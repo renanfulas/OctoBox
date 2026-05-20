@@ -40,7 +40,10 @@ class AccessViewTests(TestCase):
         response = self.client.get(reverse('home'), HTTP_HOST='www.octoboxfit.com.br')
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Seu box com presença premium. Sua operação no controle.')
+        # Copy revisada do landing comercial (early adopters edition).
+        # Antes: 'Seu box com presenca premium. Sua operacao no controle.'
+        # Reformulado para o headline atual + frase resumo.
+        self.assertContains(response, 'Seu box, sob controle.')
         self.assertContains(response, 'https://app.octoboxfit.com.br/login/')
 
     def test_login_route_renders_entry_hub(self):

@@ -7,7 +7,16 @@ class SecurityLoginTest(TestCase):
         User = get_user_model()
         self.username = 'sec_test_user_auto'
         self.password = 'P@ssw0rd!'
-        self.user = User.objects.create_user(username=self.username, password=self.password, email='sec_auto@example.com')
+        # Sprint 4: criar superuser em vez de plain user. O dashboard
+        # exige role (Owner/DEV/Manager/Coach) e plain user fica
+        # 'SemPapel'. O intent deste teste e validar o FLUXO login/CSRF,
+        # nao granularidade de permissoes — superuser e o mais simples
+        # para nao acoplar a setUp ao bootstrap de Groups/Membership.
+        self.user = User.objects.create_superuser(
+            username=self.username,
+            password=self.password,
+            email='sec_auto@example.com',
+        )
 
     def test_login_flow_with_csrf_and_redirect(self):
         client = Client()

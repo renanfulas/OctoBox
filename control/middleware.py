@@ -66,6 +66,20 @@ PUBLIC_SCHEMA_PATHS = (
     '/__debug__/',            # django-debug-toolbar
 )
 
+# Paths que sao publicos APENAS em correspondencia EXATA (sem subpaths).
+# Diferente de PUBLIC_SCHEMA_PATHS (que usa startswith), aqui validamos
+# path == prefix. Usado para endpoints de manifesto/discovery onde o
+# pai e publico mas filhos sao privados (ex.: /api/ expoe versoes
+# disponiveis; /api/v1/finance/... e autenticado e exige tenant).
+PUBLIC_SCHEMA_EXACT_PATHS = (
+    # Home marketing landing (host www.octoboxfit.com.br). Anonimo precisa ver
+    # a pagina; usuario logado vai pra /dashboard/ (decidido na view). Sem
+    # exact-match, qualquer subpath caia em /login/.
+    '/',
+    '/api/',
+    '/api/v1/',
+)
+
 
 class TenantBySessionMiddleware:
     """
@@ -134,7 +148,9 @@ class TenantBySessionMiddleware:
     # ------------------------------------------------------------------
 
     def _is_public_path(self, path: str) -> bool:
-        return any(path.startswith(prefix) for prefix in PUBLIC_SCHEMA_PATHS)
+        if any(path.startswith(prefix) for prefix in PUBLIC_SCHEMA_PATHS):
+            return True
+        return path in PUBLIC_SCHEMA_EXACT_PATHS
 
     def _set_public(self, request) -> None:
         """Reset explícito para public schema. Corrige herança de search_path (C1)."""
