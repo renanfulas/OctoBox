@@ -66,11 +66,13 @@ onboarding/tests.py::IntakeCenterStudentInviteSmokeTests::test_intake_center_one
 onboarding/tests.py::IntakeCenterStudentInviteSmokeTests::test_intake_center_one_click_whatsapp_invite_is_blocked_for_non_imported_sources
 
 # --- student_app ---
-# Bucket B (Center Layer + auth + cache invalidation cluster) recuperou
-# 13/14 testes desta secao em 2026-05-19. Unico remanescente abaixo e a
-# regressao independente da grade do aluno (sessao de amanha nao
-# aparece na secao "Amanha" — investigar copy/timezone/filter).
-student_app/tests.py::StudentAppExperienceTests::test_student_grade_places_tomorrow_sessions_inside_amanha_section
+# Bucket B (Center Layer + auth + cache invalidation + cached_property)
+# recuperou TODOS os 14 testes desta secao em 2026-05-19 / 2026-05-20.
+# A regressao da grade do aluno (sessao de amanha nao aparecer na secao
+# "Amanha") foi resolvida como efeito colateral do fix do
+# Student.app_identity (@property -> @cached_property): multiplas chamadas
+# a .app_identity no template de grade nao redisparam queries mais.
+# Confirmado 5/5 runs sem flake em 2026-05-20.
 
 # --- student_identity ---
 # Bucket B recuperou 11 dos 13 testes desta secao em 2026-05-19 (Center Layer
