@@ -1289,7 +1289,14 @@ class StudentAppExperienceTests(TestCase):
             second_dashboard = GetStudentDashboard().execute(identity=second_identity)
 
         second_session = next(item for item in second_dashboard.next_sessions if item.session_id == session.id)
-        self.assertLessEqual(len(captured_queries), 8)
+        # Sprint 4 schema-per-tenant: budget de queries subiu de 8 para 10
+        # porque o dashboard agora reconcilia tenant ativo (Box + Membership)
+        # alem do payload original. As 2 queries extras sao:
+        # - Box.objects.get (lookup do tenant ativo).
+        # - StudentBoxMembership.filter (validacao do membership).
+        # Ambas sao requisitos estruturais da multitenancy; nao representam
+        # N+1.
+        self.assertLessEqual(len(captured_queries), 10)
         self.assertEqual(second_session.attendance_status, 'Reservado')
         self.assertEqual(second_session.occupied_slots, 1)
 
@@ -1642,7 +1649,10 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         subscription = StudentPushSubscription.objects.get(endpoint='https://push.example.test/subscription-1')
         self.assertEqual(subscription.identity, self.identity)
-        self.assertEqual(subscription.box_root_slug, 'control')
+        # Sprint 4 schema-per-tenant: box_root_slug do push subscription
+        # reflete o slug do tenant ativo (em pytest: box_test).
+        from shared_support.box_runtime import get_box_runtime_slug
+        self.assertEqual(subscription.box_root_slug, get_box_runtime_slug())
         self.assertEqual(subscription.subscription['keys']['auth'], 'test-auth')
         send_push_mock.assert_called_once()
 

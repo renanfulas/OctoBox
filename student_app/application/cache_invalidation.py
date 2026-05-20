@@ -95,7 +95,8 @@ def invalidate_student_home_snapshots(*, box_root_slug: str | None, student_id: 
 
     keys = []
     today = localize_box_datetime(timezone.now(), box_root_slug=box_slug).date()
-    for date_value in [today + timedelta(days=offset) for offset in range(-7, 8)]:
+    date_window = [today + timedelta(days=offset) for offset in range(-7, 8)]
+    for date_value in date_window:
         keys.append(
             build_student_home_snapshot_cache_key(
                 box_root_slug=box_slug,
@@ -115,15 +116,36 @@ def invalidate_student_home_snapshots(*, box_root_slug: str | None, student_id: 
                     limit=None,
                 )
             )
-        for session_id in range(1, 65):
-            keys.append(
-                build_student_home_rm_snapshot_cache_key(
-                    box_root_slug=box_slug,
-                    student_id=student_id,
-                    session_id=session_id,
-                )
+
+    # Sprint 4 fix: queriar session_ids reais da janela em vez de iterar
+    # range(1, 65). Em DEV/test o auto-increment de ClassSession acumula
+    # entre runs e ja passa de 64 cedo — testes de invalidacao de RM
+    # snapshot falhavam porque o session_id real estava fora da range
+    # hardcoded, e a chave do cache nunca era apagada.
+    try:
+        from operations.models import ClassSession
+        from datetime import datetime, time
+        from django.utils.timezone import make_aware, get_current_timezone
+        tz = get_current_timezone()
+        window_start = make_aware(datetime.combine(date_window[0], time.min), tz)
+        window_end = make_aware(datetime.combine(date_window[-1], time.max), tz)
+        session_ids = list(
+            ClassSession.objects
+            .filter(scheduled_at__gte=window_start, scheduled_at__lte=window_end)
+            .values_list('id', flat=True)
+        )
+    except Exception:
+        session_ids = []
+    for session_id in session_ids:
+        keys.append(
+            build_student_home_rm_snapshot_cache_key(
+                box_root_slug=box_slug,
+                student_id=student_id,
+                session_id=session_id,
             )
-    cache.delete_many(keys)
+        )
+    if keys:
+        cache.delete_many(keys)
 
 
 def invalidate_student_rm_snapshots(*, box_root_slug: str | None, student_id: int | None = None):

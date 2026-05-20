@@ -66,15 +66,11 @@ onboarding/tests.py::IntakeCenterStudentInviteSmokeTests::test_intake_center_one
 onboarding/tests.py::IntakeCenterStudentInviteSmokeTests::test_intake_center_one_click_whatsapp_invite_is_blocked_for_non_imported_sources
 
 # --- student_app ---
-# Bucket B (Center Layer + auth) recuperou 7 testes desta secao em 2026-05-19.
-# Remanescentes: cache invalidation + membership fallback (tickets separados).
-student_app/tests.py::StudentAppExperienceTests::test_runtime_falls_back_to_another_active_membership_when_current_one_is_revoked
-student_app/tests.py::StudentAppExperienceTests::test_student_dashboard_agenda_snapshot_keeps_attendance_personalized
-student_app/tests.py::StudentAppExperienceTests::test_student_home_redirects_to_suspended_financial_page_when_all_memberships_are_suspended
-student_app/tests.py::StudentAppExperienceTests::test_student_home_redirects_to_suspended_financial_when_membership_is_suspended
-student_app/tests.py::StudentAppExperienceTests::test_student_home_snapshot_invalidates_when_rm_changes
-student_app/tests.py::StudentAppExperienceTests::test_student_push_subscribe_persists_subscription
-student_app/tests.py::StudentAppExperienceTests::test_student_rm_snapshot_reuses_cached_record_for_workout_prescription
+# Bucket B (Center Layer + auth + cache invalidation cluster) recuperou
+# 13/14 testes desta secao em 2026-05-19. Unico remanescente abaixo e a
+# regressao independente da grade do aluno (sessao de amanha nao
+# aparece na secao "Amanha" — investigar copy/timezone/filter).
+student_app/tests.py::StudentAppExperienceTests::test_student_grade_places_tomorrow_sessions_inside_amanha_section
 
 # --- student_identity ---
 # Bucket B recuperou 11 dos 13 testes desta secao em 2026-05-19 (Center Layer

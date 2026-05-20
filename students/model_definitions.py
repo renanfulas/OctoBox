@@ -16,6 +16,7 @@ PONTOS CRITICOS:
 
 from django.conf import settings
 from django.db import models
+from django.utils.functional import cached_property
 
 from model_support.base import TimeStampedModel
 from shared_support.crypto_fields import EncryptedCharField
@@ -120,7 +121,7 @@ class Student(TimeStampedModel):
     def __str__(self):
         return self.full_name
 
-    @property
+    @cached_property
     def app_identity(self):
         """Sprint 2 compatibility shim.
 
@@ -130,6 +131,16 @@ class Student(TimeStampedModel):
 
         Esta property substitui o reverse-lookup via student_id, que e
         IntegerField (referencia fraca, sem FK constraint).
+
+        @cached_property: o lookup e cacheado na instancia Python (igual
+        ao reverse-OneToOne nativo do Django). Sem isso, callers que
+        acessam `student.app_identity` multiplas vezes (ex.: use cases
+        com cache de RM) disparam 1 query por acesso. Testes que medem
+        captured_queries quebram em consequencia.
+
+        Invalidacao: por ser cache de instancia (nao Django ORM cache),
+        nao precisa de signal. Recarregar o Student via Student.objects.get
+        cria uma nova instancia sem o cache.
 
         DEBITO TECNICO: callers devem migrar para query explicita:
             StudentIdentity.objects.filter(student_id=student.id)
