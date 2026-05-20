@@ -7,8 +7,17 @@
 # FASE 0.5 — Bucket A resolvido (2026-05-18):
 # Fix de class-scope fixtures no conftest cobriu setUpTestData do Django
 # TestCase. 115 dos 118 ERRORED voltaram para a suite verde.
-# Sobram: 75 FAILED (bugs individuais) + 3 stragglers ex-ERRORED + 1
-# regressao descoberta pos-fix = 79.
+#
+# BUCKET B fechado (2026-05-19/20): 40/40 recuperados.
+# BUCKET C fechado quase totalmente (2026-05-20): 36 -> 1 entries.
+#   Padroes consolidados:
+#   1. log_audit_event tenant-aware (Center Layer pattern)
+#   2. PUBLIC_SCHEMA_EXACT_PATHS para discovery endpoints
+#   3. SELECT FOR UPDATE of=('self',) em joins nullable (5 lugares)
+#   4. EncryptedCharField nao queriavel — usar phone_lookup_index (blind index)
+#   5. _model_table_exists agora cheque public p/ SHARED_APPS
+#   6. ClassSession scheduled_at signal handler aceita string/None
+#   7. Student.app_identity @cached_property (evita N+1)
 #
 # COMO USAR:
 # - O conftest.py le este arquivo e marca cada node-id como skip.
@@ -22,68 +31,25 @@
 # OBJETIVO: lista DEVE ENCOLHER a cada sprint.
 
 # ============================================================================
-# Bugs individuais — Bucket B/C/D (precisam triagem 1-a-1)
+# Remanescentes Bucket C — produto/copy individual (ticket separado)
 # ============================================================================
 
+# Dashboard cards (5 tests) — cedilha + copy reformulada em
+# dashboard_snapshot_panels.py vs presentation.py (regression de cedilha).
+boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_keeps_routine_session_out_of_emergency_card
+boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_overdue_metric_card_keeps_only_neon_when_clean
+boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_overdue_metric_card_restores_click_to_go_when_there_is_pressure
+boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_renders_reading_list_metrics_and_sessions_for_authenticated_user
+boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_renders_session_title_from_sanitized_snapshot_contract
 
-# --- access ---
-# Bucket C 2026-05-20: 3 access tests recuperados (security login + 2 public_landing).
-# Mover ja-recuperados para a secao "recuperados". Vazio aqui.
-
-# --- boxcore ---
-# Bucket C 2026-05-20: ~13 boxcore testes recuperados via 3 padroes:
-#   1. log_audit_event tenant-aware (test_audit + login signals)
-#   2. PUBLIC_SCHEMA_EXACT_PATHS para /api/ + /api/v1/ (test_api)
-#   3. SELECT FOR UPDATE of=('self',) no payment regeneration (1 test)
-#   4. Copy updates + test design (settings, access marketing)
-# Remanescentes abaixo: bugs de produto que precisam decisao individual
-# (status enum drift, copy reformulada, queries/SQL diversos). Cada um
-# vira ticket separado depois do merge do PR #75.
-# Bucket C cluster cedilha/copy reformulada (2026-05-20):
-#   - 5 dashboard testes: cedilha em 'Cobranças'/'Presença' + copy reformulada
-#     do reading_panel (presentation.py:573/618). Fonte tinha inconsistencia
-#     entre dashboard_snapshot_panels.py (sem cedilha) e _queries.py (com).
-#   - 3 finance testes: copy de 'Resumo do recorte ativo', 'Filtros do
-#     financeiro', 'Aguardando a primeira adesão', 'último recorte salvo para'.
-#   - 1 catalog_services (Cobranças em atraso): mesma padronizacao de cedilha
-#     no source (operational_queue.py).
-boxcore/tests/test_catalog.py::CatalogViewTests::test_class_grid_allows_exact_monthly_limit_in_single_batch
-boxcore/tests/test_catalog_services.py::CatalogServiceTests::test_finance_communication_handler_blocks_duplicate_same_day_message
-boxcore/tests/test_catalog_services.py::CatalogServiceTests::test_sync_student_intake_links_latest_matching_lead_by_phone
-# test_finance_center_renders_dashboard_and_plan_portfolio: 60+ assertContains
-# verificando UI quase como screenshot. Trabalho disproporcional (cada string
-# precisa busca-substituicao individual com ground-truth em template). Mais
-# eficiente reescrever como teste de regressao especifica (sem o gigante
-# assertContains) em ticket separado.
+# Finance center (4 tests) — copy reformulada + 60+ assertContains em
+# test_finance_center_renders_dashboard_and_plan_portfolio (template como
+# screenshot). Reescrever como regressao especifica em ticket separado.
+boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_can_create_plan
+boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_filters_by_plan_and_method
 boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_renders_dashboard_and_plan_portfolio
-boxcore/tests/test_import_students.py::ImportStudentsCsvCommandTests::test_import_creates_and_updates_students_by_phone
-boxcore/tests/test_onboarding.py::IntakeCenterViewTests::test_intake_center_kpis_link_to_server_scoped_queue_filters
-boxcore/tests/test_onboarding.py::IntakeCenterViewTests::test_owner_can_create_intake_inside_intake_center
-boxcore/tests/test_onboarding.py::IntakeCenterViewTests::test_reception_can_reject_from_intake_center
-boxcore/tests/test_page_payloads.py::PagePayloadBridgeContractTests::test_sync_static_to_staticfiles_copies_selected_subtrees
-boxcore/tests/test_student_source_capture_view.py::StudentSourceCaptureViewTests::test_secure_link_can_record_declared_source
+boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_restores_last_filter_state_from_session
 
-# --- onboarding ---
-onboarding/tests.py::IntakeCenterStudentInviteSmokeTests::test_intake_center_one_click_whatsapp_invite_creates_linked_student_invitation
-onboarding/tests.py::IntakeCenterStudentInviteSmokeTests::test_intake_center_one_click_whatsapp_invite_is_blocked_for_non_imported_sources
-
-# --- student_app ---
-# Bucket B (Center Layer + auth + cache invalidation + cached_property)
-# recuperou TODOS os 14 testes desta secao em 2026-05-19 / 2026-05-20.
-# A regressao da grade do aluno (sessao de amanha nao aparecer na secao
-# "Amanha") foi resolvida como efeito colateral do fix do
-# Student.app_identity (@property -> @cached_property): multiplas chamadas
-# a .app_identity no template de grade nao redisparam queries mais.
-# Confirmado 5/5 runs sem flake em 2026-05-20.
-
-# --- student_identity ---
-# Bucket B recuperou 11 dos 13 testes desta secao em 2026-05-19 (Center Layer
-# facade + invite landing + OAuth rate-limit + Resend webhook).
-# Remanescentes: tickets de cobertura especifica.
+# Student identity tests fora do escopo do Bucket B (tickets separados).
 student_identity/tests.py::StudentIdentityFlowTests::test_existing_google_identity_updates_photo_url_on_new_login
 student_identity/tests.py::StudentIdentityFlowTests::test_student_can_authenticate_with_apple_invitation_when_student_email_is_blank
-
-# --- tests/ (top-level — stragglers do ex-ERRORED Bucket A) ---
-tests/test_dashboard_snapshot_serialization.py::DashboardSnapshotSerializationTests::test_dashboard_snapshot_is_json_serializable
-tests/test_request_timing_headers.py::RequestTimingHeadersTests::test_debug_headers_can_be_explicitly_enabled_for_internal_diagnostics
-tests/test_request_timing_headers.py::RequestTimingHeadersTests::test_public_responses_keep_server_timing_but_hide_internal_debug_headers_by_default

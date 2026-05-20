@@ -40,8 +40,11 @@ class ImportStudentsCsvCommandTests(TestCase):
             call_command('import_students_csv', str(csv_path))
 
         self.assertEqual(Student.objects.count(), 2)
-        updated_student = Student.objects.get(phone='5511911111111')
-        new_student = Student.objects.get(phone='5511922222222')
+        # phone e EncryptedCharField — usar phone_lookup_index (blind index)
+        # como chave de lookup determinista.
+        from shared_support.crypto_fields import generate_blind_index
+        updated_student = Student.objects.get(phone_lookup_index=generate_blind_index('5511911111111'))
+        new_student = Student.objects.get(phone_lookup_index=generate_blind_index('5511922222222'))
 
         self.assertEqual(updated_student.full_name, 'Ana Nova')
         self.assertEqual(updated_student.email, 'ana@example.com')

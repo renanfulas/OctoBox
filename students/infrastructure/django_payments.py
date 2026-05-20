@@ -96,10 +96,12 @@ class DjangoStudentPaymentRegenerationPort(StudentPaymentRegenerationPort):
         )
 
         target_enrollment = None
+        # SQL fix (mesmo padrao das outras select_for_update): of=('self',)
+        # impede 'FOR UPDATE no lado nullable de outer join' com plan.
         if command.enrollment_id is not None:
-            target_enrollment = student.enrollments.select_related('plan').select_for_update().get(pk=command.enrollment_id)
+            target_enrollment = student.enrollments.select_related('plan').select_for_update(of=('self',)).get(pk=command.enrollment_id)
         else:
-            target_enrollment = student.enrollments.select_related('plan').select_for_update().order_by('-start_date', '-created_at').first()
+            target_enrollment = student.enrollments.select_related('plan').select_for_update(of=('self',)).order_by('-start_date', '-created_at').first()
 
         if target_enrollment is None:
             return StudentPaymentRegenerationResult(

@@ -40,6 +40,10 @@ PUBLIC_SCHEMA_PATHS = (
     '/admin/',
     '/signup/',
     '/financeiro/stripe/webhook/',
+    # Captura segura de origem declarada — link externo para alunos (anon)
+    # registrarem origem via token assinado. Sem isso, POST anonimo cai em
+    # 302→/login/ antes da view validar o token.
+    '/alunos/origem/qualificar/',
     '/api/v1/health/',
     # Webhooks de integracoes externas (Resend, WhatsApp). Recebem POST
     # de servicos terceiros que NAO tem session/auth. View interna

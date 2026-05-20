@@ -69,8 +69,39 @@ def _get_known_tables(using: str) -> tuple[str, ...]:
 
 
 def _model_table_exists(model) -> bool:
+    """Verifica se a tabela do modelo existe no schema acessivel pela conexao.
+
+    Em schema-per-tenant (django-tenants), introspection.table_names() so
+    retorna tabelas do schema ATUAL — nao percorre o search_path completo.
+    SHARED_APP models (ex.: WebhookEvent em integrations) vivem em public;
+    se a conexao esta em box_xxx, o check direto falha mesmo com a
+    tabela acessivel via search_path = (box_xxx, public).
+
+    Para evitar falsos negativos que jogam o caller no fallback de runtime
+    cache (mascarando contagens reais do DB), checamos:
+      1. schema atual (rapido, cache per-tenant ja existente);
+      2. public schema (fallback explicito para SHARED_APPS).
+    """
     using = router.db_for_read(model)
-    return model._meta.db_table in _get_known_tables(using)
+    db_table = model._meta.db_table
+    if db_table in _get_known_tables(using):
+        return True
+    # Fallback: cheque o public schema (onde vivem SHARED_APPS).
+    try:
+        connection = connections[using]
+        current_schema = getattr(connection, 'schema_name', '') or 'public'
+        if current_schema != 'public':
+            with connection.cursor() as cur:
+                cur.execute(
+                    "SELECT 1 FROM information_schema.tables "
+                    "WHERE table_schema = 'public' AND table_name = %s LIMIT 1",
+                    [db_table],
+                )
+                if cur.fetchone() is not None:
+                    return True
+    except Exception:
+        pass
+    return False
 
 
 def _summarize_skips(skipped_items):

@@ -34,8 +34,14 @@ class DjangoStudentIntakeWorkflowPort(StudentIntakeWorkflowPort):
 
         linked_intake = StudentIntake.objects.filter(pk=lookup_decision.explicit_intake_id).first() if lookup_decision.explicit_intake_id else None
         if linked_intake is None and lookup_decision.should_try_phone_fallback:
+            # Bug fix: phone e EncryptedCharField — query em phone__in nunca
+            # casa (cipher determinism nao garantido). Modelo mantem
+            # phone_lookup_index (blind index) para search. Mapear cada
+            # candidate para seu blind index e queriar nessa coluna.
+            from shared_support.crypto_fields import generate_blind_index
+            blind_candidates = [generate_blind_index(p) for p in lookup_decision.fallback_phone_candidates if p]
             linked_intake = StudentIntake.objects.filter(
-                phone__in=lookup_decision.fallback_phone_candidates,
+                phone_lookup_index__in=blind_candidates,
                 linked_student__isnull=True,
             ).order_by('-pk').first()
         if linked_intake is None:
