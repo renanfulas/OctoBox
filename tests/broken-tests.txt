@@ -61,8 +61,6 @@ boxcore/tests/test_onboarding.py::IntakeCenterViewTests::test_intake_center_kpis
 boxcore/tests/test_onboarding.py::IntakeCenterViewTests::test_owner_can_create_intake_inside_intake_center
 boxcore/tests/test_onboarding.py::IntakeCenterViewTests::test_reception_can_reject_from_intake_center
 boxcore/tests/test_page_payloads.py::PagePayloadBridgeContractTests::test_sync_static_to_staticfiles_copies_selected_subtrees
-boxcore/tests/test_reset_demo_workspace.py::ResetDemoWorkspaceCommandTests::test_reset_demo_workspace_replaces_existing_business_data
-boxcore/tests/test_reset_demo_workspace.py::ResetDemoWorkspaceCommandTests::test_reset_demo_workspace_supports_reception_conversion_scenario
 boxcore/tests/test_student_source_capture_view.py::StudentSourceCaptureViewTests::test_secure_link_can_record_declared_source
 
 # --- onboarding ---
