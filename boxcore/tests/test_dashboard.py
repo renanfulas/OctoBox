@@ -530,14 +530,17 @@ class DashboardViewTests(TestCase):
 
     def test_dashboard_renders_session_title_from_sanitized_snapshot_contract(self):
         self.client.force_login(self.user)
-        today = timezone.localdate()
+        # Sprint 4 / regression fix: marcar como futuro (now + 2h) garante que
+        # _decorate_dashboard_sessions nao filtre via status_label='Finalizada'
+        # apos sync_runtime_statuses (dashboard_snapshot_queries.py:185). O
+        # teste anterior usava '09:00' fixo, mas pytest pode rodar em qualquer
+        # hora — se for depois das 09h locais, a sessao virava finalizada e
+        # nao aparecia em upcoming_sessions.
+        future_time = timezone.now() + timezone.timedelta(hours=2)
         ClassSession.objects.create(
             title="CrossFit Front Squat",
             coach=self.user,
-            scheduled_at=timezone.make_aware(
-                timezone.datetime.combine(today, timezone.datetime.strptime("09:00", "%H:%M").time()),
-                timezone.get_current_timezone(),
-            ),
+            scheduled_at=future_time,
             duration_minutes=60,
             capacity=16,
             status=SessionStatus.SCHEDULED,

@@ -34,21 +34,19 @@
 # Remanescentes Bucket C — produto/copy individual (ticket separado)
 # ============================================================================
 
-# Dashboard cards (5 tests) — cedilha + copy reformulada em
-# dashboard_snapshot_panels.py vs presentation.py (regression de cedilha).
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_keeps_routine_session_out_of_emergency_card
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_overdue_metric_card_keeps_only_neon_when_clean
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_overdue_metric_card_restores_click_to_go_when_there_is_pressure
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_renders_reading_list_metrics_and_sessions_for_authenticated_user
-boxcore/tests/test_dashboard.py::DashboardViewTests::test_dashboard_renders_session_title_from_sanitized_snapshot_contract
+# Dashboard cards (5 tests) — recuperados 2026-05-20:
+#   - 4 ja passavam apos os fixes de framework anteriores.
+#   - 1 (test_dashboard_renders_session_title_from_sanitized_snapshot_contract)
+#     fixado: usar hora futura em vez de '09:00' fixo, evitando que
+#     sync_runtime_statuses marque a sessao como 'Finalizada' (filtrada
+#     por _decorate_dashboard_sessions, dashboard_snapshot_queries.py:185).
 
-# Finance center (4 tests) — copy reformulada + 60+ assertContains em
-# test_finance_center_renders_dashboard_and_plan_portfolio (template como
-# screenshot). Reescrever como regressao especifica em ticket separado.
-boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_can_create_plan
-boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_filters_by_plan_and_method
-boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_renders_dashboard_and_plan_portfolio
-boxcore/tests/test_finance.py::FinanceCenterTests::test_finance_center_restores_last_filter_state_from_session
+# Finance center (4 tests) — recuperados 2026-05-20:
+#   - 3 ja passavam apos os fixes de framework anteriores.
+#   - 1 (test_finance_center_renders_dashboard_and_plan_portfolio) reescrito:
+#     60+ assertContains de copy reduzidos para ~12 asserts estruturais
+#     (block IDs, anchor links, data-attributes, plan name, valor BRL).
+#     Copy individual fica para snapshot/screenshot regression em outro nivel.
 
 # Student identity tests fora do escopo do Bucket B (tickets separados).
 student_identity/tests.py::StudentIdentityFlowTests::test_existing_google_identity_updates_photo_url_on_new_login
