@@ -11,6 +11,7 @@ O QUE ESTE ARQUIVO FAZ:
 4. Testa a fundação técnica de DEV e auditoria.
 """
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management import call_command
@@ -82,19 +83,6 @@ class OperationWorkspaceTests(TestCase):
 
         self.assertRedirects(response, reverse('reception-workspace'))
 
-    def test_coach_cannot_access_manager_area(self):
-        self.client.force_login(self.coach)
-
-        response = self.client.get(reverse('manager-workspace'))
-
-        self.assertEqual(response.status_code, 404)
-
-    def test_manager_cannot_access_coach_area(self):
-        self.client.force_login(self.manager)
-
-        response = self.client.get(reverse('coach-workspace'))
-
-        self.assertEqual(response.status_code, 403)
 
     def test_dev_workspace_uses_dev_shell_scope_and_shortcuts(self):
         self.client.force_login(self.dev)
@@ -117,13 +105,6 @@ class OperationWorkspaceTests(TestCase):
         self.assertContains(response, 'href="#reception-intake-board"')
         self.assertContains(response, 'href="#reception-payment-board"')
         self.assertContains(response, 'href="#reception-class-grid-board"')
-
-    def test_manager_cannot_access_official_reception_workspace(self):
-        self.client.force_login(self.manager)
-
-        response = self.client.get(reverse('reception-workspace'))
-
-        self.assertEqual(response.status_code, 403)
 
     def test_reception_can_mark_payment_paid_from_official_reception_workspace(self):
         self.client.force_login(self.reception)
@@ -206,17 +187,6 @@ class OperationWorkspaceTests(TestCase):
         self.assertEqual(second_response.status_code, 302)
         self.assertEqual(blocked_response.status_code, 429)
         self.assertEqual(blocked_response['Retry-After'], '60')
-
-    def test_reception_can_access_students_and_class_grid_but_not_finance_center(self):
-        self.client.force_login(self.reception)
-
-        students_response = self.client.get(reverse('student-directory'))
-        class_grid_response = self.client.get(reverse('class-grid'))
-        finance_response = self.client.get(reverse('finance-center'))
-
-        self.assertEqual(students_response.status_code, 200)
-        self.assertEqual(class_grid_response.status_code, 200)
-        self.assertEqual(finance_response.status_code, 403)
 
     def test_reception_sidebar_hides_finance_link(self):
         self.client.force_login(self.reception)
@@ -520,4 +490,50 @@ class OperationWorkspaceTests(TestCase):
         self.assertContains(response, 'Eventos recentes de auditoria')
 
 
+# ---------------------------------------------------------------------------
+# Matriz de controle de acesso por papel — pytest standalone (parametrize)
+# ---------------------------------------------------------------------------
+# @pytest.mark.parametrize nao expande em metodos de TestCase (limitacao do
+# pytest), por isso este teste fica fora da classe como funcao pytest.
+#
+# COMO ESTENDER: adicione uma tupla (role, url_name, status_esperado) na lista
+# abaixo para cobrir novos papeis ou rotas sem duplicar o boilerplate de
+# login + GET + assert.
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def ops_role_users(db):
+    """Cria um usuario por papel para uso na matriz de acesso."""
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.models import Group
+
+    call_command('bootstrap_roles')
+    User = get_user_model()
+    users = {}
+    for role_const, username in [
+        (ROLE_COACH,     'ops-matrix-coach'),
+        (ROLE_MANAGER,   'ops-matrix-manager'),
+        (ROLE_RECEPTION, 'ops-matrix-reception'),
+    ]:
+        u = User.objects.create_user(username, password='senha-forte-123')
+        u.groups.add(Group.objects.get(name=role_const))
+        users[role_const] = u
+    return users
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("role,url_name,expected_status", [
+    # Papeis bloqueados de workspaces alheios
+    (ROLE_COACH,     'manager-workspace',   404),
+    (ROLE_MANAGER,   'coach-workspace',     403),
+    (ROLE_MANAGER,   'reception-workspace', 403),
+    # Recepcao: acesso permitido a alunos/grade, bloqueado em financeiro
+    (ROLE_RECEPTION, 'student-directory',   200),
+    (ROLE_RECEPTION, 'class-grid',          200),
+    (ROLE_RECEPTION, 'finance-center',      403),
+])
+def test_cross_role_workspace_access_matrix(client, ops_role_users, role, url_name, expected_status):
+    client.force_login(ops_role_users[role])
+    response = client.get(reverse(url_name))
+    assert response.status_code == expected_status
 
