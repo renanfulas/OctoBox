@@ -1,13 +1,13 @@
 from django.test import TestCase
 from django.db import IntegrityError, transaction
-from students.models import Student
 from communications.models import WhatsAppContact
 from onboarding.models import StudentIntake
 from shared_support.crypto_fields import generate_blind_index
 from integrations.whatsapp.identity import resolve_whatsapp_channel_identity
 from django.core.management import call_command
 from io import StringIO
-import logging
+from students.models import Student
+from tests.factories import StudentFactory
 
 class BlindIndexTests(TestCase):
     def test_blind_index_determinism(self):
@@ -34,10 +34,7 @@ class BlindIndexTests(TestCase):
 
     def test_student_dual_write(self):
         """O campo phone_lookup_index deve ser populado/limpo automaticamente no save() de Student."""
-        student = Student.objects.create(
-            full_name="Test Student",
-            phone="11999998888"
-        )
+        student = StudentFactory(phone="11999998888")
         self.assertTrue(student.phone_lookup_index.startswith("v1:"))
         
         # Limpeza do telefone deve limpar o indice
@@ -64,7 +61,7 @@ class BlindIndexTests(TestCase):
     def test_identity_resolution_via_index(self):
         """A resolucao de identidade deve encontrar Student, Contact e Intake usando o indice."""
         phone = "11999993333"
-        student = Student.objects.create(full_name="Student Test", phone=phone)
+        student = StudentFactory(phone=phone)
         contact = WhatsAppContact.objects.create(phone=phone, display_name="Contact Test")
         intake = StudentIntake.objects.create(full_name="Intake Test", phone=phone)
         
@@ -78,7 +75,7 @@ class BlindIndexTests(TestCase):
         """Simula um cenario de backfill onde registros antigos sem indice passam a ser localizaveis."""
         phone = "11888887777"
         # Criar sem usar save() para simular dado legado (ou bypass de save)
-        Student.objects.filter(pk=Student.objects.create(full_name="Legacy", phone=phone).pk).update(phone_lookup_index="")
+        Student.objects.filter(pk=StudentFactory(full_name="Legacy", phone=phone).pk).update(phone_lookup_index="")
         
         # Lookup inicial falha (regra de cinto de seguranca localiza via student vinculado se houvesse contact, 
         # mas aqui testamos o indice direto no resolve_student)
@@ -95,8 +92,8 @@ class BlindIndexTests(TestCase):
 
     def test_student_lookup_index_constraint_blocks_duplicates(self):
         """Student agora deve bloquear duplicidade de indice pesquisavel no banco."""
-        student_one = Student.objects.create(full_name="Student 1", phone="11977776660")
-        student_two = Student.objects.create(full_name="Student 2", phone="11977776661")
+        student_one = StudentFactory(phone="11977776660")
+        student_two = StudentFactory(phone="11977776661")
 
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
@@ -113,7 +110,7 @@ class BlindIndexTests(TestCase):
 
     def test_audit_command_detects_drift(self):
         """Validar que a auditoria detecta quando o indice nao bate com o telefone atual."""
-        student = Student.objects.create(full_name="Drifter", phone="11999991111")
+        student = StudentFactory(full_name="Drifter", phone="11999991111")
         # Forçar um indice errado via update (bypass save)
         Student.objects.filter(id=student.id).update(phone_lookup_index="v1:fakehash")
         
