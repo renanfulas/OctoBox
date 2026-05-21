@@ -1,0 +1,102 @@
+name: E2E Tests (Nightly)
+
+# Fase 8 do plano de qualidade de testes.
+#
+# DECISÃO: por que E2E NÃO roda em todo PR?
+# - Cada teste E2E leva 10-30s (vs 0.1s unitário). Com POC de 1 teste,
+#   o overhead ainda é aceitável, mas a tendência é crescer para 10-20
+#   testes (~5-10 min só de E2E).
+# - Playwright precisa de `playwright install --with-deps chromium`, que
+#   baixa ~300 MB e leva ~2 min em CI cold. Inaceitável para todo PR.
+# - E2E testa integração de UI — muda menos que lógica de domínio.
+#   Rodar em push para main + nightly protege regressões sem travar PRs.
+#
+# QUANDO RODAR MANUALMENTE:
+#   gh workflow run e2e-nightly.yml
+#
+# COMO ESCALAR:
+# - Adicionar testes em tests/e2e/ seguindo o padrão em docs/testing/e2e-guide.md.
+# - Se suite E2E ultrapassar 10 min: mover para workflow semanal ou usar
+#   sharding do Playwright (`--shard=1/4`).
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # 03:00 UTC todos os dias (00:00 BRT)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    # Permite disparo manual via GitHub UI ou gh CLI
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements_test.txt
+
+      - name: Install Playwright browsers
+        # Instala apenas o Chromium para manter o download pequeno (~150 MB).
+        # Para Firefox ou WebKit: adicionar `firefox` ou `webkit` na lista.
+        run: playwright install --with-deps chromium
+
+      - name: Run E2E suite
+        env:
+          DJANGO_SECRET_KEY: "a-dummy-secret-key-for-ci-e2e"
+          PHONE_BLIND_INDEX_KEY: "ci-only-blind-index-key"
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          DATABASE_URL: postgres://user:password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+        run: |
+          python -m pytest tests/e2e/ \
+            --create-db --migrations \
+            --browser chromium \
+            --headed=false \
+            -m e2e \
+            --tb=short \
+            --junitxml=junit-e2e.xml \
+            -v
+
+      - name: Upload E2E JUnit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-e2e
+          path: junit-e2e.xml
+
+      - name: Upload Playwright traces (em falha)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: test-results/
+          if-no-files-found: ignore
