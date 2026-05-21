@@ -151,6 +151,7 @@ Use the docs by question level:
 6. [docs/reference/reading-guide.md](docs/reference/reading-guide.md) is for navigating the code and debugging the codebase, not for defining product direction
 7. [docs/map/1-map-by-tests.md](docs/map/1-map-by-tests.md) maps the live project skeleton from the current test suite
 8. docs in [docs/rollout](docs/rollout) are for release, staging, and field operations
+9. [docs/testing/README.md](docs/testing/README.md) covers how to run the test suite, add tests, manage coverage, and track quality trade-offs
 
 ## OctoBox governance
 
@@ -188,6 +189,8 @@ In the areas with the highest rule density, the codebase was organized more expl
 3. business rule actions and workflows
 
 This README stops at the institutional and strategic layer. To navigate file by file, reading sequence, bug hotspots, and runtime technical boundaries, use [docs/reference/reading-guide.md](docs/reference/reading-guide.md).
+
+If you want to run the test suite, understand the test patterns, add a new test, raise the coverage threshold, or check which constraints and error paths are covered, use [docs/testing/README.md](docs/testing/README.md).
 
 If you want to study the codebase in pedagogical order, use [docs/reference/reading-guide.md](docs/reference/reading-guide.md).
 
