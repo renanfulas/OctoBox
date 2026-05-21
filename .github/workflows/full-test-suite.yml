@@ -21,6 +21,9 @@ on:
 jobs:
   full-test-suite:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     services:
       postgres:
@@ -87,6 +90,16 @@ jobs:
         with:
           name: coverage-xml
           path: coverage.xml
+
+      - name: Coverage comment on PR
+        if: github.event_name == 'pull_request'
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          MINIMUM_GREEN: 80
+          MINIMUM_ORANGE: 70
+          ANNOTATE_MISSING_LINES: true
+          ANNOTATION_TYPE: warning
 
       - name: Upload JUnit report
         if: always()
