@@ -18,6 +18,9 @@
 # nao so de linha). Aumenta o sinal: 90% de linhas + 70% de branches >
 # 90% de linhas sozinho.
 branch = True
+# relative_files=True necessario para py-cov-action/python-coverage-comment-action:
+# o action roda em container separado e nao consegue resolver paths absolutos.
+relative_files = True
 source =
     access
     api
