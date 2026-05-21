@@ -9,7 +9,7 @@
 
 | Componente | Versão | Papel |
 |---|---|---|
-| `pytest-playwright` | 0.5.2 | Integração pytest ↔ Playwright |
+| `pytest-playwright` | 0.7.2 | Integração pytest ↔ Playwright |
 | `playwright` (dep transitiva) | ≥ 1.38 | Driver de browser |
 | `pytest-django` | 4.12.0 | `live_server` fixture |
 | Chromium | latest (CI) | Browser padrão |

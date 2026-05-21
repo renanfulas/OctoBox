@@ -53,4 +53,6 @@ pytest-randomly==4.1.0
 pytest-xdist==3.6.1
 
 # E2E — Fase 8 do plano de qualidade de testes.
-pytest-playwright==0.5.2
+# 0.5.x–0.7.1 requerem pytest<9.0.0 (incompatível com pytest==9.0.3).
+# 0.7.2 foi a primeira versão a aceitar pytest<10.0.0.
+pytest-playwright==0.7.2
