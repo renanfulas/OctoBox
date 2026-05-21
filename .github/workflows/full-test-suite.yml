@@ -110,10 +110,8 @@ jobs:
 
   order-dependence-check:
     # Fase 3: valida que a suite passa em ordem aleatoria com seeds fixos.
-    # Job separado para nao bloquear o full-test-suite em caso de falha.
-    # Quando todos os seeds passarem, remover continue-on-error.
+    # Validado em 2026-05-21: 891/891 verde nos 3 seeds (0 order-dependentes).
     runs-on: ubuntu-latest
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
