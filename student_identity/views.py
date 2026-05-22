@@ -17,6 +17,7 @@ from shared_support.box_runtime import get_box_runtime_slug
 from auditing.models import AuditEvent
 from .application.commands import AuthenticateStudentWithProviderCommand
 from .application.use_cases import AuthenticateStudentWithProvider
+from .facade import resolve_tenant_for_student_invite_landing
 from .infrastructure.repositories import DjangoStudentIdentityRepository
 from .infrastructure.session import clear_student_session_cookie
 from .funnel_events import record_student_onboarding_event
@@ -178,6 +179,18 @@ class StudentOAuthCallbackView(StudentSignInView):
         return self._handle_callback(request, provider)
 
     def _handle_callback(self, request, provider: str):
+        # Center Layer pre-rate-limit: ativa tenant via SINGLE_ACTIVE_BOX
+        # antes do rate-limit check escrever AuditEvent (TENANT_APP).
+        # /aluno/auth/* esta em PUBLIC_SCHEMA_PATHS, schema=public no
+        # entrypoint. Sem ativar tenant pelo facade, o AuditEvent do
+        # rate-limit cai num INSERT em public e quebra (relacao nao existe).
+        # Em piloto (1 box ativo) o facade resolve via SINGLE_ACTIVE_BOX.
+        # Em multi-tenant prod retorna NONE; rate-limit audit cai no
+        # try/except defensivo dentro do oauth_loader.
+        from student_identity.facade import resolve_tenant_for_student_oauth_callback
+        resolve_tenant_for_student_oauth_callback(
+            invite_token='', provider_subject='', email='',
+        )
         rate_limit_response = enforce_student_oauth_callback_rate_limit(request=request, provider=provider)
         if rate_limit_response is not None:
             return rate_limit_response
@@ -209,6 +222,22 @@ class StudentOAuthCallbackView(StudentSignInView):
                 },
             )
             return redirect('student-identity-login')
+
+        # CENTER LAYER (docs/architecture/center-layer.md):
+        # Resolve o tenant ANTES de qualquer query TENANT_APPS abaixo.
+        # Estrategias em ordem (primeira que resolver vence):
+        #   1. invite_token (invitation OU link em massa)
+        #   2. provider_subject -> existing identity
+        #   3. email -> existing identity (so se houver 1 candidate)
+        # Sem isso, AuthenticateStudentWithProvider.execute() chama
+        # find_student_candidates_by_email() que tenta Student.objects.filter()
+        # em public schema (boxcore_student so existe em box_xxx).
+        from student_identity.facade import resolve_tenant_for_student_oauth_callback
+        resolve_tenant_for_student_oauth_callback(
+            invite_token=callback_input.invite_token,
+            provider_subject=identity_payload.provider_subject,
+            email=identity_payload.email,
+        )
 
         result = authenticate_student_oauth_identity(
             authenticate_identity=self.authenticate_identity,
@@ -255,6 +284,12 @@ class StudentInviteLandingView(TemplateView):
     template_name = 'student_identity/invite_landing.html'
 
     def dispatch(self, request, *args, **kwargs):
+        # Sprint 4 schema-per-tenant: rota /aluno/auth/* esta em
+        # PUBLIC_SCHEMA_PATHS — schema=public no entrypoint. AuditEvent
+        # vive em TENANT_APPS. Resolver tenant via Center Layer facade
+        # ANTES de qualquer escrita, e envolver audits em try/except como
+        # fallback (audit anonimo e nice-to-have, nao pode bloquear a view).
+        resolve_tenant_for_student_invite_landing(invite_token=str(self.kwargs.get('token', '')))
         allowed, retry_after = check_student_flow_rate_limit(
             scope='student-invite-landing',
             token=f'ip:{resolve_student_client_ip(request)}',
@@ -262,18 +297,22 @@ class StudentInviteLandingView(TemplateView):
             window_seconds=max(1, int(getattr(settings, 'STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS', 300))),
         )
         if not allowed:
-            AuditEvent.objects.create(
-                actor=None,
-                actor_role='',
-                action='student_invite_landing.rate_limited',
-                target_model='student_identity.StudentAppInvitation',
-                target_label=hashlib.sha256(str(self.kwargs.get('token', '')).encode()).hexdigest()[:16],
-                description='Landing de invite do aluno bloqueada por rajada.',
-                metadata={
-                    'ip_hash': hashlib.sha256(resolve_student_client_ip(request).encode()).hexdigest()[:8],
-                    'path': request.path,
-                },
-            )
+            try:
+                AuditEvent.objects.create(
+                    actor=None,
+                    actor_role='',
+                    action='student_invite_landing.rate_limited',
+                    target_model='student_identity.StudentAppInvitation',
+                    target_label=hashlib.sha256(str(self.kwargs.get('token', '')).encode()).hexdigest()[:16],
+                    description='Landing de invite do aluno bloqueada por rajada.',
+                    metadata={
+                        'ip_hash': hashlib.sha256(resolve_student_client_ip(request).encode()).hexdigest()[:8],
+                        'path': request.path,
+                    },
+                )
+            except Exception:
+                # Audit roda em schema public quando token nao resolveu tenant — best effort.
+                pass
             response = HttpResponse('Muitas tentativas de abrir convites em pouco tempo. Aguarde e tente novamente.', status=429)
             response['Retry-After'] = str(retry_after)
             return response
@@ -284,17 +323,14 @@ class StudentInviteLandingView(TemplateView):
         context['invite_token'] = self.kwargs['token']
         context['login_url'] = reverse('student-identity-login')
         context['journey_label'] = 'aluno'
+        # Center Layer: resolve tenant ANTES de qualquer escrita TENANT_APPS.
+        # Idempotente com a chamada no dispatch() — segundo set_tenant em
+        # cima do mesmo box e no-op de fato.
+        resolve_tenant_for_student_invite_landing(invite_token=str(self.kwargs['token']))
         invitation = DjangoStudentIdentityRepository().find_invitation_by_token(str(self.kwargs['token']))
         context['invite_not_found'] = invitation is None
         context['invite_expired'] = bool(invitation and invitation.is_expired)
         context['invite_already_accepted'] = bool(invitation and invitation.accepted_at)
-        # Sprint 4 schema-per-tenant: esta view corre em public schema
-        # (/aluno/auth/ esta em PUBLIC_SCHEMA_PATHS). AuditEvent abaixo
-        # vive em TENANT_APPS — precisa do tenant ativo. Usar o box do
-        # convite como fonte de verdade.
-        if invitation is not None:
-            from student_identity.oauth_journeys import _activate_box_tenant
-            _activate_box_tenant(invitation.box_id, box_root_slug=invitation.box_root_slug)
         if invitation is not None:
             record_student_onboarding_event(
                 actor=None,
@@ -312,20 +348,28 @@ class StudentInviteLandingView(TemplateView):
                 },
             )
         else:
+            # Token invalido: facade nao conseguiu resolver tenant. Audit
+            # so funciona se a strategy SINGLE_ACTIVE_BOX (pilot) tiver
+            # ativado; em prod multi-tenant ficamos em public e a escrita
+            # falha. Best effort para nao quebrar a renderizacao da pagina
+            # "convite invalido".
             _token_hash = hashlib.sha256(str(self.kwargs['token']).encode()).hexdigest()[:16]
-            AuditEvent.objects.create(
-                actor=None,
-                actor_role='',
-                action='student_invite_landing.invalid_token_accessed',
-                target_model='student_identity.StudentAppInvitation',
-                target_label=_token_hash,
-                description='Tentativa de abrir convite individual inexistente.',
-                metadata={
-                    'box_root_slug': get_box_runtime_slug(),
-                    'token_hash': _token_hash,
-                    'path': self.request.path,
-                },
-            )
+            try:
+                AuditEvent.objects.create(
+                    actor=None,
+                    actor_role='',
+                    action='student_invite_landing.invalid_token_accessed',
+                    target_model='student_identity.StudentAppInvitation',
+                    target_label=_token_hash,
+                    description='Tentativa de abrir convite individual inexistente.',
+                    metadata={
+                        'box_root_slug': get_box_runtime_slug(),
+                        'token_hash': _token_hash,
+                        'path': self.request.path,
+                    },
+                )
+            except Exception:
+                pass
         return context
 
     def render_to_response(self, context, **response_kwargs):
@@ -343,6 +387,9 @@ class StudentBoxInviteLandingView(TemplateView):
     template_name = 'student_identity/invite_landing.html'
 
     def dispatch(self, request, *args, **kwargs):
+        # Center Layer: resolve tenant ANTES de qualquer AuditEvent.
+        # Ver comentario equivalente em StudentInviteLandingView.dispatch.
+        resolve_tenant_for_student_invite_landing(invite_token=str(self.kwargs.get('token', '')))
         allowed, retry_after = check_student_flow_rate_limit(
             scope='student-box-invite-landing',
             token=f'ip:{resolve_student_client_ip(request)}',
@@ -350,18 +397,21 @@ class StudentBoxInviteLandingView(TemplateView):
             window_seconds=max(1, int(getattr(settings, 'STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS', 300))),
         )
         if not allowed:
-            AuditEvent.objects.create(
-                actor=None,
-                actor_role='',
-                action='student_box_invite_landing.rate_limited',
-                target_model='student_identity.StudentBoxInviteLink',
-                target_label=hashlib.sha256(str(self.kwargs.get('token', '')).encode()).hexdigest()[:16],
-                description='Landing de link em massa do aluno bloqueada por rajada.',
-                metadata={
-                    'ip_hash': hashlib.sha256(resolve_student_client_ip(request).encode()).hexdigest()[:8],
-                    'path': request.path,
-                },
-            )
+            try:
+                AuditEvent.objects.create(
+                    actor=None,
+                    actor_role='',
+                    action='student_box_invite_landing.rate_limited',
+                    target_model='student_identity.StudentBoxInviteLink',
+                    target_label=hashlib.sha256(str(self.kwargs.get('token', '')).encode()).hexdigest()[:16],
+                    description='Landing de link em massa do aluno bloqueada por rajada.',
+                    metadata={
+                        'ip_hash': hashlib.sha256(resolve_student_client_ip(request).encode()).hexdigest()[:8],
+                        'path': request.path,
+                    },
+                )
+            except Exception:
+                pass
             response = HttpResponse('Muitas tentativas de abrir links de convite em pouco tempo. Aguarde e tente novamente.', status=429)
             response['Retry-After'] = str(retry_after)
             return response
@@ -373,6 +423,8 @@ class StudentBoxInviteLandingView(TemplateView):
         context['login_url'] = reverse('student-identity-login')
         context['journey_label'] = 'grupo do box'
         context['mass_invite_mode'] = True
+        # Center Layer: garante tenant resolvido antes de qualquer escrita.
+        resolve_tenant_for_student_invite_landing(invite_token=str(self.kwargs['token']))
         box_invite_link = DjangoStudentIdentityRepository().find_box_invite_link_by_token(str(self.kwargs['token']))
         context['invite_not_found'] = box_invite_link is None
         context['invite_unavailable'] = bool(box_invite_link is not None and not box_invite_link.can_accept)
@@ -393,19 +445,22 @@ class StudentBoxInviteLandingView(TemplateView):
             )
         else:
             _token_hash = hashlib.sha256(str(self.kwargs['token']).encode()).hexdigest()[:16]
-            AuditEvent.objects.create(
-                actor=None,
-                actor_role='',
-                action='student_box_invite_landing.invalid_token_accessed',
-                target_model='student_identity.StudentBoxInviteLink',
-                target_label=_token_hash,
-                description='Tentativa de abrir link em massa inexistente.',
-                metadata={
-                    'box_root_slug': get_box_runtime_slug(),
-                    'token_hash': _token_hash,
-                    'path': self.request.path,
-                },
-            )
+            try:
+                AuditEvent.objects.create(
+                    actor=None,
+                    actor_role='',
+                    action='student_box_invite_landing.invalid_token_accessed',
+                    target_model='student_identity.StudentBoxInviteLink',
+                    target_label=_token_hash,
+                    description='Tentativa de abrir link em massa inexistente.',
+                    metadata={
+                        'box_root_slug': get_box_runtime_slug(),
+                        'token_hash': _token_hash,
+                        'path': self.request.path,
+                    },
+                )
+            except Exception:
+                pass
         return context
 
     def render_to_response(self, context, **response_kwargs):

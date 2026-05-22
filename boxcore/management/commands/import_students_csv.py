@@ -73,10 +73,14 @@ class Command(BaseCommand):
                         'notes': (row.get('notes') or '').strip(),
                     }
 
-                    # update_or_create evita cadastro duplicado quando o WhatsApp ja existe.
+                    # Bug fix: phone e EncryptedCharField — lookup em phone__exact
+                    # nao casa de forma deterministica (cipher tem nonce). Modelo
+                    # mantem phone_lookup_index (blind index) para dedup. Usar
+                    # esse indice como chave de update_or_create.
+                    from shared_support.crypto_fields import generate_blind_index
                     student, created = Student.objects.update_or_create(
-                        phone=phone,
-                        defaults=defaults,
+                        phone_lookup_index=generate_blind_index(phone),
+                        defaults={**defaults, 'phone': phone},
                     )
 
                     if created:

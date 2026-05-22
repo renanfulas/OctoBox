@@ -4,10 +4,23 @@ ARQUIVO: snapshot curado do Red Beacon.
 POR QUE ELE EXISTE:
 - consolida sinais operacionais em leitura confiavel para dashboard e workspaces.
 - prepara a emissao superior sem vazar telemetria bruta.
+
+DECISAO DE CACHE (substituiu @lru_cache de processo):
+- Antes: @lru_cache(maxsize=8) era process-wide, sem TTL, sem awareness de
+  schema. Em multitenant + schema-per-tenant, o cache de "tabela existe"
+  do schema A vazava para o schema B no mesmo processo (sintoma: testes
+  flaky cross-tenant). Em prod, uma migration que dropasse+recriasse
+  tabela mid-flight mostraria estado stale ate restart.
+- Agora: Django cache backend com TTL curto + chave incluindo
+  schema_name. Multi-tenant safe, auto-invalidation, e isolavel em
+  testes via cache.clear().
+- Fallback se cache backend falhar: introspeccao direta a cada call
+  (lento mas correto). Snapshot nunca quebra por falha de cache.
 """
 
-from functools import lru_cache
+import logging
 
+from django.core.cache import cache
 from django.db import DatabaseError, connections, router
 from django.utils import timezone
 
@@ -15,16 +28,80 @@ from integrations.whatsapp.models import WebhookDeliveryStatus, WebhookEvent
 from jobs.models import AsyncJob, JobStatus
 from monitoring.signal_mesh_runtime import get_signal_mesh_runtime_snapshot
 
+logger = logging.getLogger(__name__)
 
-@lru_cache(maxsize=8)
-def _get_known_tables(using: str) -> tuple[str, ...]:
+KNOWN_TABLES_CACHE_KEY_PREFIX = 'red_beacon:known_tables:v1'
+KNOWN_TABLES_TTL_SECONDS = 60
+
+
+def _known_tables_cache_key(using: str) -> str:
+    """Chave de cache incluindo schema_name para isolar entre tenants.
+
+    Em multitenant + schema-per-tenant, o resultado de
+    `connection.introspection.table_names()` depende do `search_path`
+    atual da conexao. Chave plana ('default' so) vazaria estado entre
+    schemas. Incluir schema_name garante isolamento per-tenant.
+    """
     connection = connections[using]
-    return tuple(connection.introspection.table_names())
+    schema = getattr(connection, 'schema_name', '') or 'public'
+    return f'{KNOWN_TABLES_CACHE_KEY_PREFIX}:{using}:{schema}'
+
+
+def _get_known_tables(using: str) -> tuple[str, ...]:
+    key = _known_tables_cache_key(using)
+    try:
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+    except Exception:
+        # Cache backend falhou (Redis down, etc). Continua sem cache —
+        # snapshot prefere lentidao a estar errado.
+        logger.warning('beacon_snapshot: cache.get falhou; usando introspeccao direta', exc_info=True)
+
+    result = tuple(connections[using].introspection.table_names())
+
+    try:
+        cache.set(key, result, timeout=KNOWN_TABLES_TTL_SECONDS)
+    except Exception:
+        logger.warning('beacon_snapshot: cache.set falhou; resultado nao foi cacheado', exc_info=True)
+
+    return result
 
 
 def _model_table_exists(model) -> bool:
+    """Verifica se a tabela do modelo existe no schema acessivel pela conexao.
+
+    Em schema-per-tenant (django-tenants), introspection.table_names() so
+    retorna tabelas do schema ATUAL — nao percorre o search_path completo.
+    SHARED_APP models (ex.: WebhookEvent em integrations) vivem em public;
+    se a conexao esta em box_xxx, o check direto falha mesmo com a
+    tabela acessivel via search_path = (box_xxx, public).
+
+    Para evitar falsos negativos que jogam o caller no fallback de runtime
+    cache (mascarando contagens reais do DB), checamos:
+      1. schema atual (rapido, cache per-tenant ja existente);
+      2. public schema (fallback explicito para SHARED_APPS).
+    """
     using = router.db_for_read(model)
-    return model._meta.db_table in _get_known_tables(using)
+    db_table = model._meta.db_table
+    if db_table in _get_known_tables(using):
+        return True
+    # Fallback: cheque o public schema (onde vivem SHARED_APPS).
+    try:
+        connection = connections[using]
+        current_schema = getattr(connection, 'schema_name', '') or 'public'
+        if current_schema != 'public':
+            with connection.cursor() as cur:
+                cur.execute(
+                    "SELECT 1 FROM information_schema.tables "
+                    "WHERE table_schema = 'public' AND table_name = %s LIMIT 1",
+                    [db_table],
+                )
+                if cur.fetchone() is not None:
+                    return True
+    except Exception:
+        pass
+    return False
 
 
 def _summarize_skips(skipped_items):

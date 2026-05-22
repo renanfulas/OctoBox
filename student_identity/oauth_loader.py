@@ -32,19 +32,26 @@ def enforce_student_oauth_callback_rate_limit(*, request, provider: str):
     if allowed:
         return None
 
-    AuditEvent.objects.create(
-        actor=None,
-        actor_role='',
-        action='student_oauth_callback.rate_limited',
-        target_model='student_identity.StudentOAuthCallback',
-        target_label=provider,
-        description='Callback social do aluno bloqueado por rajada.',
-        metadata={
-            'provider': provider,
-            'client_ip': resolve_student_client_ip(request),
-            'path': request.path,
-        },
-    )
+    # Audit best-effort: rota /aluno/auth/* corre em schema=public por padrao.
+    # Caller (StudentOAuthCallbackView._handle_callback) ja ativou o tenant
+    # via Center Layer facade quando havia 1 box ativo. Em multi-tenant prod
+    # sem identificador ainda, audit pode falhar silenciosamente.
+    try:
+        AuditEvent.objects.create(
+            actor=None,
+            actor_role='',
+            action='student_oauth_callback.rate_limited',
+            target_model='student_identity.StudentOAuthCallback',
+            target_label=provider,
+            description='Callback social do aluno bloqueado por rajada.',
+            metadata={
+                'provider': provider,
+                'client_ip': resolve_student_client_ip(request),
+                'path': request.path,
+            },
+        )
+    except Exception:
+        pass
     response = HttpResponse('Muitas tentativas de callback social em pouco tempo. Aguarde e tente novamente.', status=429)
     response['Retry-After'] = str(retry_after)
     return response

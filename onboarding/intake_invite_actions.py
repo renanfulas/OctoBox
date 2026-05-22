@@ -46,7 +46,10 @@ def send_intake_whatsapp_invite(*, request, role_slug: str, get_success_url):
         messages.error(request, f'O limite operacional de {daily_limit} convites por dia para leads importados foi alcancado.')
         return redirect(get_success_url(return_query))
 
-    intake = StudentIntake.objects.select_for_update().select_related('linked_student').filter(
+    # SQL fix: of=('self',) impede 'FOR UPDATE no lado nullable de outer join'.
+    # linked_student e FK nullable; select_related cria LEFT JOIN. Lock so
+    # a StudentIntake.
+    intake = StudentIntake.objects.select_for_update(of=('self',)).select_related('linked_student').filter(
         pk=request.POST.get('intake_id')
     ).first()
     if intake is None:

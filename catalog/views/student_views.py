@@ -861,6 +861,23 @@ class StudentBulkActionView(LoginRequiredMixin, RoleRequiredMixin, View):
 class StudentSourceCaptureView(View):
     template_name = 'catalog/student-source-capture.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        # Center Layer: rota e PUBLIC (/alunos/origem/qualificar/ esta em
+        # PUBLIC_SCHEMA_PATHS pq aluno anonimo precisa abrir o link). Mas
+        # Student vive em TENANT_APP. Ativar tenant via SINGLE_ACTIVE_BOX
+        # em pilot. Em multi-tenant prod, o token deveria carregar box_id
+        # (refactor futuro).
+        try:
+            from django.db import connection
+            if getattr(connection, 'schema_name', 'public') == 'public':
+                from control.models import Box
+                active_boxes = list(Box.objects.filter(status=Box.Status.ACTIVE)[:2])
+                if len(active_boxes) == 1:
+                    connection.set_tenant(active_boxes[0])
+        except Exception:
+            pass
+        return super().dispatch(request, *args, **kwargs)
+
     def _resolve_student(self, token: str):
         student_id = run_student_source_capture_token_read(token=token)
         return get_object_or_404(Student, pk=student_id)

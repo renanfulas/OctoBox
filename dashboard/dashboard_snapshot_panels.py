@@ -222,7 +222,7 @@ def build_dashboard_metric_cards_enriched(metrics, *, pending_intakes_count, tod
         },
         'attendance': {
             'card_class': 'dashboard-kpi-card kpi-green is-rail',
-            'eyebrow': 'Presenca no mes',
+            'eyebrow': 'Presença no mês',
             'kicker': 'Compromisso que voltou',
             'display_value': metrics['attendance_this_month'],
             'data_action': 'blink-sidebar-alunos',
@@ -323,10 +323,17 @@ def build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pay
         primary_session = upcoming_sessions[0]
         starts_at_label = timezone.localtime(primary_session['starts_at']).strftime('%H:%M')
         indicator = primary_session['status_label'] if primary_session['status_label'] == 'Em andamento' else primary_session['occupancy_label']
+        # Bug fix: sanitize_dashboard_snapshot remove 'object' do dict e
+        # expoe 'title' top-level (dashboard_snapshot_queries.py:248-254).
+        # Acessar primary_session['object'] funciona so antes do snapshot
+        # ser cacheado/serializado — quando re-renderiza do cache, 'object'
+        # nao existe. Usar 'title' (chave estavel pos-sanitize) ou fallback
+        # para getattr(object, 'title', '') quando 'object' ainda esta presente.
+        session_title = primary_session.get('title') or getattr(primary_session.get('object'), 'title', '')
         copy = (
-            f"{primary_session['object'].title} está rodando agora. Eu cuido do painel, você cuida do salão."
+            f"{session_title} está rodando agora. Eu cuido do painel, você cuida do salão."
             if primary_session['status_label'] == 'Em andamento' else
-            f"{primary_session['object'].title} começa às {starts_at_label}. Preparei tudo para você só conferir."
+            f"{session_title} começa às {starts_at_label}. Preparei tudo para você só conferir."
         )
         return {
             'href': '#dashboard-sessions-board',

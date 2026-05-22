@@ -88,7 +88,11 @@ def build_intake_queue_item(*, intake: StudentIntake, actor_role_slug: str, toda
 
 
 def run_intake_queue_action(*, actor, intake_id: int, action: str) -> IntakeQueueActionResult:
-    intake = StudentIntake.objects.select_for_update().select_related('linked_student', 'assigned_to').get(pk=intake_id)
+    # SQL fix (mesmo padrao de students/infrastructure/django_payments.py):
+    # 'FOR UPDATE' nao pode rodar no lado nullable de outer join.
+    # linked_student e assigned_to sao FKs nullable. of=('self',) restringe
+    # o lock apenas a StudentIntake.
+    intake = StudentIntake.objects.select_for_update(of=('self',)).select_related('linked_student', 'assigned_to').get(pk=intake_id)
     actor_role_slug = getattr(get_user_role(actor), 'slug', '')
 
     permissions = resolve_intake_action_permissions(

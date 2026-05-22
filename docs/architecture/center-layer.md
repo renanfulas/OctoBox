@@ -253,8 +253,20 @@ Hoje o conceito ja nao e apenas teorico.
 
 Ele ja existe de forma concreta em `operations`, onde a grade e o workspace ganharam entradas publicas estaveis. Com isso, `operations` passa a ter dois corredores reais dentro do CENTER.
 
+A capacidade de `student_identity` tambem ganhou seu corredor oficial: `student_identity/facade/tenant_resolver.py` resolve tenant pre-auth do aluno (OAuth callback, invite landing) em UM lugar, com strategies explicitas e ordenadas. Antes, essa logica estava espalhada em `student_identity/oauth_actions.py`, `student_identity/oauth_journeys.py` e `student_identity/views.py` — cada lugar implementava sua estrategia parcial e algumas combinacoes de inputs caiam em buracos de cobertura (ver gap do Bucket B do plano de qualidade de testes). Anti-pattern proibido: adicionar mais uma chamada `connection.set_tenant(...)` ad-hoc em outro modulo. Strategy nova entra no facade.
+
 O CENTER agora tambem tem uma estrutura complementar oficial para sinais, integracoes e expansao transversal. Para isso, leia [signal-mesh.md](signal-mesh.md).
 
 Essa malha complementar tambem foi definida como elástica, mas com baseline fixo, expansao bounded e retracao de seguranca para proteger a estrutura.
 
 No topo desse modelo, a camada de emissao visivel e confiavel do predio foi formalizada em [red-beacon.md](red-beacon.md).
+
+## Decisoes registradas (ADRs)
+
+Hardening do Center Layer durante Sprint 4 (schema-per-tenant) gerou 4 ADRs
+que aprofundam regras de implementacao:
+
+- [ADR-006](../adr/ADR-006-center-layer-tenant-resolution.md) — Facade para tenant resolution pre-auth (aluno + staff).
+- [ADR-007](../adr/ADR-007-public-schema-paths-hygiene.md) — Higiene de PUBLIC_SCHEMA_PATHS no middleware.
+- [ADR-008](../adr/ADR-008-audit-event-best-effort-public-paths.md) — AuditEvent best-effort em paths publicos.
+- [ADR-009](../adr/ADR-009-cached-property-em-compatibility-shims.md) — `@cached_property` em compatibility shims pos schema-per-tenant.

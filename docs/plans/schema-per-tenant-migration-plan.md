@@ -70,6 +70,98 @@ O plano cobre 6 sprints (~18-24 dias-dev), comecando pelo control plane (model `
 
 **Esforco total: 18-24 dias-dev com 1 dev senior** (4-5 semanas calendar). Sem regressao no escopo de Early Adopter; o feature do `/obrigado/` continua intacto.
 
+## 0. Mapa de documentos e arquivos de referencia
+
+> Este indice existe para que QUALQUER leitor pule direto pro arquivo que importa, sem ter que adivinhar onde a logica vive. Caminhos sao relativos a raiz do repo (`OctoBox/`). Linhas citadas refletem o snapshot deste worktree; se voce le isso em outra branch, ajuste antes de patchear.
+
+### 0.1 Documentos irmaos (arquitetura, plano, rollout)
+
+| Topico | Documento canonico | Por que ler |
+|---|---|---|
+| Visao macro de scale (Fase 1 → Fase 3) | [docs/plans/scale-transition-20-100-open-multitenancy-plan.md](scale-transition-20-100-open-multitenancy-plan.md) | Este plano e a Fase 1 materializada do scale-transition. Conflitos resolvem-se a favor do scale-transition. |
+| Closed beta operacional (20 boxes) | [docs/plans/phase1-closed-beta-20-boxes-corda.md](phase1-closed-beta-20-boxes-corda.md) | Define o gate "20 boxes em prod" que destrava o trabalho deste plano. |
+| Onboarding/identidade do aluno | [docs/plans/student-access-invite-switch-corda.md](student-access-invite-switch-corda.md) | Modelo m:n Identity↔Box ja desenhado aqui; §3.5 deste plano formaliza. |
+| Modelo arquitetural geral | [docs/architecture/octobox-architecture-model.md](../architecture/octobox-architecture-model.md) | Vocabulario oficial OctoBox (Center Layer, Signal Mesh, etc.). |
+| Center Layer (facades) | [docs/architecture/center-layer.md](../architecture/center-layer.md) | Onde formalizar fachadas como `student_identity/facade/`; usado pelo `resolve_tenant_for_student_oauth_callback`. |
+| Signal Mesh (eventos cross-app) | [docs/architecture/signal-mesh.md](../architecture/signal-mesh.md) | `PlatformAuditEvent` em public usa o vocabulario aqui. |
+| Red Beacon (snapshots/observabilidade) | [docs/architecture/red-beacon.md](../architecture/red-beacon.md) | Cache de tabelas conhecidas por schema (`beacon_snapshot.py`) precisa ser tenant-aware. |
+| Estrategia Django (apps shared/tenant) | [docs/architecture/django-core-strategy.md](../architecture/django-core-strategy.md) | Base da decisao SHARED_APPS vs TENANT_APPS de §1.2. |
+| Roadmap macro | [docs/architecture/architecture-growth-plan.md](../architecture/architecture-growth-plan.md) | Justifica por que schema-per-tenant agora, microservices nunca cedo. |
+| Domain ownership matrix | [docs/architecture/domain-model-ownership-matrix.md](../architecture/domain-model-ownership-matrix.md) | Lista de quem POSSUI cada model; informa §1.2. |
+| App split plan | [docs/architecture/app-split-plan.md](../architecture/app-split-plan.md) | Historico da divisao boxcore → apps de fachada (students, finance, ...). |
+| OctoPass (auth do aluno) | [docs/architecture/octopass-architecture.md](../architecture/octopass-architecture.md) | Auth do aluno desacoplada do Django auth; informa §3.5. |
+| Setup de primeira box | [docs/rollout/first-box-system-setup-checklist.md](../rollout/first-box-system-setup-checklist.md) | Lista mecanica do que precisa existir pro provision rodar. |
+| Sprint 5 rollout | [docs/rollout/sprint5-tenant-rollout-checklist.md](../rollout/sprint5-tenant-rollout-checklist.md) | Checklist operacional do Sprint 5 deste plano. |
+| Backup/restore | [docs/rollout/backup-guide.md](../rollout/backup-guide.md), [docs/rollout/restore-and-rollback-drill.md](../rollout/restore-and-rollback-drill.md) | Pre-requisito do rollout invisivel; ver §14.7 (SQL) sobre pg_dump por schema. |
+| ADR do invite-token do aluno | [docs/adr/ADR-001-invite-token-cookie.md](../adr/ADR-001-invite-token-cookie.md) | Decisao travada do cookie + token; informa §3.5.4. |
+| ADR do StudentAuthMiddleware | [docs/adr/ADR-003-student-auth-middleware.md](../adr/ADR-003-student-auth-middleware.md) | Contrato do middleware; §3.5.4 estende ele. |
+| Autoridade documental | [docs/map/documentation-authority-map.md](../map/documentation-authority-map.md) | Em caso de conflito entre docs, este define quem ganha. |
+
+### 0.2 Arquivos de codigo afetados (mapa por capability)
+
+Cada linha mapeia uma capability deste plano para o arquivo concreto onde a mudanca acontece. Use isto para pular direto pro patch sem reler o plano inteiro.
+
+#### Control plane (NOVO)
+- `control/__init__.py`, `control/apps.py` — app skel.
+- `control/models.py` — `Box`, `Domain`, `Membership`, `BoxProvisioningEvent`, `PlatformAuditEvent` (ver §2).
+- `control/middleware.py` — `TenantBySessionMiddleware` (ja existe em esboco; ver §3.1 + §3.4).
+- `control/services.py` — `provision_box`, `derive_slug`, `archive_box`, `reprovision_box` (ver §4).
+- `control/cache.py` — `tcache_get/set`, `tenant_cache_key` (ver §7.1).
+- `control/logging.py` — `TenantContextFilter` (ver §7.3).
+
+#### Identidade do aluno (cross-tenant em public)
+- `student_identity/models.py` — 7 models a migrar pra SHARED (ver §3.5.1).
+- `student_identity/views.py` — `StudentOAuthCallbackView`, `StudentInviteLandingView`; consumidores do facade (ver §3.5.4 e §12).
+- `student_identity/facade/__init__.py` — porta publica do Center Layer.
+- `student_identity/facade/tenant_resolver.py` — `resolve_tenant_for_student_oauth_callback`, `resolve_tenant_for_student_invite_landing`, 5 strategies (NOVO, ja implementado).
+- `student_identity/oauth_actions.py`, `student_identity/oauth_journeys.py` — antigas casas da resolucao de tenant ad-hoc; mantidas mas chamando o facade.
+- `student_identity/infrastructure/session.py` — cookie do aluno (read_student_session_value).
+- `student_identity/infrastructure/repositories.py` — `DjangoStudentIdentityRepository.find_invitation_by_token`, `find_box_invite_link_by_token`.
+- `student_identity/application/use_cases.py` — use cases que rodam DEPOIS do tenant resolvido.
+- `student_identity/migrations/0001_initial.py` — base; novas migrations: `0XXX_promote_to_shared.py` e `0XXX_box_root_slug_to_fk.py` (ver §3.5.1 e §3.5.3).
+
+#### App do aluno (per-tenant)
+- `student_app/middleware/student_auth.py` — `StudentAuthMiddleware`, `_resolve_student_tenant`, `_has_active_membership` (ver §3.5.4).
+- `student_app/workflows/attendance_workflows.py` — consumidor de `Student.app_identity` (shim ja adicionado em `students/model_definitions.py`).
+- `student_app/views/membership_views.py` — `switch_box` (ver §3.5.5).
+- `student_app/urls.py` — landing/auth/grade/wod/sw.js.
+
+#### Signup + onboarding pago
+- `signup/models.py` — `PendingSignup`, `PendingSignupStatus`.
+- `signup/services.py` — `activate_pending_signup` (ver §4.1; refator critico).
+- `signup/views.py` — `activate` view (post-pagamento → magic link).
+- `signup/notifications.py`, `signup/email_sender.py` — envio do magic link.
+
+#### Stripe + integracoes
+- `integrations/stripe/router.py` — `_HANDLERS`, `_handle_early_adopter_signup`, novos handlers de `invoice.*` (ver §6.3).
+- `integrations/middleware.py` — `WebhookIdempotencyMiddleware` (ver §13.1; ordem critica).
+- `integrations/models.py` (cross-tenant) — `PaymentWebhookEvent`.
+
+#### Settings / config / urls
+- `config/settings/base.py` — SHARED_APPS, TENANT_APPS, MIDDLEWARE, TENANT_MODEL, DATABASES, CONN_MAX_AGE, SESSION_*  (ver §5.1 + §14.6).
+- `config/urls.py` — ROOT_URLCONF (tenants).
+- `config/urls_public.py` (NOVO) — PUBLIC_SCHEMA_URLCONF (ver §3.2).
+
+#### Code legado "1 instancia = 1 box"
+- `shared_support/box_runtime.py` — `get_box_runtime_slug` (ver §1.4; refator Sprint 4).
+- `shared_support/background_jobs.py` — `submit_background_job` (ver §8.3).
+- `jobs/dispatcher.py` — `dispatch_async_job` (ver §8.3).
+- `monitoring/beacon_snapshot.py` — Red Beacon snapshot; cache de `known_tables` ja foi tornado tenant-aware via `cache.set/get` (commit 7a263d1).
+
+#### Boundary tests
+- `tests/test_tenant_boundary.py` (NOVO no Sprint 4) — B1..B11 (ver §9.2 e §3.5.6).
+- `tests/conftest.py` — fixtures multi-tenant (`box_a`, `box_b`, `identity_joao`, `_class_tenant_schema_context`).
+- `tests/broken-tests.txt` — quarentena com bypass via `OCTOBOX_RUN_BROKEN_TESTS=1`.
+- `conftest.py` — fixture autouse de schema-context em escopo de classe (cobre `setUpTestData`).
+
+### 0.3 Convencoes do plano
+
+- `arquivo.py:NNN` cita o numero de linha no snapshot do worktree. Em outra branch confirme via `Grep` antes de aplicar patch.
+- Caminhos sem prefixo (`control/...`, `student_identity/...`) sao relativos a raiz do repo.
+- Caminhos com `../` sao relativos ao diretorio deste plano (`docs/plans/`).
+- "(NOVO)" = arquivo precisa ser criado pelo sprint correspondente.
+- "(PARCIAL)" = arquivo existe mas precisa de refactor para fechar contrato.
+
 ## Diagrama (ASCII) — Topologia alvo
 
 ```
@@ -130,7 +222,7 @@ Joao Silva (1 ser humano, 1 conta OAuth) frequenta box_001 + box_002:
 
 ### 1.1 Restricao estrutural descoberta
 
-O Django app `boxcore` (definido em `boxcore/apps.py`, label `boxcore`) e a ancora historica de **todas** as migracoes de dominio. Os "apps de dominio" `students/`, `finance/`, `operations/`, `auditing/` sao **facades de import** sobre `boxcore.models`. As migracoes reais vivem em `boxcore/migrations/0001_initial.py` ate `0020+`.
+O Django app `boxcore` (definido em `boxcore/apps.py`, label `boxcore`) e a ancora historica de **todas** as migracoes de dominio. Os "apps de dominio" `students/`, `finance/`, `operations/`, `auditing/` sao **facades de import** sobre `boxcore.models` (ver `students/__init__.py`, `finance/__init__.py`, `operations/__init__.py`). As migracoes reais vivem em `boxcore/migrations/0001_initial.py` ate `0020+`. Contexto historico em [docs/architecture/app-split-plan.md](../architecture/app-split-plan.md) e [docs/architecture/boxcore-state-residue-inventory.md](../architecture/boxcore-state-residue-inventory.md).
 
 **Consequencia**: a classificacao SHARED vs TENANT e feita ao nivel `boxcore` (o app inteiro), nao por subdominio. O app `boxcore` precisa virar TENANT_APP — o que e correto, pois `Student`, `Payment`, `Enrollment`, `AuditEvent`, `WhatsappContact`, `MembershipPlan` etc. todos pertencem a um tenant.
 
@@ -189,8 +281,13 @@ O Django app `boxcore` (definido em `boxcore/apps.py`, label `boxcore`) e a anco
 | `config/settings/base.py:149` | `build_box_cache_key_prefix()` chamado uma vez por processo. | Migrar para funcao runtime (cache-key prefix dinamico por request). | 3 |
 | `base.py:186-187` | `SESSION_CACHE_ALIAS='default'`. | Manter session em public, prefix global estavel. | 3 |
 | `api/v1/health/` | Healthcheck precisa NAO entrar em tenant. | Whitelist em `PUBLIC_SCHEMA_URLCONF`. | 1 |
-| `student_app/middleware/student_auth.py` | Aluno autentica via cookie proprio. | Adicionar resolucao de tenant ANTES de qualquer query de dominio. | 4 |
+| `student_app/middleware/student_auth.py:43-74` (`_resolve_student_tenant`) | Aluno autentica via cookie proprio; resolucao pre-auth (OAuth callback sem cookie) estava ad-hoc. | **Feito (parcial):** Center Layer facade `student_identity/facade/tenant_resolver.py` consolida 5 strategies. Restante do refactor (membership gating) — Sprint 4. | 4 |
 | `student_identity/models.py:22` (`_default_box_root_slug`) | Le `BOX_RUNTIME_SLUG` para preencher campo. | Trocar por `box_id` FK; remover default global. | 2 |
+| `student_identity/oauth_actions.py` (`_activate_identity_tenant`) e `student_identity/oauth_journeys.py` (`_activate_box_tenant`) | Cada lugar reimplementava parcialmente a resolucao de tenant pre-auth. | Substituir por chamada ao facade `resolve_tenant_for_student_oauth_callback`. | 2 (em curso) |
+| `monitoring/beacon_snapshot.py` (Red Beacon) | `@lru_cache` em `_get_known_tables` poluia entre tenants (cache de tabelas do schema A retornado pra B). | **Feito** (commit 7a263d1): trocar `@lru_cache` por `django.core.cache` com chave `red_beacon:known_tables:v1:<using>:<schema>` e TTL 60s. | 0.5 |
+| `students/model_definitions.py::Student.app_identity` | Reverse-name do antigo O2O `StudentIdentity.student` quebrou apos quebra de cross-schema FK. | **Feito** (commit b380f4e): `@property app_identity` shim consulta `StudentIdentity.objects.filter(student_id=self.id, status=ACTIVE)`. | 0.5 |
+| `control/middleware.py::PUBLIC_SCHEMA_PATHS` | Webhooks de integracoes e PWAs publicas redirecionavam anonimo para `/login/` antes da view validar. | **Feito** (commit 28056ac): adicionar `/api/v1/integrations/`, `/renan/`. | 0.5 |
+| `student_app/middleware/student_auth.py::AuditEvent.objects.create` em redirect anonimo | `AuditEvent` e TENANT_APP; em path publico (`/aluno/*`) schema=public, escrita quebra com 500. | **Feito** (commit 28056ac): wrap em `try/except` — audit anonimo e nice-to-have, nao bloqueia redirect. | 0.5 |
 
 ## 2. Model `Box` (control plane)
 
@@ -429,11 +526,27 @@ def forward(apps, schema_editor):
 
 Apos backfill OK em todos os models: drop dos campos `box_root_slug`.
 
-#### 3.5.4 Refator `StudentAuthMiddleware`
+#### 3.5.4 Refator `StudentAuthMiddleware` + Center Layer facade
 
-Hoje (`student_app/middleware/student_auth.py:26`): valida cookie do aluno → resolve `StudentSession` → encerra.
+Hoje (`student_app/middleware/student_auth.py:105` — `StudentAuthMiddleware.__call__`): valida cookie do aluno → resolve `StudentSession` → chama `_resolve_student_tenant(request, session_payload)` (linha 43) → checa `_has_active_membership` (linha 77) → segue.
 
-Depois (V2):
+A resolucao pre-auth (OAuth callback sem cookie ainda, landing de convite) **NAO** vive mais espalhada em `student_identity/oauth_actions.py` / `oauth_journeys.py` / `student_identity/views.py`. Foi consolidada no **Center Layer facade**:
+
+- `student_identity/facade/__init__.py` — porta publica.
+- `student_identity/facade/tenant_resolver.py` — `resolve_tenant_for_student_oauth_callback`, `resolve_tenant_for_student_invite_landing`, classe `StudentAuthTenantStrategy` (Enum), dataclass `TenantResolution`.
+
+5 strategies, em ordem de prioridade:
+1. `INVITATION` — `invite_token` casa com `StudentAppInvitation` (`DjangoStudentIdentityRepository.find_invitation_by_token`).
+2. `INVITE_LINK` — `invite_token` casa com `StudentBoxInviteLink` (`...find_box_invite_link_by_token`).
+3. `EXISTING_IDENTITY_BY_SUBJECT` — `provider_subject` ja existe em `StudentIdentity` (cobre o gap do Bucket B: OAuth recorrente sem token).
+4. `EXISTING_IDENTITY_BY_EMAIL` — match unico de email em `StudentIdentity.email__iexact` (so se houver exatamente 1).
+5. `SINGLE_ACTIVE_BOX` — fallback de pilot: 1 Box ATIVO no sistema → usa ele. **Limite explicito**: em prod multi-tenant retorna `NONE`.
+
+Apos retorno do facade, `connection.set_tenant(box)` ja foi chamado — o caller NAO precisa reativar. View consumidora (`student_identity/views.py::StudentOAuthCallbackView._handle_callback`) chama o facade ANTES de `authenticate_student_oauth_identity`, garantindo que o use case roda no schema correto.
+
+Anti-pattern proibido (documentado em `student_identity/facade/tenant_resolver.py:22-25`): adicionar mais uma chamada `connection.set_tenant(...)` ad-hoc em outro modulo. Strategy nova entra no facade, nao espalhada no codigo.
+
+Esboco do middleware p/ requests do aluno ja autenticado (post-cookie):
 ```python
 # student_app/middleware/student_auth.py — esboco
 class StudentAuthMiddleware:
@@ -509,7 +622,14 @@ def switch_box(request, target_box_id: int):
 
 #### 3.5.6 Boundary tests especificos para Student multi-box
 
-Adicionar em `tests/test_tenant_boundary.py` (Sprint 4):
+Adicionar em `tests/test_tenant_boundary.py` (Sprint 4). Suites adjacentes ja existentes:
+- `tests/test_monitoring_beacon_snapshot.py` — isolamento do Red Beacon (commit 7a263d1).
+- `student_identity/tests.py` — testes do facade.
+- `student_app/tests/test_views_*.py` — coverage do middleware + redirects.
+- `tests/broken-tests.txt` — quarentena de testes em Bucket B/C ainda nao migrados; bypass via `OCTOBOX_RUN_BROKEN_TESTS=1`.
+
+Esquema de fixtures em `tests/conftest.py` + `conftest.py` (raiz) — `_class_tenant_schema_context` (escopo de classe, cobre `setUpTestData`) + `_tenant_schema_context` (escopo de funcao, backup contra rollback de transacao).
+
 
 | Teste | O que valida |
 |---|---|
@@ -944,14 +1064,18 @@ with schema_context('box_pilot'):
 
 ## 12. Contratos entre apps (cross-references)
 
-| Origem | Destino | Contrato |
+| Origem (arquivo) | Destino (arquivo) | Contrato |
 |---|---|---|
-| `signup` → `control` | `provision_box(pending_signup, owner_user, slug, plan, stripe_*)` | Input: PendingSignup PAID. Output: Box ACTIVE. Idempotente. Excecoes: BoxProvisioningError. |
-| `control` → `boxcore` | `with schema_context(box.schema_name): ...` | Input: schema_name valido. Output: queries no schema correto. Excecoes: SchemaDoesNotExist. |
-| `integrations.stripe` → `control` | `Box.objects.get(stripe_subscription_id=...)` | Input: subscription_id Stripe. Output: Box. Excecoes: Box.DoesNotExist (log + ack). |
-| `student_identity` → `control` | `Box.objects.get(id=active_box_id)` | Input: box_id. Output: Box. Read-only do tenant pelo middleware. |
-| `student_app` → `control` | `connection.set_tenant(box)` no middleware | Input: Box ativo. Output: search_path setado. Idempotente. |
-| `control` → `signup` | `pending_signup.box` (related_name) | Read-only. Apos activate, `pending.box` retorna o Box criado. |
+| `signup/services.py::activate_pending_signup` | `control/services.py::provision_box(pending_signup, owner_user, slug, plan, stripe_*)` | Input: PendingSignup PAID. Output: Box ACTIVE. Idempotente. Excecoes: `BoxProvisioningError`. |
+| `control/services.py::provision_box` | `django_tenants` + `boxcore/migrations/*` via `with schema_context(box.schema_name)` | Input: schema_name valido. Output: queries no schema correto. Excecoes: `SchemaDoesNotExist`. |
+| `integrations/stripe/router.py::_HANDLERS` | `control/models.py::Box.objects.get(stripe_subscription_id=...)` | Input: subscription_id Stripe. Output: Box. Excecoes: `Box.DoesNotExist` (log + ack 200). |
+| `student_app/middleware/student_auth.py::_resolve_student_tenant` | `control/models.py::Box.objects.filter(pk=..., status=ACTIVE)` | Input: `box_id` do cookie do aluno. Output: Box ativo. Read-only. Idempotente. |
+| `student_identity/views.py::StudentOAuthCallbackView` | `student_identity/facade/tenant_resolver.py::resolve_tenant_for_student_oauth_callback` | Input: `invite_token`, `provider_subject`, `email`. Output: `TenantResolution` com `connection.set_tenant` ja chamado. Sem efeitos colaterais alem de ativar tenant. |
+| `student_identity/views.py::StudentInviteLandingView` | `student_identity/facade/tenant_resolver.py::resolve_tenant_for_student_invite_landing` | Input: `invite_token`. Output: `TenantResolution` ou `strategy=NONE`. |
+| `student_identity/facade/tenant_resolver.py` | `student_identity/infrastructure/repositories.py::DjangoStudentIdentityRepository` | Lookups por token (invitation, link). Read-only em public. |
+| `control/middleware.py::TenantBySessionMiddleware` | `django.db.connection.set_tenant(box)` | Input: Box ativo da session. Output: `search_path` setado. Idempotente. Reset explicito em paths de `PUBLIC_SCHEMA_PATHS`. |
+| `control/services.py::provision_box` | `signup/models.py::PendingSignup` via `related_name='box'` | Read-only. Apos activate, `pending.box` retorna o Box criado. |
+| `monitoring/beacon_snapshot.py::_get_known_tables` | `django.core.cache.cache` (chave `red_beacon:known_tables:v1:<using>:<schema>`) | TTL 60s. Isolado por schema (chave inclui `connection.schema_name`). |
 
 ## Estimativa total de esforco
 

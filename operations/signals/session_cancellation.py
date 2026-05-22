@@ -59,7 +59,20 @@ def _register(sender):
 
         now = timezone.now()
         session_time = getattr(instance, 'scheduled_at', now)
-        lead_minutes = max(0, int((session_time - now).total_seconds() / 60))
+        # Defesa: durante o ciclo de vida do save Django, `scheduled_at`
+        # pode vir como string ISO se o caller passar string em vez de
+        # datetime (Django converte no DB mas o signal pre-save ja viu
+        # o valor cru). Tambem aceita None defensivamente.
+        if isinstance(session_time, str):
+            from django.utils.dateparse import parse_datetime
+            parsed = parse_datetime(session_time)
+            session_time = parsed if parsed is not None else now
+        if session_time is None:
+            session_time = now
+        try:
+            lead_minutes = max(0, int((session_time - now).total_seconds() / 60))
+        except TypeError:
+            lead_minutes = 0
 
         decision = build_cancellation_decision(
             prev_status=prev_status,

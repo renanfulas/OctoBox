@@ -102,6 +102,36 @@ def _parse_occurred_at(value: str | None):
     return parse_datetime(value)
 
 
+def _activate_tenant_for_delivery(delivery) -> None:
+    """Ativa tenant a partir do box associado ao invitation do delivery.
+
+    Webhook do Resend e roteado por /api/v1/integrations/ (PUBLIC_SCHEMA_PATHS).
+    AuditEvent vive em TENANT_APP — sem ativar tenant aqui, INSERT falha
+    em public com 'relacao boxcore_auditevent nao existe'.
+    """
+    try:
+        from django.db import connection
+        from control.models import Box
+        invitation = getattr(delivery, 'invitation', None)
+        if invitation is None:
+            return
+        box_id = getattr(invitation, 'box_id', None)
+        slug = getattr(invitation, 'box_root_slug', '') or ''
+        box = None
+        if box_id:
+            box = Box.objects.filter(pk=box_id, status=Box.Status.ACTIVE).first()
+        if box is None and slug:
+            box = (
+                Box.objects.filter(schema_name=slug, status=Box.Status.ACTIVE).first()
+                or Box.objects.filter(slug=slug, status=Box.Status.ACTIVE).first()
+            )
+        if box is not None:
+            connection.set_tenant(box)
+    except Exception:
+        # Audit no webhook e nice-to-have; nao bloqueia processamento.
+        pass
+
+
 @transaction.atomic
 def process_resend_webhook(*, payload: bytes, headers: ResendWebhookHeaders) -> dict:
     verify_resend_webhook_signature(payload=payload, headers=headers)
@@ -116,12 +146,23 @@ def process_resend_webhook(*, payload: bytes, headers: ResendWebhookHeaders) -> 
         raise ResendWebhookVerificationError('email-id-missing')
 
     delivery = (
-        StudentInvitationDelivery.objects.select_related('invitation', 'invitation__student')
+        # Sprint 2 schema-per-tenant: 'invitation__student' removido. FK
+        # cross-schema StudentAppInvitation -> boxcore.Student foi invertida
+        # (Student.identity_id -> public.StudentIdentity). select_related
+        # nao alcanca mais Student diretamente; quem precisar pode ir via
+        # invitation.identity.student_records.
+        StudentInvitationDelivery.objects.select_related('invitation')
         .filter(provider='resend', provider_message_id=provider_message_id)
         .first()
     )
     if delivery is None:
         return {'accepted': True, 'reason': 'delivery-not-found', 'event_type': event_type}
+
+    # Schema-per-tenant: webhook do Resend chega em /api/v1/integrations/
+    # (PUBLIC_SCHEMA_PATHS). StudentInvitationDelivery vive em public mas
+    # log_audit_event escreve em boxcore.AuditEvent (TENANT_APP). Ativar
+    # tenant a partir do box associado ao invitation.
+    _activate_tenant_for_delivery(delivery)
 
     if StudentInvitationDeliveryEvent.objects.filter(provider_event_id=headers.webhook_id).exists():
         return {'accepted': True, 'reason': 'duplicate-event', 'event_type': event_type}

@@ -83,13 +83,25 @@ class DjangoStudentPaymentRegenerationPort(StudentPaymentRegenerationPort):
     @transaction.atomic
     def execute(self, command: StudentPaymentRegenerationCommand) -> StudentPaymentRegenerationResult:
         student = Student.objects.select_for_update().get(pk=command.student_id)
-        payment = Payment.objects.select_related('enrollment__plan').select_for_update().get(pk=command.payment_id)
+        # SQL fix: 'FOR UPDATE' nao pode rodar no lado nullable de outer
+        # join. Payment.enrollment e Enrollment.plan sao FKs nullable —
+        # select_related cria LEFT JOIN, e o lock estoura. Restringimos
+        # o lock so para Payment via of=('self',). Postgres-only feature
+        # (django_tenants ja exige PG14+).
+        payment = (
+            Payment.objects
+            .select_related('enrollment__plan')
+            .select_for_update(of=('self',))
+            .get(pk=command.payment_id)
+        )
 
         target_enrollment = None
+        # SQL fix (mesmo padrao das outras select_for_update): of=('self',)
+        # impede 'FOR UPDATE no lado nullable de outer join' com plan.
         if command.enrollment_id is not None:
-            target_enrollment = student.enrollments.select_related('plan').select_for_update().get(pk=command.enrollment_id)
+            target_enrollment = student.enrollments.select_related('plan').select_for_update(of=('self',)).get(pk=command.enrollment_id)
         else:
-            target_enrollment = student.enrollments.select_related('plan').select_for_update().order_by('-start_date', '-created_at').first()
+            target_enrollment = student.enrollments.select_related('plan').select_for_update(of=('self',)).order_by('-start_date', '-created_at').first()
 
         if target_enrollment is None:
             return StudentPaymentRegenerationResult(

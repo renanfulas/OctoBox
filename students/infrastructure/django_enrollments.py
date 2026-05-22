@@ -213,7 +213,8 @@ def cancel_student_enrollment_command(command: StudentEnrollmentActionCommand) -
 @transaction.atomic
 def reactivate_student_enrollment_command(command: StudentEnrollmentActionCommand) -> StudentEnrollmentActionResult:
     student = Student.objects.select_for_update().get(pk=command.student_id)
-    enrollment = Enrollment.objects.select_related('plan').select_for_update().get(pk=command.enrollment_id)
+    # SQL fix: of=('self',) → lock so Enrollment, nao o JOIN com plan (nullable).
+    enrollment = Enrollment.objects.select_related('plan').select_for_update(of=('self',)).get(pk=command.enrollment_id)
     decision = build_enrollment_reactivation_decision(action_date=command.action_date, reason=command.reason)
     student.enrollments.filter(status=EnrollmentStatus.ACTIVE).exclude(pk=enrollment.pk).update(
         status=decision.expire_current_active_status,

@@ -16,6 +16,7 @@ PONTOS CRITICOS:
 
 from django.conf import settings
 from django.db import models
+from django.utils.functional import cached_property
 
 from model_support.base import TimeStampedModel
 from shared_support.crypto_fields import EncryptedCharField
@@ -119,6 +120,47 @@ class Student(TimeStampedModel):
 
     def __str__(self):
         return self.full_name
+
+    @cached_property
+    def app_identity(self):
+        """Sprint 2 compatibility shim.
+
+        Antes existia `StudentIdentity.student = OneToOneField(Student,
+        related_name='app_identity')`. Essa FK foi removida no Sprint 2
+        por ser cross-schema (public → tenant_xxx é fragil).
+
+        Esta property substitui o reverse-lookup via student_id, que e
+        IntegerField (referencia fraca, sem FK constraint).
+
+        @cached_property: o lookup e cacheado na instancia Python (igual
+        ao reverse-OneToOne nativo do Django). Sem isso, callers que
+        acessam `student.app_identity` multiplas vezes (ex.: use cases
+        com cache de RM) disparam 1 query por acesso. Testes que medem
+        captured_queries quebram em consequencia.
+
+        Invalidacao: por ser cache de instancia (nao Django ORM cache),
+        nao precisa de signal. Recarregar o Student via Student.objects.get
+        cria uma nova instancia sem o cache.
+
+        DEBITO TECNICO: callers devem migrar para query explicita:
+            StudentIdentity.objects.filter(student_id=student.id)
+        ou usar `student_identity.models._fetch_identity_for_student(...)`
+        (futuro helper). Esta property assume que StudentIdentity vive
+        em public (SHARED_APPS) e search_path inclui public — verdade
+        em todos os fluxos de tenant atuais.
+
+        Retorna a StudentIdentity ACTIVE mais recente, ou None.
+        """
+        try:
+            from student_identity.models import StudentIdentity, StudentIdentityStatus
+            return (
+                StudentIdentity.objects
+                .filter(student_id=self.id, status=StudentIdentityStatus.ACTIVE)
+                .order_by('-last_authenticated_at', '-id')
+                .first()
+            )
+        except Exception:
+            return None
 
     def save(self, *args, **kwargs):
         from shared_support.crypto_fields import generate_blind_index

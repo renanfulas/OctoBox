@@ -19,7 +19,8 @@ from operations.models import Attendance, BehaviorNote
 
 class DjangoWorkspaceStore:
     def get_payment_for_update(self, *, payment_id: int):
-        return Payment.objects.select_related('student').select_for_update().get(pk=payment_id)
+        # SQL fix: of=('self',) → lock so Payment, nao o JOIN com student.
+        return Payment.objects.select_related('student').select_for_update(of=('self',)).get(pk=payment_id)
 
     def get_active_enrollment_for_student(self, *, student) -> Enrollment | None:
         return Enrollment.objects.filter(

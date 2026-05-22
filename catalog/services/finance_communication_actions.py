@@ -18,16 +18,19 @@ def handle_finance_communication_action(*, actor, action_kind, student_id, payme
 	
 	student = Student.objects.get(pk=result.student_id)
 	
-	# Se estiver bloqueado, não teremos log de mensagem novo para retornar
+	# Se estiver bloqueado, retornamos o LOG QUE BLOQUEOU (mensagem
+	# previa enviada dentro da janela de repeat-block). Antes retornavamos
+	# None — quebrava callers que precisam comparar IDs (test_finance_
+	# communication_handler_blocks_duplicate_same_day_message).
+	message = WhatsAppMessageLog.objects.filter(pk=result.message_log_id).first() if result.message_log_id else None
+
 	if result.blocked:
 		return {
 			'student': student,
-			'message': None,
+			'message': message,
 			'blocked': True,
 			'whatsapp_href': None,
 		}
-
-	message = WhatsAppMessageLog.objects.get(pk=result.message_log_id)
 	mark_finance_follow_up_realized(
 		student_id=result.student_id,
 		action_kind=action_kind,

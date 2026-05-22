@@ -40,7 +40,18 @@ PUBLIC_SCHEMA_PATHS = (
     '/admin/',
     '/signup/',
     '/financeiro/stripe/webhook/',
+    # Captura segura de origem declarada — link externo para alunos (anon)
+    # registrarem origem via token assinado. Sem isso, POST anonimo cai em
+    # 302→/login/ antes da view validar o token.
+    '/alunos/origem/qualificar/',
     '/api/v1/health/',
+    # Webhooks de integracoes externas (Resend, WhatsApp). Recebem POST
+    # de servicos terceiros que NAO tem session/auth. View interna
+    # valida assinatura HMAC. Sem isso, TenantBySessionMiddleware
+    # redireciona o POST anonimo para /login/ (302) antes da view
+    # validar a assinatura — quebra contrato de webhook (esperado 400
+    # para assinatura invalida).
+    '/api/v1/integrations/',
     '/login/',
     '/logout/',
     '/onboarding/',
@@ -50,9 +61,27 @@ PUBLIC_SCHEMA_PATHS = (
     # Sem isso, TenantBySessionMiddleware redirecionaria alunos anonimos
     # para /login/ (staff) antes do StudentAuthMiddleware rodar.
     '/aluno/',
+    # PWA publica de workouts: rotas /renan/<slug> e /renan/<slug>/sw.js
+    # sao paginas estaticas-ish acessadas SEM login (PWA pessoal por aluno).
+    # Sem isso, TenantBySessionMiddleware redireciona anonimo para /login/.
+    '/renan/',
     '/static/',
     '/favicon.ico',
     '/__debug__/',            # django-debug-toolbar
+)
+
+# Paths que sao publicos APENAS em correspondencia EXATA (sem subpaths).
+# Diferente de PUBLIC_SCHEMA_PATHS (que usa startswith), aqui validamos
+# path == prefix. Usado para endpoints de manifesto/discovery onde o
+# pai e publico mas filhos sao privados (ex.: /api/ expoe versoes
+# disponiveis; /api/v1/finance/... e autenticado e exige tenant).
+PUBLIC_SCHEMA_EXACT_PATHS = (
+    # Home marketing landing (host www.octoboxfit.com.br). Anonimo precisa ver
+    # a pagina; usuario logado vai pra /dashboard/ (decidido na view). Sem
+    # exact-match, qualquer subpath caia em /login/.
+    '/',
+    '/api/',
+    '/api/v1/',
 )
 
 
@@ -77,8 +106,24 @@ class TenantBySessionMiddleware:
         # C1 FIX: sempre resetar search_path explicitamente neste middleware.
         # Nunca confiar no search_path herdado de conexão reutilizada.
         if self._is_public_path(request.path):
+            # Save/restore: paths publicos forçam public DURANTE o request
+            # (proteção C1), mas a connection volta ao estado anterior
+            # APOS o request. Sem isso, um request a /admin/ (público)
+            # deixa a connection em public, e o próximo request reusado
+            # na mesma connection começa com search_path errado. Em prod
+            # isso e mitigado por CONN_MAX_AGE/pool, mas em testes (e em
+            # cenarios de assertRedirects que disparam segunda Client.get)
+            # o efeito vaza entre requests do mesmo teste.
+            _previous_tenant = getattr(connection, 'tenant', None)
             self._set_public(request)
-            return self.get_response(request)
+            try:
+                return self.get_response(request)
+            finally:
+                if _previous_tenant is not None:
+                    try:
+                        connection.set_tenant(_previous_tenant)
+                    except Exception:
+                        connection.set_schema_to_public()
 
         if not request.user.is_authenticated:
             # Usuário anônimo em path privado → login
@@ -107,7 +152,9 @@ class TenantBySessionMiddleware:
     # ------------------------------------------------------------------
 
     def _is_public_path(self, path: str) -> bool:
-        return any(path.startswith(prefix) for prefix in PUBLIC_SCHEMA_PATHS)
+        if any(path.startswith(prefix) for prefix in PUBLIC_SCHEMA_PATHS):
+            return True
+        return path in PUBLIC_SCHEMA_EXACT_PATHS
 
     def _set_public(self, request) -> None:
         """Reset explícito para public schema. Corrige herança de search_path (C1)."""

@@ -41,3 +41,10 @@ factory-boy==3.3.3
 
 # Suite hygiene: detecta testes order-dependentes ao randomizar ordem.
 pytest-randomly==4.1.0
+
+# Paralelizacao de suite. Fase 1 do plano de qualidade: sem isso a suite
+# leva ~125min, inviavel para CI. Com -n auto cai para 20-30min em 4-8
+# cores. Trade-off: pytest-randomly fica desativado em paralelo (ordem
+# nao e mais total por processo). Aceitavel: Fase 3 (order-dependence)
+# valida com seed fixo em runs separados.
+pytest-xdist==3.6.1

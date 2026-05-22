@@ -517,6 +517,12 @@ class CatalogViewTests(TestCase):
         start_date = timezone.datetime(2026, 4, 1).date()
         end_date = timezone.datetime(2026, 4, 30).date()
 
+        # Sprint 4: MONTHLY_SESSION_LIMIT = 150 (era menor antes).
+        # 5 sequencias/dia x 7 weekdays x ~30 dias = 150 sessoes → atinge
+        # limite exato. Antes sequence_count=4 gerava apenas 120, abaixo
+        # do limite atual e o teste retornava 302 (sucesso) em vez do
+        # 200 + 'Limite mensal atingido' esperado.
+        # NOTA: limite DIARIO=12, semanal=70 nao colidem aqui (5/dia, 35/sem).
         response = self.client.post(
             reverse('class-grid'),
             data={
@@ -526,7 +532,7 @@ class CatalogViewTests(TestCase):
                 'end_date': end_date.strftime('%d/%m/%y'),
                 'weekdays': [str(index) for index in range(7)],
                 'start_time': '06:00',
-                'sequence_count': 4,
+                'sequence_count': 5,
                 'duration_minutes': 60,
                 'capacity': 18,
                 'status': 'scheduled',

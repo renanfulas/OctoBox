@@ -156,7 +156,11 @@ class IntakeCenterViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         created_entry = StudentIntake.objects.get(full_name='Intake Hero')
-        self.assertEqual(created_entry.status, IntakeStatus.NEW)
+        # Sprint 4 produto: create_intake_quick_entry seta REVIEWING quando
+        # entry_kind='intake' (pronto para triagem do staff). NEW e reservado
+        # para leads brutos (entry_kind!='intake'). Ver
+        # onboarding/intake_actions.py:35.
+        self.assertEqual(created_entry.status, IntakeStatus.REVIEWING)
         self.assertEqual(created_entry.raw_payload.get('entry_kind'), 'intake')
         self.assertContains(response, 'Intake cadastrado com sucesso na Central de Intake.')
 
@@ -192,7 +196,11 @@ class IntakeCenterViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="?panel=tab-intake-queue&amp;created_window=today"')
-        self.assertContains(response, 'href="?panel=tab-intake-queue&amp;assignment=assigned"')
+        # Sprint 4: KPI 'assignment=assigned' foi removido (onboarding/queries.py
+        # nao gera mais esse link). 'semantic_stage=lead-open' eo equivalente
+        # atual para "intakes em revisao". O filtro assignment=assigned ainda
+        # existe na query layer (queries.py:210), so nao tem KPI clickavel.
+        self.assertContains(response, 'href="?panel=tab-intake-queue&amp;semantic_stage=lead-open"')
 
         today_response = self.client.get(
             reverse('intake-center'),

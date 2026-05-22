@@ -25,6 +25,10 @@ _PUBLIC_PREFIXES = (
 _MEMBERSHIP_GATE_EXEMPT_PREFIXES = (
     '/aluno/aguardando-aprovacao/',
     '/aluno/sem-box/',
+    # Suspensao financeira: a pagina destino de membership SUSPENDED_FINANCIAL.
+    # Sem esta isencao, o middleware redireciona para sem-box mesmo na pagina
+    # que e o destino do redirect — entra em loop / 302.
+    '/aluno/suspenso-financeiro/',
 )
 
 _PENDING_ONBOARDING_SESSION_KEY = 'student_pending_onboarding'
@@ -75,32 +79,77 @@ def _resolve_student_tenant(request, session_payload: dict) -> None:
 
 
 def _has_active_membership(request, session_payload: dict) -> bool:
-    """Sprint 4 / §3.5.4: verifica StudentBoxMembership.status=ACTIVE para o tenant resolvido.
+    """Sprint 4 / §3.5.4: verifica se o aluno tem QUALQUER StudentBoxMembership.status=ACTIVE.
 
-    Usado pelo StudentAuthMiddleware para bloquear acesso de alunos cujo membership
-    foi suspenso, revogado ou ainda esta pendente de aprovacao.
+    Usado pelo StudentAuthMiddleware para bloquear alunos sem nenhum vinculo
+    operacional ativo (todos revoked/suspended/pending).
 
-    Retorna True em caso de duvida (sessao legada sem identity_id, nenhum tenant resolvido)
-    para evitar lockout de usuarios em migracao gradual.
+    DESIGN — POR QUE QUALQUER MEMBERSHIP ATIVA, NAO SO A DO TENANT ATUAL:
+    - A view base (student_app/views/base.py::_resolve_student_runtime, linhas 124-131)
+      ja faz fallback: se o membership do tenant ATUAL nao esta ativo mas
+      OUTRO membership do mesmo identity esta, usa esse outro. O middleware
+      precisa permitir a request prosseguir para a view decidir qual box mostrar.
+    - Se o middleware so checasse o tenant atual, alunos com box_a revoked +
+      box_b active iriam para no-active-box mesmo tendo box_b ativo. Sprint 4
+      original tinha esse bug; o teste
+      test_runtime_falls_back_to_another_active_membership documenta o
+      comportamento correto.
+    - A escolha do tenant operacional concreto (connection.set_tenant) e
+      responsabilidade do _resolve_student_tenant (middleware) + do view.
+      Este gate aqui responde apenas "este aluno tem direito de acessar
+      QUALQUER pagina do app?".
+
+    Retorna True em caso de duvida (sessao legada sem identity_id, falha ao
+    consultar) para evitar lockout de usuarios em migracao gradual.
     """
     identity_id = session_payload.get('identity_id')
     if not identity_id:
         return True  # sessao legada sem identity_id — nao bloquear
-    tenant = getattr(request, 'tenant', None)
-    if tenant is None:
-        return True  # sem tenant resolvido — nao bloquear (evita loop de redirect)
     try:
         from student_identity.models import StudentBoxMembership, StudentBoxMembershipStatus
-        # Sprint 4: membership.box_root_slug guarda o schema_name do tenant
-        # (ex.: 'box_test'), nao o slug curto (tenant.slug == 'test'). Aceitar
-        # ambos por seguranca (dados legados podem ter sido salvos com slug).
         return StudentBoxMembership.objects.filter(
             identity_id=identity_id,
-            box_root_slug__in=(tenant.schema_name, tenant.slug),
             status=StudentBoxMembershipStatus.ACTIVE,
         ).exists()
     except Exception:
         return True  # falha ao consultar — nao bloquear
+
+
+def _resolve_no_active_membership_redirect(session_payload: dict) -> str:
+    """Decide PARA ONDE redirecionar quando o aluno nao tem membership ACTIVE.
+
+    Sprint 4 / §3.5.4 (refinement):
+    - Se TODOS os memberships (do tenant resolvido) estao SUSPENDED_FINANCIAL,
+      manda para a pagina de orientacao financeira (mostra o que fazer pra
+      reabilitar acesso). Se misturados (ex.: 1 suspended + 1 revoked), a
+      experiencia esperada e tambem "suspensa" porque o aluno tem algum
+      vinculo financeiro pendente — mesmo nao sendo total.
+    - Caso contrario (nenhum vinculo financeiro pendente ou nenhum
+      membership), cai em no-active-box (lista os boxes e o status de cada).
+
+    Espelha a logica que ja existia em student_app/views/base.py (linhas 149-157),
+    mas executada no middleware ANTES da view ter chance de rodar.
+    """
+    from django.urls import reverse
+    fallback = reverse('student-app-no-active-box')
+    identity_id = session_payload.get('identity_id')
+    if not identity_id:
+        return fallback
+    try:
+        from student_identity.models import StudentBoxMembership, StudentBoxMembershipStatus
+        statuses = list(
+            StudentBoxMembership.objects
+            .filter(identity_id=identity_id)
+            .values_list('status', flat=True)
+        )
+        if not statuses:
+            return fallback
+        all_suspended = all(s == StudentBoxMembershipStatus.SUSPENDED_FINANCIAL for s in statuses)
+        if all_suspended:
+            return reverse('student-app-suspended-financial')
+        return fallback
+    except Exception:
+        return fallback
 
 class StudentAuthMiddleware:
     def __init__(self, get_response):
@@ -128,7 +177,7 @@ class StudentAuthMiddleware:
                     not _is_membership_gate_exempt(request.path)
                     and not _has_active_membership(request, session_payload)
                 ):
-                    return redirect(reverse('student-app-no-active-box'))
+                    return redirect(_resolve_no_active_membership_redirect(session_payload))
             elif has_pending_onboarding:
                 # Sprint 4: pre-auth onboarding em curso (sem session cookie ainda).
                 # Resolver tenant pelo box_id armazenado no payload do OAuth callback
@@ -137,21 +186,47 @@ class StudentAuthMiddleware:
                 _resolve_student_tenant(request, pending_onboarding)
 
             if session_payload is None and not has_pending_onboarding:
-                AuditEvent.objects.create(
-                    actor=None,
-                    actor_role='',
-                    action='student_app.anonymous_access_redirected',
-                    target_model='student_app.AnonymousAccess',
-                    target_label=request.path[:120],
-                    description='Acesso anonimo a rota protegida do app do aluno redirecionado para login.',
-                    metadata={
-                        'path': request.path,
-                        'method': request.method,
-                        'ip_hash': __import__('hashlib').sha256(
-                            resolve_student_client_ip(request).encode()
-                        ).hexdigest()[:8],
-                    },
+                # Sprint 4 schema-per-tenant: AuditEvent vive em TENANT_APPS.
+                # /aluno/ esta em PUBLIC_SCHEMA_PATHS, entao o middleware
+                # TenantBySessionMiddleware ja setou schema=public. Em
+                # pilot (1 box ativo) usar Center Layer facade com
+                # SINGLE_ACTIVE_BOX para ativar tenant antes da escrita.
+                # Em prod multi-tenant a strategy retorna NONE; usamos
+                # transaction.atomic como savepoint para que a falha do
+                # INSERT nao deixe a transaction principal num estado
+                # broken (caso contrario qualquer query subsequente —
+                # inclusive o teste — falha com TransactionManagementError).
+                from student_identity.facade import resolve_tenant_for_student_oauth_callback
+                from django.db import connection, transaction
+                resolve_tenant_for_student_oauth_callback(
+                    invite_token='', provider_subject='', email='',
                 )
+                try:
+                    with transaction.atomic():
+                        AuditEvent.objects.create(
+                            actor=None,
+                            actor_role='',
+                            action='student_app.anonymous_access_redirected',
+                            target_model='student_app.AnonymousAccess',
+                            target_label=request.path[:120],
+                            description='Acesso anonimo a rota protegida do app do aluno redirecionado para login.',
+                            metadata={
+                                'path': request.path,
+                                'method': request.method,
+                                'ip_hash': __import__('hashlib').sha256(
+                                    resolve_student_client_ip(request).encode()
+                                ).hexdigest()[:8],
+                            },
+                        )
+                except Exception:
+                    # AuditEvent indisponivel (schema sem tabela em prod
+                    # multi-tenant sem facade resolvido). Nao bloqueia o
+                    # redirect.
+                    pass
+                    # AuditEvent indisponivel (schema sem tabela em prod
+                    # multi-tenant sem facade resolvido). Nao bloqueia o
+                    # redirect.
+                    pass
                 messages.warning(
                     request,
                     'Para acessar esta pagina, entre com sua conta Google ou Apple primeiro.',

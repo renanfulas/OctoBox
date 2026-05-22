@@ -122,3 +122,8 @@ debug_*.html
 
 tmp/
 .omx/
+coverage.xml
+htmlcov/
+.coverage
+.coverage.*
+

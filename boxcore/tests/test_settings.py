@@ -31,11 +31,20 @@ class SettingsHelperTests(SimpleTestCase):
             self.assertTrue(is_local_runtime_mode())
 
     def test_build_cache_config_uses_locmem_when_no_external_cache_url_exists(self):
-        with patch.dict(os.environ, {}, clear=True):
+        # Sem REDIS_URL, build_cache_config faz fallback para locmem
+        # APENAS em runtime local (dev). Em prod/staging exige REDIS_URL
+        # (Epic 8: hardening explicito). Marcar DJANGO_DEBUG=true sinaliza
+        # ambiente local — sem isso o teste antigo passava apenas porque
+        # o env de pytest tinha algum DEBUG herdado.
+        with patch.dict(os.environ, {'DJANGO_DEBUG': 'true'}, clear=True):
             cache_config = build_cache_config()
 
         self.assertEqual(cache_config['BACKEND'], 'django.core.cache.backends.locmem.LocMemCache')
-        self.assertEqual(cache_config['LOCATION'], 'octobox-default')
+        # Sprint 4 schema-per-tenant: LOCATION incorpora sufixo do tenant
+        # ativo via build_box_cache_key_prefix para isolar caches entre
+        # boxes. Em pytest e 'octobox-default:box_test'; em DEV legado
+        # era 'octobox-default'.
+        self.assertTrue(cache_config['LOCATION'].startswith('octobox-default'))
 
     def test_build_cache_config_uses_redis_when_redis_url_exists(self):
         with patch.dict(os.environ, {'REDIS_URL': 'redis://cache.example:6379/1'}, clear=True):
@@ -43,7 +52,9 @@ class SettingsHelperTests(SimpleTestCase):
 
         self.assertEqual(cache_config['BACKEND'], 'django_redis.cache.RedisCache')
         self.assertEqual(cache_config['LOCATION'], 'redis://cache.example:6379/1')
-        self.assertEqual(cache_config['KEY_PREFIX'], 'octobox')
+        # Sprint 4 schema-per-tenant: KEY_PREFIX inclui sufixo do tenant
+        # ativo (ver comentario equivalente no teste anterior).
+        self.assertTrue(cache_config['KEY_PREFIX'].startswith('octobox'))
         self.assertTrue(cache_config['OPTIONS']['IGNORE_EXCEPTIONS'])
 
     def test_build_cache_config_allows_disabling_ignore_exceptions_explicitly(self):

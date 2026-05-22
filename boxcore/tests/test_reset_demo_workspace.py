@@ -50,10 +50,15 @@ class ResetDemoWorkspaceCommandTests(TestCase):
         )
         old_plan = MembershipPlan.objects.create(name='Plano Antigo', price='199.90')
         old_enrollment = Enrollment.objects.create(student=old_student, plan=old_plan)
+        # Sprint 4: scheduled_at precisa ser datetime real para evitar
+        # quebra em signals post_save que esperam objeto datetime aware
+        # (operations/signals/session_cancellation.py acessa session_time
+        # antes do save converter a string).
+        from datetime import datetime, timezone as dt_timezone
         old_session = ClassSession.objects.create(
             title='Aula Antiga',
             coach=self.owner,
-            scheduled_at='2026-03-10T07:00:00Z',
+            scheduled_at=datetime(2026, 3, 10, 7, 0, 0, tzinfo=dt_timezone.utc),
             status=SessionStatus.SCHEDULED,
         )
         Payment.objects.create(

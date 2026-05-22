@@ -77,7 +77,10 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Risco")
         self.assertNotContains(response, "Emergencia")
         self.assertNotContains(response, "Urgente")
-        self.assertContains(response, "Rotina limpa.", html=False)
+        # Copy reformulada (dashboard/presentation.py:618). Antes era
+        # 'Rotina limpa.'; agora a frase completa para o risk_card sem
+        # ocorrencias.
+        self.assertContains(response, "A rotina está limpa e previsível", html=False)
         self.assertContains(response, "Sem acao imediata", html=False)
         self.assertContains(response, 'id="dashboard"', html=False)
         self.assertContains(response, 'data-dashboard-layout-version="v2"', html=False)
@@ -95,8 +98,8 @@ class DashboardViewTests(TestCase):
         )
         self.assertContains(response, "workspace-grid-layout", html=False)
         content = response.content.decode("utf-8")
-        self.assertLess(content.index("Receita realizada"), content.index("Cobrancas em atraso"))
-        self.assertLess(content.index("Cobrancas em atraso"), content.index("Entradas pendentes"))
+        self.assertLess(content.index("Receita realizada"), content.index("Cobranças em atraso"))
+        self.assertLess(content.index("Cobranças em atraso"), content.index("Entradas pendentes"))
         self.assertNotContains(response, "#dashboard-finance-board")
         self.assertNotContains(response, "#dashboard-risk-board")
 
@@ -331,7 +334,12 @@ class DashboardViewTests(TestCase):
         response = self.client.get(reverse("dashboard"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Tudo tranquilo na reten", html=False)
+        # Copy reformulada do dashboard. Antes: 'Tudo tranquilo na reten.'.
+        # No cenario do teste (1 ClassSession futura, sem occurrences,
+        # sem alunos em risco), o reading panel mostra apenas o risk_card
+        # tranquilo (presentation.py:618). O urgency_card e suprimido
+        # pelo filtro de tranquilos.
+        self.assertContains(response, "A rotina está limpa e previsível", html=False)
         self.assertContains(response, "Entradas pendentes")
 
     def test_dashboard_priority_counts_only_actionable_financial_alerts(self):
@@ -431,7 +439,7 @@ class DashboardViewTests(TestCase):
         for eyebrow in (
             "Entradas pendentes",
             "Aproveitamento da agenda hoje",
-            "Presenca no mes",
+            "Presença no mês",
             "Comunidade ativa",
         ):
             self.assertNotIn("href", cards_by_eyebrow[eyebrow])
@@ -443,7 +451,7 @@ class DashboardViewTests(TestCase):
 
         snapshot = build_dashboard_snapshot(today=today, month_start=month_start, role_slug=ROLE_OWNER)
         cards_by_eyebrow = {card["eyebrow"]: card for card in snapshot["metric_cards"]}
-        overdue_card = cards_by_eyebrow["Cobrancas em atraso"]
+        overdue_card = cards_by_eyebrow["Cobranças em atraso"]
 
         self.assertEqual(overdue_card["display_value"], 0)
         self.assertNotIn("href", overdue_card)
@@ -468,7 +476,7 @@ class DashboardViewTests(TestCase):
         month_start = today.replace(day=1)
         snapshot = build_dashboard_snapshot(today=today, month_start=month_start, role_slug=ROLE_OWNER)
         cards_by_eyebrow = {card["eyebrow"]: card for card in snapshot["metric_cards"]}
-        overdue_card = cards_by_eyebrow["Cobrancas em atraso"]
+        overdue_card = cards_by_eyebrow["Cobranças em atraso"]
 
         self.assertGreater(overdue_card["display_value"], 0)
         self.assertEqual(overdue_card["href"], "/financeiro/")
@@ -522,14 +530,17 @@ class DashboardViewTests(TestCase):
 
     def test_dashboard_renders_session_title_from_sanitized_snapshot_contract(self):
         self.client.force_login(self.user)
-        today = timezone.localdate()
+        # Sprint 4 / regression fix: marcar como futuro (now + 2h) garante que
+        # _decorate_dashboard_sessions nao filtre via status_label='Finalizada'
+        # apos sync_runtime_statuses (dashboard_snapshot_queries.py:185). O
+        # teste anterior usava '09:00' fixo, mas pytest pode rodar em qualquer
+        # hora — se for depois das 09h locais, a sessao virava finalizada e
+        # nao aparecia em upcoming_sessions.
+        future_time = timezone.now() + timezone.timedelta(hours=2)
         ClassSession.objects.create(
             title="CrossFit Front Squat",
             coach=self.user,
-            scheduled_at=timezone.make_aware(
-                timezone.datetime.combine(today, timezone.datetime.strptime("09:00", "%H:%M").time()),
-                timezone.get_current_timezone(),
-            ),
+            scheduled_at=future_time,
             duration_minutes=60,
             capacity=16,
             status=SessionStatus.SCHEDULED,
