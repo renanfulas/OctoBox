@@ -22,25 +22,58 @@ jobs:
           timeout: 2m
           command_timeout: 5m
           script: |
-            echo "=== JANELA OAUTH 500 (13:34-13:38 BRT = 16:34-16:38 UTC) ==="
-            journalctl -u octobox-gunicorn \
-              --since "2026-05-22 16:34:00" \
-              --until "2026-05-22 16:38:00" \
-              --no-pager -o cat 2>/dev/null || echo "(sem logs nessa janela UTC)"
+            APP=/srv/octobox/app
+            VENV=/srv/octobox/venv
+            ENV=/srv/octobox/shared/octobox.env
+
+            echo "=== DJANGO LOG FILES ==="
+            find /srv/octobox /var/log -name "*.log" 2>/dev/null | head -20
+            ls -lh /srv/octobox/app/*.log /srv/octobox/logs/ 2>/dev/null || echo "(nenhum arquivo .log direto)"
 
             echo ""
-            echo "=== JANELA OAUTH 500 (13:34-13:38 BRT = sem offset) ==="
-            journalctl -u octobox-gunicorn \
-              --since "2026-05-22 13:34:00" \
-              --until "2026-05-22 13:38:00" \
-              --no-pager -o cat 2>/dev/null || echo "(sem logs nessa janela local)"
+            echo "=== LOGGING CONFIG NO SETTINGS ==="
+            set -a && source "$ENV" && set +a
+            "$VENV/bin/python" - <<'PY'
+import os, sys
+sys.path.insert(0, '/srv/octobox/app')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'octobox.settings')
+import django
+django.setup()
+from django.conf import settings
+import json
+logging_cfg = getattr(settings, 'LOGGING', {})
+print(json.dumps(logging_cfg, indent=2, default=str))
+PY
 
             echo ""
-            echo "=== TIMEZONE DO SERVIDOR ==="
-            timedatectl show --no-pager 2>/dev/null || date
+            echo "=== REPRODUZIR TRACEBACK: simular OAuth callback com bad state ==="
+            set -a && source "$ENV" && set +a
+            "$VENV/bin/python" - <<'PY'
+import os, sys, traceback
+sys.path.insert(0, '/srv/octobox/app')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'octobox.settings')
+import django
+django.setup()
 
-            echo ""
-            echo "=== TRACEBACKS RECENTES (ultimos 2000 linhas) ==="
-            journalctl -u octobox-gunicorn -n 2000 --no-pager -o cat 2>/dev/null \
-              | grep -A 40 "Traceback (most recent call last)" \
-              | tail -600 || echo "(nenhum traceback)"
+from django.test import RequestFactory
+from student_identity.views import StudentOAuthCallbackView
+
+factory = RequestFactory()
+request = factory.get('/aluno/auth/oauth/google/callback/', {
+    'state': 'eyJwcm92aWRlciI6Imdvb2dsZSIsImludml0ZV90b2tlbiI6IiJ9:1wQSqx:bzBvKZ3ep12izc-XvrKqNL2Kt-nLdyP74VXpfva72aw',
+    'code': 'DUMMY_CODE_WILL_FAIL_EARLY',
+    'iss': 'https://accounts.google.com',
+    'scope': 'email profile openid',
+})
+request.META['HTTP_HOST'] = 'app.octoboxfit.com.br'
+request.META['SERVER_NAME'] = 'app.octoboxfit.com.br'
+request.META['SERVER_PORT'] = '443'
+request.META['wsgi.url_scheme'] = 'https'
+
+try:
+    view = StudentOAuthCallbackView.as_view()
+    response = view(request, provider='google')
+    print(f"Response status: {response.status_code}")
+except Exception as e:
+    traceback.print_exc()
+PY
