@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: Production
     steps:
-      - name: Fetch gunicorn error logs from VPS
+      - name: Inspecionar Postgres e schemas dos boxes
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -22,25 +22,141 @@ jobs:
           timeout: 2m
           command_timeout: 5m
           script: |
-            echo "=== JANELA OAUTH 500 (13:34-13:38 BRT = 16:34-16:38 UTC) ==="
-            journalctl -u octobox-gunicorn \
-              --since "2026-05-22 16:34:00" \
-              --until "2026-05-22 16:38:00" \
-              --no-pager -o cat 2>/dev/null || echo "(sem logs nessa janela UTC)"
+            VENV=/srv/octobox/venv
+            ENV=/srv/octobox/shared/octobox.env
+            set -a && source "$ENV" && set +a
 
-            echo ""
-            echo "=== JANELA OAUTH 500 (13:34-13:38 BRT = sem offset) ==="
-            journalctl -u octobox-gunicorn \
-              --since "2026-05-22 13:34:00" \
-              --until "2026-05-22 13:38:00" \
-              --no-pager -o cat 2>/dev/null || echo "(sem logs nessa janela local)"
+            "$VENV/bin/python" - <<'PY'
+import os, sys
+sys.path.insert(0, '/srv/octobox/app')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'octobox.settings')
+import django
+django.setup()
+from django.db import connection
 
-            echo ""
-            echo "=== TIMEZONE DO SERVIDOR ==="
-            timedatectl show --no-pager 2>/dev/null || date
+def section(title):
+    print(f"\n{'='*60}")
+    print(f"  {title}")
+    print('='*60)
 
-            echo ""
-            echo "=== TRACEBACKS RECENTES (ultimos 2000 linhas) ==="
-            journalctl -u octobox-gunicorn -n 2000 --no-pager -o cat 2>/dev/null \
-              | grep -A 40 "Traceback (most recent call last)" \
-              | tail -600 || echo "(nenhum traceback)"
+# 1. Schemas existentes no Postgres
+section("SCHEMAS NO POSTGRES")
+with connection.cursor() as cur:
+    cur.execute("""
+        SELECT schema_name, schema_owner
+        FROM information_schema.schemata
+        WHERE schema_name NOT IN ('pg_catalog','information_schema','pg_toast')
+          AND schema_name NOT LIKE 'pg_temp%'
+          AND schema_name NOT LIKE 'pg_toast_temp%'
+        ORDER BY schema_name
+    """)
+    rows = cur.fetchall()
+    for r in rows:
+        print(f"  schema={r[0]}  owner={r[1]}")
+    print(f"\n  Total: {len(rows)} schemas")
+
+# 2. Registros na tabela control_box
+section("TABELA control_box (Box records)")
+try:
+    with connection.cursor() as cur:
+        cur.execute("""
+            SELECT id, slug, schema_name, status, display_name,
+                   created_at::text
+            FROM control_box
+            ORDER BY id
+        """)
+        rows = cur.fetchall()
+        if rows:
+            for r in rows:
+                print(f"  id={r[0]}  slug={r[1]}  schema={r[2]}  status={r[3]}")
+                print(f"    display_name={r[4]}  created_at={r[5]}")
+        else:
+            print("  *** VAZIA — nenhum Box cadastrado ***")
+        print(f"\n  Total: {len(rows)} boxes")
+except Exception as e:
+    print(f"  ERRO: {e}")
+
+# 3. Tabelas presentes em cada schema box_*
+section("TABELAS POR SCHEMA box_*")
+with connection.cursor() as cur:
+    cur.execute("""
+        SELECT table_schema, COUNT(*) as qtd
+        FROM information_schema.tables
+        WHERE table_schema LIKE 'box_%'
+          AND table_type = 'BASE TABLE'
+        GROUP BY table_schema
+        ORDER BY table_schema
+    """)
+    rows = cur.fetchall()
+    if rows:
+        for r in rows:
+            print(f"  {r[0]}: {r[1]} tabelas")
+    else:
+        print("  Nenhum schema box_* encontrado")
+
+# 4. Migrations aplicadas
+section("DJANGO_MIGRATIONS (apps relevantes)")
+with connection.cursor() as cur:
+    cur.execute("""
+        SELECT app, name, applied::text
+        FROM django_migrations
+        WHERE app IN ('control','student_identity','students','boxcore','auditing')
+        ORDER BY app, applied
+    """)
+    rows = cur.fetchall()
+    current_app = None
+    for r in rows:
+        if r[0] != current_app:
+            current_app = r[0]
+            print(f"\n  [{current_app}]")
+        print(f"    {r[1]}  @ {r[2][:19]}")
+
+# 5. Contagem de StudentIdentity em public
+section("STUDENT_IDENTITY (public schema)")
+try:
+    with connection.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM student_identity_studentidentity")
+        total = cur.fetchone()[0]
+        print(f"  StudentIdentity total: {total}")
+        if total > 0:
+            cur.execute("""
+                SELECT DISTINCT box_root_slug, COUNT(*) as qtd
+                FROM student_identity_studentidentity
+                GROUP BY box_root_slug
+                ORDER BY qtd DESC
+                LIMIT 10
+            """)
+            for r in cur.fetchall():
+                print(f"    box_root_slug={r[0]}  qtd={r[1]}")
+except Exception as e:
+    print(f"  ERRO: {e}")
+
+# 6. Tabelas no schema public relacionadas ao boxcore
+section("TABELAS boxcore_* NO SCHEMA PUBLIC (legado pre-tenant)")
+with connection.cursor() as cur:
+    cur.execute("""
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name LIKE 'boxcore_%'
+        ORDER BY table_name
+    """)
+    rows = cur.fetchall()
+    if rows:
+        for r in rows:
+            cur.execute(f"SELECT COUNT(*) FROM public.{r[0]}")
+            cnt = cur.fetchone()[0]
+            print(f"  public.{r[0]}: {cnt} rows")
+    else:
+        print("  Nenhuma tabela boxcore_* no schema public")
+
+# 7. Versao do Postgres
+section("VERSAO POSTGRES")
+with connection.cursor() as cur:
+    cur.execute("SELECT version()")
+    print(f"  {cur.fetchone()[0]}")
+
+print("\n" + "="*60)
+print("  FIM DA INSPEÇÃO")
+print("="*60)
+PY
