@@ -150,6 +150,9 @@ jobs:
             set -a && source "$ENV" && set +a
             "$VENV/bin/python" "$APP/manage.py" collectstatic --noinput
 
+            echo "==> Bootstrap control (resolve InconsistentMigrationHistory)..."
+            "$VENV/bin/python" "$APP/manage.py" bootstrap_control
+
             echo "==> Rodando migrations..."
             "$VENV/bin/python" "$APP/manage.py" migrate --noinput
 
