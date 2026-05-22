@@ -14,9 +14,12 @@
 # 4. test data factories (factory-boy traz Faker)
 # 5. higiene da suite (pytest-randomly para detectar order-dependence)
 #
-# E2E (Playwright/Selenium) NAO esta incluido aqui — quando o plano de
-# qualidade de testes definir essa frente, adicionar pytest-playwright
-# em uma segunda iteracao.
+# E2E browser tests (Fase 8 do plano de qualidade).
+# pytest-playwright orquestra o browser; playwright instala os binarios
+# separadamente via `playwright install --with-deps chromium` (so em CI).
+# Testes marcados com @pytest.mark.e2e ficam em tests/e2e/ e sao ignorados
+# pelo addopts padrao (--ignore=tests/e2e). O workflow e2e-nightly.yml
+# roda explicitamente `pytest tests/e2e/` em push para main e nightly.
 #
 # PONTOS CRITICOS:
 # - Versoes devem ser compativeis com Django==6.0.5 e Python 3.12.
@@ -48,3 +51,8 @@ pytest-randomly==4.1.0
 # nao e mais total por processo). Aceitavel: Fase 3 (order-dependence)
 # valida com seed fixo em runs separados.
 pytest-xdist==3.6.1
+
+# E2E — Fase 8 do plano de qualidade de testes.
+# 0.5.x–0.7.1 requerem pytest<9.0.0 (incompatível com pytest==9.0.3).
+# 0.7.2 foi a primeira versão a aceitar pytest<10.0.0.
+pytest-playwright==0.7.2

@@ -318,14 +318,18 @@ class DashboardViewTests(TestCase):
 
     def test_dashboard_keeps_routine_session_out_of_emergency_card(self):
         self.client.force_login(self.user)
-        today = timezone.localdate()
+        # Bug de test design corrigido: horario fixo '19:00' fazia o teste
+        # falhar quando CI rodava entre 19:00-20:00 BRT (TIME_ZONE=America/Sao_Paulo).
+        # Nessa janela, sync_runtime_statuses marcava a sessao como 'Em andamento'
+        # e session_snapshots.py forcava occupancy_percent=100 (booking_closed),
+        # tornando o urgency_card acionavel e suprimindo o risk_card com a copy
+        # esperada. Mesmo padrao do fix em test_dashboard_renders_session_title.
+        # Fix: now() + 2h garante sessao sempre no futuro independente do horario
+        # do CI.
         ClassSession.objects.create(
             title="Gymnastics 19h",
             coach=self.user,
-            scheduled_at=timezone.make_aware(
-                timezone.datetime.combine(today, timezone.datetime.strptime("19:00", "%H:%M").time()),
-                timezone.get_current_timezone(),
-            ),
+            scheduled_at=timezone.now() + timezone.timedelta(hours=2),
             duration_minutes=60,
             capacity=18,
             status=SessionStatus.SCHEDULED,
