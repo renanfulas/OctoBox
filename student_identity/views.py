@@ -208,19 +208,25 @@ class StudentOAuthCallbackView(StudentSignInView):
             )
         except StudentOAuthProviderExchangeError as exc:
             messages.error(request, self._map_provider_callback_error(str(exc)))
-            AuditEvent.objects.create(
-                actor=None,
-                actor_role='',
-                action='student_oauth_callback.provider_error_received',
-                target_model='student_identity.StudentOAuthCallback',
-                target_label=provider,
-                description='Provedor OAuth retornou erro durante troca de identidade do aluno.',
-                metadata={
-                    'provider': provider,
-                    'reason': str(exc),
-                    'path': request.path,
-                },
-            )
+            # Sprint 4 / fix OAuth-500: AuditEvent e TENANT_APP. O tenant pode
+            # nao estar ativo aqui (control_box vazio ou rota em public schema).
+            # Falha silenciosa: o audit e best-effort, nao pode explodir o callback.
+            try:
+                AuditEvent.objects.create(
+                    actor=None,
+                    actor_role='',
+                    action='student_oauth_callback.provider_error_received',
+                    target_model='student_identity.StudentOAuthCallback',
+                    target_label=provider,
+                    description='Provedor OAuth retornou erro durante troca de identidade do aluno.',
+                    metadata={
+                        'provider': provider,
+                        'reason': str(exc),
+                        'path': request.path,
+                    },
+                )
+            except Exception:
+                pass
             return redirect('student-identity-login')
 
         # CENTER LAYER (docs/architecture/center-layer.md):
