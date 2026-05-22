@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: Production
     steps:
-      - name: Inspecionar Postgres e schemas dos boxes
+      - name: Inspecionar Postgres via psql direto
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -22,7 +22,26 @@ jobs:
           timeout: 2m
           command_timeout: 5m
           script: |
-            VENV=/srv/octobox/venv
             ENV=/srv/octobox/shared/octobox.env
             set -a && source "$ENV" && set +a
-            echo "aW1wb3J0IG9zLCBzeXMKc3lzLnBhdGguaW5zZXJ0KDAsICcvc3J2L29jdG9ib3gvYXBwJykKb3MuZW52aXJvbi5zZXRkZWZhdWx0KCdESkFOR09fU0VUVElOR1NfTU9EVUxFJywgJ29jdG9ib3guc2V0dGluZ3MnKQppbXBvcnQgZGphbmdvCmRqYW5nby5zZXR1cCgpCmZyb20gZGphbmdvLmRiIGltcG9ydCBjb25uZWN0aW9uCgpkZWYgc2VjdGlvbih0aXRsZSk6CiAgICBwcmludCgnXG4nICsgJz0nKjYwKQogICAgcHJpbnQoJyAgJyArIHRpdGxlKQogICAgcHJpbnQoJz0nKjYwKQoKc2VjdGlvbignU0NIRU1BUyBOTyBQT1NUR1JFUycpCndpdGggY29ubmVjdGlvbi5jdXJzb3IoKSBhcyBjdXI6CiAgICBjdXIuZXhlY3V0ZSgiIiIKICAgICAgICBTRUxFQ1Qgc2NoZW1hX25hbWUsIHNjaGVtYV9vd25lcgogICAgICAgIEZST00gaW5mb3JtYXRpb25fc2NoZW1hLnNjaGVtYXRhCiAgICAgICAgV0hFUkUgc2NoZW1hX25hbWUgTk9UIElOICgncGdfY2F0YWxvZycsJ2luZm9ybWF0aW9uX3NjaGVtYScsJ3BnX3RvYXN0JykKICAgICAgICAgIEFORCBzY2hlbWFfbmFtZSBOT1QgTElLRSAncGdfdGVtcCUnCiAgICAgICAgICBBTkQgc2NoZW1hX25hbWUgTk9UIExJS0UgJ3BnX3RvYXN0X3RlbXAlJwogICAgICAgIE9SREVSIEJZIHN0Y2hlbWFfbmFtZQogICAgIiIiKQogICAgcm93cyA9IGN1ci5mZXRjaGFsbCgpCiAgICBmb3IgciBpbiByb3dzOgogICAgICAgIHByaW50KCcgIHNjaGVtYT0lLTMwcyAgb3duZXI9JXMnICUgKHJbMF0sIHJbMV0pKQogICAgcHJpbnQoJ1xuICBUb3RhbDogJWQgc2NoZW1hcycgJSBsZW4ocm93cykpCgpzZWN0aW9uKCdUQUJFTEEgY29udHJvbF9ib3ggKEJveCByZWNvcmRzKScpCnRyeToKICAgIHdpdGggY29ubmVjdGlvbi5jdXJzb3IoKSBhcyBjdXI6CiAgICAgICAgY3VyLmV4ZWN1dGUoJ1NFTEVDVCBpZCwgc2x1Zywgc2NoZW1hX25hbWUsIHN0YXR1cywgZGlzcGxheV9uYW1lLCBjcmVhdGVkX2F0Ojp0ZXh0IEZST00gY29udHJvbF9ib3ggT1JERVIgQlkgaWQnKQogICAgICAgIHJvd3MgPSBjdXIuZmV0Y2hhbGwoKQogICAgICAgIGlmIHJvd3M6CiAgICAgICAgICAgIGZvciByIGluIHJvd3M6CiAgICAgICAgICAgICAgICBwcmludCgnICBpZD0lcyAgc2x1Zz0lcyAgc2NoZW1hPSVzICBzdGF0dXM9JXMnICUgKHJbMF0sclsxXSxyWzJdLHJbM10pKQogICAgICAgICAgICAgICAgcHJpbnQoJyAgICBkaXNwbGF5X25hbWU9JXMgIGNyZWF0ZWRfYXQ9JXMnICUgKHJbNF0scls1XSkpCiAgICAgICAgZWxzZToKICAgICAgICAgICAgcHJpbnQoJyAgKioqIFZBWklBIC0gbmVuaHVtIEJveCBjYWRhc3RyYWRvICoqKicpCiAgICAgICAgcHJpbnQoJ1xuICBUb3RhbDogJWQgYm94ZXMnICUgbGVuKHJvd3MpKQpleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICBwcmludCgnICBFUlJPOiAlcycgJSBlKQoKc2VjdGlvbignVEFCRUxBUyBQT1IgU0NIRU1BIGJveF8qJykKd2l0aCBjb25uZWN0aW9uLmN1cnNvcigpIGFzIGN1cjoKICAgIGN1ci5leGVjdXRlKCIiIgogICAgICAgIFNFTEVDVCB0YWJsZV9zY2hlbWEsIENPVU5UKCopIEZST00gaW5mb3JtYXRpb25fc2NoZW1hLnRhYmxlcwogICAgICAgIFdIRVJFIHRhYmxlX3NjaGVtYSBMSUtFICdib3hfJScgQU5EIHRhYmxlX3R5cGU9J0JBU0UgVEFCTEUnCiAgICAgICAgR1JPVVAgQlkgdGFibGVfc2NoZW1hIE9SREVSIEJZIHB0YWJsZV9zY2hlbWEKICAgICIiIikKICAgIHJvd3MgPSBjdXIuZmV0Y2hhbGwoKQogICAgaWYgcm93czoKICAgICAgICBmb3IgciBpbiByb3dzOgogICAgICAgICAgICBwcmludCgnICAlczogJWQgdGFiZWxhcycgJSAoclswXSwgclsxXSkpCiAgICBlbHNlOgogICAgICAgIHByaW50KCcgIE5lbmh1bSBzY2hlbWEgYm94XyogZW5jb250cmFkbycpCgpzZWN0aW9uKCdESkFOR09fTUlHUkFUSU9OUyAoYXBwcyByZWxldmFudGVzKScpCndpdGggY29ubmVjdGlvbi5jdXJzb3IoKSBhcyBjdXI6CiAgICBjdXIuZXhlY3V0ZSgiIiIKICAgICAgICBTRUxFQ1QgYXBwLCBuYW1lLCBhcHBsaWVkOjp0ZXh0IEZST00gZGphbmdvX21pZ3JhdGlvbnMKICAgICAgICBXSEVSRSBhcHAgSU4gKCdjb250cm9sJywnc3R1ZGVudF9pZGVudGl0eScsJ3N0dWRlbnRzJywnYm94Y29yZScsJ2F1ZGl0aW5nJykKICAgICAgICBPUkRFUiBCWSBhcHAsIGFwcGxpZWQKICAgICIiIikKICAgIHJvd3MgPSBjdXIuZmV0Y2hhbGwoKQogICAgY3VycmVudF9hcHAgPSBOb25lCiAgICBmb3IgciBpbiByb3dzOgogICAgICAgIGlmIHJbMF0gIT0gY3VycmVudF9hcHA6CiAgICAgICAgICAgIGN1cnJlbnRfYXBwID0gclswXQogICAgICAgICAgICBwcmludCgnXG4gIFslc10nICUgY3VycmVudF9hcHApCiAgICAgICAgcHJpbnQoJyAgICAlLTYwcyAgQCAlcycgJSAoclsxXSwgclsyXVs6MTldKSkKCnNlY3Rpb24oJ1NUVURFTlRfSURFTlRJVFkgLSBjb250YWdlbSBwb3IgYm94X3Jvb3Rfc2x1ZycpCnRyeToKICAgIHdpdGggY29ubmVjdGlvbi5jdXJzb3IoKSBhcyBjdXI6CiAgICAgICAgY3VyLmV4ZWN1dGUoJ1NFTEVDVCBDT1VOVCgqKSBGUk9NIHN0dWRlbnRfaWRlbnRpdHlfc3R1ZGVudGlkZW50aXR5JykKICAgICAgICB0b3RhbCA9IGN1ci5mZXRjaG9uZSgpWzBdCiAgICAgICAgcHJpbnQoJyAgVG90YWwgU3R1ZGVudElkZW50aXR5OiAlZCcgJSB0b3RhbCkKICAgICAgICBpZiB0b3RhbCA+IDA6CiAgICAgICAgICAgIGN1ci5leGVjdXRlKCIiIgogICAgICAgICAgICAgICAgU0VMRUNUIENPQUxFU0NFKGJveF9yb290X3NsdWcsJyhudWxsKScpLCBDT1VOVCgqKQogICAgICAgICAgICAgICAgRlJPTSBzdHVkZW50X2lkZW50aXR5X3N0dWRlbnRpZGVudGl0eQogICAgICAgICAgICAgICAgR1JPVVAgQlkgYm94X3Jvb3Rfc2x1ZyBPUkRFUiBCWSBDT1VOVCgqKSBERVNDIExJTUlUIDEwCiAgICAgICAgICAgICIiIikKICAgICAgICAgICAgZm9yIHIgaW4gY3VyLmZldGNoYWxsKCk6CiAgICAgICAgICAgICAgICBwcmludCgnICAgIGJveF9yb290X3NsdWc9JS0zMHMgIHF0ZD0lZCcgJSAoclswXSwgclsxXSkpCmV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgIHByaW50KCcgIEVSUk86ICVzJyAlIGUpCgpzZWN0aW9uKCdUQUJFTEFTIGJveGNvcmVfKiBOTyBTQ0hFTUEgUFVCTElDIChsZWdhZG8pJykKd2l0aCBjb25uZWN0aW9uLmN1cnNvcigpIGFzIGN1cjoKICAgIGN1ci5leGVjdXRlKCIiIgogICAgICAgIFNFTEVDVCB0YWJsZV9uYW1lIEZST00gaW5mb3JtYXRpb25fc2NoZW1hLnRhYmxlcwogICAgICAgIFdIRVJFIHRhYmxlX3NjaGVtYT0ncHVibGljJyBBTkQgdGFibGVfbmFtZSBMSUtFICdib3hjb3JlXyUnCiAgICAgICAgT1JERVIgQlkgdGFibGVfbmFtZQogICAgIiIiKQogICAgcm93cyA9IGN1ci5mZXRjaGFsbCgpCiAgICBpZiByb3dzOgogICAgICAgIGZvciByIGluIHJvd3M6CiAgICAgICAgICAgIGN1ci5leGVjdXRlKCdTRUxFQ1QgQ09VTlQoKikgRlJPTSBwdWJsaWMuJXMnICUgclswXSkKICAgICAgICAgICAgY250ID0gY3VyLmZldGNob25lKClbMF0KICAgICAgICAgICAgcHJpbnQoJyAgcHVibGljLiUtNDBzICAlZCByb3dzJyAlIChyWzBdLCBjbnQpKQogICAgZWxzZToKICAgICAgICBwcmludCgnICBOZW5odW1hIHRhYmVsYSBib3hjb3JlXyogbm8gc2NoZW1hIHB1YmxpYycpCgpzZWN0aW9uKCdWRVJTQU8gUE9TVEdSRVMnKQp3aXRoIGNvbm5lY3Rpb24uY3Vyc29yKCkgYXMgY3VyOgogICAgY3VyLmV4ZWN1dGUoJ1NFTEVDVCB2ZXJzaW9uKCknKQogICAgcHJpbnQoJyAgJyArIGN1ci5mZXRjaG9uZSgpWzBdKQoKcHJpbnQoJ1xuJyArICc9Jyo2MCkKcHJpbnQoJyAgRklNIERBIElOU1BFQ0FPJykKcHJpbnQoJz0nKjYwKQo=" | base64 -d | "$VENV/bin/python"
+            DB="$DATABASE_URL"
+            echo "=== SCHEMAS NO POSTGRES ==="
+            psql "$DB" -t -A -c "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('pg_catalog','information_schema','pg_toast') AND schema_name NOT LIKE 'pg_temp%' AND schema_name NOT LIKE 'pg_toast_temp%' ORDER BY schema_name"
+            echo ""
+            echo "=== control_box (Box records) ==="
+            psql "$DB" -c "SELECT id, slug, schema_name, status, display_name, created_at FROM control_box ORDER BY id" 2>&1 || echo "ERRO ao consultar control_box"
+            echo ""
+            echo "=== SCHEMAS box_* E CONTAGEM DE TABELAS ==="
+            psql "$DB" -t -A -c "SELECT table_schema, COUNT(*) FROM information_schema.tables WHERE table_schema LIKE 'box_%' AND table_type='BASE TABLE' GROUP BY table_schema ORDER BY table_schema"
+            echo ""
+            echo "=== DJANGO_MIGRATIONS (control, student_identity, boxcore, auditing) ==="
+            psql "$DB" -t -A -c "SELECT app || '  ' || name || '  ' || applied::text FROM django_migrations WHERE app IN ('control','student_identity','students','boxcore','auditing') ORDER BY app, applied"
+            echo ""
+            echo "=== STUDENT_IDENTITY contagem por box_root_slug ==="
+            psql "$DB" -t -A -c "SELECT COALESCE(box_root_slug,'(null)') || ': ' || COUNT(*) FROM student_identity_studentidentity GROUP BY box_root_slug ORDER BY COUNT(*) DESC LIMIT 10" 2>&1 || echo "ERRO"
+            echo ""
+            echo "=== boxcore_* NO SCHEMA PUBLIC ==="
+            psql "$DB" -t -A -c "SELECT 'public.' || table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'boxcore_%' ORDER BY table_name" 2>&1 || echo "Nenhuma"
+            echo ""
+            echo "=== VERSAO POSTGRES ==="
+            psql "$DB" -t -A -c "SELECT version()"
