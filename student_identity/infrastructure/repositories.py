@@ -154,6 +154,14 @@ class DjangoStudentIdentityRepository:
 
     def find_student_candidates_by_email(self, *, email: str):
         # AVISO: requer tenant ativo em connection.schema_name.
+        # Sprint 4 / fix OAuth-500: Student e TENANT_APP — a tabela students_student
+        # nao existe em public/control schema. Se o tenant nao foi ativado (ex.:
+        # control_box vazio, nenhum Box ATIVO), a query explode com ProgrammingError
+        # e devolve HTTP 500. Retornar [] forca failure_reason='student-email-ambiguous'
+        # e redireciona para login com mensagem clara em vez de tela de erro.
+        from django.db import connection
+        if connection.schema_name in ('public', 'control'):
+            return []
         from students.models import Student
         return list(Student.objects.filter(email__iexact=(email or '').strip()).order_by('id'))
 
