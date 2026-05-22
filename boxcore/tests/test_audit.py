@@ -13,30 +13,25 @@ PONTOS CRITICOS:
 - Se estes testes falharem, o sistema pode continuar funcionando sem rastreabilidade adequada.
 """
 
-from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
 from auditing.models import AuditEvent
-from finance.models import Payment, PaymentStatus
-from students.models import Student
+from finance.models import PaymentStatus
+from tests.factories import PaymentFactory, StudentFactory, UserFactory
 
 
 class AuditTrailTests(TestCase):
     def setUp(self):
-        user_model = get_user_model()
-        self.user = user_model.objects.create_user(
-            username='auditor-user',
-            email='audit@example.com',
-            password='senha-forte-123',
-        )
-        self.superuser = user_model.objects.create_superuser(
+        self.user = UserFactory(username='auditor-user', email='audit@example.com')
+        self.superuser = UserFactory(
             username='audit-admin',
             email='audit-admin@example.com',
-            password='senha-forte-123',
+            is_staff=True,
+            is_superuser=True,
         )
-        self.student = Student.objects.create(full_name='Aluno Financeiro', phone='5511911111111')
-        self.payment = Payment.objects.create(
+        self.student = StudentFactory()
+        self.payment = PaymentFactory(
             student=self.student,
             due_date='2026-03-20',
             amount='199.90',

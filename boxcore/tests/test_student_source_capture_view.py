@@ -10,14 +10,12 @@ from django.test import TestCase
 from django.urls import reverse
 
 from students.infrastructure.source_capture_links import build_student_source_capture_token
-from students.models import Student
+from tests.factories import StudentFactory
 
 
 class StudentSourceCaptureViewTests(TestCase):
     def test_secure_link_can_record_declared_source(self):
-        student = Student.objects.create(
-            full_name='Aluno Link Seguro',
-            phone='5511999995555',
+        student = StudentFactory(
             acquisition_source='instagram',
             resolved_acquisition_source='instagram',
             source_resolution_method='manual_form',
