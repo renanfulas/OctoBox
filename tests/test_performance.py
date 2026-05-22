@@ -38,9 +38,12 @@ def test_dashboard_query_count(logged_client, django_assert_num_queries):
 def test_student_directory_query_count(logged_client, django_assert_num_queries):
     """
         GARANTE: Diretório de alunos eficiente no caminho autenticado estável,
-    não ultrapassando 16 queries com shell cache aquecido.
+    não ultrapassando 18 queries com shell cache aquecido.
+
+    Sprint 4 schema-per-tenant: +1 query (resolução de Box via
+    TenantBySessionMiddleware) eleva o teto de 16 → 18 (margem de 1 query).
     """
-    with django_assert_num_queries(16, exact=False):
+    with django_assert_num_queries(18, exact=False):
         response = logged_client.get(reverse('student-directory'))
         assert response.status_code == 200
 

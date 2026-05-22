@@ -66,12 +66,33 @@ class StudentSignInView(TemplateView):
         return context
 
     def authenticate_identity(self, *, provider_name: str, email: str, provider_subject: str, invite_token: str = ''):
-        use_case = AuthenticateStudentWithProvider(DjangoStudentIdentityRepository())
+        repository = DjangoStudentIdentityRepository()
+        use_case = AuthenticateStudentWithProvider(repository)
+
+        # Sprint 4: o OAuth callback do aluno corre em public schema
+        # (/aluno/auth/ esta em PUBLIC_SCHEMA_PATHS), entao
+        # get_box_runtime_slug() retorna 'control' (env fallback). Se houver
+        # um invite_token, derivamos box_root_slug do proprio convite/link —
+        # essa e a fonte de verdade para qual box o aluno quer entrar. Sem
+        # esse fallback a verificacao `invite.box_root_slug != command.box_root_slug`
+        # no use case sempre dispararia invite-box-mismatch e o callback
+        # redirecionaria para login mesmo com convite valido.
+        box_root_slug = get_box_runtime_slug()
+        token = invite_token.strip()
+        if token:
+            invitation = repository.find_invitation_by_token(token)
+            if invitation is not None:
+                box_root_slug = invitation.box_root_slug
+            else:
+                link = repository.find_box_invite_link_by_token(token)
+                if link is not None:
+                    box_root_slug = link.box_root_slug
+
         command = AuthenticateStudentWithProviderCommand(
             provider=provider_name,
             email=email,
             provider_subject=provider_subject,
-            box_root_slug=get_box_runtime_slug(),
+            box_root_slug=box_root_slug,
             invite_token=invite_token,
         )
         return use_case.execute(command)
@@ -267,6 +288,13 @@ class StudentInviteLandingView(TemplateView):
         context['invite_not_found'] = invitation is None
         context['invite_expired'] = bool(invitation and invitation.is_expired)
         context['invite_already_accepted'] = bool(invitation and invitation.accepted_at)
+        # Sprint 4 schema-per-tenant: esta view corre em public schema
+        # (/aluno/auth/ esta em PUBLIC_SCHEMA_PATHS). AuditEvent abaixo
+        # vive em TENANT_APPS — precisa do tenant ativo. Usar o box do
+        # convite como fonte de verdade.
+        if invitation is not None:
+            from student_identity.oauth_journeys import _activate_box_tenant
+            _activate_box_tenant(invitation.box_id, box_root_slug=invitation.box_root_slug)
         if invitation is not None:
             record_student_onboarding_event(
                 actor=None,
@@ -275,7 +303,7 @@ class StudentInviteLandingView(TemplateView):
                 event='landing_viewed',
                 target_model='student_identity.StudentAppInvitation',
                 target_id=str(invitation.id),
-                target_label=invitation.student.full_name,
+                target_label=invitation.student_name,  # # Sprint 2: denorm
                 description='Landing do convite do aluno visualizada.',
                 metadata={
                     'box_root_slug': invitation.box_root_slug,

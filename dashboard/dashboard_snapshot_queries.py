@@ -370,9 +370,15 @@ def _build_dashboard_glance_summary(*, metrics, role_slug, upcoming_sessions, pa
 def build_dashboard_snapshot(*, today, month_start, role_slug=''):
     """
     Retorna um snapshot do dashboard com cache de curton prazo (60s por padrao).
-    O cache e particionado por role_slug, data e inicio do mes.
+    O cache e particionado por tenant (schema_name), role_slug, data e inicio do mes.
+
+    Sprint 3: adicionado schema_name ao cache_key para evitar vazamento cross-tenant.
+    Cenario de risco sem o fix: dois tenants com role_slug identico, mesmo dia ->
+    compartilham snapshot de dashboard com dados financeiros de outro box.
     """
-    cache_key = f"dashboard_snapshot:v2:{role_slug}:{today.isoformat()}:{month_start.isoformat()}"
+    from django.db import connection
+    tenant = getattr(connection, 'schema_name', None) or 'public'
+    cache_key = f"dashboard_snapshot:v2:{tenant}:{role_slug}:{today.isoformat()}:{month_start.isoformat()}"
     ttl = getattr(settings, 'SHELL_COUNTS_CACHE_TTL_SECONDS', 60)
     # 🚀 Performance de Elite (Ghost Hardening): Cache Jitter
     # Evita que todos os dashboards de todos os usuários expirem no mesmo segundo.

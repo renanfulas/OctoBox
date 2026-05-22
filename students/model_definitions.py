@@ -94,6 +94,18 @@ class Student(TimeStampedModel):
     )
     notes = models.TextField(blank=True)
 
+    # Sprint 2: FK tenant->public (permitido em django-tenants via search_path box_xxx, public).
+    # Substituiu o OneToOneField(Student) que existia em StudentIdentity (public->tenant, invalido).
+    # on_delete=SET_NULL: arquivar identidade nao deve deletar o aluno.
+    identity = models.ForeignKey(
+        'student_identity.StudentIdentity',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+        db_index=True,
+    )
+
     class Meta:
         app_label = HISTORICAL_BOXCORE_APP_LABEL
         ordering = ['full_name']

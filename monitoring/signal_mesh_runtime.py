@@ -9,12 +9,25 @@ POR QUE ELE EXISTE:
 from django.core.cache import cache
 
 
-SIGNAL_MESH_RUNTIME_CACHE_KEY = 'signal_mesh_runtime:v1'
+# Sprint 3: SIGNAL_MESH_RUNTIME_CACHE_KEY agora e per-tenant para evitar que
+# o sweep de um box sobrescreva o estado de monitoramento de outro box.
+# Cada tenant tem seu proprio estado de signal mesh.
+SIGNAL_MESH_RUNTIME_KEY_PREFIX = 'signal_mesh_runtime:v1'
 SIGNAL_MESH_RUNTIME_TTL_SECONDS = 60 * 60 * 6
 
 
+def _get_cache_key() -> str:
+    from django.db import connection
+    tenant = getattr(connection, 'schema_name', None) or 'public'
+    return f'{SIGNAL_MESH_RUNTIME_KEY_PREFIX}:{tenant}'
+
+
+# Compat: manter SIGNAL_MESH_RUNTIME_CACHE_KEY apontando para chave global (DEPRECATED)
+SIGNAL_MESH_RUNTIME_CACHE_KEY = SIGNAL_MESH_RUNTIME_KEY_PREFIX
+
+
 def _read_runtime_state() -> dict:
-    cached = cache.get(SIGNAL_MESH_RUNTIME_CACHE_KEY)
+    cached = cache.get(_get_cache_key())
     return cached if isinstance(cached, dict) else {}
 
 
@@ -27,7 +40,7 @@ def remember_signal_mesh_sweep(*, channel: str, result: dict) -> dict:
         'skipped_count': result.get('skipped_count', 0),
         'skipped': result.get('skipped', []),
     }
-    cache.set(SIGNAL_MESH_RUNTIME_CACHE_KEY, state, timeout=SIGNAL_MESH_RUNTIME_TTL_SECONDS)
+    cache.set(_get_cache_key(), state, timeout=SIGNAL_MESH_RUNTIME_TTL_SECONDS)
     return state[channel]
 
 

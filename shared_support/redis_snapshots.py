@@ -18,12 +18,21 @@ from shared_support.performance import get_cache_ttl_with_jitter
 STUDENT_GHOST_PREFIX = "student_ghost:"
 DEFAULT_GHOST_TTL = 86400  # 24 horas (invalidação controlada por signals)
 
+
+def _ghost_key(student_id) -> str:
+    # Sprint 3: inclui schema_name para isolar snapshots por tenant.
+    # student_id nao e unico entre tenants (cada schema tem auto-increment proprio).
+    from django.db import connection
+    tenant = getattr(connection, 'schema_name', None) or 'public'
+    return f"{STUDENT_GHOST_PREFIX}{tenant}:{student_id}"
+
+
 def get_student_snapshot(student_id):
     """
     Tenta buscar o Shadow State do aluno no Redis.
     Retorna None se não existir (indicando Cache Miss).
     """
-    key = f"{STUDENT_GHOST_PREFIX}{student_id}"
+    key = _ghost_key(student_id)
     data = cache.get(key)
     if data:
         try:
@@ -78,7 +87,10 @@ def _build_snapshots_batch(student_ids):
             'has_overdue_payment': student.id in overdue_set,
             'last_updated': now_iso
         }
-        key = f"{STUDENT_GHOST_PREFIX}{student.id}"
+        # Sprint 3: usar _ghost_key (que inclui tenant schema_name) — consistente
+        # com update_student_snapshot/prewarm_student_snapshots que tambem usam
+        # _ghost_key. Sem isso, writer e reader divergem e bate KeyError.
+        key = _ghost_key(student.id)
         payloads[key] = json.dumps(snapshot)
         
     return payloads
@@ -91,7 +103,7 @@ def update_student_snapshot(student_id):
     if not payloads:
         return None
         
-    key = f"{STUDENT_GHOST_PREFIX}{student_id}"
+    key = _ghost_key(student_id)
     json_str = payloads[key]
     cache.set(key, json_str, timeout=get_cache_ttl_with_jitter(DEFAULT_GHOST_TTL))
     return json.loads(json_str)
@@ -107,13 +119,13 @@ def prewarm_student_snapshots(student_ids):
         return
 
     # 1. Busca todos no Redis de uma vez (1 viagem de rede ao invés de N)
-    keys = [f"{STUDENT_GHOST_PREFIX}{sid}" for sid in valid_ids]
+    keys = [_ghost_key(sid) for sid in valid_ids]
     cached_data = cache.get_many(keys)
     
     # 2. Avalia quem caiu no 'Cache Miss'
     missing_ids = []
     for sid in valid_ids:
-        key = f"{STUDENT_GHOST_PREFIX}{sid}"
+        key = _ghost_key(sid)
         if key not in cached_data:
             missing_ids.append(sid)
 
@@ -132,5 +144,5 @@ def invalidate_student_snapshot(student_id):
     """
     Remove o Shadow State. Força o próximo read a ser "Read-Through".
     """
-    key = f"{STUDENT_GHOST_PREFIX}{student_id}"
+    key = _ghost_key(student_id)
     cache.delete(key)

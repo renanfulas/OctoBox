@@ -102,7 +102,7 @@ class StudentIdentityFlowTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('student-app-home'))
-        identity = StudentIdentity.objects.get(student=self.student)
+        identity = StudentIdentity.objects.get(student_id=self.student.id)
         self.assertEqual(identity.box_root_slug, get_box_runtime_slug())
         self.assertEqual(identity.primary_box_root_slug, get_box_runtime_slug())
         self.assertEqual(identity.status, StudentIdentityStatus.ACTIVE)
@@ -121,7 +121,7 @@ class StudentIdentityFlowTests(TestCase):
     @patch('student_identity.views.build_provider')
     def test_existing_google_identity_updates_photo_url_on_new_login(self, build_provider_mock):
         identity = StudentIdentity.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug=get_box_runtime_slug(),
             primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
@@ -132,7 +132,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         StudentBoxMembership.objects.create(
             identity=identity,
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -169,7 +169,7 @@ class StudentIdentityFlowTests(TestCase):
             email='',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=student,
+            student_id=student.id, student_name=student.full_name,
             invited_email='convite@example.com',
             expires_at=timezone.now() + timedelta(days=3),
         )
@@ -192,7 +192,7 @@ class StudentIdentityFlowTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('student-app-home'))
-        identity = StudentIdentity.objects.get(student=student)
+        identity = StudentIdentity.objects.get(student_id=student.id)
         self.assertEqual(identity.email, 'convite@example.com')
         self.assertEqual(identity.primary_box_root_slug, get_box_runtime_slug())
         student.refresh_from_db()
@@ -210,7 +210,7 @@ class StudentIdentityFlowTests(TestCase):
     @patch('student_identity.views.build_provider')
     def test_open_box_invite_redirects_student_to_membership_pending(self, build_provider_mock):
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             invite_type=StudentInvitationType.OPEN_BOX,
             expires_at=timezone.now() + timedelta(days=3),
@@ -234,7 +234,7 @@ class StudentIdentityFlowTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('student-app-membership-pending'))
-        identity = StudentIdentity.objects.get(student=self.student)
+        identity = StudentIdentity.objects.get(student_id=self.student.id)
         membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug=get_box_runtime_slug())
         self.assertEqual(membership.status, StudentBoxMembershipStatus.PENDING_APPROVAL)
         invitation.refresh_from_db()
@@ -289,7 +289,7 @@ class StudentIdentityFlowTests(TestCase):
     @patch('student_identity.views.build_provider')
     def test_imported_lead_invite_redirects_to_reduced_onboarding(self, build_provider_mock):
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='',
             onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
             expires_at=timezone.now() + timedelta(days=3),
@@ -315,7 +315,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertRedirects(response, reverse('student-app-onboarding'))
         pending = self.client.session.get('student_pending_onboarding', {})
         self.assertEqual(pending.get('journey'), StudentOnboardingJourney.IMPORTED_LEAD_INVITE)
-        identity = StudentIdentity.objects.get(student=self.student)
+        identity = StudentIdentity.objects.get(student_id=self.student.id)
         self.assertEqual(identity.provider_subject, 'google-imported-lead-subject')
         self.assertTrue(
             AuditEvent.objects.filter(
@@ -331,7 +331,7 @@ class StudentIdentityFlowTests(TestCase):
     @patch('student_identity.views.build_provider')
     def test_registered_student_invite_redirects_directly_to_app_with_funnel_events(self, build_provider_mock):
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             onboarding_journey=StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
             expires_at=timezone.now() + timedelta(days=3),
@@ -355,7 +355,7 @@ class StudentIdentityFlowTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('student-app-home'))
-        identity = StudentIdentity.objects.get(student=self.student)
+        identity = StudentIdentity.objects.get(student_id=self.student.id)
         self.assertEqual(identity.provider_subject, 'google-registered-student-subject')
         invitation.refresh_from_db()
         self.assertIsNotNone(invitation.accepted_at)
@@ -410,7 +410,7 @@ class StudentIdentityFlowTests(TestCase):
 
     def test_transfer_student_moves_box_root_without_creating_second_house(self):
         identity = StudentIdentity.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug='box-raiz-a',
             provider=StudentIdentityProvider.GOOGLE,
             provider_subject='provider-subject-a',
@@ -436,7 +436,7 @@ class StudentIdentityFlowTests(TestCase):
         identity.refresh_from_db()
         self.assertEqual(identity.box_root_slug, 'box-raiz-b')
         self.assertEqual(identity.primary_box_root_slug, 'box-raiz-b')
-        self.assertEqual(StudentIdentity.objects.filter(student=self.student).count(), 1)
+        self.assertEqual(StudentIdentity.objects.filter(student_id=self.student.id).count(), 1)
         old_membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug='box-raiz-a')
         new_membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug='box-raiz-b')
         self.assertEqual(old_membership.status, StudentBoxMembershipStatus.INACTIVE)
@@ -477,7 +477,7 @@ class StudentIdentityFlowTests(TestCase):
 
     def test_public_login_hub_preserves_invite_token_in_student_oauth_buttons(self):
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=3),
         )
@@ -499,7 +499,7 @@ class StudentIdentityFlowTests(TestCase):
 
     def test_invite_landing_points_student_to_student_login_with_invite_token(self):
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=3),
         )
@@ -513,7 +513,7 @@ class StudentIdentityFlowTests(TestCase):
 
     def test_invite_landing_shows_expired_message(self):
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() - timedelta(minutes=5),
         )
@@ -550,7 +550,7 @@ class StudentIdentityFlowTests(TestCase):
 
     def test_student_login_shows_invite_context_label(self):
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=3),
         )
@@ -611,7 +611,7 @@ class StudentIdentityFlowTests(TestCase):
     def test_landing_p95_latency_under_200ms_with_async_audit(self):
         import time
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=3),
         )
@@ -678,7 +678,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(home_response.status_code, 200)
         self.assertContains(home_response, 'Modo atual: Grade')
         self.assertContains(home_response, 'Grade')
-        membership = StudentBoxMembership.objects.get(student=self.student, box_root_slug=get_box_runtime_slug())
+        membership = StudentBoxMembership.objects.get(student_id=self.student.id, box_root_slug=get_box_runtime_slug())
         self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
 
     @override_settings(
@@ -703,7 +703,7 @@ class StudentIdentityFlowTests(TestCase):
             status=AttendanceStatus.BOOKED,
         )
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug=get_box_runtime_slug(),
             invite_type=StudentInvitationType.INDIVIDUAL,
             onboarding_journey=StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
@@ -785,7 +785,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(pending_response.status_code, 200)
         self.assertContains(pending_response, 'aguardando')
 
-        membership = StudentBoxMembership.objects.get(student=self.student, box_root_slug=get_box_runtime_slug())
+        membership = StudentBoxMembership.objects.get(student_id=self.student.id, box_root_slug=get_box_runtime_slug())
         self.assertEqual(membership.status, StudentBoxMembershipStatus.PENDING_APPROVAL)
 
         approve_response = manager_client.post(
@@ -836,7 +836,7 @@ class StudentIdentityFlowTests(TestCase):
             password='Senha@123456',
         )
         previous_invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=5),
         )
@@ -856,7 +856,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(result.invitation.invited_email, self.student.email)
         previous_invitation.refresh_from_db()
         self.assertTrue(previous_invitation.is_expired)
-        self.assertEqual(StudentAppInvitation.objects.filter(student=self.student).count(), 2)
+        self.assertEqual(StudentAppInvitation.objects.filter(student_id=self.student.id).count(), 2)
 
     @override_settings(
         STUDENT_OPEN_BOX_INVITE_LIMIT_PER_WINDOW=1,
@@ -869,7 +869,7 @@ class StudentIdentityFlowTests(TestCase):
             password='Senha@123456',
         )
         StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             invite_type=StudentInvitationType.OPEN_BOX,
             box_root_slug=get_box_runtime_slug(),
@@ -897,7 +897,7 @@ class StudentIdentityFlowTests(TestCase):
     )
     def test_invite_landing_rate_limit_blocks_second_open_in_window(self):
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=3),
         )
@@ -1087,7 +1087,7 @@ class StudentIdentityFlowTests(TestCase):
             password='Senha@123456',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=5),
             created_by=owner,
@@ -1121,7 +1121,7 @@ class StudentIdentityFlowTests(TestCase):
             password='Senha@123456',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=5),
             created_by=owner,
@@ -1156,7 +1156,7 @@ class StudentIdentityFlowTests(TestCase):
             password='Senha@123456',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=5),
             created_by=owner,
@@ -1189,7 +1189,7 @@ class StudentIdentityFlowTests(TestCase):
             password='Senha@123456',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=5),
             created_by=owner,
@@ -1226,7 +1226,7 @@ class StudentIdentityFlowTests(TestCase):
             password='Senha@123456',
         )
         identity = StudentIdentity.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug=get_box_runtime_slug(),
             primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
@@ -1235,7 +1235,7 @@ class StudentIdentityFlowTests(TestCase):
             status=StudentIdentityStatus.ACTIVE,
         )
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             invite_type=StudentInvitationType.OPEN_BOX,
             box_root_slug=get_box_runtime_slug(),
@@ -1244,7 +1244,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.PENDING_APPROVAL,
             created_from_invite=invitation,
@@ -1272,13 +1272,13 @@ class StudentIdentityFlowTests(TestCase):
             role_name='Coach',
         )
         invitation = StudentAppInvitation.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=5),
         )
         StudentBoxMembership.objects.create(
             identity=StudentIdentity.objects.create(
-                student=self.student,
+                student_id=self.student.id,
                 box_root_slug=get_box_runtime_slug(),
                 primary_box_root_slug=get_box_runtime_slug(),
                 provider=StudentIdentityProvider.GOOGLE,
@@ -1286,7 +1286,7 @@ class StudentIdentityFlowTests(TestCase):
                 email='aluno@example.com',
                 status=StudentIdentityStatus.ACTIVE,
             ),
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.PENDING_APPROVAL,
             created_from_invite=invitation,
@@ -1333,7 +1333,7 @@ class StudentIdentityFlowTests(TestCase):
             role_name='Recepcao',
         )
         identity = StudentIdentity.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug=get_box_runtime_slug(),
             primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
@@ -1343,7 +1343,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1379,7 +1379,7 @@ class StudentIdentityFlowTests(TestCase):
             role_name='Recepcao',
         )
         identity = StudentIdentity.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug=get_box_runtime_slug(),
             primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
@@ -1389,7 +1389,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1429,7 +1429,7 @@ class StudentIdentityFlowTests(TestCase):
             role_name='Manager',
         )
         identity = StudentIdentity.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug=get_box_runtime_slug(),
             primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
@@ -1439,7 +1439,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1466,7 +1466,7 @@ class StudentIdentityFlowTests(TestCase):
             password='Senha@123456',
         )
         identity = StudentIdentity.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug=get_box_runtime_slug(),
             primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
@@ -1476,7 +1476,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1507,7 +1507,7 @@ class StudentIdentityFlowTests(TestCase):
             role_name='Recepcao',
         )
         identity = StudentIdentity.objects.create(
-            student=self.student,
+            student_id=self.student.id, student_name=self.student.full_name,
             box_root_slug=get_box_runtime_slug(),
             primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
@@ -1517,7 +1517,7 @@ class StudentIdentityFlowTests(TestCase):
         )
         membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1545,9 +1545,9 @@ class StudentIdentityFlowTests(TestCase):
             password='Senha@123456',
         )
         identity = StudentIdentity.objects.create(
-            student=self.student,
-            box_root_slug='control',
-            primary_box_root_slug='control',
+            student_id=self.student.id, student_name=self.student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
             provider=StudentIdentityProvider.GOOGLE,
             provider_subject='google-revoke-fallback',
             email='aluno@example.com',
@@ -1555,13 +1555,13 @@ class StudentIdentityFlowTests(TestCase):
         )
         target_membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug=get_box_runtime_slug(),
             status=StudentBoxMembershipStatus.ACTIVE,
         )
         fallback_membership = StudentBoxMembership.objects.create(
             identity=identity,
-            student=self.student,
+            student_id=self.student.id,
             box_root_slug='box-secundario',
             status=StudentBoxMembershipStatus.ACTIVE,
         )
@@ -1591,7 +1591,7 @@ class StudentIdentityFlowTests(TestCase):
     def test_resend_webhook_marks_delivery_as_delivered(self):
         delivery = StudentInvitationDelivery.objects.create(
             invitation=StudentAppInvitation.objects.create(
-                student=self.student,
+                student_id=self.student.id, student_name=self.student.full_name,
                 invited_email='aluno@example.com',
                 expires_at=timezone.now() + timedelta(days=5),
             ),
@@ -1641,7 +1641,7 @@ class StudentIdentityFlowTests(TestCase):
     def test_resend_webhook_marks_delivery_as_bounced(self):
         delivery = StudentInvitationDelivery.objects.create(
             invitation=StudentAppInvitation.objects.create(
-                student=self.student,
+                student_id=self.student.id, student_name=self.student.full_name,
                 invited_email='aluno@example.com',
                 expires_at=timezone.now() + timedelta(days=5),
             ),
@@ -1713,7 +1713,7 @@ class StudentIdentityFlowTests(TestCase):
     def test_resend_webhook_ignores_duplicate_event_id(self):
         StudentInvitationDelivery.objects.create(
             invitation=StudentAppInvitation.objects.create(
-                student=self.student,
+                student_id=self.student.id, student_name=self.student.full_name,
                 invited_email='aluno@example.com',
                 expires_at=timezone.now() + timedelta(days=5),
             ),
