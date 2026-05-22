@@ -1,0 +1,44 @@
+name: Fetch VPS Logs (ops one-off)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  fetch-logs:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Fetch gunicorn logs from VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          timeout: 2m
+          command_timeout: 5m
+          script: |
+            echo "=== STATUS DO SERVIÇO ==="
+            systemctl status octobox-gunicorn --no-pager -l || true
+
+            echo ""
+            echo "=== LOGS GUNICORN (últimas 200 linhas) ==="
+            journalctl -u octobox-gunicorn -n 200 --no-pager 2>/dev/null || true
+
+            echo ""
+            echo "=== ERROS RECENTES (últimas 1h) ==="
+            journalctl -u octobox-gunicorn --since "1 hour ago" --no-pager -p err 2>/dev/null || true
+
+            echo ""
+            echo "=== DJANGO ERROR LOG (se existir) ==="
+            if [ -f /srv/octobox/app/logs/error.log ]; then
+              tail -100 /srv/octobox/app/logs/error.log
+            elif [ -f /var/log/octobox/error.log ]; then
+              tail -100 /var/log/octobox/error.log
+            else
+              echo "(nenhum arquivo de log Django encontrado)"
+            fi
