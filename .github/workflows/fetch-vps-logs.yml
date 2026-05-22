@@ -22,14 +22,25 @@ jobs:
           timeout: 2m
           command_timeout: 5m
           script: |
-            echo "=== TRACEBACKS PYTHON ==="
-            journalctl -u octobox-gunicorn --no-pager -a 2>/dev/null \
-              | grep -A 50 "Traceback (most recent call last)" \
-              | tail -500 || echo "(nenhum traceback encontrado)"
+            echo "=== JANELA OAUTH 500 (13:34-13:38 BRT = 16:34-16:38 UTC) ==="
+            journalctl -u octobox-gunicorn \
+              --since "2026-05-22 16:34:00" \
+              --until "2026-05-22 16:38:00" \
+              --no-pager -o cat 2>/dev/null || echo "(sem logs nessa janela UTC)"
 
             echo ""
-            echo "=== STDERR WORKER SEM ACCESS LOG ==="
-            journalctl -u octobox-gunicorn -n 500 --no-pager -o cat 2>/dev/null \
-              | grep -v '"[A-Z]* .* HTTP/1\.' \
-              | grep -v "^$" \
-              | tail -300 || true
+            echo "=== JANELA OAUTH 500 (13:34-13:38 BRT = sem offset) ==="
+            journalctl -u octobox-gunicorn \
+              --since "2026-05-22 13:34:00" \
+              --until "2026-05-22 13:38:00" \
+              --no-pager -o cat 2>/dev/null || echo "(sem logs nessa janela local)"
+
+            echo ""
+            echo "=== TIMEZONE DO SERVIDOR ==="
+            timedatectl show --no-pager 2>/dev/null || date
+
+            echo ""
+            echo "=== TRACEBACKS RECENTES (ultimos 2000 linhas) ==="
+            journalctl -u octobox-gunicorn -n 2000 --no-pager -o cat 2>/dev/null \
+              | grep -A 40 "Traceback (most recent call last)" \
+              | tail -600 || echo "(nenhum traceback)"
