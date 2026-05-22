@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: Production
     steps:
-      - name: Fetch gunicorn logs from VPS
+      - name: Fetch gunicorn error logs from VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -22,23 +22,14 @@ jobs:
           timeout: 2m
           command_timeout: 5m
           script: |
-            echo "=== STATUS DO SERVIÇO ==="
-            systemctl status octobox-gunicorn --no-pager -l || true
+            echo "=== TRACEBACKS PYTHON ==="
+            journalctl -u octobox-gunicorn --no-pager -a 2>/dev/null \
+              | grep -A 50 "Traceback (most recent call last)" \
+              | tail -500 || echo "(nenhum traceback encontrado)"
 
             echo ""
-            echo "=== LOGS GUNICORN (últimas 200 linhas) ==="
-            journalctl -u octobox-gunicorn -n 200 --no-pager 2>/dev/null || true
-
-            echo ""
-            echo "=== ERROS RECENTES (últimas 1h) ==="
-            journalctl -u octobox-gunicorn --since "1 hour ago" --no-pager -p err 2>/dev/null || true
-
-            echo ""
-            echo "=== DJANGO ERROR LOG (se existir) ==="
-            if [ -f /srv/octobox/app/logs/error.log ]; then
-              tail -100 /srv/octobox/app/logs/error.log
-            elif [ -f /var/log/octobox/error.log ]; then
-              tail -100 /var/log/octobox/error.log
-            else
-              echo "(nenhum arquivo de log Django encontrado)"
-            fi
+            echo "=== STDERR WORKER SEM ACCESS LOG ==="
+            journalctl -u octobox-gunicorn -n 500 --no-pager -o cat 2>/dev/null \
+              | grep -v '"[A-Z]* .* HTTP/1\.' \
+              | grep -v "^$" \
+              | tail -300 || true
