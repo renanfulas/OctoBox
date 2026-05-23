@@ -1,0 +1,155 @@
+name: Sprint 5 — Prereq Fix student_identity Drift
+
+# Pre-requisito do Sprint 5: corrige o drift entre o schema antigo (Sprint 2 WIP)
+# aplicado em producao e o novo 0001_initial squashed que vive no main.
+#
+# O QUE FAZ:
+# 1. pg_dump de seguranca
+# 2. DROP TABLE student_identity_* (7 tabelas) em public
+# 3. DELETE FROM django_migrations WHERE app='student_identity'
+# 4. manage.py migrate student_identity (aplica novo 0001_initial)
+# 5. Verifica schema novo (incluindo coluna student_name)
+#
+# PERDA DE DADOS:
+# Os 2 StudentIdentity records existentes (com box_root_slug='octoboxfit-production')
+# serao apagados. Eles se reconstroem no proximo OAuth login dos usuarios.
+#
+# DECISAO BASE:
+# docs/plans/schema-per-tenant-migration-plan.md §3.5: "banco de dev/pilot e descartavel".
+# Esta workflow honra essa decisao tardiamente.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Digite "RESET_IDENTITY" para confirmar o reset destrutivo.'
+        required: true
+        default: 'CANCELAR'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  fix-drift:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Validar input de confirmacao
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "RESET_IDENTITY" ]; then
+            echo "Confirmacao ausente. Esperado 'RESET_IDENTITY', recebido '${{ github.event.inputs.confirm }}'."
+            exit 1
+          fi
+          echo "Confirmacao OK. Prosseguindo com reset destrutivo de student_identity_*."
+
+      - name: Backup + drop + recreate via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          timeout: 5m
+          command_timeout: 15m
+          script: |
+            set -e
+            ENV=/srv/octobox/shared/octobox.env
+            APP=/srv/octobox/app
+            VENV=/srv/octobox/venv
+            BACKUP_DIR=/srv/octobox/backups/pre-tenant
+            set -a && source "$ENV" && set +a
+            DB="$DATABASE_URL"
+
+            echo "============================================"
+            echo "PREREQ - FIX STUDENT_IDENTITY DRIFT"
+            echo "============================================"
+            echo ""
+
+            mkdir -p "$BACKUP_DIR"
+            TS=$(date +%Y%m%d_%H%M%S)
+            DUMP="$BACKUP_DIR/${TS}_pre-identity-reset.dump"
+
+            echo "=== 1. PG_DUMP COMPLETO (seguranca antes do drop) ==="
+            pg_dump "$DB" --format=custom --compress=9 --file="$DUMP"
+            ls -lh "$DUMP"
+            DUMP_SIZE=$(stat -c%s "$DUMP")
+            if [ "$DUMP_SIZE" -lt 10000 ]; then
+              echo "ERRO: dump suspeito. Abortando."
+              exit 1
+            fi
+            echo "Backup OK: $DUMP"
+            echo ""
+
+            echo "=== 2. ESTADO ATUAL (antes) ==="
+            echo "Tabelas student_identity_* em public:"
+            psql "$DB" -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'student_identity_%' ORDER BY table_name"
+            echo ""
+            echo "Rows em student_identity_studentidentity:"
+            psql "$DB" -t -A -c "SELECT COUNT(*) FROM student_identity_studentidentity"
+            echo ""
+            echo "Migrations aplicadas student_identity:"
+            psql "$DB" -t -A -c "SELECT name FROM django_migrations WHERE app='student_identity' ORDER BY id"
+            echo ""
+
+            echo "=== 3. DROP TABLES (CASCADE) ==="
+            psql "$DB" <<'SQL'
+            BEGIN;
+            DROP TABLE IF EXISTS public.student_identity_studentinvitationdelivery CASCADE;
+            DROP TABLE IF EXISTS public.student_identity_studentpushsubscription CASCADE;
+            DROP TABLE IF EXISTS public.student_identity_studenttransfer CASCADE;
+            DROP TABLE IF EXISTS public.student_identity_studentboxinvitelink CASCADE;
+            DROP TABLE IF EXISTS public.student_identity_studentappinvitation CASCADE;
+            DROP TABLE IF EXISTS public.student_identity_studentboxmembership CASCADE;
+            DROP TABLE IF EXISTS public.student_identity_studentidentity CASCADE;
+            COMMIT;
+            SQL
+            echo ""
+
+            echo "=== 4. LIMPAR django_migrations ==="
+            psql "$DB" -c "DELETE FROM django_migrations WHERE app='student_identity'"
+            echo ""
+
+            echo "=== 5. CONFIRMAR LIMPEZA ==="
+            REMAINING_T=$(psql "$DB" -t -A -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'student_identity_%'")
+            REMAINING_M=$(psql "$DB" -t -A -c "SELECT COUNT(*) FROM django_migrations WHERE app='student_identity'")
+            echo "Tabelas restantes: $REMAINING_T (esperado 0)"
+            echo "Migration rows restantes: $REMAINING_M (esperado 0)"
+            if [ "$REMAINING_T" != "0" ] || [ "$REMAINING_M" != "0" ]; then
+              echo "ERRO: limpeza incompleta. Backup em $DUMP."
+              exit 1
+            fi
+            echo ""
+
+            echo "=== 6. APLICAR NOVO 0001_initial ==="
+            cd "$APP"
+            "$VENV/bin/python" manage.py migrate student_identity --verbosity 2
+            echo ""
+
+            echo "=== 7. CONFIRMAR SCHEMA NOVO ==="
+            echo "Tabelas criadas:"
+            psql "$DB" -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'student_identity_%' ORDER BY table_name"
+            echo ""
+            echo "Coluna student_name na studentidentity:"
+            psql "$DB" -t -A -c "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema='public' AND table_name='student_identity_studentidentity' AND column_name='student_name'"
+            echo ""
+            echo "Migrations aplicadas (esperado: apenas 0001_initial):"
+            psql "$DB" -c "SELECT name, applied FROM django_migrations WHERE app='student_identity' ORDER BY id"
+            echo ""
+
+            echo "=== 8. SMOKE QUERY (deve passar agora) ==="
+            psql "$DB" -c "SELECT id, student_id, student_name, email, box_root_slug, status FROM student_identity_studentidentity LIMIT 5" 2>&1 || echo "ERRO ainda presente!"
+            echo ""
+
+            echo "=== 9. RESTART GUNICORN ==="
+            sudo systemctl restart octobox-gunicorn || systemctl restart octobox-gunicorn || echo "AVISO: nao foi possivel restart. Reinicie manualmente."
+            sleep 3
+            curl -sS -o /dev/null -w "Healthcheck: HTTP=%{http_code}\n" https://app.octoboxfit.com.br/api/v1/health/ || echo "Healthcheck falhou"
+            echo ""
+
+            echo "============================================"
+            echo "PREREQ CONCLUIDO."
+            echo "  Backup: $DUMP"
+            echo "  student_identity schema agora bate com main."
+            echo "  Proximo: re-rodar Stage 0 para confirmar zero drift."
+            echo "============================================"
