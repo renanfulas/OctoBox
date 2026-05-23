@@ -1,0 +1,99 @@
+name: Sprint 5 — Stage 0 Discovery (read-only)
+
+# Stage 0 do rollout multi-tenant: inspeciona a VPS antes de qualquer escrita.
+# Lista candidatos a Owner, verifica migracoes pendentes, valida pre-condicoes
+# (pg_dump disponivel, disco livre, comandos management presentes).
+# NAO escreve nada. NAO provisiona. NAO migra. Apenas le.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Discovery read-only via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          timeout: 2m
+          command_timeout: 5m
+          script: |
+            set -e
+            ENV=/srv/octobox/shared/octobox.env
+            APP=/srv/octobox/app
+            VENV=/srv/octobox/venv
+            set -a && source "$ENV" && set +a
+            DB="$DATABASE_URL"
+
+            echo "============================================"
+            echo "STAGE 0 - DISCOVERY (read-only)"
+            echo "============================================"
+            echo ""
+
+            echo "=== 1. CANDIDATOS A OWNER (auth_user) ==="
+            psql "$DB" -c "SELECT id, email, is_superuser, is_active, date_joined FROM auth_user ORDER BY is_superuser DESC, id LIMIT 20" 2>&1 || echo "ERRO ao listar auth_user"
+            echo ""
+
+            echo "=== 2. MIGRATIONS APLICADAS (overview) ==="
+            psql "$DB" -t -A -c "SELECT app, COUNT(*) FROM django_migrations GROUP BY app ORDER BY app"
+            echo ""
+
+            echo "=== 3. STUDENT_IDENTITY MIGRATIONS (detalhe) ==="
+            psql "$DB" -t -A -c "SELECT name FROM django_migrations WHERE app='student_identity' ORDER BY id"
+            echo ""
+
+            echo "=== 4. CONTROL MIGRATIONS (precisa estar aplicado) ==="
+            psql "$DB" -t -A -c "SELECT name FROM django_migrations WHERE app='control' ORDER BY id" 2>&1 || echo "App 'control' sem migracoes aplicadas"
+            echo ""
+
+            echo "=== 5. MIGRATIONS PENDENTES (showmigrations --plan) ==="
+            cd "$APP"
+            "$VENV/bin/python" manage.py showmigrations --plan 2>&1 | grep -E '^\[ \]' | head -30 || echo "Sem pendentes ou comando falhou"
+            echo ""
+
+            echo "=== 6. COMANDOS MANAGEMENT DISPONIVEIS ==="
+            for cmd in provision_box migrate_existing_data_to_pilot smoke_test_tenant archive_box; do
+              if "$VENV/bin/python" manage.py help "$cmd" >/dev/null 2>&1; then
+                echo "  OK   $cmd"
+              else
+                echo "  MISS $cmd  <-- AUSENTE NO DEPLOY"
+              fi
+            done
+            echo ""
+
+            echo "=== 7. STUDENT_IDENTITY EXISTENTE (box_root_slug) ==="
+            psql "$DB" -c "SELECT id, student_id, student_name, email, box_root_slug, status FROM student_identity_studentidentity ORDER BY id" 2>&1 || echo "ERRO"
+            echo ""
+
+            echo "=== 8. PG_DUMP DISPONIVEL E VERSAO ==="
+            which pg_dump && pg_dump --version || echo "pg_dump NAO DISPONIVEL"
+            echo ""
+
+            echo "=== 9. ESPACO EM DISCO ==="
+            df -h /srv /var 2>&1 | head -10
+            echo ""
+
+            echo "=== 10. DIRETORIO DE BACKUP ==="
+            ls -ld /srv/octobox/backups 2>&1 || echo "Diretorio /srv/octobox/backups NAO EXISTE"
+            echo ""
+
+            echo "=== 11. CONFIRMAR DJANGO-TENANTS NO INSTALLED_APPS ==="
+            "$VENV/bin/python" manage.py shell -c "from django.conf import settings; print('django_tenants' in settings.INSTALLED_APPS)" 2>&1 || echo "Falha ao inspecionar settings"
+            echo ""
+
+            echo "=== 12. STATUS DOS BOXES (control_box) ==="
+            psql "$DB" -c "SELECT id, slug, schema_name, status, display_name FROM control_box ORDER BY id" 2>&1 || echo "Tabela control_box ausente ou sem dados"
+            echo ""
+
+            echo "============================================"
+            echo "STAGE 0 CONCLUIDO. Revise antes do Stage 1."
+            echo "============================================"

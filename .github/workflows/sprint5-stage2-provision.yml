@@ -1,0 +1,132 @@
+name: Sprint 5 — Stage 2 Provision Box
+
+# Stage 2: provisiona o Box octoboxfit-production na VPS.
+# Cria schema box_octoboxfit-production, aplica migracoes do tenant,
+# bootstrap_roles, seed_plans. Depois roda migrate_existing_data --dry-run
+# para mostrar o plano de copia.
+# NAO copia dados ainda. Stage 3 faz isso.
+
+on:
+  workflow_dispatch:
+    inputs:
+      owner_email:
+        description: 'Email do User Owner (precisa existir em auth_user na VPS).'
+        required: true
+      slug:
+        description: 'Slug do box (default: octoboxfit-production).'
+        required: false
+        default: 'octoboxfit-production'
+      display_name:
+        description: 'Display name do box.'
+        required: false
+        default: 'OctoBox Fit'
+      confirm:
+        description: 'Digite "PROVISIONAR" para confirmar.'
+        required: true
+        default: 'CANCELAR'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  stage2:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Validar input de confirmacao
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "PROVISIONAR" ]; then
+            echo "Confirmacao ausente. Esperado 'PROVISIONAR', recebido '${{ github.event.inputs.confirm }}'."
+            exit 1
+          fi
+          if [ -z "${{ github.event.inputs.owner_email }}" ]; then
+            echo "owner_email vazio."
+            exit 1
+          fi
+          echo "Confirmacao OK. Provisionando slug=${{ github.event.inputs.slug }} owner=${{ github.event.inputs.owner_email }}"
+
+      - name: Provision Box via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          OWNER_EMAIL: ${{ github.event.inputs.owner_email }}
+          SLUG: ${{ github.event.inputs.slug }}
+          DISPLAY_NAME: ${{ github.event.inputs.display_name }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          envs: OWNER_EMAIL,SLUG,DISPLAY_NAME
+          timeout: 5m
+          command_timeout: 15m
+          script: |
+            set -e
+            ENV=/srv/octobox/shared/octobox.env
+            APP=/srv/octobox/app
+            VENV=/srv/octobox/venv
+            set -a && source "$ENV" && set +a
+            DB="$DATABASE_URL"
+
+            echo "============================================"
+            echo "STAGE 2 - PROVISION BOX"
+            echo "  slug         : $SLUG"
+            echo "  schema       : box_$SLUG"
+            echo "  owner_email  : $OWNER_EMAIL"
+            echo "  display_name : $DISPLAY_NAME"
+            echo "============================================"
+            echo ""
+
+            cd "$APP"
+
+            echo "=== 1. VALIDAR OWNER EMAIL EXISTE ==="
+            FOUND=$(psql "$DB" -t -A -c "SELECT id FROM auth_user WHERE email = '$OWNER_EMAIL'")
+            if [ -z "$FOUND" ]; then
+              echo "ERRO: Nenhum auth_user com email='$OWNER_EMAIL'."
+              echo "Rode Stage 0 para listar candidatos."
+              exit 1
+            fi
+            echo "OK: owner user id=$FOUND"
+            echo ""
+
+            echo "=== 2. PROVISION_BOX ==="
+            "$VENV/bin/python" manage.py provision_box \
+              --slug="$SLUG" \
+              --owner-email="$OWNER_EMAIL" \
+              --display-name="$DISPLAY_NAME" \
+              --plan=monthly
+            echo ""
+
+            echo "=== 3. VERIFICAR SCHEMA CRIADO ==="
+            psql "$DB" -t -A -c "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'box_$SLUG'"
+            TABLES=$(psql "$DB" -t -A -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'box_$SLUG' AND table_type='BASE TABLE'")
+            echo "Tabelas em box_$SLUG: $TABLES"
+            if [ "$TABLES" -lt 20 ]; then
+              echo "AVISO: esperado >=20 tabelas, obtido $TABLES."
+            fi
+            echo ""
+
+            echo "=== 4. CONTROL_BOX REGISTRADO ==="
+            psql "$DB" -c "SELECT id, slug, schema_name, status, display_name FROM control_box WHERE slug = '$SLUG'"
+            echo ""
+
+            echo "=== 5. CONTROL_MEMBERSHIP DO OWNER ==="
+            psql "$DB" -c "SELECT m.user_id, u.email, m.box_id, m.role, m.is_primary_box FROM control_membership m JOIN auth_user u ON m.user_id=u.id JOIN control_box b ON m.box_id=b.id WHERE b.slug='$SLUG'"
+            echo ""
+
+            echo "=== 6. BOXPROVISIONINGEVENT (steps) ==="
+            psql "$DB" -c "SELECT step, status, created_at FROM control_boxprovisioningevent WHERE box_id=(SELECT id FROM control_box WHERE slug='$SLUG') ORDER BY id"
+            echo ""
+
+            echo "=== 7. DRY-RUN DA MIGRACAO DE DADOS ==="
+            "$VENV/bin/python" manage.py migrate_existing_data_to_pilot \
+              --slug="$SLUG" \
+              --dry-run
+            echo ""
+
+            echo "============================================"
+            echo "STAGE 2 CONCLUIDO."
+            echo "  Box provisionado: $SLUG"
+            echo "  Dry-run mostrou plano de migracao."
+            echo "  Proximo: Stage 3 (migrate REAL + smoke)"
+            echo "============================================"

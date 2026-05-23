@@ -1,0 +1,106 @@
+name: Sprint 5 — Stage 1 Backup + Shared Migrations
+
+# Stage 1: faz pg_dump completo e aplica migrate_schemas --shared.
+# Idempotente. Nao provisiona Box. Nao mexe em dados de dominio.
+# So pode rodar apos Stage 0 ser revisado.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Digite "EXECUTAR" para confirmar o backup + migrate shared.'
+        required: true
+        default: 'CANCELAR'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  stage1:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Validar input de confirmacao
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "EXECUTAR" ]; then
+            echo "Confirmacao ausente. Esperado 'EXECUTAR', recebido '${{ github.event.inputs.confirm }}'."
+            exit 1
+          fi
+          echo "Confirmacao OK. Prosseguindo com Stage 1."
+
+      - name: Backup + migrate_schemas --shared via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          timeout: 5m
+          command_timeout: 20m
+          script: |
+            set -e
+            ENV=/srv/octobox/shared/octobox.env
+            APP=/srv/octobox/app
+            VENV=/srv/octobox/venv
+            BACKUP_DIR=/srv/octobox/backups/pre-tenant
+            set -a && source "$ENV" && set +a
+            DB="$DATABASE_URL"
+
+            echo "============================================"
+            echo "STAGE 1 - BACKUP + MIGRATE_SCHEMAS --SHARED"
+            echo "============================================"
+            echo ""
+
+            mkdir -p "$BACKUP_DIR"
+            TS=$(date +%Y%m%d_%H%M%S)
+            DUMP="$BACKUP_DIR/${TS}_pre-tenant_full.dump"
+
+            echo "=== 1. PG_DUMP COMPLETO ==="
+            echo "  Destino: $DUMP"
+            pg_dump "$DB" \
+              --format=custom \
+              --compress=9 \
+              --file="$DUMP"
+            ls -lh "$DUMP"
+            echo ""
+
+            echo "=== 2. VERIFICAR INTEGRIDADE DO DUMP ==="
+            pg_restore --list "$DUMP" | head -5
+            DUMP_SIZE=$(stat -c%s "$DUMP")
+            if [ "$DUMP_SIZE" -lt 10000 ]; then
+              echo "ERRO: dump suspeito (menos de 10KB). Abortando."
+              exit 1
+            fi
+            echo "Dump tamanho OK: $DUMP_SIZE bytes."
+            echo ""
+
+            echo "=== 3. SHOWMIGRATIONS ANTES ==="
+            cd "$APP"
+            "$VENV/bin/python" manage.py showmigrations control 2>&1 | head -20 || echo "control: app sem migracoes ou ausente"
+            echo ""
+
+            echo "=== 4. MIGRATE_SCHEMAS --SHARED ==="
+            "$VENV/bin/python" manage.py migrate_schemas --shared --verbosity 2 2>&1 || {
+              echo "migrate_schemas --shared FALHOU. Backup preservado em: $DUMP"
+              exit 1
+            }
+            echo ""
+
+            echo "=== 5. SHOWMIGRATIONS DEPOIS ==="
+            "$VENV/bin/python" manage.py showmigrations control 2>&1 | head -20
+            echo ""
+
+            echo "=== 6. TABELAS CONTROL_* CRIADAS EM PUBLIC ==="
+            psql "$DB" -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'control_%' ORDER BY table_name"
+            echo ""
+
+            echo "=== 7. CONTROL_BOX VAZIO ESPERADO ==="
+            psql "$DB" -c "SELECT COUNT(*) AS box_count FROM control_box"
+            echo ""
+
+            echo "============================================"
+            echo "STAGE 1 CONCLUIDO."
+            echo "  Backup: $DUMP"
+            echo "  Proximo: Stage 2 (provision_box)"
+            echo "============================================"

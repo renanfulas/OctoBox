@@ -1,0 +1,117 @@
+name: Sprint 5 — Stage 3 Migrate Data + Smoke Test
+
+# Stage 3: copia dados boxcore_* de public para box_<slug>, valida contagens
+# e roda smoke_test_tenant. Idempotente via ON CONFLICT DO NOTHING.
+# NAO usa --truncate-source. Os dados de public ficam intactos.
+# So pode rodar apos Stage 2 ter provisionado o schema.
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Slug do box (precisa bater com Stage 2).'
+        required: true
+        default: 'octoboxfit-production'
+      confirm:
+        description: 'Digite "MIGRAR" para confirmar.'
+        required: true
+        default: 'CANCELAR'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  stage3:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Validar input de confirmacao
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "MIGRAR" ]; then
+            echo "Confirmacao ausente. Esperado 'MIGRAR', recebido '${{ github.event.inputs.confirm }}'."
+            exit 1
+          fi
+          if [ -z "${{ github.event.inputs.slug }}" ]; then
+            echo "slug vazio."
+            exit 1
+          fi
+          echo "Confirmacao OK. Migrando dados para box_${{ github.event.inputs.slug }}"
+
+      - name: Migrate data + smoke via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          SLUG: ${{ github.event.inputs.slug }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          envs: SLUG
+          timeout: 5m
+          command_timeout: 30m
+          script: |
+            set -e
+            ENV=/srv/octobox/shared/octobox.env
+            APP=/srv/octobox/app
+            VENV=/srv/octobox/venv
+            set -a && source "$ENV" && set +a
+            DB="$DATABASE_URL"
+
+            echo "============================================"
+            echo "STAGE 3 - MIGRATE DATA + SMOKE TEST"
+            echo "  slug   : $SLUG"
+            echo "  schema : box_$SLUG"
+            echo "============================================"
+            echo ""
+
+            cd "$APP"
+
+            echo "=== 1. VALIDAR QUE SCHEMA EXISTE ==="
+            EXISTS=$(psql "$DB" -t -A -c "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'box_$SLUG'")
+            if [ -z "$EXISTS" ]; then
+              echo "ERRO: Schema box_$SLUG nao existe. Rode Stage 2 primeiro."
+              exit 1
+            fi
+            echo "OK: schema box_$SLUG presente."
+            echo ""
+
+            echo "=== 2. CONTAGEM DE LINHAS EM PUBLIC.BOXCORE_* (antes) ==="
+            psql "$DB" -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'boxcore_%' ORDER BY table_name" | while read t; do
+              [ -z "$t" ] && continue
+              C=$(psql "$DB" -t -A -c "SELECT COUNT(*) FROM public.\"$t\"")
+              printf "  public.%-40s %s\n" "$t" "$C"
+            done
+            echo ""
+
+            echo "=== 3. MIGRATE_EXISTING_DATA_TO_PILOT (REAL) ==="
+            "$VENV/bin/python" manage.py migrate_existing_data_to_pilot --slug="$SLUG"
+            echo ""
+
+            echo "=== 4. CONTAGEM DE LINHAS EM BOX_$SLUG.BOXCORE_* (depois) ==="
+            psql "$DB" -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema='box_$SLUG' AND table_name LIKE 'boxcore_%' ORDER BY table_name" | while read t; do
+              [ -z "$t" ] && continue
+              C=$(psql "$DB" -t -A -c "SELECT COUNT(*) FROM \"box_$SLUG\".\"$t\"")
+              printf "  box_$SLUG.%-40s %s\n" "$t" "$C"
+            done
+            echo ""
+
+            echo "=== 5. SMOKE TEST DO TENANT ==="
+            "$VENV/bin/python" manage.py smoke_test_tenant --slug="$SLUG" --verbose
+            echo ""
+
+            echo "=== 6. HEALTHCHECK PUBLICO ==="
+            curl -sS -o /tmp/health.json -w "HTTP=%{http_code}\n" https://app.octoboxfit.com.br/api/v1/health/ || true
+            cat /tmp/health.json 2>/dev/null || echo "Sem resposta"
+            echo ""
+
+            echo "=== 7. STUDENT_IDENTITY ALINHADO AO BOX ==="
+            psql "$DB" -c "SELECT id, student_id, email, box_root_slug, status FROM student_identity_studentidentity WHERE box_root_slug = '$SLUG' ORDER BY id"
+            echo ""
+
+            echo "============================================"
+            echo "STAGE 3 CONCLUIDO."
+            echo "  Dados migrados para box_$SLUG."
+            echo "  Dados de public PRESERVADOS (sem --truncate-source)."
+            echo "  Proximo: 24h de observacao antes de truncar source."
+            echo "============================================"
