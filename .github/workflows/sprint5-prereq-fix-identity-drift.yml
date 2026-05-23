@@ -151,17 +151,23 @@ jobs:
             }
             echo "  SQL aplicado."
             echo ""
-            echo "  Registrando 0001_initial em django_migrations..."
-            psql "$DB" -c "INSERT INTO django_migrations (app, name, applied) VALUES ('student_identity', '0001_initial', NOW())"
+            echo "  Registrando 0001_initial em django_migrations (idempotente)..."
+            psql "$DB" -c "INSERT INTO django_migrations (app, name, applied) VALUES ('student_identity', '0001_initial', NOW()) ON CONFLICT DO NOTHING"
             echo ""
 
-            echo "=== 6b. RECRIAR FK CONSTRAINTS QUE CASCATEARAM NO DROP ==="
-            # Quando dropamos student_identity_studentidentity, duas FKs externas
-            # foram droppedas via cascade (so a constraint, nao a coluna):
-            #   - student_app_studentprofilechangerequest.identity_id (ON DELETE CASCADE)
-            #   - boxcore_student.identity_id (ON DELETE SET NULL)
-            # Recriamos elas agora que studentidentity existe de novo.
+            echo "=== 6b. RECRIAR FK CONSTRAINTS + COLUNAS QUE FALTAVAM ==="
+            # Duas situacoes distintas:
+            # (A) student_app_studentprofilechangerequest.identity_id - coluna existe,
+            #     FK foi cascadeada no drop. So precisa ADD CONSTRAINT.
+            # (B) boxcore_student.identity_id - coluna NAO EXISTE em prod, apesar
+            #     de boxcore.0026 estar marcada applied. Indica --fake historico.
+            #     Precisa ADD COLUMN + ADD CONSTRAINT + INDEX (replicando o que
+            #     boxcore.0026 deveria ter feito de verdade).
+            # Tudo idempotente: DROP IF EXISTS antes de ADD para suportar re-run.
             psql "$DB" -v ON_ERROR_STOP=1 <<'SQL'
+            -- (A) student_app: so a FK precisa ser restaurada
+            ALTER TABLE public.student_app_studentprofilechangerequest
+              DROP CONSTRAINT IF EXISTS student_app_studentp_identity_id_fk_restored;
             ALTER TABLE public.student_app_studentprofilechangerequest
               ADD CONSTRAINT student_app_studentp_identity_id_fk_restored
               FOREIGN KEY (identity_id)
@@ -169,14 +175,21 @@ jobs:
               ON DELETE CASCADE
               DEFERRABLE INITIALLY DEFERRED;
 
+            -- (B) boxcore: replicar boxcore.0026_sprint2_student_identity_fk
+            ALTER TABLE public.boxcore_student
+              ADD COLUMN IF NOT EXISTS identity_id bigint NULL;
+            ALTER TABLE public.boxcore_student
+              DROP CONSTRAINT IF EXISTS boxcore_student_identity_id_fk_restored;
             ALTER TABLE public.boxcore_student
               ADD CONSTRAINT boxcore_student_identity_id_fk_restored
               FOREIGN KEY (identity_id)
               REFERENCES public.student_identity_studentidentity(id)
               ON DELETE SET NULL
               DEFERRABLE INITIALLY DEFERRED;
+            CREATE INDEX IF NOT EXISTS boxcore_student_identity_id_idx
+              ON public.boxcore_student(identity_id);
             SQL
-            echo "  FKs restauradas."
+            echo "  FKs restauradas + coluna boxcore_student.identity_id garantida."
             echo ""
 
             echo "=== 7. CONFIRMAR SCHEMA NOVO ==="
