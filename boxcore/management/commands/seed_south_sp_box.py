@@ -54,8 +54,8 @@ USER_BLUEPRINTS = [
     {
         'username': 'owner_morumbi',
         'email': 'owner@octobox-demo.local',
-        'first_name': 'Fernando',
-        'last_name': 'Azevedo',
+        'first_name': 'Carlos',
+        'last_name': 'Pereira',
         'group': 'Owner',
         'is_staff': True,
         'is_superuser': True,
@@ -63,8 +63,8 @@ USER_BLUEPRINTS = [
     {
         'username': 'manager_vila_andrade',
         'email': 'manager@octobox-demo.local',
-        'first_name': 'Mayara',
-        'last_name': 'Lima',
+        'first_name': 'Ana',
+        'last_name': 'Souza',
         'group': 'Manager',
     },
     {

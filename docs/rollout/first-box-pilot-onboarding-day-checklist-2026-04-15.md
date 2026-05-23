@@ -1,5 +1,5 @@
 <!--
-ARQUIVO: checklist operacional do onboarding da Endorfina Cross no dia 15/04/2026.
+ARQUIVO: checklist operacional do onboarding do Box Piloto no dia 15/04/2026.
 
 TIPO DE DOCUMENTO:
 - checklist operacional executavel
@@ -8,36 +8,37 @@ AUTORIDADE:
 - alta para o dia do onboarding do primeiro box real
 
 DOCUMENTOS IRMAOS:
-- [first-box-endorfina-cross-setup-plan.md](first-box-endorfina-cross-setup-plan.md)
+- [first-box-pilot-setup-plan.md](first-box-pilot-setup-plan.md)
 - [first-box-onboarding-runbook.md](first-box-onboarding-runbook.md)
 - [first-box-system-setup-checklist.md](first-box-system-setup-checklist.md)
 - [first-box-production-execution-checklist.md](first-box-production-execution-checklist.md)
 
 QUANDO USAR:
-- no onboarding real da Endorfina Cross em 15/04/2026 as 15:00
+- no onboarding real do Box Piloto em 15/04/2026 as 15:00
 - para conduzir a implantacao em ordem curta e verificavel
 
 PONTOS CRITICOS:
 - este checklist e do dia da operacao, nao do planejamento
 - se um gate critico falhar, parar e corrigir antes de continuar
 - nao ampliar o escopo curto no meio da sessao
+- PII dos participantes reais foi anonimizada para repositorio publico
 -->
 
-# Checklist operacional do onboarding - Endorfina Cross - 15/04/2026 15:00
+# Checklist operacional do onboarding - Box Piloto - 15/04/2026 15:00
 
 ## Janela oficial
 
-- box: `Endorfina Cross`
+- box: `Box Piloto`
 - data: `15/04/2026`
 - horario: `15:00`
-- participante principal: `Fernando`
-- cobertura contingencial de Recepcao no piloto curto: `Fernando`
+- participante principal: `[Owner do box]`
+- cobertura contingencial de Recepcao no piloto curto: `[Owner do box]`
 
 Em linguagem simples: este documento e a folha do piloto no painel do aviao. A ideia nao e improvisar; e seguir a ordem para o voo sair reto.
 
 ## Gate de inicio
 
-Antes de abrir a sessao com Fernando, confirmar:
+Antes de abrir a sessao com `[Owner do box]`, confirmar:
 
 1. homologacao PostgreSQL local ja foi validada
 2. `/api/v1/health/` responde `status=ok`
@@ -63,7 +64,7 @@ Objetivo:
 
 Checklist:
 
-1. confirmar com Fernando que o foco hoje e:
+1. confirmar com `[Owner do box]` que o foco hoje e:
    - login e papeis
    - dashboard
    - alunos
@@ -71,14 +72,14 @@ Checklist:
    - cobranca curta
    - grade em leitura
    - Recepcao
-2. registrar que `Recepcao` no dia 1 ficara em contingencia com `Fernando`
+2. registrar que `Recepcao` no dia 1 ficara em contingencia com `[Owner do box]`
 3. avisar que o objetivo nao e cadastrar os `100 alunos` no mesmo dia
 4. avisar que a meta do dia e sair com o suficiente para operar sem medo
 
 Aceite do bloco:
 
-1. Fernando confirma o escopo curto
-2. Fernando confirma que a contingencia de Recepcao esta clara
+1. `[Owner do box]` confirma o escopo curto
+2. `[Owner do box]` confirma que a contingencia de Recepcao esta clara
 
 ### Bloco 2 - runtime e acesso base - 15:10 a 15:20
 
@@ -111,29 +112,29 @@ Objetivo:
 
 Usuarios do piloto:
 
-1. `Fernando` - `Owner`
-2. `Mayara` - `Manager`
-3. `Renan` - `Coach`
+1. `[Owner do box]` - `Owner`
+2. `[Manager do box]` - `Manager`
+3. `[Founder]` - `Coach`
 
 Checklist:
 
-1. confirmar usuario `Fernando` criado com email `endorfinacross@gmail.com`
-2. confirmar usuario `Mayara` criado com email `mayaraal@gmail.com`
-3. confirmar usuario `Renan` criado com email `renanfulas@outlook.com`
+1. confirmar usuario `[Owner do box]` criado com email `[email-owner-piloto]`
+2. confirmar usuario `[Manager do box]` criado com email `[email-coach-piloto]`
+3. confirmar usuario `[Founder]` criado com email `[email-founder]`
 4. validar grupo correto de cada um
-5. testar login de `Fernando`
-6. se houver tempo e acesso, testar login de `Mayara`
+5. testar login de `[Owner do box]`
+6. se houver tempo e acesso, testar login de `[Manager do box]`
 
 Failure check:
 
-1. se `Fernando` nao entrar, parar
-2. se o grupo de `Fernando` nao for `Owner`, corrigir antes de seguir
+1. se `[Owner do box]` nao entrar, parar
+2. se o grupo de `[Owner do box]` nao for `Owner`, corrigir antes de seguir
 
 ### Bloco 4 - planos - 15:35 a 15:50
 
 Objetivo:
 
-1. colocar os 3 produtos comerciais basicos da Endorfina dentro do sistema
+1. colocar os 3 produtos comerciais basicos do Box Piloto dentro do sistema
 
 Checklist:
 
@@ -180,22 +181,22 @@ Objetivo:
 Checklist de cadastro:
 
 1. `Segunda, quarta e sexta`
-   - `Cross 06:00` - `Renan`
-   - `Cross 07:00` - `Renan`
-   - `Cross 08:00` - `Renan`
+   - `Cross 06:00` - `[Founder]`
+   - `Cross 07:00` - `[Founder]`
+   - `Cross 08:00` - `[Founder]`
 2. `Terca e quinta`
-   - `Cross 07:00` - `Renan`
-   - `Cross 08:00` - `Renan`
+   - `Cross 07:00` - `[Founder]`
+   - `Cross 08:00` - `[Founder]`
 3. `Terca, quinta e sexta`
-   - `Cross 17:00` - `Eric`
-   - `Cross 18:00` - `Eric`
-   - `Cross 19:00` - `Eric`
-   - `Cross 20:00` - `Eric`
+   - `Cross 17:00` - `[Coach 2]`
+   - `Cross 18:00` - `[Coach 2]`
+   - `Cross 19:00` - `[Coach 2]`
+   - `Cross 20:00` - `[Coach 2]`
 4. `Segunda e quarta`
-   - `Cross 17:00` - `Thiago ou Fernando`
-   - `Cross 18:00` - `Thiago ou Fernando`
-   - `Cross 19:00` - `Thiago ou Fernando`
-   - `Cross 20:00` - `Thiago ou Fernando`
+   - `Cross 17:00` - `[Coach 3 ou Owner]`
+   - `Cross 18:00` - `[Coach 3 ou Owner]`
+   - `Cross 19:00` - `[Coach 3 ou Owner]`
+   - `Cross 20:00` - `[Coach 3 ou Owner]`
 
 Checklist de validacao:
 
@@ -216,7 +217,7 @@ Objetivo:
 Checklist:
 
 1. abrir `/operacao/recepcao/`
-2. testar com `Fernando` na contingencia
+2. testar com `[Owner do box]` na contingencia
 3. localizar um aluno
 4. enxergar a grade em leitura
 5. localizar um caso simples de cobranca curta
@@ -237,7 +238,7 @@ Objetivo:
 
 Smoke minimo:
 
-1. `Fernando` entra como `Owner`
+1. `[Owner do box]` entra como `Owner`
 2. dashboard abre
 3. alunos abre
 4. grade abre
@@ -247,12 +248,12 @@ Smoke minimo:
 
 Perguntas de aceite:
 
-1. `Fernando, voce consegue enxergar o box funcionando no pacote curto de hoje?`
+1. `[Owner], voce consegue enxergar o box funcionando no pacote curto de hoje?`
 2. `Ficou claro o que entra hoje e o que fica para depois?`
 
 Aceite do dia:
 
-1. marcar `aprovado` se Fernando confirmar o pacote curto
+1. marcar `aprovado` se `[Owner do box]` confirmar o pacote curto
 2. marcar `com ressalvas` se houver algo contornavel mas nao bloqueante
 3. marcar `nao aprovado` se houver falha em login, alunos, grade ou Recepcao
 
@@ -266,7 +267,7 @@ Registrar no mesmo dia:
 4. status da grade essencial
 5. status da contingencia de Recepcao
 6. pendencias abertas
-7. aceite final do Fernando
+7. aceite final do `[Owner do box]`
 
 ## O que nao fazer no dia
 
@@ -279,7 +280,7 @@ Registrar no mesmo dia:
 
 No dia 15/04 as 15:00, o objetivo nao e impressionar com volume.
 
-E fazer Fernando sentir cinco coisas:
+E fazer `[Owner do box]` sentir cinco coisas:
 
 1. eu entro
 2. meus planos existem

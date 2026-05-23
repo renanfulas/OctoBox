@@ -1,5 +1,5 @@
 <!--
-ARQUIVO: plano de setup real do primeiro box piloto Endorfina Cross.
+ARQUIVO: plano de setup real do primeiro box piloto.
 
 TIPO DE DOCUMENTO:
 - plano operacional preenchido
@@ -11,12 +11,12 @@ DOCUMENTOS IRMAOS:
 - [first-box-pilot-intake-sheet.md](first-box-pilot-intake-sheet.md)
 - [first-box-system-setup-checklist.md](first-box-system-setup-checklist.md)
 - [first-box-onboarding-runbook.md](first-box-onboarding-runbook.md)
-- [first-box-endorfina-onboarding-day-checklist-2026-04-15.md](first-box-endorfina-onboarding-day-checklist-2026-04-15.md)
+- [first-box-pilot-onboarding-day-checklist-2026-04-15.md](first-box-pilot-onboarding-day-checklist-2026-04-15.md)
 - [first-box-production-execution-checklist.md](first-box-production-execution-checklist.md)
 - [phase1-closed-beta-operations-matrix.md](phase1-closed-beta-operations-matrix.md)
 
 QUANDO USAR:
-- para preparar a implantacao real da Endorfina Cross
+- para preparar a implantacao real do primeiro box piloto
 - para saber o que ja esta definido e o que ainda bloqueia o dia 1
 - para conduzir o setup dentro do OctoBox sem improviso
 
@@ -24,22 +24,23 @@ PONTOS CRITICOS:
 - este plano e especifico para o primeiro box real conhecido hoje
 - ele nao substitui a ficha de coleta; ele traduz a ficha em ordem de execucao
 - campos criticos nao preenchidos continuam sendo bloqueadores do onboarding
+- PII dos participantes reais foi anonimizada para repositorio publico
 -->
 
-# Plano de setup real do primeiro box - Endorfina Cross
+# Plano de setup real do primeiro box - Box Piloto
 
 ## Objetivo
 
-Transformar a ficha de coleta da Endorfina Cross em um plano executavel de onboarding do primeiro box real.
+Transformar a ficha de coleta do box piloto em um plano executavel de onboarding do primeiro box real.
 
 Em linguagem simples: a ficha e a lista de compras. Este documento e a ordem de como os moveis entram na casa.
 
 ## Identificacao do box
 
-- nome do box: `Endorfina Cross`
-- cidade/estado: `Guarulhos, Sao Paulo`
-- responsavel principal: `Fernando`
-- email principal: `endorfinacross@gmail.com`
+- nome do box: `Box Piloto`
+- cidade/estado: `[Cidade, Estado]`
+- responsavel principal: `[Owner do box]`
+- email principal: `[email-owner-piloto]`
 - data registrada na ficha: `13/03/2026`
 
 ## Escopo combinado do piloto
@@ -86,31 +87,31 @@ Bloqueador:
 Leitura:
 
 1. a casa ja tem estrutura
-2. agora estamos mobiliando a Endorfina Cross dentro dela
+2. agora estamos mobiliando o Box Piloto dentro dela
 
-## Dados ja definidos da Endorfina Cross
+## Dados ja definidos do Box Piloto
 
 ### Pessoas do box
 
 #### Owner
 
-- nome: `Fernando`
-- email: `endorfinacross@gmail.com`
+- nome: `[Owner do box]`
+- email: `[email-owner-piloto]`
 
 #### Manager
 
-- nome: `Mayara`
-- email: `mayaraal@gmail.com`
+- nome: `[Manager do box]`
+- email: `[email-coach-piloto]`
 
 #### Recepcao
 
 - usuario dedicado: `nao definido ainda`
-- cobertura contingencial: `Fernando` como `Owner` no dia 1
+- cobertura contingencial: `[Owner do box]` como `Owner` no dia 1
 
 #### Coach
 
-- nome: `Renan`
-- email: `renanfulas@outlook.com`
+- nome: `[Founder]`
+- email: `[email-founder]`
 
 ### Planos principais
 
@@ -148,7 +149,7 @@ Leitura:
 1. `usuario oficial de Recepcao` ainda nao definido para o pos-piloto
 2. `grade essencial` ainda nao foi preenchida no sistema
 3. `horario do onboarding` ainda nao foi executado
-4. `Fernando` sera o unico participante confirmado do onboarding
+4. `[Owner do box]` sera o unico participante confirmado do onboarding
 
 Em linguagem simples: a cozinha ja existe, mas ainda faltam decidir quem cozinha, que horas abre e quais panelas vao para o fogao.
 
@@ -159,7 +160,7 @@ Em linguagem simples: a cozinha ja existe, mas ainda faltam decidir quem cozinha
 Escolher uma das duas:
 
 1. `recomendado`: definir o usuario oficial de Recepcao
-2. `contingencia`: registrar por escrito que o fluxo sera coberto por `Fernando`
+2. `contingencia`: registrar por escrito que o fluxo sera coberto por `[Owner do box]`
 
 Regra:
 
@@ -167,7 +168,7 @@ Regra:
 
 Status decidido hoje:
 
-1. `Recepcao do dia 1`: `Fernando` em contingencia
+1. `Recepcao do dia 1`: `[Owner do box]` em contingencia
 
 ### 2. Grade essencial
 
@@ -190,7 +191,7 @@ Status decidido hoje:
 
 1. data: `15/04/2026`
 2. horario: `15:00`
-3. participante principal: `Fernando`
+3. participante principal: `[Owner do box]`
 
 ## Setup real do dia 1
 
@@ -211,10 +212,10 @@ Aceite:
 
 Criar na ordem:
 
-1. `Fernando` como `Owner`
-2. `Mayara` como `Manager`
+1. `[Owner do box]` como `Owner`
+2. `[Manager do box]` como `Manager`
 3. `Recepcao` oficial, se ja existir
-4. `Renan` como `Coach`
+4. `[Founder]` como `Coach`
 
 Checklist por usuario:
 
@@ -224,7 +225,7 @@ Checklist por usuario:
 4. login testado
 5. redirecionamento testado
 
-### Etapa 3. Cadastrar os 3 planos da Endorfina
+### Etapa 3. Cadastrar os 3 planos do Box Piloto
 
 Cadastrar exatamente:
 
@@ -277,7 +278,7 @@ Se ainda nao houver usuario dedicado:
 
 1. registrar por escrito a contingencia
 2. testar com o papel que vai cobrir de verdade
-3. na Endorfina Cross, testar com `Fernando`
+3. no Box Piloto, testar com `[Owner do box]`
 
 ### Etapa 7. Smoke por papel
 
@@ -305,23 +306,23 @@ Se ainda nao houver usuario dedicado:
 1. `/operacao/coach/`
 2. `/grade-aulas/`
 
-## Critério de pronto da Endorfina Cross
+## Criterio de pronto do Box Piloto
 
-A Endorfina Cross so entra em uso piloto real quando:
+O Box Piloto so entra em uso piloto real quando:
 
-1. `Fernando` entra como `Owner`
-2. `Mayara` entra como `Manager`
+1. `[Owner do box]` entra como `Owner`
+2. `[Manager do box]` entra como `Manager`
 3. o papel que vai cobrir `Recepcao` esta definido e testado
 4. os 3 planos principais existem
 5. a grade essencial tem pelo menos 3 aulas
 6. existe uma base inicial minima de alunos utilizavel
 7. o fluxo curto de Recepcao funciona
-8. Fernando confirma o aceite do escopo curto
+8. `[Owner do box]` confirma o aceite do escopo curto
 
 ## Risco de debito tecnico se improvisarmos
 
 1. entrar sem `Recepcao` definida empurra confusao operacional para o dia 1
-   na Endorfina isso esta coberto por contingencia com `Fernando`, mas so para o piloto curto
+   no Box Piloto isso esta coberto por contingencia com `[Owner do box]`, mas so para o piloto curto
 2. entrar sem `grade essencial` faz o sistema parecer incompleto mesmo quando o backend esta certo
 3. entrar sem `aceite do escopo` faz cada demanda virar promessa implícita
 4. tentar cadastrar `100 alunos` no mesmo dia pode transformar onboarding em exaustao e mascarar bugs reais
@@ -333,7 +334,7 @@ Em linguagem simples: se a gente tentar encher a piscina, montar o parquinho e f
 ### Agora
 
 1. confirmar `aceite do escopo curto`
-2. manter `Fernando` como contingencia formal da `Recepcao`
+2. manter `[Owner do box]` como contingencia formal da `Recepcao`
 3. preencher as aulas reais da grade
 4. onboarding fechado para `15/04/2026 às 15:00`
 
@@ -344,12 +345,12 @@ Em linguagem simples: se a gente tentar encher a piscina, montar o parquinho e f
 3. cadastrar 3 planos
 4. cadastrar de `10 a 20 alunos` prioritarios
 5. montar as aulas reais informadas
-6. testar Recepcao com `Fernando`
+6. testar Recepcao com `[Owner do box]`
 7. rodar smoke por papel
 
 Checklist operacional da sessao:
 
-1. usar [first-box-endorfina-onboarding-day-checklist-2026-04-15.md](first-box-endorfina-onboarding-day-checklist-2026-04-15.md)
+1. usar [first-box-pilot-onboarding-day-checklist-2026-04-15.md](first-box-pilot-onboarding-day-checklist-2026-04-15.md)
 
 ### Depois
 
@@ -360,9 +361,9 @@ Checklist operacional da sessao:
 
 ## Formula curta
 
-Para a Endorfina Cross entrar bem, o objetivo nao e colocar tudo para dentro.
+Para o Box Piloto entrar bem, o objetivo nao e colocar tudo para dentro.
 
-E colocar o suficiente, na ordem certa, para Fernando sentir:
+E colocar o suficiente, na ordem certa, para `[Owner do box]` sentir:
 
 1. a casa esta pronta
 2. as pessoas conseguem entrar

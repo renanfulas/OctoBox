@@ -31,11 +31,11 @@ PONTOS CRITICOS:
 
 ## Identificacao do box
 
-1. nome do box: Endorfina Cross
-2. cidade e estado: Guarulhos São Paulo
-3. responsavel principal: Fernando
-4. telefone do responsavel: 
-5. email do responsavel: endorfinacross@gmail.com
+1. nome do box: Box Piloto
+2. cidade e estado: [Cidade, Estado]
+3. responsavel principal: [Owner do piloto]
+4. telefone do responsavel: [redacted]
+5. email do responsavel: [email-owner-piloto]
 
 ## Escopo combinado do piloto
 
@@ -60,15 +60,15 @@ Preencher ao menos um usuario por papel necessario.
 
 ### Owner
 
-1. nome: Fernando
-2. email: endorfinacross@gmail.com
-3. telefone:
+1. nome: [Owner do piloto]
+2. email: [email-owner-piloto]
+3. telefone: [redacted]
 
 ### Manager
 
-1. nome: Mayara
-2. email: mayaraal@gmail.com
-3. telefone: 
+1. nome: [Coach do piloto]
+2. email: [email-coach-piloto]
+3. telefone: [redacted]
 
 ### Recepcao
 
@@ -78,9 +78,9 @@ Preencher ao menos um usuario por papel necessario.
 
 ### Coach
 
-1. nome: Renan
-2. email: renanfulas@outlook.com
-3. telefone:
+1. nome: [Founder]
+2. email: [email-founder]
+3. telefone: [redacted]
 
 ## Planos principais
 
@@ -186,7 +186,7 @@ Registrar:
 1. data da implantacao: 13/03/2026
 2. horario da implantacao: pendente
 3. quem vai estar online ou presencial: pendente
-4. quem valida o aceite final do box: Fernando
+4. quem valida o aceite final do box: [Owner do piloto]
 
 ## Criterio de pronto antes do onboarding
 

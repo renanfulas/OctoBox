@@ -961,7 +961,7 @@ python manage.py test --tag=tenant
 | `TenantBySessionMiddleware` | Test: request a `/admin/` (path publico) NAO seta tenant; request a `/dashboard/` autenticado seta. |
 | `config/urls_public.py` | `curl /admin/` em qualquer schema retorna 200 sem entrar em tenant. |
 | Atualizar `config/settings/base.py` | SHARED_APPS, TENANT_APPS, MIDDLEWARE, TENANT_MODEL setados. `manage.py check` retorna exit 0. |
-| `derive_slug(box_name)` | Test: 3 boxes "Endorfina" geram `endorfina`, `endorfina-2`, `endorfina-3`. |
+| `derive_slug(box_name)` | Test: 3 boxes "Box Demo" geram `box-demo`, `box-demo-2`, `box-demo-3`. |
 | Comando `manage.py provision_box --slug=pilot --owner-email=dev@octobox.local` | Exit 0. `\dt box_pilot.*` em psql lista 30+ tabelas. |
 | Comando `manage.py archive_box --slug=pilot` | Exit 0. `Box.status=ARCHIVED`; schema `box_pilot` renomeado para `archived_box_pilot_<ts>`. |
 | Comando `manage.py reprovision_box --slug=xxx` | Exit 0 retomando do step pendente em `BoxProvisioningEvent`. |
