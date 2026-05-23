@@ -30,13 +30,15 @@ from django.core.management.base import BaseCommand, CommandError
 
 logger = logging.getLogger('control.smoke_test')
 
-# Tabelas mínimas esperadas em qualquer schema provisionado
+# Tabelas mínimas esperadas em qualquer schema provisionado.
+# IMPORTANTE: auth_group e auth_user sao SHARED_APPS (vivem em public, nao no
+# schema do tenant). django-tenants nao replica auth_* nos schemas dos tenants
+# — eles ficam apenas no public para o roteamento de identidade funcionar.
+# Listar auth_* aqui causava falso positivo em qualquer Box provisionado.
 _REQUIRED_TABLES = [
     'boxcore_student',
     'boxcore_membershipplan',
     'boxcore_payment',
-    'auth_group',
-    'auth_user',
 ]
 
 # Groups obrigatórios em cada tenant
