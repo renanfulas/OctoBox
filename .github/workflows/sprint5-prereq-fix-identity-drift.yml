@@ -82,14 +82,15 @@ jobs:
             echo ""
 
             echo "=== 2. ESTADO ATUAL (antes) ==="
+            # Todas as queries toleram tabelas ausentes (re-execucao parcial e valida).
             echo "Tabelas student_identity_* em public:"
-            psql "$DB" -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'student_identity_%' ORDER BY table_name"
+            psql "$DB" -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'student_identity_%' ORDER BY table_name" 2>&1 || echo "(sem tabelas ou erro)"
             echo ""
-            echo "Rows em student_identity_studentidentity:"
-            psql "$DB" -t -A -c "SELECT COUNT(*) FROM student_identity_studentidentity"
+            echo "Rows em student_identity_studentidentity (se tabela existir):"
+            psql "$DB" -t -A -c "SELECT COUNT(*) FROM student_identity_studentidentity" 2>&1 || echo "(tabela ausente - re-execucao apos drop)"
             echo ""
             echo "Migrations aplicadas student_identity:"
-            psql "$DB" -t -A -c "SELECT name FROM django_migrations WHERE app='student_identity' ORDER BY id"
+            psql "$DB" -t -A -c "SELECT name FROM django_migrations WHERE app='student_identity' ORDER BY id" 2>&1 || echo "(sem migrations)"
             echo ""
 
             echo "=== 3. DROP TABLES (CASCADE) ==="
