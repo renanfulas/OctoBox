@@ -126,9 +126,57 @@ jobs:
             fi
             echo ""
 
-            echo "=== 6. APLICAR NOVO 0001_initial ==="
+            echo "=== 6. APLICAR NOVO 0001_initial (via SQL para contornar InconsistentMigrationHistory) ==="
+            # Nao podemos usar 'manage.py migrate student_identity' direto porque
+            # student_app.0014 e boxcore.0026 dependem de student_identity.0001_initial.
+            # Como 0014/0026 ja estao marcadas applied e 0001_initial nao esta,
+            # Django levanta InconsistentMigrationHistory antes de rodar qualquer coisa.
+            #
+            # Estrategia: gerar o SQL do 0001_initial, aplicar via psql,
+            # inserir o row em django_migrations manualmente. Resultado: schema
+            # criado + historia consistente, sem o gate do migrate.
             cd "$APP"
-            "$VENV/bin/python" manage.py migrate student_identity --verbosity 2
+            SQLFILE=/tmp/student_identity_0001_initial.sql
+            "$VENV/bin/python" manage.py sqlmigrate student_identity 0001_initial > "$SQLFILE"
+            wc -l "$SQLFILE"
+            head -3 "$SQLFILE"
+            echo "..."
+            tail -3 "$SQLFILE"
+            echo ""
+            echo "  Aplicando SQL via psql..."
+            psql "$DB" -v ON_ERROR_STOP=1 -f "$SQLFILE" > /tmp/psql_apply.log 2>&1 || {
+              echo "ERRO ao aplicar SQL. Veja log:"
+              tail -20 /tmp/psql_apply.log
+              exit 1
+            }
+            echo "  SQL aplicado."
+            echo ""
+            echo "  Registrando 0001_initial em django_migrations..."
+            psql "$DB" -c "INSERT INTO django_migrations (app, name, applied) VALUES ('student_identity', '0001_initial', NOW())"
+            echo ""
+
+            echo "=== 6b. RECRIAR FK CONSTRAINTS QUE CASCATEARAM NO DROP ==="
+            # Quando dropamos student_identity_studentidentity, duas FKs externas
+            # foram droppedas via cascade (so a constraint, nao a coluna):
+            #   - student_app_studentprofilechangerequest.identity_id (ON DELETE CASCADE)
+            #   - boxcore_student.identity_id (ON DELETE SET NULL)
+            # Recriamos elas agora que studentidentity existe de novo.
+            psql "$DB" -v ON_ERROR_STOP=1 <<'SQL'
+            ALTER TABLE public.student_app_studentprofilechangerequest
+              ADD CONSTRAINT student_app_studentp_identity_id_fk_restored
+              FOREIGN KEY (identity_id)
+              REFERENCES public.student_identity_studentidentity(id)
+              ON DELETE CASCADE
+              DEFERRABLE INITIALLY DEFERRED;
+
+            ALTER TABLE public.boxcore_student
+              ADD CONSTRAINT boxcore_student_identity_id_fk_restored
+              FOREIGN KEY (identity_id)
+              REFERENCES public.student_identity_studentidentity(id)
+              ON DELETE SET NULL
+              DEFERRABLE INITIALLY DEFERRED;
+            SQL
+            echo "  FKs restauradas."
             echo ""
 
             echo "=== 7. CONFIRMAR SCHEMA NOVO ==="
