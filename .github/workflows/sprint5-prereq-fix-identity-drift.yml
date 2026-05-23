@@ -93,8 +93,12 @@ jobs:
             echo ""
 
             echo "=== 3. DROP TABLES (CASCADE) ==="
+            # Idempotente: usa IF EXISTS e cobre todas as 8 tabelas (inclui
+            # studentinvitationdeliveryevent, que ficou orfa na primeira tentativa).
+            # Cascades cobrem FKs em student_app_studentprofilechangerequest.
             psql "$DB" <<'SQL'
             BEGIN;
+            DROP TABLE IF EXISTS public.student_identity_studentinvitationdeliveryevent CASCADE;
             DROP TABLE IF EXISTS public.student_identity_studentinvitationdelivery CASCADE;
             DROP TABLE IF EXISTS public.student_identity_studentpushsubscription CASCADE;
             DROP TABLE IF EXISTS public.student_identity_studenttransfer CASCADE;
