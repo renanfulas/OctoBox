@@ -1,0 +1,94 @@
+name: Sprint 5 — Inspect OAuth User (read-only)
+
+# Inspeciona o estado de um usuario OAuth (aluno) na VPS apos login.
+# Read-only. Sem escrita. Mostra:
+# - Student em boxcore_student do tenant
+# - StudentIdentity em public (provider, subject, box_root_slug)
+# - StudentBoxMembership em public (status, box_root_slug)
+# - Ligacao Student.identity_id -> StudentIdentity.id
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Email do aluno a inspecionar (case-insensitive).'
+        required: true
+        default: 'renanjuniorfulas@gmail.com'
+      slug:
+        description: 'Slug do box.'
+        required: false
+        default: 'octoboxfit-production'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Inspect OAuth user via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          EMAIL: ${{ github.event.inputs.email }}
+          SLUG: ${{ github.event.inputs.slug }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          envs: EMAIL,SLUG
+          timeout: 2m
+          command_timeout: 5m
+          script: |
+            ENV=/srv/octobox/shared/octobox.env
+            set -a && source "$ENV" && set +a
+            DB="$DATABASE_URL"
+
+            echo "============================================"
+            echo "INSPECT OAUTH USER"
+            echo "  email : $EMAIL"
+            echo "  slug  : $SLUG"
+            echo "  schema: box_$SLUG"
+            echo "============================================"
+            echo ""
+
+            echo "=== 1. AUTH_USER (provavel nao listar - alunos vivem em boxcore_student) ==="
+            psql "$DB" -c "SELECT id, email, is_staff, is_superuser, date_joined FROM auth_user WHERE LOWER(email) = LOWER('$EMAIL')" 2>&1 || echo "(sem registro)"
+            echo ""
+
+            echo "=== 2. BOXCORE_STUDENT NO TENANT (deve estar la - aluno migrado) ==="
+            psql "$DB" -c "SELECT id, full_name, email, status, identity_id, created_at FROM \"box_$SLUG\".boxcore_student WHERE LOWER(email) = LOWER('$EMAIL')" 2>&1 || echo "(erro ou sem registro)"
+            echo ""
+
+            echo "=== 3. STUDENT_IDENTITY EM PUBLIC (deve ter rowo criado pelo OAuth) ==="
+            psql "$DB" -c "SELECT id, student_id, student_name, email, provider, box_root_slug, primary_box_root_slug, status, invited_at, activated_at, last_authenticated_at FROM public.student_identity_studentidentity WHERE LOWER(email) = LOWER('$EMAIL')" 2>&1 || echo "(erro ou sem registro)"
+            echo ""
+
+            echo "=== 4. STUDENT_BOX_MEMBERSHIP (deve ter ACTIVE para o box) ==="
+            psql "$DB" -c "SELECT m.id, m.identity_id, m.student_id, m.box_root_slug, m.status, m.created_at, m.activated_at FROM public.student_identity_studentboxmembership m JOIN public.student_identity_studentidentity i ON m.identity_id = i.id WHERE LOWER(i.email) = LOWER('$EMAIL')" 2>&1 || echo "(erro ou sem registro)"
+            echo ""
+
+            echo "=== 5. LIGACAO STUDENT.IDENTITY_ID -> STUDENTIDENTITY.ID ==="
+            psql "$DB" -c "SELECT s.id AS student_id, s.full_name, s.email AS student_email, s.identity_id, i.id AS identity_id_check, i.email AS identity_email, i.status FROM \"box_$SLUG\".boxcore_student s LEFT JOIN public.student_identity_studentidentity i ON s.identity_id = i.id WHERE LOWER(s.email) = LOWER('$EMAIL')" 2>&1 || echo "(erro ou sem registro)"
+            echo ""
+
+            echo "=== 6. SESSAO ATIVA (django_session - se ainda valida) ==="
+            psql "$DB" -c "SELECT session_key, expire_date FROM django_session WHERE expire_date > NOW() ORDER BY expire_date DESC LIMIT 5" 2>&1 || echo "(sem sessoes)"
+            echo ""
+
+            echo "=== 7. AUDITEVENT DO STUDENT NO TENANT (ultimos 10) ==="
+            psql "$DB" -c "SELECT id, action, actor_role, target_label, created_at FROM \"box_$SLUG\".boxcore_auditevent ORDER BY id DESC LIMIT 10" 2>&1 || echo "(erro)"
+            echo ""
+
+            echo "=== 8. TOTAIS GERAIS DO TENANT (sanidade) ==="
+            psql "$DB" -t -A -c "SELECT 'auth_user (public)' || ': ' || COUNT(*) FROM public.auth_user"
+            psql "$DB" -t -A -c "SELECT 'boxcore_student (tenant)' || ': ' || COUNT(*) FROM \"box_$SLUG\".boxcore_student"
+            psql "$DB" -t -A -c "SELECT 'student_identity_studentidentity (public)' || ': ' || COUNT(*) FROM public.student_identity_studentidentity"
+            psql "$DB" -t -A -c "SELECT 'student_identity_studentboxmembership (public)' || ': ' || COUNT(*) FROM public.student_identity_studentboxmembership"
+            echo ""
+
+            echo "============================================"
+            echo "INSPECT CONCLUIDO."
+            echo "============================================"
