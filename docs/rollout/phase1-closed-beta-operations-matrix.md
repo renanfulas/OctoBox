@@ -11,7 +11,7 @@ DOCUMENTOS IRMAOS:
 - [first-box-production-execution-checklist.md](first-box-production-execution-checklist.md)
 - [restore-and-rollback-drill.md](restore-and-rollback-drill.md)
 - [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md)
-- [postgres-homolog-provisioning-round-2026-04-13.md](postgres-homolog-provisioning-round-2026-04-13.md)
+- [postgres-homolog-provisioning-round-2026-04-13.md](archive/postgres-homolog-provisioning-round-2026-04-13.md)
 - [../plans/phase1-closed-beta-20-boxes-corda.md](../plans/phase1-closed-beta-20-boxes-corda.md)
 
 QUANDO USAR:
@@ -63,10 +63,10 @@ Status permitidos:
 | Baseline de throttles | `validado` | Engenharia | settings e docs de seguranca alinhados | Revisar so com telemetria real |
 | Admin protegido | `parcial` | Engenharia / Ops | `DJANGO_ADMIN_URL_PATH` definido em producao | Confirmar valor real no ambiente alvo |
 | HTTPS e trusted origins | `parcial` | Ops | variaveis de ambiente do deploy | Validar host final do go-live |
-| Backup do banco | `validado` | Ops | backup local SQLite gerado em `backups/db-20260413-050155.sqlite3` em `2026-04-13`; dump PostgreSQL real gerado em `backups/octobox-20260414-013716.dump`; rodada de provisionamento preenchida em [postgres-homolog-provisioning-round-2026-04-13.md](postgres-homolog-provisioning-round-2026-04-13.md) | Repetir no ambiente-alvo do piloto quando existir host definitivo |
+| Backup do banco | `validado` | Ops | backup local SQLite gerado em `backups/db-20260413-050155.sqlite3` em `2026-04-13`; dump PostgreSQL real gerado em `backups/octobox-20260414-013716.dump`; rodada de provisionamento preenchida em [postgres-homolog-provisioning-round-2026-04-13.md](archive/postgres-homolog-provisioning-round-2026-04-13.md) | Repetir no ambiente-alvo do piloto quando existir host definitivo |
 | Restore testado | `validado` | Ops / Engenharia | drill local SQLite validado em `2026-04-13`; restore PostgreSQL real validado com `auth_user = 3`, `auth_group = 6`, `manage.py check` verde e smoke `200` em `health` e `owner` no banco `octobox_restore_test` | Repetir no host definitivo do piloto quando ele existir |
 | Rollback ensaiado | `validado` | Ops / Engenharia | rollback drill executado no worktree limpo entre `dc5ef8a` e `9e0e2bb`, com `manage.py check` verde e smoke central `200` nos dois lados | Repetir o ritual na homologacao oficial quando ela existir |
-| Checklist de homologacao | `validado` | Engenharia | docs de homologacao e provisionamento existem; rodada preenchida de status criada em [postgres-homolog-provisioning-round-2026-04-13.md](postgres-homolog-provisioning-round-2026-04-13.md); homologacao local PostgreSQL provisionada e validada | Repetir o mesmo ritual no host definitivo do piloto quando ele existir |
+| Checklist de homologacao | `validado` | Engenharia | docs de homologacao e provisionamento existem; rodada preenchida de status criada em [postgres-homolog-provisioning-round-2026-04-13.md](archive/postgres-homolog-provisioning-round-2026-04-13.md); homologacao local PostgreSQL provisionada e validada | Repetir o mesmo ritual no host definitivo do piloto quando ele existir |
 | Setup interno do primeiro box | `parcial` | Operacao / CS | checklist existente | Executar com o box piloto real |
 | Smoke funcional do go-live | `parcial` | Engenharia / Operacao | smoke local validado com `localhost`; `owner`, `reception`, `alunos`, `grade` e `health` em `200`; `manager` tambem validado com `OPERATIONS_MANAGER_WORKSPACE_ENABLED=1`; bateria ampla de `111 tests` verde em `2026-04-13` | Repetir no ambiente alvo com a flag do manager ligada se o piloto incluir esse papel |
 | War room dos primeiros 7 a 14 dias | `parcial` | Operacao / Engenharia | playbook existente | Definir canal, dono e horario de triagem |

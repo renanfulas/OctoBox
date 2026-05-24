@@ -1,6 +1,14 @@
 # Sprint 5 — Checklist de rollout multi-tenant em produção
 
-> **Critério de pronto**: 5 boxes ativos em prod; 0 vazamento; `/api/v1/health/` verde por 24h contínuas.
+> **STATUS: PARCIALMENTE CONCLUIDO em 2026-05-23**
+> - Fases 1-5: executadas via workflows GitHub Actions (`sprint5-stage0` → `sprint5-stage3`)
+> - Box `octoboxfit-production` ativo em `control_box` com 51 tabelas no schema dedicado
+> - 359 linhas migradas de `public` para `box_octoboxfit-production` (sem `--truncate-source`)
+> - Primeiro aluno real autenticado via OAuth (`renanjuniorfulas@gmail.com`)
+> - Fases 6-8 pendentes: E2E Early Adopter, 24h de observacao, proximos 5 boxes
+> - Marco registrado em [../history/mudaram-o-nivel-do-projeto.md](../history/mudaram-o-nivel-do-projeto.md) (itens 107-114 + "Nota sobre o primeiro aluno em producao")
+
+> **Critério de pronto original**: 5 boxes ativos em prod; 0 vazamento; `/api/v1/health/` verde por 24h contínuas.
 
 ## Pré-requisitos (antes de começar)
 

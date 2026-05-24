@@ -7,6 +7,12 @@ TIPO DE DOCUMENTO:
 AUTORIDADE:
 - alta para o dia do onboarding do primeiro box real
 
+STATUS:
+- CONCLUIDO (data 2026-04-15 ja passou)
+- evolucao real do go-live em producao aconteceu em 2026-05-23 via Sprint 5
+- mantido como evidencia historica da prepacao operacional do piloto
+- ver registro de marco em [../history/mudaram-o-nivel-do-projeto.md](../history/mudaram-o-nivel-do-projeto.md)
+
 DOCUMENTOS IRMAOS:
 - [first-box-endorfina-cross-setup-plan.md](first-box-endorfina-cross-setup-plan.md)
 - [first-box-onboarding-runbook.md](first-box-onboarding-runbook.md)

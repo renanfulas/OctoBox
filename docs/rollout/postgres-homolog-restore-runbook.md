@@ -319,7 +319,7 @@ Modelo curto:
 
 Depois deste roteiro:
 
-1. atualizar [phase1-execution-evidence-2026-04-13.md](phase1-execution-evidence-2026-04-13.md)
+1. atualizar [archive/phase1-execution-evidence-2026-04-13.md](archive/phase1-execution-evidence-2026-04-13.md)
 2. mudar `Restore testado` para `validado` em [phase1-closed-beta-operations-matrix.md](phase1-closed-beta-operations-matrix.md)
 3. repetir o smoke do go-live no ambiente alvo se a URL final for diferente
 
