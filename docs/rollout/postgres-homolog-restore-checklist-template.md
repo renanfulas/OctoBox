@@ -10,7 +10,7 @@ AUTORIDADE:
 DOCUMENTOS IRMAOS:
 - [postgres-homolog-restore-runbook.md](postgres-homolog-restore-runbook.md)
 - [restore-and-rollback-drill.md](restore-and-rollback-drill.md)
-- [phase1-execution-evidence-2026-04-13.md](phase1-execution-evidence-2026-04-13.md)
+- [archive/phase1-execution-evidence-2026-04-13.md](archive/phase1-execution-evidence-2026-04-13.md)
 
 QUANDO USAR:
 - no dia do restore PostgreSQL real
