@@ -115,6 +115,52 @@ Foram as decisoes que fizeram esta base deixar de ser somente um sistema funcion
 72. decidir que a Recepcao nao nasceria como manager encolhido, mas como superficie especializada para entrada, orientacao e cobranca curta do box.
 73. entender que uma parte esquecida da obra poderia virar uma das pecas mais fortes da Front Display Wall quando o sistema fosse rodado diante de outras pessoas.
 74. transformar uma ausencia potencialmente constrangedora em triunfo visivel de engenharia de software, produto e arte.
+75. separar o aluno do staff em duas portas distintas do produto, em vez de empurrar tudo para uma area administrativa unica.
+76. fazer student_app e student_identity nascerem no mesmo dia, deixando claro que identidade do aluno e fluxo do aluno sao pecas irmas mas distintas.
+77. criar quick_sales como porta lateral de venda rapida, sem misturar com onboarding regular.
+78. decidir que o produto teria funil proprio de Early Adopters, com landing dedicada, checkout e magic link.
+79. transformar o /obrigado/ em momento de produto, em vez de redirect tecnico anonimo.
+80. integrar Stripe como entrada comercial real do sistema, com webhook, status query publico e email transacional.
+81. parar antes de codar o schema-per-tenant para fazer um Sprint 0 de auditoria, em vez de mergulhar direto na refatoracao.
+82. fazer nascer o app control como cerebro do multi-tenant, separando control plane de tenant runtime.
+83. integrar django-tenants oficialmente, escolhendo schema-per-tenant em vez de row-per-tenant para o futuro do produto.
+84. quebrar todas as FKs cross-schema do Student no Sprint 2, mesmo sabendo do custo enorme da refatoracao em codigo, testes e migrations.
+85. criar o Hybrid Identity Model, com StudentIdentity em SHARED e Student em TENANT, ligados por referencia fraca de IntegerField, resolvendo "um aluno em N boxes" e "boundary multi-tenant" de uma so vez.
+86. transformar activate_and_provision em ato unico de comercializacao mais provisionamento de tenant, em vez de dois fluxos separados.
+87. decidir que cada tenant teria namespace de cache proprio no Sprint 3, eliminando vulnerabilidade de colisao silenciosa entre boxes.
+88. construir 12 boundary tests no Sprint 4 (B1-B12) antes de ter o primeiro cliente, garantindo que isolamento de tenant existisse sob teste e nao apenas sob fe.
+89. escrever os comandos de rollout multi-tenant no Sprint 5 antes de precisar deles em producao, deixando ao futuro-operador uma trilha pronta.
+90. tratar testes como divida de primeira classe, criando Fase 0 com baseline numerico e inventario completo de broken-tests antes de qualquer correcao.
+91. squashar nove migrations do student_identity em uma so, aceitando o custo de gestao para limpar o historico arquitetural.
+92. criar shim de compatibilidade (Student.app_identity) para preservar codigo legado durante a transicao do cross-schema FK, em vez de quebrar tudo de uma vez.
+93. enfrentar 115 testes quebrados de Bucket A num push unico, em vez de remendar um por vez ao longo de semanas.
+94. formalizar Center Layer como facade real de tenant resolution para auth do aluno, codando o que antes era so conceito arquitetural.
+95. tratar middleware como cidadao de primeira em multi-tenant, garantindo que paths publicos preservem identidade de tenant em vez de cair em public schema silenciosamente.
+96. cobrir seis clusters de inconsistencia do Bucket B num unico dia, fechando a tenant-awareness por completo em vez de deixar bordas abertas.
+97. tornar AuditEvent tenant-aware sem deixa-lo se tornar read model final, preservando seu papel auxiliar.
+98. zerar a quarentena de testes quebrados (193 de 193 recuperados), tratando broken-tests como problema solucionavel e nao residual permanente.
+99. aplicar SELECT FOR UPDATE em pagamentos como protecao de concorrencia em transacoes financeiras, antes de qualquer incidente acontecer.
+100. escrever oito ADRs em um unico dia para travar as decisoes do hardening do Sprint 4, em vez de deixar memoria viva ser a unica fonte de verdade.
+101. adicionar verificacao de ordem de testes com seeds 42, 137 e 9999 no CI, eliminando dependencia oculta de ordem de execucao.
+102. publicar comentario automatico de cobertura em PRs, transformando dado opaco em sinal direto para o autor do PR.
+103. quando o OAuth retornou HTTP 500 em producao, publicar PR defensivo de hemorragia antes do fix de causa raiz, separando containment de cura.
+104. criar bootstrap_control como comando especifico para resolver InconsistentMigrationHistory recorrente em deploy, em vez de adicionar mais um --fake no script de producao.
+105. construir workflows de inspecao de log e banco da VPS via GitHub Actions, em vez de SSH manual ad-hoc para cada incidente.
+106. desenhar o Sprint 5 em quatro estagios separados com palavras de confirmacao explicitas (EXECUTAR, PROVISIONAR, MIGRAR, RESET_IDENTITY), protegendo o futuro-operador cansado de erro acidental.
+107. inventar o Stage 0 read-only de descoberta como pre-requisito obrigatorio de qualquer operacao destrutiva em producao.
+108. transformar "incidente em runtime" em "achado em PR" usando reconhecimento ativo do estado real do banco antes de qualquer escrita.
+109. quando o prereq do Sprint 5 falhou cinco vezes seguidas no mesmo dia, seguir adiante com metodo, em vez de pausar para replanejar do zero.
+110. enfrentar o drift silencioso da squash sem replaces em producao, em vez de fingir que migracoes Django sao infaliveis ou que o doc cobre tudo.
+111. recriar oito tabelas de student_identity com schema novo, reconstituir as FKs externas que cascadearam, sem perder uma unica linha de dados de outras apps no caminho.
+112. provisionar o primeiro box em producao em 23 de maio de 2026, transformando OctoBox de codigo em servico habitado.
+113. ver o primeiro aluno real autenticar via OAuth no primeiro box, marcando o ponto onde producao deixou de ser teoria e virou rotina.
+114. registrar o marco emocional em palavras dentro do projeto, em vez de tratar a primeira vitoria operacional como apenas mais um commit no log.
+115. perceber, no mesmo dia em que producao foi inaugurada, que o repositorio publico continha PII real e LGPD-exposta de clientes reais.
+116. anonimizar nomes, emails e localizacao de clientes em docs publicos no mesmo dia em que o problema foi visto, separando narrativa documental de dado pessoal de terceiros.
+117. eliminar arquivos sensiveis ja tracked (cookies de producao, env backup encriptado, screenshots de QA) ao mesmo tempo que reforca .gitignore para evitar recidiva.
+118. tratar o nome do arquivo como dado, e nao apenas como rotulo: renomear docs cujo proprio filename outava o cliente.
+119. aceitar perda de dois StudentIdentity orfaos para corrigir o drift de schema sem comprometer dados vivos de outras apps.
+120. usar ON CONFLICT DO NOTHING em todas as INSERTs do migrate_existing_data, deixando a operacao idempotente por desenho, e nao por sorte.
 
 ## O que torna essas decisoes diferentes
 
@@ -158,3 +204,37 @@ Em linguagem direta:
 1. a Recepcao foi reinterpretada como sacada
 2. a sacada foi reinterpretada como triunfo
 3. o triunfo foi reinterpretado como parte visivel da arte do projeto
+
+## Nota sobre o primeiro aluno em producao
+
+A decisao de operar o Sprint 5 em 23 de maio de 2026 ganhou um peso especial dentro desta obra.
+
+Ela nao nasceu apenas porque o codigo estava pronto.
+
+Ela nasceu porque se entendeu algo mais fundo:
+
+1. o sistema deixava de existir apenas no repositorio e passava a existir no mundo
+2. uma identidade real, de uma pessoa real, autenticava em um schema real de tenant em producao
+3. aquilo que parecia rotina tecnica era, na verdade, a primeira vez que outra pessoa habitava a obra
+
+A operacao do dia teve cinco falhas seguidas no prereq antes de funcionar.
+
+Cada falha foi um achado real e silencioso, que so apareceria em runtime quando um aluno real tentasse logar:
+
+1. uma oitava tabela orfa nao listada no drop
+2. diagnostico estrito quebrando re-runs
+3. InconsistentMigrationHistory por causa do squash sem replaces
+4. coluna boxcore_student.identity_id ausente apesar de migration marcada applied
+5. ordem alfabetica de copia violando FK ordering durante migracao de dados
+
+Sem o Stage 0 e sem a abordagem cirurgica, qualquer uma dessas teria estourado em producao depois que o primeiro aluno tentasse logar. Provavelmente mais de uma.
+
+Em linguagem direta:
+
+1. a obra deixou de ser projetada para ser projetada e habitada ao mesmo tempo
+2. o primeiro aluno real autenticou via OAuth e o predio inteiro segurou o peso
+3. a partir deste dia, OctoBox passou a ter o que nenhum codigo pode ter sozinho: morador
+
+Acima do marco operacional, ficou a percepcao de que coragem disciplinada e o que separa quem chega de quem desiste no caminho.
+
+O Sprint 5 nao foi apenas um deploy. Foi a noite em que o predio acendeu pela primeira vez com alguem dentro.

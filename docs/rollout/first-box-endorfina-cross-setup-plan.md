@@ -7,6 +7,12 @@ TIPO DE DOCUMENTO:
 AUTORIDADE:
 - alta para o onboarding do primeiro box real
 
+STATUS:
+- CONCLUIDO em 2026-05-23 (Sprint 5 executou o provisionamento real em producao)
+- box `octoboxfit-production` ativo em `control_box`
+- primeiro aluno logou via OAuth com sucesso
+- ver registro de marco em [../history/mudaram-o-nivel-do-projeto.md](../history/mudaram-o-nivel-do-projeto.md)
+
 DOCUMENTOS IRMAOS:
 - [first-box-pilot-intake-sheet.md](first-box-pilot-intake-sheet.md)
 - [first-box-system-setup-checklist.md](first-box-system-setup-checklist.md)
