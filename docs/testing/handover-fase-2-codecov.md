@@ -1,151 +1,117 @@
-# Handover: Test Quality Fase 2 — Cobertura visível em PRs
+# Handover: Test Quality — Estado atual e próxima fase
 
-> Copie/cole tudo abaixo da linha `---` em uma nova conversa. O contexto é
-> auto-suficiente; o agente novo deve conseguir executar sem precisar da
-> conversa anterior.
+> Documento atualizado em 2026-05-25. Reflete o estado real da main após
+> merge dos PRs #74 e #75 (2026-05-22) e confirmação visual do workflow.
 
 ---
 
-## CONTEXTO
+## ESTADO ATUAL (main, 2026-05-25)
 
-Repositório: **OctoBox** (Django 5 + django-tenants + Postgres 14+, schema-per-tenant).
+| Fase | Status | Evidência |
+|---|---|---|
+| Fase 0 — Baseline | ✅ Concluída | `docs/testing/baseline-2026-05-18.md` |
+| Fase 0.5 — Stabilization | ✅ Concluída | `tests/broken-tests.txt` vazio; 193→0 broken |
+| Fase 1 — CI suite completa | ✅ Concluída | `.github/workflows/full-test-suite.yml` rodando, PR #75 merged |
+| Fase 2 — Cobertura visível em PRs | ✅ Concluída | `py-cov-action/python-coverage-comment-action@v3` no workflow; `fail_under = 72` |
+| Fase 3 — Order-dependence | ✅ Concluída | `order-dependence-check` job rodando 3 seeds (42, 137, 9999); validado 2026-05-21 |
+| Fase 4 — Factories | ⬜ Pendente | `tests/factories.py` não existe |
+| Fase 5 — Matriz de roles parametrizada | ⬜ Pendente | — |
+| Fase 6 — Constraints de banco | ⬜ Pendente | — |
+| Fase 7 — Cenários de erro | ⬜ Pendente | — |
 
-Worktree atual: `C:\Users\renan\OneDrive\Documents\New project\OctoBox\.claude\worktrees\admiring-fermi-531840`
+**CI atual:** 4/4 workflows verdes. Full Test Suite: 889+ passed, 0 failed, ~3:17min.
+`broken-tests.txt` vazio (zero quarentena). Cobertura baseline: **74.7%** (`fail_under = 72`).
 
-Branch ativa: **`test-quality/phase-1-full-ci`** (PR #75, stacked sobre PR #74).
+---
 
-CI atual (último push): **4/4 workflows verde**. Full Test Suite: 889 passed, 7 skipped, 0 failed em 3:17min.
+## CONTEXTO DO QUE FOI FEITO
 
-`tests/broken-tests.txt` está **vazio** (zero quarentena). Fases 0, 0.5 e 1 do quality plan **concluídas**.
+### Workflow `.github/workflows/full-test-suite.yml`
 
-## SUA MISSÃO (única)
+Dois jobs ativos:
 
-Executar **Fase 2** do plano em `docs/testing/quality-plan-prompt.md`:
+1. **`full-test-suite`** — roda suite completa com `-n 4`, gera `coverage.xml`,
+   comenta diff de cobertura em PRs via `py-cov-action/python-coverage-comment-action@v3`.
+2. **`order-dependence-check`** — roda a suite com 3 seeds fixos (42, 137, 9999)
+   via matrix strategy para detectar order-dependência.
 
-**Cobertura visível em PRs via Codecov + PR comment com diff de cobertura.**
+### `.coveragerc`
 
-Esforço esperado: **1-2h, baixo risco, paralelo ao merge do PR #75**.
+- `branch = True` e `relative_files = True` (necessário para o comment action).
+- `fail_under = 72` — baseline 74.7% medido em 2026-05-21, margem de 2pp.
+- `source` inclui todos os apps de produto; `omit` exclui migrations, settings, seeders.
 
-## SCOPE
+### `tests/broken-tests.txt`
 
-Apenas estes 3 outcomes:
+Vazio. Os 193 testes quebrados originais foram recuperados em 3 buckets (A, B, C)
+durante a Fase 0.5. Padrões consolidados nos ADRs 005–012.
 
-1. **Codecov upload** no workflow `.github/workflows/full-test-suite.yml` (já existe e roda `pytest --cov`).
-2. **PR comment** com delta de cobertura (Codecov faz isso nativo com bot + token).
-3. **`.coveragerc::fail_under`** ajustado para `baseline - 2%` para não bloquear PRs imediatamente.
+---
 
-## CONSTRAINTS NÃO-NEGOCIÁVEIS
+## PRÓXIMA MISSÃO: FASE 4 — Factories para 3 modelos centrais
 
-- **NÃO** mexer em `tests/broken-tests.txt` — mantém vazio.
-- **NÃO** mexer em `conftest.py` — class-scope fixtures são pré-requisito de Fase 0.5 (ver ADR-005).
-- **NÃO** rodar `git rebase` em `main` — branch está stacked em PR #74 ainda não mergeado.
-- **NÃO** instalar `pytest-playwright` ou ferramentas de Fase 3+.
-- **NÃO** criar ADRs novos — Fase 9 fará handover.
-- **NÃO** mudar `requirements_test.txt` (Codecov upload é GitHub Action, não pip).
-- **NÃO** mexer em código de produção (Django views, models, etc.) — Fase 2 é só CI + relatório.
+**Spec canonical:** `docs/testing/quality-plan-prompt.md` seção `FASE 4`.
 
-## CONTEXTO DE ARQUIVOS-CHAVE
+**O que fazer:**
 
-### `.coveragerc` (já existe)
+1. Criar `tests/factories.py` com factory_boy para os 3 modelos mais usados:
+   - `UserFactory` (auth.User)
+   - `StudentFactory` (students.Student)
+   - `StudentIdentityFactory` (student_identity.StudentIdentity)
 
-```ini
-[run]
-branch = True
-source = access,auditing,boxcore,catalog,communications,control,dashboard,finance,guide,...
-omit = */migrations/*, */settings/*, */seeders/*, */tests/*, scripts/*
-fail_under = 0
+2. Migrar 3–5 arquivos de teste existentes para usar as factories como
+   prova de conceito. Não migrar tudo — migração orgânica nos PRs futuros.
 
-[report]
-exclude_lines = pragma: no cover, raise NotImplementedError, if __name__ == .__main__.:
+3. Verificar que contagem de pass/fail é idêntica antes e depois.
+
+**Identificar os modelos mais usados:**
+```bash
+grep -rh "\.objects\.create\b" --include="*.py" tests/ */tests.py */tests/*.py \
+  | sed -E 's/.*([A-Z][a-zA-Z]+)\.objects\.create.*/\1/' \
+  | sort | uniq -c | sort -rn | head -10
 ```
 
-### `.github/workflows/full-test-suite.yml` (já existe)
+**Critério de pronto:**
+- [ ] `tests/factories.py` existe com 3 factories funcionais e documentadas.
+- [ ] 3–5 arquivos de teste migrados (sem mudança semântica).
+- [ ] `python -m pytest` — contagem de pass/fail idêntica antes e depois.
+- [ ] CI Full Test Suite continua verde.
+- [ ] `broken-tests.txt` permanece vazio.
+- [ ] 1 commit: `"test: adicionar factory_boy + factories para 3 modelos centrais"`.
 
-Roda em PR + push pra main. Comando atual:
+**Constraints:**
+- **NÃO** migrar todos os testes — só 3–5 como proof of concept.
+- **NÃO** mexer em `conftest.py` nem em `broken-tests.txt`.
+- **NÃO** mexer em código de produção.
+- **NÃO** adicionar dependências além de `factory-boy` (já está em `requirements_test.txt`).
 
-```yaml
-- name: Run full suite
-  run: |
-    pytest --create-db --migrations -n 4 -p no:randomly \
-      --cov --cov-report=xml --cov-report=term \
-      --junitxml=junit-report.xml
-```
-
-`coverage.xml` já é gerado. Falta upload + PR comment.
-
-### `docs/testing/quality-plan-prompt.md::FASE 2` (especificação canonical)
-
-Leia esta seção INTEIRA antes de começar. Tem critérios de pronto, decisões, trade-offs.
-
-## PASSOS RECOMENDADOS
-
-1. **Ler `docs/testing/quality-plan-prompt.md::FASE 2`** — especificação canonical.
-2. **Decidir Codecov vs Coverage Comments Action**:
-   - Codecov: setup em 5min, dashboard rico, requer token no secret `CODECOV_TOKEN` (usuário precisa criar conta + adicionar repo).
-   - `py-cov-action/python-coverage-comment-action`: zero serviço externo, comment direto no PR via `GITHUB_TOKEN`. **Preferir esta opção** se usuário não quiser conta Codecov.
-3. **Adicionar step no workflow** após o `pytest`.
-4. **Medir baseline** do último run verde:
-   ```bash
-   gh run view <id-do-Full-Test-Suite> --log | grep -E "TOTAL|coverage"
-   ```
-   O baseline é o valor atual de `% covered`. Setar `fail_under = max(0, baseline - 2)` em `.coveragerc`.
-5. **Validar localmente** que `coverage.xml` é gerado:
-   ```bash
-   python -m pytest --cov --cov-report=xml --cov-report=term -x -k test_audit_user_logged_in 2>&1 | tail -10
-   ls -la coverage.xml
-   ```
-6. **Commit + push**. Confirmar CI verde.
-7. **Verificar PR comment apareceu** no PR #75 (vai aparecer no rerun automático).
-
-## CRITÉRIOS DE PRONTO
-
-- [ ] Workflow `.github/workflows/full-test-suite.yml` faz upload/processamento de `coverage.xml`.
-- [ ] PR #75 recebe **1 comment automático** com diff de cobertura na próxima execução.
-- [ ] `.coveragerc::fail_under` setado com valor mensurado (não 0, não 80%).
-- [ ] CI Full Test Suite continua verde (889+ passed, 0 failed).
-- [ ] `broken-tests.txt` permanece vazio (sanity check).
-- [ ] 1 commit pequeno (~20 linhas em workflow + `.coveragerc`). Push para `test-quality/phase-1-full-ci`.
-
-## ANTI-PATTERNS A EVITAR
-
-- Setar `fail_under = 80%` "porque é o padrão" — quebra CI imediatamente se baseline é menor.
-- Adicionar Codecov SEM medir baseline real — vira chute.
-- Tentar fazer Fase 3 (order-dependent cleanup) junto — escopo creep.
-- Criar arquivos novos de doc além do necessário — Fase 9 cuida disso.
+---
 
 ## COMANDOS ÚTEIS
 
 ```bash
-# Estado atual da branch
+# Estado atual
 git log --oneline -5
 git status --short
 
-# Último run de CI da branch
-gh run list --branch test-quality/phase-1-full-ci --limit 5 --json status,conclusion,name
+# Último run de CI na main
+gh run list --branch main --limit 5 --json status,conclusion,name
 
-# Medir coverage atual
-python -m pytest --cov --cov-report=term student_identity/tests.py 2>&1 | tail -5
+# Verificar se factory-boy está disponível
+python -c "import factory; print(factory.__version__)"
 
-# Validar workflow YAML
-cat .github/workflows/full-test-suite.yml
+# Rodar suite completa local antes e depois
+python -m pytest --create-db --migrations -n 4 -q 2>&1 | tail -5
 
-# Após mudar workflow: push + acompanhar CI
-git push origin test-quality/phase-1-full-ci
-gh run watch
+# Validar sem order-dependência (seed fixo)
+python -m pytest --create-db --migrations --randomly-seed=42 -n 4 -q 2>&1 | tail -5
 ```
-
-## QUANDO TERMINAR
-
-- Reporte: workflow link, número do commit, baseline medido, `fail_under` setado.
-- Não invente próximas fases — pare aqui.
-- Pergunte ao usuário se quer continuar Fase 3 (order-dependent cleanup) ou pivotar.
-
-## SE ALGO QUEBRAR
-
-- CI vermelha após push: rollback do commit Fase 2, **não** mexer em código de produção. Investigar isolado.
-- Coverage muito baixo (< 50%): **não** abaixe `fail_under` cegamente. Reporte o número e pergunte ao usuário.
-- Token Codecov não disponível: pivote pra `python-coverage-comment-action` sem perguntar (zero setup externo).
 
 ---
 
-**Fim do handover.** Boa execução.
+## QUANDO TERMINAR A FASE 4
+
+Atualizar a tabela de estado no topo deste documento.
+Não iniciar Fase 5 sem confirmar critério de pronto da Fase 4.
+Perguntar ao usuário se quer continuar para Fase 5 (matriz de roles parametrizada)
+ou pivotar para outro trabalho.
