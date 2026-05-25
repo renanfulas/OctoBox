@@ -127,3 +127,20 @@ htmlcov/
 .coverage
 .coverage.*
 
+# Arquivos tmp_* na raiz (screenshots de QA, cookies, HTML salvos durante debug)
+# Razao: ja vazaram para o repo no passado (tmp_login_staff.cookies com CSRF token de prod).
+tmp_*
+
+# Backups e snapshots NUNCA devem entrar no repo, mesmo encryptados.
+# Ver SECURITY_REMOVE_BACKUPS.md para limpeza historica.
+encrypted-backups/
+*.dump
+*.dump.gz
+
+# Tooling/artefatos locais que nao pertencem ao repo
+.claire/
+.local-admin.txt
+.nodeenv/
+.tools/
+node_modules/
+
