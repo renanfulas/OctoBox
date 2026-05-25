@@ -1890,16 +1890,21 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'beforeinstallprompt')
         self.assertContains(response, 'Adicionar à Tela de Início')
 
-    def test_juliana_week_order_reflects_rest_on_friday(self):
+    def test_juliana_week_order_reflects_recomp_program(self):
         response = self.client.get('/renan/juliana')
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "goDay('qua',this)")
-        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Superior</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Lower</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, 'Quarta · ~55 min · Peito, Costas, Ombros, Bíceps, Tríceps')
-        self.assertContains(response, 'Quinta · ~60 min · Quad, Posterior, Glúteo, Panturrilha, Core')
+        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Posterior</div>', html=True)
+        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Upper</div>', html=True)
+        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Glúteo</div>', html=True)
+        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Braços</div>', html=True)
+        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">HIIT</div>', html=True)
+        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Fullbody</div>', html=True)
+        self.assertContains(response, '<div class="dn">Dom</div><div class="dt">Rest</div>', html=True)
+        self.assertContains(response, 'Terça · ~55 min · Peito, Costas, Ombros, Bíceps, Tríceps')
+        self.assertContains(response, 'Quarta · ~55 min · Glúteo, Posterior, Gastrocnêmio, Core · + Cardio leve pós-treino')
+        self.assertContains(response, 'Sábado · ~60 min · Superior em superset + Lower com pré-exaustão')
 
 
 class StudentAuthMiddlewareTests(TestCase):
