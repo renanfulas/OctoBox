@@ -61,16 +61,42 @@ Traducao pratica:
 
 ## Estado atual resumido
 
+> Atualizado em 2026-05-25. O runtime avancou significativamente desde a
+> redacao original deste plano.
+
 ### O que ja esta concreto
 
-Corredores reais do `Center Layer`:
+**Center Layer — 7 facades operacionais:**
 
 1. [../../operations/facade/class_grid.py](../../operations/facade/class_grid.py)
 2. [../../operations/facade/workspace.py](../../operations/facade/workspace.py)
 3. [../../students/facade/student_lifecycle.py](../../students/facade/student_lifecycle.py)
-4. [../../communications/facade/messaging.py](../../communications/facade/messaging.py)
+4. [../../students/facade/student_attribution.py](../../students/facade/student_attribution.py)
+5. [../../communications/facade/messaging.py](../../communications/facade/messaging.py)
+6. [../../student_identity/facade/tenant_resolver.py](../../student_identity/facade/tenant_resolver.py)
+7. [../../reporting/facade/http_exports.py](../../reporting/facade/http_exports.py)
+8. [../../onboarding/facade.py](../../onboarding/facade.py)
+9. [../../quick_sales/facade.py](../../quick_sales/facade.py)
 
-Leituras e snapshots publicos ja reais:
+**Signal Mesh — malha operacional ativa:**
+
+1. [../../integrations/mesh/contracts.py](../../integrations/mesh/contracts.py) — `SignalEnvelope`, `build_signal_envelope`, `build_correlation_id`, `resolve_idempotency_key`
+2. [../../integrations/mesh/failure_policy.py](../../integrations/mesh/failure_policy.py) — `FailureDecision`, classificacao canonica de falha
+3. [../../integrations/mesh/retry_policy.py](../../integrations/mesh/retry_policy.py) — `RetryDecision`, backoff, give_up, contain
+4. [../../integrations/whatsapp/reprocessing.py](../../integrations/whatsapp/reprocessing.py) — corredor ativo consumindo `next_retry_at`
+5. [../../jobs/base.py](../../jobs/base.py) e [../../jobs/reprocessing.py](../../jobs/reprocessing.py) — `JobResult` com `SignalEnvelope`
+6. [../../api/v1/jobs_views.py](../../api/v1/jobs_views.py) — `correlation_id` propagado em todos os fluxos de job
+
+**Red Beacon — snapshot consolidado ativo:**
+
+1. [../../monitoring/beacon_snapshot.py](../../monitoring/beacon_snapshot.py) — snapshot curado com cache multi-tenant safe
+2. [../../monitoring/alert_siren.py](../../monitoring/alert_siren.py) — engine de risco e mobilizacao
+3. [../../monitoring/defense_actions.py](../../monitoring/defense_actions.py) — acoes defensivas
+4. [../../monitoring/risk_states.py](../../monitoring/risk_states.py) — classificacao de estados de risco
+5. [../../monitoring/signal_mesh_metrics.py](../../monitoring/signal_mesh_metrics.py) — metricas da malha
+6. Consumido por `dashboard_snapshot_queries.py` e `operations/manager_workspace_queries.py`
+
+**Leituras e snapshots publicos:**
 
 1. [../../dashboard/dashboard_snapshot_queries.py](../../dashboard/dashboard_snapshot_queries.py)
 2. [../../catalog/student_queries.py](../../catalog/student_queries.py)
@@ -78,31 +104,16 @@ Leituras e snapshots publicos ja reais:
 4. [../../catalog/class_grid_queries.py](../../catalog/class_grid_queries.py)
 5. [../../operations/session_snapshots.py](../../operations/session_snapshots.py)
 
-Sementes reais de borda, integracao e observabilidade:
-
-1. [../../config/urls.py](../../config/urls.py)
-2. [../../api/urls.py](../../api/urls.py)
-3. [../../api/v1/urls.py](../../api/v1/urls.py)
-4. [../../api/v1/views.py](../../api/v1/views.py)
-5. [../../integrations/whatsapp/contracts.py](../../integrations/whatsapp/contracts.py)
-6. [../../integrations/whatsapp/services.py](../../integrations/whatsapp/services.py)
-7. [../../jobs/base.py](../../jobs/base.py)
-8. [../../monitoring/prometheus_middleware.py](../../monitoring/prometheus_middleware.py)
-
 ### O que ainda e fragilidade estrutural
 
 1. a API v1 ainda mistura endpoints de natureza diferente no mesmo modulo
-2. jobs ainda sao contrato base, nao sistema maduro de reexecucao e observabilidade
-3. canais externos ainda nao compartilham uma disciplina unica de idempotencia, retry e backpressure
-4. nao existe namespace tecnico explicito para mecanismos temporarios de transicao
-5. nao existe engine formal de risco consolidado e mudanca de postura defensiva
+2. `Scaffold Agents` ainda nao existem como namespace tecnico explicito
+3. `Vertical Sky Beam` ainda e conceito — nao deve ser ativado sem base de observabilidade robusta em producao
 
 ### O que ainda nao deve ser tratado como pronto
 
-1. `Signal Mesh` como malha operacional completa
-2. `Alert Siren` como sistema real de mobilizacao
-3. `Red Beacon` como emissao consolidada e confiavel
-4. `Vertical Sky Beam` como implementacao utilizavel
+1. `Scaffold Agents` como namespace tecnico formal
+2. `Vertical Sky Beam` como implementacao utilizavel (requer producao estavel com historico real)
 
 ## Regra geral de execucao
 

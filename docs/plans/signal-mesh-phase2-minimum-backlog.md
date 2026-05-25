@@ -23,6 +23,15 @@ PONTOS CRITICOS:
 
 # Signal Mesh: backlog minimo da Fase 2
 
+> **STATUS: EXECUTADO — 2026-05**
+>
+> Todos os itens deste backlog foram implementados. Os modulos existem no
+> runtime e os testes estao verdes. Este documento e historico.
+>
+> Estado atual: `integrations/mesh/` (contracts, failure_policy, retry_policy),
+> `monitoring/` (beacon_snapshot, alert_siren, signal_mesh_runtime, signal_mesh_metrics),
+> `integrations/whatsapp/reprocessing.py`, `jobs/base.py`, `jobs/reprocessing.py`.
+
 ## Tese pratica desta onda
 
 A Fase 2 minima da `Signal Mesh` nao comeca com fila nova, barramento novo ou replatforming.
