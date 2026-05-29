@@ -418,15 +418,15 @@ class ResolveEnrollmentSyncDefaultsTest(unittest.TestCase):
         self.assertEqual(defaults.base_amount, Decimal('0.00'))
         # FINDING: ver tests/sprint-5-8-findings.md FIND-001
 
-    def test_initial_payment_zero_decimal_is_treated_as_falsy(self):
-        """Decimal('0.00') é falsy em Python — cai no fallback selected_plan_price.
+    def test_initial_payment_zero_decimal_is_respected_over_plan_price(self):
+        """Decimal('0.00') explícito é respeitado em vez de coalescer para o plano.
 
-        Isso confirma: se UI envia explicitamente 0,00, o sistema usa o plano.
-        Comportamento intencional ou bug? Documentado para revisão.
+        FIND-002 resolvido (2026-05-28): trocamos `or` por `is None` para que
+        a decisão explícita do operador de cobrar 0,00 (bolsa, cortesia,
+        isenção) não seja sobrescrita pelo preço do plano.
         """
         defaults = self._resolve(
             initial_payment_amount=Decimal('0.00'),
             selected_plan_price=Decimal('99.00'),
         )
-        # FINDING: 0.00 é coalescido como falsy → vai para o plano
-        self.assertEqual(defaults.base_amount, Decimal('99.00'))
+        self.assertEqual(defaults.base_amount, Decimal('0.00'))
