@@ -80,7 +80,6 @@ jobs:
           python -m pytest tests/e2e/ \
             --create-db --migrations \
             --browser chromium \
-            --headed=false \
             -m e2e \
             --tb=short \
             --junitxml=junit-e2e.xml \
