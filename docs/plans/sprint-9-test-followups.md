@@ -18,6 +18,9 @@ Dois follow-ups independentes saíram da organização dos PRs. **Não têm depe
 
 # Follow-up A — Refazer testes de `control` e `auditing`
 
+> ## ✅ CONCLUÍDO (2026-05-29)
+> Marker `@pytest.mark.public_schema` adicionado ao conftest + pytest.ini. Os 2 arquivos refeitos e **validados em PostgreSQL real** (cluster local 5433): `control` 17 passed, `auditing` 14 passed. Suite SQLite completa: 467 passed, 0 regressões. Correções aplicadas: marker public_schema (provision_box/archive_box), `patch('django.db.connection')` (em vez de `patch.object`), usernames uuid, neutralização do box de fundo, `addCleanup` de schemas DDL no teste de archive.
+
 ## Contexto
 
 No #108, `tests/test_control_services.py` (15 testes) e `tests/test_auditing_services.py` (14 testes) foram **removidos** porque passavam em SQLite local mas quebravam em PostgreSQL no CI (17 falhas). O conteúdo está preservado no commit `747aae6`.

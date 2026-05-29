@@ -26,18 +26,20 @@ Três regras absolutas:
 | Sprint 1 | Fase 0 — Estancar | ✅ Concluído | Markers registrados, `-ra`, `OCTOBOX_REQUIRE_POSTGRES`, age policy do broken-tests |
 | Sprint 2 | Fase 1 — Paridade | ✅ Concluído | `provision_test_tenants.sh`, job `tenant-boundary` no CI |
 | Sprint 3 | Fase 4 — Gates | ✅ Concluído | `ci-gates.yml` (migration check + markers lint) |
-| Sprint 4 | Fase 3 — Cobertura inicial | 🟡 Parcial | `student_identity/use_cases` (18) ✅. `control/services` (15) **movido para follow-up** — ver nota abaixo |
+| Sprint 4 | Fase 3 — Cobertura inicial | ✅ Concluído | `student_identity/use_cases` (18) + `control/services` (17, refeito no Sprint 9) |
 | Sprint 5 | Fase 3 — `signup/services` | ✅ Concluído | 38 testes: `verify_magic_token` (6 branches) + `activate_pending_signup` (3 branches) + Stripe |
-| Sprint 6 | Fase 3 — `auditing/services` | 🟡 Follow-up | 14 testes escritos mas **movidos** — falham em django-tenants (ver nota) |
+| Sprint 6 | Fase 3 — `auditing/services` | ✅ Concluído | 14 testes: `_ensure_tenant_for_audit_write` (7 branches) + signals (refeito no Sprint 9) |
 | Sprint 7 | Fase 3 — `students/use_cases` | ✅ Concluído | 25 testes: use_cases + defaults comerciais |
 | Sprint 8 | Fase 3 — `student_identity` views/OAuth | ✅ Concluído | 13 testes: rate limit + anomaly + OAuth callback |
-| **Sprint 9** | Fase 3 — Refazer control + auditing para PostgreSQL | 🔴 **Próximo** | Corrigir os testes movidos + Stripe webhook |
+| Sprint 9 | Fase 3 — Refazer control + auditing para PostgreSQL | ✅ Concluído | marker `public_schema` no conftest; 31 testes validados em PostgreSQL real **e** SQLite |
 
-> **⚠️ Nota (2026-05-29) — `test_control_services.py` e `test_auditing_services.py` movidos para follow-up.**
-> Esses dois arquivos passavam em SQLite local mas **falharam em PostgreSQL no CI** (17 falhas): `provision_box` exige schema `public` mas o `conftest` aplica `schema_context('box_test')` autouse; `patch.object(connection, 'schema_name')` conflita com o atributo gerenciado pelo django-tenants; usernames fixos colidem sob paralelização.
-> **Ironia reconhecida:** caíram exatamente no anti-pattern AP5/princípio diretor deste doc ("verde em SQLite não prova produção"). Foram validados só com `pytest tests/` local. Serão refeitos em PR dedicado com setup correto de tenant. O conteúdo permanece no histórico git (commit anterior a esta remoção).
+> **✅ Resolvido (2026-05-29) — `test_control_services.py` e `test_auditing_services.py`.**
+> Foram removidos no #108 por falharem em PostgreSQL (validados só em SQLite — caíram no anti-pattern AP5 deste doc). **Refeitos no Sprint 9** e validados em **PostgreSQL real** (cluster local na 5433) além de SQLite:
+> - Novo marker `@pytest.mark.public_schema` (conftest): classe roda no schema `public`, opt-out do `schema_context` autouse — necessário para `provision_box`/`archive_box`.
+> - `patch('django.db.connection')` (em vez do frágil `patch.object(connection, ..., create=True)`) para controlar `schema_name`/`set_tenant` sem tocar o wrapper do django-tenants.
+> - Usernames únicos (uuid) + neutralização do box de fundo do fixture `test_tenant`.
 
-**Suite (sem os 2 arquivos movidos):** Sprint 5/7/8 + student_identity (Sprint 4) verdes em PostgreSQL no CI.
+**Suite atual:** 467 passed, 6 skipped, 0 failed em SQLite. `control` (17) + `auditing` (14) confirmados em PostgreSQL real.
 
 **Findings descobertos nos Sprints 5–8:** 4 itens — FIND-001 fechado (não-bug), FIND-002/003/004 corrigidos. Relatório em `tests/sprint-5-8-findings.md`.
 
