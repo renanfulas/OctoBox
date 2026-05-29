@@ -1,0 +1,51 @@
+#!/bin/sh
+# .githooks/pre-commit — guardrail anti-órfã de migrations (Sprint 9).
+#
+# POR QUE EXISTE:
+# - O Follow-up B do hardening descobriu migrations geradas localmente e
+#   NUNCA commitadas (órfãs pré-squash) que enganavam o makemigrations
+#   local e bloqueavam o PostgreSQL de dev. Este hook impede que voltem.
+# - Complementa o gate migration-check do CI (ci-gates.yml) com um
+#   fail-fast LOCAL, antes do push.
+#
+# ATIVAÇÃO (uma vez por clone):
+#   git config core.hooksPath .githooks
+#
+# BYPASS pontual (quando você sabe o que está fazendo):
+#   git commit --no-verify
+
+# ---------------------------------------------------------------------------
+# 1) Migrations NÃO rastreadas (o caso exato do Follow-up B).
+#    Rápido, sem Django — pega arquivos órfãos em */migrations/.
+# ---------------------------------------------------------------------------
+orphans=$(git ls-files --others --exclude-standard -- '*/migrations/*.py' 2>/dev/null)
+if [ -n "$orphans" ]; then
+    echo "[pre-commit] ERRO: migrations nao rastreadas no working tree:"
+    echo "$orphans" | sed 's/^/    /'
+    echo "[pre-commit] -> Inclua no commit (git add) ou remova se for lixo pre-squash."
+    echo "[pre-commit] -> Bypass pontual: git commit --no-verify"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# 2) Drift model<->migration (makemigrations --check), se o ambiente Django
+#    estiver disponivel. Tolerante a erro de setup: bloqueia SO quando
+#    detecta migration pendente real ("Migrations for"), nao por erro de env.
+# ---------------------------------------------------------------------------
+if [ -f manage.py ] && command -v python >/dev/null 2>&1; then
+    out=$(python manage.py makemigrations --check --dry-run --no-input 2>&1)
+    if [ $? -ne 0 ]; then
+        if printf '%s' "$out" | grep -q "Migrations for"; then
+            echo "[pre-commit] ERRO: models mudaram sem migration gerada:"
+            printf '%s\n' "$out" | grep "Migrations for" | sed 's/^/    /'
+            echo "[pre-commit] -> Rode: python manage.py makemigrations  (e commite a migration)"
+            echo "[pre-commit] -> Bypass pontual: git commit --no-verify"
+            exit 1
+        fi
+        # exit != 0 sem "Migrations for" = erro de ambiente (settings/banco).
+        # Nao bloqueia o commit; o gate do CI ainda cobre.
+        echo "[pre-commit] aviso: makemigrations --check nao rodou (ambiente); check de drift pulado."
+    fi
+fi
+
+exit 0
