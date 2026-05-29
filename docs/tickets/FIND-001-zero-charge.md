@@ -1,10 +1,51 @@
 # FIND-001 — Análise: cobrança zerada silenciosa
 
-> **Severidade:** HIGH
+> **Severidade:** HIGH → **rebaixado para NÃO-BUG**
 > **Descoberto em:** 2026-05-28
-> **Status:** Análise concluída — aguardando decisão de produto
+> **Status:** ✅ FECHADO — resolvido por análise (2026-05-29). Não requer código.
 > **Arquivo:** students/domain/enrollment_lifecycle.py
 > **Teste que evidencia:** tests/test_students_use_cases.py::ResolveEnrollmentSyncDefaultsTest::test_base_amount_is_zero_when_no_initial_and_no_plan_price
+
+---
+
+## ⚑ Conclusão (2026-05-29) — FECHADO COMO NÃO-BUG
+
+Após decisão de produto + verificação de schema, o risco original **não se sustenta**:
+
+1. **Produto confirmou:** matrícula de lead sem plano (cobrança zerada) é um
+   fluxo **legítimo**, não um acidente a bloquear.
+2. **Schema garante invariante:** `finance/model_definitions.py:80` define
+   `price = models.DecimalField(...)` **NOT NULL**. Um `MembershipPlan`
+   selecionado **sempre** tem preço — o cenário "plano com `price=NULL` →
+   cobrança zerada acidental" (hipótese original) **é impossível**.
+
+### Recomposição dos caminhos possíveis
+
+| Caminho | Resultado | Veredicto |
+|---|---|---|
+| Lead sem plano (`selected_plan=None`) | Early-return `django_enrollments.py:58` — não cria Payment | Legítimo (confirmado por produto) |
+| Plano selecionado | `price` NOT NULL → `base_amount > 0` | Sem acidente possível |
+| `initial_payment_amount=0.00` explícito | Cria Payment R$ 0 | Intencional (operador escolheu cobrar zero) |
+
+### Por que NÃO criar validação
+
+- **Opção A (`raise ValueError`)** seria código morto (price garantido) OU
+  bloquearia leads válidos. Descartada.
+- **Opções B/C** resolveriam um problema que não existe (acidente impossível
+  pelo schema).
+- O único Payment de R$ 0 possível é **intencional** — não há regressão a prevenir.
+
+### Salvaguarda permanente
+
+O teste `test_base_amount_is_zero_when_no_initial_and_no_plan_price` **permanece
+na suíte** documentando que `resolve_enrollment_sync_defaults` retorna
+`Decimal('0.00')` nesse caso — comportamento agora **confirmado como correto**,
+não como bug. Se o schema mudar (`price` virar nullable), este teste + a
+análise abaixo servem de ponto de partida para reabrir.
+
+---
+
+## Análise original (preservada para histórico)
 
 ## Resumo
 

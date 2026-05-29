@@ -8,11 +8,18 @@ relatório existe para virar tickets e ser priorizado pelo time.
 
 ## FIND-001 — Cobrança zerada silenciosa em `resolve_enrollment_sync_defaults`
 
-**Severidade:** HIGH
+**Severidade:** ~~HIGH~~ → **NÃO-BUG (fechado 2026-05-29)**
 **Arquivo:** `students/domain/enrollment_lifecycle.py:79`
 **Função:** `resolve_enrollment_sync_defaults`
 **Sprint:** 7
 **Teste que evidencia:** `tests/test_students_use_cases.py::ResolveEnrollmentSyncDefaultsTest::test_base_amount_is_zero_when_no_initial_and_no_plan_price`
+
+> **✅ FECHADO — resolvido por análise.** Produto confirmou que matrícula de
+> lead sem plano (cobrança zerada) é fluxo legítimo. Schema
+> (`finance/model_definitions.py:80`, `price` NOT NULL) torna impossível o
+> cenário acidental "plano sem preço". Não requer código. Detalhe completo em
+> `docs/tickets/FIND-001-zero-charge.md`. O teste permanece como salvaguarda
+> documentando o comportamento correto.
 
 ### Evidência (código verbatim)
 
@@ -166,12 +173,13 @@ if not secret_key or not session_id:
 
 ## Sumário
 
-| ID | Severidade | Sprint | Tipo |
-|----|------------|--------|------|
-| FIND-001 | HIGH | 7 | Bug de produção (cobrança zerada) |
-| FIND-002 | MEDIUM | 7 | Bug de produção (semantic do `or`) |
-| FIND-003 | MEDIUM | descoberto na validação | Bug de teste (order-dependence) |
-| FIND-004 | LOW | 5 | Bug menor (input não normalizado) |
+| ID | Severidade | Sprint | Tipo | Status |
+|----|------------|--------|------|--------|
+| FIND-001 | ~~HIGH~~ → não-bug | 7 | Falso positivo (schema impede acidente; zero é legítimo) | ✅ Fechado por análise |
+| FIND-002 | MEDIUM | 7 | Bug de produção (semantic do `or`) | ✅ Corrigido (`82bf0ab`) |
+| FIND-003 | MEDIUM | descoberto na validação | Bug de teste (jitter de wall-clock + order) | ✅ Corrigido (`80d10db`) |
+| FIND-004 | LOW | 5 | Bug menor (input não normalizado) | ✅ Corrigido (`48e47d8`) |
 
-**Decisão:** nenhum dos achados foi corrigido durante a implementação dos
-testes. Cada um deve virar ticket no backlog para priorização pelo time.
+**Resolução final:** dos 4 achados, 3 viraram correções de código/teste e 1
+(FIND-001) foi fechado como falso positivo após decisão de produto + verificação
+de schema. Todos auditados — nenhum ficou pendente no backlog.
