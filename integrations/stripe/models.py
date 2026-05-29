@@ -67,8 +67,11 @@ class PaymentWebhookEvent(TimeStampedModel):
         db_table = 'stripe_payment_webhook_event'
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['status', 'next_retry_at']),
-            models.Index(fields=['event_type', 'status']),
+            # name= explícito preservado para alinhar com a migration 0002 e o
+            # índice já existente em produção. Sem isso, o Django auto-gera um
+            # nome novo e exige migration de rename desnecessária (dívida do #55).
+            models.Index(fields=['status', 'next_retry_at'], name='stripe_wh_status_retry_idx'),
+            models.Index(fields=['event_type', 'status'], name='stripe_wh_type_status_idx'),
         ]
 
     def lag_seconds(self) -> float | None:

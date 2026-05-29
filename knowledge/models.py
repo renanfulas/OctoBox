@@ -84,7 +84,9 @@ class KnowledgeChunkEmbedding(TimeStampedModel):
     class Meta:
         ordering = ['chunk__document__path', 'chunk__ordinal']
         indexes = [
-            models.Index(fields=['model', 'dimensions']),
+            # name= explícito preservado para alinhar com a migration 0002 e o
+            # índice já existente em produção (dívida do #55 — ver integrations).
+            models.Index(fields=['model', 'dimensions'], name='knowledge_kn_model_0c7ca8_idx'),
         ]
 
     def __str__(self):
