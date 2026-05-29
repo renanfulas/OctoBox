@@ -577,6 +577,21 @@ Lista priorizada por **risco de regressão silenciosa em produção**:
 
 ## Governança
 
+### Guardrail local de migrations (pre-commit)
+
+Causa raiz do susto do Follow-up B (Sprint 9): migrations geradas localmente e **nunca commitadas** ficaram como órfãs no working tree, enganaram o `makemigrations` local e bloquearam o PostgreSQL de dev. O hook `.githooks/pre-commit` fecha isso com fail-fast local.
+
+**Ativação (uma vez por clone):**
+```bash
+git config core.hooksPath .githooks
+```
+
+**O que bloqueia:**
+1. Arquivos `*/migrations/*.py` **não rastreados** (o caso exato do Follow-up B) — rápido, sem Django.
+2. Drift model↔migration (`makemigrations --check`) quando o ambiente Django está disponível — tolerante a erro de setup (não bloqueia por falta de env; o gate do CI ainda cobre).
+
+**Bypass pontual:** `git commit --no-verify`. Complementa (não substitui) o `migration-check` do `ci-gates.yml`.
+
 ### Broken tests — formato canônico
 
 ```
