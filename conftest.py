@@ -39,6 +39,7 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import os
 import pathlib
 
 import pytest
@@ -54,24 +55,83 @@ _BROKEN_TESTS_FILE = pathlib.Path(__file__).parent / 'tests' / 'broken-tests.txt
 def _load_broken_tests() -> set[str]:
     """Le tests/broken-tests.txt e retorna conjunto de node-ids para skip.
 
-    Linhas vazias e comecadas com # sao ignoradas. Comentario inline
-    (apos `#`) tambem e descartado.
+    Formato esperado por linha:
+        path/file.py::Class::method  owner=@nome  since=YYYY-MM-DD  ticket=#NNN
+
+    Regras de validacao (ativadas em CI via OCTOBOX_REQUIRE_POSTGRES=1):
+    - Linhas sem 'owner=' emitem aviso.
+    - Linhas com 'since=' a mais de 30 dias em CI causam falha de sessao.
 
     OVERRIDE: setar OCTOBOX_RUN_BROKEN_TESTS=1 desativa o skip e roda
-    todos os tests (incluindo broken). Usado durante Fase 0.5 para
-    diagnosticar a causa raiz de tests broken sem mexer na lista.
+    todos os tests (incluindo broken). Usado para diagnostico.
     """
-    import os
     if os.environ.get('OCTOBOX_RUN_BROKEN_TESTS') == '1':
         return set()
     if not _BROKEN_TESTS_FILE.exists():
         return set()
+
+    import datetime
     broken: set[str] = set()
+    is_ci = os.environ.get('CI') == 'true'
+    today = datetime.date.today()
+
     for raw in _BROKEN_TESTS_FILE.read_text(encoding='utf-8').splitlines():
         line = raw.split('#', 1)[0].strip()
-        if line:
-            broken.add(line)
+        if not line:
+            continue
+
+        node_id = line.split()[0]
+        broken.add(node_id)
+
+        # Validacao de formato (apenas em CI para nao poluir local).
+        if is_ci:
+            if 'owner=' not in line:
+                print(f'\n⚠ broken-tests.txt: linha sem owner= — {node_id}')
+            if 'since=' in line:
+                try:
+                    since_str = [p for p in line.split() if p.startswith('since=')][0]
+                    since_date = datetime.date.fromisoformat(since_str.replace('since=', ''))
+                    age_days = (today - since_date).days
+                    if age_days > 30:
+                        pytest.exit(
+                            f'\n\n❌ broken-tests.txt: {node_id!r} esta quebrado ha {age_days} dias '
+                            f'(limite: 30). Corrija o teste ou abra ticket para priorizar.\n',
+                            returncode=4,
+                        )
+                except (ValueError, IndexError):
+                    pass
+
     return broken
+
+
+def pytest_configure(config):
+    """Gate de ambiente: OCTOBOX_REQUIRE_POSTGRES=1 converte skip em ERROR.
+
+    Em CI (full-test-suite.yml), esta variavel esta sempre setada.
+    Se o banco ativo nao for PostgreSQL, a sessao falha imediatamente com
+    mensagem clara — em vez de testes 'requires_postgres' ficarem verdes
+    por skip silencioso.
+
+    Localmente sem a variavel: comportamento normal (skip limpo em SQLite).
+    """
+    if os.environ.get('OCTOBOX_REQUIRE_POSTGRES') != '1':
+        return
+    # Importa settings lazily para nao forcar setup antes do Django estar pronto.
+    try:
+        from django.conf import settings as djsettings
+        from django.test.utils import setup_test_environment
+        # Verifica via DATABASE ENGINE, nao via connection (ainda nao aberta).
+        db_engine = djsettings.DATABASES.get('default', {}).get('ENGINE', '')
+        if 'postgresql' not in db_engine and 'psycopg' not in db_engine:
+            pytest.exit(
+                '\n\nOCTOBOX_REQUIRE_POSTGRES=1 esta setado mas o banco ativo e SQLite.\n'
+                'Configure DATABASE_URL apontando para PostgreSQL antes de rodar.\n'
+                'Para rodar localmente sem PostgreSQL: nao sete OCTOBOX_REQUIRE_POSTGRES.\n',
+                returncode=3,
+            )
+    except Exception:
+        # Django ainda nao configurado — deixa o flow normal prosseguir.
+        pass
 
 
 def pytest_collection_modifyitems(config, items):
