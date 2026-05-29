@@ -89,6 +89,9 @@ class ArchiveTemplateServiceTests(WorkoutFlowBaseTestCase):
         self.assertTrue(WorkoutTemplate.objects.filter(pk=recent_archived.pk).exists())
 
     def test_build_archived_template_list_returns_correct_shape(self):
+        # Arquivado há 5 dias -> retenção de 30 dias -> ~25 dias restantes.
+        # Usamos tolerância de 1 dia porque o serviço chama timezone.now()
+        # depois do setup; truncamento de .days pode oscilar entre 24 e 25.
         t = _make_template('Para listar', created_by=self.coach)
         t.archived_at = timezone.now() - timedelta(days=5)
         t.archived_by = self.coach
@@ -96,12 +99,17 @@ class ArchiveTemplateServiceTests(WorkoutFlowBaseTestCase):
 
         result = build_archived_template_list(box_id=None)
 
-        self.assertEqual(len(result), 1)
-        item = result[0]
-        self.assertEqual(item['id'], t.id)
+        # Filtra apenas o template criado por este teste para não depender
+        # de outros templates arquivados que outros testes possam ter
+        # deixado no banco (AP8: independência de ordem).
+        my_items = [item for item in result if item['id'] == t.id]
+        self.assertEqual(len(my_items), 1)
+        item = my_items[0]
         self.assertEqual(item['name'], 'Para listar')
-        self.assertEqual(item['days_left'], 24)
+        self.assertIn(item['days_left'], (24, 25))
         self.assertFalse(item['expires_soon'])
+        self.assertIn('archived_at_label', item)
+        self.assertIn('archived_by_label', item)
 
     def test_build_archived_template_list_marks_expiring_soon(self):
         t = _make_template('Expirando', created_by=self.coach)
@@ -111,8 +119,11 @@ class ArchiveTemplateServiceTests(WorkoutFlowBaseTestCase):
 
         result = build_archived_template_list(box_id=None)
 
-        self.assertEqual(len(result), 1)
-        self.assertTrue(result[0]['expires_soon'])
+        # Filtra apenas o template criado por este teste para não depender
+        # do estado global do banco entre execuções (AP8).
+        my_items = [item for item in result if item['id'] == t.id]
+        self.assertEqual(len(my_items), 1)
+        self.assertTrue(my_items[0]['expires_soon'])
 
 
 class ArchiveTemplateViewTests(WorkoutFlowBaseTestCase):
