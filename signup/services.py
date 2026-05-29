@@ -153,6 +153,7 @@ def query_stripe_session_status(session_id: str):
     Ou None se Stripe nao configurado ou erro de rede.
     """
     secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    session_id = (session_id or '').strip()
     if not secret_key or not session_id:
         return None
 

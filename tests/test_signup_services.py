@@ -499,14 +499,12 @@ class QueryStripeSessionStatusTest(SimpleTestCase):
 
     @override_settings(STRIPE_SECRET_KEY='sk_test_xxx')
     def test_returns_none_when_session_id_is_whitespace_only(self):
-        """secret_key strip() — mas session_id NÃO. Confirmar comportamento atual."""
-        # Documenta comportamento: session_id com só espaços passa para o stripe
-        # e gera erro de API → retorna None pelo branch 4.
+        """session_id com só whitespace é normalizado via strip() e retorna None na validação inicial."""
+        # session_id='   ' vira '' após strip — falha na validação sem chamar Stripe.
         with patch('stripe.checkout.Session.retrieve') as mock_retrieve:
-            mock_retrieve.side_effect = RuntimeError('invalid session id')
             result = query_stripe_session_status('   ')
-            # Whitespace é truthy em Python — chega no stripe e falha lá
             self.assertIsNone(result)
+            mock_retrieve.assert_not_called()
 
     # Branch 3: ImportError (stripe não instalado)
     @override_settings(STRIPE_SECRET_KEY='sk_test_xxx')
