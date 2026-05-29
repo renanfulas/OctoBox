@@ -228,7 +228,15 @@ def _class_tenant_schema_context(request, test_tenant):
     incluindo setUpClass / setUpTestData / setUp / test method / tearDown.
 
     Resolveu 118 ERRORED de uma vez na Fase 0.5 (61% do inventario).
+
+    OPT-OUT (Sprint 9): classes marcadas @pytest.mark.public_schema rodam no
+    schema public (sem schema_context). Necessario para testes que criam ou
+    manipulam tenants (provision_box, archive_box) — django-tenants proibe
+    criar/alterar um Box fora do schema public.
     """
+    if request.node.get_closest_marker('public_schema'):
+        yield
+        return
     if test_tenant is None:
         yield
         return
@@ -250,7 +258,13 @@ def _tenant_schema_context(request, test_tenant):
 
     Quando django_tenants nao esta ativo (SQLite fallback), test_tenant
     e None — pula o context manager e roda o test diretamente.
+
+    OPT-OUT (Sprint 9): respeita @pytest.mark.public_schema (ver fixture
+    _class_tenant_schema_context acima).
     """
+    if request.node.get_closest_marker('public_schema'):
+        yield
+        return
     if test_tenant is None:
         yield
         return
