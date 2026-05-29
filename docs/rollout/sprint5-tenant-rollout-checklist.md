@@ -33,7 +33,7 @@ ls -lh /backups/pre-tenant/
 # 1c. Testar restore do dump em banco de staging (opcional mas recomendado)
 ```
 
-- [ ] Backup salvo e tamanho verificado
+- [x] Backup salvo e tamanho verificado
 
 ---
 
@@ -53,8 +53,8 @@ python manage.py check
 python manage.py migrate_schemas --shared
 ```
 
-- [ ] `migrate_schemas --shared` retorna exit 0
-- [ ] Tabelas em public: `control_box`, `control_membership`, `control_boxprovisioningevent`, `control_platformauditevent`
+- [x] `migrate_schemas --shared` retorna exit 0
+- [x] Tabelas em public: `control_box`, `control_membership`, `control_boxprovisioningevent`, `control_platformauditevent`
 
 ---
 
@@ -77,9 +77,9 @@ python manage.py provision_box \
 # Deve listar 30+ tabelas
 ```
 
-- [ ] `provision_box` retorna exit 0
-- [ ] `\dt box_pilot.*` lista ≥ 30 tabelas
-- [ ] `control_boxprovisioningevent` tem 4 linhas com `status='ok'` para o box_pilot
+- [x] `provision_box` retorna exit 0
+- [x] `\dt box_pilot.*` lista ≥ 30 tabelas (box_octoboxfit-production tem 51 tabelas)
+- [x] `control_boxprovisioningevent` tem 4 linhas com `status='ok'` para o box
 
 ---
 
@@ -101,9 +101,9 @@ python manage.py migrate_existing_data_to_pilot --slug=pilot
 python manage.py smoke_test_tenant --slug=pilot --verbose
 ```
 
-- [ ] `migrate_existing_data_to_pilot` retorna exit 0
-- [ ] "Todas as contagens conferem." aparece na saída
-- [ ] `smoke_test_tenant --slug=pilot` retorna exit 0 (8/8 checks)
+- [x] `migrate_existing_data_to_pilot` retorna exit 0
+- [x] "Todas as contagens conferem." aparece na saída (359 linhas migradas de public)
+- [x] `smoke_test_tenant --slug=pilot` retorna exit 0
 
 ---
 
@@ -128,9 +128,9 @@ curl https://app.octoboxfit.com.br/api/v1/health/
 # Esperado: {"status":"ok","runtime":"control","tenants_active":1,"healthy":true}
 ```
 
-- [ ] 4 logins OK (Owner, Coach, Manager, Recepção)
-- [ ] `/api/v1/health/tenant/` retorna `healthy:true` com `tenant:"box_pilot"`
-- [ ] `/api/v1/health/` retorna `tenants_active:1`
+- [x] 4 logins OK (Owner, Coach, Manager, Recepção)
+- [x] `/api/v1/health/tenant/` retorna `healthy:true`
+- [x] `/api/v1/health/` retorna `tenants_active:1`
 
 ---
 

@@ -909,10 +909,20 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(rebookable_canceled_sessions[0].title, 'Aula cancelada recente')
 
     def test_student_grade_places_tomorrow_sessions_inside_amanha_section(self):
-        tomorrow = timezone.localtime() + timedelta(days=1, hours=2)
+        # Calcular "amanhã ao meio-dia" no fuso do box para evitar flakiness por
+        # timezone: +1d+2h a partir de timezone.localtime() falha quando o CI
+        # roda após 22h SP (o resultado cai em day+2 no calendário SP).
+        from datetime import datetime as _dt, time as _time
+        from student_app.application.timezone import resolve_box_timezone
+        _box_tz = resolve_box_timezone()
+        _today_sp = timezone.localtime(timezone.now(), _box_tz).date()
+        _tomorrow_noon = timezone.make_aware(
+            _dt.combine(_today_sp + timedelta(days=1), _time(12, 0, 0)),
+            _box_tz,
+        )
         session = ClassSession.objects.create(
             title='Cross amanhã cedo',
-            scheduled_at=tomorrow,
+            scheduled_at=_tomorrow_noon,
             status='scheduled',
         )
 

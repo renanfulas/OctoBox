@@ -358,6 +358,9 @@ class B1CrossTenantStudentIsolationTest(TestCase):
 
     def test_student_objects_scoped_to_current_schema(self):
         """Students criados em box_test_a nao aparecem em box_test_b."""
+        from django.db import connection as _conn
+        if _conn.vendor != 'postgresql':
+            self.skipTest('Requer PostgreSQL com django-tenants (rodando SQLite)')
         try:
             from django_tenants.utils import schema_context
             from students.models import Student
@@ -401,6 +404,9 @@ class B2DirectPkAccessTest(TestCase):
 
     def test_direct_pk_lookup_returns_none_in_wrong_tenant(self):
         """Student.objects.filter(pk=<id_de_box_a>) retorna 0 em box_b."""
+        from django.db import connection as _conn
+        if _conn.vendor != 'postgresql':
+            self.skipTest('Requer PostgreSQL com django-tenants (rodando SQLite)')
         try:
             from django_tenants.utils import schema_context
             from students.models import Student
@@ -440,6 +446,9 @@ class B5OrmFilterDoesNotLeakTest(TestCase):
 
     def test_queryset_count_isolated_per_schema(self):
         """Contagens de Students sao independentes por schema."""
+        from django.db import connection as _conn
+        if _conn.vendor != 'postgresql':
+            self.skipTest('Requer PostgreSQL com django-tenants (rodando SQLite)')
         try:
             from django_tenants.utils import schema_context
             from students.models import Student
@@ -486,9 +495,11 @@ class B6RawSqlRespectsSearchPathTest(TestCase):
 
     def test_raw_sql_count_scoped_to_current_schema(self):
         """SELECT COUNT(*) FROM boxcore_student respeita o search_path do tenant."""
+        from django.db import connection
+        if connection.vendor != 'postgresql':
+            self.skipTest('Requer PostgreSQL com django-tenants (rodando SQLite)')
         try:
             from django_tenants.utils import schema_context
-            from django.db import connection
         except ImportError:
             self.skipTest('django-tenants nao disponivel')
 
@@ -528,6 +539,9 @@ class B7StudentRecordsWithSameIdentityIsolatedTest(TestCase):
 
     def test_student_with_same_identity_id_isolated_per_tenant(self):
         """Student.objects.filter(identity_id=7) em box_a nao retorna record de box_b."""
+        from django.db import connection as _conn
+        if _conn.vendor != 'postgresql':
+            self.skipTest('Requer PostgreSQL com django-tenants (rodando SQLite)')
         try:
             from django_tenants.utils import schema_context
             from students.models import Student

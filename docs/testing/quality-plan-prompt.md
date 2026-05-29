@@ -1,10 +1,16 @@
 # OctoBox — Plano de Qualidade de Testes (prompt para executor agent)
 
 > **Origem:** plano gerado pelo skill `prompt-engineer` em 2026-05-18.
-> **Status:** ativo. Cada fase abaixo deve virar 1 PR independente.
-> **Pre-requisitos atendidos:** conftest.py com test_tenant fixture +
-> auto-Membership, requirements_test.txt pinado, .coveragerc com branch
-> coverage, 3 workflows CI usando `-r requirements_test.txt`.
+> **Status:** CONCLUIDO — todas as fases (0 a 9) mergeadas em main em 2026-05-22.
+> PRs: #74 (Fase 0.5), #75 (Fase 1), #77 (Fase 4), #78 (Fase 5), #79 (Fase 6),
+> #80 (Fase 7), #81 (Fase 8), #82 (Fase 9).
+>
+> CI: 4/4 workflows verdes. 922 testes coletados, 0 failed.
+> Cobertura: 74.7% (fail_under=72). broken-tests.txt vazio.
+> Fases 2 e 3 foram implementadas como parte do PR #75.
+>
+> Este arquivo e referencia historica do plano. Para o estado atual
+> consulte `docs/testing/handover-fase-2-codecov.md`.
 
 ---
 

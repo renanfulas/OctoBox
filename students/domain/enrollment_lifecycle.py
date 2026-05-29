@@ -69,6 +69,13 @@ def resolve_enrollment_sync_defaults(
     selected_plan_price: Decimal | None,
     today: date,
 ) -> EnrollmentSyncDefaults:
+    if initial_payment_amount is not None:
+        base_amount = initial_payment_amount
+    elif selected_plan_price is not None:
+        base_amount = selected_plan_price
+    else:
+        base_amount = Decimal('0.00')
+
     return EnrollmentSyncDefaults(
         enrollment_status=enrollment_status or 'pending',
         due_date=due_date or today,
@@ -76,7 +83,7 @@ def resolve_enrollment_sync_defaults(
         billing_strategy=billing_strategy or 'single',
         installment_total=installment_total or 1,
         recurrence_cycles=recurrence_cycles or 1,
-        base_amount=initial_payment_amount or selected_plan_price or Decimal('0.00'),
+        base_amount=base_amount,
     )
 
 
