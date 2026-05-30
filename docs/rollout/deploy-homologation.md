@@ -87,7 +87,7 @@ gunicorn config.wsgi --log-file -
 
 ## Fluxo recomendado no Render
 
-O repositorio agora inclui um [render.yaml](../../render.yaml) para subir um web service Django e um PostgreSQL gerenciado no Render com o minimo de friccao.
+O repositorio agora inclui um `render.yaml` para subir um web service Django e um PostgreSQL gerenciado no Render com o minimo de friccao.
 
 Leitura pratica desse fluxo:
 

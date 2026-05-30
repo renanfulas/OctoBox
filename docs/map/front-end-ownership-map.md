@@ -47,7 +47,7 @@ CSS estrutural do shell:
 2. [../../static/css/design-system/shell.css](../../static/css/design-system/shell.css)
 3. [../../static/css/design-system/sidebar/sidebar.css](../../static/css/design-system/sidebar/sidebar.css)
 4. [../../static/css/design-system/topbar.css](../../static/css/design-system/topbar.css)
-5. [../../static/css/design-system/compass.css](../../static/css/design-system/compass.css)
+5. `../../static/css/design-system/compass.css`
 6. [../../static/css/design-system/spacing.css](../../static/css/design-system/spacing.css)
 7. [../../static/css/design-system/responsiveness.css](../../static/css/design-system/responsiveness.css)
 
@@ -149,7 +149,7 @@ Bridge do catalogo:
 Guia estrutural oficial:
 
 1. [../plans/front-end-restructuring-guide.md](../plans/front-end-restructuring-guide.md)
-2. [functional-circuits-matrix.md](functional-circuits-matrix.md)
+2. [functional-circuits-matrix.md](../reference/functional-circuits-matrix.md)
 
 ## Paginas principais e ownership
 
@@ -176,7 +176,7 @@ Regra pratica:
 
 Matriz operacional desta regra:
 
-1. [functional-circuits-matrix.md](functional-circuits-matrix.md)
+1. [functional-circuits-matrix.md](../reference/functional-circuits-matrix.md)
 
 ## Comunicacao transversal
 

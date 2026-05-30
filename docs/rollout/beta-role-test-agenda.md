@@ -64,7 +64,7 @@ Circuitos vizinhos para conferir:
 Suite automatizada minima:
 
 1. [boxcore/tests/test_dashboard.py](../../boxcore/tests/test_dashboard.py)
-2. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+2. `boxcore/tests/test_shell_hints.py`
 3. [boxcore/tests/test_security_guards.py](../../boxcore/tests/test_security_guards.py) quando a mudanca tocar acesso ou admin
 
 ## Recepcao
@@ -89,7 +89,7 @@ Suite automatizada minima:
 
 1. [boxcore/tests/test_operations.py](../../boxcore/tests/test_operations.py)
 2. [boxcore/tests/test_operations_services.py](../../boxcore/tests/test_operations_services.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. `boxcore/tests/test_shell_hints.py`
 
 ## Coach
 
@@ -112,7 +112,7 @@ Suite automatizada minima:
 
 1. [boxcore/tests/test_operations.py](../../boxcore/tests/test_operations.py)
 2. [boxcore/tests/test_operations_domain.py](../../boxcore/tests/test_operations_domain.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py) quando houver reflexo no shell
+3. `boxcore/tests/test_shell_hints.py` quando houver reflexo no shell
 
 ## Gerente
 
@@ -134,7 +134,7 @@ Circuitos vizinhos para conferir:
 Suite automatizada minima:
 
 1. [boxcore/tests/test_operations.py](../../boxcore/tests/test_operations.py)
-2. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+2. `boxcore/tests/test_shell_hints.py`
 3. [boxcore/tests/test_page_payloads.py](../../boxcore/tests/test_page_payloads.py) quando o pacote tocar hero ou behavior
 
 ## Alunos
@@ -158,7 +158,7 @@ Suite automatizada minima:
 
 1. [boxcore/tests/test_catalog.py](../../boxcore/tests/test_catalog.py)
 2. [boxcore/tests/test_students_domain.py](../../boxcore/tests/test_students_domain.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. `boxcore/tests/test_shell_hints.py`
 
 ## Financeiro
 
@@ -181,7 +181,7 @@ Suite automatizada minima:
 
 1. [boxcore/tests/test_finance.py](../../boxcore/tests/test_finance.py)
 2. [boxcore/tests/test_catalog_services.py](../../boxcore/tests/test_catalog_services.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. `boxcore/tests/test_shell_hints.py`
 
 ## Dashboard
 
@@ -205,7 +205,7 @@ Suite automatizada minima:
 
 1. [boxcore/tests/test_dashboard.py](../../boxcore/tests/test_dashboard.py)
 2. [boxcore/tests/test_page_payloads.py](../../boxcore/tests/test_page_payloads.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. `boxcore/tests/test_shell_hints.py`
 
 ## API publica
 

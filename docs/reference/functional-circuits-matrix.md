@@ -59,7 +59,7 @@ Antes da matriz por funcionalidade, estes tres pontos continuam sendo a espinha 
 Testes-base desses contratos:
 
 1. [boxcore/tests/test_page_payloads.py](../../boxcore/tests/test_page_payloads.py)
-2. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+2. `boxcore/tests/test_shell_hints.py`
 
 Checklist complementar para revisao:
 
@@ -95,7 +95,7 @@ Testes obrigatorios:
 
 1. [boxcore/tests/test_dashboard.py](../../boxcore/tests/test_dashboard.py)
 2. [boxcore/tests/test_page_payloads.py](../../boxcore/tests/test_page_payloads.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. `boxcore/tests/test_shell_hints.py`
 
 ### Alunos
 
@@ -126,7 +126,7 @@ Testes obrigatorios:
 1. [boxcore/tests/test_catalog.py](../../boxcore/tests/test_catalog.py)
 2. [boxcore/tests/test_students_domain.py](../../boxcore/tests/test_students_domain.py)
 3. [boxcore/tests/test_page_payloads.py](../../boxcore/tests/test_page_payloads.py)
-4. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+4. `boxcore/tests/test_shell_hints.py`
 
 ### Financeiro
 
@@ -153,7 +153,7 @@ Testes obrigatorios:
 
 1. [boxcore/tests/test_finance.py](../../boxcore/tests/test_finance.py)
 2. [boxcore/tests/test_catalog_services.py](../../boxcore/tests/test_catalog_services.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. `boxcore/tests/test_shell_hints.py`
 
 ### Grade de aulas
 
@@ -180,7 +180,7 @@ Testes obrigatorios:
 
 1. [boxcore/tests/test_catalog.py](../../boxcore/tests/test_catalog.py)
 2. [boxcore/tests/test_page_payloads.py](../../boxcore/tests/test_page_payloads.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py) quando a mudanca alterar prioridade, alerta ou CTA global
+3. `boxcore/tests/test_shell_hints.py` quando a mudanca alterar prioridade, alerta ou CTA global
 
 ### Recepcao
 
@@ -209,7 +209,7 @@ Testes obrigatorios:
 
 1. [boxcore/tests/test_operations.py](../../boxcore/tests/test_operations.py)
 2. [boxcore/tests/test_operations_services.py](../../boxcore/tests/test_operations_services.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. `boxcore/tests/test_shell_hints.py`
 
 ### Coach
 
@@ -236,7 +236,7 @@ Testes obrigatorios:
 
 1. [boxcore/tests/test_operations.py](../../boxcore/tests/test_operations.py)
 2. [boxcore/tests/test_operations_domain.py](../../boxcore/tests/test_operations_domain.py)
-3. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py) quando a alteracao subir prioridade para o shell
+3. `boxcore/tests/test_shell_hints.py` quando a alteracao subir prioridade para o shell
 
 ### Gerente
 
@@ -260,7 +260,7 @@ Circuito critico:
 Testes obrigatorios:
 
 1. [boxcore/tests/test_operations.py](../../boxcore/tests/test_operations.py)
-2. [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+2. `boxcore/tests/test_shell_hints.py`
 3. [boxcore/tests/test_page_payloads.py](../../boxcore/tests/test_page_payloads.py) quando a alteracao tocar hero, assets ou behavior
 
 ### Guia
@@ -374,7 +374,7 @@ Se a alteracao for de payload semantico da tela:
 
 Se a alteracao for de prioridade, alerta, CTA global ou ancora cruzada:
 
-1. rode [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+1. rode `boxcore/tests/test_shell_hints.py`
 2. rode a suite local da funcionalidade
 3. rode a suite da tela vizinha impactada pelo circuito
 
@@ -382,7 +382,7 @@ Se a alteracao for de action, workflow ou mutacao:
 
 1. rode a suite local HTTP
 2. rode a suite de dominio ou service relacionada
-3. se a mutacao mudar fila ou contagem, rode tambem [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. se a mutacao mudar fila ou contagem, rode tambem `boxcore/tests/test_shell_hints.py`
 
 ## Fechamento obrigatorio antes de considerar pronto
 

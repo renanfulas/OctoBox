@@ -288,7 +288,7 @@ Leitura provavel:
 
 Onde olhar primeiro:
 
-1. [../../static/css/design-system/components/dashboard/summary.css.bkp](../../static/css/design-system/components/dashboard/summary.css.bkp)
+1. `../../static/css/design-system/components/dashboard/summary.css.bkp`
 
 Correcao que costuma funcionar:
 

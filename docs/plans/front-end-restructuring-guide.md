@@ -719,7 +719,7 @@ Aplicacao pratica atual:
 3. [templates/includes/ui/finance/finance_action_item.html](../../templates/includes/ui/finance/finance_action_item.html) concentra o card recorrente de acao semiassistida do financeiro
 4. [templates/includes/ui/finance/finance_alert_item.html](../../templates/includes/ui/finance/finance_alert_item.html) concentra o card recorrente de alerta financeiro
 5. [templates/includes/ui/finance/finance_plan_stat.html](../../templates/includes/ui/finance/finance_plan_stat.html) concentra o bloco curto de estatistica do portfolio de planos
-6. [templates/includes/ui/finance/finance_snapshot_chip.html](../../templates/includes/ui/finance/finance_snapshot_chip.html) concentra o chip de leitura curta usado no recorte ativo e no radar
+6. `templates/includes/ui/finance/finance_snapshot_chip.html` concentra o chip de leitura curta usado no recorte ativo e no radar
 
 ## Camada 3: componentes compartilhados
 

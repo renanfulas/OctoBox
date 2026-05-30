@@ -222,7 +222,7 @@ Mortos provaveis com sinal forte:
 1. `elite-glass-card`
 2. `glass-panel-elite`
 3. `ui-card`
-4. [../../static/css/design-system/components/dashboard/summary.css.bkp](../../static/css/design-system/components/dashboard/summary.css.bkp)
+4. `../../static/css/design-system/components/dashboard/summary.css.bkp`
 
 Pistas:
 
@@ -288,7 +288,7 @@ Nao apagar nada de `catalog/shared` antes de fechar consumo de:
 
 Pode entrar cedo:
 
-1. remover [../../static/css/design-system/components/dashboard/summary.css.bkp](../../static/css/design-system/components/dashboard/summary.css.bkp)
+1. remover `../../static/css/design-system/components/dashboard/summary.css.bkp`
 2. preparar retirada de familias sem `hits`, como `elite-glass-card`, `glass-panel-elite` e `ui-card`, se nenhuma arvore ativa referenciar
 3. manter esses nomes em observacao se aparecerem apenas em specs, ghost reports ou arvores espelho
 
@@ -334,7 +334,7 @@ Usar o scanner de novo depois de cada pacote para verificar:
 
 Executado nesta fase:
 
-1. remocao do residual [../../static/css/design-system/components/dashboard/summary.css.bkp](../../static/css/design-system/components/dashboard/summary.css.bkp)
+1. remocao do residual `../../static/css/design-system/components/dashboard/summary.css.bkp`
 2. reorganizacao documental de [../../static/css/catalog/shared/utilities.css](../../static/css/catalog/shared/utilities.css) por ownership, sem alterar comportamento visual
 
 Mantido em quarentena documental:

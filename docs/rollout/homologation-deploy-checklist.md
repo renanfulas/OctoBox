@@ -70,7 +70,7 @@ Critério:
 
 1. precisa suportar variaveis de ambiente, processo web, PostgreSQL e HTTPS facil
 
-Se a escolha for Render, use [render.yaml](../../render.yaml) como ponto de partida oficial do projeto.
+Se a escolha for Render, use `render.yaml` como ponto de partida oficial do projeto.
 
 ## Etapa 1: preparar os segredos e variaveis
 

@@ -49,11 +49,11 @@ Evidencia:
 1. a pagina real usa `owner-simple-shell` em [../../templates/operations/owner.html](../../templates/operations/owner.html)
 2. a busca em `templates/operations`, `operations` e `static/js` nao encontrou `owner-notion-shell`
 3. os seletores do tema notion sao todos escopados por `.owner-notion-shell` em:
-   - [../../static/css/design-system/operations/owner/notion/scene.css](../../static/css/design-system/operations/owner/notion/scene.css)
-   - [../../static/css/design-system/operations/owner/notion/narrative.css](../../static/css/design-system/operations/owner/notion/narrative.css)
-   - [../../static/css/design-system/operations/owner/notion/panels.css](../../static/css/design-system/operations/owner/notion/panels.css)
-   - [../../static/css/design-system/operations/owner/notion/dark.css](../../static/css/design-system/operations/owner/notion/dark.css)
-   - [../../static/css/design-system/operations/owner/notion/responsive.css](../../static/css/design-system/operations/owner/notion/responsive.css)
+   - [../../static/css/design-system/operations/owner/simple/scene.css](../../static/css/design-system/operations/owner/simple/scene.css)
+   - `../../static/css/design-system/operations/owner/notion/narrative.css`
+   - [../../static/css/design-system/operations/owner/simple/panels.css](../../static/css/design-system/operations/owner/simple/panels.css)
+   - [../../static/css/design-system/operations/owner/simple/dark.css](../../static/css/design-system/operations/owner/simple/dark.css)
+   - `../../static/css/design-system/operations/owner/notion/responsive.css`
 
 Acao aplicada:
 
@@ -73,10 +73,10 @@ Classificacao:
 
 Arquivos:
 
-1. [../../templates/operations/includes/owner/owner_primary_panel.html](../../templates/operations/includes/owner/owner_primary_panel.html)
-2. [../../templates/operations/includes/owner/owner_status_panel.html](../../templates/operations/includes/owner/owner_status_panel.html)
-3. [../../templates/operations/includes/owner/owner_structure_panel.html](../../templates/operations/includes/owner/owner_structure_panel.html)
-4. [../../templates/operations/includes/owner/owner_sequence_panel.html](../../templates/operations/includes/owner/owner_sequence_panel.html)
+1. `../../templates/operations/includes/owner/owner_primary_panel.html`
+2. `../../templates/operations/includes/owner/owner_status_panel.html`
+3. `../../templates/operations/includes/owner/owner_structure_panel.html`
+4. `../../templates/operations/includes/owner/owner_sequence_panel.html`
 
 Evidencia:
 
@@ -88,10 +88,10 @@ Evidencia:
 Acao aplicada:
 
 1. removidos os templates antigos:
-   - [../../templates/operations/includes/owner/owner_primary_panel.html](../../templates/operations/includes/owner/owner_primary_panel.html)
-   - [../../templates/operations/includes/owner/owner_status_panel.html](../../templates/operations/includes/owner/owner_status_panel.html)
-   - [../../templates/operations/includes/owner/owner_structure_panel.html](../../templates/operations/includes/owner/owner_structure_panel.html)
-   - [../../templates/operations/includes/owner/owner_sequence_panel.html](../../templates/operations/includes/owner/owner_sequence_panel.html)
+   - `../../templates/operations/includes/owner/owner_primary_panel.html`
+   - `../../templates/operations/includes/owner/owner_status_panel.html`
+   - `../../templates/operations/includes/owner/owner_structure_panel.html`
+   - `../../templates/operations/includes/owner/owner_sequence_panel.html`
 2. removidas as regras CSS orfas correspondentes em:
    - [../../static/css/design-system/operations/owner/simple/panels.css](../../static/css/design-system/operations/owner/simple/panels.css)
    - [../../static/css/design-system/operations/owner/simple/dark.css](../../static/css/design-system/operations/owner/simple/dark.css)
@@ -162,7 +162,7 @@ Tabela curta de "quem ainda bebe desse copo":
    - acao aplicada: removido do retorno do snapshot
 
 11. `owner_secondary_focus`
-   - so aparecia em [../../templates/operations/includes/owner/owner_primary_panel.html](../../templates/operations/includes/owner/owner_primary_panel.html), removido nesta onda
+   - so aparecia em `../../templates/operations/includes/owner/owner_primary_panel.html`, removido nesta onda
    - status: `dead` no runtime principal
    - acao aplicada: removido do retorno do snapshot
 
