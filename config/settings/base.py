@@ -268,6 +268,11 @@ SHARED_APPS = [
 
     # Shared support (sem modelos de domínio)
     'shared_support.apps.SharedSupportConfig',
+
+    # Índice de conhecimento do repositório (RAG interno). É conteúdo do REPO,
+    # idêntico para todo box → vive no public, indexado UMA vez (não por tenant).
+    # Antes era TENANT_APP: duplicava ~13k chunks por box e quebrava a CLI no public.
+    'knowledge.apps.KnowledgeConfig',
 ]
 
 TENANT_APPS = [
@@ -289,7 +294,6 @@ TENANT_APPS = [
     'access.apps.AccessConfig',
     'catalog.apps.CatalogConfig',
     'guide.apps.GuideConfig',
-    'knowledge.apps.KnowledgeConfig',
     'jobs.apps.JobsConfig',
     'quick_sales.apps.QuickSalesConfig',
     'api.apps.ApiConfig',
