@@ -159,6 +159,10 @@ def classify_source(relative_path: str) -> tuple[str, int]:
         return KnowledgeSourceKind.DOC, 50
     if relative_path.startswith('docs/coaching/'):
         return KnowledgeSourceKind.DOC, 85
+    if relative_path.startswith('docs/decisions/'):
+        # Log de lições/decisões: memória durável do "porquê". Autoridade média-alta
+        # para reaparecer na busca, mas abaixo de architecture/plans (ver docs/decisions/README.md).
+        return KnowledgeSourceKind.DOC, 82
     if relative_path.startswith('docs/'):
         return KnowledgeSourceKind.DOC, 68
     if relative_path.startswith('.specs/codebase/'):

@@ -1,0 +1,31 @@
+#!/bin/sh
+# ARQUIVO: git hook post-merge — reindexa o RAG interno (knowledge) após merge/pull.
+#
+# POR QUE: o índice do RAG (SHARED, schema public) deve refletir o código/docs atuais.
+# O ingest é barato (checksum: só regenera o que mudou).
+#
+# HABILITAR:  git config core.hooksPath scripts/hooks
+#
+# REGRA DE OURO: nunca bloqueia o merge. Se o Postgres estiver fora, ou o ambiente
+# for SQLite, faz no-op e sai 0.
+
+# knowledge/django-tenants só roda em Postgres. Sem DATABASE_URL Postgres, pula.
+case "${DATABASE_URL:-}" in
+  postgres*|postgresql*) ;;
+  *)
+    echo "[post-merge] RAG reindex pulado (DATABASE_URL nao e Postgres)."
+    exit 0
+    ;;
+esac
+
+PY=".venv/Scripts/python.exe"
+[ -x "$PY" ] || PY=".venv/bin/python"
+[ -x "$PY" ] || { echo "[post-merge] venv nao encontrado; reindex pulado."; exit 0; }
+
+echo "[post-merge] reindexando o RAG (knowledge)..."
+if "$PY" manage.py ingest_project_knowledge >/dev/null 2>&1; then
+  echo "[post-merge] RAG reindexado."
+else
+  echo "[post-merge] reindex falhou (Postgres fora?); seguindo sem bloquear."
+fi
+exit 0
