@@ -848,27 +848,27 @@ Se tentarmos soltar os fogos antes da porta abrir, a crianca fica olhando a rua 
 Status:
 
 1. plano criado antes da execucao das sprints
-2. Sprint 0 executada como baseline e inventario em [front-end-performance-sprint-0-baseline-corda.md](front-end-performance-sprint-0-baseline-corda.md)
-3. Sprint 1 executada para fonte critica e contrato do hero em [front-end-performance-sprint-1-font-hero-corda.md](front-end-performance-sprint-1-font-hero-corda.md)
-4. Sprint 2 executada para busca da topbar sob demanda em [front-end-performance-sprint-2-topbar-search-corda.md](front-end-performance-sprint-2-topbar-search-corda.md)
-5. Sprint 3 executada para camadas do shell em [front-end-performance-sprint-3-shell-layers-corda.md](front-end-performance-sprint-3-shell-layers-corda.md)
-6. Sprint 4 executada para prioridade de assets no page payload em [front-end-performance-sprint-4-asset-priority-corda.md](front-end-performance-sprint-4-asset-priority-corda.md)
-7. Sprint 5 iniciada por alunos e executada para reduzir CSS bloqueante da tela em [front-end-performance-sprint-5-students-critical-css-corda.md](front-end-performance-sprint-5-students-critical-css-corda.md)
-8. Sprint 6 executada para `dynamic-visuals.js` sob demanda em [front-end-performance-sprint-6-dynamic-visuals-corda.md](front-end-performance-sprint-6-dynamic-visuals-corda.md)
-9. Sprint 7 executada para budgets anti-regressao em [front-end-performance-sprint-7-budgets-corda.md](front-end-performance-sprint-7-budgets-corda.md)
-10. Sprint 8 executada para consolidacao controlada de CSS progressivo em [front-end-performance-sprint-8-controlled-consolidation-corda.md](front-end-performance-sprint-8-controlled-consolidation-corda.md)
+2. Sprint 0 executada como baseline e inventario em [front-end-performance-sprint-0-baseline-corda.md](archive/front-end-performance-sprint-0-baseline-corda.md)
+3. Sprint 1 executada para fonte critica e contrato do hero em [front-end-performance-sprint-1-font-hero-corda.md](archive/front-end-performance-sprint-1-font-hero-corda.md)
+4. Sprint 2 executada para busca da topbar sob demanda em [front-end-performance-sprint-2-topbar-search-corda.md](archive/front-end-performance-sprint-2-topbar-search-corda.md)
+5. Sprint 3 executada para camadas do shell em [front-end-performance-sprint-3-shell-layers-corda.md](archive/front-end-performance-sprint-3-shell-layers-corda.md)
+6. Sprint 4 executada para prioridade de assets no page payload em [front-end-performance-sprint-4-asset-priority-corda.md](archive/front-end-performance-sprint-4-asset-priority-corda.md)
+7. Sprint 5 iniciada por alunos e executada para reduzir CSS bloqueante da tela em [front-end-performance-sprint-5-students-critical-css-corda.md](archive/front-end-performance-sprint-5-students-critical-css-corda.md)
+8. Sprint 6 executada para `dynamic-visuals.js` sob demanda em [front-end-performance-sprint-6-dynamic-visuals-corda.md](archive/front-end-performance-sprint-6-dynamic-visuals-corda.md)
+9. Sprint 7 executada para budgets anti-regressao em [front-end-performance-sprint-7-budgets-corda.md](archive/front-end-performance-sprint-7-budgets-corda.md)
+10. Sprint 8 executada para consolidacao controlada de CSS progressivo em [front-end-performance-sprint-8-controlled-consolidation-corda.md](archive/front-end-performance-sprint-8-controlled-consolidation-corda.md)
 11. nenhuma sprint de correcao deve ser considerada concluida ate passar pelo ritual C.O.R.D.A. proprio
 
 Proxima acao recomendada:
 
 1. escolher a proxima frente: financeiro, validacao visual real ou Lighthouse/trace
-2. reler [front-end-performance-sprint-0-baseline-corda.md](front-end-performance-sprint-0-baseline-corda.md)
-3. reler [front-end-performance-sprint-1-font-hero-corda.md](front-end-performance-sprint-1-font-hero-corda.md)
-4. reler [front-end-performance-sprint-2-topbar-search-corda.md](front-end-performance-sprint-2-topbar-search-corda.md)
-5. reler [front-end-performance-sprint-3-shell-layers-corda.md](front-end-performance-sprint-3-shell-layers-corda.md)
-6. reler [front-end-performance-sprint-4-asset-priority-corda.md](front-end-performance-sprint-4-asset-priority-corda.md)
-7. reler [front-end-performance-sprint-5-students-critical-css-corda.md](front-end-performance-sprint-5-students-critical-css-corda.md)
-8. reler [front-end-performance-sprint-6-dynamic-visuals-corda.md](front-end-performance-sprint-6-dynamic-visuals-corda.md)
-9. reler [front-end-performance-sprint-7-budgets-corda.md](front-end-performance-sprint-7-budgets-corda.md)
-10. reler [front-end-performance-sprint-8-controlled-consolidation-corda.md](front-end-performance-sprint-8-controlled-consolidation-corda.md)
+2. reler [front-end-performance-sprint-0-baseline-corda.md](archive/front-end-performance-sprint-0-baseline-corda.md)
+3. reler [front-end-performance-sprint-1-font-hero-corda.md](archive/front-end-performance-sprint-1-font-hero-corda.md)
+4. reler [front-end-performance-sprint-2-topbar-search-corda.md](archive/front-end-performance-sprint-2-topbar-search-corda.md)
+5. reler [front-end-performance-sprint-3-shell-layers-corda.md](archive/front-end-performance-sprint-3-shell-layers-corda.md)
+6. reler [front-end-performance-sprint-4-asset-priority-corda.md](archive/front-end-performance-sprint-4-asset-priority-corda.md)
+7. reler [front-end-performance-sprint-5-students-critical-css-corda.md](archive/front-end-performance-sprint-5-students-critical-css-corda.md)
+8. reler [front-end-performance-sprint-6-dynamic-visuals-corda.md](archive/front-end-performance-sprint-6-dynamic-visuals-corda.md)
+9. reler [front-end-performance-sprint-7-budgets-corda.md](archive/front-end-performance-sprint-7-budgets-corda.md)
+10. reler [front-end-performance-sprint-8-controlled-consolidation-corda.md](archive/front-end-performance-sprint-8-controlled-consolidation-corda.md)
 11. nao ampliar `bundle:` para CSS critico sem nova medicao e budget proprio

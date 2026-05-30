@@ -15,9 +15,9 @@ Ele existe para responder rapido:
 Em linguagem simples:
 
 1. este doc mostra a cidade
-2. o [front-end-card-architecture.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-card-architecture.md) explica a lei da cidade
-3. o [front-end-octobox-organization-standard.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-octobox-organization-standard.md) explica como uma obra nova deve nascer sem virar puxadinho nem overengineering
-4. o [pr-front-end-checklist.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\pr-front-end-checklist.md) transforma essa lei em triagem curta de PR
+2. o [front-end-card-architecture.md](../../docs/reference/front-end-card-architecture.md) explica a lei da cidade
+3. o [front-end-octobox-organization-standard.md](../../docs/reference/front-end-octobox-organization-standard.md) explica como uma obra nova deve nascer sem virar puxadinho nem overengineering
+4. o [pr-front-end-checklist.md](../../docs/reference/pr-front-end-checklist.md) transforma essa lei em triagem curta de PR
 
 ## Mapa da cidade
 
@@ -32,7 +32,7 @@ Hoje a cascata visual do OctoBox se organiza em 4 camadas:
 
 Arquivo canônico:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\tokens.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\tokens.css)
+1. [static/css/design-system/tokens.css](../../static/css/design-system/tokens.css)
 
 Responsabilidade:
 
@@ -58,8 +58,8 @@ Quando nao mexer:
 
 Arquivos canônicos:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css)
-2. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css)
+1. [static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css)
+2. [static/css/design-system/components/card-variants.css](../../static/css/design-system/components/card-variants.css)
 
 Responsabilidade:
 
@@ -91,10 +91,10 @@ Shells principais do sistema:
 
 Ponto principal de descoberta:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\student-form.html](C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\student-form.html)
-2. [C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\finance.html](C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\finance.html)
-3. [C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\class-grid.html](C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\class-grid.html)
-4. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\student_form_stepper.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\student_form_stepper.css)
+1. [templates/catalog/student-form.html](../../templates/catalog/student-form.html)
+2. [templates/catalog/finance.html](../../templates/catalog/finance.html)
+3. [templates/catalog/class-grid.html](../../templates/catalog/class-grid.html)
+4. [static/css/catalog/student_form_stepper.css](../../static/css/catalog/student_form_stepper.css)
 
 Responsabilidade:
 
@@ -115,9 +115,9 @@ Esses cards continuam usando o DNA do tema, mas ja nao dependem da anatomia gene
 
 Exemplos reais:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css)
-2. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css)
-3. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_cards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_cards.css)
+1. [static/css/catalog/shared/student-page-shell.css](../../static/css/catalog/shared/student-page-shell.css)
+2. [static/css/catalog/shared/student-financial.css](../../static/css/catalog/shared/student-financial.css)
+3. [static/css/catalog/finance/_cards.css](../../static/css/catalog/finance/_cards.css)
 
 Quando mexer:
 
@@ -128,25 +128,25 @@ Quando mexer:
 
 | Arquivo | O que faz | Quando mexer | Quando nao mexer |
 |---|---|---|---|
-| [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\tokens.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\tokens.css) | tema, fonte, surfaces, texto, bordas, sombras e tokens-base | quando a mudanca e global | quando o problema e local |
-| [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css) | host compartilhado de `card` e `table-card` | quando a anatomia base precisa mudar | quando a mudanca e so de uma tela |
-| [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css) | variantes oficiais do host | quando o padrao sera reutilizado | quando o caso e unico de uma pagina |
-| [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css) | shell da pagina do aluno e cards proprios da ficha premium | quando o ajuste e do clima da pagina do aluno | quando a mudanca vale para finance, dashboard ou class grid |
-| [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css) | cards e drawers do financeiro do aluno | quando o ajuste e do dominio student financial | quando o mesmo comportamento vale para o host global |
-| [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_dark.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_dark.css) | ajustes dark contextuais da central financeira | quando a assinatura dark e so do finance shell | quando a resposta deveria nascer do token ou do host |
-| [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css) | overrides locais e `--card-local-*` da grade | quando o clima e do workspace da grade | quando a mudanca e um padrao global de card |
+| [static/css/design-system/tokens.css](../../static/css/design-system/tokens.css) | tema, fonte, surfaces, texto, bordas, sombras e tokens-base | quando a mudanca e global | quando o problema e local |
+| [static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css) | host compartilhado de `card` e `table-card` | quando a anatomia base precisa mudar | quando a mudanca e so de uma tela |
+| [static/css/design-system/components/card-variants.css](../../static/css/design-system/components/card-variants.css) | variantes oficiais do host | quando o padrao sera reutilizado | quando o caso e unico de uma pagina |
+| [static/css/catalog/shared/student-page-shell.css](../../static/css/catalog/shared/student-page-shell.css) | shell da pagina do aluno e cards proprios da ficha premium | quando o ajuste e do clima da pagina do aluno | quando a mudanca vale para finance, dashboard ou class grid |
+| [static/css/catalog/shared/student-financial.css](../../static/css/catalog/shared/student-financial.css) | cards e drawers do financeiro do aluno | quando o ajuste e do dominio student financial | quando o mesmo comportamento vale para o host global |
+| [static/css/catalog/finance/_dark.css](../../static/css/catalog/finance/_dark.css) | ajustes dark contextuais da central financeira | quando a assinatura dark e so do finance shell | quando a resposta deveria nascer do token ou do host |
+| [static/css/catalog/class-grid/workspace.css](../../static/css/catalog/class-grid/workspace.css) | overrides locais e `--card-local-*` da grade | quando o clima e do workspace da grade | quando a mudanca e um padrao global de card |
 
 ## Ownership por dominio
 
-Use este mapa como trilho curto. Para ownership mais amplo do produto, veja [C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-ownership-map.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-ownership-map.md).
+Use este mapa como trilho curto. Para ownership mais amplo do produto, veja [docs/reference/front-end-ownership-map.md](../../docs/reference/front-end-ownership-map.md).
 
 | Dominio | Shell / raiz | CSS principal | Leitura pratica |
 |---|---|---|---|
-| Student page | `student-page-shell` em [C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\student-form.html](C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\student-form.html) | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css) | pagina premium do aluno e seus cards proprios |
-| Student form | `student-form-shell` | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\student_form_stepper.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\student_form_stepper.css) | stepper, formularios e disclosure panels |
-| Finance | `finance-shell` em [C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\finance.html](C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\finance.html) | pasta [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance) | boards, rail, metrics e assinatura financeira |
-| Class grid | `class-grid-scene` em [C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\class-grid.html](C:\Users\renan\OneDrive\Documents\OctoBOX\templates\catalog\class-grid.html) | pasta [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid) | agenda, weekly cards, monthly cards e contexto |
-| Owner notion | `owner-notion-shell` | pasta [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\operations\owner\notion](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\operations\owner\notion) | narrativas, paineis e superfices operacionais do owner |
+| Student page | `student-page-shell` em [templates/catalog/student-form.html](../../templates/catalog/student-form.html) | [static/css/catalog/shared/student-page-shell.css](../../static/css/catalog/shared/student-page-shell.css) | pagina premium do aluno e seus cards proprios |
+| Student form | `student-form-shell` | [static/css/catalog/student_form_stepper.css](../../static/css/catalog/student_form_stepper.css) | stepper, formularios e disclosure panels |
+| Finance | `finance-shell` em [templates/catalog/finance.html](../../templates/catalog/finance.html) | pasta [static/css/catalog/finance](../../static/css/catalog/finance) | boards, rail, metrics e assinatura financeira |
+| Class grid | `class-grid-scene` em [templates/catalog/class-grid.html](../../templates/catalog/class-grid.html) | pasta [static/css/catalog/class-grid](../../static/css/catalog/class-grid) | agenda, weekly cards, monthly cards e contexto |
+| Owner notion | `owner-notion-shell` | pasta [static/css/design-system/operations/owner/notion](../../static/css/design-system/operations/owner/simple) | narrativas, paineis e superfices operacionais do owner |
 
 ## Exemplos reais
 
@@ -154,7 +154,7 @@ Use este mapa como trilho curto. Para ownership mais amplo do produto, veja [C:\
 
 Exemplo:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\templates\guide\system-map.html](C:\Users\renan\OneDrive\Documents\OctoBOX\templates\guide\system-map.html)
+1. [templates/guide/system-map.html](../../templates/guide/system-map.html)
 
 Leitura:
 
@@ -166,7 +166,7 @@ Leitura:
 
 Exemplo:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css)
+1. [static/css/catalog/class-grid/workspace.css](../../static/css/catalog/class-grid/workspace.css)
 
 Leitura:
 
@@ -178,7 +178,7 @@ Leitura:
 
 Exemplo:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\templates\includes\catalog\student_form\financial\financial_overview.html](C:\Users\renan\OneDrive\Documents\OctoBOX\templates\includes\catalog\student_form\financial\financial_overview.html)
+1. [templates/includes/catalog/student_form/financial/financial_overview.html](../../templates/includes/catalog/student_form/financial/financial_overview.html)
 
 Leitura:
 
@@ -190,8 +190,8 @@ Leitura:
 
 Exemplo:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\templates\includes\catalog\student_page\student_page_payments_summary.html](C:\Users\renan\OneDrive\Documents\OctoBOX\templates\includes\catalog\student_page\student_page_payments_summary.html)
-2. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css)
+1. [templates/includes/catalog/student_page/student_page_payments_summary.html](../../templates/includes/catalog/student_page/student_page_payments_summary.html)
+2. [static/css/catalog/shared/student-page-shell.css](../../static/css/catalog/shared/student-page-shell.css)
 
 Leitura:
 
@@ -261,6 +261,6 @@ Evite estes comportamentos:
 
 Para entender a lei da cidade, leia:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-card-architecture.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-card-architecture.md)
-2. [C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\design-system-contract.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\design-system-contract.md)
-3. [C:\Users\renan\OneDrive\Documents\OctoBOX\docs\experience\css-guide.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\experience\css-guide.md)
+1. [docs/reference/front-end-card-architecture.md](../../docs/reference/front-end-card-architecture.md)
+2. [docs/reference/design-system-contract.md](../../docs/reference/design-system-contract.md)
+3. [docs/experience/css-guide.md](../../docs/experience/css-guide.md)

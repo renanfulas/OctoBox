@@ -16,12 +16,12 @@ Este checklist cobre:
 - pasta de evidências
 
 Este checklist não substitui:
-- [postgres-homolog-restore-runbook.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/postgres-homolog-restore-runbook.md)
-- [postgres-homolog-restore-checklist-template.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/postgres-homolog-restore-checklist-template.md)
-- [first-box-production-execution-checklist.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/first-box-production-execution-checklist.md)
+- [postgres-homolog-restore-runbook.md](../../docs/rollout/postgres-homolog-restore-runbook.md)
+- [postgres-homolog-restore-checklist-template.md](../../docs/rollout/postgres-homolog-restore-checklist-template.md)
+- [first-box-production-execution-checklist.md](../../docs/rollout/first-box-production-execution-checklist.md)
 
 Ferramenta de apoio:
-- [provision_postgres_homolog_local.ps1](C:/Users/renan/OneDrive/Documents/OctoBOX/scripts/provision_postgres_homolog_local.ps1)
+- [provision_postgres_homolog_local.ps1](../../scripts/provision_postgres_homolog_local.ps1)
 
 ## Status
 Use:
@@ -153,8 +153,8 @@ Nao rode o restore real se qualquer item abaixo for verdadeiro:
 ## 11. Próximo Passo
 Quando este checklist estiver verde:
 
-1. abrir o runbook [postgres-homolog-restore-runbook.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/postgres-homolog-restore-runbook.md)
-2. copiar o template [postgres-homolog-restore-checklist-template.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/postgres-homolog-restore-checklist-template.md)
+1. abrir o runbook [postgres-homolog-restore-runbook.md](../../docs/rollout/postgres-homolog-restore-runbook.md)
+2. copiar o template [postgres-homolog-restore-checklist-template.md](../../docs/rollout/postgres-homolog-restore-checklist-template.md)
 3. executar backup
 4. executar restore
 5. rodar smoke funcional

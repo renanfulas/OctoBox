@@ -70,11 +70,11 @@ Se o foco for reorganizar o front-end agora, com convergencia entre fachada visu
 
 Se o foco for implantar esse tema em ordem pratica, por ondas, com baixo risco e criterio de aceite claro, leia tambem [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md).
 
-Se o foco for saber quem e o dono local de cada funcionalidade e quais testes sobem quando uma tela precisa continuar se comunicando com as outras, leia tambem [functional-circuits-matrix.md](functional-circuits-matrix.md).
+Se o foco for saber quem e o dono local de cada funcionalidade e quais testes sobem quando uma tela precisa continuar se comunicando com as outras, leia tambem [functional-circuits-matrix.md](../reference/functional-circuits-matrix.md).
 
 Se o foco for entender o circuito comercial de entrada, triagem, conversao e fechamento inicial de aluno sem se perder entre onboarding, catalog e models promovidos, leia tambem [leads-intake-cadastro-alunos-map.md](leads-intake-cadastro-alunos-map.md).
 
-Se o foco for revisar PRs por circuito ou organizar smoke manual por papel do beta, leia tambem [pr-circuit-checklist.md](pr-circuit-checklist.md) e [../rollout/beta-role-test-agenda.md](../rollout/beta-role-test-agenda.md).
+Se o foco for revisar PRs por circuito ou organizar smoke manual por papel do beta, leia tambem [pr-circuit-checklist.md](../reference/pr-circuit-checklist.md) e [../rollout/beta-role-test-agenda.md](../rollout/beta-role-test-agenda.md).
 
 Se o foco for padronizar especificamente a lingua estrutural do catalogo, com presenters e page payload para alunos, financeiro e grade, leia tambem [../plans/catalog-page-payload-presenter-blueprint.md](../plans/catalog-page-payload-presenter-blueprint.md).
 
@@ -86,7 +86,7 @@ Se o foco for transformar a leitura extraordinaria do Beam em um plano real de c
 
 Se o foco for ver o modelo inteiro consolidado em uma referencia unica, leia tambem [../architecture/octobox-architecture-model.md](../architecture/octobox-architecture-model.md).
 
-Se o foco for estudar o criterio por tras das decisoes, leia tambem [personal-architecture-framework.md](personal-architecture-framework.md), [architecture-terms-glossary.md](architecture-terms-glossary.md) e [personal-growth-roadmap.md](personal-growth-roadmap.md).
+Se o foco for estudar o criterio por tras das decisoes, leia tambem [personal-architecture-framework.md](../reference/personal-architecture-framework.md), [architecture-terms-glossary.md](../reference/architecture-terms-glossary.md) e [personal-growth-roadmap.md](../reference/personal-growth-roadmap.md).
 
 ## Objetivo deste guia
 
@@ -327,7 +327,7 @@ Se houver bug de rastreabilidade ou ausencia de eventos, olhe aqui e depois quem
 Leia:
 
 1. [boxcore/management/commands/import_students_csv.py](../../boxcore/management/commands/import_students_csv.py)
-2. [new-file-template.md](new-file-template.md)
+2. [new-file-template.md](../reference/new-file-template.md)
 
 Aqui voce entende:
 

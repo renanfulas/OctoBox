@@ -118,9 +118,9 @@ O token deve considerar:
 
 Arquivos vivos:
 
-1. [catalog/student_queries.py](C:/Users/renan/OneDrive/Documents/OctoBOX/catalog/student_queries.py)
-2. [catalog/views/student_views.py](C:/Users/renan/OneDrive/Documents/OctoBOX/catalog/views/student_views.py)
-3. [student-directory.js](C:/Users/renan/OneDrive/Documents/OctoBOX/static/js/pages/students/student-directory.js)
+1. [catalog/student_queries.py](../../catalog/student_queries.py)
+2. [catalog/views/student_views.py](../../catalog/views/student_views.py)
+3. [student-directory.js](../../static/js/pages/students/student-directory.js)
 
 #### Entradas
 
@@ -131,9 +131,9 @@ O token atual considera:
 
 Arquivos vivos:
 
-1. [onboarding/queries.py](C:/Users/renan/OneDrive/Documents/OctoBOX/onboarding/queries.py)
-2. [onboarding/views.py](C:/Users/renan/OneDrive/Documents/OctoBOX/onboarding/views.py)
-3. [intake-center.js](C:/Users/renan/OneDrive/Documents/OctoBOX/static/js/pages/onboarding/intake-center.js)
+1. [onboarding/queries.py](../../onboarding/queries.py)
+2. [onboarding/views.py](../../onboarding/views.py)
+3. [intake-center.js](../../static/js/pages/onboarding/intake-center.js)
 
 ## Regra de invalidaçao
 
@@ -213,6 +213,6 @@ Nao use por reflexo quando:
 
 ## Mapas irmaos
 
-1. [front-end-forensics-map.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/map/front-end-forensics-map.md)
-2. [front-end-contract-forensics-map.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/map/front-end-contract-forensics-map.md)
-3. [front-end-error-patterns-map.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/map/front-end-error-patterns-map.md)
+1. [front-end-forensics-map.md](../../docs/map/front-end-forensics-map.md)
+2. [front-end-contract-forensics-map.md](../../docs/map/front-end-contract-forensics-map.md)
+3. [front-end-error-patterns-map.md](../../docs/map/front-end-error-patterns-map.md)

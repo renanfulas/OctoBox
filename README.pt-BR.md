@@ -87,6 +87,9 @@ Linha do tempo deste primeiro ciclo:
 
 ## Estado operacional atual
 
+- runtime multi-tenant vivo em producao: `django-tenants` schema-per-tenant, o control plane `control` provisionando cada box em seu proprio schema Postgres, e o primeiro box provisionado em 23/05/2026 com um aluno real autenticando via OAuth
+- isolamento de tenant sob teste antes da escala: boundary tests (B1-B12), namespace de cache por box e comandos de rollout (`provision_box`, `archive_box`, `smoke_test_tenant`) escritos antes da necessidade
+- funil comercial de entrada em `signup` ja conectado a checkout Stripe, magic link e ativacao de tenant
 - pilha recente de endurecimento ja aterrissada na `main`
 - contrato de identidade WhatsApp com blind index, backfill historico e constraint de unicidade
 - contrato de navegacao do shell estabilizado nas superficies centrais
@@ -109,11 +112,12 @@ Linha do tempo deste primeiro ciclo:
 
 Hoje o projeto e melhor descrito como:
 
-1. um monolito modular orientado por dominio
-2. com `boxcore` preservado como estado historico do Django, e nao como a melhor explicacao do runtime atual
+1. um monolito modular multi-tenant orientado por dominio, com isolamento schema-per-tenant via `django-tenants` e um control plane `control` separado do runtime do tenant
+2. com `boxcore` preservado como estado historico do Django dentro do schema de cada tenant, e nao como a melhor explicacao do runtime atual
 3. com fachadas publicas mais fortes, contratos de page payload e montagem de tela orientada por presenter
 4. com uma superficie real de app do aluno e PWA ja em movimento ao lado da operacao web principal
-5. com trabalho ativo concentrado em disciplina de performance, importacao operacional, experiencia do aluno e rollout de producao mais seguro
+5. ja habitado em producao: o primeiro box foi provisionado em 23/05/2026 e o primeiro aluno real autenticou via OAuth
+6. com trabalho ativo concentrado em disciplina de performance, importacao operacional, experiencia do aluno e na transicao de escala do closed beta para multitenancy aberto
 
 ## Como usar a documentacao
 
@@ -154,8 +158,9 @@ Hoje o sistema tem quatro camadas principais de produto:
 Importante para leitura tecnica atual:
 
 1. `boxcore` ja nao deve ser lido como centro do runtime
-2. ele permanece no projeto como app legado de estado do Django
-3. o runtime atual deve preferir apps reais como `access`, `catalog`, `operations`, `students`, `finance`, `auditing`, `communications`, `api`, `integrations` e `jobs`
+2. ele permanece no projeto como app legado de estado do Django, agora ancorando os models de dominio dentro do schema de cada tenant
+3. o runtime atual deve preferir apps reais como `access`, `catalog`, `operations`, `students`, `finance`, `auditing`, `communications`, `api`, `integrations`, `jobs`, `guide`, `quick_sales`, `knowledge` e `student_app`
+4. a camada de plataforma vive no schema public e existe antes de qualquer tenant: `control` (control plane), `signup` (funil comercial) e `student_identity` (identidade do aluno cross-box)
 
 Nas areas com maior volume de regra, a base foi organizada de forma mais explicita:
 
@@ -180,6 +185,8 @@ Se quiser entender a estrategia especifica para fazer o negocio deixar de depend
 Se quiser entender a declaracao oficial de qual passa a ser o centro conceitual do sistema, use [docs/architecture/octobox-conceptual-core.md](docs/architecture/octobox-conceptual-core.md).
 
 Se quiser entender o novo CENTER arquitetural que separa nivel de acesso e nucleo interno, use [docs/architecture/center-layer.md](docs/architecture/center-layer.md).
+
+Se quiser entender o runtime multi-tenant — schema-per-tenant com `django-tenants`, o control plane `control`, o Hybrid Identity Model e como um box e provisionado e isolado — use [docs/plans/schema-per-tenant-migration-plan.md](docs/plans/schema-per-tenant-migration-plan.md), o indice [docs/adr/README.md](docs/adr/README.md) (`ADR-005` a `ADR-010`) e [docs/architecture/center-layer.md](docs/architecture/center-layer.md). Para o rumo de abertura a mais boxes, use [docs/plans/scale-transition-20-100-open-multitenancy-plan.md](docs/plans/scale-transition-20-100-open-multitenancy-plan.md).
 
 Se quiser entender a estrutura complementar de sinais, integracoes e expansao transversal do sistema, use [docs/architecture/signal-mesh.md](docs/architecture/signal-mesh.md).
 
@@ -221,19 +228,21 @@ Se quiser entender o raciocinio da primeira entrega, as decisoes tomadas e o que
 
 ## Fotografia arquitetural
 
-Em nivel publico, o repositorio fica mais facil de entender em seis fatias:
+Em nivel publico, o repositorio fica mais facil de entender em sete fatias:
 
-1. `access`, `dashboard`, `catalog`, `operations`
-   operacao web principal, workspaces por papel, alunos, financeiro e grade de aulas
-2. `student_app`, `student_identity`
-   shell PWA do aluno, identidade, convite, troca de box ativo, Grade, WOD, RM e suporte offline
-3. `communications`, `integrations`, `api`, `jobs`
-   fronteiras externas, mensageria, webhooks, superficie de API e trabalho assincrono
-4. `shared_support`, `monitoring`, `reporting`, `model_support`
+1. `control`, `signup`, `student_identity`
+   plataforma e tenancy no schema public: control plane (`Box`, `Domain`, `Membership`), funil Early Adopters e identidade do aluno cross-box
+2. `access`, `dashboard`, `catalog`, `operations`, `guide`, `quick_sales`
+   operacao web principal, workspaces por papel, alunos, financeiro, grade de aulas, superficie de guide interno e venda rapida
+3. `student_app`
+   shell PWA do aluno, convite, troca de box ativo, Grade, WOD, RM e suporte offline
+4. `communications`, `integrations`, `api`, `jobs`, `knowledge`
+   fronteiras externas, mensageria, webhooks, superficie de API, trabalho assincrono e o RAG interno do projeto
+5. `shared_support`, `monitoring`, `reporting`, `model_support`
    contratos transversais, performance, helpers de runtime, observabilidade e estruturas base
-5. `boxcore`
-   estado historico do Django, ancora de migrations e superficie de compatibilidade
-6. `docs`, `.specs`, `tests`, `scripts`
+6. `boxcore`
+   estado historico do Django, ancora de migrations e superficie de compatibilidade dentro do schema de cada tenant
+7. `docs`, `.specs`, `tests`, `scripts`
    governanca, planos, rollout, leitura tecnica, validacao e ferramental operacional
 
 Se voce precisar da ordem de leitura em nivel de codigo, ownership e pontos de depuracao, pule para [docs/reference/reading-guide.md](docs/reference/reading-guide.md) em vez de usar este README como inventario arquivo por arquivo.
@@ -281,11 +290,15 @@ python manage.py bootstrap_roles
 
 ## Como rodar
 
+O runtime e multi-tenant via `django-tenants` (schema-per-tenant), e o isolamento real de schema so funciona em PostgreSQL. Um schema local rapido (SQLite) basta para ler codigo e rodar parte da suite, mas o runtime fiel — e o CI — usa PostgreSQL, aplica migrations com `migrate_schemas` e provisiona cada box em seu proprio schema com `provision_box`. Para o setup multi-tenant completo e os comandos de rollout, veja [docs/rollout/README.md](docs/rollout/README.md) e [docs/plans/schema-per-tenant-migration-plan.md](docs/plans/schema-per-tenant-migration-plan.md).
+
+Fluxo basico de instancia unica (suficiente para leitura local e a maioria dos testes):
+
 1. Crie e ative o ambiente virtual.
 2. Instale dependencias com `pip install -r requirements.txt`.
 3. Copie `.env.example` para `.env` e ajuste o minimo necessario.
-4. Rode `python manage.py migrate`.
-5. Rode `python manage.py bootstrap_roles`.
+4. Rode `python manage.py migrate` (em PostgreSQL, prefira `python manage.py migrate_schemas` para cobrir os schemas shared e de tenant).
+5. Rode `python manage.py bootstrap_roles` (por tenant; o `provision_box` ja faz bootstrap de roles para um box recem-provisionado).
 6. Crie um usuario administrativo com `python manage.py createsuperuser`.
 7. Suba o servidor com `python manage.py runserver`.
 8. Rode `python manage.py test` para usar automaticamente a trilha de configuracao de testes do projeto.

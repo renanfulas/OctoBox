@@ -417,6 +417,8 @@ Hoje o modelo esta em dois niveis ao mesmo tempo.
 1. o projeto ja caminha para Django como shell e nao como cerebro
 2. operations ja ganhou dois corredores reais de CENTER em [operations/facade/class_grid.py](../../operations/facade/class_grid.py) e [operations/facade/workspace.py](../../operations/facade/workspace.py)
 3. students, communications e operations ja avancaram na drenagem de regra para dominio, application e adapters tecnicos menores
+4. o predio virou multi-tenant de verdade: `django-tenants` com schema-per-tenant, control plane proprio no app `control` (`Box` como tenant, `Domain`, `Membership`), e o CENTER ja resolve tenant pre-auth em `student_identity/facade/tenant_resolver.py`
+5. o primeiro box foi provisionado em producao em 2026-05-23; a obra deixou de ser apenas projetada e passou a ser habitada
 
 ### Nivel formalizado como direcao arquitetural
 

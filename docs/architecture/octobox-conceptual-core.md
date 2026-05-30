@@ -303,7 +303,12 @@ Hoje, em leitura pragmatica, a conversa arquitetural deveria ficar assim:
 4. communications concentra identidade de canal e toque operacional de mensagem
 5. dashboard concentra leitura executiva consolidada
 6. guide concentra a camada pedagogica interna de leitura do sistema
-7. boxcore guarda estado historico, compatibilidade e residuos ainda nao promovidos
+7. control e o control plane multi-tenant: provisiona e isola cada box em seu schema (`Box`, `Domain`, `Membership`)
+8. signup e o funil comercial de entrada cross-tenant (Early Adopters, checkout Stripe, magic link)
+9. student_identity concentra a identidade do aluno cross-box, vivendo no schema public
+10. boxcore guarda estado historico, compatibilidade e residuos ainda nao promovidos, agora dentro de cada schema de tenant
+
+Nota de plataforma: as capacidades de dominio acima rodam dentro do schema de cada box. O control plane (`control`, `signup`, `student_identity`) vive no schema public e existe antes de qualquer tenant. Essa separacao entre plataforma e tenant runtime nao substitui a tese das capacidades; ela diz onde cada capacidade roda.
 
 ## Relacao com o predio arquitetural maior
 

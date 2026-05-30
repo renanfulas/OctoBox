@@ -41,8 +41,12 @@ Regra de uso deste documento:
 Leitura estrutural importante para esta fase:
 
 1. `boxcore` nao e mais a raiz canonica do runtime
-2. `boxcore` agora deve ser lido como app legado de estado, compatibilidade e migrations historicas
+2. `boxcore` agora deve ser lido como app legado de estado, compatibilidade e migrations historicas — e seus models de dominio vivem dentro do schema de cada tenant
 3. ao navegar pela base, prefira primeiro os apps reais promovidos e so depois as fachadas historicas
+4. o runtime agora e multi-tenant via `django-tenants` (schema-per-tenant): o app `control` (SHARED) e o control plane (`Box`, `Domain`, `Membership`, provisionamento) e os apps de dominio rodam dentro do schema do box
+5. ha dois URLconfs: `config/urls.py` (runtime do tenant) e `config/urls_public.py` (schema public: login, signup, webhook, auth do aluno)
+
+Para entender a camada multi-tenant e a resolucao de tenant, leia [../architecture/center-layer.md](../architecture/center-layer.md), os ADRs `ADR-005` a `ADR-010`, e [../plans/schema-per-tenant-migration-plan.md](../plans/schema-per-tenant-migration-plan.md).
 
 Para a direcao de medio e longo prazo da arquitetura, leia tambem [../architecture/architecture-growth-plan.md](../architecture/architecture-growth-plan.md).
 

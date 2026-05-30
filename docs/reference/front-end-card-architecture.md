@@ -14,16 +14,16 @@ Ele existe para decidir com rapidez:
 
 Em linguagem simples:
 
-1. o [front-end-city-map.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-city-map.md) mostra os bairros
+1. o [front-end-city-map.md](../../docs/reference/front-end-city-map.md) mostra os bairros
 2. este doc diz qual regra de construcao vale em cada bairro
 
 ## Regras da cascata
 
 Ordem oficial de autoridade:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\tokens.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\tokens.css)
-2. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css)
-3. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css)
+1. [static/css/design-system/tokens.css](../../static/css/design-system/tokens.css)
+2. [static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css)
+3. [static/css/design-system/components/card-variants.css](../../static/css/design-system/components/card-variants.css)
 4. shell da pagina
 5. card proprio da pagina
 
@@ -186,24 +186,24 @@ Todo card relevante deve conseguir ser classificado neste formato:
 
 | Nome | Tipo | Shell dono | Arquivo principal | Status |
 |---|---|---|---|---|
-| `card` | `shared` | global | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\cards.css) | saudavel |
-| `card--sci-fi` | `variant` | global | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css) | saudavel |
-| `class-grid` cards com `--card-local-*` | `page-override` | class-grid | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css) | saudavel |
-| `weekly-day-card` | `page-override` | class-grid | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\calendar.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\calendar.css) | saudavel |
-| `weekly-session-chip` | `page-override` | class-grid | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\calendar.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\calendar.css) | saudavel |
-| `student-form-shell` stepper e disclosures | `page-override` | student-form-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\student_form_stepper.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\student_form_stepper.css) | saudavel |
-| `student-financial-*` overview panels | `page-override` | student-page-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css) | saudavel |
-| `student-financial-peek` e `student-financial-command-strip` | `page-override` | student-page-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css) | saudavel |
-| `student-financial-drawer` e `student-payment-management-card` | `page-override` | student-page-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-financial.css) | saudavel |
-| `finance-shell` boards e KPI strip | `page-override` | finance-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_shell.css) | saudavel |
-| `finance-board-queue` | `page-override` | finance-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_boards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_boards.css) | saudavel |
-| `finance-board-rail--priority` | `page-override` | finance-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_boards.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_boards.css) | saudavel |
-| `finance` signature cards | `page-override` | finance-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_signature.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\finance\_signature.css) | transitorio |
-| `intake` boards e filter card | `page-override` | intake-scene | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css) | saudavel |
-| `intake-filter-card` | `page-override` | intake-scene | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css) | saudavel |
-| `intake-board` | `page-override` | intake-scene | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\onboarding\intakes.css) | saudavel |
-| `owner notion` panels | `page-override` | owner-notion-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\operations\owner\notion\panels.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\operations\owner\notion\panels.css) | saudavel |
-| `student-page-charge-card` | `page-owned` | student-page-shell | [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css) | saudavel |
+| `card` | `shared` | global | [static/css/design-system/components/cards.css](../../static/css/design-system/components/cards.css) | saudavel |
+| `card--sci-fi` | `variant` | global | [static/css/design-system/components/card-variants.css](../../static/css/design-system/components/card-variants.css) | saudavel |
+| `class-grid` cards com `--card-local-*` | `page-override` | class-grid | [static/css/catalog/class-grid/workspace.css](../../static/css/catalog/class-grid/workspace.css) | saudavel |
+| `weekly-day-card` | `page-override` | class-grid | [static/css/catalog/class-grid/calendar.css](../../static/css/catalog/class-grid/calendar.css) | saudavel |
+| `weekly-session-chip` | `page-override` | class-grid | [static/css/catalog/class-grid/calendar.css](../../static/css/catalog/class-grid/calendar.css) | saudavel |
+| `student-form-shell` stepper e disclosures | `page-override` | student-form-shell | [static/css/catalog/student_form_stepper.css](../../static/css/catalog/student_form_stepper.css) | saudavel |
+| `student-financial-*` overview panels | `page-override` | student-page-shell | [static/css/catalog/shared/student-financial.css](../../static/css/catalog/shared/student-financial.css) | saudavel |
+| `student-financial-peek` e `student-financial-command-strip` | `page-override` | student-page-shell | [static/css/catalog/shared/student-financial.css](../../static/css/catalog/shared/student-financial.css) | saudavel |
+| `student-financial-drawer` e `student-payment-management-card` | `page-override` | student-page-shell | [static/css/catalog/shared/student-financial.css](../../static/css/catalog/shared/student-financial.css) | saudavel |
+| `finance-shell` boards e KPI strip | `page-override` | finance-shell | [static/css/catalog/finance/_shell.css](../../static/css/catalog/finance/_shell.css) | saudavel |
+| `finance-board-queue` | `page-override` | finance-shell | [static/css/catalog/finance/_boards.css](../../static/css/catalog/finance/_boards.css) | saudavel |
+| `finance-board-rail--priority` | `page-override` | finance-shell | [static/css/catalog/finance/_boards.css](../../static/css/catalog/finance/_boards.css) | saudavel |
+| `finance` signature cards | `page-override` | finance-shell | [static/css/catalog/finance/_signature.css](../../static/css/catalog/finance/_signature.css) | transitorio |
+| `intake` boards e filter card | `page-override` | intake-scene | [static/css/onboarding/intakes.css](../../static/css/onboarding/intakes.css) | saudavel |
+| `intake-filter-card` | `page-override` | intake-scene | [static/css/onboarding/intakes.css](../../static/css/onboarding/intakes.css) | saudavel |
+| `intake-board` | `page-override` | intake-scene | [static/css/onboarding/intakes.css](../../static/css/onboarding/intakes.css) | saudavel |
+| `owner notion` panels | `page-override` | owner-notion-shell | [static/css/design-system/operations/owner/notion/panels.css](../../static/css/design-system/operations/owner/simple/panels.css) | saudavel |
+| `student-page-charge-card` | `page-owned` | student-page-shell | [static/css/catalog/shared/student-page-shell.css](../../static/css/catalog/shared/student-page-shell.css) | saudavel |
 
 ## Reclassificacao operacional atual
 
@@ -217,7 +217,7 @@ Nota:
 ### Ja classificados como `page-owned`
 
 1. `student-page-charge-card`
-2. cards editoriais e estruturas premium da [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css)
+2. cards editoriais e estruturas premium da [static/css/catalog/shared/student-page-shell.css](../../static/css/catalog/shared/student-page-shell.css)
 
 Motivo:
 
@@ -359,31 +359,31 @@ Evite estes erros:
 
 Se uma mudanca mexe em `--card-surface` ou `--theme-text-primary`, o lugar certo e:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\tokens.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\tokens.css)
+1. [static/css/design-system/tokens.css](../../static/css/design-system/tokens.css)
 
 ### Caso shell
 
 Se a grade precisa de outro clima visual sem mudar o host:
 
-1. use [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\class-grid\workspace.css)
+1. use [static/css/catalog/class-grid/workspace.css](../../static/css/catalog/class-grid/workspace.css)
 2. ajuste `--card-local-*`
 
 ### Caso variante
 
 Se varios cards pedem a mesma personalidade premium:
 
-1. use ou evolua [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\design-system\components\card-variants.css)
+1. use ou evolua [static/css/design-system/components/card-variants.css](../../static/css/design-system/components/card-variants.css)
 
 ### Caso page-owned
 
 Se a pagina do aluno precisa de um card editorial com anatomia propria:
 
-1. mantenha esse ownership em [C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css](C:\Users\renan\OneDrive\Documents\OctoBOX\static\css\catalog\shared\student-page-shell.css)
+1. mantenha esse ownership em [static/css/catalog/shared/student-page-shell.css](../../static/css/catalog/shared/student-page-shell.css)
 
 ## Referencias cruzadas
 
 Para localizar os bairros e ownership, leia:
 
-1. [C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-city-map.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\front-end-city-map.md)
-2. [C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\design-system-contract.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\reference\design-system-contract.md)
-3. [C:\Users\renan\OneDrive\Documents\OctoBOX\docs\experience\css-guide.md](C:\Users\renan\OneDrive\Documents\OctoBOX\docs\experience\css-guide.md)
+1. [docs/reference/front-end-city-map.md](../../docs/reference/front-end-city-map.md)
+2. [docs/reference/design-system-contract.md](../../docs/reference/design-system-contract.md)
+3. [docs/experience/css-guide.md](../../docs/experience/css-guide.md)
