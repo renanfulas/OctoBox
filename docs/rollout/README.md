@@ -47,8 +47,8 @@ A regra de leitura e simples:
 | [first-box-pilot-intake-sheet.md](first-box-pilot-intake-sheet.md) | ATIVO (template de coleta) |
 | [first-box-system-setup-checklist.md](first-box-system-setup-checklist.md) | ATIVO (checklist generico) |
 | [first-box-production-execution-checklist.md](first-box-production-execution-checklist.md) | ATIVO (execucao Fase 1) |
-| [first-box-endorfina-cross-setup-plan.md](first-box-endorfina-cross-setup-plan.md) | CONCLUIDO (Sprint 5 em 2026-05-23) |
-| [first-box-endorfina-onboarding-day-checklist-2026-04-15.md](first-box-endorfina-onboarding-day-checklist-2026-04-15.md) | CONCLUIDO (data passou) |
+| [first-box-endorfina-cross-setup-plan.md](archive/first-box-endorfina-cross-setup-plan.md) | CONCLUIDO (Sprint 5 em 2026-05-23) |
+| [first-box-endorfina-onboarding-day-checklist-2026-04-15.md](archive/first-box-endorfina-onboarding-day-checklist-2026-04-15.md) | CONCLUIDO (data passou) |
 | [pilot-support-playbook.md](pilot-support-playbook.md) | ATIVO (fase piloto assistida) |
 
 ---
