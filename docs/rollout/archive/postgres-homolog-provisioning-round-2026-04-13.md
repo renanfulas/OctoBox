@@ -72,11 +72,11 @@ O que ainda nao foi provado no host definitivo do piloto:
 
 ### Ja existe
 
-1. [postgres-homolog-provisioning-checklist.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/postgres-homolog-provisioning-checklist.md)
-2. [postgres-homolog-restore-runbook.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/postgres-homolog-restore-runbook.md)
-3. [postgres-homolog-restore-checklist-template.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/postgres-homolog-restore-checklist-template.md)
-4. [backup_postgres.ps1](C:/Users/renan/OneDrive/Documents/OctoBOX/scripts/backup_postgres.ps1)
-5. [restore_postgres.ps1](C:/Users/renan/OneDrive/Documents/OctoBOX/scripts/restore_postgres.ps1)
+1. [postgres-homolog-provisioning-checklist.md](../../docs/rollout/postgres-homolog-provisioning-checklist.md)
+2. [postgres-homolog-restore-runbook.md](../../docs/rollout/postgres-homolog-restore-runbook.md)
+3. [postgres-homolog-restore-checklist-template.md](../../docs/rollout/postgres-homolog-restore-checklist-template.md)
+4. [backup_postgres.ps1](../../scripts/backup_postgres.ps1)
+5. [restore_postgres.ps1](../../scripts/restore_postgres.ps1)
 6. validacao interna da Fase 1 verde em `2026-04-13` com:
    - `py manage.py check`
    - `py manage.py sync_runtime_assets --collectstatic`
@@ -165,8 +165,8 @@ Get-ChildItem Env: | Where-Object {
 
 ### 3. Quando o host definitivo do piloto estiver pronto, abrir o runbook
 
-1. [postgres-homolog-restore-runbook.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/postgres-homolog-restore-runbook.md)
-2. [postgres-homolog-restore-checklist-template.md](C:/Users/renan/OneDrive/Documents/OctoBOX/docs/rollout/postgres-homolog-restore-checklist-template.md)
+1. [postgres-homolog-restore-runbook.md](../../docs/rollout/postgres-homolog-restore-runbook.md)
+2. [postgres-homolog-restore-checklist-template.md](../../docs/rollout/postgres-homolog-restore-checklist-template.md)
 
 ## Veredito desta rodada
 
