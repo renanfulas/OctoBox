@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from auditing.models import AuditEvent
 from finance.models import Enrollment, MembershipPlan
-from operations.models import Attendance, AttendanceStatus, ClassSession
+from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
 from student_app.application.cache_keys import (
     build_student_agenda_snapshot_cache_key,
     build_student_home_snapshot_cache_key,
@@ -595,6 +595,117 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(attendance.status, AttendanceStatus.BOOKED)
         self.assertEqual(attendance.reservation_source, 'student_app')
 
+    def test_confirm_attendance_blocks_booking_when_class_is_full(self):
+        session = ClassSession.objects.create(
+            title='Aula lotada',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+            capacity=1,
+        )
+        other_student = Student.objects.create(
+            full_name='Colega Reservado',
+            phone='5511666666666',
+            email='colega@example.com',
+        )
+        Attendance.objects.create(
+            student=other_student,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+
+        response = self.client.post(
+            reverse('student-app-confirm-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Esta aula já está com todas as vagas preenchidas.')
+        self.assertFalse(Attendance.objects.filter(student=self.student, session=session).exists())
+
+    def test_confirm_attendance_ignores_canceled_and_absent_when_counting_slots(self):
+        session = ClassSession.objects.create(
+            title='Aula com vaga liberada',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+            capacity=1,
+        )
+        former = Student.objects.create(
+            full_name='Colega Cancelado',
+            phone='5511555555555',
+            email='cancelado@example.com',
+        )
+        Attendance.objects.create(
+            student=former,
+            session=session,
+            status=AttendanceStatus.CANCELED,
+            reservation_source='student_app',
+        )
+
+        response = self.client.post(
+            reverse('student-app-confirm-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        attendance = Attendance.objects.get(student=self.student, session=session)
+        self.assertEqual(attendance.status, AttendanceStatus.BOOKED)
+
+    def test_confirm_attendance_reactivates_own_booking_even_when_class_is_full(self):
+        session = ClassSession.objects.create(
+            title='Aula cheia com vaga propria',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+            capacity=1,
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=session,
+            status=AttendanceStatus.CANCELED,
+            reservation_source='student_app',
+        )
+
+        response = self.client.post(
+            reverse('student-app-confirm-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        attendance = Attendance.objects.get(student=self.student, session=session)
+        self.assertEqual(attendance.status, AttendanceStatus.BOOKED)
+
+    def test_confirm_attendance_blocks_session_with_unbookable_status(self):
+        session = ClassSession.objects.create(
+            title='Aula cancelada',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status=SessionStatus.CANCELED,
+        )
+
+        response = self.client.post(
+            reverse('student-app-confirm-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sessão indisponível para reserva.')
+        self.assertFalse(Attendance.objects.filter(student=self.student, session=session).exists())
+
     def test_student_grade_renders_booking_action_for_every_listed_session(self):
         for offset in (2, 4):
             ClassSession.objects.create(
@@ -686,6 +797,53 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Sua presença já foi confirmada nesta aula.')
         attendance = Attendance.objects.get(student=self.student, session=session)
         self.assertEqual(attendance.status, AttendanceStatus.CHECKED_IN)
+
+    def test_cancel_attendance_without_reservation_is_blocked(self):
+        session = ClassSession.objects.create(
+            title='Aula sem reserva',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status='scheduled',
+        )
+
+        response = self.client.post(
+            reverse('student-app-cancel-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Reserva indisponível para cancelamento.')
+        self.assertFalse(Attendance.objects.filter(student=self.student, session=session).exists())
+
+    def test_cancel_attendance_for_unbookable_session_is_blocked(self):
+        session = ClassSession.objects.create(
+            title='Aula cancelada pelo box',
+            scheduled_at=timezone.now() + timedelta(hours=3),
+            status=SessionStatus.CANCELED,
+        )
+        Attendance.objects.create(
+            student=self.student,
+            session=session,
+            status=AttendanceStatus.BOOKED,
+            reservation_source='student_app',
+        )
+
+        response = self.client.post(
+            reverse('student-app-cancel-attendance'),
+            {
+                'session_id': str(session.id),
+                'next': reverse('student-app-grade'),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sessão indisponível para cancelamento.')
+        attendance = Attendance.objects.get(student=self.student, session=session)
+        self.assertEqual(attendance.status, AttendanceStatus.BOOKED)
 
     @override_settings(TIME_ZONE='America/Sao_Paulo')
     def test_student_schedule_renders_utc_input_in_box_local_timezone(self):
