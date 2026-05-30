@@ -236,7 +236,7 @@ Se eu fosse continuar essa onda por ordem de retorno:
 
 Evolucao desta trilha:
 
-1. o mapa de dependencia e o primeiro corte seguro desta frente ficaram registrados em [front-end-wave4-operations-dependency-map.md](archive/front-end-wave4-operations-dependency-map.md)
+1. o mapa de dependencia e o primeiro corte seguro desta frente ficaram registrados em [front-end-wave4-operations-dependency-map.md](front-end-wave4-operations-dependency-map.md)
 
 ## Regra de ouro que saiu desta onda
 

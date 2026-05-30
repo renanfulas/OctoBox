@@ -160,7 +160,7 @@ Use quando o foco for mapas de fase, auditorias pontuais ou material de reestrut
 Arquivos:
 
 1. [front-end-wave1-catalog-shared-audit.md](./front-end-wave1-catalog-shared-audit.md)
-2. [front-end-wave4-contract-audit.md](./front-end-wave4-contract-audit.md)
+2. [front-end-wave4-contract-audit.md](./archive/front-end-wave4-contract-audit.md) *(arquivado)*
 3. [front-end-wave4-operations-dependency-map.md](./archive/front-end-wave4-operations-dependency-map.md) *(arquivado)*
 4. [front-end-owner-workspace-audit.md](./archive/front-end-owner-workspace-audit.md) *(arquivado)*
 5. [dashboard-darkmode-cascade-roadmap.md](./dashboard-darkmode-cascade-roadmap.md)
