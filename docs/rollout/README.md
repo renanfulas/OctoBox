@@ -86,18 +86,20 @@ Evidencia datada arquivada em [archive/phase1-execution-evidence-2026-04-13.md](
 
 ---
 
-## VPS Hostinger (rota de producao atual)
+## VPS HostGator (rota de producao atual)
 
-| Doc | Status |
+A operacao real roda em **HostGator** (os docs antigos diziam "Hostinger" — nome do provedor trocado). Runbooks consolidados e **corrigidos a partir dos scripts reais** em **[hostgator/](hostgator/)**:
+
+| operacao | runbook |
 |-----|--------|
-| [hostinger-vps-bootstrap-checklist.md](hostinger-vps-bootstrap-checklist.md) | ATIVO (preparo da maquina) |
-| [hostinger-vps-production-deploy.md](hostinger-vps-production-deploy.md) | ATIVO (deploy oficial) |
-| [hostinger-vps-post-deploy-smoke-checklist.md](hostinger-vps-post-deploy-smoke-checklist.md) | ATIVO (smoke pos-deploy) |
-| [hostinger-vps-backup-and-restore-runbook.md](hostinger-vps-backup-and-restore-runbook.md) | ATIVO (backup + restore) |
-| [hostinger-vps-restore-postgres.md](hostinger-vps-restore-postgres.md) | ATIVO (template de restore curto) |
-| [hostinger-vps-update-and-rollback-runbook.md](hostinger-vps-update-and-rollback-runbook.md) | ATIVO (update + rollback) |
+| Bootstrap (maquina do zero) | [hostgator/bootstrap.md](hostgator/bootstrap.md) |
+| Deploy | [hostgator/deploy.md](hostgator/deploy.md) |
+| Rollback | [hostgator/rollback.md](hostgator/rollback.md) |
+| Backup (R2 + systemd) | [hostgator/backup.md](hostgator/backup.md) |
+| Restore | [hostgator/restore.md](hostgator/restore.md) |
+| Smoke & runtime check | [hostgator/smoke.md](hostgator/smoke.md) |
 
-Rota antiga (Hostgator) arquivada em [archive/hostgator-vps-observability-and-backup.md](archive/hostgator-vps-observability-and-backup.md).
+Os docs `hostinger-vps-*` antigos foram arquivados (rotulo de host trocado + alguns desatualizados, ex.: cron vs systemd) — ver Arquivados.
 
 ---
 
@@ -128,8 +130,7 @@ Rodadas preenchidas datadas em [archive/postgres-homolog-provisioning-round-2026
 | Doc | Status |
 |-----|--------|
 | [backup-guide.md](backup-guide.md) | ATIVO (guia conceitual de backup) |
-| [deploy-homologation.md](deploy-homologation.md) | ATIVO (guia de deploy em homolog) |
-| [homologation-deploy-checklist.md](homologation-deploy-checklist.md) | ATIVO (checklist do guia anterior) |
+| Deploy | rota Render **removida** → [hostgator/deploy.md](hostgator/deploy.md) (decisão: [../decisions/0002-render-to-hostgator-vps.md](../decisions/0002-render-to-hostgator-vps.md)) |
 | [local-format-restore-runbook.md](local-format-restore-runbook.md) | ATIVO (restore local) |
 
 ---
@@ -141,7 +142,13 @@ Rodadas preenchidas datadas em [archive/postgres-homolog-provisioning-round-2026
 | [archive/phase1-execution-evidence-2026-04-13.md](archive/phase1-execution-evidence-2026-04-13.md) | Snapshot datado de execucao da Fase 1 |
 | [archive/postgres-homolog-provisioning-round-2026-04-13.md](archive/postgres-homolog-provisioning-round-2026-04-13.md) | Snapshot datado de provisionamento |
 | [archive/postgres-homolog-restore-checklist-2026-04-13.md](archive/postgres-homolog-restore-checklist-2026-04-13.md) | Snapshot datado de checklist preenchido |
-| [archive/hostgator-vps-observability-and-backup.md](archive/hostgator-vps-observability-and-backup.md) | Hostgator superseded — producao migrou para Hostinger |
+| [archive/hostgator-vps-observability-and-backup.md](archive/hostgator-vps-observability-and-backup.md) | Observability/backup absorvidos por `hostgator/backup.md` + `hostgator/smoke.md` (o "migrou para Hostinger" era rotulo trocado — o host real e HostGator) |
+| [archive/hostinger-vps-backup-and-restore-runbook.md](archive/hostinger-vps-backup-and-restore-runbook.md) | Superseded por `hostgator/backup.md` (host + cron→systemd/R2 corrigidos dos scripts) |
+| [archive/hostinger-vps-restore-postgres.md](archive/hostinger-vps-restore-postgres.md) | Superseded por `hostgator/restore.md` |
+| [archive/hostinger-vps-production-deploy.md](archive/hostinger-vps-production-deploy.md) | Superseded por `hostgator/deploy.md` (host Hostinger→HostGator, grounded no script) |
+| [archive/hostinger-vps-update-and-rollback-runbook.md](archive/hostinger-vps-update-and-rollback-runbook.md) | Superseded por `hostgator/rollback.md` |
+| [archive/hostinger-vps-bootstrap-checklist.md](archive/hostinger-vps-bootstrap-checklist.md) | Superseded por `hostgator/bootstrap.md` |
+| [archive/hostinger-vps-post-deploy-smoke-checklist.md](archive/hostinger-vps-post-deploy-smoke-checklist.md) | Superseded por `hostgator/smoke.md` |
 
 ---
 

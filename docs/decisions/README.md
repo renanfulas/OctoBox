@@ -50,3 +50,4 @@ lição reapareça na busca sobre a mesma área. Escreva só o que for **não-ó
 ## Índice
 
 - [0001 — `knowledge` (RAG) movido para SHARED + gotcha de migração django-tenants](0001-knowledge-shared-migration.md)
+- [0002 — Deploy saiu do Render para HostGator VPS](0002-render-to-hostgator-vps.md)

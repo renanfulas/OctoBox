@@ -11,7 +11,7 @@ DOCUMENTOS IRMAOS:
 - [scale-transition-20-100-open-multitenancy-plan.md](scale-transition-20-100-open-multitenancy-plan.md)
 - [unit-cascade-architecture-plan.md](unit-cascade-architecture-plan.md)
 - [../rollout/first-box-production-execution-checklist.md](../rollout/first-box-production-execution-checklist.md)
-- [../rollout/homologation-deploy-checklist.md](../rollout/homologation-deploy-checklist.md)
+- [../rollout/homologation-deploy-checklist.md](../rollout/hostgator/deploy.md)
 - [../rollout/beta-internal-release-gate.md](../rollout/beta-internal-release-gate.md)
 
 QUANDO USAR:

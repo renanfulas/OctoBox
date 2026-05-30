@@ -58,8 +58,8 @@ O projeto ja tem um pacote tecnico minimo importante:
 
 1. settings de producao com PostgreSQL e WhiteNoise em [config/settings/production.py](../../config/settings/production.py)
 2. base de ambiente em [config/settings/base.py](../../config/settings/base.py)
-3. guia de deploy em [deploy-homologation.md](deploy-homologation.md)
-4. checklist exato de homologacao em [homologation-deploy-checklist.md](homologation-deploy-checklist.md)
+3. guia de deploy em [deploy-homologation.md](hostgator/deploy.md)
+4. checklist exato de homologacao em [homologation-deploy-checklist.md](hostgator/deploy.md)
 4. guia de backup em [backup-guide.md](backup-guide.md)
 5. dependencias minimas de producao em [requirements.txt](../../requirements.txt)
 

@@ -9,7 +9,7 @@ AUTORIDADE:
 
 DOCUMENTOS IRMAOS:
 - [beta-role-test-agenda.md](beta-role-test-agenda.md)
-- [homologation-deploy-checklist.md](homologation-deploy-checklist.md)
+- [homologation-deploy-checklist.md](hostgator/deploy.md)
 - [first-box-system-setup-checklist.md](first-box-system-setup-checklist.md)
 
 QUANDO USAR:

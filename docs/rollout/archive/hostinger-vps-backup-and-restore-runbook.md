@@ -22,6 +22,9 @@ PONTOS CRITICOS:
 - backup sem copia externa e protecao incompleta
 -->
 
+> ⚠️ **SUPERADO — não use.** Descreve o host como "Hostinger" e usa **cron**; a realidade é **HostGator + Cloudflare R2 + systemd timer**. Fonte única: [../hostgator/backup.md](../hostgator/backup.md) e [../hostgator/restore.md](../hostgator/restore.md). Abaixo só como histórico.
+
+
 # Runbook de backup e restore para Hostinger VPS unica
 
 ## Objetivo

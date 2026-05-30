@@ -64,9 +64,15 @@ class RetrievalHit:
     reasons: list[str]
     lexical_score: float = 0.0
     semantic_score: float = 0.0
+    is_archived: bool = False
 
 
-def search_project_knowledge(*, question: str, limit: int = 5) -> list[RetrievalHit]:
+def search_project_knowledge(*, question: str, limit: int = 5, include_archive: bool = False) -> list[RetrievalHit]:
+    """Busca no RAG. Por padrao ignora docs em `*/archive/*` (historia, nao operacao).
+
+    Tier de historico: passe include_archive=True para "como era / como evoluiu".
+    Fallback automatico: se nada nos docs vivos, refaz a busca incluindo o archive.
+    """
     normalized_question = question.strip()
     if not normalized_question:
         return []
@@ -76,10 +82,10 @@ def search_project_knowledge(*, question: str, limit: int = 5) -> list[Retrieval
         return []
 
     lexical_candidate_limit = max(limit * 6, 24)
-    lexical_hits = _search_lexical(question=normalized_question, query_tokens=query_tokens, limit=lexical_candidate_limit)
+    lexical_hits = _search_lexical(question=normalized_question, query_tokens=query_tokens, limit=lexical_candidate_limit, include_archive=include_archive)
 
     combined_hits: dict[int, RetrievalHit] = {hit.chunk_id: hit for hit in lexical_hits}
-    semantic_hits = _search_semantic(question=normalized_question, limit=max(limit * 4, 12))
+    semantic_hits = _search_semantic(question=normalized_question, limit=max(limit * 4, 12), include_archive=include_archive)
     for hit in semantic_hits:
         existing = combined_hits.get(hit.chunk_id)
         if existing is None:
@@ -89,10 +95,14 @@ def search_project_knowledge(*, question: str, limit: int = 5) -> list[Retrieval
         existing.reasons.extend(reason for reason in hit.reasons if reason not in existing.reasons)
         existing.score = round(existing.lexical_score + _semantic_weight(hit.semantic_score), 4)
 
-    return sorted(combined_hits.values(), key=lambda item: (-item.score, item.path, item.start_line))[:limit]
+    result = sorted(combined_hits.values(), key=lambda item: (-item.score, item.path, item.start_line))[:limit]
+    if not result and not include_archive:
+        # Nada nos docs vivos -> tier de historico: procura no archive.
+        return search_project_knowledge(question=question, limit=limit, include_archive=True)
+    return result
 
 
-def _search_lexical(*, question: str, query_tokens: list[str], limit: int) -> list[RetrievalHit]:
+def _search_lexical(*, question: str, query_tokens: list[str], limit: int, include_archive: bool = False) -> list[RetrievalHit]:
     candidates = (
         KnowledgeChunk.objects
         .select_related('document')
@@ -110,6 +120,8 @@ def _search_lexical(*, question: str, query_tokens: list[str], limit: int) -> li
             'document__source_kind',
         )
     )
+    if not include_archive:
+        candidates = candidates.exclude(document__path__contains='/archive/')
 
     hits: list[RetrievalHit] = []
     for chunk in candidates.iterator():
@@ -131,13 +143,14 @@ def _search_lexical(*, question: str, query_tokens: list[str], limit: int) -> li
                 source_kind=chunk.document.source_kind,
                 reasons=reasons,
                 lexical_score=round(score, 4),
+                is_archived='/archive/' in chunk.document.path,
             )
         )
 
     return sorted(hits, key=lambda item: (-item.score, item.path, item.start_line))[:limit]
 
 
-def _search_semantic(*, question: str, limit: int) -> list[RetrievalHit]:
+def _search_semantic(*, question: str, limit: int, include_archive: bool = False) -> list[RetrievalHit]:
     client = get_embedding_client()
     if not client.is_enabled():
         return []
@@ -174,6 +187,8 @@ def _search_semantic(*, question: str, limit: int) -> list[RetrievalHit]:
             'chunk__document__source_kind',
         )
     )
+    if not include_archive:
+        queryset = queryset.exclude(chunk__document__path__contains='/archive/')
 
     top_hits: list[tuple[float, RetrievalHit]] = []
     min_score = float(getattr(settings, 'PROJECT_RAG_EMBEDDING_MIN_SCORE', 0.15) or 0.15)
@@ -199,6 +214,7 @@ def _search_semantic(*, question: str, limit: int) -> list[RetrievalHit]:
                 f'semantic:{similarity:.4f}',
             ],
             semantic_score=round(similarity, 4),
+            is_archived='/archive/' in embedding.chunk.document.path,
         )
         if len(top_hits) < limit:
             heapq.heappush(top_hits, (similarity, hit))
