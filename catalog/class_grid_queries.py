@@ -58,6 +58,7 @@ def build_class_grid_snapshot(today, params=None):
     start_date, end_date = _get_month_bounds(reference_month)
     weekly_start_date = today - timezone.timedelta(days=today.weekday())
     weekly_end_date = weekly_start_date + timezone.timedelta(days=13)
+    weekly_detail_end_date = today + timezone.timedelta(days=6)
     query_start_date = min(start_date, weekly_start_date)
     query_end_date = max(end_date, weekly_end_date)
 
@@ -114,6 +115,7 @@ def build_class_grid_snapshot(today, params=None):
                     'weekday_label': WEEKDAY_LABELS[cursor.weekday()],
                     'is_today': cursor == today,
                     'is_in_window': start_date <= cursor <= end_date,
+                    'is_in_detail_window': cursor <= weekly_detail_end_date,
                     'sessions': sessions_for_day,
                 }
             )
