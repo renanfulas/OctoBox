@@ -63,6 +63,12 @@ PUBLIC_WORKOUT_LIBRARY = {
         'background_color': '#f6f5f2',
         'template_file': 'thaislima.html',
     },
+    'john': {
+        'title': 'Treino John',
+        'theme_color': '#111111',
+        'background_color': '#f6f5f2',
+        'template_file': 'john.html',
+    },
 }
 PUBLIC_WORKOUT_TEMPLATE_DIR = Path(settings.BASE_DIR) / 'templates' / 'public_workouts'
 
