@@ -2,12 +2,13 @@
 ARQUIVO: resolucao de schema do RAG interno no runtime multi-tenant.
 
 POR QUE ELE EXISTE:
-- `knowledge` e um app TENANT (vive em schemas box_*, nao no public). Os comandos de
-  ingest/search rodam por padrao na conexao public, onde as tabelas knowledge_* NAO
-  existem -> ProgrammingError "relation knowledge_knowledgechunk does not exist".
-- este modulo da aos comandos uma forma unica de escolher o schema certo e funcionar
-  tanto chamados direto (`manage.py search_project_knowledge ...`) quanto via
-  `manage.py tenant_command ... --schema=box_x`.
+- `knowledge` e um app SHARED: o indice vive no schema public, indexado UMA vez (nao por
+  box). No caminho normal os comandos rodam na conexao public, onde as tabelas knowledge_*
+  agora existem -> a busca "bare" funciona direto, sem --schema/--box.
+- ainda assim este modulo da aos comandos uma forma unica de escolher schema: respeita
+  --schema/--box como escape hatch (consultar um tenant especifico) e mantem o fallback
+  legado para quando `knowledge` era TENANT app e as tabelas so existiam em box_* (conexao
+  public sem elas -> ProgrammingError "relation knowledge_knowledgechunk does not exist").
 
 O QUE ESTE ARQUIVO FAZ:
 1. `force_utf8_io()` — forca stdout/stderr para UTF-8 (console do Windows estoura com
@@ -17,9 +18,10 @@ O QUE ESTE ARQUIVO FAZ:
    - senao resolve por --schema / --box / env OCTOBOX_KNOWLEDGE_SCHEMA / auto (primeiro box com schema real).
 
 PONTOS CRITICOS:
-- o indice e conteudo do REPOSITORIO (mesmo em qualquer tenant); por isso qualquer box
-  ja indexado serve para leitura. A escolha automatica e transparente (loga o schema usado).
-- nunca cai para o public silenciosamente: se nao houver schema valido, levanta erro claro.
+- o indice e conteudo do REPOSITORIO (igual para todo tenant); como knowledge e SHARED,
+  ele vive no public e e lido de la por padrao.
+- so cai no fallback legado (auto-resolver um box_*) quando as tabelas NAO estao na conexao
+  atual; nesse caso, se nao houver schema valido, levanta erro claro (nunca silencioso).
 """
 
 from __future__ import annotations
