@@ -47,7 +47,7 @@ CSS estrutural do shell:
 2. [../../static/css/design-system/shell.css](../../static/css/design-system/shell.css)
 3. [../../static/css/design-system/sidebar/sidebar.css](../../static/css/design-system/sidebar/sidebar.css)
 4. [../../static/css/design-system/topbar.css](../../static/css/design-system/topbar.css)
-5. [../../static/css/design-system/compass.css](../../static/css/design-system/compass.css)
+5. `../../static/css/design-system/compass.css`
 6. [../../static/css/design-system/spacing.css](../../static/css/design-system/spacing.css)
 7. [../../static/css/design-system/responsiveness.css](../../static/css/design-system/responsiveness.css)
 

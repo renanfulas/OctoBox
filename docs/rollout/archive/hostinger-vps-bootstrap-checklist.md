@@ -19,6 +19,9 @@ PONTOS CRITICOS:
 - deploy, smoke e backup tem checklists proprios
 -->
 
+> ⚠️ **SUPERADO — não use.** Fonte única: [../hostgator/bootstrap.md](../hostgator/bootstrap.md). Abaixo só histórico.
+
+
 # Checklist de bootstrap da Hostinger VPS
 
 Use:

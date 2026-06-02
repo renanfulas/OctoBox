@@ -8,7 +8,7 @@ AUTORIDADE:
 - alta para a Fase 1 do beta fechado
 
 DOCUMENTOS IRMAOS:
-- [homologation-deploy-checklist.md](homologation-deploy-checklist.md)
+- [homologation-deploy-checklist.md](hostgator/deploy.md)
 - [first-box-system-setup-checklist.md](first-box-system-setup-checklist.md)
 - [first-box-onboarding-runbook.md](first-box-onboarding-runbook.md)
 - [beta-internal-release-gate.md](beta-internal-release-gate.md)
@@ -118,7 +118,7 @@ Bloqueador:
 
 Referencia:
 
-1. [homologation-deploy-checklist.md](homologation-deploy-checklist.md)
+1. [homologation-deploy-checklist.md](hostgator/deploy.md)
 2. [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md)
 
 ---

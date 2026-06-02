@@ -54,6 +54,10 @@ PUBLIC_SCHEMA_PATHS = (
     '/api/v1/integrations/',
     '/login/',
     '/logout/',
+    # Fluxo Early Adopter: checkout publico para novos boxes. Anonimos chegam
+    # via CTA da landing (/checkout/?plan=...). Sem isso o middleware bloqueia
+    # com redirect para /login/ e o ?plan= se perde, quebrando o funil.
+    '/checkout/',
     '/onboarding/',
     # Sprint 4: TODO o app do aluno bypassa o staff tenant middleware.
     # StudentAuthMiddleware (mais abaixo na chain) faz a auth via cookie
@@ -80,6 +84,8 @@ PUBLIC_SCHEMA_EXACT_PATHS = (
     # a pagina; usuario logado vai pra /dashboard/ (decidido na view). Sem
     # exact-match, qualquer subpath caia em /login/.
     '/',
+    # Pagina de produto (vitrine publica). Anonimo precisa ver sem fazer login.
+    '/produto/',
     '/api/',
     '/api/v1/',
 )

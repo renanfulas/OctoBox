@@ -91,7 +91,7 @@ Se a ideia for comecar pelo menor corte util, rode primeiro estas tres superfici
 
 Registro pronto desta rodada:
 
-1. [mobile-real-validation-round-1-2026-03-14.md](mobile-real-validation-round-1-2026-03-14.md)
+1. [mobile-real-validation-round-1-2026-03-14.md](archive/mobile-real-validation-round-1-2026-03-14.md)
 
 Ordem pratica de execucao:
 

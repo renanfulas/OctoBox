@@ -143,6 +143,10 @@ def _read_source(*, base_dir: Path, file_path: Path) -> SourceDocument | None:
 def classify_source(relative_path: str) -> tuple[str, int]:
     if relative_path == 'README.md':
         return KnowledgeSourceKind.README, 95
+    if '/archive/' in relative_path:
+        # Snapshots arquivados: autoridade baixa (abaixo de history), em qualquer pasta.
+        # Sem isso, docs/plans/archive/* herdava 85 (nivel de plano vivo) — ruido no RAG.
+        return KnowledgeSourceKind.DOC, 45
     if relative_path.startswith('docs/architecture/'):
         return KnowledgeSourceKind.DOC, 90
     if relative_path.startswith('docs/plans/'):
@@ -159,6 +163,10 @@ def classify_source(relative_path: str) -> tuple[str, int]:
         return KnowledgeSourceKind.DOC, 50
     if relative_path.startswith('docs/coaching/'):
         return KnowledgeSourceKind.DOC, 85
+    if relative_path.startswith('docs/decisions/'):
+        # Log de lições/decisões: memória durável do "porquê". Autoridade média-alta
+        # para reaparecer na busca, mas abaixo de architecture/plans (ver docs/decisions/README.md).
+        return KnowledgeSourceKind.DOC, 82
     if relative_path.startswith('docs/'):
         return KnowledgeSourceKind.DOC, 68
     if relative_path.startswith('.specs/codebase/'):

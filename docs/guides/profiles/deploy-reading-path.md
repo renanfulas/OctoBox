@@ -33,8 +33,8 @@ Esta trilha existe para quem vai tocar:
 5. [../../reference/production-security-baseline.md](../../reference/production-security-baseline.md)
 6. [../../reference/external-security-edge-playbook.md](../../reference/external-security-edge-playbook.md)
 7. [../../reference/cloudflare-edge-rules.md](../../reference/cloudflare-edge-rules.md)
-8. [../../rollout/hostinger-vps-production-deploy.md](../../rollout/hostinger-vps-production-deploy.md)
-9. [../../rollout/hostinger-vps-post-deploy-smoke-checklist.md](../../rollout/hostinger-vps-post-deploy-smoke-checklist.md)
+8. [../../rollout/hostinger-vps-production-deploy.md](../../rollout/hostgator/deploy.md)
+9. [../../rollout/hostinger-vps-post-deploy-smoke-checklist.md](../../rollout/hostgator/smoke.md)
 
 ## Depois disso, entre no runtime
 

@@ -9,7 +9,7 @@ AUTORIDADE:
 - media
 
 DOCUMENTOS PAIS:
-- [homologation-deploy-checklist.md](homologation-deploy-checklist.md)
+- [homologation-deploy-checklist.md](hostgator/deploy.md)
 - [first-box-onboarding-runbook.md](first-box-onboarding-runbook.md)
 - [../plans/intelligent-student-onboarding-plan.md](../plans/intelligent-student-onboarding-plan.md)
 

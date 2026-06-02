@@ -51,7 +51,7 @@ Use este documento junto com [../experience/front-pr-checklist.md](../experience
 
 1. revisar [access/context_processors.py](../../access/context_processors.py)
 2. revisar [access/shell_actions.py](../../access/shell_actions.py)
-3. executar [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. executar `boxcore/tests/test_shell_hints.py`
 4. executar a suite da funcionalidade dona
 5. executar a suite da tela vizinha mais diretamente afetada
 
@@ -59,7 +59,7 @@ Use este documento junto com [../experience/front-pr-checklist.md](../experience
 
 1. executar a suite HTTP local
 2. executar a suite de dominio ou service correspondente
-3. se a mutacao muda contagem, alerta ou fila visivel, executar tambem [boxcore/tests/test_shell_hints.py](../../boxcore/tests/test_shell_hints.py)
+3. se a mutacao muda contagem, alerta ou fila visivel, executar tambem `boxcore/tests/test_shell_hints.py`
 
 ## Se a mudanca tocar API publica
 

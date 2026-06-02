@@ -317,8 +317,8 @@ Ver guia: [e2e-guide.md](./e2e-guide.md)
 | Documento | O que contém |
 |---|---|
 | [quality-plan-prompt.md](./quality-plan-prompt.md) | Plano completo fase a fase com critérios de pronto |
-| [baseline-2026-05-18.md](./baseline-2026-05-18.md) | Estado da suite antes do plano (Fase 0) |
-| [broken-tests-inventory.md](./broken-tests-inventory.md) | Testes pré-existentes quebrados e suas causas |
+| [baseline-2026-05-18.md](./archive/baseline-2026-05-18.md) | Estado da suite antes do plano (Fase 0) |
+| [broken-tests-inventory.md](./archive/broken-tests-inventory.md) | Testes pré-existentes quebrados e suas causas |
 | [error-scenarios-inventory.md](./error-scenarios-inventory.md) | Mapa de endpoints × status de erro cobertos (Fase 7) |
 | [e2e-guide.md](./e2e-guide.md) | Como rodar e adicionar testes E2E Playwright (Fase 8) |
 | `tests/factories.py` | Factories factory-boy para os 5 modelos principais |

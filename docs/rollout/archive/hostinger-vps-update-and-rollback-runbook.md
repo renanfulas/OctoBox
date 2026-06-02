@@ -10,7 +10,7 @@ AUTORIDADE:
 DOCUMENTOS IRMAOS:
 - [hostinger-vps-production-deploy.md](hostinger-vps-production-deploy.md)
 - [hostinger-vps-post-deploy-smoke-checklist.md](hostinger-vps-post-deploy-smoke-checklist.md)
-- [hostinger-vps-backup-and-restore-runbook.md](hostinger-vps-backup-and-restore-runbook.md)
+- [hostinger-vps-backup-and-restore-runbook.md](hostgator/backup.md)
 - [restore-and-rollback-drill.md](restore-and-rollback-drill.md)
 
 QUANDO USAR:
@@ -27,6 +27,9 @@ PONTOS CRITICOS:
 - nao pular o smoke pos-update
 - nao fazer rollback sem registrar o commit de retorno
 -->
+
+> ⚠️ **SUPERADO — não use.** Fonte única: [../hostgator/rollback.md](../hostgator/rollback.md) e [../hostgator/deploy.md](../hostgator/deploy.md). Abaixo só histórico.
+
 
 # Runbook de update e rollback para Hostinger VPS
 
@@ -77,7 +80,7 @@ Antes de atualizar, gere um backup novo do banco.
 
 Referencia:
 
-1. [hostinger-vps-backup-and-restore-runbook.md](hostinger-vps-backup-and-restore-runbook.md)
+1. [hostinger-vps-backup-and-restore-runbook.md](hostgator/backup.md)
 
 ### Passo 3. Atualizar o codigo
 
@@ -180,7 +183,7 @@ Se o problema estiver nos dados e nao apenas na release:
 
 1. parar
 2. nao improvisar
-3. seguir [hostinger-vps-backup-and-restore-runbook.md](hostinger-vps-backup-and-restore-runbook.md)
+3. seguir [hostinger-vps-backup-and-restore-runbook.md](hostgator/backup.md)
 
 ### Failure checks do rollback
 

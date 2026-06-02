@@ -8,10 +8,10 @@ AUTORIDADE:
 - alta para a rota Hostinger VPS do primeiro cliente
 
 DOCUMENTOS IRMAOS:
-- [../rollout/hostinger-vps-production-deploy.md](../rollout/hostinger-vps-production-deploy.md)
-- [../rollout/hostinger-vps-bootstrap-checklist.md](../rollout/hostinger-vps-bootstrap-checklist.md)
-- [../rollout/hostinger-vps-post-deploy-smoke-checklist.md](../rollout/hostinger-vps-post-deploy-smoke-checklist.md)
-- [../rollout/hostinger-vps-backup-and-restore-runbook.md](../rollout/hostinger-vps-backup-and-restore-runbook.md)
+- [../rollout/hostinger-vps-production-deploy.md](../rollout/hostgator/deploy.md)
+- [../rollout/hostinger-vps-bootstrap-checklist.md](../rollout/hostgator/bootstrap.md)
+- [../rollout/hostinger-vps-post-deploy-smoke-checklist.md](../rollout/hostgator/smoke.md)
+- [../rollout/hostinger-vps-backup-and-restore-runbook.md](../rollout/hostgator/backup.md)
 - [../reference/production-security-baseline.md](../reference/production-security-baseline.md)
 - [../reference/cloudflare-edge-rules.md](../reference/cloudflare-edge-rules.md)
 

@@ -351,7 +351,7 @@ Regra de decisao:
 
 1. a primeira onda executavel da `Signal Mesh` fica em [signal-mesh-phase2-minimum-backlog.md](signal-mesh-phase2-minimum-backlog.md)
 2. o scheduler explicito desta onda fica em [signal-mesh-retry-scheduler-runbook.md](signal-mesh-retry-scheduler-runbook.md)
-3. o deploy controlado do saneamento de `AsyncJob` fica em [asyncjob-signal-mesh-migration-deploy-runbook.md](asyncjob-signal-mesh-migration-deploy-runbook.md)
+3. o deploy controlado do saneamento de `AsyncJob` fica em [asyncjob-signal-mesh-migration-deploy-runbook.md](archive/asyncjob-signal-mesh-migration-deploy-runbook.md)
 
 ## Fase 3: introduzir Scaffold Agents explicitos
 
@@ -457,7 +457,7 @@ Regra de decisao:
 
 ### Arquivos e modulos-alvo
 
-1. novo arquivo sugerido: [../../monitoring/vertical_sky_beam.py](../../monitoring/vertical_sky_beam.py)
+1. novo arquivo sugerido: `../../monitoring/vertical_sky_beam.py`
 2. [../../monitoring/beacon_snapshot.py](../../monitoring/beacon_snapshot.py)
 3. [../../monitoring/alert_siren.py](../../monitoring/alert_siren.py)
 4. [vertical-sky-beam-readiness-guide.md](vertical-sky-beam-readiness-guide.md)

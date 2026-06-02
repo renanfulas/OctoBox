@@ -36,7 +36,7 @@ Configuracoes default:
 
 ## Render
 
-O repositório atual ja usa [render.yaml](../../render.yaml).
+O repositório atual ja usa `render.yaml`.
 
 Exemplo recomendado de cron service para anexar ao stack atual:
 

@@ -16,10 +16,16 @@ COMO USAR (agente de AI):
 
 COMO USAR (humano):
     python manage.py search_project_knowledge "arquitetura do OctoBox"
-    python manage.py search_project_knowledge "finance queue" --limit 3
+    python manage.py search_project_knowledge "finance queue" --limit 3 --box ragprobe
+
+SCHEMA:
+- `knowledge` e um app SHARED: o indice vive no schema public, indexado uma vez (nao por box).
+  Por isso o comando "bare" funciona direto, sem --schema/--box.
+- --schema/--box continuam existindo como escape hatch (ex.: consultar um tenant especifico),
+  mas normalmente sao desnecessarios.
 
 PONTOS CRITICOS:
-- o banco precisa ter sido indexado antes via: python manage.py ingest_project_knowledge
+- o public precisa ter sido migrado/indexado antes: migrate_schemas --shared + ingest_project_knowledge
 - sem embeddings ativos, a busca retorna resultados lexicais (excelentes para docs e codigo).
 - com embeddings ativos, o resultado inclui semantic_score alem do lexical_score.
 """
@@ -28,9 +34,10 @@ from __future__ import annotations
 
 import json
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from knowledge.retrieval import search_project_knowledge
+from knowledge.schema_access import KnowledgeSchemaError, force_utf8_io, knowledge_schema
 
 
 class Command(BaseCommand):
@@ -54,8 +61,15 @@ class Command(BaseCommand):
             dest='output_json',
             help='Retorna saida como JSON estruturado (ideal para consumo por agentes de AI).',
         )
+        parser.add_argument('--schema', default=None, help='Schema de tenant a consultar (ex.: box_ragprobe).')
+        parser.add_argument('--box', default=None, help='Slug do box a consultar (vira box_<slug>).')
+        parser.add_argument(
+            '--include-archive', action='store_true', dest='include_archive',
+            help='Inclui docs arquivados (historia / "como era"). Por padrao o RAG so olha docs vivos.',
+        )
 
     def handle(self, *args, **options):
+        force_utf8_io()
         question = options['question'].strip()
         limit = max(1, min(options['limit'], 20))
         output_json = options['output_json']
@@ -64,12 +78,20 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR('Pergunta nao pode ser vazia.'))
             return
 
-        hits = search_project_knowledge(question=question, limit=limit)
+        include_archive = options['include_archive']
+        try:
+            with knowledge_schema(schema=options.get('schema'), box=options.get('box')):
+                hits = search_project_knowledge(question=question, limit=limit, include_archive=include_archive)
+        except KnowledgeSchemaError as exc:
+            raise CommandError(str(exc)) from exc
+
+        # Fallback automatico do motor: pediu docs vivos, mas so havia historico arquivado.
+        fell_back = bool(hits) and not include_archive and all(getattr(h, 'is_archived', False) for h in hits)
 
         if output_json:
             self._print_json(question=question, hits=hits)
         else:
-            self._print_human(question=question, hits=hits)
+            self._print_human(question=question, hits=hits, fell_back=fell_back)
 
     def _print_json(self, *, question: str, hits) -> None:
         output = {
@@ -88,6 +110,7 @@ class Command(BaseCommand):
                     'semantic_score': hit.semantic_score,
                     'authority_score': hit.authority_score,
                     'source_kind': hit.source_kind,
+                    'is_archived': hit.is_archived,
                     'reasons': hit.reasons,
                     'preview': hit.preview,
                     'content': hit.content,
@@ -97,8 +120,10 @@ class Command(BaseCommand):
         }
         self.stdout.write(json.dumps(output, ensure_ascii=False, indent=2))
 
-    def _print_human(self, *, question: str, hits) -> None:
+    def _print_human(self, *, question: str, hits, fell_back: bool = False) -> None:
         self.stdout.write(self.style.SUCCESS(f'\nRAG — Pergunta: "{question}"'))
+        if fell_back:
+            self.stdout.write(self.style.WARNING('(nada nos docs vivos — mostrando HISTORICO arquivado)'))
         self.stdout.write(self.style.SUCCESS(f'Resultados: {len(hits)}\n'))
 
         if not hits:
@@ -108,9 +133,10 @@ class Command(BaseCommand):
 
         for index, hit in enumerate(hits, start=1):
             heading_label = f' :: {hit.heading}' if hit.heading else ''
+            archive_tag = '[ARQUIVADO] ' if getattr(hit, 'is_archived', False) else ''
             self.stdout.write(
                 self.style.HTTP_INFO(
-                    f'[{index}] {hit.path}{heading_label} '
+                    f'[{index}] {archive_tag}{hit.path}{heading_label} '
                     f'(linhas {hit.start_line}-{hit.end_line}) '
                     f'[score={hit.score} | auth={hit.authority_score}]'
                 )

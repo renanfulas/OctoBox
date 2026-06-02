@@ -5,12 +5,15 @@ POR QUE ELE EXISTE:
 - protege o ranking hibrido por autoridade e sobreposicao lexical.
 """
 
+import os
+from unittest import mock
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from knowledge.models import KnowledgeChunk, KnowledgeChunkEmbedding, KnowledgeDocument, KnowledgeSourceKind
 from knowledge.retrieval import search_project_knowledge
+from knowledge.schema_access import _normalize_schema, force_utf8_io
 from knowledge.vector_math import pack_vector, vector_norm
 
 
@@ -108,3 +111,27 @@ class KnowledgeRetrievalTests(TestCase):
 
         self.assertEqual(hits[0].path, 'docs/architecture/center-layer.md')
         self.assertGreater(hits[0].semantic_score, 0.9)
+
+
+class KnowledgeSchemaResolutionTests(SimpleTestCase):
+    """Contrato de resolucao de schema do RAG tenant (sem banco)."""
+
+    def test_explicit_schema_wins_over_box(self):
+        self.assertEqual(_normalize_schema('box_alpha', 'beta'), 'box_alpha')
+
+    def test_box_slug_gets_prefix(self):
+        self.assertEqual(_normalize_schema(None, 'ragprobe'), 'box_ragprobe')
+
+    def test_box_already_prefixed_is_kept(self):
+        self.assertEqual(_normalize_schema(None, 'box_ragprobe'), 'box_ragprobe')
+
+    def test_env_var_used_when_nothing_explicit(self):
+        with mock.patch.dict(os.environ, {'OCTOBOX_KNOWLEDGE_SCHEMA': 'box_envbox'}, clear=False):
+            self.assertEqual(_normalize_schema(None, None), 'box_envbox')
+
+    def test_none_when_no_signal(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            self.assertIsNone(_normalize_schema(None, None))
+
+    def test_force_utf8_io_is_safe_to_call(self):
+        force_utf8_io()  # nao deve levantar mesmo se o stream nao suportar reconfigure

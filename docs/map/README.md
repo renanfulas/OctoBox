@@ -149,8 +149,8 @@ Use quando o foco for depuracao guiada, smoke manual, debug por contrato ou revi
 Arquivos:
 
 1. [front-end-forensics-checklist.md](./front-end-forensics-checklist.md)
-2. [front-end-contract-only-visual-smoke-checklist.md](./front-end-contract-only-visual-smoke-checklist.md)
-3. [front-end-contract-only-visual-smoke-report-template.md](./front-end-contract-only-visual-smoke-report-template.md)
+2. [front-end-contract-only-visual-smoke-checklist.md](./archive/front-end-contract-only-visual-smoke-checklist.md) *(arquivado)*
+3. [front-end-contract-only-visual-smoke-report-template.md](./archive/front-end-contract-only-visual-smoke-report-template.md) *(arquivado)*
 4. [front-end-data-action-debug-checklist.md](./front-end-data-action-debug-checklist.md)
 
 ### 4. Frontend por ondas e auditorias de frente
@@ -160,9 +160,9 @@ Use quando o foco for mapas de fase, auditorias pontuais ou material de reestrut
 Arquivos:
 
 1. [front-end-wave1-catalog-shared-audit.md](./front-end-wave1-catalog-shared-audit.md)
-2. [front-end-wave4-contract-audit.md](./front-end-wave4-contract-audit.md)
-3. [front-end-wave4-operations-dependency-map.md](./front-end-wave4-operations-dependency-map.md)
-4. [front-end-owner-workspace-audit.md](./front-end-owner-workspace-audit.md)
+2. [front-end-wave4-contract-audit.md](./archive/front-end-wave4-contract-audit.md) *(arquivado)*
+3. [front-end-wave4-operations-dependency-map.md](./archive/front-end-wave4-operations-dependency-map.md) *(arquivado)*
+4. [front-end-owner-workspace-audit.md](./archive/front-end-owner-workspace-audit.md) *(arquivado)*
 5. [dashboard-darkmode-cascade-roadmap.md](./dashboard-darkmode-cascade-roadmap.md)
 6. [finance-darkmode-wave1-map.md](./finance-darkmode-wave1-map.md)
 

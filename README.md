@@ -90,6 +90,9 @@ Timeline of this first cycle:
 
 ## Current operational state
 
+- multi-tenant runtime live in production: `django-tenants` schema-per-tenant, the `control` plane provisioning each box into its own Postgres schema, and the first box provisioned on 2026-05-23 with a real student authenticating through OAuth
+- tenant isolation under test before scale: boundary tests (B1-B12), per-box cache namespacing, and rollout commands (`provision_box`, `archive_box`, `smoke_test_tenant`) written ahead of need
+- commercial entry funnel in `signup` already wired into Stripe hosted checkout, magic link, and tenant activation
 - recent hardening wave already landed on `main`
 - WhatsApp identity contract with blind index, historical backfill, and uniqueness constraint
 - shell navigation contract stabilized across the core surfaces
@@ -112,6 +115,8 @@ Timeline of this first cycle:
 
 The project already carries a broader technical surface than a CRUD back office. Today the repository includes these capabilities:
 
+- multi-tenant runtime with schema-per-tenant isolation through `django-tenants`, a dedicated `control` plane (`Box` as the tenant model, `Domain`, `Membership`, and provisioning events), one Postgres schema per box (`box_<slug>`), and a Hybrid Identity Model that keeps `StudentIdentity` in the shared schema while `Student` lives inside each tenant
+- a commercial entry funnel in `signup` for the Early Adopters program, with a dedicated landing, Stripe hosted checkout, magic link, and public payment-status query, plus tenant provisioning wired into activation through `control.services.provision_box`
 - internal project RAG with document ingestion, chunking, optional embeddings, hybrid lexical plus semantic retrieval, answer generation with citations, and authenticated API endpoints for `health`, `search`, `answer`, and `reindex`
 - webhook boundaries for WhatsApp poll votes and Resend invitation delivery, with normalized contracts, verification, correlation id propagation, and integration-focused API routes under `api/v1/integrations/*`
 - idempotency and replay protection at multiple layers, including shared idempotency helpers, Stripe checkout idempotency keys, webhook fingerprint deduplication, `X-Idempotency-Key` support, and persistent webhook event tracking with retry metadata
@@ -133,11 +138,12 @@ The project already carries a broader technical surface than a CRUD back office.
 
 Today the project is best described as:
 
-1. a domain-oriented modular monolith
-2. with `boxcore` preserved as historical Django state, not as the best explanation of the current runtime
+1. a multi-tenant, domain-oriented modular monolith, with schema-per-tenant isolation through `django-tenants` and a dedicated `control` plane separated from the tenant runtime
+2. with `boxcore` preserved as historical Django state inside each tenant schema, not as the best explanation of the current runtime
 3. with stronger public facades, page-payload contracts, and presenter-based screen assembly
 4. with a real mobile/PWA student surface already in motion alongside the main web operation
-5. with active work focused on performance discipline, operational imports, student experience, and safer production rollout
+5. already inhabited in production: the first box was provisioned on 2026-05-23 and the first real student authenticated through OAuth
+6. with active work focused on performance discipline, operational imports, student experience, and the closed-beta-to-open multitenancy scale transition
 
 ## How to use the documentation
 
@@ -179,8 +185,9 @@ Today the system has four main product layers:
 Important for the current technical reading:
 
 1. `boxcore` should no longer be read as the center of the runtime
-2. it remains in the project as a legacy Django state app
-3. the current runtime should prefer real apps such as `access`, `catalog`, `operations`, `students`, `finance`, `auditing`, `communications`, `api`, `integrations`, and `jobs`
+2. it remains in the project as a legacy Django state app, now anchoring domain models inside each tenant schema
+3. the current runtime should prefer real apps such as `access`, `catalog`, `operations`, `students`, `finance`, `auditing`, `communications`, `api`, `integrations`, `jobs`, `guide`, `quick_sales`, `knowledge`, and `student_app`
+4. the platform layer lives in the public schema and exists before any tenant: `control` (control plane), `signup` (commercial funnel), and `student_identity` (cross-box student identity)
 
 In the areas with the highest rule density, the codebase was organized more explicitly:
 
@@ -215,6 +222,8 @@ If you want to understand the specific strategy for making the business stop dep
 If you want to understand the official declaration of what becomes the conceptual center of the system, use [docs/architecture/octobox-conceptual-core.md](docs/architecture/octobox-conceptual-core.md).
 
 If you want to understand the new architectural CENTER that separates access level and internal core, use [docs/architecture/center-layer.md](docs/architecture/center-layer.md).
+
+If you want to understand the multi-tenant runtime — schema-per-tenant with `django-tenants`, the `control` plane, the Hybrid Identity Model, and how a box is provisioned and isolated — use [docs/plans/schema-per-tenant-migration-plan.md](docs/plans/schema-per-tenant-migration-plan.md), the [docs/adr/README.md](docs/adr/README.md) index (`ADR-005` to `ADR-010`), and [docs/architecture/center-layer.md](docs/architecture/center-layer.md). For where the product is heading as it opens to more boxes, use [docs/plans/scale-transition-20-100-open-multitenancy-plan.md](docs/plans/scale-transition-20-100-open-multitenancy-plan.md).
 
 If you want to understand the complementary structure of signals, integrations, and cross-system expansion, use [docs/architecture/signal-mesh.md](docs/architecture/signal-mesh.md).
 
@@ -258,19 +267,21 @@ If you want to understand the reasoning behind the first delivery, the decisions
 
 ## Architecture snapshot
 
-At a public level, the repository is easier to understand in six slices:
+At a public level, the repository is easier to understand in seven slices:
 
-1. `access`, `dashboard`, `catalog`, `operations`
-   main web operation, role-based workspaces, students, finance, and class scheduling
-2. `student_app`, `student_identity`
-   student-facing PWA shell, identity, invite entry, active-box switching, Grade, WOD, RM, and offline support
-3. `communications`, `integrations`, `api`, `jobs`
-   external boundaries, messaging, webhooks, API surface, and asynchronous work
-4. `shared_support`, `monitoring`, `reporting`, `model_support`
+1. `control`, `signup`, `student_identity`
+   platform and tenancy in the public schema: control plane (`Box`, `Domain`, `Membership`), Early Adopters funnel, and cross-box student identity
+2. `access`, `dashboard`, `catalog`, `operations`, `guide`, `quick_sales`
+   main web operation, role-based workspaces, students, finance, class scheduling, internal guide surface, and quick sales
+3. `student_app`
+   student-facing PWA shell, invite entry, active-box switching, Grade, WOD, RM, and offline support
+4. `communications`, `integrations`, `api`, `jobs`, `knowledge`
+   external boundaries, messaging, webhooks, API surface, asynchronous work, and the internal project RAG
+5. `shared_support`, `monitoring`, `reporting`, `model_support`
    cross-cutting contracts, performance, runtime helpers, observability, and shared base structures
-5. `boxcore`
-   historical Django state, migrations anchor, and compatibility surface
-6. `docs`, `.specs`, `tests`, `scripts`
+6. `boxcore`
+   historical Django state, migrations anchor, and compatibility surface inside each tenant schema
+7. `docs`, `.specs`, `tests`, `scripts`
    governance, plans, rollout, technical reading, validation, and operational tooling
 
 If you need the code-level reading order, ownership map, and debugging entry points, jump to [docs/reference/reading-guide.md](docs/reference/reading-guide.md) instead of using this README as a file-by-file inventory.
@@ -318,11 +329,15 @@ python manage.py bootstrap_roles
 
 ## How to run
 
+The runtime is multi-tenant through `django-tenants` (schema-per-tenant), and real schema isolation only works on PostgreSQL. A quick local schema (SQLite) is enough to read code and run part of the suite, but the faithful runtime — and CI — uses PostgreSQL, applies migrations with `migrate_schemas`, and provisions each box into its own schema with `provision_box`. For the full multi-tenant setup and rollout commands, see [docs/rollout/README.md](docs/rollout/README.md) and [docs/plans/schema-per-tenant-migration-plan.md](docs/plans/schema-per-tenant-migration-plan.md).
+
+Basic single-instance flow (good enough for local reading and most tests):
+
 1. Create and activate the virtual environment.
 2. Install dependencies with `pip install -r requirements.txt`.
 3. Copy `.env.example` to `.env` and adjust the minimum required values.
-4. Run `python manage.py migrate`.
-5. Run `python manage.py bootstrap_roles`.
+4. Run `python manage.py migrate` (on PostgreSQL, prefer `python manage.py migrate_schemas` to cover shared and tenant schemas).
+5. Run `python manage.py bootstrap_roles` (per tenant; `provision_box` already bootstraps roles for a newly provisioned box).
 6. Create an administrative user with `python manage.py createsuperuser`.
 7. Start the server with `python manage.py runserver`.
 8. Run `python manage.py test` to automatically use the project's test configuration path.

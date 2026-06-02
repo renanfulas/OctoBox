@@ -11,6 +11,9 @@ DOCUMENTO PAI:
 - [hostinger-vps-backup-and-restore-runbook.md](hostinger-vps-backup-and-restore-runbook.md)
 -->
 
+> ⚠️ **SUPERADO — não use.** Fonte única: [../hostgator/restore.md](../hostgator/restore.md). Abaixo só como histórico.
+
+
 # Template de restore PostgreSQL para Hostinger VPS
 
 ## Objetivo

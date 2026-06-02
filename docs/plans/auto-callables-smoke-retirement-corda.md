@@ -11,7 +11,7 @@ AUTORIDADE:
 DOCUMENTOS PAIS:
 - [../../README.md](../../README.md)
 - [../reference/documentation-authority-map.md](../reference/documentation-authority-map.md)
-- [test-failures-stabilization-corda.md](test-failures-stabilization-corda.md)
+- `test-failures-stabilization-corda.md`
 
 QUANDO USAR:
 - quando `tests/test_auto_callables.py` falhar ou produzir ruido estrutural

@@ -10,7 +10,7 @@ AUTORIDADE:
 DOCUMENTOS IRMAOS:
 - [hostinger-vps-bootstrap-checklist.md](hostinger-vps-bootstrap-checklist.md)
 - [hostinger-vps-post-deploy-smoke-checklist.md](hostinger-vps-post-deploy-smoke-checklist.md)
-- [hostinger-vps-backup-and-restore-runbook.md](hostinger-vps-backup-and-restore-runbook.md)
+- [hostinger-vps-backup-and-restore-runbook.md](hostgator/backup.md)
 - [../reference/production-security-baseline.md](../reference/production-security-baseline.md)
 - [../reference/cloudflare-edge-rules.md](../reference/cloudflare-edge-rules.md)
 
@@ -29,6 +29,9 @@ PONTOS CRITICOS:
 - nao substitui backup, restore e smoke funcional
 - nao publicar com SQLite, runserver ou Redis exposto
 -->
+
+> ⚠️ **SUPERADO — não use.** Host real é **HostGator** (não Hostinger); fonte única corrigida dos scripts: [../hostgator/deploy.md](../hostgator/deploy.md). Abaixo só histórico.
+
 
 # Deploy canonico do OctoBOX em Hostinger VPS
 
@@ -315,5 +318,5 @@ Antes de abrir para cliente real, confirme:
 Depois do primeiro deploy:
 
 1. rodar o checklist [hostinger-vps-post-deploy-smoke-checklist.md](hostinger-vps-post-deploy-smoke-checklist.md)
-2. configurar backup diario com [hostinger-vps-backup-and-restore-runbook.md](hostinger-vps-backup-and-restore-runbook.md)
+2. configurar backup diario com [hostinger-vps-backup-and-restore-runbook.md](hostgator/backup.md)
 3. registrar evidencias do go-live

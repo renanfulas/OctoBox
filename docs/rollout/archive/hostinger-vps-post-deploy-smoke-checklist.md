@@ -15,6 +15,9 @@ QUANDO USAR:
 - antes do go-live do primeiro cliente
 -->
 
+> ⚠️ **SUPERADO — não use.** Fonte única: [../hostgator/smoke.md](../hostgator/smoke.md). Abaixo só histórico.
+
+
 # Checklist de smoke pos-deploy na Hostinger VPS
 
 ## Objetivo

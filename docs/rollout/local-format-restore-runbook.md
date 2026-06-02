@@ -9,7 +9,7 @@ AUTORIDADE:
 
 DOCUMENTOS IRMAOS:
 - [backup-guide.md](backup-guide.md)
-- [hostinger-vps-backup-and-restore-runbook.md](hostinger-vps-backup-and-restore-runbook.md)
+- [hostinger-vps-backup-and-restore-runbook.md](hostgator/backup.md)
 
 QUANDO USAR:
 - antes de formatar o computador de desenvolvimento

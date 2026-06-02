@@ -11,8 +11,8 @@ DOCUMENTO PAI:
 - [first-box-onboarding-runbook.md](first-box-onboarding-runbook.md)
 
 DOCUMENTO DE EXECUCAO PREENCHIDO:
-- [first-box-endorfina-cross-setup-plan.md](first-box-endorfina-cross-setup-plan.md)
-- [first-box-endorfina-onboarding-day-checklist-2026-04-15.md](first-box-endorfina-onboarding-day-checklist-2026-04-15.md)
+- [first-box-endorfina-cross-setup-plan.md](archive/first-box-endorfina-cross-setup-plan.md)
+- [first-box-endorfina-onboarding-day-checklist-2026-04-15.md](archive/first-box-endorfina-onboarding-day-checklist-2026-04-15.md)
 
 QUANDO USAR:
 - quando a duvida for qual ordem seguir dentro do OctoBox para deixar o primeiro box apto a operar no dia 1

@@ -44,11 +44,11 @@ Mapas irmaos desta frente:
 7. [front-end-neon-contract-map.md](front-end-neon-contract-map.md) para o contrato vivo entre KPI, shell e highlight da sidebar
 8. [front-end-dashboard-action-contract-map.md](front-end-dashboard-action-contract-map.md) para o catalogo dos `data_action` interativos do dashboard
 9. [front-end-data-action-debug-checklist.md](front-end-data-action-debug-checklist.md) para o pronto-socorro de debug quando um clique nao reage
-10. [front-end-wave4-contract-audit.md](front-end-wave4-contract-audit.md) para o raio-x da trilha contratual entre payload, presenter, shell e template
-11. [front-end-wave4-operations-dependency-map.md](front-end-wave4-operations-dependency-map.md) para o inventario de onde `operations.css` ainda e full, pending ou contract-only no catalogo
-12. [front-end-contract-only-visual-smoke-checklist.md](front-end-contract-only-visual-smoke-checklist.md) para o roteiro curto de validacao visual das telas migradas para o contrato minimo
+10. [front-end-wave4-contract-audit.md](archive/front-end-wave4-contract-audit.md) para o raio-x da trilha contratual entre payload, presenter, shell e template
+11. [front-end-wave4-operations-dependency-map.md](archive/front-end-wave4-operations-dependency-map.md) para o inventario de onde `operations.css` ainda e full, pending ou contract-only no catalogo
+12. [front-end-contract-only-visual-smoke-checklist.md](archive/front-end-contract-only-visual-smoke-checklist.md) para o roteiro curto de validacao visual das telas migradas para o contrato minimo
 13. [front-end-search-cache-contract-map.md](front-end-search-cache-contract-map.md) para o contrato de cache local, versionamento e invalidação das buscas ricas
-14. [front-end-owner-workspace-audit.md](front-end-owner-workspace-audit.md) para o raio-x do `/operacao/owner/`, legado notion e manifestos vivos da superficie
+14. [front-end-owner-workspace-audit.md](archive/front-end-owner-workspace-audit.md) para o raio-x do `/operacao/owner/`, legado notion e manifestos vivos da superficie
 15. [dashboard-darkmode-cascade-roadmap.md](dashboard-darkmode-cascade-roadmap.md) para o mapa de familias repetidas de contraste ruim, wrappers paralelos e ordem de correcao do dashboard no dark mode
 
 ## Ordem curta de leitura da cena do crime
@@ -288,7 +288,7 @@ Leitura provavel:
 
 Onde olhar primeiro:
 
-1. [../../static/css/design-system/components/dashboard/summary.css.bkp](../../static/css/design-system/components/dashboard/summary.css.bkp)
+1. `../../static/css/design-system/components/dashboard/summary.css.bkp`
 
 Correcao que costuma funcionar:
 

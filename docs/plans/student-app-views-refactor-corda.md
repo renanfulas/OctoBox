@@ -61,7 +61,7 @@ Ele ja carrega:
 
 O problema estrutural e que boa parte disso ainda passa por um unico arquivo:
 
-1. [student_app/views.py](../../student_app/views.py)
+1. [student_app/views/](../../student_app/views/)
 
 Fotografia atual:
 

@@ -35,12 +35,13 @@ PONTOS CRITICOS:
 
 ## Resumo executivo
 
-Hoje o OctoBox deve ser lido como um `monolito modular orientado por dominios`, com quatro marcas de maturidade que nao estavam tao claras no inicio:
+Hoje o OctoBox deve ser lido como um `monolito modular multi-tenant orientado por dominios`, com cinco marcas de maturidade que nao estavam tao claras no inicio:
 
 1. apps reais promovidos como corredores oficiais do runtime
 2. separacao mais explicita entre borda HTTP, leitura, regra e apresentacao
 3. contratos de tela mais disciplinados entre backend e frontend
 4. telemetria, hardening e governanca documental mais proximos da operacao real
+5. isolamento multi-tenant real via schema-per-tenant (`django-tenants`), com `control` plane proprio e o primeiro box ja provisionado em producao
 
 Metafora simples:
 
@@ -63,30 +64,33 @@ O projeto acertou cedo em pontos valiosos:
 
 O projeto ficou mais eficiente porque ganhou camadas de disciplina que reduzem custo mental e custo de manutencao:
 
-1. `config/urls.py` virou a raiz HTTP canonica do runtime
-2. `access`, `catalog`, `dashboard`, `operations`, `communications`, `students`, `finance`, `auditing`, `integrations`, `jobs` e `student_app` passaram a aparecer como corredores reais do produto
-3. `boxcore` deixou de ser o centro explicativo do sistema e passou a ser lido mais como ancora historica de schema, migrations e compatibilidade
+1. `config/urls.py` virou a raiz HTTP canonica do runtime do tenant, e `config/urls_public.py` passou a servir o schema public (login, signup, webhook, healthcheck, auth do aluno)
+2. `access`, `catalog`, `dashboard`, `operations`, `communications`, `students`, `finance`, `auditing`, `integrations`, `jobs`, `guide`, `quick_sales`, `knowledge` e `student_app` passaram a aparecer como corredores reais do produto
+3. `boxcore` deixou de ser o centro explicativo do sistema e passou a ser lido mais como ancora historica de schema, migrations e compatibilidade — agora dentro dos schemas de tenant
 4. fachadas promovidas e `facades` publicas passaram a reduzir acoplamento da borda com detalhes internos
 5. `page payload`, `presentation` e assets declarados passaram a organizar melhor a conversa entre backend e frontend
 6. seguranca deixou de ficar implícita e ganhou throttles, admin gate, CSP, bloqueios e regras de edge documentadas
 7. performance deixou de ser um desejo difuso e ganhou probe, `Server-Timing`, budgets, sprints e telemetria
 8. a documentacao deixou de ser so conteudo bom e passou a ter precedencia oficial entre tese, plano, referencia, rollout e historia
+9. `control` nasceu como control plane multi-tenant (`Box` como tenant, `Domain`, `Membership`, `BoxProvisioningEvent`), `signup` passou a ser o funil Early Adopters cross-tenant (landing, checkout Stripe, magic link), e `django-tenants` passou a isolar cada box em seu proprio schema Postgres (`box_<slug>`)
 
 ## Como pensar o sistema hoje
 
-Leia o projeto em seis blocos:
+Leia o projeto em sete blocos:
 
-1. `Entrada e acesso`
+1. `Plataforma e tenancy` (schema public)
+   `control` (control plane: `Box`, `Domain`, `Membership`), `signup` (funil Early Adopters + Stripe), `student_identity` (identidade do aluno cross-box)
+2. `Entrada e acesso`
    `config`, `access`, `api`, `integrations`, `student_app`
-2. `Dominios centrais`
+3. `Dominios centrais` (schema do tenant)
    `students`, `finance`, `communications`, `onboarding`, `operations`, `quick_sales`
-3. `Fachadas de produto`
+4. `Fachadas de produto`
    `catalog`, `dashboard`, `guide`, `operations/facade`
-4. `Suporte transversal`
-   `shared_support`, `model_support`, `monitoring`, `reporting`
-5. `Estado historico`
+5. `Suporte transversal`
+   `shared_support`, `model_support`, `monitoring`, `reporting`, `knowledge`
+6. `Estado historico`
    `boxcore`
-6. `Governanca e execucao`
+7. `Governanca e execucao`
    `docs`, `.specs`, `tests`, `scripts`, `tools`
 
 ## Forma arquitetural atual
@@ -162,6 +166,19 @@ O projeto ganhou linguagem e instrumentos para nao otimizar no escuro:
 5. planos de sprint para reduzir custo de shell, CSS e assets
 6. commits recentes focados em batching e telemetria de snapshot
 
+### 6. Multi-tenancy e isolamento por box
+
+A virada estrutural mais recente saiu do papel e entrou em producao:
+
+1. `django-tenants` com schema-per-tenant: cada box vive em seu proprio schema Postgres (`box_<slug>`), provisionado por `control.services.provision_box`
+2. control plane separado do tenant runtime: `control` (SHARED) cuida de `Box`, `Domain`, `Membership` e provisionamento; os apps de dominio rodam dentro do schema do tenant
+3. Hybrid Identity Model: `StudentIdentity` vive em SHARED e `Student` vive no TENANT, ligados por referencia fraca, resolvendo "um aluno em N boxes" e o boundary multi-tenant de uma vez
+4. resolucao de tenant em um lugar so: `TenantBySessionMiddleware` (staff, por sessao) e `student_identity/facade/tenant_resolver.py` (aluno, pre-auth)
+5. isolamento sob teste: boundary tests (B1-B12) e cache namespaced por schema, escritos antes do primeiro cliente
+6. primeiro box provisionado em producao em 2026-05-23, com o primeiro aluno real autenticando via OAuth
+
+Detalhe canonico em [../architecture/center-layer.md](../architecture/center-layer.md), nos ADRs `ADR-005` a `ADR-010`, e no plano [../plans/schema-per-tenant-migration-plan.md](../plans/schema-per-tenant-migration-plan.md).
+
 ## O que ainda e transicao
 
 Nem tudo virou estado final. Hoje ainda vale tratar como transicao:
@@ -170,6 +187,7 @@ Nem tudo virou estado final. Hoje ainda vale tratar como transicao:
 2. coexistencia entre estrutura antiga de catalogo e trilhas mais novas em `operations/application`, `domain`, `infrastructure` e `facade`
 3. coexistencia entre CSS legado de `static/css/catalog/*` e a camada mais disciplinada de `static/css/design-system/*`
 4. docs antigos em `.specs/codebase` que ainda explicam bem a fase anterior, mas nao capturam toda a maturidade atual
+5. transicao de escala: o produto esta em closed beta de poucos boxes e ainda precisa percorrer o caminho ate multitenancy aberto (ver [../plans/scale-transition-20-100-open-multitenancy-plan.md](../plans/scale-transition-20-100-open-multitenancy-plan.md))
 
 ## Regra pratica para evolucao
 

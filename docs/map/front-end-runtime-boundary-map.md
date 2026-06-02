@@ -96,8 +96,8 @@ Exemplo:
 
 ### Use como fonte secundaria
 
-1. [../../OctoBox/templates](../../OctoBox/templates)
-2. [../../OctoBox/static](../../OctoBox/static)
+1. `../../OctoBox/templates`
+2. `../../OctoBox/static`
 
 Somente para:
 

@@ -441,14 +441,14 @@ ROLLBACK            - como desfazer em 1 passo
 - CRIADO: `templates/operations/workout_planner.html`
 - CRIADO: [static/css/design-system/operations/workspace/wod-planner.css](../../static/css/design-system/operations/workspace/wod-planner.css) usando `--wod-state-*` tokens
 - CRIADO: [static/js/operations/wod_planner.js](../../static/js/operations/wod_planner.js) com navegacao por teclado
-- CRIADO: [static/css/design-system/operations/workspace/wod-drawer.css](../../static/css/design-system/operations/workspace/wod-drawer.css) (historico como drawer)
+- CRIADO: `static/css/design-system/operations/workspace/wod-drawer.css` (historico como drawer)
 - ALTERADO: [static/css/design-system/tokens.css](../../static/css/design-system/tokens.css) adicionando tokens `--wod-state-*` e `--wod-cell-min-size`
 - ALTERADO: [operations/urls.py](../../operations/urls.py) adicionando `operacao/wod/planner/` e fazendo `operacao/wod/editor/` virar redirect
 
 **PR 3.3 - Acoes de celula**
 - CRIADO: `operations/actions/workout_planner_actions.py` com `duplicate_previous_week`, `apply_template`, `assign_coach`
 - CRIADO: `WorkoutPlannerCellActionView` em [operations/workout_action_views.py](../../operations/workout_action_views.py)
-- ALTERADO: [operations/permissions.py](../../operations/permissions.py) garantindo que so OWNER/MANAGER acessa essas acoes
+- ALTERADO: `operations/permissions.py` garantindo que so OWNER/MANAGER acessa essas acoes
 - ALTERADO: [operations/urls.py](../../operations/urls.py) com `operacao/wod/planner/celula/<int:session_id>/<str:action>/`
 - TESTE: `tests/test_workout_planner_actions.py`
 
@@ -494,7 +494,7 @@ ROLLBACK            - como desfazer em 1 passo
 - CRIADO: `operations/workout_prescription_preview.py` que usa [student_app/domain/workout_prescription.py](../../student_app/domain/workout_prescription.py) e agrega por aluno da aula
 - CRIADO: endpoint JSON `operations/workout_prescription_preview_view.py`
 - CRIADO: [static/js/operations/wod_prescription_preview.js](../../static/js/operations/wod_prescription_preview.js) com debounce 250 ms
-- CRIADO: [static/css/design-system/operations/workspace/wod-editor.css](../../static/css/design-system/operations/workspace/wod-editor.css) (substitui parte de `coach-wod-*`)
+- CRIADO: `static/css/design-system/operations/workspace/wod-editor.css` (substitui parte de `coach-wod-*`)
 - ALTERADO: [templates/operations/coach_session_workout_editor.html](../../templates/operations/coach_session_workout_editor.html) com painel "RM da aula"
 
 **PR 4.3 - Duplicar slot anterior + politica**
@@ -543,7 +543,7 @@ ROLLBACK            - como desfazer em 1 passo
 **ALTERADOS:**
 - [operations/urls.py](../../operations/urls.py) fazendo `operacao/wod/historico/` virar redirect
 - [templates/operations/workout_planner.html](../../templates/operations/workout_planner.html) montando o drawer
-- [static/css/design-system/operations/workspace/wod-drawer.css](../../static/css/design-system/operations/workspace/wod-drawer.css) expandido
+- `static/css/design-system/operations/workspace/wod-drawer.css` expandido
 
 **DoD:**
 - nenhum link quebrado nos emails e notificacoes existentes (grep por `/operacao/wod/historico/`)
