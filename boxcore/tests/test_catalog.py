@@ -547,11 +547,12 @@ class CatalogViewTests(TestCase):
 
     def test_class_grid_can_filter_by_coach_and_status(self):
         self.client.force_login(self.user)
-        target_month = timezone.localdate().strftime('%Y-%m')
+        scheduled_at = timezone.now() + timezone.timedelta(days=1)
+        target_month = timezone.localtime(scheduled_at).strftime('%Y-%m')
         ClassSession.objects.create(
             title='Funcional 06h',
             coach=self.coach,
-            scheduled_at=timezone.now() + timezone.timedelta(days=1),
+            scheduled_at=scheduled_at,
             status=SessionStatus.OPEN,
         )
         ClassSession.objects.create(
@@ -572,6 +573,39 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Funcional 06h')
         self.assertNotContains(response, 'Yoga 20h')
+
+    def test_class_grid_keeps_next_seven_days_detailed_across_month_boundary(self):
+        self.client.force_login(self.user)
+        simulated_today = date(2026, 5, 31)
+        simulated_now = timezone.make_aware(datetime(2026, 5, 31, 12, 0), timezone.get_current_timezone())
+        next_day = timezone.make_aware(datetime(2026, 6, 1, 6, 0), timezone.get_current_timezone())
+        preview_day = timezone.make_aware(datetime(2026, 6, 7, 6, 0), timezone.get_current_timezone())
+        ClassSession.objects.create(title='WOD Virada 06h', coach=self.coach, scheduled_at=next_day)
+        ClassSession.objects.create(title='WOD Preview 06h', coach=self.coach, scheduled_at=preview_day)
+        original_localtime = timezone.localtime
+
+        with (
+            patch('catalog.views.catalog_base_views.timezone.localdate', return_value=simulated_today),
+            patch(
+                'catalog.class_grid_queries.timezone.localtime',
+                side_effect=lambda value=None, *args, **kwargs: simulated_now if value is None else original_localtime(value, *args, **kwargs),
+            ),
+        ):
+            response = self.client.get(reverse('class-grid'))
+
+        weekly_days = [
+            day
+            for week in response.context['class_grid_page']['data']['weekly_calendar']
+            for day in week['days']
+        ]
+        next_day_snapshot = next(day for day in weekly_days if day['date'] == next_day.date())
+        preview_day_snapshot = next(day for day in weekly_days if day['date'] == preview_day.date())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(next_day_snapshot['is_in_detail_window'])
+        self.assertFalse(preview_day_snapshot['is_in_detail_window'])
+        self.assertContains(response, 'WOD Virada 06h')
+        self.assertNotContains(response, 'WOD Preview 06h')
 
     def test_class_grid_can_update_and_delete_session(self):
         self.client.force_login(self.user)

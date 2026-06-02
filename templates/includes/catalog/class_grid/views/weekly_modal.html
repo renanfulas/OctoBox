@@ -24,7 +24,7 @@ POR QUE ELE EXISTE:
                 </div>
                 <div class="weekly-calendar-grid weekly-modal-expanded-grid{% if forloop.first %} weekly-modal-expanded-grid--rows{% else %} weekly-modal-expanded-grid--preview{% endif %}">
                     {% for day in week.days %}
-                    {% if forloop.parentloop.first %}
+                    {% if day.is_in_detail_window %}
                     {% include "includes/ui/class_grid/class_grid_weekly_day_card.html" with day=day page=page %}
                     {% else %}
                     {% include "includes/ui/class_grid/class_grid_weekly_day_card.html" with day=day page=page preview_mode=True %}
