@@ -266,7 +266,7 @@ class StudentInvitationOperationsQueries:
             {
                 'eyebrow': 'Janela de invite aberto',
                 'value': f'{open_box_invites_in_window}/{open_box_limit_per_window}',
-                'detail': f'Convites abertos emitidos nas ultimas {open_box_window_hours}h.',
+                'detail': f'Convites abertos emitidos nas últimas {open_box_window_hours}h.',
                 'tone': (
                     'danger'
                     if open_box_invites_in_window >= open_box_limit_per_window
@@ -276,15 +276,15 @@ class StudentInvitationOperationsQueries:
                 ),
             },
             {
-                'eyebrow': 'Aprovacoes pendentes',
+                'eyebrow': 'Aprovações pendentes',
                 'value': str(len(pending_memberships)),
-                'detail': 'Alunos que ja fecharam identidade e esperam liberacao do box.',
+                'detail': 'Alunos que já fecharam identidade e esperam liberação do box.',
                 'tone': 'attention' if pending_memberships else 'ok',
             },
             {
                 'eyebrow': 'Convites aceitos',
                 'value': str(accepted_invites_last_7d),
-                'detail': 'Entradas concluidas nos ultimos 7 dias.',
+                'detail': 'Entradas concluídas nos últimos 7 dias.',
                 'tone': 'ok',
             },
             {
@@ -296,7 +296,7 @@ class StudentInvitationOperationsQueries:
             {
                 'eyebrow': 'Pulso de 24h',
                 'value': str(recent_invites_last_24h),
-                'detail': 'Todos os convites emitidos neste box nas ultimas 24h.',
+                'detail': 'Todos os convites emitidos neste box nas últimas 24h.',
                 'tone': 'attention' if recent_invites_last_24h >= open_box_limit_per_window else 'ok',
             },
         ]
@@ -304,19 +304,19 @@ class StudentInvitationOperationsQueries:
         observability_alerts = []
         if open_box_invites_in_window >= open_box_limit_per_window:
             observability_alerts.append(
-                f'O limite tecnico de convites abertos por {open_box_window_hours}h foi alcancado. Use invites individuais ou aguarde a janela respirar.'
+                f'O limite técnico de convites abertos por {open_box_window_hours}h foi alcançado. Use invites individuais ou aguarde a janela respirar.'
             )
         elif open_box_invites_in_window >= max(1, int(open_box_limit_per_window * 0.7)):
             observability_alerts.append(
-                f'O box ja consumiu boa parte da janela de convites abertos ({open_box_invites_in_window}/{open_box_limit_per_window}).'
+                f'O box já consumiu boa parte da janela de convites abertos ({open_box_invites_in_window}/{open_box_limit_per_window}).'
             )
         if len(stalled_invites) >= 3:
             observability_alerts.append(
-                'A fila quente ja tem 3 ou mais convites travados. Vale revisar e-mail ruim, bounce e handoff via WhatsApp.'
+                'A fila quente já tem 3 ou mais convites travados. Vale revisar e-mail ruim, bounce e handoff via WhatsApp.'
             )
         if len(pending_memberships) >= 5:
             observability_alerts.append(
-                'Ha uma fila grande de memberships aguardando aprovacao. Isso pode virar gargalo operacional e parecer app quebrado para o aluno.'
+                'Há uma fila grande de memberships aguardando aprovação. Isso pode virar gargalo operacional e parecer app quebrado para o aluno.'
             )
 
         return {

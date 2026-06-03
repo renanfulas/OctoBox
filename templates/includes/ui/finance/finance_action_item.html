@@ -12,7 +12,7 @@ PONTOS CRITICOS:
     <div class="card-body finance-action-card-body">
         <div class="row-between history-header finance-action-head">
             <div class="finance-action-heading">
-                <span class="finance-action-kicker">Regua semiassistida</span>
+                <span class="finance-action-kicker">Régua semiassistida</span>
                 <div class="finance-action-copy card-head-main-stack">
                     <strong>{{ item.title }}</strong>
                     <p class="meta-text-sm">{{ item.summary }}</p>
@@ -25,12 +25,12 @@ PONTOS CRITICOS:
         <div class="card-content finance-action-body">
             <div class="stack-4 finance-action-meta-list">
                 <div class="finance-action-meta-chip">
-                    <span class="finance-action-meta-label">Ultimo toque</span>
+                    <span class="finance-action-meta-label">Último toque</span>
                     <p class="meta-text-sm">{{ item.whatsapp_last_contact_label }}</p>
                 </div>
                 {% if item.whatsapp_next_available_label %}
                 <div class="finance-action-meta-chip">
-                    <span class="finance-action-meta-label">Proxima janela</span>
+                    <span class="finance-action-meta-label">Próxima janela</span>
                     <p class="meta-text-sm">{{ item.whatsapp_next_available_label }}</p>
                 </div>
                 {% endif %}
@@ -39,7 +39,7 @@ PONTOS CRITICOS:
                 <div class="finance-action-message-head">
                     <div>
                         <span class="finance-action-message-eyebrow">Mensagem pronta</span>
-                        <strong class="finance-action-message-title">Proxima abordagem</strong>
+                        <strong class="finance-action-message-title">Próxima abordagem</strong>
                     </div>
                 </div>
                 <p class="finance-action-message-copy">{{ item.suggested_message }}</p>
@@ -63,7 +63,7 @@ PONTOS CRITICOS:
             </form>
             {% endif %}
             {% else %}
-            <span class="meta-text-sm finance-action-fallback">Aluno sem WhatsApp valido para contato rapido.</span>
+            <span class="meta-text-sm finance-action-fallback">Aluno sem WhatsApp válido para contato rápido.</span>
             {% endif %}
             <a class="button secondary finance-action-secondary" href="{% url 'student-quick-update' item.student.id %}#student-financial-overview">Abrir ficha do aluno</a>
         </div>

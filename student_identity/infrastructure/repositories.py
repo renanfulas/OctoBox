@@ -333,7 +333,7 @@ class DjangoStudentIdentityRepository:
             requested_by_id=actor_id,
             completed_at=timezone.now(),
             reason=reason,
-            audit_summary=f'Transferencia concluida de {identity.box_root_slug} para {to_box_root_slug}.',
+            audit_summary=f'Transferência concluída de {identity.box_root_slug} para {to_box_root_slug}.',
         )
         previous_box_root_slug = identity.box_root_slug
         previous_membership = (

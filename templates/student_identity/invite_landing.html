@@ -6,27 +6,27 @@
 <section class="student-card">
     <p class="student-eyebrow">Convite do Box</p>
     {% if invite_not_found %}
-    <h1>Este convite nao foi encontrado.</h1>
-    <p>Pense nisso como chegar numa porta com a placa trocada. O link pode estar incompleto ou ja nao existe mais.</p>
-    <p class="student-form-note">Fale com a recepcao para pedir um novo link de acesso.</p>
+    <h1>Este convite não foi encontrado.</h1>
+    <p>Pense nisso como chegar numa porta com a placa trocada. O link pode estar incompleto ou já não existe mais.</p>
+    <p class="student-form-note">Fale com a recepção para pedir um novo link de acesso.</p>
     {% elif invite_expired %}
     <h1>Este convite expirou.</h1>
-    <p>Convite tem prazo, como ingresso de evento. Depois da validade, a porta continua ali, mas nao abre mais.</p>
-    <p class="student-form-note">Fale com a recepcao para gerar um novo convite.</p>
+    <p>Convite tem prazo, como ingresso de evento. Depois da validade, a porta continua ali, mas não abre mais.</p>
+    <p class="student-form-note">Fale com a recepção para gerar um novo convite.</p>
     {% elif invite_already_accepted %}
-    <h1>Este convite ja foi usado.</h1>
-    <p>O acesso principal provavelmente ja foi criado. Entre no app com sua conta social para continuar.</p>
+    <h1>Este convite já foi usado.</h1>
+    <p>O acesso principal provavelmente já foi criado. Entre no app com sua conta social para continuar.</p>
     <a href="{{ login_url }}" class="student-button">Ir para o login do aluno</a>
     {% elif invite_unavailable %}
-    <h1>Este link nao esta mais disponivel.</h1>
-    <p>O box pausou, revogou ou esgotou este link. E como um portao de evento que foi fechado depois do limite.</p>
-    <p class="student-form-note">Fale com a recepcao para receber um novo acesso.</p>
+    <h1>Este link não está mais disponível.</h1>
+    <p>O box pausou, revogou ou esgotou este link. É como um portão de evento que foi fechado depois do limite.</p>
+    <p class="student-form-note">Fale com a recepção para receber um novo acesso.</p>
     {% elif mass_invite_mode %}
     <h1>Cadastre-se no app do seu box.</h1>
     <p>Autentique com Google para criar seu perfil e liberar o acesso ao app.</p>
     <a href="{{ login_url }}" class="student-button">Prosseguir</a>
     {% else %}
-    <h1>Seu acesso ao app esta pronto.</h1>
+    <h1>Seu acesso ao app está pronto.</h1>
     <p>Clique abaixo para autenticar e acessar o app do seu box.</p>
     <a href="{{ login_url }}" class="student-button">Prosseguir</a>
     {% endif %}

@@ -65,7 +65,7 @@ def handle_student_special_oauth_journey(
         # quebrada: o link e a fonte de verdade do box-alvo. Manter so o gate
         # de "link ainda aceita usos".
         if not box_invite_link.can_accept:
-            return _redirect_with_message(request, 'error', 'Este link em massa nao esta mais disponivel para novos cadastros.')
+            return _redirect_with_message(request, 'error', 'Este link em massa não está mais disponível para novos cadastros.')
         # Sprint 4: ativar o tenant do link como contexto ativo para que
         # operacoes tenant-aware downstream (AuditEvent, ContentType, etc.)
         # encontrem suas tabelas no schema correto. /aluno/auth/ esta em
@@ -103,7 +103,7 @@ def handle_student_special_oauth_journey(
             target_model='student_identity.StudentBoxInviteLink',
             target_id=str(box_invite_link.id),
             target_label=box_invite_link.box_root_slug,
-            description='OAuth concluido para link em massa do box.',
+            description='OAuth concluído para link em massa do box.',
             metadata={
                 'box_root_slug': box_invite_link.box_root_slug,
                 'box_invite_link_id': box_invite_link.id,
@@ -150,7 +150,7 @@ def handle_student_special_oauth_journey(
         target_model='student_identity.StudentAppInvitation',
         target_id=str(invitation.id),
         target_label=invitation.student_name,  # # Sprint 2: denorm
-        description='OAuth concluido para convite individual do onboarding do aluno.',
+        description='OAuth concluído para convite individual do onboarding do aluno.',
         metadata={
             'box_root_slug': invitation.box_root_slug,
             'student_id': invitation.student_id,
@@ -174,7 +174,7 @@ def record_student_entry_completed_journey(*, provider: str, result, journey: st
         target_model='student_identity.StudentIdentity',
         target_id=str(result.identity.id),
         target_label=result.identity.student_name,
-        description='OAuth concluido com sucesso no onboarding do aluno.',
+        description='OAuth concluído com sucesso no onboarding do aluno.',
         metadata={
             'box_root_slug': result.identity.box_root_slug,
             'identity_id': result.identity.id,
@@ -190,7 +190,7 @@ def record_student_entry_completed_journey(*, provider: str, result, journey: st
         target_model='student_identity.StudentIdentity',
         target_id=str(result.identity.id),
         target_label=result.identity.student_name,
-        description='Entrada direta no app concluida via convite do aluno.',
+        description='Entrada direta no app concluída via convite do aluno.',
         metadata={
             'box_root_slug': result.identity.box_root_slug,
             'identity_id': result.identity.id,

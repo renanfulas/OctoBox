@@ -100,16 +100,16 @@ class StudentSignInView(TemplateView):
 
     def _map_failure_reason(self, reason: str) -> str:
         mapping = {
-            'invite-not-found': 'O convite informado nao foi encontrado ou expirou. Tente entrar sem convite.',
-            'invite-box-mismatch': 'Este convite nao pertence ao box atual.',
-            'invite-expired': 'O convite informado nao foi encontrado ou expirou. Tente entrar sem convite.',
-            'invite-email-mismatch': 'O email informado nao corresponde ao convite.',
-            'student-email-ambiguous': 'Nao foi possivel validar este aluno por email neste box.',
+            'invite-not-found': 'O convite informado não foi encontrado ou expirou. Tente entrar sem convite.',
+            'invite-box-mismatch': 'Este convite não pertence ao box atual.',
+            'invite-expired': 'O convite informado não foi encontrado ou expirou. Tente entrar sem convite.',
+            'invite-email-mismatch': 'O e-mail informado não corresponde ao convite.',
+            'student-email-ambiguous': 'Não foi possível validar este aluno por e-mail neste box.',
             'box-root-mismatch': 'Esta conta de aluno pertence a outro box.',
-            'student-box-mismatch': 'Este aluno ja esta vinculado a outro box.',
-            'provider-subject-required': 'Nao foi possivel validar a identidade social informada.',
+            'student-box-mismatch': 'Este aluno já está vinculado a outro box.',
+            'provider-subject-required': 'Não foi possível validar a identidade social informada.',
         }
-        return mapping.get(reason, 'Nao foi possivel autorizar este aluno no box atual.')
+        return mapping.get(reason, 'Não foi possível autorizar este aluno no box atual.')
 
 
 class StudentOAuthStartView(View):
@@ -157,11 +157,11 @@ class StudentOAuthStartView(View):
 
     def _map_provider_error(self, reason: str) -> str:
         mapping = {
-            'google-client-id-missing': 'Google ainda nao foi configurado para o app do aluno.',
-            'apple-client-id-missing': 'Apple ainda nao foi configurada para o app do aluno.',
-            'provider-not-supported': 'O provedor solicitado nao e suportado.',
+            'google-client-id-missing': 'Google ainda não foi configurado para o app do aluno.',
+            'apple-client-id-missing': 'Apple ainda não foi configurada para o app do aluno.',
+            'provider-not-supported': 'O provedor solicitado não é suportado.',
         }
-        return mapping.get(reason, 'Nao foi possivel iniciar a autenticacao social agora.')
+        return mapping.get(reason, 'Não foi possível iniciar a autenticação social agora.')
 
 
 class StudentOAuthCallbackView(StudentSignInView):
@@ -262,21 +262,21 @@ class StudentOAuthCallbackView(StudentSignInView):
 
     def _map_provider_callback_error(self, reason: str) -> str:
         mapping = {
-            'google-client-config-missing': 'Google ainda nao foi configurado com client secret.',
-            'google-token-exchange-failed': 'O Google nao liberou o token de acesso.',
-            'google-userinfo-failed': 'Nao foi possivel ler a identidade retornada pelo Google.',
-            'google-email-not-verified': 'O email retornado pelo Google ainda nao esta verificado.',
-            'apple-client-config-missing': 'Apple ainda nao foi configurada com as chaves do app do aluno.',
-            'apple-token-exchange-failed': 'A Apple nao liberou o token de autenticacao.',
-            'apple-id-token-missing': 'A Apple nao retornou a identidade esperada.',
-            'apple-jwks-fetch-failed': 'Nao foi possivel validar a assinatura retornada pela Apple.',
-            'jwks-key-not-found': 'A chave publica do provedor nao foi encontrada para validar a identidade.',
-            'invalid-issuer': 'O emissor retornado pelo provedor nao confere.',
-            'invalid-audience': 'O token retornado nao pertence a este app.',
+            'google-client-config-missing': 'Google ainda não foi configurado com client secret.',
+            'google-token-exchange-failed': 'O Google não liberou o token de acesso.',
+            'google-userinfo-failed': 'Não foi possível ler a identidade retornada pelo Google.',
+            'google-email-not-verified': 'O e-mail retornado pelo Google ainda não está verificado.',
+            'apple-client-config-missing': 'Apple ainda não foi configurada com as chaves do app do aluno.',
+            'apple-token-exchange-failed': 'A Apple não liberou o token de autenticação.',
+            'apple-id-token-missing': 'A Apple não retornou a identidade esperada.',
+            'apple-jwks-fetch-failed': 'Não foi possível validar a assinatura retornada pela Apple.',
+            'jwks-key-not-found': 'A chave pública do provedor não foi encontrada para validar a identidade.',
+            'invalid-issuer': 'O emissor retornado pelo provedor não confere.',
+            'invalid-audience': 'O token retornado não pertence a este app.',
             'token-expired': 'O token retornado pelo provedor expirou.',
-            'apple-email-missing': 'A Apple nao retornou um email utilizavel para este aluno.',
+            'apple-email-missing': 'A Apple não retornou um e-mail utilizável para este aluno.',
         }
-        return mapping.get(reason, 'Nao foi possivel concluir a autenticacao social agora.')
+        return mapping.get(reason, 'Não foi possível concluir a autenticação social agora.')
 
 
 class StudentSignOutView(View):

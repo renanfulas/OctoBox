@@ -30,7 +30,7 @@ class AjaxLoginRequiredMixin(LoginRequiredMixin):
             return JsonResponse(
                 {
                     'status': 'error',
-                    'message': 'Sua sessao nao esta autenticada para esta acao. Faca login novamente e tente de novo.',
+                    'message': 'Sua sessão não está autenticada para esta ação. Faça login novamente e tente de novo.',
                 },
                 status=401,
             )
@@ -83,13 +83,13 @@ class RoleRequiredMixin:
                 return JsonResponse(
                     {
                         'status': 'error',
-                        'message': 'Seu usuario nao tem permissao para executar esta acao. Este fluxo exige papel Owner, Manager ou Recepcao.',
+                        'message': 'Seu usuário não tem permissão para executar esta ação. Este fluxo exige papel Owner, Manager ou Recepção.',
                         'role': getattr(role, 'slug', None),
                         'allowed_roles': list(self.allowed_roles),
                     },
                     status=403,
                 )
 
-            raise PermissionDenied('Este usuario nao tem permissao para acessar esta area.')
+            raise PermissionDenied('Este usuário não tem permissão para acessar esta área.')
 
         return super().dispatch(request, *args, **kwargs)

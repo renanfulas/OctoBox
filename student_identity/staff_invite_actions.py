@@ -145,9 +145,9 @@ class StudentInvitationInviteActionsMixin:
             .first()
         )
         if link is None:
-            messages.error(request, 'O link em massa nao foi encontrado para pausa.')
+            messages.error(request, 'O link em massa não foi encontrado para pausa.')
             return redirect('student-invitation-operations')
         link.paused_at = timezone.now()
         link.save(update_fields=['paused_at', 'updated_at'])
-        messages.success(request, 'Link em massa pausado. Ele deixa de aceitar novos cadastros ate ser regenerado.')
+        messages.success(request, 'Link em massa pausado. Ele deixa de aceitar novos cadastros até ser regenerado.')
         return redirect('student-invitation-operations')

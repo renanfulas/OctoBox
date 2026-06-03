@@ -287,8 +287,8 @@ def _resolve_turn_priority_tension_guidance(
         return {
             'available': False,
             'tendency': 'unknown',
-            'label': 'Sem leitura de tensao',
-            'note': 'Ainda sem amostra suficiente para dizer se a tensao neste contexto costuma ajudar ou dispersar.',
+            'label': 'Sem leitura de tensão',
+            'note': 'Ainda sem amostra suficiente para dizer se a tensão neste contexto costuma ajudar ou dispersar.',
             'healthy_tension_rate': 0.0,
             'dangerous_tension_rate': 0.0,
             'realized_count': 0,
@@ -298,21 +298,21 @@ def _resolve_turn_priority_tension_guidance(
 
     tendency = guidance.get('tendency') or 'mixed'
     if tendency == 'healthy':
-        label = 'Tensao costuma ser saudavel'
+        label = 'Tensão costuma ser saudável'
         note = (
-            f"Neste timing e gravidade, a tensao historicamente ajudou mais do que atrapalhou "
+            f"Neste timing e gravidade, a tensão historicamente ajudou mais do que atrapalhou "
             f"({guidance.get('healthy_tension_rate', 0.0)}% vs {guidance.get('dangerous_tension_rate', 0.0)}%)."
         )
     elif tendency == 'dangerous':
-        label = 'Tensao costuma virar ruido'
+        label = 'Tensão costuma virar ruído'
         note = (
-            f"Neste timing e gravidade, a tensao historicamente dispersou mais do que ajudou "
+            f"Neste timing e gravidade, a tensão historicamente dispersou mais do que ajudou "
             f"({guidance.get('dangerous_tension_rate', 0.0)}% vs {guidance.get('healthy_tension_rate', 0.0)}%)."
         )
     else:
-        label = 'Tensao ainda mista'
+        label = 'Tensão ainda mista'
         note = (
-            f"Neste timing e gravidade, a tensao ainda nao mostra lado dominante "
+            f"Neste timing e gravidade, a tensão ainda não mostra lado dominante "
             f"({guidance.get('healthy_tension_rate', 0.0)}% vs {guidance.get('dangerous_tension_rate', 0.0)}%)."
         )
     return {

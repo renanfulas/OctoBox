@@ -12,22 +12,22 @@ def build_follow_up_analytics_board(analytics):
     analytics = analytics or {}
     action_map = {
         'review_winback': 'Revisar winback',
-        'monitor_recent_reactivation': 'Acompanhar reativacao',
-        'escalate_manual_retention': 'Escalar retencao manual',
+        'monitor_recent_reactivation': 'Acompanhar reativação',
+        'escalate_manual_retention': 'Escalar retenção manual',
         'send_financial_followup': 'Enviar follow-up financeiro',
         'monitor_and_nudge': 'Monitorar e lembrar',
-        'observe_payment_resolution': 'Observar regularizacao',
+        'observe_payment_resolution': 'Observar regularização',
         'maintain_relationship': 'Manter relacionamento',
-        'overdue': 'WhatsApp de cobranca',
-        'reactivation': 'WhatsApp de reativacao',
+        'overdue': 'WhatsApp de cobrança',
+        'reactivation': 'WhatsApp de reativação',
     }
     signal_bucket_map = {
-        'already_inactive': 'Ja inativo',
+        'already_inactive': 'Já inativo',
         'high_signal': 'Alto risco',
-        'watch': 'Observacao',
+        'watch': 'Observação',
         'recovered': 'Recuperado',
-        'stable': 'Estavel',
-        'unknown': 'Sem classificacao',
+        'stable': 'Estável',
+        'unknown': 'Sem classificação',
     }
     recommendation_performance = []
     for item in analytics.get('recommendation_performance', [])[:4]:
@@ -172,7 +172,7 @@ def build_follow_up_analytics_board(analytics):
         action_label = action_map.get(best_play['recommended_action'], best_play['recommended_action'].replace('_', ' '))
         best_play['action_label'] = action_label
         best_play['summary'] = (
-            f"{action_label} esta liderando no historico ativo dentro da janela {best_play.get('outcome_window', '')}, "
+            f"{action_label} está liderando no histórico ativo dentro da janela {best_play.get('outcome_window', '')}, "
             f"com {best_play.get('success_rate', 0.0)}% de sucesso em {best_play.get('realized_count', 0)} realizado(s)."
         )
     adherence = analytics.get('turn_recommendation_adherence', {}) or {}
@@ -208,7 +208,7 @@ def build_follow_up_analytics_board(analytics):
                 'success_rate': (turn_learning.get('smart_divergence') or {}).get('success_rate', 0.0),
                 'summary': (turn_learning.get('smart_divergence') or {}).get(
                     'summary',
-                    'Ainda sem casos suficientes para provar divergencia inteligente.',
+                    'Ainda sem casos suficientes para provar divergência inteligente.',
                 ),
             },
             'bad_divergence': {
@@ -233,7 +233,7 @@ def build_follow_up_analytics_board(analytics):
                 'success_rate': (turn_priority_outcome.get('aligned') or {}).get('success_rate', 0.0),
             },
             'tension': {
-                'label': 'Turno em tensao',
+                'label': 'Turno em tensão',
                 'realized_count': (turn_priority_outcome.get('tension') or {}).get('realized_count', 0),
                 'succeeded_count': (turn_priority_outcome.get('tension') or {}).get('succeeded_count', 0),
                 'failed_count': (turn_priority_outcome.get('tension') or {}).get('failed_count', 0),
@@ -244,25 +244,25 @@ def build_follow_up_analytics_board(analytics):
             'healthy_tension': {
                 'headline': (turn_priority_learning.get('healthy_tension') or {}).get(
                     'headline',
-                    'Quando a tensao valeu a pena',
+                    'Quando a tensão valeu a pena',
                 ),
                 'realized_count': (turn_priority_learning.get('healthy_tension') or {}).get('realized_count', 0),
                 'success_rate': (turn_priority_learning.get('healthy_tension') or {}).get('success_rate', 0.0),
                 'summary': (turn_priority_learning.get('healthy_tension') or {}).get(
                     'summary',
-                    'Ainda sem casos suficientes para provar tensao saudavel.',
+                    'Ainda sem casos suficientes para provar tensão saudável.',
                 ),
             },
             'dangerous_tension': {
                 'headline': (turn_priority_learning.get('dangerous_tension') or {}).get(
                     'headline',
-                    'Quando a tensao virou dispersao',
+                    'Quando a tensão virou dispersão',
                 ),
                 'realized_count': (turn_priority_learning.get('dangerous_tension') or {}).get('realized_count', 0),
                 'failure_rate': (turn_priority_learning.get('dangerous_tension') or {}).get('failure_rate', 0.0),
                 'summary': (turn_priority_learning.get('dangerous_tension') or {}).get(
                     'summary',
-                    'Ainda sem casos suficientes para provar tensao perigosa.',
+                    'Ainda sem casos suficientes para provar tensão perigosa.',
                 ),
             },
         },

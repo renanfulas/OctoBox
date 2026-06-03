@@ -92,7 +92,7 @@ class FinanceCenterView(FinanceWorkspaceContextMixin, CatalogBaseView, FormView)
             form=form,
         )
         if not result['ok']:
-            messages.error(self.request, 'Seu papel atual pode consultar o financeiro, mas nao criar planos por esta tela.')
+            messages.error(self.request, 'Seu papel atual pode consultar o financeiro, mas não criar planos por esta tela.')
             return redirect(self.get_success_url())
 
         plan = result['plan']
@@ -100,7 +100,7 @@ class FinanceCenterView(FinanceWorkspaceContextMixin, CatalogBaseView, FormView)
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        messages.error(self.request, 'O plano nao foi salvo. Revise os campos destacados.')
+        messages.error(self.request, 'O plano não foi salvo. Revise os campos destacados.')
         return super().form_invalid(form)
 
 
@@ -110,7 +110,7 @@ class FinanceReportExportView(LoginRequiredMixin, RoleRequiredMixin, View):
     def get(self, request, report_format, *args, **kwargs):
         allowed, count = check_export_quota(user_id=request.user.id, scope=f'finance-report-{report_format}')
         if not allowed:
-            messages.warning(request, 'Cota de exportacao semanal atingida para este relatorio financeiro. O OctoBox reserva o motor para operacoes criticas, limitando exportacoes pesadas a 2 por semana.')
+            messages.warning(request, 'Cota de exportação semanal atingida para este relatório financeiro. O OctoBox reserva o motor para operações críticas, limitando exportações pesadas a 2 por semana.')
             return redirect('finance-center')
 
         snapshot = build_finance_snapshot(request.GET)
@@ -170,5 +170,5 @@ class MembershipPlanQuickUpdateView(CatalogBaseView, FormView):
         return redirect(self.get_success_url())
 
     def form_invalid(self, form):
-        messages.error(self.request, 'O plano nao foi salvo. Revise os campos destacados.')
+        messages.error(self.request, 'O plano não foi salvo. Revise os campos destacados.')
         return super().form_invalid(form)
