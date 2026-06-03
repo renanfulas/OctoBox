@@ -9,7 +9,7 @@
 
 ## Princípio diretor
 
-> Um teste que passa em SQLite local mas não roda em PostgreSQL **não protege a produção**. Toda decisão de arquitetura nesta suite existe para fechar essa lacuna, não para inflar cobertura.
+> Um teste que passa apenas em SQLite local mas não roda em PostgreSQL **não protege a produção**. PostgreSQL é o caminho padrão da suite; SQLite fica só como escape legado explícito.
 
 Três regras absolutas:
 
@@ -39,7 +39,7 @@ Três regras absolutas:
 > - `patch('django.db.connection')` (em vez do frágil `patch.object(connection, ..., create=True)`) para controlar `schema_name`/`set_tenant` sem tocar o wrapper do django-tenants.
 > - Usernames únicos (uuid) + neutralização do box de fundo do fixture `test_tenant`.
 
-**Suite atual:** 467 passed, 6 skipped, 0 failed em SQLite. `control` (17) + `auditing` (14) confirmados em PostgreSQL real.
+**Suite atual:** PostgreSQL é o baseline operacional. `control` (17) + `auditing` (14) já foram confirmados em PostgreSQL real.
 
 **Findings descobertos nos Sprints 5–8:** 4 itens — FIND-001 fechado (não-bug), FIND-002/003/004 corrigidos. Relatório em `tests/sprint-5-8-findings.md`.
 
@@ -53,7 +53,7 @@ Três regras absolutas:
 OctoBox/
 ├── conftest.py                          # Fixtures globais (tenant, schema_context, membership)
 ├── pytest.ini                           # Markers, addopts, ignores
-├── config/settings/test.py              # Settings de teste (PG → SQLite fallback)
+├── config/settings/test.py              # Settings de teste (PostgreSQL default; SQLite só com flag legada)
 │
 ├── tests/                               # Suite centralizada — 74 arquivos
 │   ├── test_tenant_boundary.py          # B1–B12: isolamento multi-tenant
@@ -90,7 +90,7 @@ OctoBox/
 | Scripts raiz ignorados | 5 | ⚠️ Mover para `scripts/` ou apagar |
 | **Total auditável** | **115** | |
 
-### Resultado em SQLite local (2026-05-28)
+### Snapshot legado em SQLite local (2026-05-28)
 
 - `tests/`: **344 pass / 0 fail / 5 skipped** (boundary tests B1–B7 — esperado, exigem PostgreSQL)
 - `access/tests/`: **10 pass / 0 fail**
@@ -286,7 +286,7 @@ except Exception as exc:                                    # ❌ esconde bug re
 
 | Job | Banco | Quando roda | Tempo alvo | Comando |
 |---|---|---|---|---|
-| `unit-sqlite` | SQLite | Todo push | < 60s | `pytest -m "not requires_postgres and not e2e"` |
+| `unit-pg` | PostgreSQL | Todo push | < 60s | `pytest -m "not requires_postgres and not e2e"` |
 | `integration-pg` | PostgreSQL | Todo PR | < 3min | `pytest --create-db --migrations` |
 | `tenant-pg` | PG + tenants provisionados | Todo PR | < 90s | `pytest tests/test_tenant_boundary.py -m requires_postgres` |
 | `e2e-playwright` | PostgreSQL | Nightly + tag `e2e` | < 10min | `pytest tests/e2e/ --create-db --migrations` |
@@ -454,7 +454,7 @@ class TestA(TestCase):
 | Tarefa | Critério de aceite |
 |---|---|
 | Matriz de CI com 4 jobs (unit/integration/tenant/e2e) | Todos rodam em todo PR exceto e2e (nightly) |
-| `docker-compose.test.yml` com PG + Redis | `docker compose up && pytest -m requires_postgres` funciona |
+| `docker-compose.postgres.yml` com PG + Redis | `docker compose -f docker-compose.postgres.yml up -d && pytest -m requires_postgres` funciona |
 | Script `scripts/provision_test_tenants.sh` | Idempotente; cria `box_test_a` e `box_test_b` |
 | Política de idade no `broken-tests.txt` | CI falha se algum item > 30 dias |
 
