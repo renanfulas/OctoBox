@@ -127,28 +127,29 @@ class LeadImportPolicyTests(TestCase):
         self.assertEqual(decision.processing_mode, LeadImportProcessingMode.SYNC)
 
     def test_evaluate_policy_blocks_fourth_monthly_upload_for_same_source(self):
-        month_start = self.today.replace(day=1)
-        self._create_job(
-            source_type=LeadImportSourceType.NEXTFIT_EXPORT,
-            created_at=timezone.make_aware(timezone.datetime.combine(month_start, timezone.datetime.min.time())),
-        )
-        self._create_job(
-            source_type=LeadImportSourceType.NEXTFIT_EXPORT,
-            created_at=timezone.make_aware(
-                timezone.datetime.combine(month_start + timezone.timedelta(days=3), timezone.datetime.min.time())
-            ),
-        )
-        self._create_job(
-            source_type=LeadImportSourceType.NEXTFIT_EXPORT,
-            created_at=timezone.make_aware(
-                timezone.datetime.combine(month_start + timezone.timedelta(days=7), timezone.datetime.min.time())
-            ),
-        )
+        # Data de referencia FIXA no meio do mes (dia 20). Antes este teste usava
+        # self.today = localdate() e semeava jobs nos dias 1/4/8; quando o CI rodava
+        # num desses dias (ex.: 2026-06-04), o job daquele dia disparava o
+        # daily_limit_reached ANTES do monthly_limit_reached -> flake de calendario.
+        # Com today fixo no dia 20 e seeds nos dias 1/4/8, o uso diario e sempre 0
+        # e o teste vira deterministico em qualquer data de execucao.
+        reference_today = self.today.replace(day=20)
+        month_start = reference_today.replace(day=1)
+        for offset_days in (0, 3, 7):
+            self._create_job(
+                source_type=LeadImportSourceType.NEXTFIT_EXPORT,
+                created_at=timezone.make_aware(
+                    timezone.datetime.combine(
+                        month_start + timezone.timedelta(days=offset_days),
+                        timezone.datetime.min.time(),
+                    )
+                ),
+            )
 
         decision = evaluate_lead_import_policy(
             source_type=LeadImportSourceType.NEXTFIT_EXPORT,
             detected_lead_count=100,
-            today=self.today,
+            today=reference_today,
         )
 
         self.assertFalse(decision.allowed)
