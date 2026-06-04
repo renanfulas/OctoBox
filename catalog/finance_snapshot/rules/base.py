@@ -109,9 +109,9 @@ def _resolve_priority_contract(*, actual_status, signal_bucket, confidence, fina
             return {'priority_rank': 1, 'priority_label': 'Escalada manual'}
         return {'priority_rank': 2, 'priority_label': 'Ataque imediato'}
     if signal_bucket == 'watch':
-        return {'priority_rank': 3, 'priority_label': 'Observacao ativa'}
+        return {'priority_rank': 3, 'priority_label': 'Observação ativa'}
     if signal_bucket == 'recovered':
-        return {'priority_rank': 4, 'priority_label': 'Pos-recuperacao'}
+        return {'priority_rank': 4, 'priority_label': 'Pós-recuperação'}
     return {
         'priority_rank': 5 if confidence == 'low' else 4,
         'priority_label': 'Base estavel',

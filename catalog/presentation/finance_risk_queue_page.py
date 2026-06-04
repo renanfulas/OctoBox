@@ -35,12 +35,12 @@ def _resolve_turn_priority_dominant_signal(group):
         (
             'contextual_conviction',
             round(high_contextual_conviction_count * 1.4, 1),
-            f"conviccao contextual ({high_contextual_conviction_count} caso(s) com leitura alta)",
+            f"convicção contextual ({high_contextual_conviction_count} caso(s) com leitura alta)",
         ),
         (
             'high_confidence',
             round(high_confidence_count * 1.2, 1),
-            f"confianca alta ({high_confidence_count} caso(s) com leitura forte)",
+            f"confiança alta ({high_confidence_count} caso(s) com leitura forte)",
         ),
     ]
     dominant_key, dominant_score, dominant_label = max(signal_scores, key=lambda item: item[1])
@@ -55,16 +55,16 @@ def _resolve_group_dominant_action(rows):
     action_counts = Counter(row.get('recommended_action_label') for row in rows if row.get('recommended_action_label'))
     if not action_counts:
         return {
-            'label': 'Sem acao dominante',
+            'label': 'Sem ação dominante',
             'count': 0,
-            'note': 'Ainda sem massa suficiente para uma acao dominante neste bloco.',
+            'note': 'Ainda sem massa suficiente para uma ação dominante neste bloco.',
         }
 
     label, count = action_counts.most_common(1)[0]
     return {
         'label': label,
         'count': count,
-        'note': f"A acao mais presente neste bloco e {label}, aparecendo em {count} caso(s).",
+        'note': f"A ação mais presente neste bloco é {label}, aparecendo em {count} caso(s).",
     }
 
 
@@ -77,36 +77,36 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
     rows = []
 
     bucket_map = {
-        'already_inactive': ('Ja inativo', 'warning'),
+        'already_inactive': ('Já inativo', 'warning'),
         'high_signal': ('Alto risco', 'warning'),
-        'watch': ('Observacao', 'info'),
+        'watch': ('Observação', 'info'),
         'recovered': ('Recuperado', 'success'),
-        'stable': ('Estavel', 'accent'),
+        'stable': ('Estável', 'accent'),
     }
     reason_map = {
-        'student_inactive': 'Aluno ja esta inativo',
+        'student_inactive': 'Aluno já está inativo',
         'recurring_overdue_60d': 'Atraso recorrente em 60 dias',
         'overdue_60d': 'Atraso financeiro recente',
         'open_amount_active': 'Existe valor em aberto',
-        'enrollment_canceled': 'Matricula cancelada',
-        'enrollment_expired': 'Matricula expirada',
+        'enrollment_canceled': 'Matrícula cancelada',
+        'enrollment_expired': 'Matrícula expirada',
         'recent_finance_touch': 'Recebeu toque financeiro recente',
-        'reactivated_after_inactive': 'Voltou depois de uma saida',
-        'stable_base': 'Base financeira estavel',
+        'reactivated_after_inactive': 'Voltou depois de uma saída',
+        'stable_base': 'Base financeira estável',
     }
     action_map = {
         'review_winback': 'Revisar winback',
-        'monitor_recent_reactivation': 'Acompanhar reativacao',
-        'escalate_manual_retention': 'Escalar retencao manual',
+        'monitor_recent_reactivation': 'Acompanhar reativação',
+        'escalate_manual_retention': 'Escalar retenção manual',
         'send_financial_followup': 'Enviar follow-up financeiro',
         'monitor_and_nudge': 'Monitorar e lembrar',
-        'observe_payment_resolution': 'Observar regularizacao',
+        'observe_payment_resolution': 'Observar regularização',
         'maintain_relationship': 'Manter relacionamento',
     }
     confidence_map = {
-        'high': 'Alta confianca',
-        'medium': 'Confianca media',
-        'low': 'Baixa confianca',
+        'high': 'Alta confiança',
+        'medium': 'Confiança média',
+        'low': 'Baixa confiança',
     }
     student_status_map = {
         'active': 'ativo',
@@ -114,15 +114,15 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         'paused': 'pausado',
     }
     enrollment_status_map = {
-        'active': 'Matricula ativa',
-        'canceled': 'Matricula cancelada',
-        'expired': 'Matricula expirada',
-        'paused': 'Matricula pausada',
-        'pending': 'Matricula pendente',
+        'active': 'Matrícula ativa',
+        'canceled': 'Matrícula cancelada',
+        'expired': 'Matrícula expirada',
+        'paused': 'Matrícula pausada',
+        'pending': 'Matrícula pendente',
     }
     touch_label_map = {
-        'overdue': 'Toque de cobranca',
-        'reactivation': 'Toque de reativacao',
+        'overdue': 'Toque de cobrança',
+        'reactivation': 'Toque de reativação',
     }
     prediction_window_map = {
         'next_7_days': 'Resposta em 7 dias',
@@ -138,10 +138,10 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         'stale': 'accent',
     }
     focus_map = {
-        '': 'Todas as missoes',
+        '': 'Todas as missões',
         'high_signal': 'Alto risco',
-        'already_inactive': 'Ja inativo',
-        'watch': 'Observacao',
+        'already_inactive': 'Já inativo',
+        'watch': 'Observação',
         'recovered': 'Recuperado',
     }
     operational_band_map = {
@@ -151,11 +151,11 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         },
         'act_with_caution': {
             'label': 'Agir com cautela',
-            'description': 'Casos com sinal de acao, mas que pedem leitura fina.',
+            'description': 'Casos com sinal de ação, mas que pedem leitura fina.',
         },
         'observe_first': {
             'label': 'Observar primeiro',
-            'description': 'Casos que merecem monitoramento antes de empurrar a acao.',
+            'description': 'Casos que merecem monitoramento antes de empurrar a ação.',
         },
     }
 
@@ -218,7 +218,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         elif item['recommended_action'] == 'monitor_recent_reactivation':
             playbook = {
                 'playbook_label': 'Segurar retorno',
-                'playbook_note': 'Acompanhar o aluno que voltou para evitar recaida imediata.',
+                'playbook_note': 'Acompanhar o aluno que voltou para evitar recaída imediata.',
                 'primary_label': 'Monitorar por 7 dias',
                 'primary_href': student_url,
                 'primary_mode': 'link',
@@ -228,7 +228,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
             }
         elif item['recommended_action'] == 'observe_payment_resolution':
             playbook = {
-                'playbook_label': 'Observar regularizacao',
+                'playbook_label': 'Observar regularização',
                 'playbook_note': 'Ver se o sinal financeiro some antes de puxar escalada.',
                 'primary_label': 'Abrir ficha',
                 'primary_href': student_url,
@@ -240,7 +240,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         else:
             playbook = {
                 'playbook_label': 'Base sob controle',
-                'playbook_note': 'Sem acao agressiva agora; manter proximidade e leitura.',
+                'playbook_note': 'Sem ação agressiva agora; manter proximidade e leitura.',
                 'primary_label': 'Abrir ficha',
                 'primary_href': student_url,
                 'primary_mode': 'link',
@@ -252,7 +252,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         tendency = turn_priority_tension_guidance.get('tendency') or 'unknown'
         if tendency == 'healthy':
             playbook['playbook_note'] = (
-                f"{playbook['playbook_note']} Contexto com espaco para ajuste humano."
+                f"{playbook['playbook_note']} Contexto com espaço para ajuste humano."
             )
             if playbook.get('secondary_href'):
                 playbook['secondary_label'] = 'Ver ficha'
@@ -266,7 +266,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 playbook['secondary_variant'] = 'finance-risk-action-dangerous'
         elif tendency == 'mixed':
             playbook['playbook_note'] = (
-                f"{playbook['playbook_note']} Melhor agir com prudencia."
+                f"{playbook['playbook_note']} Melhor agir com prudência."
             )
             if playbook.get('secondary_href'):
                 playbook['secondary_label'] = 'Ver caso'
@@ -292,7 +292,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         adjustment_note = ''
         if recommendation_adjustment.get('applied'):
             adjustment_note = (
-                f"Ajuste automatico por timing: saiu de {adjusted_from_label} para "
+                f"Ajuste automático por timing: saiu de {adjusted_from_label} para "
                 f"{action_map.get(item['recommended_action'], item['recommended_action'].replace('_', ' '))} "
                 f"porque essa jogada entregou {recommendation_adjustment.get('candidate_window_success_rate', 0.0):.1f}% "
                 f"dentro da janela {recommendation_adjustment.get('candidate_preferred_outcome_window', '').replace('d', 'd')} "
@@ -302,10 +302,10 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         confidence_adjustment_note = ''
         if confidence_adjustment.get('applied'):
             confidence_adjustment_note = (
-                f"Confianca ajustada de {confidence_map.get(item.get('confidence_base', ''), item.get('confidence_base', ''))} para "
+                f"Confiança ajustada de {confidence_map.get(item.get('confidence_base', ''), item.get('confidence_base', ''))} para "
                 f"{confidence_map.get(item.get('confidence', ''), item.get('confidence', ''))} "
                 f"pela regra {confidence_adjustment.get('rule_name', '')}, "
-                f"com score historico {confidence_adjustment.get('evidence_historical_score', 0.0):.1f} "
+                f"com score histórico {confidence_adjustment.get('evidence_historical_score', 0.0):.1f} "
                 f"e score de fila {confidence_adjustment.get('evidence_queue_assist_score', 0.0):.1f}."
             )
         prediction_window_adjustment_note = ''
@@ -313,7 +313,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
             prediction_window_adjustment_note = (
                 f"Janela prevista ajustada de {prediction_window_adjustment.get('from_prediction_window_label', item.get('prediction_window_base', ''))} para "
                 f"{prediction_window_adjustment.get('to_prediction_window_label', item.get('prediction_window', ''))} "
-                f"porque essa acao respondeu melhor em {prediction_window_adjustment.get('evidence_realized_count', 0)} caso(s) "
+                f"porque essa ação respondeu melhor em {prediction_window_adjustment.get('evidence_realized_count', 0)} caso(s) "
                 f"com {prediction_window_adjustment.get('evidence_success_rate', 0.0):.1f}% de sucesso."
             )
         contextual_action_key = contextual_guidance.get('suggested_recommended_action', '')
@@ -334,7 +334,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
             )
         tension_guidance_note = turn_priority_tension_guidance.get(
             'note',
-            'Ainda sem amostra suficiente para dizer se a tensao neste contexto costuma ajudar ou dispersar.',
+            'Ainda sem amostra suficiente para dizer se a tensão neste contexto costuma ajudar ou dispersar.',
         )
         assist_flags = []
         if timing_guidance.get('is_aligned_with_best_action', False):
@@ -342,7 +342,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         if recommendation_adjustment.get('applied', False):
             assist_flags.append({'label': 'Ajuste por timing', 'tone': 'warning'})
         if confidence_adjustment.get('applied', False):
-            assist_flags.append({'label': 'Confianca ajustada', 'tone': 'info'})
+            assist_flags.append({'label': 'Confiança ajustada', 'tone': 'info'})
         if prediction_window_adjustment.get('applied', False):
             assist_flags.append({'label': 'Janela ajustada', 'tone': 'accent'})
         if contextual_guidance.get('available', False):
@@ -350,7 +350,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         if turn_priority_tension_guidance.get('available', False):
             assist_flags.append(
                 {
-                    'label': turn_priority_tension_guidance.get('label', 'Leitura de tensao'),
+                    'label': turn_priority_tension_guidance.get('label', 'Leitura de tensão'),
                     'tone': 'accent',
                 }
             )
@@ -365,7 +365,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
             )
         if confidence_adjustment.get('applied', False):
             assist_notes.append(
-                f"Confianca subiu para {confidence_map.get(item.get('confidence', ''), item.get('confidence', ''))} com apoio do historico."
+                f"Confiança subiu para {confidence_map.get(item.get('confidence', ''), item.get('confidence', ''))} com apoio do histórico."
             )
         if prediction_window_adjustment.get('applied', False):
             assist_notes.append(
@@ -389,7 +389,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 'overdue_count_60d': item['financial_signal']['overdue_payment_count_60d'],
                 'latest_enrollment_status': enrollment_status_map.get(
                     item['operational_state']['latest_enrollment_status'],
-                    'Sem matricula',
+                    'Sem matrícula',
                 ),
                 'last_touch_label': touch_label_map.get(
                     item['communication_state']['last_finance_touch_action_kind'],
@@ -403,12 +403,12 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 'prediction_window': prediction_window_map.get(item['prediction_window'], item['prediction_window']),
                 'prediction_window_base': item.get('prediction_window_base', ''),
                 'priority_label': item['priority_label'],
-                'historical_score_label': f"Score historico {item.get('historical_score', 0.0):.1f}",
+                'historical_score_label': f"Score histórico {item.get('historical_score', 0.0):.1f}",
                 'queue_assist_score_label': f"Score de fila {item.get('queue_assist_score', 0.0):.1f}",
                 'contextual_priority_score_label': f"Score contextual {item.get('contextual_priority_score', 0.0):.1f}",
                 'contextual_conviction_label': (item.get('contextual_conviction') or {}).get('label', 'Sem leitura contextual'),
                 'operational_band_label': (item.get('operational_band') or {}).get('label', 'Observar primeiro'),
-                'priority_order_hint': 'Missao primeiro, historico depois, contexto por ultimo',
+                'priority_order_hint': 'Missão primeiro, histórico depois, contexto por último',
                 'momentum_label': item['recommendation_momentum']['decay_label'],
                 'momentum_class': momentum_class_map.get(item['recommendation_momentum']['decay_stage'], 'info'),
                 'momentum_detail': (
@@ -418,7 +418,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 ),
                 'timing_guidance_label': best_action_label,
                 'timing_guidance_note': (
-                    f"Melhor historico neste timing: {best_action_label} ({timing_guidance.get('best_action_success_rate', 0.0):.1f}% em {timing_guidance.get('best_action_realized_count', 0)} caso(s))"
+                    f"Melhor histórico neste timing: {best_action_label} ({timing_guidance.get('best_action_success_rate', 0.0):.1f}% em {timing_guidance.get('best_action_realized_count', 0)} caso(s))"
                     if best_action_label else
                     'Sem amostra historica suficiente para sugerir outra jogada neste timing.'
                 ),
@@ -434,7 +434,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 'contextual_guidance_label': contextual_action_label,
                 'contextual_guidance_note': contextual_guidance_note,
                 'turn_priority_tension_guidance_available': turn_priority_tension_guidance.get('available', False),
-                'turn_priority_tension_guidance_label': turn_priority_tension_guidance.get('label', 'Sem leitura de tensao'),
+                'turn_priority_tension_guidance_label': turn_priority_tension_guidance.get('label', 'Sem leitura de tensão'),
                 'turn_priority_tension_guidance_note': tension_guidance_note,
                 'assist_flags': assist_flags,
                 'assist_notes': assist_notes[:3],
@@ -468,7 +468,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         high_confidence_count = sum(
             1
             for row in band_rows
-            if row.get('confidence_label') == 'Alta confianca'
+            if row.get('confidence_label') == 'Alta confiança'
         )
         if band_level == 'act_now':
             command_message = (
@@ -476,11 +476,11 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
             )
         elif band_level == 'act_with_caution':
             command_message = (
-                f"Avance com calma nestes {len(band_rows)}; {contextual_guidance_count} ainda pedem leitura fina antes do proximo toque."
+                f"Avance com calma nestes {len(band_rows)}; {contextual_guidance_count} ainda pedem leitura fina antes do próximo toque."
             )
         else:
             command_message = (
-                f"Deixe estes {len(band_rows)} em observacao; {high_confidence_count} ainda sustentam leitura sem pedir aceleracao."
+                f"Deixe estes {len(band_rows)} em observação; {high_confidence_count} ainda sustentam leitura sem pedir aceleração."
             )
         grouped_rows.append(
             {
@@ -500,9 +500,9 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 ),
                 'dominant_action': _resolve_group_dominant_action(band_rows),
                 'summary_line': (
-                    f"{contextual_guidance_count} com jogada contextual â€¢ "
-                    f"{high_contextual_conviction_count} com conviccao alta â€¢ "
-                    f"{high_confidence_count} com alta confianca"
+                    f"{contextual_guidance_count} com jogada contextual • "
+                    f"{high_contextual_conviction_count} com convicção alta • "
+                    f"{high_confidence_count} com alta confiança"
                 ),
                 'command_message': command_message,
                 'rows': band_rows,
@@ -515,7 +515,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
         dominant_signal = _resolve_turn_priority_dominant_signal(lead_group)
         turn_recommendation = follow_up_analytics_board.get('best_play', {}) or {}
         global_action_label = turn_recommendation.get('action_label')
-        dominant_action_label = (lead_group.get('dominant_action') or {}).get('label', 'Sem acao dominante')
+        dominant_action_label = (lead_group.get('dominant_action') or {}).get('label', 'Sem ação dominante')
         is_turn_action_aligned = bool(
             global_action_label and dominant_action_label and global_action_label == dominant_action_label
         )
@@ -528,17 +528,17 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
             'dominant_action_label': dominant_action_label,
             'why_now': (
                 f"{lead_group['count']} caso(s) puxam a abertura. "
-                f"O que mais empurra esta faixa e {dominant_signal['label']}."
+                f"O que mais empurra esta faixa é {dominant_signal['label']}."
             ),
             'action_focus': (
                 f"Primeira jogada sugerida: {dominant_action_label}."
             ),
             'alignment_note': (
-                f"Ela converge com a recomendacao global do turno: {global_action_label}."
+                f"Ela converge com a recomendação global do turno: {global_action_label}."
                 if is_turn_action_aligned else
-                f"Ela puxa para outro lado da recomendacao global do turno: {global_action_label}."
+                f"Ela puxa para outro lado da recomendação global do turno: {global_action_label}."
                 if global_action_label else
-                'Ainda sem recomendacao global suficiente para medir alinhamento.'
+                'Ainda sem recomendação global suficiente para medir alinhamento.'
             ),
             'alignment_status': (
                 'aligned' if is_turn_action_aligned else 'tension' if global_action_label else 'unknown'
@@ -547,7 +547,7 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
 
     return {
         'queue_focus': queue_focus,
-        'queue_focus_label': focus_map.get(queue_focus, 'Todas as missoes'),
+        'queue_focus_label': focus_map.get(queue_focus, 'Todas as missões'),
         'filtered_count': foundation.get('filtered_count', len(rows)),
         'turn_recommendation': follow_up_analytics_board.get('best_play', {}),
         'turn_priority': turn_priority,

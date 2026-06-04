@@ -21,7 +21,7 @@ def build_finance_operational_focus(*, finance_priority_context, operational_que
             'count': len(operational_queue),
             'pill_class': 'warning' if len(operational_queue) > 0 else 'success',
             'href': '#finance-priority-board' if operational_queue else '#finance-queue-board',
-            'href_label': 'Abrir regua' if operational_queue else 'Abrir fila',
+            'href_label': 'Abrir régua' if operational_queue else 'Abrir fila',
             'data_action': 'open-tab-finance-queue',
         },
         {

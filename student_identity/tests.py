@@ -405,7 +405,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertNotIn('student_invite_pending', self.client.cookies)
         messages = list(response.context['messages'])
         self.assertTrue(
-            any('O convite informado nao foi encontrado ou expirou. Tente entrar sem convite.' in str(message) for message in messages)
+            any('O convite informado não foi encontrado ou expirou. Tente entrar sem convite.' in str(message) for message in messages)
         )
 
     def test_transfer_student_moves_box_root_without_creating_second_house(self):
@@ -472,7 +472,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertNotContains(response, 'Continuar com Google')
         self.assertNotContains(response, 'Continuar com Apple')
         self.assertContains(response, 'O login social está em manutenção.')
-        self.assertNotContains(response, 'Entrar com usuario')
+        self.assertNotContains(response, 'Entrar com usuário')
         self.assertNotContains(response, reverse('login-staff'))
 
     def test_public_login_hub_preserves_invite_token_in_student_oauth_buttons(self):
@@ -546,7 +546,7 @@ class StudentIdentityFlowTests(TestCase):
         response = self.client.get(reverse('student-identity-box-invite', kwargs={'token': link.token}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Este link nao esta mais disponivel.')
+        self.assertContains(response, 'Este link não está mais disponível.')
 
     def test_student_login_shows_invite_context_label(self):
         invitation = StudentAppInvitation.objects.create(
@@ -575,7 +575,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertContains(response, 'student-google-mark')
         self.assertContains(response, 'Continuar com Google')
         self.assertNotContains(response, 'Equipe do box')
-        self.assertNotContains(response, 'Entrar com usuario')
+        self.assertNotContains(response, 'Entrar com usuário')
 
     @override_settings(STUDENT_GOOGLE_OAUTH_CLIENT_ID='', STUDENT_APPLE_OAUTH_CLIENT_ID='')
     def test_login_shows_unavailable_block_when_no_provider_configured(self):
@@ -814,7 +814,7 @@ class StudentIdentityFlowTests(TestCase):
 
         self.assertRedirects(response, reverse('student-identity-login'))
         messages = list(response.context['messages'])
-        self.assertTrue(any('Google ainda nao foi configurado' in str(message) for message in messages))
+        self.assertTrue(any('Google ainda não foi configurado' in str(message) for message in messages))
 
     @override_settings(
         STUDENT_APPLE_OAUTH_CLIENT_ID='',
@@ -827,7 +827,7 @@ class StudentIdentityFlowTests(TestCase):
 
         self.assertRedirects(response, reverse('student-identity-login'))
         messages = list(response.context['messages'])
-        self.assertTrue(any('Apple ainda nao foi configurada' in str(message) for message in messages))
+        self.assertTrue(any('Apple ainda não foi configurada' in str(message) for message in messages))
 
     def test_create_student_invitation_revokes_previous_open_invite(self):
         actor = get_user_model().objects.create_user(
@@ -1077,8 +1077,8 @@ class StudentIdentityFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Pulso do corredor')
-        self.assertContains(response, 'Proxima melhor acao: atacar visitas -&gt; oauth concluido')
-        self.assertContains(response, 'O grupo esta clicando, mas pouca gente esta entrando com Google ou Apple.')
+        self.assertContains(response, 'Próxima melhor ação: atacar visitas -&gt; oauth concluído')
+        self.assertContains(response, 'O grupo está clicando, mas pouca gente está entrando com Google ou Apple.')
 
     def test_operations_page_prioritizes_stalled_invites_in_recommended_queue(self):
         owner = get_user_model().objects.create_superuser(
@@ -1536,7 +1536,7 @@ class StudentIdentityFlowTests(TestCase):
         membership.refresh_from_db()
         self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
         messages = list(response.context['messages'])
-        self.assertTrue(any('Suspensao financeira exige Manager, Owner ou DEV' in str(message) for message in messages))
+        self.assertTrue(any('Suspensão financeira exige Manager, Owner ou DEV' in str(message) for message in messages))
 
     def test_owner_revoke_promotes_another_active_membership_to_primary(self):
         owner = get_user_model().objects.create_superuser(

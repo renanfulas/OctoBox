@@ -157,7 +157,7 @@ class FinanceCenterTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Alto risco')
-        self.assertContains(response, 'Missao da fila')
+        self.assertContains(response, 'Missão da fila')
 
     def test_finance_center_restores_last_filter_state_from_session(self):
         self.client.force_login(self.user)

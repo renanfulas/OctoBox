@@ -12,8 +12,8 @@
 #   tenants de isolamento com suas migrations aplicadas.
 #
 # COMO USAR:
-#   # Local (requer docker-compose.test.yml rodando):
-#   DATABASE_URL=postgres://postgres:postgres@localhost:5433/octobox_test \
+#   # Local (requer docker-compose.postgres.yml rodando):
+#   DATABASE_URL=postgres://postgres:postgres@localhost:5433/octobox_control \
 #     bash scripts/provision_test_tenants.sh
 #
 #   # CI (rodado pelo job tenant-boundary em full-test-suite.yml):

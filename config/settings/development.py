@@ -6,11 +6,12 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. Liga DEBUG por padrao.
-2. Usa SQLite quando DATABASE_URL nao for informado.
+2. Usa PostgreSQL local por padrao quando DATABASE_URL nao for informado.
 3. Relaxa cookies e HTTPS para rodar localmente.
 
 PONTOS CRITICOS:
 - Esse arquivo nao deve ser usado como referencia de seguranca para homologacao publica ou producao.
+- SQLite e apenas escape legado via OCTOBOX_ALLOW_SQLITE_FALLBACK=1.
 """
 
 from .base import *  # noqa: F401,F403

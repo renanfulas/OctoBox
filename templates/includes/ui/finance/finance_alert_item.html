@@ -3,7 +3,7 @@
         <div class="row-between history-header finance-action-head">
             <div class="finance-action-copy card-head-main-stack">
                 <strong>{{ payment.student.full_name }}</strong>
-                <p class="meta-text-sm">{% if payment.enrollment %}{{ payment.enrollment.plan.name }}{% else %}Sem vinculo de plano{% endif %}</p>
+                <p class="meta-text-sm">{% if payment.enrollment %}{{ payment.enrollment.plan.name }}{% else %}Sem vínculo de plano{% endif %}</p>
             </div>
             <span class="pill{% if payment.status == 'overdue' or payment.status == 'pending' %} warning{% endif %}">{{ payment.get_status_display }}</span>
         </div>
@@ -19,7 +19,7 @@
                 </div>
                 <div class="finance-alert-stat">
                     <span class="operation-mini-label">Leitura</span>
-                    <strong>{% if payment.status == 'overdue' or payment.status == 'pending' %}Exige acao{% else %}Acompanhar{% endif %}</strong>
+                    <strong>{% if payment.status == 'overdue' or payment.status == 'pending' %}Exige ação{% else %}Acompanhar{% endif %}</strong>
                 </div>
             </div>
         </div>

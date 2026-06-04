@@ -22,7 +22,7 @@ class FinanceFilterForm(forms.Form):
     months = forms.ChoiceField(
         required=False,
         label='Janela',
-        choices=(('1', '1 mes'), ('3', '3 meses'), ('6', '6 meses'), ('12', '12 meses')),
+        choices=(('1', '1 mês'), ('3', '3 meses'), ('6', '6 meses'), ('12', '12 meses')),
     )
     plan = forms.ModelChoiceField(
         queryset=MembershipPlan.objects.all().order_by('name'),
@@ -37,17 +37,17 @@ class FinanceFilterForm(forms.Form):
     )
     payment_method = forms.ChoiceField(
         required=False,
-        label='Metodo',
+        label='Método',
         choices=(('', 'Todos'), *PaymentMethod.choices),
     )
     queue_focus = forms.ChoiceField(
         required=False,
-        label='Missao da fila',
+        label='Missão da fila',
         choices=(
             ('', 'Todas'),
             ('high_signal', 'Alto risco'),
-            ('already_inactive', 'Ja inativo'),
-            ('watch', 'Observacao'),
+            ('already_inactive', 'Já inativo'),
+            ('watch', 'Observação'),
             ('recovered', 'Recuperado'),
         ),
     )
@@ -84,13 +84,13 @@ class MembershipPlanQuickForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['name'].label = 'Nome do plano'
         self.fields['price'].label = 'Valor do plano'
-        self.fields['billing_cycle'].label = 'Ciclo de cobranca'
+        self.fields['billing_cycle'].label = 'Ciclo de cobrança'
         self.fields['sessions_per_week'].label = 'Aulas por semana'
         self.fields['description'].label = 'O que este plano entrega'
 
         apply_text_input_attrs(self.fields['name'], placeholder='Ex.: Cross Prime', maxlength=100)
         apply_currency_input_attrs(self.fields['price'], placeholder='Ex.: 289.90')
         apply_integer_input_attrs(self.fields['sessions_per_week'], placeholder='Ex.: 3', min_value=1, maxlength=2)
-        apply_text_input_attrs(self.fields['description'], placeholder='Descreva proposta, limite e observacoes comerciais do plano.')
+        apply_text_input_attrs(self.fields['description'], placeholder='Descreva proposta, limite e observações comerciais do plano.')
 
         self.fields['description'].required = False
