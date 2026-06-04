@@ -38,7 +38,7 @@ def build_learning_analytics_sections(*, follow_up_rows):
             'realized_count': 0,
             'success_rate': 0.0,
             'headline': 'Quando divergir valeu a pena',
-            'summary': 'Ainda sem casos suficientes para provar divergencia inteligente.',
+            'summary': 'Ainda sem casos suficientes para provar divergência inteligente.',
         },
         'bad_divergence': {
             'realized_count': 0,
@@ -63,16 +63,16 @@ def build_learning_analytics_sections(*, follow_up_rows):
     }
     turn_priority_learning = {
         'healthy_tension': {
-            'headline': 'Quando a tensao valeu a pena',
+            'headline': 'Quando a tensão valeu a pena',
             'realized_count': 0,
             'success_rate': 0.0,
-            'summary': 'Ainda sem casos suficientes para provar tensao saudavel.',
+            'summary': 'Ainda sem casos suficientes para provar tensão saudável.',
         },
         'dangerous_tension': {
-            'headline': 'Quando a tensao virou dispersao',
+            'headline': 'Quando a tensão virou dispersão',
             'realized_count': 0,
             'failure_rate': 0.0,
-            'summary': 'Ainda sem casos suficientes para provar tensao perigosa.',
+            'summary': 'Ainda sem casos suficientes para provar tensão perigosa.',
         },
     }
     turn_priority_tension_timing_matrix = []
@@ -249,7 +249,7 @@ def build_learning_analytics_sections(*, follow_up_rows):
     )
     if smart_divergence['realized_count']:
         smart_divergence['summary'] = (
-            f"{smart_divergence['realized_count']} divergencia(s) terminaram em sucesso, "
+            f"{smart_divergence['realized_count']} divergência(s) terminaram em sucesso, "
             "sinalizando que o time saiu da trilha e mesmo assim acertou a mao."
         )
     bad_divergence['realized_count'] = turn_recommendation_outcome['divergent']['failed_count']
@@ -259,8 +259,8 @@ def build_learning_analytics_sections(*, follow_up_rows):
     )
     if bad_divergence['realized_count']:
         bad_divergence['summary'] = (
-            f"{bad_divergence['realized_count']} divergencia(s) terminaram em falha, "
-            "sinalizando desvio que tirou a operacao da melhor linha."
+            f"{bad_divergence['realized_count']} divergência(s) terminaram em falha, "
+            "sinalizando desvio que tirou a operação da melhor linha."
         )
 
     healthy_tension = turn_priority_learning['healthy_tension']
@@ -272,8 +272,8 @@ def build_learning_analytics_sections(*, follow_up_rows):
     )
     if healthy_tension['realized_count']:
         healthy_tension['summary'] = (
-            f"{healthy_tension['realized_count']} caso(s) em tensao terminaram em sucesso, "
-            "sinalizando adaptacao humana que leu melhor o campo."
+            f"{healthy_tension['realized_count']} caso(s) em tensão terminaram em sucesso, "
+            "sinalizando adaptação humana que leu melhor o campo."
         )
     dangerous_tension['realized_count'] = turn_priority_outcome['tension']['failed_count']
     dangerous_tension['failure_rate'] = safe_rate(
@@ -282,8 +282,8 @@ def build_learning_analytics_sections(*, follow_up_rows):
     )
     if dangerous_tension['realized_count']:
         dangerous_tension['summary'] = (
-            f"{dangerous_tension['realized_count']} caso(s) em tensao terminaram em falha, "
-            "sinalizando conflito operacional que dispersou a execucao."
+            f"{dangerous_tension['realized_count']} caso(s) em tensão terminaram em falha, "
+            "sinalizando conflito operacional que dispersou a execução."
         )
 
     for stage, data in tension_by_stage.items():

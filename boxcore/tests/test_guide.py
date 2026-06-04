@@ -379,7 +379,7 @@ class GuideViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Painel de temperatura dos convites')
         self.assertContains(response, '2/2')
-        self.assertContains(response, 'limite tecnico de convites abertos')
+        self.assertContains(response, 'limite técnico de convites abertos')
 
     def test_student_invitation_operations_shows_delivery_status_badges(self):
         self.client.force_login(self.user)
@@ -467,7 +467,7 @@ class GuideViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Complaint')
-        self.assertContains(response, 'Complaint detectado. Nao reenvie por e-mail; use Enviar mensagem no WhatsApp.')
+        self.assertContains(response, 'Complaint detectado. Não reenvie por e-mail; use Enviar mensagem no WhatsApp.')
         self.assertNotContains(response, 'Enviar e-mail')
 
     def test_student_invitation_operations_shows_whatsapp_handoff_status(self):

@@ -110,9 +110,9 @@ Aplicar a mesma guarda em `_tenant_schema_context` (function scope). Registrar o
 
 ```bash
 # Subir Postgres local
-docker compose -f docker-compose.test.yml up -d
+docker compose -f docker-compose.postgres.yml up -d
 # Rodar SÓ os 2 arquivos contra Postgres + django-tenants ativo
-DATABASE_URL=postgres://postgres:postgres@localhost:5433/octobox_test \
+DATABASE_URL=postgres://postgres:postgres@localhost:5433/octobox_control \
   pytest tests/test_control_services.py tests/test_auditing_services.py --create-db --migrations -v
 ```
 

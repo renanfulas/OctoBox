@@ -32,9 +32,10 @@ LIMITES CONHECIDOS:
   ainda recebem o wrap. Tambem inofensivo.
 
 PONTOS CRITICOS:
-- Quando o test DB usa SQLite (sem PostgreSQL), config/settings/test.py ja
-  remove django_tenants do INSTALLED_APPS e TenantSyncRouter. Neste cenario,
-  o conftest detecta a ausencia de django_tenants e vira no-op.
+- PostgreSQL e o caminho padrao. SQLite so existe como escape legado explicito
+  via OCTOBOX_ALLOW_SQLITE_FALLBACK=1; nesse cenario, config/settings/test.py
+  remove django_tenants do INSTALLED_APPS e TenantSyncRouter, e este conftest
+  detecta a ausencia de django_tenants e vira no-op.
 """
 
 from __future__ import annotations
@@ -112,7 +113,8 @@ def pytest_configure(config):
     mensagem clara — em vez de testes 'requires_postgres' ficarem verdes
     por skip silencioso.
 
-    Localmente sem a variavel: comportamento normal (skip limpo em SQLite).
+    Localmente sem a variavel: comportamento normal. SQLite so entra quando o
+    fallback legado for explicitamente liberado.
     """
     if os.environ.get('OCTOBOX_REQUIRE_POSTGRES') != '1':
         return
@@ -126,7 +128,8 @@ def pytest_configure(config):
             pytest.exit(
                 '\n\nOCTOBOX_REQUIRE_POSTGRES=1 esta setado mas o banco ativo e SQLite.\n'
                 'Configure DATABASE_URL apontando para PostgreSQL antes de rodar.\n'
-                'Para rodar localmente sem PostgreSQL: nao sete OCTOBOX_REQUIRE_POSTGRES.\n',
+                'Para diagnostico legado sem PostgreSQL: use OCTOBOX_ALLOW_SQLITE_FALLBACK=1 '
+                'e nao sete OCTOBOX_REQUIRE_POSTGRES.\n',
                 returncode=3,
             )
     except Exception:
@@ -166,8 +169,8 @@ def test_tenant(django_db_setup, django_db_blocker):
     migrate_schemas (idempotente — Django so aplica migrations pendentes).
     """
     if not _django_tenants_active():
-        # SQLite fallback (test.py removeu django_tenants). Retorna None para
-        # indicar que tests devem rodar sem tenant_context.
+        # Escape SQLite legado (test.py removeu django_tenants). Retorna None
+        # para indicar que tests devem rodar sem tenant_context.
         return None
 
     from django.contrib.auth import get_user_model
@@ -256,7 +259,7 @@ def _tenant_schema_context(request, test_tenant):
     Re-entrar per-function garante search_path correto antes de cada
     test method rodar.
 
-    Quando django_tenants nao esta ativo (SQLite fallback), test_tenant
+    Quando django_tenants nao esta ativo (escape SQLite legado), test_tenant
     e None — pula o context manager e roda o test diretamente.
 
     OPT-OUT (Sprint 9): respeita @pytest.mark.public_schema (ver fixture

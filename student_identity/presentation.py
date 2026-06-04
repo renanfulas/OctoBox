@@ -22,16 +22,16 @@ def build_student_invitation_operations_page(
     return build_page_payload(
         context={
             'page_key': 'student-app-invitations',
-            'title': 'Central de ativacao do aluno',
-            'subtitle': 'Ative alunos no app com o corredor certo e sem atrito para a operacao.',
+            'title': 'Central de ativação do aluno',
+            'subtitle': 'Ative alunos no app com o corredor certo e sem atrito para a operação.',
         },
         data={
             'hero': build_page_hero(
                 eyebrow='Aluno App',
                 title='Convites operacionais prontos.',
-                copy='Aqui a recepcao e o owner escolhem o melhor caminho para colocar o aluno dentro do app sem confusao.',
+                copy='Aqui a recepção e o owner escolhem o melhor caminho para colocar o aluno dentro do app sem confusão.',
                 actions=[
-                    {'label': 'Voltar para configuracoes', 'href': '/configuracoes-operacionais/', 'kind': 'secondary'},
+                    {'label': 'Voltar para configurações', 'href': '/configuracoes-operacionais/', 'kind': 'secondary'},
                 ],
                 aria_label='Convites operacionais do app do aluno',
                 classes=['system-map-hero'],
@@ -42,7 +42,7 @@ def build_student_invitation_operations_page(
             'access_matrix': access_matrix,
             'guardrails': [
                 'Cada convite vale para um aluno ou um box por vez.',
-                'Quando voce gera um novo convite para o mesmo aluno, o anterior deixa de ser o principal.',
+                'Quando você gera um novo convite para o mesmo aluno, o anterior deixa de ser o principal.',
                 'Link de grupo ajuda a puxar a massa; convite individual ajuda a recuperar caso a caso.',
                 'O aluno ainda precisa entrar com Google ou Apple para o acesso nascer de verdade.',
             ],

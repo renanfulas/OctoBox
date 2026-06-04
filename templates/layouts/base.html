@@ -95,11 +95,11 @@
                     {% for message in messages %}
                     <div class="message {{ message.tags }}" role="alert">
                         {% if 'success' in message.tags %}
-                        {% include "includes/ui/states/state_notice.html" with tone="success" compact=True eyebrow="Fluxo concluido" title="Confirmacao registrada" copy=message class_name="message-notice" %}
+                        {% include "includes/ui/states/state_notice.html" with tone="success" compact=True eyebrow="Fluxo concluído" title="Confirmação registrada" copy=message class_name="message-notice" %}
                         {% elif 'error' in message.tags %}
-                        {% include "includes/ui/states/state_notice.html" with tone="danger" compact=True eyebrow="Intervencao necessaria" title="Algo pediu revisao" copy=message class_name="message-notice" %}
+                        {% include "includes/ui/states/state_notice.html" with tone="danger" compact=True eyebrow="Intervenção necessária" title="Algo pediu revisão" copy=message class_name="message-notice" %}
                         {% elif 'warning' in message.tags %}
-                        {% include "includes/ui/states/state_notice.html" with tone="warning" compact=True eyebrow="Atencao operacional" title="Revise antes de seguir" copy=message class_name="message-notice" %}
+                        {% include "includes/ui/states/state_notice.html" with tone="warning" compact=True eyebrow="Atenção operacional" title="Revise antes de seguir" copy=message class_name="message-notice" %}
                         {% else %}
                         {% include "includes/ui/states/state_notice.html" with tone="info" compact=True eyebrow="Atualizacao do sistema" title="Leitura confirmada" copy=message class_name="message-notice" %}
                         {% endif %}

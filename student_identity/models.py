@@ -92,7 +92,7 @@ class StudentIdentityProvider(models.TextChoices):
 
 class StudentTransferStatus(models.TextChoices):
     REQUESTED = 'requested', 'Solicitada'
-    COMPLETED = 'completed', 'Concluida'
+    COMPLETED = 'completed', 'Concluída'
     CANCELED = 'canceled', 'Cancelada'
 
 
@@ -103,13 +103,13 @@ class StudentInvitationChannel(models.TextChoices):
 
 class StudentInvitationType(models.TextChoices):
     INDIVIDUAL = 'individual', 'Individual'
-    OPEN_BOX = 'open_box', 'Box com aprovacao'
+    OPEN_BOX = 'open_box', 'Box com aprovação'
 
 
 class StudentOnboardingJourney(models.TextChoices):
     MASS_BOX_INVITE = 'mass_box_invite', 'Link em massa do box'
     IMPORTED_LEAD_INVITE = 'imported_lead_invite', 'Lead importado'
-    REGISTERED_STUDENT_INVITE = 'registered_student_invite', 'Aluno ja cadastrado'
+    REGISTERED_STUDENT_INVITE = 'registered_student_invite', 'Aluno já cadastrado'
 
 
 class StudentInvitationDeliveryStatus(models.TextChoices):
@@ -123,7 +123,7 @@ class StudentInvitationDeliveryStatus(models.TextChoices):
 
 
 class StudentBoxMembershipStatus(models.TextChoices):
-    PENDING_APPROVAL = 'pending_approval', 'Aguardando aprovacao'
+    PENDING_APPROVAL = 'pending_approval', 'Aguardando aprovação'
     ACTIVE = 'active', 'Ativo'
     INACTIVE = 'inactive', 'Inativo'
     SUSPENDED_FINANCIAL = 'suspended_financial', 'Suspenso financeiro'

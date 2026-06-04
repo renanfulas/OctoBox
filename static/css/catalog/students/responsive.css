@@ -16,14 +16,6 @@ POR QUE ELE EXISTE:
         justify-self: start;
     }
 
-    .student-kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .student-scene .metric-card {
-        min-height: 146px;
-    }
-
     .student-priority-badges {
         justify-items: start;
     }
@@ -265,10 +257,6 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 520px) {
-    .student-kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .student-filter-pill {
         flex-basis: 100%;
     }
@@ -370,10 +358,6 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 420px) {
-    .student-kpi-grid {
-        grid-template-columns: 1fr;
-    }
-
     .student-directory-table tbody tr {
         grid-template-columns: 1fr;
         grid-template-areas:
