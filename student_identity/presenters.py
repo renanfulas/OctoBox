@@ -57,7 +57,7 @@ class StudentInvitationOperationsPresenter:
             return 'Expirado'
         if link.is_exhausted:
             return 'Limite atingido'
-        return 'Disponivel'
+        return 'Disponível'
 
     def build_box_invite_link_status_tone(self, link) -> str:
         if link.can_accept:
@@ -92,7 +92,7 @@ class StudentInvitationOperationsPresenter:
         if delivery is None:
             return 'Nenhum envio de e-mail registrado ainda.'
         if delivery.status == StudentInvitationDeliveryStatus.SENT and delivery.sent_at:
-            return f'Ultimo e-mail enviado em {delivery.sent_at:%d/%m/%Y %H:%M} via {delivery.provider}.'
+            return f'Último e-mail enviado em {delivery.sent_at:%d/%m/%Y %H:%M} via {delivery.provider}.'
         if delivery.status == StudentInvitationDeliveryStatus.DELIVERED and delivery.sent_at:
             return f'E-mail entregue em {delivery.sent_at:%d/%m/%Y %H:%M} via {delivery.provider}.'
         if delivery.status in {
@@ -104,7 +104,7 @@ class StudentInvitationOperationsPresenter:
             return f'Ultima falha de e-mail em {delivery.failed_at:%d/%m/%Y %H:%M} via {delivery.provider}.'
         if delivery.status == StudentInvitationDeliveryStatus.DELAYED:
             return f'E-mail atrasado no provedor {delivery.provider}.'
-        return f'Ultimo status de e-mail: {delivery.status}.'
+        return f'Último status de e-mail: {delivery.status}.'
 
     def build_last_email_delivery_status_label(self, delivery) -> str:
         if delivery is None:
@@ -141,7 +141,7 @@ class StudentInvitationOperationsPresenter:
             return 'Nenhum envio de WhatsApp registrado ainda.'
         if delivery.status == StudentInvitationDeliveryStatus.SENT and delivery.sent_at:
             return f'Ultima mensagem aberta em {delivery.sent_at:%d/%m/%Y %H:%M} pela equipe.'
-        return f'Ultimo status de WhatsApp: {delivery.status}.'
+        return f'Último status de WhatsApp: {delivery.status}.'
 
     def build_last_whatsapp_delivery_status_label(self, delivery) -> str:
         if delivery is None:
@@ -231,7 +231,7 @@ class StudentInvitationOperationsPresenter:
 
     def build_email_action_recommendation_label(self, *, invitation, delivery) -> str:
         if invitation.accepted_at:
-            return 'Convite concluido pelo aluno.'
+            return 'Convite concluído pelo aluno.'
         if invitation.is_expired:
             return 'Gere um novo convite antes de reenviar.'
         if not invitation.invited_email:
@@ -239,20 +239,20 @@ class StudentInvitationOperationsPresenter:
         if delivery is None:
             return 'Se quiser acelerar, use Enviar mensagem no WhatsApp com o link pronto.'
         if delivery.status == StudentInvitationDeliveryStatus.DELIVERED:
-            return 'E-mail entregue. Se o aluno nao responder, acompanhe pelo WhatsApp.'
+            return 'E-mail entregue. Se o aluno não responder, acompanhe pelo WhatsApp.'
         if delivery.status == StudentInvitationDeliveryStatus.DELAYED:
             return 'E-mail atrasado. Para acelerar, use Enviar mensagem no WhatsApp.'
         if delivery.status == StudentInvitationDeliveryStatus.BOUNCED:
             return 'Bounce detectado. Use Enviar mensagem no WhatsApp com o link do convite.'
         if delivery.status == StudentInvitationDeliveryStatus.COMPLAINED:
-            return 'Complaint detectado. Nao reenvie por e-mail; use Enviar mensagem no WhatsApp.'
+            return 'Complaint detectado. Não reenvie por e-mail; use Enviar mensagem no WhatsApp.'
         if delivery.status == StudentInvitationDeliveryStatus.SUPPRESSED:
             return 'Endereco suprimido pelo provedor. Use Enviar mensagem no WhatsApp para seguir com o convite.'
         if delivery.status == StudentInvitationDeliveryStatus.FAILED:
             return 'Falha transacional. Se precisar destravar agora, use Enviar mensagem no WhatsApp.'
         if delivery.status == StudentInvitationDeliveryStatus.SENT:
             return 'E-mail em rota. Se quiser acelerar, use Enviar mensagem no WhatsApp.'
-        return 'Revise o status antes de escolher o proximo canal.'
+        return 'Revise o status antes de escolher o próximo canal.'
 
     def build_email_action_recommendation_tone(self, *, invitation, delivery) -> str:
         if invitation.accepted_at:
@@ -280,7 +280,7 @@ class StudentInvitationOperationsPresenter:
     def build_empty_journey_copy(self, *, journey: str) -> str:
         copy_by_journey = {
             StudentOnboardingJourney.MASS_BOX_INVITE: 'Copie o link em massa e publique no grupo oficial do box com uma chamada curta para entrar com Google ou Apple.',
-            StudentOnboardingJourney.IMPORTED_LEAD_INVITE: 'A recepcao pode comecar pelos leads mais quentes usando o botao de 1 clique no WhatsApp.',
-            StudentOnboardingJourney.REGISTERED_STUDENT_INVITE: 'Escolha alguns alunos ja cadastrados e dispare convites diretos para abrir este corredor.',
+            StudentOnboardingJourney.IMPORTED_LEAD_INVITE: 'A recepção pode começar pelos leads mais quentes usando o botão de 1 clique no WhatsApp.',
+            StudentOnboardingJourney.REGISTERED_STUDENT_INVITE: 'Escolha alguns alunos já cadastrados e dispare convites diretos para abrir este corredor.',
         }
         return copy_by_journey.get(journey, 'Comece gerando volume neste corredor para o painel aprender.')

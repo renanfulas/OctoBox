@@ -16,17 +16,17 @@ class StudentInvitationCreateForm(forms.Form):
         label='Tipo de convite',
         choices=StudentInvitationType.choices,
         initial=StudentInvitationType.INDIVIDUAL,
-        help_text='Convite individual libera o aluno ao fechar a identidade. Convite do box pede aprovacao depois.',
+        help_text='Convite individual libera o aluno ao fechar a identidade. Convite do box pede aprovação depois.',
     )
     onboarding_journey = forms.ChoiceField(
         label='Jornada',
         choices=(
-            (StudentOnboardingJourney.REGISTERED_STUDENT_INVITE, 'Aluno ja cadastrado'),
+            (StudentOnboardingJourney.REGISTERED_STUDENT_INVITE, 'Aluno já cadastrado'),
             (StudentOnboardingJourney.IMPORTED_LEAD_INVITE, 'Lead importado'),
         ),
         initial=StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
         required=False,
-        help_text='Use lead importado quando o box ja sabe nome e WhatsApp, mas o aluno ainda precisa completar o resto.',
+        help_text='Use lead importado quando o box já sabe nome e WhatsApp, mas o aluno ainda precisa completar o resto.',
     )
     expires_in_days = forms.TypedChoiceField(
         label='Validade',

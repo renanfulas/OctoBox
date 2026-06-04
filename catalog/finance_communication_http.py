@@ -42,7 +42,7 @@ def handle_finance_communication_view_post(*, request):
     if not form.is_valid():
         messages.error(
             request,
-            'A acao de comunicacao nao foi registrada. Revise os dados do contato operacional.',
+            'A ação de comunicação não foi registrada. Revise os dados do contato operacional.',
         )
         return redirect('finance-center')
 
@@ -59,8 +59,8 @@ def handle_finance_communication_view_post(*, request):
             messages.warning(
                 request,
                 (
-                    f'Contato de WhatsApp ja registrado nas ultimas {repeat_block_hours}h para '
-                    f'{result["student"].full_name}. Aguarde a proxima janela antes de repetir a mesma acao.'
+                    f'Contato de WhatsApp já registrado nas últimas {repeat_block_hours}h para '
+                    f'{result["student"].full_name}. Aguarde a próxima janela antes de repetir a mesma ação.'
                 ),
             )
         else:
@@ -110,7 +110,7 @@ def handle_finance_communication_view_post(*, request):
         actor=request.user,
         action=action_name,
         target=audit_target,
-        description=f'Contato de cobranca aberto por WhatsApp para {result["student"].full_name}.',
+        description=f'Contato de cobrança aberto por WhatsApp para {result["student"].full_name}.',
         metadata=merge_cascade_metadata(
             build_contact_memory_metadata(
                 board_key='finance',

@@ -16,20 +16,20 @@ def build_student_invitation_email_body(*, student_name: str, invite_url: str, b
     first_name = (student_name or 'aluno').split()[0]
     return (
         f'Oi, {first_name}.\n\n'
-        f'Seu acesso ao app do aluno do {box_name} esta pronto.\n'
+        f'Seu acesso ao app do aluno do {box_name} está pronto.\n'
         f'Use este link para ativar a sua conta:\n{invite_url}\n\n'
-        f'Este convite fica valido ate {expires_label}.\n'
-        'Depois disso, se precisar, o box pode gerar um novo convite para voce.\n\n'
-        'Importante: o acesso final ainda depende da confirmacao da sua identidade social no app.\n'
+        f'Este convite fica válido até {expires_label}.\n'
+        'Depois disso, se precisar, o box pode gerar um novo convite para você.\n\n'
+        'Importante: o acesso final ainda depende da confirmação da sua identidade social no app.\n'
     )
 
 
 def build_student_invitation_whatsapp_body(*, student_name: str, invite_url: str, box_name: str, expires_label: str) -> str:
     first_name = (student_name or 'aluno').split()[0]
     return (
-        f'Oi, {first_name}! Seu acesso ao app do aluno do {box_name} esta pronto. '
+        f'Oi, {first_name}! Seu acesso ao app do aluno do {box_name} está pronto. '
         f'Ative por este link: {invite_url} '
-        f'Este convite fica valido ate {expires_label}.'
+        f'Este convite fica válido até {expires_label}.'
     )
 
 

@@ -52,7 +52,7 @@ class AccessViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Seu box, sem excesso.')
         self.assertContains(response, 'Continuar com Google')
-        self.assertContains(response, 'Entrar com usuario')
+        self.assertContains(response, 'Entrar com usuário')
         self.assertContains(response, reverse('login-staff'))
 
     def test_staff_login_route_renders_internal_form(self):
@@ -72,7 +72,7 @@ class AccessViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Criar perfil sem abrir o admin')
         self.assertContains(response, 'DEV')
-        self.assertContains(response, 'Recepcao')
+        self.assertContains(response, 'Recepção')
         self.assertNotContains(response, 'Editar e ativar perfis sem admin')
 
     def test_access_overview_shows_management_panel_only_when_requested(self):

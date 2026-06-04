@@ -33,16 +33,16 @@ class StudentInvitationDeliveryActionsMixin:
             .first()
         )
         if invitation is None:
-            messages.error(request, 'O convite escolhido nao foi encontrado.')
+            messages.error(request, 'O convite escolhido não foi encontrado.')
             return redirect('student-invitation-operations')
         if invitation.accepted_at:
-            messages.info(request, 'Esse convite ja foi aceito pelo aluno.')
+            messages.info(request, 'Esse convite já foi aceito pelo aluno.')
             return redirect('student-invitation-operations')
         if invitation.is_expired:
             messages.error(request, 'Esse convite expirou. Gere um novo antes de enviar.')
             return redirect('student-invitation-operations')
         if not invitation.invited_email:
-            messages.error(request, 'Esse convite nao possui e-mail de destino.')
+            messages.error(request, 'Esse convite não possui e-mail de destino.')
             return redirect('student-invitation-operations')
 
         invite_url = request.build_absolute_uri(
@@ -51,7 +51,7 @@ class StudentInvitationDeliveryActionsMixin:
         try:
             result = send_invitation_email(invitation=invitation, invite_url=invite_url, actor=request.user)
         except StudentEmailDeliveryError:
-            messages.error(request, 'Nao foi possivel enviar o e-mail agora. Revise a configuracao do provedor transacional.')
+            messages.error(request, 'Não foi possível enviar o e-mail agora. Revise a configuração do provedor transacional.')
             return redirect('student-invitation-operations')
 
         messages.success(
@@ -68,10 +68,10 @@ class StudentInvitationDeliveryActionsMixin:
             .first()
         )
         if invitation is None:
-            messages.error(request, 'O convite escolhido nao foi encontrado.')
+            messages.error(request, 'O convite escolhido não foi encontrado.')
             return redirect('student-invitation-operations')
         if invitation.accepted_at:
-            messages.info(request, 'Esse convite ja foi aceito pelo aluno.')
+            messages.info(request, 'Esse convite já foi aceito pelo aluno.')
             return redirect('student-invitation-operations')
         if invitation.is_expired:
             messages.error(request, 'Esse convite expirou. Gere um novo antes de enviar mensagem.')
@@ -82,7 +82,7 @@ class StudentInvitationDeliveryActionsMixin:
         )
         whatsapp_url = build_invitation_whatsapp_url(invitation=invitation, invite_url=invite_url)
         if not whatsapp_url:
-            messages.error(request, 'Esse aluno nao possui telefone valido para abrir o WhatsApp.')
+            messages.error(request, 'Esse aluno não possui telefone válido para abrir o WhatsApp.')
             return redirect('student-invitation-operations')
 
         # Sprint 2: invitation.student.phone era cross-schema — usa helper com schema_context

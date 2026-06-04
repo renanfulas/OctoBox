@@ -18,6 +18,17 @@
 
 ## Como rodar a suite
 
+### Pre-requisito - PostgreSQL local
+
+```bash
+docker compose -f docker-compose.postgres.yml up -d
+```
+
+O caminho padrao usa `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/octobox_control`.
+Para testes, `TEST_DATABASE_URL` tem prioridade sobre `DATABASE_URL`. SQLite nao e mais
+fallback padrao; use `OCTOBOX_ALLOW_SQLITE_FALLBACK=1` apenas para diagnosticos legados
+sem `django-tenants`.
+
 ### Fluxo 1 — Suite rápida local (desenvolvimento diário)
 
 ```bash

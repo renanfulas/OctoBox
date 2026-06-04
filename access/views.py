@@ -149,7 +149,7 @@ class ThrottledLoginView(LoginView):
         if not throttle.allow_request(request, self):
             throttle.on_throttle_exceeded(request, self)
             from django.http import HttpResponseForbidden
-            return HttpResponseForbidden("Multiplas requisicoes suspeitas. Conta temporariamente bloqueada (Cooldown: 10 min).")
+            return HttpResponseForbidden("Múltiplas requisições suspeitas. Conta temporariamente bloqueada (Cooldown: 10 min).")
             
         return super().post(request, *args, **kwargs)
 
@@ -257,7 +257,7 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
 
     def post(self, request, *args, **kwargs):
         if not self._can_manage_access_profiles():
-            messages.error(request, 'Seu papel atual pode consultar acessos, mas nao gerenciar perfis por esta tela.')
+            messages.error(request, 'Seu papel atual pode consultar acessos, mas não gerenciar perfis por esta tela.')
             return redirect('access-overview')
 
         access_action = request.POST.get('access_action', 'create')
@@ -270,7 +270,7 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
                 if result['reason'] == 'invalid-form':
                     context = self.get_context_data(forms_by_user_id=result['forms_by_user_id'])
                     return self.render_to_response(context)
-                messages.error(request, 'Perfil nao encontrado para atualizacao.')
+                messages.error(request, 'Perfil não encontrado para atualização.')
                 return redirect('access-overview')
 
             messages.success(request, f'Perfil de {result["user"].username} atualizado com sucesso.')
@@ -283,9 +283,9 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
             )
             if not result['ok']:
                 if result['reason'] == 'self-disable-blocked':
-                    messages.error(request, 'Nao e permitido desativar o proprio usuario por esta tela.')
+                    messages.error(request, 'Não é permitido desativar o próprio usuário por esta tela.')
                 else:
-                    messages.error(request, 'Perfil nao encontrado para alteracao de status.')
+                    messages.error(request, 'Perfil não encontrado para alteração de status.')
                 return redirect('access-overview')
 
             status_label = 'ativado' if result['user'].is_active else 'desativado'

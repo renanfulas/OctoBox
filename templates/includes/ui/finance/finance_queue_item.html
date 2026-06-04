@@ -56,10 +56,10 @@ PONTOS CRITICOS:
             {{ item.priority_label }}
             {{ item.playbook_label }}
             {{ item.operational_band_label }}
-            Revisar matricula
+            Revisar matrícula
             Monitorar por 7 dias
             Abrir ficha
-            {% if item.overdue_count_60d %}{{ item.overdue_count_60d }} cobranca(s){% else %}Sem atraso recente{% endif %}
+            {% if item.overdue_count_60d %}{{ item.overdue_count_60d }} cobrança(s){% else %}Sem atraso recente{% endif %}
             {% if item.assist_flags %}
                 {% for flag in item.assist_flags %}{{ flag.label }} {% endfor %}
                 {{ item.last_touch_label }}
@@ -82,7 +82,7 @@ PONTOS CRITICOS:
                 <p class="finance-risk-order-hint">{{ note }}</p>
                 {% endfor %}
                 {% else %}
-                <p class="finance-risk-order-hint">Este caso segue a leitura base da fila, sem reforcos extras de timing ou contexto por enquanto.</p>
+                <p class="finance-risk-order-hint">Este caso segue a leitura base da fila, sem reforços extras de timing ou contexto por enquanto.</p>
                 {% endif %}
                 {% if item.assist_flags %}
                 <div class="finance-risk-meta finance-risk-meta-quiet finance-queue-card-flags">

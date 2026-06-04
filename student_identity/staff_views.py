@@ -71,7 +71,7 @@ class StudentInvitationOperationsView(
                 actor=request.user,
                 actor_role=self._get_actor_role_slug(request),
                 target_label=str(request.user.id),
-                description='Volume suspeito de criacao de invites concentrado no mesmo ator.',
+                description='Volume suspeito de criação de invites concentrado no mesmo ator.',
                 metadata={
                     'box_root_slug': invitation.box_root_slug,
                     'invite_type': invitation.invite_type,
@@ -100,7 +100,7 @@ class StudentInvitationOperationsView(
                 actor=request.user,
                 actor_role=self._get_actor_role_slug(request),
                 target_label=invitation.box_root_slug,
-                description='Volume suspeito de criacao de invites concentrado no mesmo box.',
+                description='Volume suspeito de criação de invites concentrado no mesmo box.',
                 metadata={
                     'actor_id': request.user.id,
                     'invite_type': invitation.invite_type,
@@ -135,9 +135,9 @@ class StudentInvitationOperationsView(
 
     def _map_failure_reason(self, reason: str) -> str:
         mapping = {
-            'student-not-found': 'O aluno escolhido nao foi encontrado.',
-            'email-required': 'Defina um e-mail no formulario ou no cadastro do aluno antes de gerar o convite.',
-            'student-box-mismatch': 'Este aluno ja esta vinculado a outro box raiz.',
-            'open-box-rate-limit-exceeded': 'O limite tecnico de convites abertos nesta janela foi alcancado. Gere invite individual ou aguarde a janela reiniciar.',
+            'student-not-found': 'O aluno escolhido não foi encontrado.',
+            'email-required': 'Defina um e-mail no formulário ou no cadastro do aluno antes de gerar o convite.',
+            'student-box-mismatch': 'Este aluno já está vinculado a outro box raiz.',
+            'open-box-rate-limit-exceeded': 'O limite técnico de convites abertos nesta janela foi alcançado. Gere invite individual ou aguarde a janela reiniciar.',
         }
-        return mapping.get(reason, 'Nao foi possivel gerar o convite do app do aluno.')
+        return mapping.get(reason, 'Não foi possível gerar o convite do app do aluno.')

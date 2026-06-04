@@ -30,7 +30,7 @@ class AccessAuthenticationForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['username'].widget.attrs.update({
-            'placeholder': 'Seu usuario interno',
+            'placeholder': 'Seu usuário interno',
             'maxlength': '150',
             'autocomplete': 'username',
             'spellcheck': 'false',
@@ -45,9 +45,9 @@ class AccessAuthenticationForm(AuthenticationForm):
 
 class AccessProfileCreateForm(forms.Form):
     full_name = forms.CharField(label='Nome completo', max_length=150)
-    username = forms.CharField(label='Usuario', max_length=150)
+    username = forms.CharField(label='Usuário', max_length=150)
     email = forms.EmailField(label='E-mail', required=False)
-    password = forms.CharField(label='Senha provisoria', widget=forms.PasswordInput(render_value=True), max_length=128)
+    password = forms.CharField(label='Senha provisória', widget=forms.PasswordInput(render_value=True), max_length=128)
     role = forms.ChoiceField(
         label='Papel',
         choices=OPERATIONAL_ROLE_CHOICES,
