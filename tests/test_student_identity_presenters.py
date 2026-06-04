@@ -94,7 +94,7 @@ class BoxInviteLinkTest(unittest.TestCase):
         self.assertEqual(p.build_box_invite_link_status_label(self._link(is_paused=True)), 'Pausado')
         self.assertEqual(p.build_box_invite_link_status_label(self._link(is_expired=True)), 'Expirado')
         self.assertEqual(p.build_box_invite_link_status_label(self._link(is_exhausted=True)), 'Limite atingido')
-        self.assertEqual(p.build_box_invite_link_status_label(self._link()), 'Disponivel')
+        self.assertEqual(p.build_box_invite_link_status_label(self._link()), 'Disponível')
 
     def test_status_tone_all_branches(self):
         p = _presenter()
@@ -110,7 +110,7 @@ class BoxInviteLinkTest(unittest.TestCase):
         p = _presenter(can_view_invite_links=True)
         payload = p.build_active_box_invite_link_payload(active_box_invite_link=self._link())
         self.assertEqual(payload['invite_url'], 'https://box.local/box-invite/tok/')
-        self.assertEqual(payload['status_label'], 'Disponivel')
+        self.assertEqual(payload['status_label'], 'Disponível')
 
     @patch('student_identity.presenters.reverse', return_value='/box-invite/tok/')
     def test_active_payload_without_view_permission_blanks_url(self, _reverse):
@@ -127,8 +127,8 @@ class EmailDeliveryTest(unittest.TestCase):
         self.assertIn('entregue', p.build_last_email_delivery_label(_delivery(D.DELIVERED)))
         self.assertIn('falha', p.build_last_email_delivery_label(_delivery(D.BOUNCED)))
         self.assertIn('atrasado', p.build_last_email_delivery_label(_delivery(D.DELAYED)))
-        # status fora dos ramos -> fallback "Ultimo status"
-        self.assertIn('Ultimo status', p.build_last_email_delivery_label(_delivery('weird')))
+        # status fora dos ramos -> fallback "Último status"
+        self.assertIn('Último status', p.build_last_email_delivery_label(_delivery('weird')))
 
     def test_status_label_mapping_and_fallback(self):
         p = _presenter()
@@ -150,7 +150,7 @@ class WhatsAppDeliveryTest(unittest.TestCase):
         p = _presenter()
         self.assertIn('Nenhum envio', p.build_last_whatsapp_delivery_label(None))
         self.assertIn('aberta', p.build_last_whatsapp_delivery_label(_delivery(D.SENT)))
-        self.assertIn('Ultimo status', p.build_last_whatsapp_delivery_label(_delivery(D.FAILED)))
+        self.assertIn('Último status', p.build_last_whatsapp_delivery_label(_delivery(D.FAILED)))
         self.assertEqual(p.build_last_whatsapp_delivery_status_label(None), 'Sem mensagem')
         self.assertEqual(p.build_last_whatsapp_delivery_status_label(_delivery(D.SENT)), 'Mensagem aberta')
         self.assertEqual(p.build_last_whatsapp_delivery_status_label(_delivery(D.FAILED)), D.FAILED)
@@ -219,7 +219,7 @@ class CanSendEmailTest(unittest.TestCase):
 class EmailActionRecommendationTest(unittest.TestCase):
     def test_label_all_branches(self):
         p = _presenter()
-        self.assertIn('concluido', p.build_email_action_recommendation_label(invitation=_invitation(accepted_at=SENT_AT), delivery=None))
+        self.assertIn('concluído', p.build_email_action_recommendation_label(invitation=_invitation(accepted_at=SENT_AT), delivery=None))
         self.assertIn('novo convite', p.build_email_action_recommendation_label(invitation=_invitation(is_expired=True), delivery=None))
         self.assertIn('WhatsApp', p.build_email_action_recommendation_label(invitation=_invitation(invited_email=''), delivery=None))
         self.assertIn('acelerar', p.build_email_action_recommendation_label(invitation=_invitation(), delivery=None))
@@ -248,8 +248,8 @@ class EmptyJourneyCopyTest(unittest.TestCase):
     def test_mapping_and_fallback(self):
         p = _presenter()
         self.assertIn('link em massa', p.build_empty_journey_copy(journey=J.MASS_BOX_INVITE))
-        self.assertIn('recepcao', p.build_empty_journey_copy(journey=J.IMPORTED_LEAD_INVITE))
-        self.assertIn('ja cadastrados', p.build_empty_journey_copy(journey=J.REGISTERED_STUDENT_INVITE))
+        self.assertIn('recepção', p.build_empty_journey_copy(journey=J.IMPORTED_LEAD_INVITE))
+        self.assertIn('já cadastrados', p.build_empty_journey_copy(journey=J.REGISTERED_STUDENT_INVITE))
         self.assertIn('volume', p.build_empty_journey_copy(journey='desconhecido'))
 
 
