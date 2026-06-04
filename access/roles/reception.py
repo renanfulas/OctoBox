@@ -20,12 +20,12 @@ ROLE_RECEPTION = 'Recepcao'
 
 RECEPTION_ROLE = RoleDefinition(
     slug=ROLE_RECEPTION,
-    label='Recepcao',
-    summary='Perfil de balcao para orientar chegada, localizar aluno, ler a grade e resolver cobranca curta.',
+    label='Recepção',
+    summary='Perfil de balcão para orientar chegada, localizar aluno, ler a grade e resolver cobrança curta.',
     capabilities=(
-        'Localizar, cadastrar e atualizar aluno no contexto de atendimento rapido.',
-        'Ler a grade de aulas sem ganhar gestao administrativa da agenda.',
-        'Resolver cobranca curta e confirmar pagamento sem abrir o financeiro completo.',
+        'Localizar, cadastrar e atualizar aluno no contexto de atendimento rápido.',
+        'Ler a grade de aulas sem ganhar gestão administrativa da agenda.',
+        'Resolver cobrança curta e confirmar pagamento sem abrir o financeiro completo.',
     ),
 )
 

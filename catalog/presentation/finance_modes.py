@@ -23,18 +23,18 @@ def build_finance_mode_contract(
             'key': 'traditional',
             'label': 'Modo tradicional',
             'kicker': 'Fato operacional',
-            'summary': 'Abre so o que e factual e direto para decidir.',
-            'detail': 'Leitura objetiva do que aconteceu, sem a camada de recomendacao assistida.',
+            'summary': 'Abre só o que é factual e direto para decidir.',
+            'detail': 'Leitura objetiva do que aconteceu, sem a camada de recomendação assistida.',
             'badge': '3 blocos',
             'is_active': active_mode == 'traditional',
             'surface_count': 3,
         },
         {
             'key': 'hybrid',
-            'label': 'Modo hibrido',
-            'kicker': 'Acao com contexto',
+            'label': 'Modo híbrido',
+            'kicker': 'Ação com contexto',
             'summary': 'Abre o factual junto da leitura assistida no mesmo contexto.',
-            'detail': 'E a visao mais completa do turno, com fato e IA lado a lado para decidir rapido.',
+            'detail': 'É a visão mais completa do turno, com fato e IA lado a lado para decidir rápido.',
             'badge': 'Vista completa',
             'is_active': active_mode == 'hybrid',
             'surface_count': 5,
@@ -42,9 +42,9 @@ def build_finance_mode_contract(
         {
             'key': 'ai',
             'label': 'Modo IA',
-            'kicker': 'Aprendizado historico',
-            'summary': 'Abre so o aprendizado e a leitura assistida da maquina.',
-            'detail': 'Foca no que o historico sugere e no que o time tem aprendido com a execucao.',
+            'kicker': 'Aprendizado histórico',
+            'summary': 'Abre só o aprendizado e a leitura assistida da máquina.',
+            'detail': 'Foca no que o histórico sugere e no que o time tem aprendido com a execução.',
             'badge': f'{tracked_realized_count} follow-up(s)',
             'is_active': active_mode == 'ai',
             'surface_count': 1,
@@ -53,8 +53,8 @@ def build_finance_mode_contract(
 
     return {
         'active_mode': active_mode,
-        'headline': 'Escolha como voce quer ler o financeiro.',
-        'summary': 'Tradicional abre o factual. Hibrido junta factual e IA. IA abre so a leitura assistida.',
+        'headline': 'Escolha como você quer ler o financeiro.',
+        'summary': 'Tradicional abre o factual. Híbrido junta factual e IA. IA abre só a leitura assistida.',
         'modes': modes,
     }
 

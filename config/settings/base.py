@@ -21,11 +21,14 @@ import socket
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
 from config.env_loader import load_project_env
 from shared_support.box_runtime import build_box_cache_key_prefix
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ACTIVE_SETTINGS_MODULE = os.getenv('DJANGO_SETTINGS_MODULE', '').strip().lower()
+LOCAL_POSTGRES_DATABASE_URL = 'postgresql://postgres:postgres@127.0.0.1:5433/octobox_control'
 
 load_project_env(
     BASE_DIR,
@@ -132,17 +135,32 @@ def local_private_network_hosts():
 
 
 def build_database_config(default_sqlite_path):
-    database_url = env_str('DATABASE_URL')
-    if database_url:
-        return dj_database_url.parse(database_url, conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', '60')), ssl_require=env_bool('DB_SSL_REQUIRE', False))
+    database_url = ''
+    if ACTIVE_SETTINGS_MODULE.endswith('.test'):
+        database_url = env_str('TEST_DATABASE_URL')
+    database_url = database_url or env_str('DATABASE_URL') or env_str('OCTOBOX_DEFAULT_DATABASE_URL')
 
-    return {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': default_sqlite_path,
-    }
+    if not database_url and env_bool('OCTOBOX_ALLOW_SQLITE_FALLBACK', False):
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': default_sqlite_path,
+        }
 
+    parsed = dj_database_url.parse(
+        database_url or LOCAL_POSTGRES_DATABASE_URL,
+        conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', '60')),
+        ssl_require=env_bool('DB_SSL_REQUIRE', False),
+    )
 
-from django.core.exceptions import ImproperlyConfigured
+    if 'sqlite' in parsed.get('ENGINE', '') and not env_bool('OCTOBOX_ALLOW_SQLITE_FALLBACK', False):
+        raise ImproperlyConfigured(
+            'SQLite nao e mais fallback padrao do OctoBox. '
+            'Configure DATABASE_URL/TEST_DATABASE_URL com PostgreSQL ou defina '
+            'OCTOBOX_ALLOW_SQLITE_FALLBACK=1 apenas para diagnosticos legados.'
+        )
+
+    return parsed
+
 
 def build_cache_config():
     cache_url = env_str('REDIS_URL') or env_str('CACHE_URL')

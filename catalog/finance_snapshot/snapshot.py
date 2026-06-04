@@ -63,7 +63,7 @@ def _serialize_financial_alert(payment):
         'student_id': getattr(student, 'id', None),
         'student_full_name': getattr(student, 'full_name', 'Aluno'),
         'student_url': _build_student_financial_overview_url(getattr(student, 'id', None)),
-        'plan_name': enrollment.plan.name if enrollment and getattr(enrollment, 'plan', None) else 'Sem vinculo de plano',
+            'plan_name': enrollment.plan.name if enrollment and getattr(enrollment, 'plan', None) else 'Sem vínculo de plano',
         'due_date': payment.due_date,
         'amount': payment.amount,
         'status': payment.status,

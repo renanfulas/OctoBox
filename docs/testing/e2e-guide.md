@@ -18,6 +18,16 @@
 
 ## Como rodar localmente
 
+Pre-requisito de banco:
+
+```bash
+docker compose -f docker-compose.postgres.yml up -d
+```
+
+O E2E usa PostgreSQL por padrao. `TEST_DATABASE_URL` pode apontar para outro
+cluster local, mas SQLite nao cobre `django-tenants` nem os schemas usados pelo
+`live_server`.
+
 ```bash
 # 1. Instalar dependências de teste (incluindo pytest-playwright)
 pip install -r requirements_test.txt

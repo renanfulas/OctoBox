@@ -160,8 +160,8 @@ def build_turn_recommendation(analytics):
             'recommended_action': '',
             'action_kind': '',
             'action_label': 'Sem leitura suficiente',
-            'summary': 'Assim que houver historico suficiente de acao dentro da janela prevista, a jogada mais forte aparece aqui.',
-            'note': 'Leitura baseada no historico acumulado atual; um recorte semanal dedicado pode entrar depois.',
+            'summary': 'Assim que houver histórico suficiente de ação dentro da janela prevista, a jogada mais forte aparece aqui.',
+            'note': 'Leitura baseada no histórico acumulado atual; um recorte semanal dedicado pode entrar depois.',
         }
 
     item = recommendation_window_matrix[0]
@@ -172,7 +172,7 @@ def build_turn_recommendation(analytics):
         'action_kind': RECOMMENDATION_ACTION_KIND_MAP.get(recommended_action, ''),
         'action_label': recommended_action,
         'summary': '',
-        'note': 'Leitura baseada no historico acumulado atual; um recorte semanal dedicado pode entrar depois.',
+        'note': 'Leitura baseada no histórico acumulado atual; um recorte semanal dedicado pode entrar depois.',
         'outcome_window': item.get('outcome_window', ''),
         'success_rate': item.get('success_rate', 0.0) or 0.0,
         'realized_count': item.get('realized_count', 0) or 0,

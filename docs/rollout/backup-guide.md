@@ -18,7 +18,7 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. Explica a estrategia minima de backup.
-2. Mostra fluxo para SQLite e PostgreSQL.
+2. Mostra o fluxo padrao para PostgreSQL.
 3. Referencia os scripts reais incluidos no projeto para Windows e Linux.
 
 PONTOS CRITICOS:
@@ -27,7 +27,7 @@ PONTOS CRITICOS:
 
 # Backup minimo do banco
 
-Este projeto pode rodar com SQLite em desenvolvimento e com PostgreSQL em homologacao/producao.
+PostgreSQL e o banco padrao do OctoBox em desenvolvimento, testes, homologacao e producao. SQLite fica restrito a diagnosticos legados explicitamente liberados e nao deve ser tratado como trilho operacional.
 
 ## Estrategia recomendada
 
@@ -35,16 +35,7 @@ Este projeto pode rodar com SQLite em desenvolvimento e com PostgreSQL em homolo
 2. retencao de pelo menos 7 copias
 3. restauracao testada periodicamente
 
-## SQLite local
-
-Para um backup simples do ambiente local:
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-./scripts/backup_sqlite.ps1
-```
-
-## PostgreSQL em homologacao/producao
+## PostgreSQL local, homologacao e producao
 
 Exemplo com pg_dump:
 
@@ -76,7 +67,8 @@ $securePassword = Read-Host "Senha do banco" -AsSecureString
 
 ## Scripts incluidos no projeto
 
-1. [scripts/backup_sqlite.ps1](../../scripts/backup_sqlite.ps1)
-2. [scripts/backup_postgres.ps1](../../scripts/backup_postgres.ps1)
-3. [scripts/restore_postgres.ps1](../../scripts/restore_postgres.ps1)
-4. [scripts/linux/backup_postgres.sh](../../scripts/linux/backup_postgres.sh)
+1. [scripts/backup_postgres.ps1](../../scripts/backup_postgres.ps1)
+2. [scripts/restore_postgres.ps1](../../scripts/restore_postgres.ps1)
+3. [scripts/linux/backup_postgres.sh](../../scripts/linux/backup_postgres.sh)
+
+O script [scripts/backup_sqlite.ps1](../../scripts/backup_sqlite.ps1) permanece apenas para recuperar ambientes legados locais antes da migracao para PostgreSQL.

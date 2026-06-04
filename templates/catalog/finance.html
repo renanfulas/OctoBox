@@ -22,7 +22,7 @@ PONTOS CRITICOS:
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
 
     <div class="finance-kpi-panel section-gap" data-panel="finance-interactive-kpis">
-        <section class="finance-kpi-grid interactive-tab-triggers" aria-label="Navegacao principal financeira">
+        <section class="finance-kpi-grid interactive-tab-triggers" aria-label="Navegação principal financeira">
             {% for card in page.data.interactive_kpis %}
                 {% if card.data_action == page.behavior.default_action %}
             {% include "includes/ui/shared/interactive_kpi_card.html" with card=card extra_classes="finance-kpi-card is-selected-tab "|add:card.card_class %}
@@ -44,7 +44,7 @@ PONTOS CRITICOS:
                 <span class="eyebrow">{{ mode.kicker }}</span>
                 <strong>{{ mode.label }}</strong>
                 <p>{{ mode.summary }}</p>
-                <span class="finance-mode-card-meta">{{ mode.badge }} | {{ mode.surface_count }} superficie(s)</span>
+                <span class="finance-mode-card-meta">{{ mode.badge }} | {{ mode.surface_count }} superfície(s)</span>
             </button>
             {% endfor %}
         </div>
@@ -55,7 +55,7 @@ PONTOS CRITICOS:
             {% include "includes/catalog/finance/boards/trend_boards.html" %}
         </div>
 
-        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" data-mode-surface="hybrid" aria-label="Handoff de cobranca">
+        <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-queue' %} is-tab-active{% endif %}" id="tab-finance-queue" data-mode-surface="hybrid" aria-label="Handoff de cobrança">
             {% if page.data.operational_queue %}
             {% include "includes/catalog/finance/views/priority_rail.html" %}
             {% endif %}
@@ -76,4 +76,3 @@ PONTOS CRITICOS:
 </div>
 {% endwith %}
 {% endblock %}
-

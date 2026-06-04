@@ -119,7 +119,7 @@ def build_finance_overdue_rows(financial_alerts):
             due_date = payment.get('due_date')
             overdue_days = max((today - due_date).days, 0) if due_date else 0
             amount = payment.get('amount')
-            plan_name = payment.get('plan_name') or 'Sem vinculo de plano'
+            plan_name = payment.get('plan_name') or 'Sem vínculo de plano'
         else:
             student_name = payment.student.full_name
             student_url = f"{reverse('student-quick-update', args=[payment.student.id])}#student-financial-overview"
@@ -127,7 +127,7 @@ def build_finance_overdue_rows(financial_alerts):
             due_date = payment.due_date
             overdue_days = max((today - due_date).days, 0)
             amount = payment.amount
-            plan_name = payment.enrollment.plan.name if payment.enrollment else 'Sem vinculo de plano'
+            plan_name = payment.enrollment.plan.name if payment.enrollment else 'Sem vínculo de plano'
 
         rows.append(
             {
@@ -137,7 +137,7 @@ def build_finance_overdue_rows(financial_alerts):
                 'plan_name': plan_name,
                 'amount': amount,
                 'overdue_days': overdue_days,
-                'badge': 'Urgente' if overdue_days >= 7 else 'Atencao',
+                'badge': 'Urgente' if overdue_days >= 7 else 'Atenção',
             }
         )
 
@@ -212,38 +212,38 @@ def build_finance_filter_summary(filter_form):
             'label': 'Janela',
             'value': months_choices.get(months_value, '6 meses'),
             'is_default': months_value == '6',
-            'summary': 'Define o horizonte da leitura gerencial antes de comparar caixa e retencao.',
+            'summary': 'Define o horizonte da leitura gerencial antes de comparar caixa e retenção.',
         },
         {
             'key': 'plan',
             'label': 'Plano',
             'value': selected_plan.name if selected_plan else 'Todos os planos',
             'is_default': selected_plan is None,
-            'summary': 'Mostra se o recorte esta amplo ou se ja esta olhando uma carteira especifica.',
+            'summary': 'Mostra se o recorte está amplo ou se já está olhando uma carteira específica.',
         },
         {
             'key': 'payment_status',
             'label': 'Status',
             'value': status_choices.get(payment_status, 'Todos'),
             'is_default': not payment_status,
-            'summary': 'Ajuda a separar leitura total de leitura de pressao operacional.',
+            'summary': 'Ajuda a separar leitura total de leitura de pressão operacional.',
         },
         {
             'key': 'payment_method',
-            'label': 'Metodo',
+            'label': 'Método',
             'value': method_choices.get(payment_method, 'Todos'),
             'is_default': not payment_method,
-            'summary': 'Util quando a analise precisa isolar comportamento de recebimento.',
+            'summary': 'Útil quando a análise precisa isolar comportamento de recebimento.',
         },
         {
             'key': 'queue_focus',
-            'label': 'Missao',
+            'label': 'Missão',
             'value': dict(filter_form.fields['queue_focus'].choices).get(
                 filter_form.cleaned_data.get('queue_focus') if filter_form.is_valid() else '',
                 'Todas',
             ),
             'is_default': not (filter_form.cleaned_data.get('queue_focus') if filter_form.is_valid() else ''),
-            'summary': 'Recorta a fila para a missao operacional que merece foco agora.',
+            'summary': 'Recorta a fila para a missão operacional que merece foco agora.',
         },
     ]
 
@@ -258,7 +258,7 @@ def build_finance_filter_summary_current(summary_items):
             active_values.append(item['value'])
     if active_values:
         return 'Recorte atual: ' + ' | '.join(active_values)
-    return 'Recorte atual: padrao da leitura financeira.'
+    return 'Recorte atual: padrão da leitura financeira.'
 
 
 __all__ = [

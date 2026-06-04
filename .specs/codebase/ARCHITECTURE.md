@@ -1,37 +1,44 @@
 # Architecture Overview - OctoBOX
 
-O OctoBOX utiliza um padrão de **Monolito Modular** com uma separação clara de domínios em nível de pasta, mantendo uma estrutura de banco de dados unificada por motivos históricos.
+O OctoBOX utiliza um padrao de monolito modular com separacao clara de dominios em nivel de pasta, mantendo uma estrutura de banco de dados historicamente unificada.
 
 ## Camada de Dados (Historical Boxcore)
 
-Uma característica única deste projeto é o uso do `app_label = 'boxcore'` em modelos definidos em outros apps (`students`, `finance`, `communications`).
+Uma caracteristica importante deste projeto e o uso de `app_label = 'boxcore'` em modelos definidos em outros apps (`students`, `finance`, `communications`).
 
-*   **Por que existe:** Permite que o código seja organizado em domínios lógicos (`students/models.py`, `finance/models.py`) sem quebrar as migrações do banco de dados que foram iniciadas no app `boxcore`.
-*   **Implicação:** Todas as migrações de dados desses modelos residem em `boxcore/migrations/`.
+- **Por que existe:** permite que o codigo seja organizado em dominios logicos sem quebrar as migracoes iniciadas no app `boxcore`.
+- **Implicacao:** varias migracoes de dados desses modelos ainda residem em `boxcore/migrations/`.
 
-## Domínios Funcionais
+## Banco Padrao
+
+PostgreSQL e a fonte unica da verdade em desenvolvimento, testes, homologacao e producao.
+
+O motivo tecnico e simples: `django-tenants` depende de schemas PostgreSQL. SQLite nao representa esse contrato e so pode ser usado como escape legado de diagnostico via `OCTOBOX_ALLOW_SQLITE_FALLBACK=1`.
+
+## Dominios Funcionais
 
 | App | Responsabilidade |
 | :--- | :--- |
-| **Students** | Ponto central da identidade do aluno. Gere dados pessoais e saúde. |
-| **Finance** | Coração financeiro. Gere `Enrollment` (Matrícula) e `Payment`. Integração Stripe. |
-| **Communications** | Gestão de contatos de WhatsApp e logs de mensagens enviados/recebidos. |
-| **Integrations** | Camada de tradução para serviços externos (Stripe, WhatsApp Cloud API). |
-| **Access** | Controle de acesso baseado em funções (RBAC), login e navegação. |
-| **Boxcore** | App "âncora" para o schema do banco de dados e migrações globais. |
-| **Shared Support** | Utilitários transversais: Criptografia, Snapshots Redis e Mixins. |
+| **Students** | Ponto central da identidade do aluno, dados pessoais e saude |
+| **Finance** | Matricula, pagamentos e integracao Stripe |
+| **Communications** | Contatos de WhatsApp e logs de mensagens |
+| **Integrations** | Traducao para servicos externos |
+| **Access** | RBAC, login e navegacao |
+| **Boxcore** | App ancora para schema historico e migrations |
+| **Shared Support** | Utilitarios transversais, criptografia, snapshots Redis e mixins |
 
 ## Shadow State & Performance
 
-O sistema implementa uma arquitetura de **Shadow State** para otimizar a leitura no Dashboard/Cockpit Financeiro.
+O sistema implementa uma arquitetura de shadow state para otimizar leituras no dashboard e nas superficies operacionais.
 
-1.  **Database (SSOT):** O PostgreSQL/SQLite é a Fonte Única da Verdade.
-2.  **Redis Snapshots:** Dados agregados de alunos (status financeiro, matrículas ativas) são cacheados em formato JSON no Redis.
-3.  **Sincronização:** Gatilhos nos modelos (signals ou métodos `save`) invalidam ou atualizam esses snapshots após mudanças no banco.
+1. **PostgreSQL (SSOT):** fonte unica da verdade transacional.
+2. **Redis snapshots:** dados agregados ficam cacheados em JSON.
+3. **Sincronizacao:** signals, services ou invalidacoes limpam/atualizam snapshots apos mudancas no banco.
 
 ## Fluxo de Identidade (Blind Index)
 
-Para garantir busca rápida sem expor dados criptografados (PII), utilizamos:
-1.  `phone`: Campo criptografado (ilegível no DB).
-2.  `phone_lookup_index`: Hash determinístico (v1:<hash>) do telefone normalizado.
-3.  **Unicidade:** Garantida via `UniqueConstraint` no nível do banco de dados sobre o índice.
+Para garantir busca rapida sem expor dados criptografados:
+
+1. `phone`: campo criptografado.
+2. `phone_lookup_index`: hash deterministico do telefone normalizado.
+3. **Unicidade:** garantida por constraint no banco sobre o indice.
