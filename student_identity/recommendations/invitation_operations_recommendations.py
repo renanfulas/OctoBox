@@ -38,11 +38,11 @@ class StudentInvitationOperationsRecommendations:
             {
                 'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
                 'title': 'Link em massa',
-                'copy': 'Leitura da rede do box: da visita na landing ate a entrada real no app.',
+                'copy': 'Leitura da rede do box: da visita na landing até a entrada real no app.',
                 'steps': [
                     ('landing_viewed', 'Visitas'),
-                    ('oauth_completed', 'OAuth concluido'),
-                    ('wizard_completed', 'Cadastro concluido'),
+                    ('oauth_completed', 'OAuth concluído'),
+                    ('wizard_completed', 'Cadastro concluído'),
                     ('app_entry_completed', 'Entrada no app'),
                 ],
                 'scope_queryset': (
@@ -53,25 +53,25 @@ class StudentInvitationOperationsRecommendations:
             {
                 'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
                 'title': 'Lead importado',
-                'copy': 'Leitura do corredor de precisao: convite, WhatsApp, revisao curta e entrada.',
+                'copy': 'Leitura do corredor de precisão: convite, WhatsApp, revisão curta e entrada.',
                 'steps': [
                     ('invite_created', 'Convites'),
                     ('whatsapp_handoff_opened', 'WhatsApp aberto'),
                     ('landing_viewed', 'Landing aberta'),
-                    ('oauth_completed', 'OAuth concluido'),
-                    ('wizard_completed', 'Cadastro concluido'),
+                    ('oauth_completed', 'OAuth concluído'),
+                    ('wizard_completed', 'Cadastro concluído'),
                     ('app_entry_completed', 'Entrada no app'),
                 ],
                 'scope_queryset': base_queryset,
             },
             {
                 'journey': StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
-                'title': 'Aluno ja cadastrado',
-                'copy': 'Leitura do corredor mais curto: convite, autenticacao e entrada direta.',
+                'title': 'Aluno já cadastrado',
+                'copy': 'Leitura do corredor mais curto: convite, autenticação e entrada direta.',
                 'steps': [
                     ('invite_created', 'Convites'),
                     ('landing_viewed', 'Landing aberta'),
-                    ('oauth_completed', 'OAuth concluido'),
+                    ('oauth_completed', 'OAuth concluído'),
                     ('app_entry_completed', 'Entrada no app'),
                 ],
                 'scope_queryset': base_queryset,
@@ -96,9 +96,9 @@ class StudentInvitationOperationsRecommendations:
             conversion_rate = round((last_step_value / first_step_value) * 100, 1) if first_step_value else 0
             alerts = []
             if first_step_value >= 5 and conversion_rate < 30:
-                alerts.append('Conversao baixa nesta janela. Vale revisar copy, handoff ou friccao da jornada.')
+                alerts.append('Conversão baixa nesta janela. Vale revisar copy, handoff ou fricção da jornada.')
             if len(steps) >= 3 and steps[-2]['value'] > steps[-1]['value']:
-                alerts.append('Existe atrito perto da reta final: tem gente chegando quase la e nao entrando no app.')
+                alerts.append('Existe atrito perto da reta final: tem gente chegando quase lá e não entrando no app.')
             biggest_drop = self._find_biggest_funnel_drop(steps=steps)
             next_action = self._build_journey_next_action(
                 journey=item['journey'],
@@ -113,7 +113,7 @@ class StudentInvitationOperationsRecommendations:
                     'copy': item['copy'],
                     'steps': steps,
                     'headline_value': f'{conversion_rate:.1f}%',
-                    'headline_label': 'Conversao final da janela',
+                    'headline_label': 'Conversão final da janela',
                     'headline_tone': (
                         'ok'
                         if conversion_rate >= 60
@@ -128,7 +128,7 @@ class StudentInvitationOperationsRecommendations:
                         {
                             'eyebrow': 'Janela',
                             'value': '30d',
-                            'detail': 'Leitura curta para operacao.',
+                            'detail': 'Leitura curta para operação.',
                             'tone': 'muted',
                         },
                         {
@@ -138,15 +138,15 @@ class StudentInvitationOperationsRecommendations:
                             'tone': 'attention' if first_step_value else 'muted',
                         },
                         {
-                            'eyebrow': 'Ultimo passo',
+                            'eyebrow': 'Último passo',
                             'value': str(last_step_value),
                             'detail': steps[-1]['label'] if steps else 'Sem eventos',
                             'tone': 'ok' if last_step_value else 'muted',
                         },
                         {
-                            'eyebrow': 'Conversao final',
+                            'eyebrow': 'Conversão final',
                             'value': f'{conversion_rate:.1f}%',
-                            'detail': 'Do primeiro ao ultimo passo.',
+                            'detail': 'Do primeiro ao último passo.',
                             'tone': (
                                 'ok'
                                 if conversion_rate >= 60
@@ -175,8 +175,8 @@ class StudentInvitationOperationsRecommendations:
         if len(pending_memberships) >= 3:
             return {
                 'kind': 'pending_memberships',
-                'title': 'Liberar quem ja chegou ao portao',
-                'body': f'Existem {len(pending_memberships)} alunos aguardando aprovacao. A melhor energia de hoje e destravar acesso para quem ja fez a parte dele.',
+                'title': 'Liberar quem já chegou ao portão',
+                'body': f'Existem {len(pending_memberships)} alunos aguardando aprovação. A melhor energia de hoje é destravar acesso para quem já fez a parte dele.',
                 'tone': 'danger' if len(pending_memberships) >= 5 else 'attention',
                 'pill': f'{len(pending_memberships)} aguardando',
             }
@@ -185,7 +185,7 @@ class StudentInvitationOperationsRecommendations:
             return {
                 'kind': 'stalled_invites',
                 'title': 'Trabalhar a fila quente do WhatsApp',
-                'body': f'Existem {len(stalled_invites)} convites travados. O maior ganho rapido agora e recuperar quem ja estava quase entrando.',
+                'body': f'Existem {len(stalled_invites)} convites travados. O maior ganho rápido agora é recuperar quem já estava quase entrando.',
                 'tone': 'danger' if len(stalled_invites) >= 3 else 'attention',
                 'pill': f'{min(len(stalled_invites), 5)} para atacar agora',
             }
@@ -199,7 +199,7 @@ class StudentInvitationOperationsRecommendations:
             return {
                 'kind': 'mass_link_reannounce',
                 'title': 'Reanunciar o link em massa',
-                'body': 'O link do grupo esta pronto, mas ainda sem tracao real nesta janela. Vale republicar no grupo com uma chamada simples para entrar com Google ou Apple.',
+                'body': 'O link do grupo está pronto, mas ainda sem tração real nesta janela. Vale republicar no grupo com uma chamada simples para entrar com Google ou Apple.',
                 'tone': 'attention',
                 'pill': 'Rede pronta',
             }
@@ -208,7 +208,7 @@ class StudentInvitationOperationsRecommendations:
             return {
                 'kind': 'restart_momentum',
                 'title': 'Reaquecer o corredor hoje',
-                'body': 'Nao houve novos convites nas ultimas 24h. O melhor agora e disparar algumas entradas para manter o onboarding vivo e aprendendo.',
+                'body': 'Não houve novos convites nas últimas 24h. O melhor agora é disparar algumas entradas para manter o onboarding vivo e aprendendo.',
                 'tone': 'muted',
                 'pill': 'Sem pulso recente',
             }
@@ -224,8 +224,8 @@ class StudentInvitationOperationsRecommendations:
 
         return {
             'kind': 'monitoring',
-            'title': 'Operacao em observacao',
-            'body': 'Os corredores estao sem gargalo gritante agora. Vale manter o ritmo e observar a proxima rodada de dados.',
+            'title': 'Operação em observação',
+            'body': 'Os corredores estão sem gargalo gritante agora. Vale manter o ritmo e observar a próxima rodada de dados.',
             'tone': 'ok',
             'pill': 'Estavel',
         }
@@ -315,12 +315,12 @@ class StudentInvitationOperationsRecommendations:
             if conversion_rate >= 60:
                 return {
                     'title': 'Corredor saudavel',
-                    'body': 'A jornada esta fechando bem. O melhor agora e manter volume e acompanhar se o ritmo continua.',
+                    'body': 'A jornada está fechando bem. O melhor agora é manter volume e acompanhar se o ritmo continua.',
                     'tone': 'ok',
                     'pill': 'Fluxo bom',
                 }
             return {
-                'title': 'Acompanhe a proxima rodada',
+                'title': 'Acompanhe a próxima rodada',
                 'body': 'O volume ainda e curto. Vale observar mais alguns alunos antes de mexer no fluxo.',
                 'tone': 'attention',
                 'pill': 'Em leitura',
@@ -330,29 +330,29 @@ class StudentInvitationOperationsRecommendations:
         to_label = biggest_drop['to_label']
         journey_actions = {
             StudentOnboardingJourney.MASS_BOX_INVITE: {
-                ('Visitas', 'OAuth concluido'): 'O grupo esta clicando, mas pouca gente esta entrando com Google ou Apple. Vale encurtar a copy e deixar a chamada de autenticacao mais obvia.',
-                ('OAuth concluido', 'Cadastro concluido'): 'Tem gente autenticando e travando no wizard. O melhor ajuste e simplificar campos e reforcar que o cadastro leva menos de um minuto.',
-                ('Cadastro concluido', 'Entrada no app'): 'Tem aluno terminando o cadastro e nao sentando no app. Revise a mensagem final e a sensacao de "pronto para usar".',
+                ('Visitas', 'OAuth concluído'): 'O grupo está clicando, mas pouca gente está entrando com Google ou Apple. Vale encurtar a copy e deixar a chamada de autenticação mais óbvia.',
+                ('OAuth concluído', 'Cadastro concluído'): 'Tem gente autenticando e travando no wizard. O melhor ajuste é simplificar campos e reforçar que o cadastro leva menos de um minuto.',
+                ('Cadastro concluído', 'Entrada no app'): 'Tem aluno terminando o cadastro e não sentando no app. Revise a mensagem final e a sensação de "pronto para usar".',
             },
             StudentOnboardingJourney.IMPORTED_LEAD_INVITE: {
-                ('Convites', 'WhatsApp aberto'): 'Os convites existem, mas a recepcao ainda nao puxou o handoff do WhatsApp. O proximo passo e trabalhar a fila quente do dia.',
-                ('WhatsApp aberto', 'Landing aberta'): 'A mensagem esta saindo, mas o aluno nao esta abrindo o link. Vale testar uma copy mais direta e pessoal no WhatsApp.',
-                ('Landing aberta', 'OAuth concluido'): 'O aluno chegou na landing, mas hesitou na autenticacao. Deixe claro que basta tocar em Google ou Apple para entrar.',
-                ('OAuth concluido', 'Cadastro concluido'): 'O aluno entrou com OAuth, mas o wizard ainda esta segurando gente demais. Revise os campos obrigatorios e a ordem visual.',
-                ('Cadastro concluido', 'Entrada no app'): 'A jornada termina o cadastro, mas ainda nao fecha a entrada real. Revise o redirect final e a mensagem de sucesso.',
+                ('Convites', 'WhatsApp aberto'): 'Os convites existem, mas a recepção ainda não puxou o handoff do WhatsApp. O próximo passo é trabalhar a fila quente do dia.',
+                ('WhatsApp aberto', 'Landing aberta'): 'A mensagem está saindo, mas o aluno não está abrindo o link. Vale testar uma copy mais direta e pessoal no WhatsApp.',
+                ('Landing aberta', 'OAuth concluído'): 'O aluno chegou na landing, mas hesitou na autenticação. Deixe claro que basta tocar em Google ou Apple para entrar.',
+                ('OAuth concluído', 'Cadastro concluído'): 'O aluno entrou com OAuth, mas o wizard ainda está segurando gente demais. Revise os campos obrigatórios e a ordem visual.',
+                ('Cadastro concluído', 'Entrada no app'): 'A jornada termina o cadastro, mas ainda não fecha a entrada real. Revise o redirect final e a mensagem de sucesso.',
             },
             StudentOnboardingJourney.REGISTERED_STUDENT_INVITE: {
-                ('Convites', 'Landing aberta'): 'O convite saiu, mas pouca gente abriu. Vale reenviar para quem esta quente e usar um texto mais claro no canal do box.',
-                ('Landing aberta', 'OAuth concluido'): 'A landing esta atraindo clique, mas ainda falta confianca para autenticar. Simplifique a explicacao e destaque que o acesso e rapido.',
-                ('OAuth concluido', 'Entrada no app'): 'Tem aluno autenticando e nao chegando ao app. Revise o callback final e a mensagem de acesso confirmado.',
+                ('Convites', 'Landing aberta'): 'O convite saiu, mas pouca gente abriu. Vale reenviar para quem está quente e usar um texto mais claro no canal do box.',
+                ('Landing aberta', 'OAuth concluído'): 'A landing está atraindo clique, mas ainda falta confiança para autenticar. Simplifique a explicação e destaque que o acesso é rápido.',
+                ('OAuth concluído', 'Entrada no app'): 'Tem aluno autenticando e não chegando ao app. Revise o callback final e a mensagem de acesso confirmado.',
             },
         }
         body = journey_actions.get(journey, {}).get(
             (from_label, to_label),
-            f'O maior gargalo esta entre {from_label.lower()} e {to_label.lower()}. Vale atacar esse trecho primeiro.',
+            f'O maior gargalo está entre {from_label.lower()} e {to_label.lower()}. Vale atacar esse trecho primeiro.',
         )
         return {
-            'title': f'Proxima melhor acao: atacar {from_label.lower()} -> {to_label.lower()}',
+            'title': f'Próxima melhor ação: atacar {from_label.lower()} -> {to_label.lower()}',
             'body': body,
             'tone': 'attention' if conversion_rate >= 30 else 'danger',
             'pill': 'Gargalo principal',

@@ -335,25 +335,31 @@ Basic single-instance flow (good enough for local reading and most tests):
 
 1. Create and activate the virtual environment.
 2. Install dependencies with `pip install -r requirements.txt`.
-3. Copy `.env.example` to `.env` and adjust the minimum required values.
-4. Run `python manage.py migrate` (on PostgreSQL, prefer `python manage.py migrate_schemas` to cover shared and tenant schemas).
-5. Run `python manage.py bootstrap_roles` (per tenant; `provision_box` already bootstraps roles for a newly provisioned box).
-6. Create an administrative user with `python manage.py createsuperuser`.
-7. Start the server with `python manage.py runserver`.
-8. Run `python manage.py test` to automatically use the project's test configuration path.
+3. Start the local PostgreSQL stack with `docker compose -f docker-compose.postgres.yml up -d`.
+4. Copy `.env.example` to `.env` and adjust the minimum required values.
+5. Keep `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/octobox_control` for the default local Docker database, or point it to another PostgreSQL 15+ instance.
+6. Run `python manage.py migrate_schemas --shared`.
+7. Run `python manage.py migrate_schemas`.
+8. Run `python manage.py bootstrap_roles` (per tenant; `provision_box` already bootstraps roles for a newly provisioned box).
+9. Create an administrative user with `python manage.py createsuperuser`.
+10. Start the server with `python manage.py runserver`.
+11. Run tests with PostgreSQL using `python -m pytest --create-db --migrations -q`.
 
 Notes:
 
 - login, logout, admin changes, and sensitive commercial actions already feed the audit trail
 - for local environments, the project automatically reads `.env` when it exists
+- PostgreSQL is the default database for local development, tests, staging, and production because `django-tenants` depends on PostgreSQL schemas
 - `python manage.py test` prefers `config.settings.test` and also accepts a local `.env.test` as an optional complement
+- `TEST_DATABASE_URL` overrides `DATABASE_URL` only for tests; when both are absent, the settings point to the local PostgreSQL default on `127.0.0.1:5433`
 - for local environments, you can define `DJANGO_SECRET_KEY` in a `.env` file or in system variables
 - for environments that use WhatsApp channel identity, also define `PHONE_BLIND_INDEX_KEY`
 - the project now accepts `DJANGO_ENV=development` or `DJANGO_ENV=production` to separate local configuration from staging/production
-- for staging/production, the recommended path is using `DATABASE_URL` with PostgreSQL, `REDIS_URL` for shared cache, running `collectstatic`, and publishing behind HTTPS
+- SQLite is no longer the default fallback; use `OCTOBOX_ALLOW_SQLITE_FALLBACK=1` only for legacy diagnostics that do not need tenants
+- for staging/production, use `DATABASE_URL` with PostgreSQL, `REDIS_URL` for shared cache, running `collectstatic`, and publishing behind HTTPS
 - the public admin path must be defined by `DJANGO_ADMIN_URL_PATH`, not by `/admin/`
 - to expose the server on the local network, use the `Run Django Server (LAN)` task or run `python manage.py runserver 0.0.0.0:8000`
-- for CI or staging with PostgreSQL, use Postgres 14 or newer
+- for CI, local development, staging, or production, use PostgreSQL 15 or newer
 
 New guides:
 
@@ -361,7 +367,7 @@ New guides:
 - minimum database backup: [docs/rollout/backup-guide.md](docs/rollout/backup-guide.md)
 - production security baseline: [docs/reference/production-security-baseline.md](docs/reference/production-security-baseline.md)
 - real mobile validation checklist: [docs/experience/mobile-real-validation-checklist.md](docs/experience/mobile-real-validation-checklist.md)
-- backup scripts: [scripts/backup_sqlite.ps1](scripts/backup_sqlite.ps1) and [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1)
+- backup scripts: [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1) and [scripts/restore_postgres.ps1](scripts/restore_postgres.ps1)
 - Hostinger VPS production deploy: [docs/rollout/hostinger-vps-production-deploy.md](docs/rollout/hostinger-vps-production-deploy.md)
 
 ## License

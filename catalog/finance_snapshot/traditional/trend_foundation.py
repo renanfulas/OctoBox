@@ -34,15 +34,15 @@ def _format_delta_percent(current, previous):
     previous = Decimal(previous or 0)
     if previous == 0:
         if current == 0:
-            return 'Sem variacao', 'flat'
+            return 'Sem variação', 'flat'
         return 'Sem base anterior', 'up'
     change = ((current - previous) / previous) * Decimal('100')
     rounded = change.quantize(Decimal('0.1'))
     if rounded == 0:
-        return 'Sem variacao', 'flat'
+        return 'Sem variação', 'flat'
     signal = '+' if rounded > 0 else ''
     direction = 'up' if rounded > 0 else 'down'
-    return f'{signal}{str(rounded).replace(".", ",")}% vs mes anterior', direction
+    return f'{signal}{str(rounded).replace(".", ",")}% vs mês anterior', direction
 
 
 def _format_delta_count(current, previous):
@@ -50,10 +50,10 @@ def _format_delta_count(current, previous):
     previous = int(previous or 0)
     delta = current - previous
     if delta == 0:
-        return 'Mesmo nivel do mes anterior', 'flat'
+        return 'Mesmo nível do mês anterior', 'flat'
     direction = 'up' if delta > 0 else 'down'
     signal = '+' if delta > 0 else ''
-    return f'{signal}{delta} vs mes anterior', direction
+    return f'{signal}{delta} vs mês anterior', direction
 
 
 def _format_delta_currency(current, previous):
@@ -61,10 +61,10 @@ def _format_delta_currency(current, previous):
     previous = Decimal(previous or 0)
     delta = (current - previous).quantize(Decimal('0.01'))
     if delta == 0:
-        return 'Mesmo valor do mes anterior', 'flat'
+        return 'Mesmo valor do mês anterior', 'flat'
     direction = 'up' if delta > 0 else 'down'
     signal = '+' if delta > 0 else '-'
-    return f'{signal}{_format_currency_compact(abs(delta))} vs mes anterior', direction
+    return f'{signal}{_format_currency_compact(abs(delta))} vs mês anterior', direction
 
 
 def _format_svg_number(value):
@@ -153,7 +153,7 @@ def _resolve_received_metric_note(finance_metrics):
         if 'Receita recebida' in key and metric.get('note'):
             return metric['note']
 
-    return 'Mostra o caixa realizado no recorte atual frente ao mes anterior.'
+    return 'Mostra o caixa realizado no recorte atual frente ao mês anterior.'
 
 
 def _resolve_window_label(filter_form):
@@ -325,7 +325,7 @@ def _build_churn_sparkline(monthly_comparison):
                 'svg_x': point['svg_x'],
                 'svg_y': point['svg_y'],
                 'label': current_item.get('short_label') or current_item.get('label'),
-                'tooltip': f"{current_item.get('short_label')}: {current_item.get('activations', 0)} ativacoes",
+                'tooltip': f"{current_item.get('short_label')}: {current_item.get('activations', 0)} ativações",
             }
         )
 
@@ -385,9 +385,9 @@ def build_finance_trend_foundation(*, filter_form, finance_metrics, monthly_comp
         'churn': {
             'key': 'churn',
             'title': 'Churn e crescimento',
-            'subtitle': f'Ativacoes vs cancelamentos no recorte de {window_label}.',
+            'subtitle': f'Ativações vs cancelamentos no recorte de {window_label}.',
             'legend': {
-                'primary': 'Ativacoes',
+                'primary': 'Ativações',
                 'primary_state': 'activation',
                 'secondary': 'Cancelamentos',
                 'secondary_state': 'cancellation',
@@ -400,9 +400,9 @@ def build_finance_trend_foundation(*, filter_form, finance_metrics, monthly_comp
     metric_pills = [
         _build_pending_metric(
             key='liquido',
-            label='Liquido',
+            label='Líquido',
             placeholder_label='Aguardando base',
-            pending_reason='Falta definir a formula canonica de liquido com politica de estorno e base de gastos.',
+            pending_reason='Falta definir a fórmula canônica de líquido com política de estorno e base de gastos.',
             dependencies=['refund_netting_policy', 'expenses_ledger'],
         ),
         _build_ready_metric(
@@ -419,7 +419,7 @@ def build_finance_trend_foundation(*, filter_form, finance_metrics, monthly_comp
             key='gastos',
             label='Gastos',
             placeholder_label='Em breve',
-            pending_reason='Ainda nao existe ledger canonico de gastos do box no dominio financeiro.',
+            pending_reason='Ainda não existe ledger canônico de gastos do box no domínio financeiro.',
             dependencies=['expenses_ledger'],
         ),
         _build_ready_metric(
@@ -430,7 +430,7 @@ def build_finance_trend_foundation(*, filter_form, finance_metrics, monthly_comp
             delta_label=churn_delta_label,
             direction=churn_direction,
             semantic_state=churn_semantic,
-            help_text='Mostra a soma do valor dos planos cancelados no recorte atual frente ao mes anterior.',
+            help_text='Mostra a soma do valor dos planos cancelados no recorte atual frente ao mês anterior.',
         ),
     ]
 
@@ -452,11 +452,11 @@ def build_finance_trend_foundation(*, filter_form, finance_metrics, monthly_comp
             'interactive_metric_keys': ['recebido', 'churn'],
             'pending_foundation_contract': {
                 'liquido': {
-                    'reason': 'Falta regra canonica de liquido.',
+                    'reason': 'Falta regra canônica de líquido.',
                     'dependencies': ['refund_netting_policy', 'expenses_ledger'],
                 },
                 'gastos': {
-                    'reason': 'Falta ledger canonico de gastos.',
+                    'reason': 'Falta ledger canônico de gastos.',
                     'dependencies': ['expenses_ledger'],
                 },
             },

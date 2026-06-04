@@ -58,7 +58,7 @@ class StudentInvitationMembershipActionsMixin:
         denied_response = self._require_action_roles(
             request,
             allowed_roles=self.membership_approval_roles,
-            denied_message='Aprovacao de membership exige Recepcao, Manager, Owner ou DEV.',
+            denied_message='Aprovação de membership exige Recepção, Manager, Owner ou DEV.',
         )
         if denied_response is not None:
             return denied_response
@@ -72,7 +72,7 @@ class StudentInvitationMembershipActionsMixin:
             .first()
         )
         if membership is None:
-            messages.error(request, 'O vinculo pendente nao foi encontrado.')
+            messages.error(request, 'O vínculo pendente não foi encontrado.')
             return redirect('student-invitation-operations')
 
         membership.mark_active()
@@ -130,13 +130,13 @@ class StudentInvitationMembershipActionsMixin:
         denied_response = self._require_action_roles(
             request,
             allowed_roles=self.invite_operator_roles,
-            denied_message='Troca de e-mail exige Recepcao, Manager, Owner ou DEV.',
+            denied_message='Troca de e-mail exige Recepção, Manager, Owner ou DEV.',
         )
         if denied_response is not None:
             return denied_response
         membership = self._get_membership_for_management(request)
         if membership is None:
-            messages.error(request, 'O vinculo do aluno nao foi encontrado para trocar o e-mail.')
+            messages.error(request, 'O vínculo do aluno não foi encontrado para trocar o e-mail.')
             return redirect('student-invitation-operations')
 
         new_email = (request.POST.get('new_email') or '').strip().lower()
@@ -147,12 +147,12 @@ class StudentInvitationMembershipActionsMixin:
         try:
             validate_email(new_email)
         except ValidationError:
-            messages.error(request, 'O novo e-mail informado nao e valido.')
+            messages.error(request, 'O novo e-mail informado não é válido.')
             return redirect('student-invitation-operations')
 
         identity = membership.identity
         if identity.email == new_email:
-            messages.info(request, 'Esse aluno ja esta com esse e-mail registrado no app.')
+            messages.info(request, 'Esse aluno já está com esse e-mail registrado no app.')
             return redirect('student-invitation-operations')
 
         role_slug = self._get_actor_role_slug(request)
@@ -166,7 +166,7 @@ class StudentInvitationMembershipActionsMixin:
             if reception_changes_in_window >= 1:
                 messages.error(
                     request,
-                    'A segunda troca de e-mail no mesmo mes exige Manager ou Owner. Chame a lideranca para confirmar esta alteracao.',
+                    'A segunda troca de e-mail no mesmo mês exige Manager ou Owner. Chame a liderança para confirmar esta alteração.',
                 )
                 return redirect('student-invitation-operations')
 
@@ -201,16 +201,16 @@ class StudentInvitationMembershipActionsMixin:
         denied_response = self._require_action_roles(
             request,
             allowed_roles=self.membership_lifecycle_roles,
-            denied_message='Suspensao financeira exige Manager, Owner ou DEV.',
+            denied_message='Suspensão financeira exige Manager, Owner ou DEV.',
         )
         if denied_response is not None:
             return denied_response
         membership = self._get_membership_for_management(request)
         if membership is None:
-            messages.error(request, 'O vinculo do aluno nao foi encontrado para suspensao financeira.')
+            messages.error(request, 'O vínculo do aluno não foi encontrado para suspensão financeira.')
             return redirect('student-invitation-operations')
         if membership.status != StudentBoxMembershipStatus.ACTIVE:
-            messages.info(request, 'Somente memberships ativos podem entrar em suspensao financeira.')
+            messages.info(request, 'Somente memberships ativos podem entrar em suspensão financeira.')
             return redirect('student-invitation-operations')
 
         membership.mark_suspended_financial()
@@ -237,13 +237,13 @@ class StudentInvitationMembershipActionsMixin:
         denied_response = self._require_action_roles(
             request,
             allowed_roles=self.membership_lifecycle_roles,
-            denied_message='Reativacao exige Manager, Owner ou DEV.',
+            denied_message='Reativação exige Manager, Owner ou DEV.',
         )
         if denied_response is not None:
             return denied_response
         membership = self._get_membership_for_management(request)
         if membership is None:
-            messages.error(request, 'O vinculo do aluno nao foi encontrado para reativacao.')
+            messages.error(request, 'O vínculo do aluno não foi encontrado para reativação.')
             return redirect('student-invitation-operations')
         if membership.status not in {
             StudentBoxMembershipStatus.SUSPENDED_FINANCIAL,
@@ -292,19 +292,19 @@ class StudentInvitationMembershipActionsMixin:
         denied_response = self._require_action_roles(
             request,
             allowed_roles=self.membership_lifecycle_roles,
-            denied_message='Revogacao exige Manager, Owner ou DEV.',
+            denied_message='Revogação exige Manager, Owner ou DEV.',
         )
         if denied_response is not None:
             return denied_response
         membership = self._get_membership_for_management(request)
         if membership is None:
-            messages.error(request, 'O vinculo do aluno nao foi encontrado para revogacao.')
+            messages.error(request, 'O vínculo do aluno não foi encontrado para revogação.')
             return redirect('student-invitation-operations')
         if membership.status == StudentBoxMembershipStatus.REVOKED:
-            messages.info(request, 'Esse membership ja esta revogado.')
+            messages.info(request, 'Esse membership já está revogado.')
             return redirect('student-invitation-operations')
 
-        revoke_reason = (request.POST.get('revoke_reason') or '').strip() or 'Revogacao operacional do box.'
+        revoke_reason = (request.POST.get('revoke_reason') or '').strip() or 'Revogação operacional do box.'
         membership.mark_revoked(reason=revoke_reason)
         membership.save(update_fields=['status', 'revoked_at', 'revoked_reason', 'updated_at'])
         self._realign_identity_after_membership_loss(identity=membership.identity, affected_membership=membership)

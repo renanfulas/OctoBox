@@ -134,14 +134,14 @@ def _build_shell_page_context(current_view_name, current_path, role, navigation,
     section_map = {
         'dashboard': {'eyebrow': 'Painel', 'title': 'Dashboard'},
         'intake-center': {'eyebrow': 'Triagem', 'title': 'Fila de Entradas'},
-        'students': {'eyebrow': 'Gestao', 'title': 'Diretorio de Alunos'},
-        'finance': {'eyebrow': 'Gestao', 'title': 'Centro Financeiro'},
+        'students': {'eyebrow': 'Gestão', 'title': 'Diretório de Alunos'},
+        'finance': {'eyebrow': 'Gestão', 'title': 'Centro Financeiro'},
         'class-grid': {'eyebrow': 'Grade', 'title': 'Agenda de Aulas'},
-        'reports-hub': {'eyebrow': 'Relatorios', 'title': 'Camada gerencial'},
-        'operations-owner': {'eyebrow': 'Operacao', 'title': 'Painel Operacional'},
-        'access': {'eyebrow': 'Acessos', 'title': 'Papeis e acessos'},
+        'reports-hub': {'eyebrow': 'Relatórios', 'title': 'Camada gerencial'},
+        'operations-owner': {'eyebrow': 'Operação', 'title': 'Painel Operacional'},
+        'access': {'eyebrow': 'Acessos', 'title': 'Papéis e acessos'},
         'system-map': {'eyebrow': 'Sistema', 'title': 'Mapa do sistema'},
-        'operational-settings': {'eyebrow': 'Config', 'title': 'Configuracoes operacionais'},
+        'operational-settings': {'eyebrow': 'Config', 'title': 'Configurações operacionais'},
         'admin': {'eyebrow': 'Admin', 'title': active_label},
     }
 
@@ -150,7 +150,7 @@ def _build_shell_page_context(current_view_name, current_path, role, navigation,
         section = {'eyebrow': 'OctoBox', 'title': active_label}
 
     if scope == 'dashboard' and role_slug == ROLE_RECEPTION:
-        section = {**section, 'eyebrow': 'Recepcao'}
+        section = {**section, 'eyebrow': 'Recepção'}
 
     return build_shell_page_payload(
         eyebrow=section['eyebrow'],
@@ -177,7 +177,7 @@ def _build_navigation(role_slug, current_view_name):
         },
         {
             'nav_key': 'operacao',
-            'label': 'Minha operacao',
+            'label': 'Minha operação',
             'href': reverse('role-operations'),
             'roles': operation_roles,
             'icon': 'OP',
@@ -296,7 +296,7 @@ def role_navigation(request):
 
         if role_slug in (ROLE_OWNER, ROLE_DEV):
             profile_navigation = [
-                {'label': 'Papeis e acessos', 'href': reverse('access-overview')},
+                {'label': 'Papéis e acessos', 'href': reverse('access-overview')},
                 {'label': 'Config. operacionais', 'href': reverse('operational-settings')},
                 {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent')},
             ]
@@ -321,7 +321,7 @@ def role_navigation(request):
     shell_chrome = build_shell_chrome_payload(
         sidebar=build_shell_sidebar_payload(
             brand='OctoBox Control',
-            tagline='Gestao viva do box com leitura comercial e rotina operacional clara.',
+            tagline='Gestão viva do box com leitura comercial e rotina operacional clara.',
             user_name=user_display_name,
             navigation=sidebar_navigation,
         ),

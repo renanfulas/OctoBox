@@ -110,7 +110,7 @@ def _format_prediction_window_label(value):
     normalized = str(value or '').strip().lower()
     if normalized.startswith('next_') and normalized.endswith('_days'):
         days = normalized.removeprefix('next_').removesuffix('_days')
-        return f'proximos {days} dias'
+        return f'próximos {days} dias'
     return normalized or 'janela indefinida'
 
 

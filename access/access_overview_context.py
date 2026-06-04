@@ -71,19 +71,19 @@ def build_access_overview_context(view, *, context, profile_create_form=None, fo
         request=view.request,
         forms_by_user_id=forms_by_user_id,
     )
-    context['page_title'] = 'Papeis e acessos'
-    context['page_subtitle'] = 'Quem decide o que e onde cada papel para.'
+    context['page_title'] = 'Papéis e acessos'
+    context['page_subtitle'] = 'Quem decide o quê e onde cada papel para.'
     context['hero_stats'] = [
         {'label': 'Papel atual', 'value': current_role.label},
         {'label': 'Capacidades do papel', 'value': len(role_capabilities)},
-        {'label': 'Papeis formais', 'value': len(role_definitions)},
-        {'label': 'Fronteira central', 'value': 'Governanca'},
+        {'label': 'Papéis formais', 'value': len(role_definitions)},
+        {'label': 'Fronteira central', 'value': 'Governança'},
     ]
     context['access_operational_focus'] = []
     context['access_reading_panel'] = build_page_reading_panel(
         items=context['access_operational_focus'],
         primary_href='',
-        pill_label='Governanca',
+        pill_label='Governança',
         pill_class='accent',
         class_name='access-reading-panel',
         panel_id='access-command-lane',
@@ -91,9 +91,9 @@ def build_access_overview_context(view, *, context, profile_create_form=None, fo
     context['access_hero'] = build_page_hero(
         eyebrow='Acessos',
         title='Fronteiras em leitura.',
-        copy='Veja quem pode agir, onde cada papel comeca e o que pede cuidado agora.',
+        copy='Veja quem pode agir, onde cada papel começa e o que pede cuidado agora.',
         actions=[
-            {'label': 'Ver mapa de papeis', 'href': '#access-role-map'},
+            {'label': 'Ver mapa de papéis', 'href': '#access-role-map'},
         ],
         aria_label='Panorama de acessos',
         classes=['access-hero'],

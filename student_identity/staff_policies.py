@@ -53,7 +53,7 @@ def actor_has_student_operations_capability(access_matrix: dict) -> bool:
 def deny_read_only_student_operations_actor(request):
     messages.error(
         request,
-        'Coach acompanha o estado do app do aluno em modo leitura. Convite, aprovacao e governanca de identidade ficam com Recepcao, Manager, Owner ou DEV.',
+        'Coach acompanha o estado do app do aluno em modo leitura. Convite, aprovação e governança de identidade ficam com Recepção, Manager, Owner ou DEV.',
     )
     return redirect('student-invitation-operations')
 

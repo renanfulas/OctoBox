@@ -92,7 +92,7 @@ def handle_access_profile_create(*, post_data, ensure_role_group):
     user_model = get_user_model()
     username = form.cleaned_data['username']
     if user_model.objects.filter(username=username).exists():
-        form.add_error('username', 'Ja existe um usuario com esse identificador.')
+        form.add_error('username', 'Já existe um usuário com esse identificador.')
         return {
             'ok': False,
             'reason': 'duplicate-username',

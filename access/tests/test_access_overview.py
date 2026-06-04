@@ -23,7 +23,7 @@ class AccessOverviewViewTests(TestCase):
         response = self.client.get(reverse('access-overview'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Papeis e acessos')
+        self.assertContains(response, 'Papéis e acessos')
 
     def test_access_overview_can_create_profile(self):
         response = self.client.post(
