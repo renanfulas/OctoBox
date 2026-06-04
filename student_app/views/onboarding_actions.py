@@ -36,7 +36,7 @@ def complete_student_mass_onboarding(view, form):
         box_root_slug=result.identity.box_root_slug,
         device_fingerprint=build_student_device_fingerprint(view.request),
     )
-    messages.success(view.request, 'Cadastro concluido. Seu app do aluno ja esta pronto para uso.')
+    messages.success(view.request, 'Cadastro concluído. Seu app do aluno já está pronto para uso.')
     return response
 
 
@@ -50,7 +50,7 @@ def complete_student_imported_lead_onboarding(view, form):
         clear_pending_student_onboarding(view.request)
         return redirect('student-app-home')
     clear_pending_student_onboarding(view.request)
-    messages.success(view.request, 'Dados revisados. Agora voce pode usar o app normalmente.')
+    messages.success(view.request, 'Dados revisados. Agora você pode usar o app normalmente.')
     return redirect('student-app-home')
 
 

@@ -82,7 +82,7 @@ def build_student_directory_report(*, students, report_format):
             ],
         }
 
-    raise ValueError('Formato de exportacao nao suportado.')
+    raise ValueError('Formato de exportação não suportado.')
 
 
 from django.urls import reverse
@@ -96,7 +96,7 @@ def build_finance_report(*, snapshot, report_format):
         return {
             'format': 'csv',
             'filename': 'relatorio-financeiro.csv',
-            'headers': ['Aluno', 'Data de Vencimento', 'Valor', 'Status', 'Metodo', 'Competência', 'Parcelas', 'Pago Em', 'Link Checkout'],
+            'headers': ['Aluno', 'Data de Vencimento', 'Valor', 'Status', 'Método', 'Competência', 'Parcelas', 'Pago Em', 'Link Checkout'],
             'rows': [
                 [
                     payment.student.full_name,
@@ -115,7 +115,7 @@ def build_finance_report(*, snapshot, report_format):
 
     if report_format == 'pdf':
         plan_lines = [
-            f'{plan.name} | R$ {plan.price:.2f} | {plan.get_billing_cycle_display()} | ativo={"sim" if plan.active else "nao"}'
+            f'{plan.name} | R$ {plan.price:.2f} | {plan.get_billing_cycle_display()} | ativo={"sim" if plan.active else "não"}'
             for plan in plans[:30]
         ] or ['Nenhum plano encontrado para o filtro atual.']
         payment_lines = [
@@ -123,21 +123,21 @@ def build_finance_report(*, snapshot, report_format):
             for payment in payments.order_by('due_date', 'student__full_name')[:45]
         ] or ['Nenhum pagamento encontrado para o filtro atual.']
         movement_lines = [
-            f'{enrollment.student.full_name} | {enrollment.plan.name} | {enrollment.get_status_display()} | inicio {enrollment.start_date:%d/%m/%Y}'
+            f'{enrollment.student.full_name} | {enrollment.plan.name} | {enrollment.get_status_display()} | início {enrollment.start_date:%d/%m/%Y}'
             for enrollment in enrollments.order_by('-updated_at', '-created_at')[:30]
-        ] or ['Nenhuma matricula encontrada para o filtro atual.']
+        ] or ['Nenhuma matrícula encontrada para o filtro atual.']
         return {
             'format': 'pdf',
             'filename': 'relatorio-financeiro.pdf',
-            'title': 'Relatorio financeiro - OctoBox Control',
+            'title': 'Relatório financeiro - OctoBox Control',
             'sections': [
                 {'title': 'Planos no recorte', 'lines': plan_lines},
                 {'title': 'Pagamentos no recorte', 'lines': payment_lines},
-                {'title': 'Movimentos de matricula', 'lines': movement_lines},
+                {'title': 'Movimentos de matrícula', 'lines': movement_lines},
             ],
         }
 
-    raise ValueError('Formato de exportacao nao suportado.')
+    raise ValueError('Formato de exportação não suportado.')
 
 
 __all__ = ['build_finance_report', 'build_student_directory_report']

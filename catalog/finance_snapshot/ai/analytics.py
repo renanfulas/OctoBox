@@ -55,7 +55,7 @@ def build_finance_follow_up_analytics(*, follow_ups):
         **learning_sections,
         'score_guide': {
             'formula': 'historical_score = 0.4 * execution_rate + 0.6 * success_rate',
-            'note': 'Score simples, transparente e nao probabilistico; serve como leitura operacional historica.',
+            'note': 'Score simples, transparente e não probabilístico; serve como leitura operacional histórica.',
         },
     }
 

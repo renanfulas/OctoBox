@@ -24,7 +24,7 @@ PONTOS CRITICOS:
 </head>
 <body data-page="login-hub" data-screen="entry-choice" data-ui="login-hub-body">
     <main class="entry-shell" aria-label="Escolha de entrada do OctoBox">
-        <section class="entry-panel" aria-label="Opcoes de acesso">
+        <section class="entry-panel" aria-label="Opções de acesso">
             <div class="entry-brand-chip">
                 <img class="entry-brand-icon" src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
                 <span>OctoBox</span>
@@ -33,11 +33,11 @@ PONTOS CRITICOS:
             <p class="entry-eyebrow">Entrar</p>
             <h1>Seu box, sem excesso.</h1>
             <p class="entry-copy">
-                Entre com Google para abrir o app do aluno. Se voce faz parte da equipe, use o acesso interno logo abaixo.
+                Entre com Google para abrir o app do aluno. Se você faz parte da equipe, use o acesso interno logo abaixo.
             </p>
             {% if invite_token %}
             <p class="entry-note">
-                Convite reconhecido. Sua autenticacao com Google vai entrar ja com o contexto certo do box.
+                Convite reconhecido. Sua autenticação com Google vai entrar já com o contexto certo do box.
             </p>
             {% endif %}
 
@@ -49,8 +49,8 @@ PONTOS CRITICOS:
                 <span>Equipe do box</span>
             </div>
 
-            <a href="{{ staff_login_url }}" class="entry-button entry-button--staff">Entrar com usuario</a>
-            <p class="entry-support-copy">Usuario interno e senha. Simples como pegar o cracha certo antes de entrar na sala certa.</p>
+            <a href="{{ staff_login_url }}" class="entry-button entry-button--staff">Entrar com usuário</a>
+            <p class="entry-support-copy">Usuário interno e senha. Simples como pegar o crachá certo antes de entrar na sala certa.</p>
         </section>
     </main>
 </body>

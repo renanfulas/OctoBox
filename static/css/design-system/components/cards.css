@@ -512,6 +512,206 @@ body[data-theme="dark"] .metric-card .card-signal.is-info {
     color: color-mix(in srgb, var(--theme-accent-support) 80%, white 20%);
 }
 
+.kpi-command-overview {
+    margin-top: var(--workspace-fib-4);
+    margin-bottom: 0;
+}
+
+.kpi-command-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--kpi-command-columns, 4), minmax(168px, 1fr));
+    gap: var(--kpi-command-gap, 14px);
+}
+
+.kpi-command-grid > * {
+    min-width: 0;
+}
+
+.kpi-command-card {
+    display: grid;
+    gap: 20px;
+    min-height: 104px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(246, 250, 255, 0.96) 100%);
+    box-shadow:
+        0 16px 34px rgba(15, 23, 42, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.84);
+    isolation: isolate;
+    overflow: hidden;
+}
+
+.kpi-command-card::after {
+    display: none;
+}
+
+.kpi-command-card.is-selected-tab {
+    position: relative;
+    border-color: color-mix(in srgb, currentColor 24%, rgba(15, 23, 42, 0.08) 76%);
+    box-shadow:
+        0 18px 34px rgba(15, 23, 42, 0.09),
+        0 0 0 1px color-mix(in srgb, currentColor 10%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86);
+    transform: translateY(-1px);
+}
+
+.kpi-command-card-body {
+    min-height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr;
+    gap: 18px;
+    position: relative;
+    height: 100%;
+}
+
+.kpi-command-card .card-value-stack {
+    grid-column: 1 / -1;
+    grid-row: 1 / span 2;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.kpi-command-card .card-value-row {
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 0;
+}
+
+.kpi-command-card .card-value,
+.kpi-command-card .metric-number {
+    color: currentColor;
+}
+
+.kpi-command-card .card-label {
+    margin: 0;
+    line-height: 1;
+}
+
+.kpi-command-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.kpi-command-card-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--muted) 82%, currentColor 18%);
+}
+
+.kpi-command-card-value {
+    font-size: clamp(1.75rem, 2.35vw, 2.45rem);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    color: currentColor;
+}
+
+.kpi-command-icon-box {
+    grid-column: 2;
+    grid-row: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    margin-left: auto;
+    color: color-mix(in srgb, currentColor 84%, var(--ink) 16%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42));
+    border: 1px solid color-mix(in srgb, currentColor 16%, rgba(15, 23, 42, 0.08) 84%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    z-index: 1;
+}
+
+.kpi-command-icon-box svg {
+    width: 18px;
+    height: 18px;
+}
+
+.kpi-command-card.kpi-green {
+    color: var(--theme-accent-success);
+}
+
+.kpi-command-card.kpi-red {
+    color: var(--theme-accent-danger);
+}
+
+.kpi-command-card.kpi-cyan,
+.kpi-command-card.kpi-blue {
+    color: var(--theme-accent-primary);
+}
+
+.kpi-command-card.kpi-amber {
+    color: var(--theme-accent-warning);
+}
+
+.kpi-command-card.kpi-emerald {
+    color: var(--theme-accent-success);
+}
+
+.kpi-command-card.kpi-purple {
+    color: var(--theme-accent-premium);
+}
+
+body[data-theme="dark"] .kpi-command-card {
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 68%, currentColor 32%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, currentColor 12%, transparent), transparent 42%),
+        linear-gradient(180deg, rgba(11, 18, 30, 0.98) 0%, rgba(10, 16, 27, 0.95) 100%);
+    box-shadow:
+        0 18px 34px rgba(0, 0, 0, 0.22),
+        0 0 0 1px color-mix(in srgb, currentColor 8%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="dark"] .kpi-command-card-label {
+    color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
+}
+
+body[data-theme="dark"] .kpi-command-icon-box {
+    color: color-mix(in srgb, currentColor 88%, white 12%);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, currentColor 18%, transparent), transparent 36%),
+        linear-gradient(180deg, rgba(24, 33, 50, 0.96), rgba(14, 21, 34, 0.9));
+    border-color: color-mix(in srgb, currentColor 24%, var(--theme-border-soft) 76%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 10px 22px rgba(2, 6, 23, 0.16);
+}
+
+body[data-theme="dark"] .kpi-command-card.is-selected-tab {
+    border-color: color-mix(in srgb, currentColor 36%, var(--theme-border-soft) 64%);
+    box-shadow:
+        0 22px 40px rgba(0, 0, 0, 0.26),
+        0 0 0 2px color-mix(in srgb, currentColor 18%, transparent),
+        0 0 26px color-mix(in srgb, currentColor 18%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 960px) {
+    .kpi-command-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .kpi-command-card {
+        min-height: 146px;
+    }
+}
+
+@media (max-width: 420px) {
+    .kpi-command-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .metric-card.kpi-family-card {
     transition:
         transform var(--transition-base),

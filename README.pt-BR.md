@@ -296,25 +296,31 @@ Fluxo basico de instancia unica (suficiente para leitura local e a maioria dos t
 
 1. Crie e ative o ambiente virtual.
 2. Instale dependencias com `pip install -r requirements.txt`.
-3. Copie `.env.example` para `.env` e ajuste o minimo necessario.
-4. Rode `python manage.py migrate` (em PostgreSQL, prefira `python manage.py migrate_schemas` para cobrir os schemas shared e de tenant).
-5. Rode `python manage.py bootstrap_roles` (por tenant; o `provision_box` ja faz bootstrap de roles para um box recem-provisionado).
-6. Crie um usuario administrativo com `python manage.py createsuperuser`.
-7. Suba o servidor com `python manage.py runserver`.
-8. Rode `python manage.py test` para usar automaticamente a trilha de configuracao de testes do projeto.
+3. Suba o PostgreSQL local com `docker compose -f docker-compose.postgres.yml up -d`.
+4. Copie `.env.example` para `.env` e ajuste o minimo necessario.
+5. Mantenha `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/octobox_control` para o banco Docker local padrao, ou aponte para outro PostgreSQL 15+.
+6. Rode `python manage.py migrate_schemas --shared`.
+7. Rode `python manage.py migrate_schemas`.
+8. Rode `python manage.py bootstrap_roles` (por tenant; o `provision_box` ja faz bootstrap de roles para um box recem-provisionado).
+9. Crie um usuario administrativo com `python manage.py createsuperuser`.
+10. Suba o servidor com `python manage.py runserver`.
+11. Rode os testes com PostgreSQL usando `python -m pytest --create-db --migrations -q`.
 
 Observacao:
 
 - login, logout, mudancas no admin e acoes comerciais sensiveis ja alimentam a trilha de auditoria
 - para ambiente local, o projeto le automaticamente `.env` quando ele existir
+- PostgreSQL e o banco padrao para desenvolvimento local, testes, homologacao e producao porque `django-tenants` depende de schemas PostgreSQL
 - `python manage.py test` prefere `config.settings.test` e tambem aceita `.env.test` local como complemento opcional
+- `TEST_DATABASE_URL` sobrescreve `DATABASE_URL` apenas nos testes; se ambos estiverem ausentes, as settings apontam para o PostgreSQL local padrao em `127.0.0.1:5433`
 - para ambiente local, voce pode definir `DJANGO_SECRET_KEY` em um arquivo `.env` ou nas variaveis do sistema
 - para ambientes que usam identidade de canal WhatsApp, defina tambem `PHONE_BLIND_INDEX_KEY`
 - o projeto agora aceita `DJANGO_ENV=development` ou `DJANGO_ENV=production` para separar configuracao local de homologacao/producao
-- para homologacao/producao, o caminho recomendado e usar `DATABASE_URL` com PostgreSQL, `REDIS_URL` para cache compartilhada, rodar `collectstatic` e publicar atras de HTTPS
+- SQLite nao e mais fallback padrao; use `OCTOBOX_ALLOW_SQLITE_FALLBACK=1` apenas para diagnosticos legados que nao precisam de tenants
+- para homologacao/producao, use `DATABASE_URL` com PostgreSQL, `REDIS_URL` para cache compartilhada, rode `collectstatic` e publique atras de HTTPS
 - o caminho publico do admin deve ser definido por `DJANGO_ADMIN_URL_PATH`, nao por `/admin/`
 - para abrir o servidor na rede local, use a task `Run Django Server (LAN)` ou rode `python manage.py runserver 0.0.0.0:8000`
-- para CI ou homologacao com PostgreSQL, use Postgres 14 ou superior
+- para CI, desenvolvimento local, homologacao ou producao, use PostgreSQL 15 ou superior
 
 Guias novos:
 
@@ -322,7 +328,7 @@ Guias novos:
 - backup minimo do banco: [docs/rollout/backup-guide.md](docs/rollout/backup-guide.md)
 - baseline de seguranca de producao: [docs/reference/production-security-baseline.md](docs/reference/production-security-baseline.md)
 - checklist de validacao mobile real: [docs/experience/mobile-real-validation-checklist.md](docs/experience/mobile-real-validation-checklist.md)
-- scripts de backup: [scripts/backup_sqlite.ps1](scripts/backup_sqlite.ps1) e [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1)
+- scripts de backup: [scripts/backup_postgres.ps1](scripts/backup_postgres.ps1) e [scripts/restore_postgres.ps1](scripts/restore_postgres.ps1)
 - deploy de producao em Hostinger VPS: [docs/rollout/hostinger-vps-production-deploy.md](docs/rollout/hostinger-vps-production-deploy.md)
 
 ## Licenca
