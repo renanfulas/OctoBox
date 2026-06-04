@@ -608,20 +608,38 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(AuditEvent.objects.filter(action='student_onboarding.test_journey.test_event').count(), 0)
 
     @override_settings(STUDENT_AUDIT_ASYNC=False)
-    def test_landing_p95_latency_under_200ms_with_async_audit(self):
-        import time
+    def test_landing_query_budget_stays_lean_with_audit(self):
+        """GARANTE: a landing do convite resolve em poucas queries (orcamento <= 10),
+        mesmo com auditoria sincrona — o proxy deterministico da latencia baixa.
+
+        Por que query-count e nao wall-clock: a versao anterior media
+        time.perf_counter() < 200ms e era flaky sob carga paralela (xdist -n 4)
+        nos runners do CI (chegou a 573ms sem nenhuma regressao real). Contagem
+        de queries e load-independent, seguindo o padrao de tests/test_performance.py
+        (django_assert_num_queries(..., exact=False)).
+        """
         invitation = StudentAppInvitation.objects.create(
             student_id=self.student.id, student_name=self.student.full_name,
             invited_email='aluno@example.com',
             expires_at=timezone.now() + timedelta(days=3),
         )
-        start = time.perf_counter()
-        response = self.client.get(
-            reverse('student-identity-invite', kwargs={'token': invitation.token})
-        )
-        elapsed_ms = (time.perf_counter() - start) * 1000
+        url = reverse('student-identity-invite', kwargs={'token': invitation.token})
+        # Aquece o caminho (1a request pode pagar custos de cache frio) para medir
+        # o estado estavel, como em tests/test_performance.py.
+        self.client.get(url)
+        # Teto com margem: o caminho mede 6 queries hoje (warm). Usamos um teto <=10
+        # (em vez de assertNumQueries exato) para tolerar +1/-N de drift de
+        # schema/middleware sem virar flaky — equivalente ao exact=False do
+        # django_assert_num_queries em tests/test_performance.py.
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertLess(elapsed_ms, 200, f'Landing levou {elapsed_ms:.1f}ms — acima de 200ms')
+        self.assertLessEqual(
+            len(ctx.captured_queries), 10,
+            f'Landing usou {len(ctx.captured_queries)} queries — acima do orcamento de 10',
+        )
 
     @override_settings(
         STUDENT_GOOGLE_OAUTH_CLIENT_ID='google-client-id',
