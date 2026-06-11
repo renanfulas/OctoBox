@@ -22,7 +22,7 @@
 # roda explicitamente `pytest tests/e2e/` em push para main e nightly.
 #
 # PONTOS CRITICOS:
-# - Versoes devem ser compativeis com Django==6.0.5 e Python 3.12.
+# - Versoes devem ser compativeis com Django==6.0.6 e Python 3.12.
 # - Manter sincronizado com os pacotes que os workflows CI instalam.
 
 # Core test runner.
