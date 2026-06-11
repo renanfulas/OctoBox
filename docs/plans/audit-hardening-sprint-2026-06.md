@@ -60,7 +60,7 @@ Regra do sprint:
 
 Status:
 
-1. em execução — PR [#123](https://github.com/renanfulas/OctoBox/pull/123) aberto em 2026-06-11; `pip-audit` local no requirements novo: **No known vulnerabilities found**; CI do PR com full-test-suite, security-audit e 3 seeds de ordem **verdes** em Django 6.0.6; na suíte local, 5 falhas em `tests/test_tenant_boundary.py` foram isoladas por A/B como problema do ambiente local (mesma assinatura em 6.0.5 e 6.0.6; verdes no CI) — registradas como evidência no S5
+1. **pronto (2026-06-11)** — PR [#123](https://github.com/renanfulas/OctoBox/pull/123) mergeado (`211f2e4`); Security Scanners **verde na main** no run pós-merge; gate destravado e **deploy de produção executado com sucesso** (12:35 UTC) — produção roda Django 6.0.6. Validações: `pip-audit` limpo, 12/12 checks no PR; as 5 falhas locais de `tests/test_tenant_boundary.py` foram isoladas por A/B como ambiente local (evidência no S5)
 
 Problema e evidência:
 
@@ -87,7 +87,7 @@ Critério de pronto:
 
 Status:
 
-1. em execução — PR [#122](https://github.com/renanfulas/OctoBox/pull/122) aberto em 2026-06-11; validado local (antes `1 passed + 5 errors`, depois `5 passed`) e com **dispatch manual do workflow verde no branch**
+1. **pronto (2026-06-11)** — PR [#122](https://github.com/renanfulas/OctoBox/pull/122) mergeado (`b239cf0`); **primeiro run verde do workflow na main em toda a história** (1m56s, após 55 falhas); alarme de issue instalado (critério 2 é estrutural — só comprovável numa falha agendada futura). Validações: 5 passed local + dispatch manual verde no branch antes do merge
 
 Problema e evidência:
 
@@ -113,7 +113,7 @@ Critério de pronto:
 
 Status:
 
-1. aberto
+1. em execução — medição feita na CI da main em 2026-06-11: **76,22%** (run 27347445141, suite completa pós-merge do #122); este PR sobe o `fail_under` de 72 → **74** (regra: atual − 2pp, com margem de 2,22pp)
 
 Problema e evidência:
 
@@ -138,7 +138,7 @@ Critério de pronto:
 
 Status:
 
-1. em execução — PR [#124](https://github.com/renanfulas/OctoBox/pull/124) aberto em 2026-06-11; os dois docs foram corrigidos, o RAG foi reindexado (1514 docs, 1028 chunks) e o smoke test confirmou a seção corrigida como primeiro resultado; este quadro entra no mesmo PR
+1. **pronto (2026-06-11)** — PR [#124](https://github.com/renanfulas/OctoBox/pull/124) mergeado (`9f5f5ef`); os dois docs corrigidos estão na main, o RAG foi reindexado (1514 docs, 1028 chunks) e o smoke test confirmou a seção corrigida como primeiro resultado
 
 Problema e evidência:
 
@@ -163,7 +163,7 @@ Critério de pronto:
 
 Status:
 
-1. aberto — nota de 2026-06-11: o cluster da 5433 estava parado e foi religado manualmente (`pg_ctl start`) para o reindex do S4; a causa de ele não sobreviver/subir sozinho segue sem tratamento
+1. aberto — nota de 2026-06-11: o cluster da 5433 estava parado e foi religado manualmente (`pg_ctl start`) para o reindex do S4; **caiu de novo no meio da mesma sessão** (~1h depois, connection refused) e precisou de novo `pg_ctl start`. A causa de ele não sobreviver/subir sozinho segue sem tratamento — auto-start (ação 3) virou o ponto mais urgente deste item
 
 Problema e evidência:
 
@@ -192,7 +192,7 @@ Critério de pronto:
 
 Status:
 
-1. aberto
+1. **pronto (2026-06-11)** — 23 branches remotas deletadas (todas com PR mergeado ou conteúdo já na main por ancestralidade; cuidado tomado com o falso negativo do squash-merge, cruzando com `gh pr list --state merged`). Poupadas: `claude/*` (sessões paralelas), `docs/update-handover-fase-2` (sem PR — revisar manualmente se ainda vale) e a branch do PR #124 (deletada no merge). Ação operacional direta, sem PR
 
 Problema e evidência:
 
@@ -238,9 +238,11 @@ Estes itens apareceram na auditoria como evolução, não correção. Têm trilh
 
 | Item | Prioridade | Status | PR | Data |
 |---|---|---|---|---|
-| S1 — Django 6.0.6 | P0 | em execução | [#123](https://github.com/renanfulas/OctoBox/pull/123) | 2026-06-11 |
-| S2 — E2E nightly + alarme | P0 | em execução | [#122](https://github.com/renanfulas/OctoBox/pull/122) | 2026-06-11 |
-| S3 — ratchet de cobertura | P1 | aberto | — | — |
-| S4 — sync de docs de autoridade | P1 | em execução | [#124](https://github.com/renanfulas/OctoBox/pull/124) | 2026-06-11 |
+| S1 — Django 6.0.6 | P0 | **pronto** | [#123](https://github.com/renanfulas/OctoBox/pull/123) | 2026-06-11 |
+| S2 — E2E nightly + alarme | P0 | **pronto** | [#122](https://github.com/renanfulas/OctoBox/pull/122) | 2026-06-11 |
+| S3 — ratchet de cobertura | P1 | em execução | — | 2026-06-11 |
+| S4 — sync de docs de autoridade | P1 | **pronto** | [#124](https://github.com/renanfulas/OctoBox/pull/124) | 2026-06-11 |
 | S5 — ambiente dev local | P2 | aberto | — | — |
-| S6 — higiene de branches | P2 | aberto | — | — |
+| S6 — higiene de branches | P2 | **pronto** | — (ação direta, sem PR) | 2026-06-11 |
+
+Fechamento do sprint pendente de: merge do S3, resolução do S5, e o critério de 3 dias corridos de Security Scanners + E2E nightly verdes na main (contagem iniciada em 2026-06-11).

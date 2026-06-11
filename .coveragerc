@@ -96,10 +96,11 @@ exclude_lines =
     except Exception:\s*pass
 
 # Falhar a build se cobertura cair abaixo do limiar.
-# Baseline medido na CI em 2026-05-21: 74.7% (891 passed, suite completa).
-# fail_under = baseline - 2pp = 72 (margem para flutuacao sem bloquear refactors).
+# Baseline medido na CI em 2026-06-11: 76.2% (run 27347445141 na main, suite completa).
+# fail_under = baseline - 2pp = 74 (margem para flutuacao sem bloquear refactors).
+# Historico do ratchet: 2026-05-21 baseline 74.7% -> fail_under 72.
 # Revisitar a cada sprint: subir gradualmente em direcao a 80%.
-fail_under = 72
+fail_under = 74
 
 # Mostrar % de cada modulo com linhas faltantes.
 show_missing = True
