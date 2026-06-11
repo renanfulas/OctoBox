@@ -14,9 +14,33 @@ PONTOS CRÍTICOS:
   resolver o tenant do usuario.
 - pytest-playwright fornece a fixture `page` automaticamente quando o pacote
   está instalado. Esta conftest só adiciona o que é específico do OctoBox.
+- DJANGO_ALLOW_ASYNC_UNSAFE é setado na importação deste módulo — sem isso a
+  suíte inteira erra em setup/teardown com SynchronousOnlyOperation (ver
+  comentário abaixo antes de remover).
 """
 
+import os
+
 import pytest
+
+# O sync API do Playwright mantém um event loop asyncio rodando no thread
+# principal do pytest, do primeiro uso da fixture `page` até o fim da sessão
+# (greenlets executam o código "sync" por dentro do loop). A partir daí,
+# qualquer acesso ORM nesse thread — ex.: o flush do pytest-django no
+# setup/teardown de cada teste `django_db` — dispara o guard async do Django
+# (SynchronousOnlyOperation), mesmo sendo código 100% síncrono e serial.
+# Sintoma: o 1º teste passa e todos os demais erram em setup/teardown.
+#
+# Desligar o guard é a solução documentada pelo Django para browser
+# automation + live_server, e é seguro aqui: o ORM dos testes E2E é
+# efetivamente single-threaded (fixtures no thread principal, live_server no
+# thread próprio dele); o loop do Playwright nunca toca o ORM.
+#
+# Nível de módulo (não fixture autouse) para valer antes de qualquer fixture,
+# e neste conftest (não no workflow) para cobrir também runs locais. O escopo
+# fica restrito ao E2E: o addopts padrão ignora tests/e2e/, então a suíte
+# normal nunca importa este arquivo e mantém o guard ativo.
+os.environ.setdefault('DJANGO_ALLOW_ASYNC_UNSAFE', 'true')
 
 
 @pytest.fixture(scope='session')
