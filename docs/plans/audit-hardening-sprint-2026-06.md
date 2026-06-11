@@ -163,14 +163,14 @@ Critério de pronto:
 
 Status:
 
-1. aberto — nota de 2026-06-11: o cluster da 5433 estava parado e foi religado manualmente (`pg_ctl start`) para o reindex do S4; **caiu de novo no meio da mesma sessão** (~1h depois, connection refused) e precisou de novo `pg_ctl start`. A causa de ele não sobreviver/subir sozinho segue sem tratamento — auto-start (ação 3) virou o ponto mais urgente deste item
+1. em execução — avanços de 2026-06-11: (a) **mistério dos boundary tests resolvido** — a causa raiz era o skip-guard dependente de locale (match na mensagem em inglês; o PG local fala pt-BR), corrigido por SQLSTATE no PR [#126](https://github.com/renanfulas/OctoBox/pull/126) e validado nos dois modos (sem provisionar: `23 passed, 5 skipped`; com `test-a`/`test-b` provisionados: `28 passed` — B1–B7 exercitados localmente pela primeira vez); (b) **morte do cluster explicada** — o pg.log registra worker terminado por exceção `0x40010004`: postgres iniciado de dentro de sessões do harness morre junto com o job da sessão; mitigação instalada: launcher `C:\Users\renan\octobox-pg-start.cmd` copiado para a pasta Startup do usuário (criar scheduled task foi negado sem elevação) — **validar no próximo logon**; (c) pendente: merge do #126 e decisão sobre OneDrive (mover repo vs marcar pastas como sempre-locais)
 
 Problema e evidência:
 
 1. o Postgres local (porta 5433) estava fora do ar durante a auditoria — o RAG online (`search_project_knowledge`) falhou com `connection timeout` e foi preciso usar o fallback offline
 2. a memória do projeto registra bloqueios recorrentes: migrations inconsistentes locais e OneDrive desidratando arquivos
 3. o working tree vive dentro do OneDrive — risco real de sync corromper `.venv`, dados do Postgres e `node_modules`
-4. descoberto em 2026-06-11 durante a validação do S1: os 5 testes de `tests/test_tenant_boundary.py` (B1, B2, B5, B6, B7) **falham no cluster local** com `relação "boxcore_student" não existe` — mesma assinatura em Django 6.0.5 e 6.0.6, banco de teste recriado do zero, e os mesmos testes verdes no CI (PG 15). Sondas já executadas (2026-06-11): (a) **role descartada** — falha idêntica rodando como superuser `postgres`; (b) **mecanismo identificado** — após o run, o schema `box_test` do conftest raiz existe com 48 tabelas migradas (tenant funciona no cluster), mas os schemas `box_test_a`/`box_test_b` que os testes de boundary criam **nunca chegam a existir** no banco de teste. Próximo passo: descobrir por que a criação de tenant dos fixtures de boundary não materializa o schema neste ambiente (diferencial restante: PG 16.13 vs PG 15, Windows, ou transação/conexão na criação do tenant)
+4. descoberto em 2026-06-11 durante a validação do S1: os 5 testes de `tests/test_tenant_boundary.py` (B1, B2, B5, B6, B7) **falham no cluster local** com `relação "boxcore_student" não existe` — mesma assinatura em Django 6.0.5 e 6.0.6, banco de teste recriado do zero, e os mesmos testes verdes no CI (PG 15). Sondas já executadas (2026-06-11): (a) **role descartada** — falha idêntica rodando como superuser `postgres`; (b) **mecanismo identificado** — após o run, o schema `box_test` do conftest raiz existe com 48 tabelas migradas (tenant funciona no cluster), mas os schemas `box_test_a`/`box_test_b` que os testes de boundary criam **nunca chegam a existir** no banco de teste. **Resolvido (PR #126)**: a premissa estava errada — os testes não criam esses tenants; eles esperam provisioning externo (o job `tenant-boundary` do CI roda `scripts/provision_test_tenants.sh` antes do pytest) e foram desenhados para **skipar** na ausência dos schemas. O guard de skip casava a mensagem de erro em inglês (`does not exist`) e o PostgreSQL local responde em pt-BR (`não existe a relação ...`) → os testes falhavam em vez de skipar. Não era PG 16, role nem Windows — era locale
 
 Ações:
 
@@ -242,7 +242,7 @@ Estes itens apareceram na auditoria como evolução, não correção. Têm trilh
 | S2 — E2E nightly + alarme | P0 | **pronto** | [#122](https://github.com/renanfulas/OctoBox/pull/122) | 2026-06-11 |
 | S3 — ratchet de cobertura | P1 | em execução | [#125](https://github.com/renanfulas/OctoBox/pull/125) | 2026-06-11 |
 | S4 — sync de docs de autoridade | P1 | **pronto** | [#124](https://github.com/renanfulas/OctoBox/pull/124) | 2026-06-11 |
-| S5 — ambiente dev local | P2 | aberto | — | — |
+| S5 — ambiente dev local | P2 | em execução | [#126](https://github.com/renanfulas/OctoBox/pull/126) | 2026-06-11 |
 | S6 — higiene de branches | P2 | **pronto** | — (ação direta, sem PR) | 2026-06-11 |
 
 Fechamento do sprint pendente de: merge do S3, resolução do S5, e o critério de 3 dias corridos de Security Scanners + E2E nightly verdes na main (contagem iniciada em 2026-06-11).
