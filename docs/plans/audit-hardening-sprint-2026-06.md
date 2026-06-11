@@ -240,7 +240,7 @@ Estes itens apareceram na auditoria como evolução, não correção. Têm trilh
 |---|---|---|---|---|
 | S1 — Django 6.0.6 | P0 | **pronto** | [#123](https://github.com/renanfulas/OctoBox/pull/123) | 2026-06-11 |
 | S2 — E2E nightly + alarme | P0 | **pronto** | [#122](https://github.com/renanfulas/OctoBox/pull/122) | 2026-06-11 |
-| S3 — ratchet de cobertura | P1 | em execução | — | 2026-06-11 |
+| S3 — ratchet de cobertura | P1 | em execução | [#125](https://github.com/renanfulas/OctoBox/pull/125) | 2026-06-11 |
 | S4 — sync de docs de autoridade | P1 | **pronto** | [#124](https://github.com/renanfulas/OctoBox/pull/124) | 2026-06-11 |
 | S5 — ambiente dev local | P2 | aberto | — | — |
 | S6 — higiene de branches | P2 | **pronto** | — (ação direta, sem PR) | 2026-06-11 |
