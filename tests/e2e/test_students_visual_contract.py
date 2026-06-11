@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Page, expect, sync_playwright
+from playwright.sync_api import Browser, Page, expect
 
 
 VIEWPORTS = {
@@ -68,17 +68,22 @@ def _login(page: Page, base_url: str, credentials: dict[str, str]) -> None:
 @pytest.mark.parametrize("viewport_name,viewport", VIEWPORTS.items())
 @pytest.mark.parametrize("theme", THEMES)
 def test_students_page_visual_baseline_contract(
+    browser: Browser,
     live_server,
     students_visual_credentials,
     viewport_name: str,
     viewport: dict[str, int],
     theme: str,
 ):
-    with sync_playwright() as playwright:
-        browser = playwright.chromium.launch()
-        context = browser.new_context(viewport=viewport)
-        page = context.new_page()
-
+    # Usa o browser session-scoped do pytest-playwright em vez de abrir um
+    # sync_playwright() próprio: o plugin mantém um event loop asyncio vivo no
+    # thread principal (do primeiro uso de `page`/`browser` até o fim da
+    # sessão) e um segundo sync API aninhado nele estoura com "Playwright
+    # Sync API inside the asyncio loop". Contexto novo por parametrização
+    # isola viewport/localStorage; o browser (1 launch) é compartilhado.
+    context = browser.new_context(viewport=viewport)
+    page = context.new_page()
+    try:
         _login(page, live_server.url, students_visual_credentials)
 
         page.evaluate(
@@ -130,6 +135,5 @@ def test_students_page_visual_baseline_contract(
         screenshot_dir = Path("tmp") / "visual_contract" / "students"
         screenshot_dir.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=screenshot_dir / f"students-{viewport_name}-{theme}.png", full_page=True)
-
+    finally:
         context.close()
-        browser.close()

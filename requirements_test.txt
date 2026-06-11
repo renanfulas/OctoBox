@@ -56,3 +56,9 @@ pytest-xdist==3.6.1
 # 0.5.x–0.7.1 requerem pytest<9.0.0 (incompatível com pytest==9.0.3).
 # 0.7.2 foi a primeira versão a aceitar pytest<10.0.0.
 pytest-playwright==0.7.2
+
+# O driver playwright e dependencia transitiva do pytest-playwright e nao
+# vinha pinado — cada run de CI instalava a ultima versao, contrariando a
+# filosofia deste arquivo (upgrade de pacote = commit explicito). Ao subir
+# a versao, rodar tests/e2e/ local e o e2e-nightly.yml manual antes do merge.
+playwright==1.60.0
