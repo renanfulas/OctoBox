@@ -10,9 +10,19 @@
 | Componente | Versão | Papel |
 |---|---|---|
 | `pytest-playwright` | 0.7.2 | Integração pytest ↔ Playwright |
-| `playwright` (dep transitiva) | ≥ 1.38 | Driver de browser |
+| `playwright` | 1.60.0 (pinado) | Driver de browser — pin explícito em `requirements_test.txt` |
 | `pytest-django` | 4.12.0 | `live_server` fixture |
 | Chromium | latest (CI) | Browser padrão |
+
+**Regras que mantêm a suíte viva** (aprendidas quando o nightly ficou 3 semanas vermelho):
+
+- **Use as fixtures do pytest-playwright** (`page`, `browser`, `context`) — nunca abra
+  um `sync_playwright()` próprio dentro do teste. O plugin mantém um event loop vivo
+  no thread principal da sessão inteira; um segundo sync API aninhado estoura com
+  `Playwright Sync API inside the asyncio loop`.
+- `DJANGO_ALLOW_ASYNC_UNSAFE=true` é setado por `tests/e2e/conftest.py` na importação —
+  sem isso, todo setup/teardown de `django_db` sob o loop do plugin morre com
+  `SynchronousOnlyOperation`. Não remova (racional completo no comentário do conftest).
 
 ---
 

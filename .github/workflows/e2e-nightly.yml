@@ -29,6 +29,13 @@ on:
   workflow_dispatch:
     # Permite disparo manual via GitHub UI ou gh CLI
 
+# issues: write — usado só pelo passo final de notificação, que abre/atualiza
+# uma issue quando um run AGENDADO falha (o nightly ficou vermelho 10+ dias
+# sem ninguém perceber; run agendado não notifica ninguém por padrão).
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   e2e:
     runs-on: ubuntu-latest
@@ -99,3 +106,27 @@ jobs:
           name: playwright-traces
           path: test-results/
           if-no-files-found: ignore
+
+      - name: Notificar falha do nightly (abre/atualiza issue)
+        # Só para runs AGENDADOS: em push para main e dispatch manual há um
+        # humano olhando o resultado; o cron das 03:00 UTC não tem ninguém.
+        # Procura issue aberta com o marcador [e2e-nightly] no título e
+        # comenta nela; se não existe, cria. Uma issue por "época de
+        # vermelho" — fechar a issue ao consertar a suite.
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          TITLE="[e2e-nightly] suite E2E agendada está falhando"
+          BODY="Run agendado do workflow E2E Tests (Nightly) falhou: $RUN_URL
+
+          Reproduzir localmente: \`python -m pytest tests/e2e/ --create-db --migrations -v\` (ver docs/testing/e2e-guide.md).
+          Este comentário é automático (passo 'Notificar falha do nightly')."
+          EXISTING=$(gh issue list --state open --search "e2e-nightly in:title" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
