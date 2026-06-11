@@ -8,6 +8,7 @@ AUTORIDADE:
 - alta
 
 DOCUMENTOS IRMAOS:
+- [schema-per-tenant-migration-plan.md](schema-per-tenant-migration-plan.md)
 - [../architecture/octobox-architecture-model.md](../architecture/octobox-architecture-model.md)
 - [../architecture/center-layer.md](../architecture/center-layer.md)
 - [../architecture/signal-mesh.md](../architecture/signal-mesh.md)
@@ -31,7 +32,7 @@ O QUE ESTE ARQUIVO FAZ:
 4. estabelece gates, checklist e criterio de pronto por fase.
 
 PONTOS CRITICOS:
-- a Fase 3 muda a filosofia estrutural do sistema; ela nao pode nascer como improviso.
+- revisao 2026-06-11: a virada de filosofia de isolamento ja aconteceu por rollout controlado (`django-tenants`, schema por box, em producao desde 2026-05-23); a Fase 3 restante e abrir volume com operacao de plataforma — ver a secao "Revisao de 2026-06-11".
 - a Fase 2 nao deve ser tratada como intervalo neutro; ela e a ponte real para a plataforma.
 - `AuditEvent` nao deve virar o read model final da operacao.
 -->
@@ -63,6 +64,24 @@ Ele assume:
 1. beta fechado como momento atual do produto.
 2. necessidade de monetizar cedo sem abrir infraestrutura cedo demais.
 3. preparacao silenciosa da arquitetura futura desde a Fase 1.
+
+## Revisao de 2026-06-11 — o que a virada multi-tenant muda neste plano
+
+Este plano foi escrito antes da migracao para `django-tenants`. Em 2026-05 o
+runtime virou schema-per-tenant de verdade — ver
+[schema-per-tenant-migration-plan.md](schema-per-tenant-migration-plan.md) e
+ADR-005 a ADR-010 no [indice de ADRs](../adr/README.md) — e o primeiro box foi
+provisionado em producao em 2026-05-23.
+
+Leitura correta a partir daqui:
+
+1. a topologia que este plano tratava como futuro distante chegou cedo: isolamento logico forte por tenant (schema por box), control plane proprio (`control`: `Box`, `Domain`, `Membership`) e identidade cruzada de aluno (`student_identity`) ja sao o runtime atual, nao aspiracao de Fase 3.
+2. o que nao mudou: em volume e maturidade operacional o produto continua na Fase 1 (primeiro box em producao). Os gates de saida da Fase 1 — custo por box entendido, backup e restore testados, observabilidade minima confiavel — continuam validos e continuam abertos.
+3. a Fase 2 deixa de ser sobre "introduzir identidade interna de tenant" (ja existe) e passa a ser sobre densidade, custo marginal por box, observabilidade por box e capacidade por celula.
+4. a Fase 3 deixa de ser a virada de filosofia de isolamento (isso ja aconteceu por rollout controlado em estagios, nao por improviso) e passa a ser abrir volume com operacao de plataforma: onboarding e offboarding em escala, backup e restore por tenant, metricas e custo por tenant, boundary tests como rotina.
+5. itens deste plano que pedem "introduzir identidade interna de tenant sem ligar multitenancy aberto", "separar box identity de runtime identity" ou "tenant model canonico" devem ser lidos como ja entregues; os demais itens permanecem como escritos.
+
+O restante do documento e mantido como registro do raciocinio original. Em conflito, esta revisao e o runtime vencem.
 
 ## Regra principal de transicao
 

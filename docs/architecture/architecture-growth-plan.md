@@ -31,7 +31,7 @@ PONTOS CRITICOS:
 
 Este documento traduz a ambicao do OctoBox em uma arquitetura de crescimento pragmatica.
 
-Para a trilha especifica de quebra do monolito interno em apps Django reais, leia tambem [app-split-plan.md](app-split-plan.md).
+Para a trilha especifica de quebra do monolito interno em apps Django reais, leia tambem [app-split-plan.md](app-split-plan.md) (trilha ja executada; mantida como registro).
 
 Para a direcao especifica da camada superior de inteligencia operacional, score, previsao e guardrails de ML, leia tambem [operational-intelligence-ml-layer.md](operational-intelligence-ml-layer.md).
 
@@ -73,21 +73,25 @@ Ele deve crescer como uma plataforma operacional com cinco camadas claras:
 
 ## Estado atual resumido
 
+> Revisado em 2026-06-11: a versao anterior desta secao descrevia o estado
+> pre-virada multi-tenant (boxcore como casa de tudo, sem API, integracoes ou
+> jobs oficiais). O runtime venceu o doc e a secao foi corrigida.
+
 Hoje a base ja tem bons sinais:
 
-1. dominios internos separados por pastas
-2. queries e snapshots de leitura para telas principais
-3. services e workflows nas areas mais sensiveis
-4. auditoria e papeis reais
-5. preparo inicial para comunicacao por WhatsApp
+1. apps de dominio reais fora de `boxcore`: `access`, `students`, `finance`, `operations`, `catalog`, `communications`, `auditing`, `dashboard`, `guide`, `quick_sales`
+2. fronteiras oficiais ja abertas: `api` (contrato `v1`), `integrations` (webhooks de WhatsApp e Resend), `jobs` (execucao assincrona sem fila externa)
+3. runtime multi-tenant vivo em producao: `django-tenants` com schema por box, control plane proprio (`control`), funil comercial (`signup`) e identidade cruzada de aluno (`student_identity`) no schema publico; primeiro box provisionado em 2026-05-23
+4. identidade de canal ja desacoplada do aluno: contrato WhatsApp com blind index, backfill historico e constraint de unicidade
+5. queries, snapshots, presenters e page payloads nas telas principais, com auditoria, papeis reais e throttling por escopo
 
 Hoje os limites principais ainda sao:
 
-1. tudo ainda vive dentro do app Django `boxcore`
-2. nao existe camada oficial de API versionada
-3. nao existe camada oficial de integracoes externas
-4. nao existe base oficial para jobs assincronos
-5. aluno e canal WhatsApp ainda estao perto demais na modelagem do negocio
+1. `boxcore` permanece como app legado de estado (~13,5 mil linhas): ancora de migrations, app label e namespace de admin — ver [boxcore-state-residue-inventory.md](boxcore-state-residue-inventory.md)
+2. a leitura quente da operacao ainda depende demais de `AuditEvent`; o read model operacional leve ainda nao existe
+3. so dois corredores reais de CENTER foram promovidos (`class_grid`, `workspace`); fluxo novo ainda tende a entrar por view direta
+4. custo por box e capacidade por celula ainda nao foram medidos; o gate da Fase 1 de escala segue aberto
+5. a suite E2E ainda e minima frente as superficies criticas do produto
 
 ## Arquitetura alvo por blocos
 
@@ -167,6 +171,15 @@ Regra:
 2. tarefas precisam ser reexecutaveis e auditaveis
 
 ## Ordem de execucao recomendada
+
+> Status em 2026-06-11: as Fases 1 a 4 ja foram executadas — os pacotes
+> previstos viraram apps reais (`api/`, `integrations/`, `jobs/`), a identidade
+> de canal foi desacoplada do aluno e o split de dominio aconteceu. A Fase 5
+> esta parcialmente viva: tenancy real entrou em producao via `django-tenants`
+> (ver [../plans/schema-per-tenant-migration-plan.md](../plans/schema-per-tenant-migration-plan.md)
+> e ADR-005 a ADR-010 em [../adr/README.md](../adr/README.md)) e o app do aluno
+> (PWA) existe; relatorios inteligentes e ML continuam como direcao formalizada,
+> nao construida. As fases abaixo ficam como registro do trilho seguido.
 
 ### Fase 1: solidificar a base atual
 
@@ -257,18 +270,18 @@ Entregas futuras:
 1. microservicos
 2. event-driven distribuido sem necessidade real
 3. adicionar IA sem qualidade de dado e sem jobs confiaveis
-4. modelar multiunidade antes de estabilizar unidade unica
+4. abrir multitenancy para volume antes de fechar os gates de custo, backup/restore e observabilidade da Fase 1 de escala
 5. espalhar integracao de WhatsApp em views e templates
 
 ## Decisao pratica imediata
 
 Nos proximos ciclos, o caminho mais seguro e:
 
-1. consolidar o core atual
-2. abrir fronteira de API
-3. abrir fronteira de integracao
-4. abrir fronteira de jobs
-5. so depois crescer para WhatsApp oficial, mobile e inteligencia
+1. fechar o gate da Fase 1 de escala: backup/restore testado, custo medido por box, observabilidade minima confiavel
+2. construir o read model operacional leve antes de crescer densidade de boxes
+3. continuar drenando `boxcore` por fatias seguras, comecando pelos residuos de compatibilidade
+4. promover fluxos novos pelo corredor oficial de facade/CENTER em vez de view direta
+5. so depois crescer para WhatsApp oficial em volume, mobile completo e inteligencia
 
 ## Sinal de arquitetura saudavel
 
