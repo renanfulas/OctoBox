@@ -1,4 +1,4 @@
-Django==6.0.5
+Django==6.0.6
 django-tenants==3.10.1
 djangorestframework==3.17.1
 dj-database-url==2.3.0
