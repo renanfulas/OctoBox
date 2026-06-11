@@ -28,6 +28,25 @@ from django.test import RequestFactory, SimpleTestCase, TestCase, tag
 from django.urls import reverse
 
 
+def _is_missing_schema_error(exc: Exception) -> bool:
+    """True quando o erro indica schema/tabela de tenant ausente (ambiente sem
+    box_test_a/box_test_b provisionados) — o caso em que o teste deve SKIPAR.
+
+    Compara por SQLSTATE — 42P01 (undefined_table) e 3F000 (invalid_schema_name)
+    — em vez de substring da mensagem, porque o PostgreSQL localiza as mensagens
+    de erro: em pt_BR o texto e 'não existe a relação ...', que nao contem
+    'does not exist' nem 'schema', e o skip-guard antigo deixava os 5 testes
+    FALHAREM em vez de skipar em clusters fora do locale en_US.
+    O match textual permanece como fallback para excecoes nao-psycopg.
+    """
+    cause = getattr(exc, '__cause__', None)
+    sqlstate = getattr(cause, 'sqlstate', None) or getattr(exc, 'sqlstate', None)
+    if sqlstate in ('42P01', '3F000'):
+        return True
+    text = str(exc).lower()
+    return 'does not exist' in text or 'schema' in text
+
+
 # ---------------------------------------------------------------------------
 # B3 — Cache isolation per tenant
 # ---------------------------------------------------------------------------
@@ -386,7 +405,7 @@ class B1CrossTenantStudentIsolationTest(TestCase):
                 Student.objects.filter(pk=student_id_a).delete()
 
         except Exception as exc:
-            if 'does not exist' in str(exc).lower() or 'schema' in str(exc).lower():
+            if _is_missing_schema_error(exc):
                 self.skipTest(f'Schema de teste nao existe: {exc}')
             raise
 
@@ -428,7 +447,7 @@ class B2DirectPkAccessTest(TestCase):
                 Student.objects.filter(pk=pk_a).delete()
 
         except Exception as exc:
-            if 'does not exist' in str(exc).lower() or 'schema' in str(exc).lower():
+            if _is_missing_schema_error(exc):
                 self.skipTest(f'Schema nao existe: {exc}')
             raise
 
@@ -477,7 +496,7 @@ class B5OrmFilterDoesNotLeakTest(TestCase):
                 Student.objects.filter(pk=pk).delete()
 
         except Exception as exc:
-            if 'does not exist' in str(exc).lower() or 'schema' in str(exc).lower():
+            if _is_missing_schema_error(exc):
                 self.skipTest(f'Schema nao existe: {exc}')
             raise
 
@@ -521,7 +540,7 @@ class B6RawSqlRespectsSearchPathTest(TestCase):
             self.assertIsInstance(count_b, int)
 
         except Exception as exc:
-            if 'does not exist' in str(exc).lower() or 'schema' in str(exc).lower():
+            if _is_missing_schema_error(exc):
                 self.skipTest(f'Schema nao existe: {exc}')
             raise
 
@@ -582,7 +601,7 @@ class B7StudentRecordsWithSameIdentityIsolatedTest(TestCase):
             StudentIdentity.objects.filter(pk=identity_id).delete()
 
         except Exception as exc:
-            if 'does not exist' in str(exc).lower() or 'schema' in str(exc).lower():
+            if _is_missing_schema_error(exc):
                 self.skipTest(f'Schema nao existe: {exc}')
             raise
 
