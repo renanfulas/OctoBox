@@ -1,22 +1,22 @@
 /*
-ARQUIVO: hero numerico do app do aluno.
+ARQUIVO: hero numerico do app do aluno (skin v2, Onda 6 — visual do prototipo).
 
 POR QUE ELE EXISTE:
 - destaca o dado pessoal mais importante da tela antes de qualquer explicacao.
+- define tambem o eyebrow (.student-context-switch), que deixou de ser chip
+  com borda e virou rotulo tipografico uppercase, como no prototipo.
 */
 
 .student-hero-number {
     position: relative;
     display: grid;
-    gap: 14px;
-    padding: clamp(22px, 4vw, 34px);
-    border-radius: calc(var(--radius-shell) + 8px);
-    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 20%, var(--theme-border-soft) 80%);
+    gap: 8px;
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, var(--theme-border-soft) 70%);
     background:
-        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 58%, transparent), transparent 36%),
-        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium-alpha) 26%, transparent), transparent 42%),
-        var(--theme-card-surface-strong);
-    box-shadow: var(--theme-shadow-xl);
+        linear-gradient(150deg, color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent), transparent 55%),
+        color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
     overflow: hidden;
 }
 
@@ -24,48 +24,48 @@ POR QUE ELE EXISTE:
 .student-context-switch {
     display: inline-flex;
     align-items: center;
+    gap: 6px;
     width: fit-content;
-    min-height: 32px;
-    padding: 7px 11px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 22%, var(--theme-border-soft) 78%);
-    background: color-mix(in srgb, var(--theme-surface-strong) 82%, var(--theme-accent-support-alpha) 18%);
-    color: var(--theme-text-primary);
-    font-size: 0.78rem;
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+    font-size: 0.7rem;
     font-weight: 800;
-    line-height: 1.1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.2;
 }
 
 .student-hero-number__label {
     margin: 0;
-    color: var(--theme-text-secondary);
-    font-size: clamp(1.05rem, 2.6vw, 1.35rem);
-    font-weight: 800;
-    letter-spacing: -0.035em;
+    color: var(--theme-text-primary);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
 }
 
 .student-hero-number__value {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 10px;
+    margin-top: 2px;
     color: var(--theme-text-primary);
     font-family: var(--font-display);
-    font-size: clamp(3.3rem, 14vw, 5.6rem);
-    font-weight: 850;
-    letter-spacing: -0.055em;
-    line-height: 0.92;
+    font-size: 3.25rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
 }
 
 .student-hero-number__unit {
     color: var(--theme-text-muted);
-    font-size: clamp(1rem, 4vw, 1.35rem);
+    font-size: clamp(1rem, 4vw, 1.2rem);
     letter-spacing: 0;
 }
 
 .student-hero-number__countdown {
     color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
     font-family: var(--font-body);
-    font-size: clamp(0.86rem, 3.4vw, 1rem);
+    font-size: 0.88rem;
     font-weight: 800;
     letter-spacing: -0.01em;
     white-space: nowrap;
@@ -80,8 +80,9 @@ POR QUE ELE EXISTE:
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-top: 2px;
     color: var(--theme-text-muted);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
 }
 
@@ -91,18 +92,14 @@ POR QUE ELE EXISTE:
 
 .student-hero-number__occupancy .student-session-card__capacity-bar {
     flex: 1 1 auto;
-}
-
-.student-hero-number__ghost-action {
-    justify-content: center;
-    text-align: center;
-    text-decoration: none;
+    height: 4px;
 }
 
 .student-hero-number__support {
     margin: 0;
     max-width: 52ch;
-    color: var(--theme-text-secondary);
+    color: var(--theme-text-muted);
+    font-size: 0.8rem;
     line-height: 1.45;
 }
 
@@ -111,8 +108,8 @@ POR QUE ELE EXISTE:
     font-weight: 900;
 }
 
-@media (max-width: 640px) {
-    .student-hero-number {
-        padding: 20px 18px;
-    }
+.student-hero-number__ghost-action {
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
 }

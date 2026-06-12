@@ -2,56 +2,60 @@
 ARQUIVO: CTA primario contextual do app do aluno.
 */
 
-.student-primary-action {
+/* Skin v2 (Onda 6): CTA do prototipo — gradiente 90deg cyan→azul, texto escuro.
+   Escopo via body.student-app-body para vencer `body.student-app-body a { color: inherit }`. */
+body.student-app-body .student-primary-action {
+    --student-cta-ink: #06121f;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: fit-content;
-    min-height: 52px;
+    min-height: 48px;
     padding: 14px 22px;
-    border-radius: 18px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
-    background:
-        linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--theme-accent-primary) 92%, white 8%),
-            color-mix(in srgb, var(--theme-accent-support) 84%, black 16%)
-        );
-    color: color-mix(in srgb, white 96%, var(--theme-accent-primary) 4%);
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support));
+    color: var(--student-cta-ink);
     font: inherit;
-    font-weight: 900;
+    font-size: 0.94rem;
+    font-weight: 800;
     text-decoration: none;
     cursor: pointer;
-    box-shadow:
-        0 20px 38px color-mix(in srgb, var(--theme-accent-support-alpha) 50%, transparent),
-        inset 0 1px 0 color-mix(in srgb, white 20%, transparent);
     transition:
         transform var(--motion-fast) var(--ease-standard),
-        box-shadow var(--motion-base) var(--ease-standard);
+        filter var(--motion-base) var(--ease-standard);
+}
+
+body[data-theme="light"] .student-primary-action {
+    --student-cta-ink: #091a2f;
 }
 
 .student-primary-action:hover,
 .student-primary-action:focus-visible {
     transform: translateY(-1px);
     outline: none;
-    box-shadow:
-        0 26px 48px color-mix(in srgb, var(--theme-accent-support-alpha) 58%, transparent),
-        0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, transparent);
+    filter: brightness(1.06);
 }
 
+.student-primary-action:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 32%, transparent);
+}
+
+/* Ghost do prototipo: transparente, borda fina, texto secundario. */
 .student-secondary-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: fit-content;
     min-height: 42px;
-    padding: 10px 14px;
+    padding: 11px 14px;
     border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-strong) 90%, transparent);
-    color: var(--theme-text-primary);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: transparent;
+    color: var(--theme-text-secondary);
     font: inherit;
-    font-weight: 800;
+    font-size: 0.88rem;
+    font-weight: 700;
     text-decoration: none;
     cursor: pointer;
 }

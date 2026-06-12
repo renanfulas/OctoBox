@@ -14,16 +14,11 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     gap: 4px;
     padding: 6px;
     border-radius: 22px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
-    background:
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-strong) 96%, transparent),
-            color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent)
-        );
-    box-shadow: var(--theme-shadow-xl);
-    backdrop-filter: blur(18px) saturate(145%);
-    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, var(--theme-bg-root) 4%);
+    box-shadow: var(--theme-shadow-lift);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
 }
 
 .student-mobile-nav-link {
@@ -77,15 +72,10 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 
 .student-mobile-nav-link.is-active {
     color: var(--theme-text-primary);
-    background:
-        linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--theme-accent-primary) 18%, var(--theme-surface-strong) 82%),
-            color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-surface-secondary) 82%)
-        );
-    border-color: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
 }
 
 .student-mobile-nav-link.is-active .student-mobile-nav-icon {
-    filter: saturate(1.08);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
 }

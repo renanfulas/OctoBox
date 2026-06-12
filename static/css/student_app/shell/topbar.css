@@ -1,90 +1,71 @@
-﻿/*
-ARQUIVO: header de saudacao do app do aluno (shell v2).
-- Onda 0 do redesign: o header carrega avatar + saudacao + box ativo.
-- Theme toggle e troca de box moraram aqui ate o shell v2; hoje vivem no Perfil.
+/*
+ARQUIVO: header de saudacao do app do aluno (skin v2, Onda 6 — visual do prototipo).
+- Header transparente em fluxo: avatar circular + saudacao + box, sem cartao de vidro.
+- Sobrescreve a base .topbar do design-system (sticky/surface) dentro do app do aluno.
 */
 
 .student-topbar.topbar {
-    --topbar-h: auto;
-    --topbar-padding-block: 12px;
-    --topbar-padding-inline: 16px;
-    --topbar-gap: 10px;
-    --topbar-left-gap: 10px;
-    --topbar-right-gap: 8px;
-    --topbar-top: 18px;
-    --topbar-margin-bottom: 0;
-    --topbar-radius: calc(var(--radius-shell) + 2px);
-    --topbar-surface:
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-strong) 94%, transparent),
-            color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent)
-        );
-    --topbar-border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
-    --topbar-shadow: var(--theme-shadow-lift);
-    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 84%, var(--theme-accent-support-alpha) 16%);
-    --topbar-toggle-border-color: color-mix(in srgb, var(--theme-border-soft) 86%, var(--theme-accent-support-alpha) 14%);
+    position: static;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: nowrap;
+    gap: 12px;
+    margin: 0;
+    padding: 6px 2px 14px;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 .student-topbar-main {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     flex: 1 1 auto;
     min-width: 0;
 }
 
 .student-topbar-copy {
     display: grid;
-    gap: 0;
+    gap: 1px;
     min-width: 0;
     flex: 1 1 auto;
 }
 
 .student-topbar-copy strong {
     display: block;
-    font-family: var(--font-display);
-    font-size: clamp(0.98rem, 2vw, 1.08rem);
-    letter-spacing: -0.03em;
+    color: var(--theme-text-primary);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.08;
+    line-height: 1.2;
 }
 
 .student-topbar-copy span {
     color: var(--theme-text-muted);
-    font-size: 0.84rem;
+    font-size: 0.75rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.15;
+    line-height: 1.25;
 }
 
 .student-avatar {
     width: 42px;
     height: 42px;
-    border-radius: 16px;
+    border-radius: 50%;
     display: grid;
     place-items: center;
     flex-shrink: 0;
-    background:
-        linear-gradient(
-            135deg,
-            color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-surface-strong) 76%),
-            color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-surface-secondary) 80%),
-            color-mix(in srgb, var(--theme-accent-premium) 12%, var(--theme-surface-strong) 88%)
-        );
-    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-border-soft) 80%);
-    box-shadow:
-        inset 0 1px 0 color-mix(in srgb, white 14%, transparent),
-        0 12px 22px color-mix(in srgb, var(--theme-accent-support-alpha) 24%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
     font-weight: 800;
-    letter-spacing: 0.06em;
     overflow: hidden;
 }
 
@@ -96,24 +77,17 @@ ARQUIVO: header de saudacao do app do aluno (shell v2).
 }
 
 .student-avatar-link {
-    color: var(--theme-text-primary);
     text-decoration: none;
     transition:
         transform var(--motion-fast) var(--ease-standard),
         border-color var(--motion-base) var(--ease-standard),
-        box-shadow var(--motion-base) var(--ease-standard),
-        filter var(--motion-base) var(--ease-standard);
+        box-shadow var(--motion-base) var(--ease-standard);
 }
 
 .student-avatar-link:hover,
 .student-avatar-link:focus-visible {
     transform: translateY(-1px);
     outline: none;
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 34%, var(--theme-border-soft) 66%);
-    box-shadow:
-        inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
-        0 0 0 4px color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, transparent),
-        0 16px 28px color-mix(in srgb, var(--theme-accent-support-alpha) 28%, transparent);
-    filter: saturate(1.08);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 48%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, transparent);
 }
-

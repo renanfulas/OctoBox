@@ -3,71 +3,31 @@ ARQUIVO: cards base do app do aluno
 GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 */
 
+/* Skin v2 (Onda 6): card flat — superficie solida, sem glow, sem linha gradiente.
+   A energia visual fica reservada ao --feature (tint cyan) e a CTA. */
 .student-card {
-    --student-card-surface:
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-strong) 96%, transparent),
-            color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent)
-        );
+    --student-card-surface: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
     --student-card-border: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
-    --student-card-shadow: var(--theme-shadow-soft);
-    --student-card-glow:
-        radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--theme-accent-support-alpha) 48%, transparent), transparent 58%);
     position: relative;
     display: grid;
-    gap: 16px;
-    padding: clamp(20px, 2.4vw, 24px);
-    border-radius: calc(var(--radius-panel) + 4px);
+    gap: 12px;
+    padding: 16px;
+    border-radius: 20px;
     border: 1px solid var(--student-card-border);
-    background:
-        var(--student-card-glow),
-        var(--student-card-surface);
-    box-shadow: var(--student-card-shadow);
+    background: var(--student-card-surface);
     overflow: hidden;
 }
 
-.student-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    background:
-        linear-gradient(
-            90deg,
-            color-mix(in srgb, var(--theme-accent-primary) 56%, transparent),
-            color-mix(in srgb, var(--theme-accent-support) 44%, transparent),
-            color-mix(in srgb, var(--theme-accent-premium) 26%, transparent)
-        );
-    opacity: 0.92;
-    pointer-events: none;
-}
-
 .student-card--feature {
-    --student-card-surface:
-        linear-gradient(
-            140deg,
-            color-mix(in srgb, var(--theme-accent-primary-alpha) 18%, var(--theme-surface-strong) 82%),
-            color-mix(in srgb, var(--theme-accent-support-alpha) 20%, var(--theme-surface-secondary) 80%),
-            color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, var(--theme-surface-strong) 90%)
-        );
-    --student-card-border: color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
-    --student-card-shadow: var(--theme-shadow-lift);
-    --student-card-glow:
-        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-support-alpha) 72%, transparent), transparent 42%),
-        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent), transparent 42%);
+    --student-card-surface: var(--theme-surface-secondary);
+    --student-card-border: color-mix(in srgb, var(--theme-accent-primary) 30%, var(--theme-border-soft) 70%);
+    background:
+        linear-gradient(150deg, color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent), transparent 55%),
+        var(--student-card-surface);
 }
 
 .student-card--quiet {
-    --student-card-surface:
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-strong) 98%, transparent),
-            color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent)
-        );
-    --student-card-border: color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    --student-card-shadow: var(--theme-shadow-soft);
-    --student-card-glow: none;
+    --student-card-border: color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
 }
 
 .student-card--alert {
@@ -101,13 +61,11 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-session-card,
 .student-prescription,
 .student-wod-block,
-.student-wod-movement-card,
 .student-rm-card {
-    padding: 18px;
+    padding: 16px;
     border-radius: 20px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-strong) 90%, transparent);
-    box-shadow: 0 12px 22px color-mix(in srgb, var(--theme-shadow-soft) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
 }
 
 .student-session-card,
@@ -123,15 +81,14 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     font-size: 1rem;
 }
 
+/* Movimento do WOD: linha flat dentro do card do bloco (skin v2, Onda 6). */
 .student-wod-movement-card {
-    display: grid;
-    gap: 14px;
-    background:
-        linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--theme-surface-strong) 92%, transparent),
-            color-mix(in srgb, var(--theme-surface-secondary) 88%, transparent)
-        );
+    padding: 9px 2px;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 72%, transparent);
+}
+
+.student-wod-movement-card:last-child {
+    border-bottom: none;
 }
 
 .student-wod-movement-copy,
@@ -199,9 +156,9 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 
 .student-session-row__time strong {
     color: var(--theme-text-primary);
-    font-size: 1.04rem;
-    font-weight: 900;
-    letter-spacing: -0.03em;
+    font-size: 0.94rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     line-height: 1;
 }
 
@@ -271,15 +228,15 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
     width: fit-content;
     padding: 4px 10px;
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
     background: color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent);
     color: var(--theme-text-secondary);
-    font-size: 0.75rem;
+    font-size: 0.69rem;
     font-weight: 800;
+    white-space: nowrap;
 }
 
 .class-status-scheduled {

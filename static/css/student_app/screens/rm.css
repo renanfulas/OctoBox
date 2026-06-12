@@ -43,11 +43,10 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 
 .student-rm-card__value {
     color: var(--theme-text-primary);
-    font-family: var(--font-display);
-    font-size: 1.12rem;
-    font-weight: 850;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
+    font-family: var(--student-font-numeric);
+    font-size: 1.06rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     white-space: nowrap;
 }
 
@@ -56,7 +55,14 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     font-weight: 800;
 }
 
-/* Hero "Maior carga" (Onda 4) */
+/* Hero "Maior carga" (Onda 4; skin v2: valor em mono como no prototipo) */
+.student-rm-hero .student-hero-number__value {
+    font-family: var(--student-font-numeric);
+    font-size: clamp(2.1rem, 9.5vw, 2.4rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
 .student-rm-hero__delta {
     display: inline-flex;
     align-items: center;
@@ -147,13 +153,13 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     display: grid;
     place-items: center;
     min-height: 52px;
-    border-radius: 16px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-border-soft) 72%);
-    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, var(--theme-surface-strong) 70%);
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
     color: var(--theme-text-primary);
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-    font-weight: 900;
+    font-family: var(--student-font-numeric);
+    font-size: 1.3rem;
+    font-weight: 600;
 }
 
 .student-rm-entry {

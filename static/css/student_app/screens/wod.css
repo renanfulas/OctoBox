@@ -40,12 +40,11 @@ ARQUIVO: tela WOD do aluno (shell v2, Onda 3).
 
 .student-wod-foryou__value strong {
     color: var(--theme-text-primary);
-    font-family: var(--font-display);
-    font-size: clamp(1.9rem, 8vw, 2.4rem);
-    font-weight: 850;
-    letter-spacing: -0.04em;
+    font-family: var(--student-font-numeric);
+    font-size: clamp(1.8rem, 8vw, 2.15rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
     line-height: 1;
-    font-variant-numeric: tabular-nums;
 }
 
 .student-wod-foryou__value span {
@@ -60,9 +59,9 @@ ARQUIVO: tela WOD do aluno (shell v2, Onda 3).
     font-size: 0.8rem;
 }
 
+/* Eyebrow do bloco colorido por kind (skin v2: cor tipografica, sem chip) */
 .student-wod-block__kind {
-    border-color: color-mix(in srgb, var(--student-wod-kind-color, var(--theme-accent-support)) 30%, var(--theme-border-soft) 70%);
-    background: color-mix(in srgb, var(--student-wod-kind-color, var(--theme-accent-support)) 12%, var(--theme-surface-strong) 88%);
+    color: color-mix(in srgb, var(--student-wod-kind-color, var(--theme-accent-support)) 72%, var(--theme-text-primary) 28%);
 }
 
 .student-wod-block[data-kind="aquecimento"] { --student-wod-kind-color: var(--theme-accent-success); }
@@ -84,8 +83,7 @@ ARQUIVO: tela WOD do aluno (shell v2, Onda 3).
 
 .student-wod-movement-list {
     display: grid;
-    gap: 10px;
-    margin-top: 14px;
+    margin-top: 10px;
 }
 
 /* Movimento em linha: nome+prescricao a esquerda, carga a direita */
@@ -98,6 +96,23 @@ ARQUIVO: tela WOD do aluno (shell v2, Onda 3).
 
 .student-wod-movement-card .student-wod-movement-copy {
     min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.student-wod-movement-copy strong {
+    font-size: 0.94rem;
+    font-weight: 700;
+}
+
+.student-wod-movement-copy span {
+    color: var(--theme-text-muted);
+    font-size: 0.8rem;
+}
+
+.student-wod-movement-rm--hit .student-wod-movement-rm__load {
+    font-family: var(--student-font-numeric);
+    font-weight: 600;
 }
 
 .student-prescription {
@@ -115,8 +130,24 @@ ARQUIVO: tela WOD do aluno (shell v2, Onda 3).
 .student-wod-session-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
+}
+
+/* No header do WOD os metadados sao pills cyan (como no prototipo), nao eyebrows. */
+.student-wod-session-meta .student-context-switch {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+    font-size: 0.69rem;
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+.student-wod-session-meta .student-context-switch + .student-context-switch {
+    background: transparent;
 }
 
 .student-wod-utility-switch {
