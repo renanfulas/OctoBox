@@ -469,9 +469,11 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'class="student-primary-action"', html=False)
         self.assertContains(response, 'class="student-progress-strip"', html=False)
         self.assertContains(response, 'data-theme="light"', html=False)
-        self.assertContains(response, 'data-ui="student-theme-toggle"', html=False)
+        # Shell v2 (Onda 0): o toggle de tema saiu do header e mora no Perfil.
+        self.assertNotContains(response, 'data-ui="student-theme-toggle"', html=False)
         self.assertContains(response, 'octobox-theme', html=False)
         self.assertContains(response, '/static/js/student_app/theme.js', html=False)
+        self.assertContains(response, 'class="student-mobile-nav-label">Perfil</span>', html=False)
 
     def test_student_home_switches_to_wod_mode_when_attendance_window_is_active(self):
         session = ClassSession.objects.create(
@@ -1763,8 +1765,18 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="student-avatar student-avatar-link"', html=False)
         self.assertContains(response, 'aria-label="Abrir perfil e configurações"', html=False)
-        self.assertContains(response, '<svg class="theme-toggle-icon"', html=False)
+        # Shell v2 (Onda 0): header de saudação, sem toggle de tema.
+        self.assertNotContains(response, '<svg class="theme-toggle-icon"', html=False)
         self.assertNotContains(response, 'class="student-topbar-link">Perfil</a>', html=False)
+        self.assertContains(response, self.student.full_name.split()[0])
+
+    def test_student_settings_renders_theme_toggle_row(self):
+        response = self.client.get(reverse('student-app-settings'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-ui="student-theme-toggle"', html=False)
+        self.assertContains(response, '<svg class="theme-toggle-icon"', html=False)
+        self.assertContains(response, 'Aparência')
 
     def test_student_topbar_uses_google_photo_when_available(self):
         self.identity.photo_url = 'https://example.com/me.jpg'
@@ -1861,7 +1873,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertIn('octobox_student_session', response.cookies)
         self.assertEqual(response.cookies['octobox_student_session'].value, '')
 
-    def test_student_home_shows_box_switcher_when_multiple_memberships_exist(self):
+    def test_box_switcher_lives_in_settings_not_in_home_header(self):
         StudentBoxMembership.objects.create(
             identity=self.identity,
             student_id=self.student.id,
@@ -1869,11 +1881,15 @@ class StudentAppExperienceTests(TestCase):
             status=StudentBoxMembershipStatus.ACTIVE,
         )
 
-        response = self.client.get(reverse('student-app-home'))
+        home_response = self.client.get(reverse('student-app-home'))
+        settings_response = self.client.get(reverse('student-app-settings'))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Trocar box')
-        self.assertContains(response, 'box-secundario')
+        # Shell v2 (Onda 0): a troca de box saiu do header e mora no Perfil.
+        self.assertEqual(home_response.status_code, 200)
+        self.assertNotContains(home_response, 'Trocar box')
+        self.assertEqual(settings_response.status_code, 200)
+        self.assertContains(settings_response, 'Trocar de box')
+        self.assertContains(settings_response, 'box-secundario')
 
     def test_switch_box_updates_active_box_in_cookie(self):
         StudentBoxMembership.objects.create(

@@ -1,6 +1,6 @@
 {% if student_identity %}
 <nav class="student-mobile-nav" aria-label="Navegação mobile do aluno">
-    <a href="{% url 'student-app-home' %}" class="student-mobile-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}" aria-label="Início" title="Início">
+    <a href="{% url 'student-app-home' %}" class="student-mobile-nav-link{% if student_shell_nav == 'home' %} is-active{% endif %}">
         <span class="student-mobile-nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 10.5 12 3l9 7.5"/>
@@ -8,9 +8,9 @@
                 <path d="M9.5 20v-5.5h5V20"/>
             </svg>
         </span>
-        <span class="visually-hidden">Início</span>
+        <span class="student-mobile-nav-label">Início</span>
     </a>
-    <a href="{% url 'student-app-grade' %}" class="student-mobile-nav-link{% if student_shell_nav == 'grade' %} is-active{% endif %}" aria-label="Grade" title="Grade">
+    <a href="{% url 'student-app-grade' %}" class="student-mobile-nav-link{% if student_shell_nav == 'grade' %} is-active{% endif %}">
         <span class="student-mobile-nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M8 2v4"/>
@@ -22,9 +22,9 @@
                 <path d="M16 14h.01"/>
             </svg>
         </span>
-        <span class="visually-hidden">Grade</span>
+        <span class="student-mobile-nav-label">Agenda</span>
     </a>
-    <a href="{% url 'student-app-wod' %}" class="student-mobile-nav-link{% if student_shell_nav == 'wod' %} is-active{% endif %}" aria-label="WOD" title="WOD">
+    <a href="{% url 'student-app-wod' %}" class="student-mobile-nav-link{% if student_shell_nav == 'wod' %} is-active{% endif %}">
         <span class="student-mobile-nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 10h3"/>
@@ -36,15 +36,24 @@
                 <path d="M8.5 14h7"/>
             </svg>
         </span>
-        <span class="visually-hidden">WOD</span>
+        <span class="student-mobile-nav-label">WOD</span>
     </a>
-    <a href="{% url 'student-app-rm' %}" class="student-mobile-nav-link{% if student_shell_nav == 'rm' %} is-active{% endif %}" aria-label="RM" title="RM">
+    <a href="{% url 'student-app-rm' %}" class="student-mobile-nav-link{% if student_shell_nav == 'rm' %} is-active{% endif %}">
         <span class="student-mobile-nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 3 14.9 8.86 21 9.76l-4.4 4.29 1.04 6.05L12 17.27 6.36 20.1 7.4 14.05 3 9.76l6.1-.9L12 3z"/>
             </svg>
         </span>
-        <span class="visually-hidden">RM</span>
+        <span class="student-mobile-nav-label">RMs</span>
+    </a>
+    <a href="{% url 'student-app-settings' %}" class="student-mobile-nav-link{% if student_shell_nav == 'settings' %} is-active{% endif %}">
+        <span class="student-mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
+                <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+            </svg>
+        </span>
+        <span class="student-mobile-nav-label">Perfil</span>
     </a>
 </nav>
 {% endif %}

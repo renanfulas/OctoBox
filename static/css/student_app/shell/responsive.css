@@ -36,11 +36,6 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     .student-topbar-copy span {
         font-size: 0.82rem;
     }
-
-    .student-box-switcher-panel {
-        left: auto;
-        right: 0;
-    }
 }
 
 @media (max-width: 640px) {
@@ -57,24 +52,8 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
         align-items: center;
     }
 
-    .student-topbar-main.topbar-left,
-    .student-topbar-actions.topbar-right {
+    .student-topbar-main.topbar-left {
         width: auto;
-    }
-
-    .student-topbar-actions.topbar-right {
-        justify-content: flex-end;
-        flex-wrap: nowrap;
-    }
-
-    .student-box-switcher {
-        flex: 0 0 auto;
-    }
-
-    .student-box-switcher > summary {
-        width: auto;
-        place-items: center;
-        padding-inline: 10px;
     }
 
     .student-avatar {
@@ -89,5 +68,5 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 
     .student-topbar-copy strong,
     .student-topbar-copy span {
-        max-width: 42vw;
+        max-width: 70vw;
     }

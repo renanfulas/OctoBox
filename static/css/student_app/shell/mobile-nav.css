@@ -10,8 +10,8 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     bottom: max(12px, env(safe-area-inset-bottom, 0px));
     z-index: 12;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
     padding: 6px;
     border-radius: 22px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
@@ -29,8 +29,9 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-mobile-nav-link {
     display: grid;
     place-items: center;
-    min-height: 48px;
-    padding: 8px 10px;
+    gap: 3px;
+    min-height: 52px;
+    padding: 7px 4px;
     border-radius: 16px;
     font-size: 0.8rem;
     text-decoration: none;
@@ -55,6 +56,14 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     width: 20px;
     height: 20px;
     display: block;
+}
+
+.student-mobile-nav-label {
+    font-size: 0.69rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .student-mobile-nav-link:hover,
