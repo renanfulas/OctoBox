@@ -278,6 +278,12 @@ class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
             }
             for card in rm_snapshot['cards']
         )
+        # Shell v2 (Onda 4): hero "Maior carga" — o maior RM vira o destaque da tela.
+        context['student_rm_top'] = max(
+            context['rm_cards'],
+            key=lambda card: card['record'].one_rep_max_kg,
+            default=None,
+        )
         context['add_rm_form'] = StudentExerciseMaxForm()
         context['percentage_choices'] = tuple(range(5, 105, 5))
         return self._attach_student_shell_context(context)
