@@ -1,10 +1,103 @@
 /*
-ARQUIVO: tela WOD do aluno
-GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+ARQUIVO: tela WOD do aluno (shell v2, Onda 3).
+- O nome do treino e o heroi da tela; meta da sessao vira chips no header.
+- "Carga pra voce" amplifica a primary_recommendation (assinatura do produto).
 */
 
+.student-wod-header {
+    display: grid;
+    gap: 8px;
+    padding: 4px 4px 0;
+}
+
+.student-wod-header__title {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 7vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+}
+
+.student-wod-header__notes {
+    margin: 0;
+    color: var(--theme-text-muted);
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.student-wod-foryou {
+    --student-card-border: color-mix(in srgb, var(--theme-accent-primary) 26%, var(--theme-border-soft) 74%);
+}
+
+.student-wod-foryou__value {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.student-wod-foryou__value strong {
+    color: var(--theme-text-primary);
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 8vw, 2.4rem);
+    font-weight: 850;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.student-wod-foryou__value span {
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+    font-size: 0.86rem;
+    font-weight: 800;
+}
+
+.student-wod-foryou__base {
+    margin: 0;
+    color: var(--theme-text-muted);
+    font-size: 0.8rem;
+}
+
+.student-wod-block__kind {
+    border-color: color-mix(in srgb, var(--student-wod-kind-color, var(--theme-accent-support)) 30%, var(--theme-border-soft) 70%);
+    background: color-mix(in srgb, var(--student-wod-kind-color, var(--theme-accent-support)) 12%, var(--theme-surface-strong) 88%);
+}
+
+.student-wod-block[data-kind="aquecimento"] { --student-wod-kind-color: var(--theme-accent-success); }
+.student-wod-block[data-kind="forca"] { --student-wod-kind-color: var(--theme-accent-support); }
+.student-wod-block[data-kind="skill"] { --student-wod-kind-color: var(--theme-accent-primary); }
+.student-wod-block[data-kind="metcon"] { --student-wod-kind-color: var(--theme-accent-danger); }
+.student-wod-block[data-kind="cooldown"] { --student-wod-kind-color: var(--theme-accent-premium); }
+
+.student-wod-block__notes {
+    margin: 0 0 4px;
+    color: var(--theme-text-secondary);
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.student-wod-block-list {
+    gap: 12px;
+}
+
 .student-wod-movement-list {
+    display: grid;
+    gap: 10px;
     margin-top: 14px;
+}
+
+/* Movimento em linha: nome+prescricao a esquerda, carga a direita */
+.student-wod-movement-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.student-wod-movement-card .student-wod-movement-copy {
+    min-width: 0;
 }
 
 .student-prescription {

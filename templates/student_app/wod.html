@@ -10,26 +10,40 @@
 {% endblock %}
 
 {% block body %}
-{% if student_workout_day and student_workout_day.primary_recommendation %}
-<section class="student-hero-number">
-    <span class="student-hero-number__meta">{{ student_workout_day.workout_title }}</span>
-    <p class="student-hero-number__label">{{ student_workout_day.session_title }}</p>
-    <div class="student-hero-number__value"><span>Resumo</span></div>
-    <p class="student-hero-number__support">
-        {{ student_workout_day.primary_recommendation.movement_label }} · {{ student_workout_day.primary_recommendation.percentage }}% do seu RM · {{ student_workout_day.primary_recommendation.recommended_load_kg }} kg
+{% if student_workout_day %}
+<section class="student-wod-header">
+    <div class="student-wod-session-meta">
+        <span class="student-context-switch">{{ student_workout_day.session_scheduled_label }}</span>
+        <span class="student-context-switch">{{ student_workout_day.session_title }}</span>
+        {% if student_workout_day.is_normalized %}
+        <span class="student-wod-rich__badge">SmartPlan</span>
+        {% endif %}
+    </div>
+    <h1 class="student-wod-header__title">{{ student_workout_day.workout_title|default:"Treino do dia" }}</h1>
+    {% if student_workout_day.coach_name or student_workout_day.coach_notes %}
+    <p class="student-wod-header__notes">
+        {% if student_workout_day.coach_name %}{{ student_workout_day.coach_name }}{% endif %}{% if student_workout_day.coach_notes and student_workout_day.is_normalized %}{% if student_workout_day.coach_name %} · {% endif %}“{{ student_workout_day.coach_notes|truncatechars:140 }}”{% endif %}
     </p>
-    <a href="#student-wod-day" class="student-primary-action">Ver treino do dia</a>
+    {% endif %}
 </section>
-{% elif student_workout_day %}
-<section class="student-hero-number">
-    <span class="student-hero-number__meta">WOD</span>
-    <p class="student-hero-number__label">{{ student_workout_day.workout_title }}</p>
-    <div class="student-hero-number__value"><span>Hoje</span></div>
+
+{% if student_workout_day.primary_recommendation %}
+<section class="student-card student-card--feature student-wod-foryou">
+    <span class="student-context-switch">Carga pra você</span>
+    <div class="student-wod-foryou__value">
+        <strong>{{ student_workout_day.primary_recommendation.recommended_load_kg }} kg</strong>
+        <span>{{ student_workout_day.primary_recommendation.percentage }}% do seu RM</span>
+    </div>
+    <p class="student-wod-foryou__base">
+        {{ student_workout_day.primary_recommendation.movement_label }}{% if student_workout_day.primary_recommendation.base_rm_kg %} · seu RM atual: {{ student_workout_day.primary_recommendation.base_rm_kg }} kg{% endif %}
+    </p>
+    <a href="#student-wod-day" class="student-primary-action">Ver treino completo</a>
 </section>
+{% endif %}
 {% else %}
 <section class="student-compact-state">
     <strong>WOD ainda não publicado.</strong>
-    <p class="student-copy">Use a calculadora.</p>
+    <p class="student-copy">Enquanto isso, use a calculadora de carga abaixo.</p>
 </section>
 {% endif %}
 
