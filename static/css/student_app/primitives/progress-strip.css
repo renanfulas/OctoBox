@@ -12,6 +12,20 @@ ARQUIVO: faixa de progresso do app do aluno.
     box-shadow: var(--theme-shadow-soft);
 }
 
+.student-progress-strip__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.student-progress-strip__score {
+    color: var(--theme-text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-align: right;
+}
+
 .student-progress-strip__track {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -48,6 +62,21 @@ ARQUIVO: faixa de progresso do app do aluno.
 .student-progress-day__date {
     display: block;
     line-height: 1.05;
+}
+
+.student-progress-day__check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    color: color-mix(in srgb, var(--theme-accent-success) 78%, var(--theme-text-primary) 22%);
+}
+
+.student-progress-day__check svg {
+    width: 14px;
+    height: 14px;
+    display: block;
 }
 
 .student-progress-day__date {
