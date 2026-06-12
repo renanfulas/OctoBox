@@ -7,8 +7,7 @@ from django.conf import settings
 _INVITE_COOKIE = 'student_invite_pending'
 _INVITE_COOKIE_MAX_AGE = 900  # 15 min
 from django.contrib import messages
-from django.http import HttpResponseNotAllowed
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseNotAllowed
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView, View
@@ -19,7 +18,12 @@ from .application.commands import AuthenticateStudentWithProviderCommand
 from .application.use_cases import AuthenticateStudentWithProvider
 from .facade import resolve_tenant_for_student_invite_landing
 from .infrastructure.repositories import DjangoStudentIdentityRepository
-from .infrastructure.session import clear_student_session_cookie
+from .infrastructure.session import (
+    clear_student_session_cookie,
+    get_student_session_cookie_name,
+    get_student_session_max_age,
+    read_student_session_value,
+)
 from .funnel_events import record_student_onboarding_event
 from .models import StudentOnboardingJourney
 from .oauth_actions import (
@@ -283,6 +287,40 @@ class StudentSignOutView(View):
     def post(self, request, *args, **kwargs):
         response = redirect('student-identity-login')
         clear_student_session_cookie(response)
+        return response
+
+
+class StudentDevTokenLoginView(View):
+    """Login de desenvolvimento via token (somente DEBUG).
+
+    O token É o valor assinado do cookie de sessão do aluno (gerado por
+    build_student_session_value). A view valida com read_student_session_value
+    — mesma assinatura/SECRET_KEY do runtime — e grava o cookie oficial.
+
+    PONTOS CRÍTICOS:
+    - 404 incondicional fora de DEBUG: isto nunca pode existir em produção.
+    - Não cria sessão nova nem identidade: só transporta um token já assinado
+      para o cookie, útil para abrir o app autenticado em outro browser local.
+    """
+
+    def get(self, request, *args, **kwargs):
+        if not settings.DEBUG:
+            raise Http404
+        token = (request.GET.get('token') or '').strip()
+        payload = read_student_session_value(token)
+        if not payload:
+            messages.error(request, 'Token de desenvolvimento inválido ou expirado.')
+            return redirect('student-identity-login')
+        response = redirect('student-app-home')
+        response.set_cookie(
+            get_student_session_cookie_name(),
+            token,
+            max_age=get_student_session_max_age(),
+            httponly=True,
+            secure=bool(getattr(settings, 'SESSION_COOKIE_SECURE', False)),
+            samesite='Lax',
+            path='/aluno/',
+        )
         return response
 
 
