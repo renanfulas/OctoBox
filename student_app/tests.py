@@ -719,8 +719,11 @@ class StudentAppExperienceTests(TestCase):
         response = self.client.get(reverse('student-app-grade'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Aqui você acompanha sua rotina. Reserve na aba Agenda.')
-        self.assertNotContains(response, 'class="student-secondary-action"', html=False)
+        # Shell v2 (Onda 2): a Agenda passa a ser a superfície de reserva —
+        # cada card carrega uma ação via _session_actions.
+        self.assertContains(response, 'class="student-agenda-card"', html=False)
+        self.assertContains(response, 'class="student-session-actions"', html=False)
+        self.assertContains(response, 'Cancele até 2h antes sem perder crédito.')
 
     def test_cancel_attendance_sets_booking_as_canceled_until_one_hour_before_class(self):
         session = ClassSession.objects.create(

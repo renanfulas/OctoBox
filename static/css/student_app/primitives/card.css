@@ -266,6 +266,86 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     font-size: 0.7rem;
 }
 
+/* Estado e capacidade de aula (compartilhado por Início e Agenda — antes duplicado por tela) */
+.student-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    width: fit-content;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent);
+    color: var(--theme-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.class-status-scheduled {
+    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
+    background: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-surface-strong) 84%);
+}
+
+.class-status-in-progress {
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-border-soft) 72%);
+    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-strong) 82%);
+}
+
+.class-status-completed,
+.class-status-canceled {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--theme-border-soft) 82%);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, var(--theme-surface-strong) 88%);
+}
+
+.student-session-card__capacity {
+    display: grid;
+    gap: 4px;
+}
+
+.student-session-card__capacity-foot {
+    color: var(--theme-text-secondary);
+    font-size: 0.78rem;
+}
+
+.student-session-card__capacity-bar {
+    position: relative;
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-border-soft) 54%, transparent);
+}
+
+.student-session-card__capacity-bar > span {
+    display: block;
+    width: min(100%, var(--student-session-occupancy, 0%));
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--theme-accent-primary) 78%, white 22%),
+        color-mix(in srgb, var(--theme-accent-support) 84%, white 16%)
+    );
+}
+
+.student-session-card__capacity-bar > span.class-occupancy-medium {
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--theme-accent-warning) 74%, white 26%),
+        color-mix(in srgb, var(--theme-accent-support) 72%, white 28%)
+    );
+}
+
+.student-session-card__capacity-bar > span.class-occupancy-high,
+.student-session-card__capacity-bar > span.class-occupancy-critical,
+.student-session-card__capacity-bar > span.class-occupancy-closed {
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--theme-accent-danger) 72%, white 28%),
+        color-mix(in srgb, var(--theme-accent-warning) 74%, white 26%)
+    );
+}
+
 /* Attendees grid */
 .student-attendees-grid {
     display: grid;
