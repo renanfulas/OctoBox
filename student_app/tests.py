@@ -866,12 +866,19 @@ class StudentAppExperienceTests(TestCase):
         card = next(item for item in dashboard.next_sessions if item.session_id == session.id)
         self.assertEqual(card.scheduled_label, '24/04 09:00')
 
-    def test_student_progress_week_starts_today(self):
+    def test_student_progress_shows_current_calendar_week(self):
+        # Shell v2: o streak é a semana corrente (segunda → domingo),
+        # retrospectivo — antes era "próximos 7 dias", que nunca completava.
         dashboard = GetStudentDashboard().execute(identity=self.identity)
         today = timezone.localdate()
+        week_start = today - timedelta(days=today.weekday())
 
-        self.assertEqual(dashboard.progress_days[0].date, today)
-        self.assertEqual(dashboard.progress_days[0].day_label, 'Hoje')
+        self.assertEqual(len(dashboard.progress_days), 7)
+        self.assertEqual(dashboard.progress_days[0].date, week_start)
+        self.assertEqual(dashboard.progress_days[0].day_label, 'Hoje' if today == week_start else 'Seg')
+        today_cell = next(day for day in dashboard.progress_days if day.date == today)
+        self.assertEqual(today_cell.day_label, 'Hoje')
+        self.assertTrue(today_cell.is_today)
 
     def test_student_grade_and_rm_routes_render_new_shell(self):
         StudentExerciseMax.objects.create(

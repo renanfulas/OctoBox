@@ -62,16 +62,17 @@ ARQUIVO: faixa de progresso do app do aluno (skin v2, Onda 6 — visual do proto
 }
 
 .student-progress-day__label,
-.student-progress-day__date {
+.student-progress-day__dot {
     display: block;
     font-size: 0.69rem;
     line-height: 1.1;
 }
 
-.student-progress-day__date {
-    color: var(--theme-text-primary);
-    font-size: 0.8rem;
+.student-progress-day__dot {
+    color: var(--theme-text-muted);
+    font-size: 1rem;
     font-weight: 800;
+    line-height: 0.8;
 }
 
 .student-progress-day__check {

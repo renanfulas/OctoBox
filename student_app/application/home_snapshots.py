@@ -86,8 +86,12 @@ def _deserialize_progress_days(payload) -> tuple[StudentProgressDay, ...]:
 
 
 def build_student_progress_days(*, student, now) -> tuple[StudentProgressDay, ...]:
+    # Streak da semana corrente (segunda → domingo), retrospectivo: os dias já
+    # vividos podem aparecer como "treinado". Antes a janela era os próximos 7
+    # dias a partir de hoje, que nunca completam (sempre "0 de 7"). Ver shell v2.
     today = now.date()
-    days = [today + timedelta(days=offset) for offset in range(7)]
+    week_start = today - timedelta(days=today.weekday())
+    days = [week_start + timedelta(days=offset) for offset in range(7)]
     activity_rows = (
         StudentAppActivity.objects
         .filter(student=student, activity_date__in=days)
@@ -102,7 +106,7 @@ def build_student_progress_days(*, student, now) -> tuple[StudentProgressDay, ..
             date=day,
             is_complete=day in activity_by_day,
             kind=activity_by_day.get(day, ''),
-            day_label='Hoje' if day == today else ('Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom')[day.weekday()],
+            day_label='Hoje' if day == today else ('Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom')[day.weekday()],
             date_label=day.strftime('%d/%m'),
             is_today=day == today,
         )

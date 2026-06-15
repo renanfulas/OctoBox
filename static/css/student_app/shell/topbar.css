@@ -91,3 +91,43 @@ ARQUIVO: header de saudacao do app do aluno (skin v2, Onda 6 — visual do proto
     border-color: color-mix(in srgb, var(--theme-accent-primary) 48%, transparent);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-primary-alpha) 24%, transparent);
 }
+
+/* Sino do header (skin v2): visual do protótipo; leva ao Perfil → Notificações. */
+.student-topbar-bell {
+    position: relative;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: var(--theme-text-secondary);
+    text-decoration: none;
+    transition:
+        color var(--motion-base) var(--ease-standard),
+        background var(--motion-base) var(--ease-standard);
+}
+
+.student-topbar-bell svg {
+    width: 21px;
+    height: 21px;
+}
+
+.student-topbar-bell::after {
+    content: "";
+    position: absolute;
+    top: 7px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--theme-accent-premium);
+    border: 2px solid var(--theme-bg-root);
+}
+
+.student-topbar-bell:hover,
+.student-topbar-bell:focus-visible {
+    outline: none;
+    color: var(--theme-text-primary);
+    background: color-mix(in srgb, var(--theme-surface-strong) 80%, transparent);
+}
