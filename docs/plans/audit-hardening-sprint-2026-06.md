@@ -60,7 +60,7 @@ Regra do sprint:
 
 Status:
 
-1. em execução — PR [#123](https://github.com/renanfulas/OctoBox/pull/123) aberto em 2026-06-11; `pip-audit` local no requirements novo: **No known vulnerabilities found**; CI do PR com full-test-suite, security-audit e 3 seeds de ordem **verdes** em Django 6.0.6; na suíte local, 5 falhas em `tests/test_tenant_boundary.py` foram isoladas por A/B como problema do ambiente local (mesma assinatura em 6.0.5 e 6.0.6; verdes no CI) — registradas como evidência no S5
+1. **pronto (2026-06-11)** — PR [#123](https://github.com/renanfulas/OctoBox/pull/123) mergeado (`211f2e4`); Security Scanners **verde na main** no run pós-merge; gate destravado e **deploy de produção executado com sucesso** (12:35 UTC) — produção roda Django 6.0.6. Validações: `pip-audit` limpo, 12/12 checks no PR; as 5 falhas locais de `tests/test_tenant_boundary.py` foram isoladas por A/B como ambiente local (evidência no S5)
 
 Problema e evidência:
 
@@ -87,7 +87,7 @@ Critério de pronto:
 
 Status:
 
-1. em execução — PR [#122](https://github.com/renanfulas/OctoBox/pull/122) aberto em 2026-06-11; validado local (antes `1 passed + 5 errors`, depois `5 passed`) e com **dispatch manual do workflow verde no branch**
+1. **pronto (2026-06-11)** — PR [#122](https://github.com/renanfulas/OctoBox/pull/122) mergeado (`b239cf0`); **primeiro run verde do workflow na main em toda a história** (1m56s, após 55 falhas); alarme de issue instalado (critério 2 é estrutural — só comprovável numa falha agendada futura). Validações: 5 passed local + dispatch manual verde no branch antes do merge
 
 Problema e evidência:
 
@@ -113,7 +113,7 @@ Critério de pronto:
 
 Status:
 
-1. aberto
+1. em execução — medição feita na CI da main em 2026-06-11: **76,22%** (run 27347445141, suite completa pós-merge do #122); este PR sobe o `fail_under` de 72 → **74** (regra: atual − 2pp, com margem de 2,22pp)
 
 Problema e evidência:
 
@@ -138,7 +138,7 @@ Critério de pronto:
 
 Status:
 
-1. em execução — PR [#124](https://github.com/renanfulas/OctoBox/pull/124) aberto em 2026-06-11; os dois docs foram corrigidos, o RAG foi reindexado (1514 docs, 1028 chunks) e o smoke test confirmou a seção corrigida como primeiro resultado; este quadro entra no mesmo PR
+1. **pronto (2026-06-11)** — PR [#124](https://github.com/renanfulas/OctoBox/pull/124) mergeado (`9f5f5ef`); os dois docs corrigidos estão na main, o RAG foi reindexado (1514 docs, 1028 chunks) e o smoke test confirmou a seção corrigida como primeiro resultado
 
 Problema e evidência:
 
@@ -163,14 +163,14 @@ Critério de pronto:
 
 Status:
 
-1. aberto — nota de 2026-06-11: o cluster da 5433 estava parado e foi religado manualmente (`pg_ctl start`) para o reindex do S4; a causa de ele não sobreviver/subir sozinho segue sem tratamento
+1. em execução — avanços de 2026-06-11: (a) **mistério dos boundary tests resolvido** — a causa raiz era o skip-guard dependente de locale (match na mensagem em inglês; o PG local fala pt-BR), corrigido por SQLSTATE no PR [#126](https://github.com/renanfulas/OctoBox/pull/126) e validado nos dois modos (sem provisionar: `23 passed, 5 skipped`; com `test-a`/`test-b` provisionados: `28 passed` — B1–B7 exercitados localmente pela primeira vez); (b) **morte do cluster explicada** — o pg.log registra worker terminado por exceção `0x40010004`: postgres iniciado de dentro de sessões do harness morre junto com o job da sessão; mitigação instalada: launcher `C:\Users\renan\octobox-pg-start.cmd` copiado para a pasta Startup do usuário (criar scheduled task foi negado sem elevação) — **validar no próximo logon**; (c) **decisão OneDrive tomada e executada**: repo migrado para `C:\dev\OctoBox` (clone limpo, venv 3.12 novo sem o pacote `k6` — build quebrado no Windows e ausente também no venv antigo —, `.env` e memória de agente copiados, `core.hooksPath` configurado) e validado de lá: `28 passed` nos boundary tests e RAG respondendo; o diretório no OneDrive vira backup até descarte. Pendente: merge do #126 e validar o auto-start do cluster no próximo logon
 
 Problema e evidência:
 
 1. o Postgres local (porta 5433) estava fora do ar durante a auditoria — o RAG online (`search_project_knowledge`) falhou com `connection timeout` e foi preciso usar o fallback offline
 2. a memória do projeto registra bloqueios recorrentes: migrations inconsistentes locais e OneDrive desidratando arquivos
 3. o working tree vive dentro do OneDrive — risco real de sync corromper `.venv`, dados do Postgres e `node_modules`
-4. descoberto em 2026-06-11 durante a validação do S1: os 5 testes de `tests/test_tenant_boundary.py` (B1, B2, B5, B6, B7) **falham no cluster local** com `relação "boxcore_student" não existe` em schema de tenant recém-criado — mesma assinatura em Django 6.0.5 e 6.0.6, banco de teste recriado do zero, e os mesmos testes verdes no CI (PG 15). Suspeitos: PG 16 local vs PG 15 do CI, role `octobox_app` não-superuser, ou o gotcha do `TenantSyncRouter` (migrations registradas sem DDL). Investigar dentro deste item
+4. descoberto em 2026-06-11 durante a validação do S1: os 5 testes de `tests/test_tenant_boundary.py` (B1, B2, B5, B6, B7) **falham no cluster local** com `relação "boxcore_student" não existe` — mesma assinatura em Django 6.0.5 e 6.0.6, banco de teste recriado do zero, e os mesmos testes verdes no CI (PG 15). Sondas já executadas (2026-06-11): (a) **role descartada** — falha idêntica rodando como superuser `postgres`; (b) **mecanismo identificado** — após o run, o schema `box_test` do conftest raiz existe com 48 tabelas migradas (tenant funciona no cluster), mas os schemas `box_test_a`/`box_test_b` que os testes de boundary criam **nunca chegam a existir** no banco de teste. **Resolvido (PR #126)**: a premissa estava errada — os testes não criam esses tenants; eles esperam provisioning externo (o job `tenant-boundary` do CI roda `scripts/provision_test_tenants.sh` antes do pytest) e foram desenhados para **skipar** na ausência dos schemas. O guard de skip casava a mensagem de erro em inglês (`does not exist`) e o PostgreSQL local responde em pt-BR (`não existe a relação ...`) → os testes falhavam em vez de skipar. Não era PG 16, role nem Windows — era locale
 
 Ações:
 
@@ -192,7 +192,7 @@ Critério de pronto:
 
 Status:
 
-1. aberto
+1. **pronto (2026-06-11)** — 23 branches remotas deletadas (todas com PR mergeado ou conteúdo já na main por ancestralidade; cuidado tomado com o falso negativo do squash-merge, cruzando com `gh pr list --state merged`). Poupadas: `claude/*` (sessões paralelas), `docs/update-handover-fase-2` (sem PR — revisar manualmente se ainda vale) e a branch do PR #124 (deletada no merge). Ação operacional direta, sem PR
 
 Problema e evidência:
 
@@ -238,9 +238,11 @@ Estes itens apareceram na auditoria como evolução, não correção. Têm trilh
 
 | Item | Prioridade | Status | PR | Data |
 |---|---|---|---|---|
-| S1 — Django 6.0.6 | P0 | em execução | [#123](https://github.com/renanfulas/OctoBox/pull/123) | 2026-06-11 |
-| S2 — E2E nightly + alarme | P0 | em execução | [#122](https://github.com/renanfulas/OctoBox/pull/122) | 2026-06-11 |
-| S3 — ratchet de cobertura | P1 | aberto | — | — |
-| S4 — sync de docs de autoridade | P1 | em execução | [#124](https://github.com/renanfulas/OctoBox/pull/124) | 2026-06-11 |
-| S5 — ambiente dev local | P2 | aberto | — | — |
-| S6 — higiene de branches | P2 | aberto | — | — |
+| S1 — Django 6.0.6 | P0 | **pronto** | [#123](https://github.com/renanfulas/OctoBox/pull/123) | 2026-06-11 |
+| S2 — E2E nightly + alarme | P0 | **pronto** | [#122](https://github.com/renanfulas/OctoBox/pull/122) | 2026-06-11 |
+| S3 — ratchet de cobertura | P1 | em execução | [#125](https://github.com/renanfulas/OctoBox/pull/125) | 2026-06-11 |
+| S4 — sync de docs de autoridade | P1 | **pronto** | [#124](https://github.com/renanfulas/OctoBox/pull/124) | 2026-06-11 |
+| S5 — ambiente dev local | P2 | em execução | [#126](https://github.com/renanfulas/OctoBox/pull/126) | 2026-06-11 |
+| S6 — higiene de branches | P2 | **pronto** | — (ação direta, sem PR) | 2026-06-11 |
+
+Fechamento do sprint pendente de: merge do S3, resolução do S5, e o critério de 3 dias corridos de Security Scanners + E2E nightly verdes na main (contagem iniciada em 2026-06-11).

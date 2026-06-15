@@ -2092,21 +2092,21 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'beforeinstallprompt')
         self.assertContains(response, 'Adicionar à Tela de Início')
 
-    def test_juliana_week_order_reflects_recomp_program(self):
+    def test_juliana_week_order_reflects_legs_program(self):
         response = self.client.get('/renan/juliana')
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "goDay('qua',this)")
-        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Posterior</div>', html=True)
-        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Upper</div>', html=True)
+        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Sup A</div>', html=True)
+        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Quad A</div>', html=True)
         self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Glúteo</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Braços</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">HIIT</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Fullbody</div>', html=True)
+        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Sup B</div>', html=True)
+        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Full</div>', html=True)
+        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Quad B</div>', html=True)
         self.assertContains(response, '<div class="dn">Dom</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, 'Terça · ~55 min · Peito, Costas, Ombros, Bíceps, Tríceps')
-        self.assertContains(response, 'Quarta · ~55 min · Glúteo, Posterior, Gastrocnêmio, Core · + Cardio leve pós-treino')
-        self.assertContains(response, 'Sábado · ~60 min · Superior em superset + Lower com pré-exaustão')
+        self.assertContains(response, 'Terça · ~55 min · Quadríceps + Panturrilha')
+        self.assertContains(response, 'Quarta · ~60 min · Glúteo, posterior, glúteo médio')
+        self.assertContains(response, 'Sábado · ~55 min · Quadríceps (variação da terça)')
 
 
 class StudentAuthMiddlewareTests(TestCase):
