@@ -85,18 +85,24 @@
 {% include "student_app/_partials/_progress_strip.html" with progress_days=dashboard.progress_days %}
 
 {% if student_tomorrow_wod %}
-<section class="student-card student-card--quiet student-tomorrow-wod-card">
-    <div class="student-section-head">
-        <div>
-            <span class="student-context-switch">WOD de amanhã</span>
-            <h2>{{ student_tomorrow_wod.title }}</h2>
-        </div>
-        <a href="{% url 'student-app-grade' %}" class="student-link">Ver grade</a>
-    </div>
-    {% if student_tomorrow_wod.notes %}
-    <p class="student-copy">{{ student_tomorrow_wod.notes }}</p>
-    {% endif %}
-</section>
+<a href="{% url 'student-app-grade' %}" class="student-card student-card--quiet student-tomorrow-wod-card">
+    <span class="student-tomorrow-wod-card__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10h3"/>
+            <path d="M18 10h3"/>
+            <path d="M6 7v6"/>
+            <path d="M18 7v6"/>
+            <path d="M8.5 12h7"/>
+            <path d="M8.5 10h7"/>
+            <path d="M8.5 14h7"/>
+        </svg>
+    </span>
+    <span class="student-tomorrow-wod-card__copy">
+        <strong>WOD de amanhã · {{ student_tomorrow_wod.title }}</strong>
+        {% if student_tomorrow_wod.notes %}<span>{{ student_tomorrow_wod.notes }}</span>{% endif %}
+    </span>
+    <svg class="student-tomorrow-wod-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+</a>
 {% endif %}
 
 <section class="student-card student-card--quiet">

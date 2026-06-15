@@ -39,6 +39,70 @@ ARQUIVO: tela Início do aluno (shell v2, Onda 1).
     margin-bottom: 12px;
 }
 
+/* Card "WOD de amanhã" como linha clicavel com icone (skin v2 — visual do prototipo) */
+.student-tomorrow-wod-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.student-tomorrow-wod-card__icon {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+}
+
+.student-tomorrow-wod-card__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.student-tomorrow-wod-card__copy {
+    display: grid;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.student-tomorrow-wod-card__copy strong {
+    color: var(--theme-text-primary);
+    font-size: 0.88rem;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.student-tomorrow-wod-card__copy span {
+    color: var(--theme-text-muted);
+    font-size: 0.78rem;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.student-tomorrow-wod-card__chevron {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    color: var(--theme-text-muted);
+}
+
+.student-tomorrow-wod-card:hover,
+.student-tomorrow-wod-card:focus-visible {
+    outline: none;
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-border-soft) 72%);
+}
+
 @media (max-width: 640px) {
     .student-day-workout summary {
         padding: 12px 14px;
