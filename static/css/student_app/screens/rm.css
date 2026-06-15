@@ -20,6 +20,16 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-rm-card__summary {
     display: grid;
     gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.student-rm-card__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding-right: 44px;
 }
 
 .student-rm-card__summary strong {
@@ -32,9 +42,81 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 }
 
 .student-rm-card__value {
-    color: var(--theme-text-secondary);
-    font-size: 0.92rem;
+    color: var(--theme-text-primary);
+    font-family: var(--student-font-numeric);
+    font-size: 1.06rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.student-rm-card__delta {
+    color: color-mix(in srgb, var(--theme-accent-success) 78%, var(--theme-text-primary) 22%);
     font-weight: 800;
+}
+
+/* Hero "Maior carga" (Onda 4; skin v2: valor em mono como no prototipo) */
+.student-rm-hero .student-hero-number__value {
+    font-family: var(--student-font-numeric);
+    font-size: clamp(2.1rem, 9.5vw, 2.4rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.student-rm-hero__delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: color-mix(in srgb, var(--theme-accent-success) 78%, var(--theme-text-primary) 22%);
+    font-family: var(--font-body);
+    font-size: clamp(0.92rem, 3.6vw, 1.05rem);
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.student-rm-hero__delta svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Chips de percentual da calculadora (Onda 4) */
+.student-rm-percent-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.student-rm-percent-chip {
+    flex: 1 1 0;
+    min-height: 40px;
+    padding: 8px 10px;
+    border-radius: 13px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 88%, transparent);
+    color: var(--theme-text-secondary);
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+        background var(--motion-base) var(--ease-standard),
+        border-color var(--motion-base) var(--ease-standard),
+        color var(--motion-base) var(--ease-standard),
+        transform var(--motion-fast) var(--ease-standard);
+}
+
+.student-rm-percent-chip:hover,
+.student-rm-percent-chip:focus-visible {
+    transform: translateY(-1px);
+    outline: none;
+    border-color: color-mix(in srgb, var(--theme-accent-support) 20%, var(--theme-border-soft) 80%);
+}
+
+.student-rm-percent-chip.is-active {
+    color: var(--theme-text-primary);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 32%, var(--theme-border-soft) 68%);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, var(--theme-surface-strong) 70%);
 }
 
 .student-rm-calculator {
@@ -71,13 +153,13 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     display: grid;
     place-items: center;
     min-height: 52px;
-    border-radius: 16px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-border-soft) 72%);
-    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, var(--theme-surface-strong) 70%);
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
     color: var(--theme-text-primary);
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-    font-weight: 900;
+    font-family: var(--student-font-numeric);
+    font-size: 1.3rem;
+    font-weight: 600;
 }
 
 .student-rm-entry {

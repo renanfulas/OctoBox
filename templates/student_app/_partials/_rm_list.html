@@ -1,4 +1,4 @@
-{% load student_app_formatters %}
+{% load l10n student_app_formatters %}
 <section class="student-card student-card--feature student-rm-records">
     <div class="student-section-head">
         <div>
@@ -18,7 +18,7 @@
                 <form method="post" action="{% url 'student-app-rm-update' card.record.id %}" class="student-rm-inline-form">
                     {% csrf_token %}
                     <span class="student-field-with-unit">
-                        <input class="student-input" type="number" name="one_rep_max_kg" min="0.5" max="999" step="0.5" value="{{ card.record.one_rep_max_kg }}" data-max-integer-digits="3">
+                        <input class="student-input" type="number" name="one_rep_max_kg" min="0.5" max="999" step="0.5" value="{{ card.record.one_rep_max_kg|unlocalize }}" data-max-integer-digits="3">
                         <span class="student-field-with-unit__suffix">kg</span>
                     </span>
                     <button type="submit" class="student-rm-edit__toggle student-rm-edit__toggle--save" aria-label="Salvar RM de {{ card.record.exercise_label }}" title="Salvar RM">
@@ -30,8 +30,11 @@
                 </form>
             </details>
             <div class="student-rm-card__summary">
-                <strong>{{ card.record.exercise_label }} <span class="student-rm-card__value">{{ card.record.one_rep_max_kg|format_rm_value }}</span></strong>
-                <p class="student-copy">{{ card.record.updated_at|date:"d/m" }}{% if card.delta_kg %} · +{{ card.delta_kg|format_rm_value }}{% endif %}</p>
+                <div class="student-rm-card__head">
+                    <strong>{{ card.record.exercise_label }}</strong>
+                    <span class="student-rm-card__value">{{ card.record.one_rep_max_kg|format_rm_value }}</span>
+                </div>
+                <p class="student-copy">{{ card.record.updated_at|date:"d/m" }}{% if card.delta_kg %} · <span class="student-rm-card__delta">+{{ card.delta_kg|format_rm_value }}</span>{% endif %}</p>
                 <svg class="student-rm-sparkline" data-sparkline aria-hidden="true" viewBox="0 0 120 32" preserveAspectRatio="none" style="width:100%;height:32px;display:none;overflow:visible;"></svg>
             </div>
         </article>

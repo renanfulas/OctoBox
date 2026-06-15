@@ -1,3 +1,9 @@
+/*
+ARQUIVO: tela Início do aluno (shell v2, Onda 1).
+- Agenda da home usa .student-session-row (primitives/card.css).
+- Pill de estado e barra de capacidade são primitivas compartilhadas.
+*/
+
 .student-day-section,
 .student-day-workouts {
     display: grid;
@@ -33,215 +39,72 @@
     margin-bottom: 12px;
 }
 
-.student-session-action--blocked {
-    width: 100%;
-    border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 94%, transparent);
-    color: var(--theme-text-muted);
-}
-
-.student-status-pill {
-    display: inline-flex;
+/* Card "WOD de amanhã" como linha clicavel com icone (skin v2 — visual do prototipo) */
+.student-tomorrow-wod-card {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    min-height: 28px;
-    width: fit-content;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent);
-    color: var(--theme-text-secondary);
-    font-size: 0.75rem;
-    font-weight: 800;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
 }
 
-.class-status-scheduled {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-surface-strong) 84%);
-}
-
-.class-status-in-progress {
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-border-soft) 72%);
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-strong) 82%);
-}
-
-.class-status-completed,
-.class-status-canceled {
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--theme-border-soft) 82%);
-    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, var(--theme-surface-strong) 88%);
-}
-
-.student-session-card--agenda {
-    align-items: stretch;
-    gap: 10px;
-    padding: 14px;
-    border-radius: 16px;
-}
-
-.student-session-card__main {
+.student-tomorrow-wod-card__icon {
+    flex: 0 0 auto;
     display: grid;
-    gap: 8px;
-    flex: 1;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+}
+
+.student-tomorrow-wod-card__icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.student-tomorrow-wod-card__copy {
+    display: grid;
+    gap: 2px;
+    flex: 1 1 auto;
     min-width: 0;
 }
 
-.student-session-card__identity,
-.student-session-card__schedule {
-    display: grid;
-    gap: 2px;
-}
-
-.student-session-card__identity strong {
-    font-size: 0.98rem;
-    line-height: 1.12;
-}
-
-.student-session-card__meta {
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-start;
-    gap: 12px;
-}
-
-.student-session-card__coach,
-.student-session-card__date,
-.student-session-card__attendance,
-.student-session-card__occupancy-inline,
-.student-session-card__capacity-foot {
-    color: var(--theme-text-secondary);
-    font-size: 0.8rem;
-}
-
-.student-session-card__time {
+.student-tomorrow-wod-card__copy strong {
     color: var(--theme-text-primary);
-    font-size: 1.32rem;
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    line-height: 0.95;
-}
-
-.student-session-card__occupancy-inline {
-    display: grid;
-    gap: 1px;
-    justify-items: end;
-    text-align: right;
-    min-width: 64px;
-    margin-left: auto;
-}
-
-.student-session-card__occupancy-link {
-    text-decoration: none;
-    transition:
-        transform var(--motion-fast) var(--ease-standard),
-        opacity var(--motion-base) var(--ease-standard);
-}
-
-.student-session-card__occupancy-link:hover,
-.student-session-card__occupancy-link:focus-visible {
-    transform: translateY(-1px);
-    opacity: 0.86;
-    outline: none;
-}
-
-.student-session-card__occupancy-count {
-    color: var(--theme-text-primary);
-    font-size: 0.9rem;
-    font-weight: 900;
-}
-
-.student-session-card__schedule {
-    min-width: 70px;
-}
-
-.student-session-card__status-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-}
-
-.student-session-card__capacity {
-    display: grid;
-    gap: 4px;
-}
-
-.student-session-card__capacity-bar {
-    position: relative;
-    height: 5px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    line-height: 1.2;
     overflow: hidden;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--theme-border-soft) 54%, transparent);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.student-session-card__capacity-bar > span {
-    display: block;
-    width: min(100%, var(--student-session-occupancy, 0%));
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--theme-accent-primary) 78%, white 22%),
-        color-mix(in srgb, var(--theme-accent-support) 84%, white 16%)
-    );
+.student-tomorrow-wod-card__copy span {
+    color: var(--theme-text-muted);
+    font-size: 0.78rem;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.student-session-card__capacity-bar > span.class-occupancy-medium {
-    background: linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--theme-accent-warning) 74%, white 26%),
-        color-mix(in srgb, var(--theme-accent-support) 72%, white 28%)
-    );
+.student-tomorrow-wod-card__chevron {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    color: var(--theme-text-muted);
 }
 
-.student-session-card__capacity-bar > span.class-occupancy-high,
-.student-session-card__capacity-bar > span.class-occupancy-critical,
-.student-session-card__capacity-bar > span.class-occupancy-closed {
-    background: linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--theme-accent-danger) 72%, white 28%),
-        color-mix(in srgb, var(--theme-accent-warning) 74%, white 26%)
-    );
-}
-
-.student-session-card__aside {
-    display: flex;
-    align-items: center;
-    min-width: 124px;
-}
-
-.student-session-card__aside .student-session-actions,
-.student-session-card__aside .student-inline-form {
-    width: 100%;
-}
-
-.student-session-card__aside .student-secondary-action,
-.student-session-card__aside .student-session-action--blocked {
-    min-height: 38px;
-    padding: 8px 12px;
-    border-radius: 12px;
-    font-size: 0.92rem;
+.student-tomorrow-wod-card:hover,
+.student-tomorrow-wod-card:focus-visible {
+    outline: none;
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-border-soft) 72%);
 }
 
 @media (max-width: 640px) {
     .student-day-workout summary {
         padding: 12px 14px;
-    }
-
-    .student-session-card--agenda {
-        flex-direction: column;
-    }
-
-    .student-session-card__aside {
-        min-width: 0;
-    }
-
-    .student-session-card__meta {
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .student-session-card__occupancy-inline {
-        min-width: 0;
     }
 }

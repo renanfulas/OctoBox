@@ -80,6 +80,22 @@
       snapStepValue(percent, 40, 100, 5);
       render();
     });
+
+    var chips = calculator.querySelectorAll('[data-rm-percent-chip]');
+    function syncChips() {
+      chips.forEach(function (chip) {
+        chip.classList.toggle('is-active', chip.dataset.rmPercentChip === String(parseNumber(percent.value)));
+      });
+    }
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        percent.value = chip.dataset.rmPercentChip;
+        render();
+        syncChips();
+      });
+    });
+    percent.addEventListener('input', syncChips);
+    syncChips();
     render();
   }
 

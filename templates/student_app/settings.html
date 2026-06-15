@@ -14,6 +14,18 @@
 {% endblock %}
 
 {% block body %}
+<section class="student-profile-identity">
+    <span class="student-avatar student-profile-identity__avatar" aria-hidden="true">
+        {% if student_identity.photo_url %}
+        <img src="{{ student_identity.photo_url }}" alt="" width="64" height="64" loading="lazy" referrerpolicy="no-referrer">
+        {% else %}
+        {{ student_identity.student.full_name|slice:":1"|upper }}
+        {% endif %}
+    </span>
+    <strong class="student-profile-identity__name">{{ student_identity.student.full_name }}</strong>
+    <span class="student-profile-identity__email">{{ student_identity.email|default:student_identity.student.email }}</span>
+</section>
+
 <section class="student-card student-card--feature student-card--settings-main">
     <div class="student-section-head">
         <div>
@@ -62,6 +74,30 @@
             <button type="submit" class="student-primary-action">Enviar alteração</button>
         </form>
     </details>
+</section>
+
+<section class="student-card student-card--quiet student-appearance-card">
+    <div class="student-section-head">
+        <div>
+            <span class="student-context-switch">Aparência</span>
+            <h2>Tema do app</h2>
+        </div>
+        <button type="button" class="student-theme-toggle theme-toggle student-theme-toggle--row" data-ui="student-theme-toggle">
+            <svg class="theme-toggle-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+            <span class="theme-toggle-label">Tema</span>
+        </button>
+    </div>
+    <p class="student-copy">Escuro ou claro — o app lembra sua escolha neste aparelho.</p>
 </section>
 
 <section class="student-surface-grid student-surface-grid--settings">
@@ -137,4 +173,16 @@
         <button type="submit" class="student-primary-action">Enviar pedido</button>
     </form>
 </section>
+
+<form method="post" action="{% url 'student-identity-logout' %}" class="student-signout">
+    {% csrf_token %}
+    <button type="submit" class="student-secondary-action student-signout__button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"/>
+            <path d="M9 12h12l-3-3"/>
+            <path d="M18 15l3-3"/>
+        </svg>
+        Sair da conta
+    </button>
+</form>
 {% endblock %}

@@ -5,10 +5,11 @@
 {% block extra_head %}
 {{ block.super }}
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/student_app/screens/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/student_app/screens/home.css' %}?v={{ static_asset_version }}">
 {% endblock %}
 
 {% block body %}
+{% load student_shell %}
 <section class="student-hero-number">
     <p class="visually-hidden">
         Modo atual: {% if student_home_mode == 'wod_active' %}WOD{% else %}Grade{% endif %}
@@ -16,15 +17,6 @@
     <span class="student-context-switch">
         {% if student_home_mode == 'wod_active' %}Modo WOD{% else %}Próxima aula{% endif %}
     </span>
-    <p class="student-hero-number__label">
-        {% if student_home_mode == 'wod_active' and student_active_wod_session %}
-        {{ student_active_wod_session.title }}
-        {% elif student_next_session %}
-        {{ student_next_session.title }}
-        {% else %}
-        Sem aula agora
-        {% endif %}
-    </p>
     <div class="student-hero-number__value">
         <span>
             {% if student_home_mode == 'wod_active' %}
@@ -35,7 +27,30 @@
             --
             {% endif %}
         </span>
+        {% if student_home_mode != 'wod_active' and student_next_session %}
+        {% with countdown=student_next_session.scheduled_at|starts_in %}
+        {% if countdown %}<span class="student-hero-number__countdown">{{ countdown }}</span>{% endif %}
+        {% endwith %}
+        {% endif %}
     </div>
+    <p class="student-hero-number__label">
+        {% if student_home_mode == 'wod_active' and student_active_wod_session %}
+        {{ student_active_wod_session.title }}
+        {% elif student_next_session %}
+        {{ student_next_session.title }}
+        {% if student_next_session.coach_name %}<span class="student-hero-number__coach">· {{ student_next_session.coach_name }}</span>{% endif %}
+        {% else %}
+        Sem aula agora
+        {% endif %}
+    </p>
+    {% if student_next_session and student_next_session.capacity %}
+    <div class="student-hero-number__occupancy" style="--student-session-occupancy: {{ student_next_session.occupancy_percent }}%;">
+        <span>{{ student_next_session.occupied_slots }} de {{ student_next_session.capacity }} vagas</span>
+        <div class="student-session-card__capacity-bar" aria-hidden="true">
+            <span class="{{ student_next_session.occupancy_fill_class }}"></span>
+        </div>
+    </div>
+    {% endif %}
     {% if student_next_session %}
     <p class="student-hero-number__support">
         {{ student_next_session.scheduled_label }} · {{ student_next_session.attendance_status }}
@@ -62,23 +77,32 @@
     {% if dashboard.primary_action.help_text %}
     <p class="student-copy">{{ dashboard.primary_action.help_text }}</p>
     {% endif %}
+    {% if student_home_mode != 'wod_active' and student_next_session and student_next_session.workout_titles %}
+    <a href="{% url 'student-app-wod' %}?session_id={{ student_next_session.session_id }}" class="student-secondary-action student-hero-number__ghost-action">Ver o WOD de hoje</a>
+    {% endif %}
 </section>
 
 {% include "student_app/_partials/_progress_strip.html" with progress_days=dashboard.progress_days %}
 
 {% if student_tomorrow_wod %}
-<section class="student-card student-card--quiet student-tomorrow-wod-card">
-    <div class="student-section-head">
-        <div>
-            <span class="student-context-switch">WOD de amanhã</span>
-            <h2>{{ student_tomorrow_wod.title }}</h2>
-        </div>
-        <a href="{% url 'student-app-grade' %}" class="student-link">Ver grade</a>
-    </div>
-    {% if student_tomorrow_wod.notes %}
-    <p class="student-copy">{{ student_tomorrow_wod.notes }}</p>
-    {% endif %}
-</section>
+<a href="{% url 'student-app-grade' %}" class="student-card student-card--quiet student-tomorrow-wod-card">
+    <span class="student-tomorrow-wod-card__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10h3"/>
+            <path d="M18 10h3"/>
+            <path d="M6 7v6"/>
+            <path d="M18 7v6"/>
+            <path d="M8.5 12h7"/>
+            <path d="M8.5 10h7"/>
+            <path d="M8.5 14h7"/>
+        </svg>
+    </span>
+    <span class="student-tomorrow-wod-card__copy">
+        <strong>WOD de amanhã · {{ student_tomorrow_wod.title }}</strong>
+        {% if student_tomorrow_wod.notes %}<span>{{ student_tomorrow_wod.notes }}</span>{% endif %}
+    </span>
+    <svg class="student-tomorrow-wod-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+</a>
 {% endif %}
 
 <section class="student-card student-card--quiet">
@@ -98,40 +122,23 @@
     <div class="student-day-section" data-day-section="{{ section.date|date:'Y-m-d' }}">
         <div class="student-session-list">
             {% for session in section.sessions %}
-            <article class="student-session-card student-session-card--agenda" data-session-link="{% url 'student-app-wod' %}?session_id={{ session.session_id }}" tabindex="0" role="link" aria-label="Abrir WOD de {{ session.title }}">
-                <div class="student-session-card__main">
-                    <div class="student-session-card__identity">
-                        <strong>{{ session.title }}</strong>
-                        <span class="student-session-card__coach">{{ session.coach_name }}</span>
-                    </div>
-                    <div class="student-session-card__meta">
-                        <div class="student-session-card__schedule">
-                            <span class="student-session-card__date">{{ session.scheduled_at|date:"d/m" }}</span>
-                            <span class="student-session-card__time">{{ session.scheduled_at|date:"H:i" }}</span>
-                        </div>
-                        <a
-                            href="{% url 'student-app-session-attendees' session.session_id %}"
-                            class="student-session-card__occupancy-inline student-session-card__occupancy-link"
-                            aria-label="Ver turma de {{ session.title }} em {{ session.scheduled_label }}"
-                        >
-                            <span class="student-session-card__occupancy-count">{{ session.occupied_slots }}/{{ session.capacity }}</span>
-                            <span class="student-session-card__occupancy-state">{{ session.occupancy_label }}</span>
-                        </a>
-                    </div>
-                    <div class="student-session-card__status-row">
-                        <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.runtime_status_label }}</span>
-                        <span class="student-session-card__attendance">{{ session.attendance_status }}</span>
-                    </div>
-                    <div class="student-session-card__capacity" style="--student-session-occupancy: {{ session.occupancy_percent }}%;">
-                        <div class="student-session-card__capacity-bar" aria-hidden="true">
-                            <span class="{{ session.occupancy_fill_class }}"></span>
-                        </div>
-                        <div class="student-session-card__capacity-foot">
-                            <span>{{ session.occupancy_note }}</span>
-                        </div>
-                    </div>
+            <article class="student-session-row" data-session-link="{% url 'student-app-wod' %}?session_id={{ session.session_id }}" tabindex="0" role="link" aria-label="Abrir WOD de {{ session.title }}">
+                <div class="student-session-row__time">
+                    <strong>{{ session.scheduled_at|date:"H:i" }}</strong>
+                    <small>{{ session.scheduled_at|date:"d/m" }}</small>
                 </div>
-                <div class="student-session-card__aside">
+                <div class="student-session-row__main">
+                    <strong>{{ session.title }}</strong>
+                    <span class="student-session-row__meta">
+                        {% if session.coach_name %}{{ session.coach_name }} · {% endif %}<a
+                            href="{% url 'student-app-session-attendees' session.session_id %}"
+                            class="student-session-row__occupancy-link"
+                            aria-label="Ver turma de {{ session.title }} em {{ session.scheduled_label }}"
+                        >{{ session.occupied_slots }}/{{ session.capacity }} · {{ session.occupancy_label }}</a>
+                    </span>
+                </div>
+                <div class="student-session-row__aside">
+                    <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.attendance_status }}</span>
                     {% include "student_app/_partials/_session_actions.html" with session=session %}
                 </div>
             </article>

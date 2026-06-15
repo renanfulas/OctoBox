@@ -1,10 +1,118 @@
 /*
-ARQUIVO: tela WOD do aluno
-GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+ARQUIVO: tela WOD do aluno (shell v2, Onda 3).
+- O nome do treino e o heroi da tela; meta da sessao vira chips no header.
+- "Carga pra voce" amplifica a primary_recommendation (assinatura do produto).
 */
 
+.student-wod-header {
+    display: grid;
+    gap: 8px;
+    padding: 4px 4px 0;
+}
+
+.student-wod-header__title {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 7vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+}
+
+.student-wod-header__notes {
+    margin: 0;
+    color: var(--theme-text-muted);
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.student-wod-foryou {
+    --student-card-border: color-mix(in srgb, var(--theme-accent-primary) 26%, var(--theme-border-soft) 74%);
+}
+
+.student-wod-foryou__value {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.student-wod-foryou__value strong {
+    color: var(--theme-text-primary);
+    font-family: var(--student-font-numeric);
+    font-size: clamp(1.8rem, 8vw, 2.15rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.student-wod-foryou__value span {
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+    font-size: 0.86rem;
+    font-weight: 800;
+}
+
+.student-wod-foryou__base {
+    margin: 0;
+    color: var(--theme-text-muted);
+    font-size: 0.8rem;
+}
+
+/* Eyebrow do bloco colorido por kind (skin v2: cor tipografica, sem chip) */
+.student-wod-block__kind {
+    color: color-mix(in srgb, var(--student-wod-kind-color, var(--theme-accent-support)) 72%, var(--theme-text-primary) 28%);
+}
+
+.student-wod-block[data-kind="aquecimento"] { --student-wod-kind-color: var(--theme-accent-success); }
+.student-wod-block[data-kind="forca"] { --student-wod-kind-color: var(--theme-accent-support); }
+.student-wod-block[data-kind="skill"] { --student-wod-kind-color: var(--theme-accent-primary); }
+.student-wod-block[data-kind="metcon"] { --student-wod-kind-color: var(--theme-accent-danger); }
+.student-wod-block[data-kind="cooldown"] { --student-wod-kind-color: var(--theme-accent-premium); }
+
+.student-wod-block__notes {
+    margin: 0 0 4px;
+    color: var(--theme-text-secondary);
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.student-wod-block-list {
+    gap: 12px;
+}
+
 .student-wod-movement-list {
-    margin-top: 14px;
+    display: grid;
+    margin-top: 10px;
+}
+
+/* Movimento em linha: nome+prescricao a esquerda, carga a direita */
+.student-wod-movement-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.student-wod-movement-card .student-wod-movement-copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.student-wod-movement-copy strong {
+    font-size: 0.94rem;
+    font-weight: 700;
+}
+
+.student-wod-movement-copy span {
+    color: var(--theme-text-muted);
+    font-size: 0.8rem;
+}
+
+.student-wod-movement-rm--hit .student-wod-movement-rm__load {
+    font-family: var(--student-font-numeric);
+    font-weight: 600;
 }
 
 .student-prescription {
@@ -22,8 +130,24 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 .student-wod-session-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
+}
+
+/* No header do WOD os metadados sao pills cyan (como no prototipo), nao eyebrows. */
+.student-wod-session-meta .student-context-switch {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+    font-size: 0.69rem;
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+.student-wod-session-meta .student-context-switch + .student-context-switch {
+    background: transparent;
 }
 
 .student-wod-utility-switch {

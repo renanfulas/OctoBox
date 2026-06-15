@@ -31,6 +31,8 @@ html {
 }
 
 body.student-app-body {
+    /* Skin v2 (Onda 6): stack mono para valores numericos (cargas, kg) como no prototipo. */
+    --student-font-numeric: ui-monospace, "Cascadia Mono", "Roboto Mono", Consolas, "SF Mono", monospace;
     --student-shell-max: 1400px;
     --student-shell-gap: clamp(18px, 2vw, 26px);
     --student-shell-padding: clamp(16px, 2vw, 22px);

@@ -34,6 +34,7 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
 
 .student-card h2,
 .student-prescription h2 {
-    font-size: clamp(1.22rem, 2vw, 1.52rem);
-    line-height: 1.08;
+    font-size: 1.08rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
 }

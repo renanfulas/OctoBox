@@ -337,42 +337,211 @@ button.student-month-day .student-month-day__num {
     background: color-mix(in srgb, var(--theme-surface-secondary) 60%, transparent);
 }
 
-.student-session-action--blocked {
-    width: 100%;
-    border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 94%, transparent);
-    color: var(--theme-text-muted);
+/* ─── Topo da Agenda: título + "Ver mês" e régua da semana (shell v2) ─── */
+
+.student-agenda-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 2px 2px 12px;
 }
 
-.student-status-pill {
+.student-agenda-title {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.student-agenda-vermes {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: fit-content;
-    min-height: 28px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent);
+    gap: 7px;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent);
     color: var(--theme-text-secondary);
-    font-size: 0.75rem;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard);
+}
+
+.student-agenda-vermes svg {
+    width: 16px;
+    height: 16px;
+}
+
+.student-agenda-vermes:hover,
+.student-agenda-vermes:focus-visible {
+    outline: none;
+    color: var(--theme-text-primary);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-border-soft) 72%);
+}
+
+.student-week-strip {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: clamp(4px, 1.4vw, 8px);
+    margin-bottom: 12px;
+}
+
+.student-week-day {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 3px;
+    min-height: 54px;
+    padding: 8px 2px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+    color: var(--theme-text-muted);
+    text-decoration: none;
+    transition: border-color var(--motion-base) var(--ease-standard), background var(--motion-base) var(--ease-standard);
+}
+
+.student-week-day__num {
+    color: var(--theme-text-primary);
+    font-size: clamp(0.86rem, 3.4vw, 1rem);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.student-week-day__label {
+    font-size: clamp(0.6rem, 2.4vw, 0.7rem);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.student-week-day:hover,
+.student-week-day:focus-visible {
+    outline: none;
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 26%, var(--theme-border-soft) 74%);
+}
+
+/* Hoje: destaque cyan permanente (atualiza sozinho a cada dia). */
+.student-week-day.is-today {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 36%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+}
+
+.student-week-day.is-today .student-week-day__num {
+    color: color-mix(in srgb, var(--theme-accent-primary) 78%, var(--theme-text-primary) 22%);
+}
+
+/* Dia selecionado (quando diferente de hoje): contorno cyan forte. */
+.student-week-day.is-selected:not(.is-today) {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 46%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent-primary-alpha) 40%, transparent);
+}
+
+.student-agenda-header__hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--theme-text-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.student-agenda-header__hint svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+}
+
+.student-agenda-list {
+    display: grid;
+    gap: 12px;
+}
+
+.student-agenda-card {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 90%, transparent);
+    cursor: pointer;
+}
+
+.student-agenda-card:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support-alpha) 22%, transparent);
+}
+
+.student-agenda-card__top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.student-agenda-card__main {
+    display: grid;
+    gap: 3px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.student-agenda-card__main > strong {
+    color: var(--theme-text-primary);
+    font-size: 0.98rem;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.student-agenda-card__top .student-status-pill {
+    flex: 0 0 auto;
+}
+
+.student-agenda-card__action .student-session-actions,
+.student-agenda-card__action .student-inline-form {
+    width: 100%;
+}
+
+.student-agenda-card__action .student-secondary-action,
+.student-agenda-card__action .student-session-action--blocked {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+}
+
+/* Reservar / Reservar novamente: CTA cyan cheia (visual do protótipo). */
+.student-agenda-card__action .student-secondary-action:not(.student-session-action--blocked):not(.student-secondary-action--danger) {
+    border: none;
+    background: linear-gradient(90deg, var(--theme-accent-primary), var(--theme-accent-support));
+    color: #06121f;
     font-weight: 800;
 }
 
-.class-status-scheduled {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
-    background: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-surface-strong) 84%);
+body[data-theme="light"] .student-agenda-card__action .student-secondary-action:not(.student-session-action--blocked):not(.student-secondary-action--danger) {
+    color: #091a2f;
 }
 
-.class-status-in-progress {
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-border-soft) 72%);
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 18%, var(--theme-surface-strong) 82%);
+.student-agenda-card__action .student-secondary-action:not(.student-session-action--blocked):not(.student-secondary-action--danger):hover,
+.student-agenda-card__action .student-secondary-action:not(.student-session-action--blocked):not(.student-secondary-action--danger):focus-visible {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
 }
 
-.class-status-completed,
-.class-status-canceled {
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 18%, var(--theme-border-soft) 82%);
-    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 12%, var(--theme-surface-strong) 88%);
+/* Cancelar reserva: contorno vermelho. */
+.student-agenda-card__action .student-secondary-action--danger {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 50%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 24%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-danger) 82%, var(--theme-text-primary) 18%);
+    font-weight: 800;
 }
 
 @media (max-width: 640px) {

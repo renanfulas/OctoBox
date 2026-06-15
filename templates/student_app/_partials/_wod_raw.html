@@ -16,15 +16,6 @@ PONTOS CRITICOS:
 - o aviso nao e bloqueante; aluno ve o conteudo normalmente.
 -->
 <section class="student-card student-card--feature student-wod-raw" id="student-wod-day">
-    <div class="student-section-head">
-        <div>
-            <div class="student-wod-session-meta">
-                <span class="student-context-switch">{{ student_workout_day.session_scheduled_label }}</span>
-                <span class="student-context-switch">{{ student_workout_day.session_weekday_label }}</span>
-            </div>
-            <h2>WOD</h2>
-        </div>
-    </div>
     {% if student_workout_day.coach_notes %}
     <pre class="student-wod-raw__text">{{ student_workout_day.coach_notes }}</pre>
     {% endif %}

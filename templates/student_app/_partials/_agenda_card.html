@@ -1,0 +1,43 @@
+{% comment %}
+Card de aula da tela Agenda (shell v2, Onda 2):
+hora à esquerda · aula+ocupação · estado, com UMA ação por card.
+Espera `session` (StudentSessionCard).
+{% endcomment %}
+<article
+    class="student-agenda-card"
+    data-session-link="{% url 'student-app-wod' %}?session_id={{ session.session_id }}"
+    tabindex="0"
+    role="link"
+    aria-label="Abrir WOD de {{ session.title }}"
+>
+    <div class="student-agenda-card__top">
+        <div class="student-session-row__time">
+            <strong>{{ session.scheduled_at|date:"H:i" }}</strong>
+            <small>{{ session.scheduled_at|date:"d/m" }}</small>
+        </div>
+        <div class="student-agenda-card__main">
+            <strong>{{ session.title }}</strong>
+            <span class="student-session-row__meta">
+                {% if session.coach_name %}{{ session.coach_name }} · {% endif %}<a
+                    href="{% url 'student-app-session-attendees' session.session_id %}"
+                    class="student-session-row__occupancy-link"
+                    aria-label="Ver turma de {{ session.title }} em {{ session.scheduled_label }}"
+                >{{ session.occupied_slots }}/{{ session.capacity }} · {{ session.occupancy_label }}</a>
+            </span>
+        </div>
+        <span class="student-status-pill {{ session.runtime_status_pill_class }}">{{ session.attendance_status }}</span>
+    </div>
+    {% if session.capacity %}
+    <div class="student-session-card__capacity" style="--student-session-occupancy: {{ session.occupancy_percent }}%;">
+        <div class="student-session-card__capacity-bar" aria-hidden="true">
+            <span class="{{ session.occupancy_fill_class }}"></span>
+        </div>
+        <div class="student-session-card__capacity-foot">
+            <span>{{ session.occupancy_note }}</span>
+        </div>
+    </div>
+    {% endif %}
+    <div class="student-agenda-card__action">
+        {% include "student_app/_partials/_session_actions.html" with session=session %}
+    </div>
+</article>

@@ -1,6 +1,15 @@
+{% load student_shell %}
 {% if progress_days %}
 <section class="student-progress-strip" aria-label="Próximos 7 dias">
-    <span class="student-context-switch">Semana</span>
+    <div class="student-progress-strip__head">
+        <span class="student-context-switch">
+            <svg class="student-progress-strip__flame" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2c.4 3.2-1.6 4.8-3 6.2C7.4 9.8 6 11.4 6 14a6 6 0 0 0 12 0c0-2.2-1-3.8-2-5-.4 1-1 1.6-1.8 1.8.6-2.2-.4-4.6-2.2-5.8z"/>
+            </svg>
+            Sua semana
+        </span>
+        <span class="student-progress-strip__score">{{ progress_days|complete_count }} de {{ progress_days|length }} dias com treino</span>
+    </div>
     <div class="student-progress-strip__track">
         {% for day in progress_days %}
         <a
@@ -10,8 +19,16 @@
             aria-label="{{ day.day_label }} {{ day.date_label }}{% if day.is_complete %}, com ação registrada{% else %}, sem ação registrada{% endif %}"
             aria-current="{% if student_selected_date == day.date or not student_selected_date and day.is_today %}date{% else %}false{% endif %}"
         >
+            {% if day.is_complete %}
+            <span class="student-progress-day__check" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12.5 10 17.5 19 7"/>
+                </svg>
+            </span>
+            {% else %}
+            <span class="student-progress-day__dot" aria-hidden="true">·</span>
+            {% endif %}
             <span class="student-progress-day__label">{{ day.day_label }}</span>
-            <span class="student-progress-day__date">{{ day.date_label }}</span>
         </a>
         {% endfor %}
     </div>

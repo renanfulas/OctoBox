@@ -68,3 +68,11 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
         0 16px 26px color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent),
         inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
 }
+
+/* Ação de aula bloqueada (compartilhado por Início e Agenda — antes duplicado por tela) */
+.student-session-action--blocked {
+    width: 100%;
+    border-color: color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 94%, transparent);
+    color: var(--theme-text-muted);
+}

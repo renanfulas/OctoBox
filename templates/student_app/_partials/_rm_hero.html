@@ -1,31 +1,21 @@
 {% load student_app_formatters %}
-{% if rm_of_the_day %}
-<section class="student-hero-number">
-    <span class="student-hero-number__meta">RM do dia</span>
-    <p class="student-hero-number__label">{{ rm_of_the_day.exercise_label }} {{ rm_of_the_day.one_rep_max_kg|format_rm_value }}</p>
-    <div class="student-hero-number__value student-rm-value">
-        <span>{% if rm_of_the_day.one_rep_max_kg %}{{ rm_of_the_day.one_rep_max_kg|format_rm_value }}{% else %}--{% endif %}</span>
+{% comment %}
+Hero "Maior carga" (shell v2, Onda 4): o maior RM do aluno em destaque,
+com delta da última atualização. Espera `student_rm_top` ({record, delta_kg}).
+{% endcomment %}
+{% if student_rm_top %}
+<section class="student-hero-number student-rm-hero">
+    <span class="student-context-switch">Maior carga</span>
+    <div class="student-hero-number__value">
+        <span>{{ student_rm_top.record.one_rep_max_kg|format_rm_value }}</span>
+        {% if student_rm_top.delta_kg %}
+        <span class="student-rm-hero__delta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></svg>
+            +{{ student_rm_top.delta_kg|format_rm_value }}
+        </span>
+        {% endif %}
     </div>
-    {% if rm_of_the_day.recommended_load_kg %}
-    <p class="student-hero-number__support">{{ rm_of_the_day.percentage }}% = {{ rm_of_the_day.recommended_load_kg }} kg</p>
-    {% endif %}
-    {% if rm_of_the_day.delta_kg %}<span class="student-hero-number__delta">+{{ rm_of_the_day.delta_kg }} kg</span>{% endif %}
-</section>
-{% elif rm_records %}
-<section class="student-hero-number">
-    <span class="student-hero-number__meta">{{ rm_records|length }} movimento(s)</span>
-    <p class="student-hero-number__label">Seus RMs</p>
-    <div class="student-hero-number__value student-rm-value">
-        <span>{{ rm_records.0.one_rep_max_kg|format_rm_value }}</span>
-    </div>
-</section>
-{% else %}
-<section class="student-hero-number">
-    <span class="student-hero-number__meta">RM</span>
-    <p class="student-hero-number__label">Cadastre seu RM</p>
-    <div class="student-hero-number__value student-rm-value">
-        <span>--</span>
-        <small class="student-hero-number__unit">kg</small>
-    </div>
+    <p class="student-hero-number__label">{{ student_rm_top.record.exercise_label }}</p>
+    <p class="student-hero-number__support">atualizado em {{ student_rm_top.record.updated_at|date:"d/m/Y" }}</p>
 </section>
 {% endif %}

@@ -469,9 +469,11 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'class="student-primary-action"', html=False)
         self.assertContains(response, 'class="student-progress-strip"', html=False)
         self.assertContains(response, 'data-theme="light"', html=False)
-        self.assertContains(response, 'data-ui="student-theme-toggle"', html=False)
+        # Shell v2 (Onda 0): o toggle de tema saiu do header e mora no Perfil.
+        self.assertNotContains(response, 'data-ui="student-theme-toggle"', html=False)
         self.assertContains(response, 'octobox-theme', html=False)
         self.assertContains(response, '/static/js/student_app/theme.js', html=False)
+        self.assertContains(response, 'class="student-mobile-nav-label">Perfil</span>', html=False)
 
     def test_student_home_switches_to_wod_mode_when_attendance_window_is_active(self):
         session = ClassSession.objects.create(
@@ -717,8 +719,11 @@ class StudentAppExperienceTests(TestCase):
         response = self.client.get(reverse('student-app-grade'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Aqui você acompanha sua rotina. Reserve na aba Agenda.')
-        self.assertNotContains(response, 'class="student-secondary-action"', html=False)
+        # Shell v2 (Onda 2): a Agenda passa a ser a superfície de reserva —
+        # cada card carrega uma ação via _session_actions.
+        self.assertContains(response, 'class="student-agenda-card"', html=False)
+        self.assertContains(response, 'class="student-session-actions"', html=False)
+        self.assertContains(response, 'Cancele até 2h antes sem perder crédito.')
 
     def test_cancel_attendance_sets_booking_as_canceled_until_one_hour_before_class(self):
         session = ClassSession.objects.create(
@@ -861,12 +866,19 @@ class StudentAppExperienceTests(TestCase):
         card = next(item for item in dashboard.next_sessions if item.session_id == session.id)
         self.assertEqual(card.scheduled_label, '24/04 09:00')
 
-    def test_student_progress_week_starts_today(self):
+    def test_student_progress_shows_current_calendar_week(self):
+        # Shell v2: o streak é a semana corrente (segunda → domingo),
+        # retrospectivo — antes era "próximos 7 dias", que nunca completava.
         dashboard = GetStudentDashboard().execute(identity=self.identity)
         today = timezone.localdate()
+        week_start = today - timedelta(days=today.weekday())
 
-        self.assertEqual(dashboard.progress_days[0].date, today)
-        self.assertEqual(dashboard.progress_days[0].day_label, 'Hoje')
+        self.assertEqual(len(dashboard.progress_days), 7)
+        self.assertEqual(dashboard.progress_days[0].date, week_start)
+        self.assertEqual(dashboard.progress_days[0].day_label, 'Hoje' if today == week_start else 'Seg')
+        today_cell = next(day for day in dashboard.progress_days if day.date == today)
+        self.assertEqual(today_cell.day_label, 'Hoje')
+        self.assertTrue(today_cell.is_today)
 
     def test_student_grade_and_rm_routes_render_new_shell(self):
         StudentExerciseMax.objects.create(
@@ -1763,8 +1775,18 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="student-avatar student-avatar-link"', html=False)
         self.assertContains(response, 'aria-label="Abrir perfil e configurações"', html=False)
-        self.assertContains(response, '<svg class="theme-toggle-icon"', html=False)
+        # Shell v2 (Onda 0): header de saudação, sem toggle de tema.
+        self.assertNotContains(response, '<svg class="theme-toggle-icon"', html=False)
         self.assertNotContains(response, 'class="student-topbar-link">Perfil</a>', html=False)
+        self.assertContains(response, self.student.full_name.split()[0])
+
+    def test_student_settings_renders_theme_toggle_row(self):
+        response = self.client.get(reverse('student-app-settings'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-ui="student-theme-toggle"', html=False)
+        self.assertContains(response, '<svg class="theme-toggle-icon"', html=False)
+        self.assertContains(response, 'Aparência')
 
     def test_student_topbar_uses_google_photo_when_available(self):
         self.identity.photo_url = 'https://example.com/me.jpg'
@@ -1861,7 +1883,7 @@ class StudentAppExperienceTests(TestCase):
         self.assertIn('octobox_student_session', response.cookies)
         self.assertEqual(response.cookies['octobox_student_session'].value, '')
 
-    def test_student_home_shows_box_switcher_when_multiple_memberships_exist(self):
+    def test_box_switcher_lives_in_settings_not_in_home_header(self):
         StudentBoxMembership.objects.create(
             identity=self.identity,
             student_id=self.student.id,
@@ -1869,11 +1891,15 @@ class StudentAppExperienceTests(TestCase):
             status=StudentBoxMembershipStatus.ACTIVE,
         )
 
-        response = self.client.get(reverse('student-app-home'))
+        home_response = self.client.get(reverse('student-app-home'))
+        settings_response = self.client.get(reverse('student-app-settings'))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Trocar box')
-        self.assertContains(response, 'box-secundario')
+        # Shell v2 (Onda 0): a troca de box saiu do header e mora no Perfil.
+        self.assertEqual(home_response.status_code, 200)
+        self.assertNotContains(home_response, 'Trocar box')
+        self.assertEqual(settings_response.status_code, 200)
+        self.assertContains(settings_response, 'Trocar de box')
+        self.assertContains(settings_response, 'box-secundario')
 
     def test_switch_box_updates_active_box_in_cookie(self):
         StudentBoxMembership.objects.create(

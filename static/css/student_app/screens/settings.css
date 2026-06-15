@@ -15,6 +15,87 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     --student-card-glow: none;
 }
 
+/* Header de identidade do Perfil (shell v2, Onda 5) */
+.student-profile-identity {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 14px 0 4px;
+    text-align: center;
+}
+
+.student-profile-identity__avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 22px;
+    font-size: 1.5rem;
+}
+
+.student-profile-identity__name {
+    color: var(--theme-text-primary);
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+}
+
+.student-profile-identity__email {
+    color: var(--theme-text-muted);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+}
+
+/* Sair da conta (shell v2, Onda 5) */
+.student-signout {
+    margin: 4px 0 0;
+}
+
+.student-signout__button {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    color: color-mix(in srgb, var(--theme-accent-danger) 78%, var(--theme-text-primary) 22%);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 22%, var(--theme-border-soft) 78%);
+}
+
+.student-signout__button svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* Toggle de tema vive aqui (Onda 0 do shell v2): saiu do header. */
+.student-theme-toggle.student-theme-toggle--row {
+    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 84%, var(--theme-accent-support-alpha) 16%);
+    --topbar-toggle-border-color: color-mix(in srgb, var(--theme-border-soft) 86%, var(--theme-accent-support-alpha) 14%);
+    --topbar-toggle-ink: var(--theme-text-primary);
+    --topbar-toggle-shadow: none;
+    width: auto;
+    min-width: 0;
+    height: 40px;
+    padding: 0 14px;
+    gap: 8px;
+    border-radius: 13px;
+    align-self: center;
+}
+
+.student-theme-toggle.student-theme-toggle--row .theme-toggle-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+}
+
+.student-theme-toggle.student-theme-toggle--row .theme-toggle-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.student-theme-toggle.student-theme-toggle--row .theme-toggle-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
 .student-profile-readonly {
     display: grid;
     gap: 12px;

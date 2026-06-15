@@ -1778,3 +1778,67 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(first_response.status_code, 200)
         self.assertEqual(second_response.status_code, 200)
         self.assertEqual(StudentInvitationDeliveryEvent.objects.filter(provider_event_id=webhook_id).count(), 1)
+
+
+class StudentDevTokenLoginTests(TestCase):
+    """Login de desenvolvimento via token (somente DEBUG)."""
+
+    def _build_identity_and_token(self):
+        from control.models import Box
+        from student_identity.infrastructure.session import build_student_session_value
+
+        student = Student.objects.create(full_name='Aluno Token', phone='+5511988887777')
+        box = Box.objects.filter(schema_name=get_box_runtime_slug()).first()
+        identity = StudentIdentity.objects.create(
+            student_id=student.id,
+            student_name=student.full_name,
+            box=box,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box=box,
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='dev-token-login-1',
+            email='token@app.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=student.id,
+            box=box,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        token = build_student_session_value(
+            identity_id=identity.id,
+            box_root_slug=get_box_runtime_slug(),
+            box_id=box.id if box else None,
+        )
+        return identity, token
+
+    def test_dev_login_is_404_outside_debug(self):
+        _, token = self._build_identity_and_token()
+
+        with override_settings(DEBUG=False):
+            response = self.client.get(reverse('student-identity-dev-login'), {'token': token})
+
+        self.assertEqual(response.status_code, 404)
+
+    @override_settings(DEBUG=True)
+    def test_dev_login_sets_session_cookie_and_redirects_home(self):
+        _, token = self._build_identity_and_token()
+
+        response = self.client.get(reverse('student-identity-dev-login'), {'token': token})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('student-app-home'))
+        self.assertIn('octobox_student_session', response.cookies)
+        payload = read_student_session_value(response.cookies['octobox_student_session'].value)
+        self.assertIsNotNone(payload)
+
+    @override_settings(DEBUG=True)
+    def test_dev_login_rejects_invalid_token(self):
+        response = self.client.get(reverse('student-identity-dev-login'), {'token': 'lixo-invalido'})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('student-identity-login'))
+        self.assertNotIn('octobox_student_session', response.cookies)
