@@ -22,6 +22,13 @@ ARQUIVO: faixa de progresso do app do aluno (skin v2, Onda 6 — visual do proto
     color: color-mix(in srgb, var(--theme-accent-premium) 64%, var(--theme-text-primary) 36%);
 }
 
+.student-progress-strip__flame {
+    width: 13px;
+    height: 13px;
+    flex: 0 0 auto;
+    color: var(--theme-accent-premium);
+}
+
 .student-progress-strip__score {
     color: var(--theme-text-muted);
     font-size: 0.75rem;
@@ -81,7 +88,7 @@ ARQUIVO: faixa de progresso do app do aluno (skin v2, Onda 6 — visual do proto
     justify-content: center;
     width: 15px;
     height: 15px;
-    color: color-mix(in srgb, var(--theme-accent-success) 78%, var(--theme-text-primary) 22%);
+    color: color-mix(in srgb, var(--theme-accent-primary) 80%, var(--theme-text-primary) 20%);
 }
 
 .student-progress-day__check svg {
@@ -92,8 +99,12 @@ ARQUIVO: faixa de progresso do app do aluno (skin v2, Onda 6 — visual do proto
 
 .student-progress-day.is-today {
     border-style: dashed;
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 36%, var(--theme-border-soft) 64%);
-    color: var(--theme-text-secondary);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 40%, var(--theme-border-soft) 60%);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+}
+
+.student-progress-day.is-today .student-progress-day__label {
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
 }
 
 .student-progress-day.is-selected,
@@ -109,7 +120,11 @@ ARQUIVO: faixa de progresso do app do aluno (skin v2, Onda 6 — visual do proto
 }
 
 .student-progress-day.is-complete {
-    border-color: color-mix(in srgb, var(--theme-accent-success) 30%, var(--theme-border-soft) 70%);
-    background: color-mix(in srgb, var(--theme-accent-success-alpha) 40%, transparent);
-    color: var(--theme-text-primary);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
+}
+
+.student-progress-day.is-complete .student-progress-day__label {
+    color: color-mix(in srgb, var(--theme-accent-primary) 72%, var(--theme-text-primary) 28%);
 }
