@@ -148,26 +148,64 @@ class StudentHomeView(StudentIdentityRequiredMixin, TemplateView):
 class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
     template_name = 'student_app/grade.html'
 
+    _WEEKDAY_LABELS = ('Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom')
+    _WEEKDAY_LONG = ('Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        box_timezone = resolve_box_timezone(box_root_slug=self.request.student_identity.box_root_slug)
+        today = timezone.localtime(timezone.now(), box_timezone).date()
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+
+        # Dia selecionado pela régua da semana (?date=), travado na semana corrente.
+        selected = today
+        raw_date = (self.request.GET.get('date') or '').strip()
+        if raw_date:
+            try:
+                candidate = date.fromisoformat(raw_date)
+            except ValueError:
+                candidate = None
+            if candidate and week_start <= candidate <= week_end:
+                selected = candidate
+        next_day = selected + timedelta(days=1)
+
+        # Agenda do dia selecionado + do dia seguinte (janela de 2 dias).
         dashboard = GetStudentDashboard().execute(
             identity=self.request.student_identity,
+            selected_date=selected,
             window_days=2,
             request_perf=getattr(self.request, '_octobox_request_perf', None),
         )
-        box_timezone = resolve_box_timezone(box_root_slug=self.request.student_identity.box_root_slug)
-        today = timezone.localtime(timezone.now(), box_timezone).date()
-        tomorrow = today + timedelta(days=1)
         context['dashboard'] = dashboard
         context['student_shell_nav'] = 'grade'
         context['student_shell_title'] = 'Grade'
         context['student_next_session'] = dashboard.focal_session or (dashboard.next_sessions[0] if dashboard.next_sessions else None)
         context['student_month_days'] = GetStudentMonthSchedule().execute(identity=self.request.student_identity)
-        context['student_today_sessions'] = tuple(
-            session for session in dashboard.next_sessions if session.scheduled_at.date() == today
+
+        # Régua fixa da semana (segunda → domingo); hoje destacado.
+        context['student_week_days'] = [
+            {
+                'date': week_start + timedelta(days=i),
+                'label': self._WEEKDAY_LABELS[i],
+                'date_label': (week_start + timedelta(days=i)).day,
+                'is_today': (week_start + timedelta(days=i)) == today,
+                'is_selected': (week_start + timedelta(days=i)) == selected,
+            }
+            for i in range(7)
+        ]
+        context['student_selected_date'] = selected
+        context['student_selected_label'] = (
+            'Hoje' if selected == today else f'{self._WEEKDAY_LONG[selected.weekday()]}, {selected:%d/%m}'
         )
-        context['student_tomorrow_sessions'] = tuple(
-            session for session in dashboard.next_sessions if session.scheduled_at.date() == tomorrow
+        context['student_next_label'] = (
+            'Amanhã' if next_day == today + timedelta(days=1) else f'{self._WEEKDAY_LONG[next_day.weekday()]}, {next_day:%d/%m}'
+        )
+        context['student_selected_sessions'] = tuple(
+            session for session in dashboard.next_sessions if session.scheduled_at.date() == selected
+        )
+        context['student_next_sessions'] = tuple(
+            session for session in dashboard.next_sessions if session.scheduled_at.date() == next_day
         )
         context['student_cancellation_events'] = self._load_cancellation_events()
         context['student_grade_highlight'] = self.request.GET.get('highlight', '')

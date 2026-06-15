@@ -5,7 +5,7 @@
 {% block extra_head %}
 {{ block.super }}
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/student_app/screens/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/student_app/screens/home.css' %}?v={{ static_asset_version }}">
 {% endblock %}
 
 {% block body %}

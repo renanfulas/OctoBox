@@ -17,6 +17,19 @@
     });
   });
 
+  // ── Toggle "Ver mês" (botão do topo controla o <details>) ──────
+  var monthToggle = document.querySelector('[data-month-toggle]');
+  var monthCalendar = document.getElementById('studentMonthCalendar');
+  if (monthToggle && monthCalendar) {
+    monthToggle.addEventListener('click', function () {
+      monthCalendar.open = !monthCalendar.open;
+      monthToggle.setAttribute('aria-expanded', monthCalendar.open ? 'true' : 'false');
+      if (monthCalendar.open) {
+        monthCalendar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+
   // ── Bottom sheet (múltiplas aulas no dia) ──────────────────────
   var picker       = document.getElementById('studentMonthPicker');
   var pickerList   = document.getElementById('studentMonthPickerList');

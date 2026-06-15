@@ -5,36 +5,41 @@
 {% block extra_head %}
 {{ block.super }}
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/student_app/screens/grade.css' %}">
+<link rel="stylesheet" href="{% static 'css/student_app/screens/grade.css' %}?v={{ static_asset_version }}">
 {% endblock %}
 
 {% block body %}
 {% load student_shell %}
 {% include "student_app/_partials/_cancellation_banner.html" %}
-<section class="student-agenda-header">
-    <div class="student-section-head">
-        <div>
-            <span class="student-context-switch">Agenda</span>
-            {% if student_next_session %}
-            <h2>
-                Próxima: {{ student_next_session.scheduled_at|date:"H:i" }} · {{ student_next_session.title }}
-                {% with countdown=student_next_session.scheduled_at|starts_in %}
-                {% if countdown %}<span class="student-agenda-header__countdown">{{ countdown }}</span>{% endif %}
-                {% endwith %}
-            </h2>
-            {% else %}
-            <h2>Sua rotina no box</h2>
-            {% endif %}
-        </div>
-    </div>
-    <p class="student-agenda-header__hint">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-        Cancele até 2h antes sem perder crédito.
-    </p>
-</section>
+<div class="student-agenda-top">
+    <h1 class="student-agenda-title">Agenda</h1>
+    <button type="button" class="student-agenda-vermes" data-month-toggle aria-expanded="false" aria-controls="studentMonthCalendar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 10h18"/></svg>
+        Ver mês
+    </button>
+</div>
 
-<details class="student-month-calendar">
-    <summary class="student-month-calendar__toggle">Ver mês</summary>
+<nav class="student-week-strip" aria-label="Dias da semana">
+    {% for day in student_week_days %}
+    <a
+        href="?date={{ day.date|date:'Y-m-d' }}"
+        class="student-week-day{% if day.is_today %} is-today{% endif %}{% if day.is_selected %} is-selected{% endif %}"
+        {% if day.is_selected %}aria-current="date"{% endif %}
+        aria-label="{{ day.label }} {{ day.date_label }}"
+    >
+        <span class="student-week-day__num">{{ day.date_label }}</span>
+        <span class="student-week-day__label">{{ day.label }}</span>
+    </a>
+    {% endfor %}
+</nav>
+
+<p class="student-agenda-header__hint">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+    Cancele até 2h antes sem perder crédito.
+</p>
+
+<details class="student-month-calendar" id="studentMonthCalendar">
+    <summary class="visually-hidden">Calendário do mês</summary>
     <div class="student-month-calendar__weekdays" aria-hidden="true">
         <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
     </div>
@@ -80,17 +85,17 @@
 <section class="student-card student-card--quiet">
     <div class="student-section-head">
         <div>
-            <span class="student-context-switch">{{ student_today_sessions|length }} aula(s)</span>
-            <h2>Hoje</h2>
+            <span class="student-context-switch">{{ student_selected_sessions|length }} aula(s)</span>
+            <h2>{{ student_selected_label }}</h2>
         </div>
     </div>
     <div class="student-agenda-list">
-        {% for session in student_today_sessions %}
+        {% for session in student_selected_sessions %}
         {% include "student_app/_partials/_agenda_card.html" with session=session %}
         {% empty %}
         <article class="student-compact-state">
-            <strong>Sem aulas hoje.</strong>
-            <p class="student-copy">Veja amanhã ou abra o mês.</p>
+            <strong>Sem aulas neste dia.</strong>
+            <p class="student-copy">Escolha outro dia na semana ou abra o mês.</p>
         </article>
         {% endfor %}
     </div>
@@ -99,16 +104,16 @@
 <section class="student-card student-card--quiet">
     <div class="student-section-head">
         <div>
-            <span class="student-context-switch">{{ student_tomorrow_sessions|length }} aula(s)</span>
-            <h2>Amanhã</h2>
+            <span class="student-context-switch">{{ student_next_sessions|length }} aula(s)</span>
+            <h2>{{ student_next_label }}</h2>
         </div>
     </div>
     <div class="student-agenda-list">
-        {% for session in student_tomorrow_sessions %}
+        {% for session in student_next_sessions %}
         {% include "student_app/_partials/_agenda_card.html" with session=session %}
         {% empty %}
         <article class="student-compact-state">
-            <strong>Sem aulas amanhã.</strong>
+            <strong>Sem aulas neste dia.</strong>
             <p class="student-copy">Nada publicado para o próximo dia.</p>
         </article>
         {% endfor %}
