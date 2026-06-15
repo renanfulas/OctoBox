@@ -388,7 +388,7 @@ button.student-month-day .student-month-day__num {
 .student-week-strip {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 6px;
+    gap: clamp(4px, 1.4vw, 8px);
     margin-bottom: 12px;
 }
 
@@ -396,8 +396,9 @@ button.student-month-day .student-month-day__num {
     display: grid;
     place-items: center;
     align-content: center;
-    gap: 2px;
-    min-height: 56px;
+    gap: 3px;
+    min-height: 54px;
+    padding: 8px 2px;
     border-radius: 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
     background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
@@ -408,13 +409,13 @@ button.student-month-day .student-month-day__num {
 
 .student-week-day__num {
     color: var(--theme-text-primary);
-    font-size: 1rem;
+    font-size: clamp(0.86rem, 3.4vw, 1rem);
     font-weight: 800;
     line-height: 1;
 }
 
 .student-week-day__label {
-    font-size: 0.68rem;
+    font-size: clamp(0.6rem, 2.4vw, 0.7rem);
     font-weight: 700;
     line-height: 1;
 }
