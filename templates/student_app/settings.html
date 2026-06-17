@@ -17,172 +17,151 @@
 <section class="student-profile-identity">
     <span class="student-avatar student-profile-identity__avatar" aria-hidden="true">
         {% if student_identity.photo_url %}
-        <img src="{{ student_identity.photo_url }}" alt="" width="64" height="64" loading="lazy" referrerpolicy="no-referrer">
+        <img src="{{ student_identity.photo_url }}" alt="" width="72" height="72" loading="lazy" referrerpolicy="no-referrer">
         {% else %}
         {{ student_identity.student.full_name|slice:":1"|upper }}
         {% endif %}
     </span>
     <strong class="student-profile-identity__name">{{ student_identity.student.full_name }}</strong>
     <span class="student-profile-identity__email">{{ student_identity.email|default:student_identity.student.email }}</span>
+    <span class="student-profile-identity__box">Box atual: {{ student_active_box_root_slug|default:"Sem box ativo" }}</span>
 </section>
 
-<section class="student-card student-card--feature student-card--settings-main">
-    <div class="student-section-head">
-        <div>
-            <span class="student-context-switch">Perfil</span>
-            <h2>Dados do acesso</h2>
-        </div>
-    </div>
-    <dl class="student-profile-readonly">
-        <div>
-            <dt>Nome completo</dt>
-            <dd>{{ student_identity.student.full_name }}</dd>
-        </div>
-        <div>
-            <dt>WhatsApp</dt>
-            <dd>{{ student_identity.student.phone }}</dd>
-        </div>
-        <div>
-            <dt>E-mail</dt>
-            <dd>{{ student_identity.email|default:student_identity.student.email }}</dd>
-        </div>
-        <div>
-            <dt>Nascimento</dt>
-            <dd>{{ student_identity.student.birth_date|date:"d/m/Y"|default:"Não informado" }}</dd>
-        </div>
-    </dl>
+{% if pending_profile_request %}
+<p class="student-profile-pending">Alteração enviada. Seus dados atuais continuam valendo até aprovação.</p>
+{% endif %}
 
-    {% if pending_profile_request %}
-    <p class="student-profile-pending">Alteração enviada. Seus dados atuais continuam valendo até aprovação.</p>
+<div class="student-settings-group">
+    {% if request.student_box_memberships|length > 1 %}
+    <details class="student-set-row">
+        <summary class="student-set-row__summary">
+            <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h13l-3-3"/><path d="M17 16H4l3 3"/></svg></span>
+            <span class="student-set-row__label">Trocar de box</span>
+            <span class="student-set-row__end">{{ student_active_box_root_slug }} <svg class="student-set-row__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </summary>
+        <div class="student-set-row__body">
+            <form method="post" action="{% url 'student-app-switch-box' %}" class="student-form-stack">
+                {% csrf_token %}
+                <label>
+                    <span>Box ativo</span>
+                    <select class="student-input" name="box_root_slug" onchange="this.form.submit()">
+                        {% for membership in request.student_box_memberships %}
+                        <option value="{{ membership.box_root_slug }}"{% if membership.box_root_slug == student_active_box_root_slug %} selected{% endif %}>
+                            {{ membership.box_root_slug }}{% if membership.box_root_slug == student_active_box_root_slug %} (ativo){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <noscript><button type="submit" class="student-primary-action">Trocar</button></noscript>
+            </form>
+        </div>
+    </details>
+    {% else %}
+    <div class="student-set-row student-set-row--static">
+        <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h13l-3-3"/><path d="M17 16H4l3 3"/></svg></span>
+        <span class="student-set-row__label">Trocar de box</span>
+        <span class="student-set-row__end">{{ student_active_box_root_slug }}</span>
+    </div>
     {% endif %}
 
-    <details class="student-profile-edit">
-        <summary class="student-icon-action" aria-label="Editar perfil">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M4 17.25V20h2.75L17.8 8.95l-2.75-2.75L4 17.25z"></path>
-                <path d="M19.7 7.05a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.04 1.04 2.75 2.75 1.04-1.04z"></path>
-            </svg>
-            <span>Editar perfil</span>
+    <details class="student-set-row">
+        <summary class="student-set-row__summary">
+            <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg></span>
+            <span class="student-set-row__label">Dados pessoais</span>
+            <span class="student-set-row__end"><svg class="student-set-row__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
         </summary>
-        <form method="post" class="student-form-stack">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
-            <label><span>Nome completo</span>{{ form.full_name }}{{ form.full_name.errors }}</label>
-            <label><span>WhatsApp</span>{{ form.phone }}{{ form.phone.errors }}</label>
-            <label><span>E-mail</span>{{ form.email }}{{ form.email.errors }}</label>
-            <label><span>Nascimento</span>{{ form.birth_date }}{{ form.birth_date.errors }}</label>
-            <button type="submit" class="student-primary-action">Enviar alteração</button>
-        </form>
+        <div class="student-set-row__body">
+            <dl class="student-profile-readonly">
+                <div><dt>Nome completo</dt><dd>{{ student_identity.student.full_name }}</dd></div>
+                <div><dt>WhatsApp</dt><dd>{{ student_identity.student.phone }}</dd></div>
+                <div><dt>E-mail</dt><dd>{{ student_identity.email|default:student_identity.student.email }}</dd></div>
+                <div><dt>Nascimento</dt><dd>{{ student_identity.student.birth_date|date:"d/m/Y"|default:"Não informado" }}</dd></div>
+            </dl>
+            <details class="student-profile-edit">
+                <summary class="student-icon-action" aria-label="Editar perfil">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M4 17.25V20h2.75L17.8 8.95l-2.75-2.75L4 17.25z"></path>
+                        <path d="M19.7 7.05a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.04 1.04 2.75 2.75 1.04-1.04z"></path>
+                    </svg>
+                    <span>Editar perfil</span>
+                </summary>
+                <form method="post" class="student-form-stack">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    <label><span>Nome completo</span>{{ form.full_name }}{{ form.full_name.errors }}</label>
+                    <label><span>WhatsApp</span>{{ form.phone }}{{ form.phone.errors }}</label>
+                    <label><span>E-mail</span>{{ form.email }}{{ form.email.errors }}</label>
+                    <label><span>Nascimento</span>{{ form.birth_date }}{{ form.birth_date.errors }}</label>
+                    <button type="submit" class="student-primary-action">Enviar alteração</button>
+                </form>
+            </details>
+        </div>
     </details>
-</section>
 
-<section class="student-card student-card--quiet student-appearance-card">
-    <div class="student-section-head">
-        <div>
-            <span class="student-context-switch">Aparência</span>
-            <h2>Tema do app</h2>
-        </div>
-        <button type="button" class="student-theme-toggle theme-toggle student-theme-toggle--row" data-ui="student-theme-toggle">
-            <svg class="theme-toggle-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="4"></circle>
-                <path d="M12 2v2"></path>
-                <path d="M12 20v2"></path>
-                <path d="m4.93 4.93 1.41 1.41"></path>
-                <path d="m17.66 17.66 1.41 1.41"></path>
-                <path d="M2 12h2"></path>
-                <path d="M20 12h2"></path>
-                <path d="m6.34 17.66-1.41 1.41"></path>
-                <path d="m19.07 4.93-1.41 1.41"></path>
-            </svg>
+    <button type="button" class="student-set-row student-set-row--button student-theme-toggle theme-toggle" data-ui="student-theme-toggle" aria-label="Alternar tema">
+        <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A8.5 8.5 0 1 1 11.21 3 6.6 6.6 0 0 0 21 12.79z"/></svg></span>
+        <span class="student-set-row__label">Tema</span>
+        <span class="student-set-row__end">
             <span class="theme-toggle-label">Tema</span>
-        </button>
-    </div>
-    <p class="student-copy">Escuro ou claro — o app lembra sua escolha neste aparelho.</p>
-</section>
+            <svg class="theme-toggle-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:0;height:0;overflow:hidden"><circle cx="12" cy="12" r="4"></circle></svg>
+        </span>
+    </button>
+</div>
 
-<section class="student-surface-grid student-surface-grid--settings">
-    <article class="student-card student-card--quiet student-card--settings-side">
-        <div class="student-section-head">
-            <div>
-                <span class="student-context-switch">Box atual</span>
-                <h2>{{ student_active_box_root_slug }}</h2>
-            </div>
+<div class="student-settings-group">
+    <details class="student-set-row">
+        <summary class="student-set-row__summary">
+            <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l4-8 5 16 4-10 2 2h3"/></svg></span>
+            <span class="student-set-row__label">Solicitar congelamento</span>
+            <span class="student-set-row__end"><svg class="student-set-row__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </summary>
+        <div class="student-set-row__body">
+            <p class="student-copy">Viagens, lesões ou afastamentos. A recepção confirma o período e suspende as cobranças.</p>
+            <form method="post" action="{% url 'student-app-request-freeze' %}" class="student-form-stack student-freeze-form" style="margin-top:12px;">
+                {% csrf_token %}
+                <label>
+                    <span>Quantos dias?</span>
+                    <span class="student-field-with-unit">
+                        <input class="student-input" type="text" name="days" inputmode="numeric" pattern="[0-9]{1,3}" maxlength="3" placeholder="Ex: 21" required autocomplete="off" data-max-integer-digits="3" list="student-freeze-day-options">
+                        <span class="student-field-with-unit__suffix">dias</span>
+                    </span>
+                    <datalist id="student-freeze-day-options">
+                        <option value="5"></option>
+                        <option value="7"></option>
+                        <option value="10"></option>
+                        <option value="20"></option>
+                        <option value="30"></option>
+                        <option value="60"></option>
+                    </datalist>
+                    <div class="student-freeze-presets" role="list" aria-label="Sugestões de dias para congelamento">
+                        <button type="button" class="student-freeze-preset" data-freeze-days="5">5 dias</button>
+                        <button type="button" class="student-freeze-preset" data-freeze-days="7">7 dias</button>
+                        <button type="button" class="student-freeze-preset" data-freeze-days="10">10 dias</button>
+                        <button type="button" class="student-freeze-preset" data-freeze-days="20">20 dias</button>
+                        <button type="button" class="student-freeze-preset" data-freeze-days="30">30 dias</button>
+                        <button type="button" class="student-freeze-preset" data-freeze-days="60">60 dias</button>
+                    </div>
+                    <small class="student-freeze-help">Escolha um atalho ou digite manualmente. O campo aceita até 3 dígitos.</small>
+                </label>
+                <label>
+                    <span>Motivo (opcional)</span>
+                    <textarea class="student-input" name="reason" rows="2" maxlength="280" placeholder="Viagem, lesão..."></textarea>
+                </label>
+                <button type="submit" class="student-primary-action">Enviar pedido</button>
+            </form>
         </div>
-        <ul class="student-settings-list">
-            <li><strong>Status:</strong> {{ student_identity.get_status_display }}</li>
-        </ul>
-        {% if request.student_box_memberships|length > 1 %}
-        <form method="post" action="{% url 'student-app-switch-box' %}" class="student-form-stack" style="margin-top:14px;">
-            {% csrf_token %}
-            <label>
-                <span>Trocar de box</span>
-                <select class="student-input" name="box_root_slug" onchange="this.form.submit()">
-                    {% for membership in request.student_box_memberships %}
-                    <option value="{{ membership.box_root_slug }}"{% if membership.box_root_slug == student_active_box_root_slug %} selected{% endif %}>
-                        {{ membership.box_root_slug }}{% if membership.box_root_slug == student_active_box_root_slug %} (ativo){% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
-            </label>
-            <noscript><button type="submit" class="student-primary-action">Trocar</button></noscript>
-        </form>
-        {% endif %}
-    </article>
+    </details>
 
     {% include "student_app/partials/invite_entry_card.html" with eyebrow="Novo box" title="Entrar com convite" copy="Cole o convite." %}
-</section>
+</div>
 
-<section class="student-card student-card--quiet student-freeze-request-card">
-    <div class="student-section-head">
-        <div>
-            <span class="student-context-switch">Matrícula</span>
-            <h2>Solicitar congelamento</h2>
-        </div>
-    </div>
-    <p class="student-copy">Viagens, lesões ou afastamentos. A recepção confirma o período e suspende as cobranças.</p>
-    <form method="post" action="{% url 'student-app-request-freeze' %}" class="student-form-stack student-freeze-form" style="margin-top:12px;">
+<div class="student-settings-group">
+    <form method="post" action="{% url 'student-identity-logout' %}">
         {% csrf_token %}
-        <label>
-            <span>Quantos dias?</span>
-            <span class="student-field-with-unit">
-                <input class="student-input" type="text" name="days" inputmode="numeric" pattern="[0-9]{1,3}" maxlength="3" placeholder="Ex: 21" required autocomplete="off" data-max-integer-digits="3" list="student-freeze-day-options">
-                <span class="student-field-with-unit__suffix">dias</span>
-            </span>
-            <datalist id="student-freeze-day-options">
-                <option value="5"></option>
-                <option value="7"></option>
-                <option value="10"></option>
-                <option value="20"></option>
-                <option value="30"></option>
-                <option value="60"></option>
-            </datalist>
-            <div class="student-freeze-presets" role="list" aria-label="Sugestões de dias para congelamento">
-                <button type="button" class="student-freeze-preset" data-freeze-days="5">5 dias</button>
-                <button type="button" class="student-freeze-preset" data-freeze-days="7">7 dias</button>
-                <button type="button" class="student-freeze-preset" data-freeze-days="10">10 dias</button>
-                <button type="button" class="student-freeze-preset" data-freeze-days="20">20 dias</button>
-                <button type="button" class="student-freeze-preset" data-freeze-days="30">30 dias</button>
-                <button type="button" class="student-freeze-preset" data-freeze-days="60">60 dias</button>
-            </div>
-            <small class="student-freeze-help">Escolha um atalho ou digite manualmente. O campo aceita até 3 dígitos.</small>
-        </label>
-        <label>
-            <span>Motivo (opcional)</span>
-            <textarea class="student-input" name="reason" rows="2" maxlength="280" placeholder="Viagem, lesão..."></textarea>
-        </label>
-        <button type="submit" class="student-primary-action">Enviar pedido</button>
+        <button type="submit" class="student-set-row student-set-row--button student-set-row--danger">
+            <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"/><path d="M9 12h12l-3-3"/><path d="M18 15l3-3"/></svg></span>
+            <span class="student-set-row__label">Sair da conta</span>
+        </button>
     </form>
-</section>
-
-<form method="post" action="{% url 'student-identity-logout' %}" class="student-signout">
-    {% csrf_token %}
-    <button type="submit" class="student-secondary-action student-signout__button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M14 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"/>
-            <path d="M9 12h12l-3-3"/>
-            <path d="M18 15l3-3"/>
-        </svg>
-        Sair da conta
-    </button>
-</form>
+</div>
 {% endblock %}
