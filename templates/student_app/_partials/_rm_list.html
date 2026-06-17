@@ -6,7 +6,10 @@ a edição inline. Espera `rm_cards` e `student_rm_top`.
 {% endcomment %}
 <section class="student-card student-card--quiet student-rm-records">
     <div class="student-section-head">
-        <div><span class="student-context-switch">Records</span></div>
+        <div><span class="student-context-switch">
+            <svg class="student-rm-eyebrow-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="6"/><path d="M9 14.4 7.5 21l4.5-2.7L16.5 21 15 14.4"/></svg>
+            Records
+        </span></div>
     </div>
     <div class="student-rm-list">
         {% for card in rm_cards %}

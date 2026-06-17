@@ -275,9 +275,11 @@ ARQUIVO: tela RMs do aluno (skin v2 — visual do protótipo).
     background: color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, var(--theme-surface-strong) 70%);
 }
 
-.student-rm-calc__icon {
+.student-rm-calc__icon,
+.student-rm-eyebrow-ico {
     width: 14px;
     height: 14px;
+    flex: 0 0 auto;
 }
 
 .student-rm-calc__readout {
