@@ -1,47 +1,192 @@
 /*
-ARQUIVO: tela RM do aluno
-GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+ARQUIVO: tela RMs do aluno (skin v2 — visual do protótipo).
+- Header "Seus recordes" + "Novo RM"; hero "Maior carga" com troféu e sparkline;
+  lista em linhas com chevron; calculadora limpa com chips.
 */
 
-.student-rm-records {
-    gap: 14px;
-}
-
-.student-rm-card {
+/* ── Topo: título + Novo RM ───────────────────────────────── */
+.student-rm-top {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 14px 16px;
-    border-radius: 18px;
-    position: relative;
+    padding: 2px 2px 12px;
 }
 
-.student-rm-card__summary {
+.student-rm-top__title {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.student-rm-top__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent);
+    color: var(--theme-text-secondary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.student-rm-top__action svg {
+    width: 16px;
+    height: 16px;
+}
+
+.student-rm-top__action:hover,
+.student-rm-top__action:focus-visible {
+    outline: none;
+    color: var(--theme-text-primary);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 28%, var(--theme-border-soft) 72%);
+}
+
+/* ── Hero "Maior carga" ───────────────────────────────────── */
+.student-rm-hero {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.student-rm-hero__main {
+    display: grid;
+    gap: 6px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.student-rm-hero__trophy {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+}
+
+.student-rm-hero .student-hero-number__value {
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 0;
+}
+
+.student-rm-hero__num {
+    color: var(--theme-text-primary);
+    font-family: var(--student-font-numeric);
+    font-size: clamp(2.6rem, 13vw, 3.1rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.student-rm-hero__unit {
+    color: var(--theme-text-secondary);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.student-rm-hero__delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-success) 32%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-success-alpha) 40%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-success) 80%, var(--theme-text-primary) 20%);
+    font-size: 0.74rem;
+    font-weight: 800;
+    white-space: nowrap;
+    align-self: center;
+}
+
+.student-rm-hero__delta svg {
+    width: 13px;
+    height: 13px;
+}
+
+/* sparkline de barras à direita do hero */
+.student-rm-hero__spark {
+    display: none;
+    align-items: flex-end;
+    gap: 3px;
+    flex: 0 0 auto;
+    width: 58px;
+    padding-bottom: 4px;
+}
+
+.student-rm-hero__spark.is-ready {
+    display: flex;
+}
+
+.student-rm-hero__spark span {
+    flex: 1 1 0;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--theme-accent-primary) 22%, var(--theme-surface-strong) 78%);
+}
+
+.student-rm-hero__spark span.is-peak {
+    background: color-mix(in srgb, var(--theme-accent-success) 70%, var(--theme-surface-strong) 30%);
+}
+
+/* ── Lista de RMs em linhas ───────────────────────────────── */
+.student-rm-list {
+    display: grid;
+}
+
+.student-rm-row {
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 60%, transparent);
+}
+
+.student-rm-row:last-child {
+    border-bottom: none;
+}
+
+.student-rm-row__summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 4px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.student-rm-row__summary::-webkit-details-marker {
+    display: none;
+}
+
+.student-rm-row__main {
     display: grid;
     gap: 2px;
     flex: 1 1 auto;
     min-width: 0;
 }
 
-.student-rm-card__head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-    padding-right: 44px;
-}
-
-.student-rm-card__summary strong {
-    font-size: 0.95rem;
+.student-rm-row__main strong {
+    color: var(--theme-text-primary);
+    font-size: 0.94rem;
+    font-weight: 700;
     line-height: 1.15;
 }
 
-.student-rm-card__summary .student-copy {
-    font-size: 0.82rem;
+.student-rm-row__main small {
+    color: var(--theme-text-muted);
+    font-size: 0.76rem;
 }
 
-.student-rm-card__value {
+.student-rm-row__end {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.student-rm-row__value {
     color: var(--theme-text-primary);
     font-family: var(--student-font-numeric);
     font-size: 1.06rem;
@@ -50,37 +195,48 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     white-space: nowrap;
 }
 
-.student-rm-card__delta {
-    color: color-mix(in srgb, var(--theme-accent-success) 78%, var(--theme-text-primary) 22%);
-    font-weight: 800;
+.student-rm-row__value small {
+    color: var(--theme-text-muted);
+    font-size: 0.78rem;
 }
 
-/* Hero "Maior carga" (Onda 4; skin v2: valor em mono como no prototipo) */
-.student-rm-hero .student-hero-number__value {
-    font-family: var(--student-font-numeric);
-    font-size: clamp(2.1rem, 9.5vw, 2.4rem);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-}
-
-.student-rm-hero__delta {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: color-mix(in srgb, var(--theme-accent-success) 78%, var(--theme-text-primary) 22%);
-    font-family: var(--font-body);
-    font-size: clamp(0.92rem, 3.6vw, 1.05rem);
-    font-weight: 900;
-    letter-spacing: -0.01em;
-    white-space: nowrap;
-}
-
-.student-rm-hero__delta svg {
+.student-rm-row__chevron {
     width: 16px;
     height: 16px;
+    align-self: center;
+    color: var(--theme-text-muted);
+    transition: transform var(--motion-base) var(--ease-standard);
 }
 
-/* Chips de percentual da calculadora (Onda 4) */
+.student-rm-row[open] .student-rm-row__chevron {
+    transform: rotate(90deg);
+}
+
+.student-rm-row__body {
+    padding: 0 2px 14px;
+}
+
+.student-rm-inline-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.student-rm-inline-form .student-field-with-unit {
+    flex: 1 1 auto;
+}
+
+.student-rm-inline-form .student-input {
+    width: 100%;
+    min-height: 44px;
+}
+
+.student-rm-inline-form .student-primary-action {
+    flex: 0 0 auto;
+}
+
+/* ── Chips e calculadora ──────────────────────────────────── */
 .student-rm-percent-chips {
     display: flex;
     flex-wrap: wrap;
@@ -119,55 +275,67 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     background: color-mix(in srgb, var(--theme-accent-primary-alpha) 30%, var(--theme-surface-strong) 70%);
 }
 
-.student-rm-calculator {
-    --student-card-glow:
-        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 54%, transparent), transparent 38%),
-        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium-alpha) 32%, transparent), transparent 42%);
+.student-rm-calc__icon {
+    width: 14px;
+    height: 14px;
+}
+
+.student-rm-calc__readout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 2px;
+}
+
+.student-rm-calc__context {
+    color: var(--theme-text-secondary);
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.student-rm-calculator__result {
+    color: var(--theme-text-primary);
+    font-family: var(--student-font-numeric);
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.student-rm-calc__manual {
+    border-top: 1px solid color-mix(in srgb, var(--theme-border-soft) 56%, transparent);
+    padding-top: 10px;
+}
+
+.student-rm-calc__manual > summary {
+    list-style: none;
+    cursor: pointer;
+    color: var(--theme-text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.student-rm-calc__manual > summary::-webkit-details-marker {
+    display: none;
 }
 
 .student-rm-calculator__grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(120px, 0.7fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 12px;
     align-items: end;
+    margin-top: 12px;
 }
 
 .student-rm-calculator__grid label {
     display: grid;
     gap: 7px;
     color: var(--theme-text-secondary);
-    font-weight: 900;
+    font-weight: 800;
+    font-size: 0.82rem;
 }
 
-.student-rm-value {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    color: var(--theme-text-primary);
-    font-family: var(--font-display);
-    font-size: 1.2rem;
-    font-weight: 900;
-}
-
-.student-rm-calculator__result {
-    display: grid;
-    place-items: center;
-    min-height: 52px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
-    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
-    color: var(--theme-text-primary);
-    font-family: var(--student-font-numeric);
-    font-size: 1.3rem;
-    font-weight: 600;
-}
-
-.student-rm-entry {
-    --student-card-glow:
-        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-primary-alpha) 42%, transparent), transparent 38%),
-        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--theme-accent-premium-alpha) 18%, transparent), transparent 42%);
-}
-
+/* ── Novo RM ──────────────────────────────────────────────── */
 .student-rm-entry__form {
     align-items: end;
 }
@@ -176,6 +344,7 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     width: 100%;
 }
 
+/* ── Campo com unidade (compartilhado) ────────────────────── */
 .student-field-with-unit {
     position: relative;
     display: block;
@@ -221,82 +390,6 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     font-size: 0.82rem;
     font-weight: 900;
     pointer-events: none;
-}
-
-/* RM inline update form */
-.student-rm-inline-form {
-    position: absolute;
-    top: 44px;
-    right: 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    margin: 0;
-    padding: 8px;
-    max-width: min(180px, calc(100vw - 72px));
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-raised) 96%, transparent);
-    box-shadow: 0 16px 28px color-mix(in srgb, var(--theme-shadow-soft) 18%, transparent);
-}
-
-.student-rm-edit {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    max-width: calc(100% - 24px);
-    gap: 8px;
-    align-self: flex-start;
-    z-index: 2;
-}
-
-.student-rm-edit__toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
-    color: var(--theme-text-primary);
-    cursor: pointer;
-    list-style: none;
-}
-
-.student-rm-edit__toggle--save {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 24%, var(--theme-border-soft) 76%);
-}
-
-.student-rm-edit__toggle::-webkit-details-marker {
-    display: none;
-}
-
-.student-rm-edit__toggle svg {
-    width: 16px;
-    height: 16px;
-    fill: currentColor;
-}
-
-.student-rm-inline-form .student-input {
-    width: 110px;
-    min-height: 42px;
-}
-
-@media (max-width: 640px) {
-    .student-rm-card,
-    .student-rm-calculator__grid {
-        display: grid;
-        grid-template-columns: 1fr;
-    }
-
-    .student-rm-inline-form {
-        max-width: min(156px, calc(100vw - 72px));
-    }
-
-    .student-rm-inline-form .student-input {
-        width: 100%;
-    }
 }
 
 @media (min-width: 720px) {

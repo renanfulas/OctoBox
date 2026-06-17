@@ -896,9 +896,11 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(grade_response, 'Hoje')
         self.assertContains(grade_response, 'Amanhã')
         self.assertContains(grade_response, 'Ver mês')
-        self.assertContains(rm_response, 'Records')
+        self.assertContains(rm_response, 'Seus recordes')
+        self.assertContains(rm_response, 'Maior carga')
         self.assertContains(rm_response, 'Deadlift')
-        self.assertContains(rm_response, '100kg')
+        # Skin v2: o número e a unidade são separados no hero ("100" + "kg").
+        self.assertContains(rm_response, 'student-rm-hero__num')
 
     def test_student_home_filters_day_by_query_param(self):
         today_session = ClassSession.objects.create(
