@@ -1786,7 +1786,8 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-ui="student-theme-toggle"', html=False)
         self.assertContains(response, '<svg class="theme-toggle-icon"', html=False)
-        self.assertContains(response, 'Aparência')
+        # Shell v2: o controle de tema vive numa linha "Tema" do Perfil.
+        self.assertContains(response, 'class="student-set-row__label">Tema<', html=False)
 
     def test_student_topbar_uses_google_photo_when_available(self):
         self.identity.photo_url = 'https://example.com/me.jpg'
