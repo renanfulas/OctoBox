@@ -10,6 +10,7 @@
 
 {% block body %}
 {% load student_shell %}
+{% if show_student_pwa_activation %}{% include "student_app/_partials/_pwa_activation.html" %}{% endif %}
 <section class="student-hero-number">
     <p class="visually-hidden">
         Modo atual: {% if student_home_mode == 'wod_active' %}WOD{% else %}Grade{% endif %}

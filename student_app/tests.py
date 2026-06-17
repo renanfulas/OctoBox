@@ -1750,7 +1750,8 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-ui="student-pwa-activation"', html=False)
         self.assertContains(response, 'data-location="home"', html=False)
-        self.assertContains(response, 'Ative o que falta no app.', html=False)
+        # Shell v2: rail em formato de linhas ("Instalar o app" / "Notificações").
+        self.assertContains(response, 'Instalar o app', html=False)
         self.assertContains(response, 'data-ui="student-pwa-install-action"', html=False)
         self.assertContains(response, 'data-ui="student-pwa-notification-action"', html=False)
         self.assertContains(response, 'data-ui="student-pwa-dismiss-action"', html=False)

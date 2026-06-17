@@ -39,57 +39,58 @@
 </script>
 
 <section
-    class="student-pwa-activation"
+    class="student-pwa-activation student-settings-group"
     data-ui="student-pwa-activation"
     data-location="{{ student_pwa_activation_location|default:'home' }}"
     hidden
     aria-live="polite"
 >
-    <div class="student-pwa-activation__copy">
-        <p class="student-eyebrow">Ativação do app</p>
-        <h2>Ative o que falta no app.</h2>
-        {% if student_pwa_activation_dismissible %}
-        <div class="student-pwa-activation__dismiss">
-            <button type="button" class="student-button student-button--ghost" data-ui="student-pwa-dismiss-action">
-                Agora não
+    <p class="student-copy student-pwa-activation__copy visually-hidden" data-ui="student-pwa-copy">
+        Falta transformar este atalho em app de verdade no seu celular e liberar os alertas.
+    </p>
+
+    <details class="student-set-row student-pwa-row" data-ui="student-pwa-install-card">
+        <summary class="student-set-row__summary">
+            <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M5 21h14"/></svg></span>
+            <span class="student-set-row__label">Instalar o app</span>
+            <span class="student-set-row__end">
+                <span class="student-status-badge" data-ui="student-pwa-install-status">PWA pendente</span>
+                <svg class="student-set-row__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+            </span>
+        </summary>
+        <div class="student-set-row__body">
+            <p class="student-form-note" data-ui="student-pwa-install-note">
+                No iPhone/iPad, toque em Compartilhar e depois em Adicionar à Tela de Início.
+            </p>
+            <button type="button" class="student-primary-action student-pwa-row__action" data-ui="student-pwa-install-action">
+                Instalar app
             </button>
         </div>
-        {% endif %}
-        <p class="student-copy" data-ui="student-pwa-copy">
-            Falta transformar este atalho em app de verdade no seu celular e liberar os alertas.
-        </p>
-        <div class="student-pwa-activation__cards">
-            <article class="student-pwa-activation__card" data-ui="student-pwa-install-card">
-                <div class="student-pwa-activation__status" data-ui="student-pwa-status">
-                    <span class="student-status-badge" data-ui="student-pwa-install-status">PWA pendente</span>
-                </div>
-                <div class="student-pwa-activation__actions">
-                    <button type="button" class="student-button" data-ui="student-pwa-install-action">
-                        Instalar app
-                    </button>
-                </div>
-                <div class="student-pwa-activation__notes">
-                    <p class="student-form-note" data-ui="student-pwa-install-note">
-                        No iPhone/iPad, toque em Compartilhar e depois em Adicionar à Tela de Início.
-                    </p>
-                </div>
-            </article>
-            <article class="student-pwa-activation__card" data-ui="student-pwa-notification-card">
-                <div class="student-pwa-activation__status">
-                    <span class="student-status-badge" data-ui="student-pwa-notification-status">Notificações pendentes</span>
-                </div>
-                <div class="student-pwa-activation__actions">
-                    <button type="button" class="student-button student-button--ghost" data-ui="student-pwa-notification-action">
-                        Ativar notificações
-                    </button>
-                </div>
-                <div class="student-pwa-activation__notes">
-                    <p class="student-form-note" data-ui="student-pwa-notification-note">
-                        Depois de instalar, aceite as notificações para receber alertas do app.
-                    </p>
-                </div>
-            </article>
+    </details>
+
+    <details class="student-set-row student-pwa-row" data-ui="student-pwa-notification-card">
+        <summary class="student-set-row__summary">
+            <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5a2 2 0 0 1 4 0 7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/></svg></span>
+            <span class="student-set-row__label">Notificações</span>
+            <span class="student-set-row__end">
+                <span class="student-status-badge" data-ui="student-pwa-notification-status">Notificações pendentes</span>
+                <svg class="student-set-row__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+            </span>
+        </summary>
+        <div class="student-set-row__body">
+            <p class="student-form-note" data-ui="student-pwa-notification-note">
+                Depois de instalar, aceite as notificações para receber alertas do app.
+            </p>
+            <button type="button" class="student-secondary-action student-pwa-row__action" data-ui="student-pwa-notification-action">
+                Ativar notificações
+            </button>
         </div>
-    </div>
+    </details>
+
+    {% if student_pwa_activation_dismissible %}
+    <button type="button" class="student-set-row student-set-row--button student-pwa-activation__dismiss" data-ui="student-pwa-dismiss-action">
+        <span class="student-set-row__label">Agora não</span>
+    </button>
+    {% endif %}
 </section>
 {% endif %}

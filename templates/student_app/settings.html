@@ -152,8 +152,24 @@
         </div>
     </details>
 
-    {% include "student_app/partials/invite_entry_card.html" with eyebrow="Novo box" title="Entrar com convite" copy="Cole o convite." %}
+    <details class="student-set-row">
+        <summary class="student-set-row__summary">
+            <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+            <span class="student-set-row__label">Entrar com convite</span>
+            <span class="student-set-row__end"><svg class="student-set-row__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </summary>
+        <div class="student-set-row__body">
+            <p class="student-copy">Cole o link completo do convite ou apenas o token. O app encontra a porta certa pra você.</p>
+            <form method="post" action="{% url 'student-app-enter-invite' %}" class="student-form student-invite-entry-form" style="margin-top:12px;">
+                {% csrf_token %}
+                <input type="text" name="invite_token_or_url" placeholder="Cole aqui o link do convite ou o token" autocomplete="off">
+                <button type="submit" class="student-primary-action">Entrar com convite</button>
+            </form>
+        </div>
+    </details>
 </div>
+
+{% if show_student_pwa_activation %}{% include "student_app/_partials/_pwa_activation.html" %}{% endif %}
 
 <div class="student-settings-group">
     <form method="post" action="{% url 'student-identity-logout' %}">
