@@ -1321,10 +1321,11 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Forca + Metcon')
         self.assertContains(response, 'Forca principal')
         self.assertContains(response, 'Deadlift')
-        self.assertContains(response, '70,00% do seu RM')
-        self.assertContains(response, '70,00 kg')
+        # Skin v2: números limpos (sem zeros à direita), como no protótipo.
+        self.assertContains(response, '70% do seu RM')
+        self.assertContains(response, '70 kg')
         # E.5: scaling de RM — carga calculada e base RM visiveis no tier rico
-        self.assertContains(response, 'seu RM: 100,00 kg')
+        self.assertContains(response, 'seu RM: 100 kg')
         workout_view = StudentWorkoutView.objects.get(student=self.student, workout=workout)
         self.assertEqual(workout_view.view_count, 1)
         self.assertTrue(

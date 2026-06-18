@@ -60,6 +60,19 @@ def _format_attendance_status(*, attendance):
     return dict(AttendanceStatus.choices).get(status, status or 'Sem reserva')
 
 
+def _clean_number(value) -> str:
+    """Número sem zeros à direita e com vírgula decimal ("75.00" -> "75", "9.50" -> "9,5")."""
+    from decimal import Decimal, InvalidOperation
+    try:
+        decimal_value = Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return str(value)
+    if decimal_value == decimal_value.to_integral():
+        return str(int(decimal_value))
+    normalized = format(decimal_value.normalize(), 'f').rstrip('0').rstrip('.')
+    return normalized.replace('.', ',')
+
+
 def build_student_prescription_label(*, movement):
     bits = []
     sets = _movement_value(movement, 'sets')
@@ -71,9 +84,9 @@ def build_student_prescription_label(*, movement):
     if reps:
         bits.append(f'{reps} reps')
     if load_type == WorkoutLoadType.PERCENTAGE_OF_RM and load_value is not None:
-        bits.append(f'@ {load_value}% do RM')
+        bits.append(f'@ {_clean_number(load_value)}% do RM')
     elif load_type == WorkoutLoadType.FIXED_KG and load_value is not None:
-        bits.append(f'@ {load_value} kg')
+        bits.append(f'@ {_clean_number(load_value)} kg')
     elif load_type == WorkoutLoadType.FREE:
         bits.append('carga livre')
     return ' · '.join(bits) or 'Sem detalhe de prescrição'
@@ -807,9 +820,9 @@ class GetStudentWorkoutDay:
                 recommended_load = recommendation_payload['recommended_load_kg']
                 recommendation_copy = recommendation_payload['recommendation_copy']
                 recommendation_label = (
-                    f'{recommended_load} kg'
-                    if recommended_load is not None and movement['load_type'] != WorkoutLoadType.FIXED_KG
-                    else (f'{recommended_load} kg' if recommended_load is not None else 'Sem carga automatica')
+                    f'{_clean_number(recommended_load)} kg'
+                    if recommended_load is not None
+                    else 'Sem carga automatica'
                 )
                 movement_card = StudentWorkoutMovementCard(
                     movement_label=movement['movement_label'],
