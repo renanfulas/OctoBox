@@ -241,6 +241,7 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
     background: color-mix(in srgb, var(--theme-surface-strong) 80%, transparent);
     color: var(--theme-text-secondary);
+    white-space: nowrap;
 }
 
 .student-pwa-row .student-status-badge[data-state="done"] {

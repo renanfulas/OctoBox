@@ -427,26 +427,28 @@
       notificationCard.hidden = hideNotificationCard;
     }
 
+    // Badges curtos: a linha já diz "Instalar o app" / "Notificações"; o badge
+    // carrega só o estado, para não estourar a largura da linha no mobile.
     updateStatusChip(
       installStatus,
-      installComplete ? 'PWA instalado' : 'PWA pendente',
+      installComplete ? 'Instalado' : 'Pendente',
       installComplete ? 'done' : 'pending'
     );
 
     if (state.notificationPermission === 'granted') {
       updateStatusChip(
         notificationStatus,
-        state.hasPushSubscription ? 'Notificações ativas' : 'Sincronizando notificações',
+        state.hasPushSubscription ? 'Ativas' : 'Sincronizando',
         state.hasPushSubscription ? 'done' : 'pending'
       );
     } else if (state.notificationPermission === 'denied') {
-      updateStatusChip(notificationStatus, 'Notificações bloqueadas', 'blocked');
+      updateStatusChip(notificationStatus, 'Bloqueadas', 'blocked');
     } else if (!state.pushConfigured) {
-      updateStatusChip(notificationStatus, 'Push ainda não configurado', 'blocked');
+      updateStatusChip(notificationStatus, 'Indisponível', 'blocked');
     } else if (!state.notificationSupported) {
-      updateStatusChip(notificationStatus, 'Push indisponivel neste navegador', 'blocked');
+      updateStatusChip(notificationStatus, 'Indisponível', 'blocked');
     } else {
-      updateStatusChip(notificationStatus, 'Notificações pendentes', 'pending');
+      updateStatusChip(notificationStatus, 'Pendentes', 'pending');
     }
 
     if (installAction) {
