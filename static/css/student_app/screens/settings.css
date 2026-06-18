@@ -303,47 +303,5 @@ details.student-set-row[open] .student-set-row__chevron {
     font-weight: 600;
 }
 
-/* Ativação do app: rail de PWA em formato de linhas (imagens 2/3) */
-.student-pwa-activation.student-settings-group[hidden] {
-    display: none;
-}
-
-.student-pwa-row .student-status-badge {
-    min-height: 0;
-    padding: 4px 10px;
-    font-size: 0.69rem;
-    font-weight: 800;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-strong) 80%, transparent);
-    color: var(--theme-text-secondary);
-}
-
-.student-pwa-row .student-status-badge[data-state="done"] {
-    color: color-mix(in srgb, var(--theme-accent-success) 80%, var(--theme-text-primary) 20%);
-    border-color: color-mix(in srgb, var(--theme-accent-success) 32%, transparent);
-    background: color-mix(in srgb, var(--theme-accent-success-alpha) 40%, transparent);
-}
-
-.student-pwa-row .student-status-badge[data-state="pending"] {
-    color: color-mix(in srgb, var(--theme-accent-warning) 82%, var(--theme-text-primary) 18%);
-    border-color: color-mix(in srgb, var(--theme-accent-warning) 34%, transparent);
-    background: color-mix(in srgb, var(--theme-accent-warning-alpha) 36%, transparent);
-}
-
-.student-pwa-row .student-status-badge[data-state="blocked"] {
-    color: color-mix(in srgb, var(--theme-accent-danger) 82%, var(--theme-text-primary) 18%);
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 32%, transparent);
-    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 34%, transparent);
-}
-
-.student-pwa-row__action {
-    width: 100%;
-    justify-content: center;
-    margin-top: 10px;
-}
-
-.student-pwa-activation__dismiss {
-    justify-content: center;
-    color: var(--theme-text-muted);
-}
+/* Estilos do rail de PWA em linhas vivem em primitives/pwa-activation.css
+   (global), para funcionar tanto no Perfil quanto na Home. */
