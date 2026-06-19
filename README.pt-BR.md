@@ -47,6 +47,15 @@ Abaixo estao capturas recentes do runtime atual: a superficie de comando do owne
   <img src="docs/screenshots/dashboard-mobile-current.png" width="34%" alt="Superficie mobile de comando" />
 </p>
 
+O lado do aluno e um PWA mobile — o app do aluno — reconstruido na linguagem visual "Luxo Futurista 2050" (instalavel, offline-aware, temas claro e escuro). Concentra a rotina de cada membro em uma tela: proxima aula com check-in em um toque, o WOD do dia com cargas personalizadas a partir dos 1RMs, a grade da semana e o acompanhamento de recordes.
+
+<p align="center">
+  <img src="docs/screenshots/student-app-home-dark.png" width="23%" alt="App do aluno: proxima aula, check-in e ofensiva semanal de treinos" />
+  <img src="docs/screenshots/student-app-wod-dark.png" width="23%" alt="App do aluno: WOD do dia com cargas personalizadas pelo 1RM" />
+  <img src="docs/screenshots/student-app-grade-dark.png" width="23%" alt="App do aluno: grade de aulas com vagas em tempo real e reserva" />
+  <img src="docs/screenshots/student-app-rm-dark.png" width="23%" alt="App do aluno: recordes pessoais (1RM) e historico" />
+</p>
+
 ## Problema que o OctoBox resolve
 
 Na pratica, muitos boxes crescem com operacao fragmentada: lead no WhatsApp, aluno em planilha, cobranca em controle manual, agenda em memoria da equipe e decisao gerencial sem leitura confiavel. O resultado costuma ser retrabalho, perda de oportunidade comercial, atraso financeiro, falha de acompanhamento e rotina dependente demais de quem esta atendendo.
