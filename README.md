@@ -50,6 +50,15 @@ Below are real product snapshots already available in the repository, chosen to 
   <img src="docs/screenshots/students-list-dark.png" width="58%" alt="Student base and operational directory surface" />
 </p>
 
+The athlete-facing side is a mobile PWA — the student app — rebuilt in the "Luxo Futurista 2050" visual language (installable, offline-aware, light and dark themes). It turns each member's routine into a single screen: next class with one-tap check-in, the day's WOD with loads personalized from their 1RMs, the weekly schedule, and personal-record tracking.
+
+<p align="center">
+  <img src="docs/screenshots/student-app-home-dark.png" width="23%" alt="Student app home: next class, check-in and weekly training streak" />
+  <img src="docs/screenshots/student-app-wod-dark.png" width="23%" alt="Student app WOD: workout of the day with loads personalized from the athlete's 1RM" />
+  <img src="docs/screenshots/student-app-grade-dark.png" width="23%" alt="Student app schedule: class grid with live availability and booking" />
+  <img src="docs/screenshots/student-app-rm-dark.png" width="23%" alt="Student app personal records: 1RM tracking and history" />
+</p>
+
 ## The problem OctoBox solves
 
 In practice, many boxes grow with fragmented operations: leads in WhatsApp, students in spreadsheets, billing in manual controls, scheduling in team memory, and management decisions without trustworthy visibility. The result is usually rework, lost commercial opportunities, financial delays, follow-up failures, and a routine that depends too much on whoever happens to be serving at the moment.
