@@ -53,6 +53,19 @@ ARQUIVO: tela WOD do aluno (shell v2, Onda 3).
     font-weight: 800;
 }
 
+.student-wod-foryou__value .student-wod-foryou__unit {
+    color: var(--theme-text-secondary);
+    font-family: var(--student-font-numeric);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.student-wod-foryou__ico {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+}
+
 .student-wod-foryou__base {
     margin: 0;
     color: var(--theme-text-muted);

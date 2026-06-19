@@ -10,6 +10,7 @@
 {% endblock %}
 
 {% block body %}
+{% load student_app_formatters %}
 {% if student_workout_day %}
 <section class="student-wod-header">
     <div class="student-wod-session-meta">
@@ -29,13 +30,17 @@
 
 {% if student_workout_day.primary_recommendation %}
 <section class="student-card student-card--feature student-wod-foryou">
-    <span class="student-context-switch">Carga pra você</span>
+    <span class="student-context-switch">
+        <svg class="student-wod-foryou__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+        Carga pra você
+    </span>
     <div class="student-wod-foryou__value">
-        <strong>{{ student_workout_day.primary_recommendation.recommended_load_kg }} kg</strong>
-        <span>{{ student_workout_day.primary_recommendation.percentage }}% do seu RM</span>
+        <strong>{{ student_workout_day.primary_recommendation.recommended_load_kg|format_rm_number }}</strong>
+        <span class="student-wod-foryou__unit">kg</span>
+        <span>{{ student_workout_day.primary_recommendation.percentage|format_rm_number }}% do seu RM</span>
     </div>
     <p class="student-wod-foryou__base">
-        {{ student_workout_day.primary_recommendation.movement_label }}{% if student_workout_day.primary_recommendation.base_rm_kg %} · seu RM atual: {{ student_workout_day.primary_recommendation.base_rm_kg }} kg{% endif %}
+        {{ student_workout_day.primary_recommendation.movement_label }}{% if student_workout_day.primary_recommendation.base_rm_kg %} · seu RM atual: {{ student_workout_day.primary_recommendation.base_rm_kg|format_rm_number }} kg{% endif %}
     </p>
     <a href="#student-wod-day" class="student-primary-action">Ver treino completo</a>
 </section>
