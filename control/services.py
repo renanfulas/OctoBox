@@ -190,6 +190,13 @@ def reprovision_box(box: 'Box') -> 'Box':
     box.refresh_from_db()
     logger.info('provision_box: Box %s ATIVO em %s', box.slug, box.schema_name)
 
+    # Anexar a conta de suporte (superdev) — SEMPRE, para a equipe OctoBox poder
+    # dar suporte sem pedir credencial ao cliente. Chamado aqui (e nao em
+    # provision_box) porque reprovision_box e o chokepoint comum do caminho novo
+    # e do resume idempotente: assim boxes provisionados antes da conta superdev
+    # existir tambem sao curados num reprovision posterior. A prova de falha.
+    _attach_support_membership(box)
+
     _record_platform_audit(box, 'box.provisioned')
     return box
 
@@ -309,6 +316,78 @@ def archive_box(box: 'Box', *, reason: str = '') -> 'Box':
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def get_superdev_user():
+    """Resolve a conta unica de suporte (superdev) a anexar em todo box.
+
+    Retorna o User do superdev, ou None se:
+    - SUPERDEV_AUTO_ATTACH=False (kill-switch),
+    - SUPERDEV_USERNAME vazio,
+    - a conta nao existe (rode `manage.py bootstrap_superdev`), ou
+    - a conta esta inativa.
+
+    NUNCA levanta: a indisponibilidade do superdev jamais pode quebrar o
+    provisionamento de um box. Apenas loga para o operador resolver.
+    """
+    from django.conf import settings
+
+    if not getattr(settings, 'SUPERDEV_AUTO_ATTACH', True):
+        return None
+
+    username = (getattr(settings, 'SUPERDEV_USERNAME', '') or '').strip()
+    if not username:
+        return None
+
+    user = User.objects.filter(username=username, is_active=True).first()
+    if user is None:
+        logger.warning(
+            'get_superdev_user: conta superdev "%s" inexistente/inativa — rode '
+            '"manage.py bootstrap_superdev". Box sera provisionado SEM acesso de suporte.',
+            username,
+        )
+    return user
+
+
+def _attach_support_membership(box: 'Box') -> None:
+    """Anexa o superdev ao box como OWNER com is_primary_box=False.
+
+    Idempotente (get_or_create sob unique_together user+box) e a prova de falha:
+    qualquer erro e logado/auditado mas NUNCA propaga — provisionar o box vence.
+
+    is_primary_box=False e critico: o superdev tem Membership em TODOS os boxes;
+    se algum fosse primary, o login dele seria resolvido para uma box de cliente
+    aleatoria pelo TenantBySessionMiddleware.
+    """
+    from control.models import Membership
+
+    superdev = get_superdev_user()
+    if superdev is None:
+        _record_platform_audit(box, 'membership.support_skipped', {'reason': 'superdev_unavailable'})
+        return
+
+    if superdev.pk == box.owner_user_id:
+        # Edge: o proprio superdev e o owner deste box — owner membership ja cobre.
+        return
+
+    try:
+        _membership, created = Membership.objects.get_or_create(
+            user=superdev,
+            box=box,
+            defaults={'role': Membership.Role.OWNER, 'is_primary_box': False},
+        )
+    except Exception:
+        logger.exception('_attach_support_membership: falha ao anexar superdev a box=%s', box.slug)
+        _record_platform_audit(box, 'membership.support_failed', {'superdev_user_id': superdev.pk})
+        return
+
+    if created:
+        logger.info('_attach_support_membership: superdev=%s anexado a box=%s', superdev.username, box.slug)
+        _record_platform_audit(
+            box,
+            'membership.support_granted',
+            {'superdev_user_id': superdev.pk, 'role': Membership.Role.OWNER},
+        )
+
 
 def _record_platform_audit(box: 'Box', kind: str, payload: dict | None = None) -> None:
     """Registra evento de plataforma em public."""
