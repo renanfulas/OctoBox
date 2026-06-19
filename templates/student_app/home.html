@@ -10,12 +10,19 @@
 
 {% block body %}
 {% load student_shell %}
+{% if show_student_pwa_activation %}{% include "student_app/_partials/_pwa_activation.html" %}{% endif %}
 <section class="student-hero-number">
     <p class="visually-hidden">
         Modo atual: {% if student_home_mode == 'wod_active' %}WOD{% else %}Grade{% endif %}
     </p>
     <span class="student-context-switch">
-        {% if student_home_mode == 'wod_active' %}Modo WOD{% else %}Próxima aula{% endif %}
+        {% if student_home_mode == 'wod_active' %}
+        <svg class="student-eyebrow-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg>
+        Modo WOD
+        {% else %}
+        <svg class="student-eyebrow-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+        Próxima aula
+        {% endif %}
     </span>
     <div class="student-hero-number__value">
         <span>
@@ -108,7 +115,10 @@
 <section class="student-card student-card--quiet">
     <div class="student-section-head">
         <div>
-            <span class="student-context-switch">Agenda</span>
+            <span class="student-context-switch">
+                <svg class="student-eyebrow-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 10h18"/></svg>
+                Agenda
+            </span>
             <h2>Próximas aulas</h2>
         </div>
     </div>

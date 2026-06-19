@@ -59,6 +59,10 @@ PUBLIC_SCHEMA_PATHS = (
     # com redirect para /login/ e o ?plan= se perde, quebrando o funil.
     '/checkout/',
     '/onboarding/',
+    # Seletor de box para staff multi-box (ex.: superdev). Roda em public porque
+    # o usuario ainda nao tem tenant resolvido ao escolher a box. Sem isso, o
+    # proprio /box/ cairia na resolucao de tenant e poderia redirecionar em loop.
+    '/box/',
     # Sprint 4: TODO o app do aluno bypassa o staff tenant middleware.
     # StudentAuthMiddleware (mais abaixo na chain) faz a auth via cookie
     # proprio do aluno e resolve o tenant via session_payload.box_id.
@@ -138,12 +142,23 @@ class TenantBySessionMiddleware:
 
         box = self._resolve_box(request)
         if box is None:
+            self._set_public(request)
+            # Sem box ativo resolvido. Se o usuario tem vinculos (ou e superuser),
+            # mandar para o seletor de box em vez de 403 seco. Caso tipico do
+            # superdev (Membership em todo box, mas is_primary_box=False) e de
+            # owners multi-box sem primary definido. /box/ e public (sem tenant),
+            # entao nao ha risco de loop de redirect.
+            from control.models import Membership
+
+            has_membership = Membership.objects.filter(user=request.user).exists()
+            if has_membership or request.user.is_superuser:
+                return redirect(f'/box/?{REDIRECT_FIELD_NAME}={request.path}')
+
             logger.warning(
                 'TenantBySessionMiddleware: user=%s sem Box resolvido para path=%s',
                 request.user.pk,
                 request.path,
             )
-            self._set_public(request)
             return HttpResponseForbidden('Nenhum box associado a este usuário.')
 
         # Setar tenant — django-tenants emite SET search_path TO box_xxx, public

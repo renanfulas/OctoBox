@@ -896,9 +896,11 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(grade_response, 'Hoje')
         self.assertContains(grade_response, 'Amanhã')
         self.assertContains(grade_response, 'Ver mês')
-        self.assertContains(rm_response, 'Records')
+        self.assertContains(rm_response, 'Seus recordes')
+        self.assertContains(rm_response, 'Maior carga')
         self.assertContains(rm_response, 'Deadlift')
-        self.assertContains(rm_response, '100kg')
+        # Skin v2: o número e a unidade são separados no hero ("100" + "kg").
+        self.assertContains(rm_response, 'student-rm-hero__num')
 
     def test_student_home_filters_day_by_query_param(self):
         today_session = ClassSession.objects.create(
@@ -1319,10 +1321,11 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Forca + Metcon')
         self.assertContains(response, 'Forca principal')
         self.assertContains(response, 'Deadlift')
-        self.assertContains(response, '70,00% do seu RM')
-        self.assertContains(response, '70,00 kg')
+        # Skin v2: números limpos (sem zeros à direita), como no protótipo.
+        self.assertContains(response, '70% do seu RM')
+        self.assertContains(response, '70 kg')
         # E.5: scaling de RM — carga calculada e base RM visiveis no tier rico
-        self.assertContains(response, 'seu RM: 100,00 kg')
+        self.assertContains(response, 'seu RM: 100 kg')
         workout_view = StudentWorkoutView.objects.get(student=self.student, workout=workout)
         self.assertEqual(workout_view.view_count, 1)
         self.assertTrue(
@@ -1750,7 +1753,8 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-ui="student-pwa-activation"', html=False)
         self.assertContains(response, 'data-location="home"', html=False)
-        self.assertContains(response, 'Ative o que falta no app.', html=False)
+        # Shell v2: rail em formato de linhas ("Instalar o app" / "Notificações").
+        self.assertContains(response, 'Instalar o app', html=False)
         self.assertContains(response, 'data-ui="student-pwa-install-action"', html=False)
         self.assertContains(response, 'data-ui="student-pwa-notification-action"', html=False)
         self.assertContains(response, 'data-ui="student-pwa-dismiss-action"', html=False)
@@ -1786,7 +1790,8 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-ui="student-theme-toggle"', html=False)
         self.assertContains(response, '<svg class="theme-toggle-icon"', html=False)
-        self.assertContains(response, 'Aparência')
+        # Shell v2: o controle de tema vive numa linha "Tema" do Perfil.
+        self.assertContains(response, 'class="student-set-row__label">Tema<', html=False)
 
     def test_student_topbar_uses_google_photo_when_available(self):
         self.identity.photo_url = 'https://example.com/me.jpg'

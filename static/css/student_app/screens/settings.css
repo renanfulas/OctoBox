@@ -1,40 +1,28 @@
 /*
-ARQUIVO: tela settings do aluno
-GERADO NA ONDA 1: divisao estrutural sem redesign visual.
+ARQUIVO: tela Perfil do aluno (skin v2 — visual de linhas do protótipo).
 */
 
-.student-card--settings-main {
-    min-height: 100%;
-}
-
-.student-card--settings-side {
-    align-content: start;
-}
-
-.student-card--settings-main {
-    --student-card-glow: none;
-}
-
-/* Header de identidade do Perfil (shell v2, Onda 5) */
+/* Header de identidade centralizado */
 .student-profile-identity {
     display: grid;
     justify-items: center;
     gap: 6px;
-    padding: 14px 0 4px;
+    padding: 18px 0 16px;
     text-align: center;
 }
 
 .student-profile-identity__avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 22px;
-    font-size: 1.5rem;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    font-size: 1.6rem;
 }
 
 .student-profile-identity__name {
     color: var(--theme-text-primary);
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 1.2rem;
+    font-weight: 800;
     letter-spacing: -0.02em;
 }
 
@@ -44,56 +32,139 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     overflow-wrap: anywhere;
 }
 
-/* Sair da conta (shell v2, Onda 5) */
-.student-signout {
-    margin: 4px 0 0;
+.student-profile-identity__box {
+    margin-top: 2px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 56%, transparent);
+    color: color-mix(in srgb, var(--theme-accent-primary) 74%, var(--theme-text-primary) 26%);
+    font-size: 0.72rem;
+    font-weight: 800;
 }
 
-.student-signout__button {
+/* Grupo de configurações = card com linhas */
+.student-settings-group {
+    padding: 2px 14px;
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 92%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+    margin-bottom: 12px;
+}
+
+/* Linha (div estática, summary de details, ou button) */
+.student-set-row,
+.student-set-row__summary {
+    display: flex;
+    align-items: center;
+    gap: 14px;
     width: 100%;
+    padding: 14px 4px;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 60%, transparent);
+    color: var(--theme-text-primary);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: left;
+    text-decoration: none;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    cursor: pointer;
+    list-style: none;
+}
+
+/* details: a borda fica no summary; o container details não duplica */
+.student-set-row {
+    border-radius: 0;
+}
+
+details.student-set-row {
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border-soft) 60%, transparent);
+    padding: 0;
+}
+
+details.student-set-row > .student-set-row__summary {
+    border-bottom: none;
+}
+
+.student-settings-group > .student-set-row:last-child,
+.student-settings-group > details.student-set-row:last-child,
+.student-settings-group > form:last-child .student-set-row {
+    border-bottom: none;
+}
+
+.student-set-row--static {
+    cursor: default;
+}
+
+.student-set-row__summary::-webkit-details-marker {
+    display: none;
+}
+
+.student-set-row__lead {
+    flex: 0 0 auto;
+    display: inline-flex;
+    color: color-mix(in srgb, var(--theme-accent-primary) 74%, var(--theme-text-primary) 26%);
+}
+
+.student-set-row__lead svg {
+    width: 20px;
+    height: 20px;
+}
+
+.student-set-row__label {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.student-set-row__end {
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
-    min-height: 46px;
-    color: color-mix(in srgb, var(--theme-accent-danger) 78%, var(--theme-text-primary) 22%);
-    border-color: color-mix(in srgb, var(--theme-accent-danger) 22%, var(--theme-border-soft) 78%);
+    color: var(--theme-text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
 }
 
-.student-signout__button svg {
-    width: 17px;
-    height: 17px;
+.student-set-row__chevron {
+    width: 16px;
+    height: 16px;
+    color: var(--theme-text-muted);
+    transition: transform var(--motion-base) var(--ease-standard);
 }
 
-/* Toggle de tema vive aqui (Onda 0 do shell v2): saiu do header. */
-.student-theme-toggle.student-theme-toggle--row {
-    --topbar-toggle-surface: color-mix(in srgb, var(--theme-surface-secondary) 84%, var(--theme-accent-support-alpha) 16%);
-    --topbar-toggle-border-color: color-mix(in srgb, var(--theme-border-soft) 86%, var(--theme-accent-support-alpha) 14%);
-    --topbar-toggle-ink: var(--theme-text-primary);
-    --topbar-toggle-shadow: none;
-    width: auto;
-    min-width: 0;
-    height: 40px;
-    padding: 0 14px;
-    gap: 8px;
-    border-radius: 13px;
-    align-self: center;
+details.student-set-row[open] .student-set-row__chevron {
+    transform: rotate(90deg);
 }
 
-.student-theme-toggle.student-theme-toggle--row .theme-toggle-icon {
-    width: 18px;
-    height: 18px;
-    flex: 0 0 auto;
+.student-set-row__body {
+    padding: 0 2px 16px;
 }
 
-.student-theme-toggle.student-theme-toggle--row .theme-toggle-icon svg {
-    width: 18px;
-    height: 18px;
+.student-set-row__body .student-form-stack {
+    margin-top: 4px;
 }
 
-.student-theme-toggle.student-theme-toggle--row .theme-toggle-label {
-    font-size: 0.82rem;
-    font-weight: 700;
+/* Linha de risco (Sair da conta) */
+.student-set-row--danger {
+    color: color-mix(in srgb, var(--theme-accent-danger) 82%, var(--theme-text-primary) 18%);
+}
+
+.student-set-row--danger .student-set-row__lead {
+    color: color-mix(in srgb, var(--theme-accent-danger) 82%, var(--theme-text-primary) 18%);
+}
+
+/* Toggle de tema mora numa linha; o ícone do toggle fica oculto (controle por JS) */
+.student-set-row.student-theme-toggle {
+    box-shadow: none;
+}
+
+.student-set-row .theme-toggle-label {
+    font-weight: 600;
+    text-transform: capitalize;
 }
 
 .student-profile-readonly {
@@ -231,3 +302,6 @@ GERADO NA ONDA 1: divisao estrutural sem redesign visual.
     font-size: 0.82rem;
     font-weight: 600;
 }
+
+/* Estilos do rail de PWA em linhas vivem em primitives/pwa-activation.css
+   (global), para funcionar tanto no Perfil quanto na Home. */

@@ -1,21 +1,28 @@
 {% load student_app_formatters %}
 {% comment %}
-Hero "Maior carga" (shell v2, Onda 4): o maior RM do aluno em destaque,
-com delta da última atualização. Espera `student_rm_top` ({record, delta_kg}).
+Hero "Maior carga" (skin v2 — visual do protótipo): maior RM em destaque com
+troféu, delta e sparkline. Espera `student_rm_top` ({record, delta_kg}).
 {% endcomment %}
 {% if student_rm_top %}
 <section class="student-hero-number student-rm-hero">
-    <span class="student-context-switch">Maior carga</span>
-    <div class="student-hero-number__value">
-        <span>{{ student_rm_top.record.one_rep_max_kg|format_rm_value }}</span>
-        {% if student_rm_top.delta_kg %}
-        <span class="student-rm-hero__delta">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></svg>
-            +{{ student_rm_top.delta_kg|format_rm_value }}
+    <div class="student-rm-hero__main">
+        <span class="student-context-switch">
+            <svg class="student-rm-hero__trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v3a4 4 0 0 1-8 0z"/><path d="M8 5H5v1a3 3 0 0 0 3 3"/><path d="M16 5h3v1a3 3 0 0 1-3 3"/><path d="M10 13.5V16h4v-2.5"/><path d="M9 20h6"/><path d="M12 16v4"/></svg>
+            Maior carga
         </span>
-        {% endif %}
+        <p class="student-hero-number__label">{{ student_rm_top.record.exercise_label }}</p>
+        <div class="student-hero-number__value">
+            <span class="student-rm-hero__num">{{ student_rm_top.record.one_rep_max_kg|format_rm_number }}</span>
+            <span class="student-rm-hero__unit">kg</span>
+            {% if student_rm_top.delta_kg %}
+            <span class="student-rm-hero__delta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M9 7h8v8"/></svg>
+                +{{ student_rm_top.delta_kg|format_rm_value }}
+            </span>
+            {% endif %}
+        </div>
+        <p class="student-hero-number__support">atualizado em {{ student_rm_top.record.updated_at|date:"d/m/Y" }}</p>
     </div>
-    <p class="student-hero-number__label">{{ student_rm_top.record.exercise_label }}</p>
-    <p class="student-hero-number__support">atualizado em {{ student_rm_top.record.updated_at|date:"d/m/Y" }}</p>
+    <div class="student-rm-hero__spark" data-hero-sparkline="{{ student_rm_top.record.exercise_slug }}" aria-hidden="true"></div>
 </section>
 {% endif %}
