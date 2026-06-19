@@ -29,9 +29,6 @@
         <main class="student-shell">
             {% include "student_app/_partials/_topbar.html" %}
             {% include "student_app/_partials/_flash_stack.html" %}
-            {% if show_student_pwa_activation %}
-                {% include "student_app/_partials/_pwa_activation.html" %}
-            {% endif %}
 
             {% block body %}{% endblock %}
 

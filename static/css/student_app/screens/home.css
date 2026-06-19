@@ -4,6 +4,12 @@ ARQUIVO: tela Início do aluno (shell v2, Onda 1).
 - Pill de estado e barra de capacidade são primitivas compartilhadas.
 */
 
+.student-eyebrow-ico {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+}
+
 .student-day-section,
 .student-day-workouts {
     display: grid;

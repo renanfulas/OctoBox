@@ -16,6 +16,7 @@ PONTOS CRITICOS:
 - movimentos sem carga mostram so a prescricao (sem repetir "carga livre").
 - meta da sessao e badge SmartPlan vivem no header de wod.html (shell v2, Onda 3).
 -->
+{% load student_app_formatters %}
 <div class="student-wod-block-list" id="student-wod-day">
     {% for block in student_workout_day.blocks %}
     <article class="student-wod-block" data-kind="{{ block.kind_label|slugify }}">
@@ -46,14 +47,14 @@ PONTOS CRITICOS:
                     {% if movement.recommended_load_kg %}
                     <!-- RM registrado: scaling completo -->
                     <div class="student-wod-movement-rm student-wod-movement-rm--hit">
-                        <span class="student-wod-movement-rm__pct">{{ movement.percentage }}% RM</span>
-                        <strong class="student-wod-movement-rm__load">{{ movement.recommended_load_kg }} kg</strong>
-                        <small class="student-wod-movement-rm__base">seu RM: {{ movement.base_rm_kg }} kg</small>
+                        <span class="student-wod-movement-rm__pct">{{ movement.percentage|format_rm_number }}% RM</span>
+                        <strong class="student-wod-movement-rm__load">{{ movement.recommended_load_kg|format_rm_number }} kg</strong>
+                        <small class="student-wod-movement-rm__base">seu RM: {{ movement.base_rm_kg|format_rm_number }} kg</small>
                     </div>
                     {% else %}
                     <!-- Sem RM registrado: nudge -->
                     <div class="student-wod-movement-rm student-wod-movement-rm--missing">
-                        <span class="student-wod-movement-rm__pct">{{ movement.percentage }}% RM</span>
+                        <span class="student-wod-movement-rm__pct">{{ movement.percentage|format_rm_number }}% RM</span>
                         <a href="{% url 'student-app-rm' %}" class="student-wod-movement-rm__cta">Registrar RM</a>
                     </div>
                     {% endif %}
