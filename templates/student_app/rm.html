@@ -9,6 +9,13 @@
 {% endblock %}
 
 {% block body %}
+<div class="student-rm-top">
+    <h1 class="student-rm-top__title">Seus recordes</h1>
+    <a href="#novo-rm" class="student-rm-top__action">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        Novo RM
+    </a>
+</div>
 {% include "student_app/_partials/_rm_hero.html" %}
 {% include "student_app/_partials/_rm_list.html" %}
 {% include "student_app/_partials/_rm_calculator.html" %}

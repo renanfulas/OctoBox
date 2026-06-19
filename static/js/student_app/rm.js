@@ -46,6 +46,7 @@
     var percent = calculator.querySelector('[data-ui="student-rm-percent"]');
     var result = calculator.querySelector('[data-ui="student-rm-result"]');
     var feedback = calculator.querySelector('[data-ui="student-rm-feedback"]');
+    var percentLabel = calculator.querySelector('[data-ui="student-rm-percent-label"]');
     if (!base || !percent || !result) {
       return;
     }
@@ -59,6 +60,9 @@
       var loadValue = baseValue * percentValue / 100;
       var isInvalid = baseValue <= 0 || percentValue <= 0 || loadValue < 0.5;
       result.textContent = isInvalid ? '-- kg' : formatKg(loadValue);
+      if (percentLabel) {
+        percentLabel.textContent = percentValue > 0 ? String(Math.round(percentValue)) : '--';
+      }
       if (feedback) {
         feedback.hidden = !isInvalid;
       }
