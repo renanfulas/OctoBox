@@ -214,6 +214,20 @@ def test_tenant(django_db_setup, django_db_blocker):
     return box
 
 
+def _reset_connection_to_public():
+    """Forca o search_path da connection de volta para o schema public.
+
+    Usado pelos opt-outs @pytest.mark.public_schema: garante que um teste
+    public_schema nunca herde o schema de um tenant resolvido por um teste
+    anterior (fonte de flakiness em ordem aleatoria — quebrava com
+    "Can't create tenant outside the public schema").
+    """
+    from django.db import connection
+    from django_tenants.utils import get_public_schema_name
+    if getattr(connection, 'schema_name', None) != get_public_schema_name():
+        connection.set_schema_to_public()
+
+
 @pytest.fixture(scope='class', autouse=True)
 def _class_tenant_schema_context(request, test_tenant):
     """Envolve a CLASSE TestCase inteira (incluindo setUpTestData) em
@@ -236,8 +250,15 @@ def _class_tenant_schema_context(request, test_tenant):
     schema public (sem schema_context). Necessario para testes que criam ou
     manipulam tenants (provision_box, archive_box) — django-tenants proibe
     criar/alterar um Box fora do schema public.
+
+    Garante public EXPLICITAMENTE (nao so "sem schema_context"): em ordem
+    aleatoria, um teste anterior que resolveu um tenant (ex.: request de staff
+    via TenantBySessionMiddleware deixa a connection em box_xxx e nao reseta)
+    vazaria o search_path para ca, quebrando a criacao de Box com
+    "Can't create tenant outside the public schema".
     """
     if request.node.get_closest_marker('public_schema'):
+        _reset_connection_to_public()
         yield
         return
     if test_tenant is None:
@@ -263,9 +284,11 @@ def _tenant_schema_context(request, test_tenant):
     e None — pula o context manager e roda o test diretamente.
 
     OPT-OUT (Sprint 9): respeita @pytest.mark.public_schema (ver fixture
-    _class_tenant_schema_context acima).
+    _class_tenant_schema_context acima) — e tambem reseta para public
+    explicitamente para nao herdar search_path vazado de um teste anterior.
     """
     if request.node.get_closest_marker('public_schema'):
+        _reset_connection_to_public()
         yield
         return
     if test_tenant is None:

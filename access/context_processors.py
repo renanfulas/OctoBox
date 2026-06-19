@@ -289,9 +289,14 @@ def role_navigation(request):
 
     if request.user.is_authenticated:
         user_display_name = request.user.get_full_name() or request.user.username
-        shell_counts, shell_counts_telemetry = get_shell_counts(return_telemetry=True)
-        if hasattr(request, '_octobox_request_perf'):
-            request._octobox_request_perf['shell_counts'] = shell_counts_telemetry
+        # get_shell_counts consulta TENANT_APPS (finance/operations/students) — so
+        # funciona com um tenant resolvido. Em paths public para usuario logado (ex.:
+        # o seletor de box /box/, onde o superdev ainda nao escolheu tenant) nao ha
+        # schema de box; mantemos os counts zerados para nao quebrar o render.
+        if getattr(request, 'tenant', None) is not None:
+            shell_counts, shell_counts_telemetry = get_shell_counts(return_telemetry=True)
+            if hasattr(request, '_octobox_request_perf'):
+                request._octobox_request_perf['shell_counts'] = shell_counts_telemetry
         sidebar_navigation = _build_navigation(role_slug, current_view_name=view_name)
 
         if role_slug in (ROLE_OWNER, ROLE_DEV):
@@ -300,6 +305,13 @@ def role_navigation(request):
                 {'label': 'Config. operacionais', 'href': reverse('operational-settings')},
                 {'label': 'Auditoria', 'href': admin_changelist_url('boxcore', 'auditevent')},
             ]
+
+        # Superdev (superuser) tem Membership em todo box e precisa pular entre
+        # eles para dar suporte — expor o seletor independente do papel atual.
+        if request.user.is_superuser:
+            profile_navigation.append(
+                {'label': 'Trocar box', 'href': reverse('box-switch')}
+            )
 
     shell_page_context = _build_shell_page_context(view_name, request.path, role, sidebar_navigation, shell_counts)
     topbar_alert_links = _build_topbar_alert_links(role_slug)

@@ -1,0 +1,60 @@
+<!--
+ARQUIVO: seletor de box para staff multi-box (ex.: superdev).
+
+POR QUE ELE EXISTE:
+- O superdev tem Membership em TODOS os boxes (is_primary_box=False), entao nao
+  cai em nenhum painel automaticamente no login. Esta tela deixa escolher em
+  qual box entrar para dar suporte.
+
+O QUE ESTE ARQUIVO FAZ:
+1. Lista os boxes onde o usuario tem Membership ativo.
+2. Ao escolher, a view seta session['active_box_id'] e leva ao painel.
+
+PONTOS CRITICOS:
+- Roda em public schema (rota /box/). Nao depende de tenant resolvido.
+-->
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}">
+<link rel="stylesheet" href="{% static 'css/access/box_switch.css' %}?v={{ static_asset_version }}">
+{% endblock %}
+
+{% block content %}
+<div class="operation-shell box-switch-scene">
+    <section class="table-card operation-focus-card box-switch-card" aria-label="Seleção de box">
+        <div class="operation-card-head">
+            <div>
+                <p class="eyebrow">Acesso de suporte</p>
+                <h1 class="operation-card-title">Escolha o box para entrar</h1>
+                <p class="operation-card-copy">Selecione em qual box você quer abrir o painel. Você verá os dados no contexto do box escolhido.</p>
+            </div>
+            <span class="pill accent">Trocar box</span>
+        </div>
+
+        {% if boxes %}
+        <form method="post" class="box-switch-form">
+            {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+            <ul class="box-switch-list">
+                {% for box in boxes %}
+                <li>
+                    <label class="box-switch-option{% if box.pk == active_box_id %} is-active{% endif %}">
+                        <input type="radio" name="box_id" value="{{ box.pk }}"{% if box.pk == active_box_id %} checked{% endif %}>
+                        <span class="box-switch-option-body">
+                            <span class="box-switch-name">{{ box.display_name }}</span>
+                            <span class="box-switch-slug">{{ box.slug }}{% if box.pk == active_box_id %} · ativo agora{% endif %}</span>
+                        </span>
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="submit" class="button primary">Entrar no box selecionado</button>
+        </form>
+        {% else %}
+        <p class="operation-card-copy box-switch-empty">Nenhum box ativo disponível para o seu usuário no momento.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

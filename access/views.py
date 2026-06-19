@@ -27,6 +27,7 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -314,5 +315,66 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
             profile_create_form=kwargs.get('profile_create_form'),
             forms_by_user_id=kwargs.get('forms_by_user_id'),
         )
+
+
+class BoxSwitchView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView):
+    """Seletor de box para staff com acesso a multiplos boxes (ex.: superdev).
+
+    Roda em public schema (a rota /box/ esta em PUBLIC_SCHEMA_PATHS), pois o
+    usuario ainda nao tem tenant resolvido ao escolher. Lista apenas boxes onde
+    ele tem Membership ativo — para o superdev (Membership em todos), e a lista
+    completa. Ao escolher, seta session['active_box_id'] e manda pro painel.
+    """
+
+    template_name = 'access/box_switch.html'
+
+    def _accessible_boxes(self):
+        from control.models import Box, Membership
+
+        box_ids = (
+            Membership.objects
+            .filter(user=self.request.user, box__status=Box.Status.ACTIVE)
+            .values_list('box_id', flat=True)
+        )
+        return (
+            Box.objects
+            .filter(pk__in=list(box_ids), status=Box.Status.ACTIVE)
+            .order_by('display_name')
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['boxes'] = self._accessible_boxes()
+        context['active_box_id'] = self.request.session.get('active_box_id')
+        context['next'] = (self.request.GET.get('next') or '').strip()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        from control.models import Box, Membership
+
+        box_id = (request.POST.get('box_id') or '').strip()
+        if not box_id.isdigit():
+            messages.error(request, 'Selecione um box válido.')
+            return redirect('box-switch')
+
+        box = Box.objects.filter(pk=int(box_id), status=Box.Status.ACTIVE).first()
+        # Mesma checagem que o TenantBySessionMiddleware faz ao honrar active_box_id:
+        # exige Membership real. Superuser sem Membership na box e barrado aqui (e
+        # o seria pelo middleware tambem) — o superdev passa porque tem Membership.
+        if box is None or not Membership.objects.filter(user=request.user, box=box).exists():
+            messages.error(request, 'Você não tem acesso a esse box.')
+            return redirect('box-switch')
+
+        request.session['active_box_id'] = box.pk
+        messages.success(request, f'Box ativo: {box.display_name}.')
+
+        next_url = (request.POST.get('next') or '').strip()
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(next_url)
+        return redirect('role-operations')
 
 

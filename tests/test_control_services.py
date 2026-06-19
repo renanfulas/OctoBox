@@ -25,7 +25,7 @@ import unittest
 import pytest
 from unittest.mock import patch, MagicMock
 
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 
 
 # ---------------------------------------------------------------------------
@@ -332,6 +332,121 @@ class ArchiveBoxTest(TestCase):
         result.refresh_from_db()
         self.assertEqual(result.status, Box.Status.ARCHIVED)
         self.assertTrue(result.schema_name.startswith('archived_box_'))
+
+
+# ---------------------------------------------------------------------------
+# L2 — anexo automatico do superdev (conta de suporte) no provisionamento
+# ---------------------------------------------------------------------------
+
+@pytest.mark.public_schema
+@override_settings(
+    SUPERDEV_USERNAME='superdev',
+    SUPERDEV_EMAIL='superdev@octoboxfit.com.br',
+    SUPERDEV_AUTO_ATTACH=True,
+)
+class SuperdevAttachTest(TestCase):
+    """Anexo automatico da conta de suporte (superdev) em provision/reprovision.
+
+    @pytest.mark.public_schema: provision_box cria Box (modelo tenant) — so em public.
+    _run_step mockado (sem DDL real); o foco e a orquestracao do Membership.
+    """
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        self.owner = User.objects.create_user(username='owner_sd_test', email='owner@sd.test')
+        self.superdev = User.objects.create_user(
+            username='superdev',
+            email='superdev@octoboxfit.com.br',
+            is_staff=True,
+            is_superuser=True,
+        )
+
+    def _provision(self, slug='academia-sd', pending_signup=None, owner=None):
+        from control.services import provision_box
+        return provision_box(
+            owner_user=owner or self.owner,
+            display_name='Academia SD',
+            slug=slug,
+            pending_signup=pending_signup,
+        )
+
+    @patch('control.services._run_step')
+    def test_superdev_attached_as_owner_non_primary(self, mock_step):
+        from control.models import Membership
+        mock_step.return_value = None
+
+        box = self._provision()
+
+        sd = Membership.objects.filter(user=self.superdev, box=box).first()
+        self.assertIsNotNone(sd, 'Superdev nao foi anexado ao box')
+        self.assertEqual(sd.role, Membership.Role.OWNER)
+        self.assertFalse(sd.is_primary_box, 'Superdev NAO pode ter is_primary_box=True')
+        # Owner permanece como primary
+        owner_m = Membership.objects.get(user=self.owner, box=box)
+        self.assertTrue(owner_m.is_primary_box)
+
+    @patch('control.services._run_step')
+    def test_support_granted_audit_event_recorded(self, mock_step):
+        from control.models import PlatformAuditEvent
+        mock_step.return_value = None
+
+        box = self._provision()
+
+        self.assertTrue(
+            PlatformAuditEvent.objects.filter(
+                target_box=box, kind='membership.support_granted'
+            ).exists()
+        )
+
+    @patch('control.services._run_step')
+    def test_attach_is_idempotent_across_reprovision(self, mock_step):
+        from control.models import Membership
+        from control.services import reprovision_box
+        mock_step.return_value = None
+
+        box = self._provision()
+        reprovision_box(box)
+        reprovision_box(box)
+
+        count = Membership.objects.filter(user=self.superdev, box=box).count()
+        self.assertEqual(count, 1)
+
+    @override_settings(SUPERDEV_AUTO_ATTACH=False)
+    @patch('control.services._run_step')
+    def test_kill_switch_disables_attach(self, mock_step):
+        from control.models import Box, Membership
+        mock_step.return_value = None
+
+        box = self._provision(slug='academia-sd-off')
+
+        self.assertFalse(Membership.objects.filter(user=self.superdev, box=box).exists())
+        box.refresh_from_db()
+        self.assertEqual(box.status, Box.Status.ACTIVE)  # provisionamento nao quebra
+
+    @override_settings(SUPERDEV_USERNAME='nao-existe')
+    @patch('control.services._run_step')
+    def test_provision_succeeds_when_superdev_missing(self, mock_step):
+        from control.models import Box, Membership
+        mock_step.return_value = None
+
+        box = self._provision(slug='academia-sd-missing')
+
+        self.assertEqual(Membership.objects.filter(box=box).count(), 1)  # so o owner
+        box.refresh_from_db()
+        self.assertEqual(box.status, Box.Status.ACTIVE)
+
+    @patch('control.services._run_step')
+    def test_no_duplicate_when_superdev_is_owner(self, mock_step):
+        from control.models import Membership
+        mock_step.return_value = None
+
+        box = self._provision(slug='box-do-superdev', owner=self.superdev)
+
+        # Apenas a membership de owner — sem segunda membership duplicada
+        self.assertEqual(Membership.objects.filter(user=self.superdev, box=box).count(), 1)
+        owner_m = Membership.objects.get(user=self.superdev, box=box)
+        self.assertTrue(owner_m.is_primary_box)
 
 
 if __name__ == '__main__':

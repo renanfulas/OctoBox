@@ -222,6 +222,15 @@ STRIPE_WEBHOOK_SECRET = env_str('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_PRICE_EARLY_MONTHLY = env_str('STRIPE_PRICE_EARLY_MONTHLY', '')
 STRIPE_PRICE_EARLY_ANNUAL = env_str('STRIPE_PRICE_EARLY_ANNUAL', '')
 
+# Superdev — conta unica de suporte anexada a TODO box provisionado.
+# Vive em public (auth e SHARED_APP), entao um so usuario serve a todos os boxes.
+# Anexado como Membership OWNER (is_primary_box=False) em control.services.provision_box.
+# Crie/garanta a conta com: manage.py bootstrap_superdev
+# SUPERDEV_AUTO_ATTACH=False e o kill-switch (desliga o anexo automatico).
+SUPERDEV_USERNAME = env_str('SUPERDEV_USERNAME', 'superdev')
+SUPERDEV_EMAIL = env_str('SUPERDEV_EMAIL', 'superdev@octoboxfit.com.br')
+SUPERDEV_AUTO_ATTACH = env_bool('SUPERDEV_AUTO_ATTACH', True)
+
 # 🚀 Segurança de Elite (Hardening): Chave de Blind Index
 if not is_local_runtime_mode():
     if PHONE_BLIND_INDEX_KEY == 'dev-default-blind-index-key' or not PHONE_BLIND_INDEX_KEY:
