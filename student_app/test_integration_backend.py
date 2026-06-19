@@ -25,6 +25,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -43,6 +44,10 @@ from student_app.models import StudentExerciseMax
 
 class StudentBackendIntegrationTests(TestCase):
     def setUp(self):
+        # Os snapshots de agenda sao cacheados por tenant+data (nao por aluno),
+        # entao um teste anterior que criou ClassSession pode vazar sessoes para
+        # ca via cache. Limpar garante que o dashboard seja montado do DB vazio.
+        cache.clear()
         self.client = Client()
         self.student, self.identity = create_onboarded_student()
         self.client.cookies[STUDENT_SESSION_COOKIE] = auth_cookie_value(self.identity)

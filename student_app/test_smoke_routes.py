@@ -23,6 +23,7 @@ PONTO CRITICO:
 
 from __future__ import annotations
 
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import NoReverseMatch, get_resolver, reverse
 
@@ -76,6 +77,7 @@ class StudentAppRouteSmokeTests(TestCase):
     )
 
     def setUp(self):
+        cache.clear()  # evita vazamento de snapshots cacheados entre testes
         self.client = Client()
         self.student, self.identity = create_onboarded_student()
         self.client.cookies[STUDENT_SESSION_COOKIE] = auth_cookie_value(self.identity)
