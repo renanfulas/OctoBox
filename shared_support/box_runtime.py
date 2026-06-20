@@ -66,8 +66,35 @@ def get_box_runtime_namespace(base_prefix: str = 'octobox') -> str:
     return build_box_cache_key_prefix(base_prefix)
 
 
+def box_scoped_filename(filename: str) -> str:
+    """Prefixa o nome de um arquivo exportado com o slug do box ativo.
+
+    Fecha a metade aberta do isolamento da Fase 1 (matriz operacional): os DADOS
+    ja sao isolados por schema, mas o ARTEFATO de export nascia sem dono. Com o
+    prefixo, o download de um box nunca se confunde com o de outro.
+
+    Idempotente dentro do mesmo box (nao re-prefixa).
+    """
+    slug = get_box_runtime_slug()
+    name = (filename or '').strip() or 'export'
+    prefix = f'{slug}_'
+    return name if name.startswith(prefix) else f'{prefix}{name}'
+
+
+def box_scoped_export_dir(media_root: str) -> str:
+    """Diretorio de exports isolado por box: ``<media_root>/exports/<slug>/``.
+
+    Write (task assincrona) e read (download view) usam o MESMO helper com o slug
+    do box ativo, entao um box so enxerga os proprios arquivos — isolamento por
+    construcao, sem depender de checagem de ownership por arquivo.
+    """
+    return os.path.join(media_root, 'exports', get_box_runtime_slug())
+
+
 __all__ = [
     'DEFAULT_BOX_RUNTIME_SLUG',
+    'box_scoped_export_dir',
+    'box_scoped_filename',
     'build_box_cache_key_prefix',
     'get_box_runtime_namespace',
     'get_box_runtime_slug',

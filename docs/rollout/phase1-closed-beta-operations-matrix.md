@@ -70,8 +70,8 @@ Status permitidos:
 | Setup interno do primeiro box | `parcial` | Operacao / CS | checklist existente | Executar com o box piloto real |
 | Smoke funcional do go-live | `parcial` | Engenharia / Operacao | smoke local validado com `localhost`; `owner`, `reception`, `alunos`, `grade` e `health` em `200`; `manager` tambem validado com `OPERATIONS_MANAGER_WORKSPACE_ENABLED=1`; bateria ampla de `111 tests` verde em `2026-04-13` | Repetir no ambiente alvo com a flag do manager ligada se o piloto incluir esse papel |
 | War room dos primeiros 7 a 14 dias | `parcial` | Operacao / Engenharia | playbook existente | Definir canal, dono e horario de triagem |
-| Isolamento de cache por box | `validado` | Engenharia | prefixo com `BOX_RUNTIME_SLUG` | Expandir a mesma clareza para logs e exports |
-| Fronteira de logs/exports/storage por box | `parcial` | Engenharia / Ops | intencao arquitetural definida | Formalizar namespace e evidencia operacional |
+| Isolamento de cache por box | `validado` | Engenharia | prefixo com `BOX_RUNTIME_SLUG` | Concluido: namespace estendido para logs/exports/storage (linha abaixo) |
+| Fronteira de logs/exports/storage por box | `validado` | Engenharia | namespace formalizado em `2026-06-20`: logs carimbados `[box=<slug>]` (`BoxRuntimeLogFilter` + formatter no `LOGGING`), filename de export box-scoped (`box_scoped_filename`) e storage de export isolado por dir `<slug>` no write (`reporting/tasks.py`) e no read (`SecureExportDownloadView`, fecha IDOR cross-box), com `tests/test_tenant_isolation_observability.py` verde | Observar evidencia operacional no piloto real |
 | Observabilidade por superficie | `parcial` | Engenharia | healthcheck, logs e playbooks; validacao interna ampla verde em `api`, `catalog`, `dashboard` e `operations` em `2026-04-13` | Registrar latencia/erro por superficie no piloto |
 
 ---

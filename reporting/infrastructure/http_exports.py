@@ -21,6 +21,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
 
+from shared_support.box_runtime import box_scoped_filename
+
 
 def build_csv_response(*, filename, headers, rows):
     buffer = StringIO()
@@ -29,7 +31,7 @@ def build_csv_response(*, filename, headers, rows):
     for row in rows:
         writer.writerow(row)
     response = HttpResponse(buffer.getvalue(), content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Content-Disposition'] = f'attachment; filename="{box_scoped_filename(filename)}"'
     return response
 
 
@@ -70,7 +72,7 @@ def build_pdf_response(*, filename, title, sections):
 
     pdf.save()
     response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Content-Disposition'] = f'attachment; filename="{box_scoped_filename(filename)}"'
     return response
 
 
