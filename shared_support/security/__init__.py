@@ -170,6 +170,36 @@ def _log_rate_limit_event(*, scope: str, request, client_ip: str, retry_after: i
     )
 
 
+def _emit_rate_limit_red_flag(*, scope: str, request, client_ip: str, window_seconds: int):
+    """Trilha forense (RED_FLAG) de breach de rate limit, deduplicada por janela.
+
+    Reaproveita o sinal acionavel que antes vivia nas classes de throttle
+    secundarias (RED_FLAG_LOGIN_BRUTEFORCE / RED_FLAG_STUDENT_SPAM), agora no
+    caminho hardened (IP confiavel + limites corretos) e cobrindo TODOS os scopes.
+
+    Dedupe via cache.add: 1 evento por (scope, token) por janela, para nao
+    amplificar escrita de auditoria sob ataque sustentado. A prova de falha:
+    nunca quebra a resposta de bloqueio.
+    """
+    token = _get_actor_token(request)
+    dedupe_key = f'rate-limit-redflag:{scope}:{token}'
+    if not cache.add(dedupe_key, 1, timeout=max(1, int(window_seconds))):
+        return
+    try:
+        from auditing.services import log_audit_event
+
+        user = getattr(request, 'user', None)
+        actor = user if user is not None and user.is_authenticated else None
+        log_audit_event(
+            actor=actor,
+            action='RED_FLAG_RATE_LIMIT',
+            description=f'Rate limit excedido no escopo {scope}. Origem contida pelo middleware de seguranca.',
+            metadata={'scope': scope, 'ip': client_ip, 'path': request.path, 'method': request.method},
+        )
+    except Exception:
+        SECURITY_LOGGER.exception('rate_limit_red_flag_audit_failed scope=%s client_ip=%s', scope, client_ip)
+
+
 class RequestSecurityMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -232,6 +262,9 @@ class RequestSecurityMiddleware:
             return None
 
         _log_rate_limit_event(scope=rule.scope, request=request, client_ip=client_ip, retry_after=retry_after)
+        _emit_rate_limit_red_flag(
+            scope=rule.scope, request=request, client_ip=client_ip, window_seconds=rule.window_seconds,
+        )
 
         # 🍯 Gatilho de Abuso em Admin (Auto-Honeypot para o Usuário)
         if not allowed and rule.scope == 'admin' and request.user.is_authenticated:
