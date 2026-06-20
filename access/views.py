@@ -60,7 +60,6 @@ def _ensure_role_group(role_slug):
 
 from django.contrib.auth.views import LoginView
 from .forms import AccessAuthenticationForm
-from shared_support.security.anti_cheat_throttles import LoginBruteForceThrottle
 
 
 VALID_LANDING_PLANS = ('monthly', 'annual')
@@ -140,19 +139,12 @@ class AppHostRequiredMixin:
         return redirect(_build_app_url(request, request.get_full_path()))
 
 class ThrottledLoginView(LoginView):
+    # O throttle de login agora vive no RequestSecurityMiddleware (scope 'login',
+    # IP confiavel via SECURITY_TRUSTED_PROXY_IPS + RED_FLAG forense deduplicado).
+    # A view nao precisa mais de uma camada propria (que era redundante e usava
+    # IP spoofavel). Nome mantido por compatibilidade de import/URL.
     template_name = 'access/login.html'
     authentication_form = AccessAuthenticationForm
-
-    def post(self, request, *args, **kwargs):
-        # A interceptacao L7 foca apenas em acoes de POST para contar tentativa de login,
-        # impedindo botneteadores de credential stuffing. 
-        throttle = LoginBruteForceThrottle()
-        if not throttle.allow_request(request, self):
-            throttle.on_throttle_exceeded(request, self)
-            from django.http import HttpResponseForbidden
-            return HttpResponseForbidden("Múltiplas requisições suspeitas. Conta temporariamente bloqueada (Cooldown: 10 min).")
-            
-        return super().post(request, *args, **kwargs)
 
 
 class AppHostThrottledLoginView(AppHostRequiredMixin, ThrottledLoginView):

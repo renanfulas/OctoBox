@@ -4,7 +4,6 @@ Corredor de ações e validações operacionais das views de ficha do aluno.
 
 from django.contrib import messages
 from django.db import IntegrityError
-from django.http import HttpResponseForbidden
 
 from access.roles import ROLE_DEV, get_user_role
 from catalog.services.student_workflows import (
@@ -19,14 +18,12 @@ from shared_support.student_snapshot_versions import build_profile_version
 
 
 def enforce_student_creation_throttle(*, request, view):
-    from shared_support.security.anti_cheat_throttles import StudentCreationSpamThrottle
-
-    throttle = StudentCreationSpamThrottle()
-    if throttle.allow_request(request, view):
-        return None
-
-    throttle.on_throttle_exceeded(request, view)
-    return HttpResponseForbidden("Limite de criacao atingido. Tente novamente em 1 hora.")
+    # O throttle de criacao de aluno agora vive no RequestSecurityMiddleware
+    # (POST em /alunos/ -> scope 'write', IP confiavel via SECURITY_TRUSTED_PROXY_IPS
+    # + RED_FLAG forense). A camada propria (StudentCreationSpamThrottle) era
+    # redundante, com IP spoofavel e limites mortos; foi aposentada. Seam mantido
+    # (no-op) para nao alterar os call-sites das views de cadastro.
+    return None
 
 
 def execute_student_quick_create(*, request, form, selected_intake):
