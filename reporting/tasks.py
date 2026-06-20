@@ -26,6 +26,7 @@ except ImportError:
 
 from catalog.student_queries import build_student_directory_snapshot
 from reporting.application.catalog_reports import build_student_directory_report
+from shared_support.box_runtime import box_scoped_export_dir
 
 logger = logging.getLogger('octobox.reporting.tasks')
 
@@ -63,7 +64,7 @@ def run_student_directory_export_task(self, query_params, report_format, actor_i
         report_payload = build_student_directory_report(students=students, report_format=report_format)
         
         # Preparar diretório de saída
-        export_dir = os.path.join(settings.MEDIA_ROOT, 'exports')
+        export_dir = box_scoped_export_dir(settings.MEDIA_ROOT)
         os.makedirs(export_dir, exist_ok=True)
         
         # 🚀 Segurança de Elite (Epic 8 Hardening): Sanitização Rigorosa
@@ -135,7 +136,7 @@ def run_finance_report_export_task(self, query_params, report_format, actor_id=N
         snapshot = build_finance_snapshot(params)
         report_payload = build_finance_report(snapshot=snapshot, report_format=report_format)
         
-        export_dir = os.path.join(settings.MEDIA_ROOT, 'exports')
+        export_dir = box_scoped_export_dir(settings.MEDIA_ROOT)
         os.makedirs(export_dir, exist_ok=True)
         
         # 🚀 Segurança de Elite (Epic 8 Hardening): Sanitização Rigorosa

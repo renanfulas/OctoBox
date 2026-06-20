@@ -579,9 +579,23 @@ CACHES = {
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        # Carimba cada registro com o box ativo (isolamento forense da Fase 1).
+        # Concern transversal -> um unico processador (filosofia Signal Mesh).
+        'box_runtime': {
+            '()': 'shared_support.box_log_filter.BoxRuntimeLogFilter',
+        },
+    },
+    'formatters': {
+        'box_aware': {
+            'format': '[%(asctime)s] %(levelname)s [box=%(runtime_slug)s] %(name)s %(message)s',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'filters': ['box_runtime'],
+            'formatter': 'box_aware',
         },
     },
     'loggers': {
