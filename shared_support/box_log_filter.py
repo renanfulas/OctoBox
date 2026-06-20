@@ -34,7 +34,7 @@ class BoxRuntimeLogFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         try:
             record.runtime_slug = get_box_runtime_slug()
-        except Exception:
+        except Exception:  # pragma: no cover - defensivo: get_box_runtime_slug nunca levanta
             record.runtime_slug = DEFAULT_BOX_RUNTIME_SLUG
         return True
 
