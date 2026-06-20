@@ -43,8 +43,13 @@ class SecureExportDownloadView(RoleRequiredMixin, View):
         from django.conf import settings
         from django.http import FileResponse, Http404
 
+        from shared_support.box_runtime import box_scoped_export_dir
+
         safe_filename = os.path.basename(filename)
-        file_path = os.path.join(settings.MEDIA_ROOT, 'exports', safe_filename)
+        # Le do diretorio isolado por box (mesmo helper do write na task). O box
+        # ativo so resolve arquivos do PROPRIO namespace -> nao baixa export de
+        # outro box mesmo conhecendo o filename (fecha IDOR cross-box).
+        file_path = os.path.join(box_scoped_export_dir(settings.MEDIA_ROOT), safe_filename)
 
         if not os.path.exists(file_path):
             raise Http404('Arquivo nao encontrado ou expirado.')
