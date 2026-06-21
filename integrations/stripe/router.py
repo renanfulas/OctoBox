@@ -53,7 +53,8 @@ def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
     """Roteia checkout.session.completed para o handler correto.
 
     O OctoBox tem dois fluxos de checkout que reusam o mesmo evento Stripe:
-    1. Pagamento de aluno em mensalidade (metadata.payment_id) — fluxo legado.
+    1. Pagamento de aluno em mensalidade (metadata.payment_id) — reconcilia o
+       Payment no schema do box (metadata.box_schema resolve o tenant).
     2. Cadastro de Early Adopter (metadata.pending_signup_id) — fluxo novo.
 
     A escolha e feita pela metadata da Session. Outros tipos sao logados e ignorados,
@@ -77,6 +78,8 @@ def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
 
 
 def _handle_student_payment(event, session, metadata):
+    from django_tenants.utils import schema_context
+
     from finance.application.commands import ReconcilePaymentCommand
     from finance.application.use_cases import execute_reconcile_payment_use_case
 
@@ -87,13 +90,47 @@ def _handle_student_payment(event, session, metadata):
     if not payment_id or version_locked is None or amount_cents is None:
         raise ValueError(f'Metadata incompleta no evento {event.event_id}: payment_id={payment_id}')
 
+    box_schema = _resolve_box_schema(metadata.get('box_schema'), event)
+
     command = ReconcilePaymentCommand(
         payment_id=int(payment_id),
         amount_cents=int(amount_cents),
         stripe_event_id=event.event_id,
         version_locked=int(version_locked),
     )
-    execute_reconcile_payment_use_case(command)
+    # O webhook chega no schema public (esta em PUBLIC_SCHEMA_PATHS), mas Payment
+    # vive no schema do box (TENANT_APP). Sem este schema_context, o reconcile
+    # faz SELECT em public e estoura 'relation does not exist'. O box e resolvido
+    # pela metadata gravada no checkout (em contexto de tenant) e validado abaixo.
+    with schema_context(box_schema):
+        execute_reconcile_payment_use_case(command)
+
+
+def _resolve_box_schema(box_schema, event) -> str:
+    """Valida o schema do box vindo da metadata contra um Box real.
+
+    Defesa em profundidade: nunca abrir schema_context para um valor arbitrario.
+    box_schema ausente/publico => Session criada antes do fix multi-tenant ou
+    metadata adulterada. Falha NAO reprocessavel (ValueError) — o operador
+    reconcilia manualmente e o evento fica no dead-letter com mensagem clara,
+    em vez de falhar em silencio no schema public.
+    """
+    from django_tenants.utils import get_public_schema_name
+
+    from control.models import Box
+
+    if not box_schema or box_schema == get_public_schema_name():
+        raise ValueError(
+            f'Evento {event.event_id} sem box_schema valido na metadata — '
+            f'impossivel reconciliar pagamento de aluno em multi-tenant '
+            f'(box_schema={box_schema!r}).'
+        )
+    if not Box.objects.filter(schema_name=box_schema).exists():
+        raise ValueError(
+            f'Evento {event.event_id}: box_schema {box_schema!r} nao corresponde '
+            f'a nenhum Box conhecido.'
+        )
+    return box_schema
 
 
 def _handle_early_adopter_signup(event, session, metadata):
