@@ -27,6 +27,7 @@ from catalog.presentation.student_financial_fragments import render_student_fina
 from catalog.student_queries import build_student_financial_snapshot
 from finance.models import EnrollmentStatus, Payment, PaymentStatus
 from integrations.stripe.services import create_checkout_session
+from shared_support.security.fintech_throttles import checkout_rate_limit_exceeded
 from students.models import Student
 
 
@@ -98,6 +99,14 @@ class PaymentLinkView(LoginRequiredMixin, View):
     """Gera um link de checkout do Stripe para compartilhamento manual."""
 
     def get(self, request, payment_id, *args, **kwargs):
+        # Mesmo guard de card-testing do StripeCheckoutRedirectView: sem isto a
+        # API podia cunhar Sessions Stripe ilimitadas (vetor de teste de cartao).
+        if checkout_rate_limit_exceeded(request):
+            return JsonResponse(
+                {'error': 'Muitas tentativas. Tente novamente em instantes.'},
+                status=429,
+            )
+
         payment = Payment.objects.filter(pk=payment_id).first()
         if not payment:
             return JsonResponse({'error': 'Payment not found'}, status=404)
@@ -160,12 +169,21 @@ class PaymentBulkActionView(GenericBulkActionView):
     """
 
     def perform_action(self, item_id, action, user):
-        payment = Payment.objects.get(pk=item_id)
+        # GenericBulkActionView.post envolve cada item em transaction.atomic(),
+        # entao o select_for_update aqui serializa baixas concorrentes do mesmo
+        # Payment (race entre abas/operadores) dentro do savepoint do item.
+        payment = Payment.objects.select_for_update().get(pk=item_id)
         if action == 'mark_paid':
-            payment.status = PaymentStatus.PAID
-            payment.save()
+            if payment.status != PaymentStatus.PAID:
+                payment.status = PaymentStatus.PAID
+                payment.paid_at = timezone.now()  # antes ficava nulo: quebrava relatorio/auditoria
+                payment.version += 1
+                payment.save(update_fields=['status', 'paid_at', 'version', 'updated_at'])
         elif action == 'mark_cancelled':
-            payment.status = PaymentStatus.CANCELLED
-            payment.save()
+            # Bug: o enum e PaymentStatus.CANCELED (1 L). PaymentStatus.CANCELLED
+            # nao existe e levantava AttributeError ao cancelar em massa.
+            if payment.status != PaymentStatus.CANCELED:
+                payment.status = PaymentStatus.CANCELED
+                payment.save(update_fields=['status', 'updated_at'])
         else:
             raise ValueError(f'Acao desconhecida: {action}')

@@ -17,12 +17,12 @@ from __future__ import annotations
 import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 
 from finance.models import Payment
 from integrations.stripe.services import create_checkout_session
+from shared_support.security.fintech_throttles import checkout_rate_limit_exceeded
 
 logger = logging.getLogger(__name__)
 
@@ -37,15 +37,12 @@ class StripeCheckoutRedirectView(LoginRequiredMixin, View):
     """
 
     def post(self, request, payment_id: int):
-        ip = request.META.get("REMOTE_ADDR")
-        key = f"octo_stripe_rl_{ip}_{request.user.id}"
-        attempts = cache.get(key, 0)
-
-        if attempts >= 10:
-            logger.warning("Suspeita de EXAUSTÃO/CARD-TESTING. Bloqueando %s.", ip)
+        if checkout_rate_limit_exceeded(request):
+            logger.warning(
+                "Suspeita de EXAUSTAO/CARD-TESTING. Bloqueando %s.",
+                request.META.get("REMOTE_ADDR"),
+            )
             return render(request, "429.html", status=429)
-
-        cache.set(key, attempts + 1, timeout=3600)
 
         payment = get_object_or_404(Payment, pk=payment_id)
 
