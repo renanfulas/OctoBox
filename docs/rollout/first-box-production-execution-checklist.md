@@ -107,6 +107,7 @@ Checklist:
 9. `/api/v1/health/` responde `status=ok`
 10. `/login/`, `/dashboard/`, `/operacao/`, `/alunos/` e `/grade-aulas/` respondem sem 500
 11. assets carregam com CSS e JS corretos
+12. **registro de ativação de ambiente aplicado** (env vars + comandos: superdev, Stripe, papéis) — ver [environment-activation-registry.md](environment-activation-registry.md)
 
 Bloqueador:
 
@@ -115,11 +116,13 @@ Bloqueador:
 3. manager exigido no piloto mas workspace desabilitado por flag
 4. assets quebrados
 5. login falhando
+6. feature mergeada mas não ativada no ambiente (env var/comando faltando no registro)
 
 Referencia:
 
 1. [homologation-deploy-checklist.md](hostgator/deploy.md)
 2. [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md)
+3. [environment-activation-registry.md](environment-activation-registry.md)
 
 ---
 

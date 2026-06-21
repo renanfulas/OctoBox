@@ -145,6 +145,7 @@ Exemplos fortes:
 2. [../plans/front-beta-closure-board.md](../plans/front-beta-closure-board.md)
 3. [../plans/catalog-page-payload-presenter-blueprint.md](../plans/catalog-page-payload-presenter-blueprint.md)
 4. [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md) para a ordem pratica de implantacao do tema oficial
+5. [../plans/in-flight-board.md](../plans/in-flight-board.md) para "o que esta em voo agora" entre sessoes/worktrees e higiene de branch orfa
 
 ### 4. Reference
 
@@ -218,6 +219,7 @@ Exemplos fortes:
 
 1. [../rollout/beta-internal-release-gate.md](../rollout/beta-internal-release-gate.md)
 2. [../rollout/beta-role-test-agenda.md](../rollout/beta-role-test-agenda.md)
+3. [../rollout/environment-activation-registry.md](../rollout/environment-activation-registry.md) para "mergeado != ativado" (env vars + comandos de ativacao por ambiente)
 
 ### 6. Experience
 
