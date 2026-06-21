@@ -34,6 +34,10 @@ aceitas, e **anti-patterns proibidos** (quando aplicável).
 - [ADR-011](ADR-011-signal-handlers-defensivos.md) — Signal handlers defensivos a valores cru.
 - [ADR-012](ADR-012-test-design-structural-asserts.md) — Test design: structural asserts > mega-copy asserts.
 
+### Plataforma & control plane
+
+- [ADR-013](ADR-013-superdev-support-access-per-box.md) — Superdev: acesso de suporte (Membership) anexado a todo box provisionado.
+
 ## Como criar um novo ADR
 
 1. Encontre o próximo número disponível (`ls docs/adr/ | sort -V | tail -1`).
