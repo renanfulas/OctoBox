@@ -8,6 +8,7 @@ POR QUE ELE EXISTE:
 
 import stripe
 from django.conf import settings
+from django.db import connection
 from django.urls import reverse
 
 from auditing import log_audit_event
@@ -35,6 +36,12 @@ def create_checkout_session(payment: Payment, request) -> str:
         'payment_id': payment.id,
         'student_id': payment.student.id,
         'version_locked': payment.version,
+        # Multi-tenant: o checkout roda em contexto de box, mas o webhook de
+        # confirmacao chega no schema public. Sem carregar o schema do box aqui,
+        # o reconcile faz SELECT em public e o Payment (TENANT_APP) some
+        # ('relation does not exist'). Gravamos o schema do tenant ativo para o
+        # router conseguir reabrir o schema_context certo na baixa.
+        'box_schema': connection.schema_name,
     }
 
     product_name = 'Fatura Avulsa'
