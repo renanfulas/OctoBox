@@ -53,6 +53,14 @@ A regra de leitura e simples:
 
 ---
 
+## Configuração de ambiente ("mergeado ≠ ativado")
+
+| Doc | Status |
+|-----|--------|
+| [environment-activation-registry.md](environment-activation-registry.md) | ATIVO (fonte de verdade: env vars + comandos de ativação por ambiente) |
+
+---
+
 ## Beta interno
 
 | Doc | Status |
