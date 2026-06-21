@@ -4,6 +4,8 @@ import json
 import uuid
 from unittest.mock import patch
 
+from freezegun import freeze_time
+
 from django.core.cache import cache
 from django.db import connection
 from django.test import Client, TestCase, override_settings
@@ -966,6 +968,10 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(dashboard.primary_action.kind, 'open_grade')
         self.assertNotEqual(dashboard.focal_session.session_id, first_session.id)
 
+    # Congela num meio de semana (quarta) porque a régua "Sua semana" só renderiza
+    # a semana corrente (seg→dom). Sem isso o teste quebra aos domingos: "amanhã"
+    # cai na segunda da semana seguinte, fora da régua, e o dia nunca fica is-selected.
+    @freeze_time('2026-06-17 15:00:00')
     def test_student_home_marks_selected_day_and_keeps_booking_block_reason(self):
         reserved_session = ClassSession.objects.create(
             title='Cross reservada',
