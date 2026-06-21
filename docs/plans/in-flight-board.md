@@ -77,7 +77,7 @@ git -C C:\dev\OctoBox worktree list
 | Frente | Branch | Worktree | Dono/sessão | Status |
 |---|---|---|---|---|
 | Docs de prontidão (registry + este quadro) | `docs/ops-readiness` | `octobox-wt/ops-docs` | sessão 2026-06-20 | PR aberto |
-| Hardening de pagamentos — reconcile multi-tenant do webhook Stripe | `feat/payment-webhook-tenant-resolution` | `octobox-wt/payment-tenant-fix` | sessão 2026-06-21 | P0 em andamento (verificação no CI) |
+| Hardening de pagamentos — guardrails P0 (rate-limit, mark_paid, copy) | `feat/payment-p0-guardrails` | `octobox-wt/payment-p0-guardrails` | sessão 2026-06-21 | P0 em andamento (verificação no CI) |
 
 ---
 
