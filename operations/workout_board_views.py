@@ -9,10 +9,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import FormView
 
 from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
+from operations.model_definitions import ClassType
 from shared_support.page_payloads import attach_page_payload
 
 from operations.operations_executive_summary_context import build_operations_executive_summary_context
@@ -34,6 +36,7 @@ from operations.forms import (
     WorkoutStudentRmQuickForm,
 )
 from operations.services.wod_paste_parser import load_wod_movement_dictionary, parse_weekly_wod_text, resolve_movement_slug
+from operations.services.wod_paste_freeform_parser import _freeform_should_take_over, parse_weekly_wod_freeform
 from operations.services.wod_slug_resolver import apply_llm_slug_resolution
 from operations.services.wod_smartplan_weekly_parser import detect_and_convert_smartplan_weekly
 from operations.services.wod_projection import build_projection_preview, project_plan_to_sessions
@@ -54,6 +57,28 @@ def _first_form_error(form, fallback_message):
     if first_errors:
         return first_errors[0]
     return fallback_message
+
+
+def _projection_guard_error(preview, cleaned_projection):
+    """Mensagem acionavel quando nao ha aulas para projetar; None se pode prosseguir.
+
+    Distingue 'nenhuma aula na semana' (precisa cadastrar a grade) de 'nenhuma aula do(s)
+    tipo(s) selecionado(s)' (precisa ajustar o filtro ou criar aulas desse tipo).
+    """
+    week_label = cleaned_projection['target_week_start'].strftime('%d/%m/%Y')
+    grade_path = reverse('class-grid')
+    if preview.get('sessions_in_week_total', 0) == 0:
+        return (
+            f'Nenhuma aula cadastrada na semana de {week_label}. '
+            f'Cadastre a grade em Grade de aulas ({grade_path}) antes de projetar.'
+        )
+    if preview.get('totals', {}).get('sessions_found', 0) == 0:
+        labels = ', '.join(str(ClassType(value).label) for value in cleaned_projection['class_types'])
+        return (
+            f'Nenhuma aula do(s) tipo(s) {labels} na semana de {week_label}. '
+            f'Ajuste os tipos de aula ou cadastre aulas desse tipo na Grade de aulas ({grade_path}).'
+        )
+    return None
 
 
 class WorkoutApprovalBoardView(OperationBaseView):
@@ -252,6 +277,18 @@ class WorkoutSmartPasteView(OperationBaseView):
                 target_week_start=cleaned_projection['target_week_start'],
                 class_types=cleaned_projection['class_types'],
             )
+            guard_error = _projection_guard_error(preview, cleaned_projection)
+            if guard_error:
+                messages.error(request, guard_error)
+                context = self._build_context(
+                    plan=plan,
+                    projection_form=projection_form,
+                    parsed_payload=plan.parsed_payload,
+                    projection_preview=preview,
+                )
+                if self._is_hx_request():
+                    return self._render_partial('operations/includes/wod_smart_paste_projection.html', context)
+                return self.render_to_response(context)
             if action == 'create_projection':
                 batch, preview = project_plan_to_sessions(
                     weekly_plan=plan,
@@ -310,6 +347,8 @@ class WorkoutSmartPasteView(OperationBaseView):
             parsed = detect_and_convert_smartplan_weekly(source_text)
             if parsed is None:
                 parsed = parse_weekly_wod_text(source_text)
+                if _freeform_should_take_over(parsed):
+                    parsed = parse_weekly_wod_freeform(source_text)
                 apply_llm_slug_resolution(parsed, load_wod_movement_dictionary())
             plan.parsed_payload = parsed
         plan.created_by = plan.created_by or request.user

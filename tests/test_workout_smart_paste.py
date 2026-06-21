@@ -7,7 +7,14 @@ from unittest.mock import patch
 
 from operations.forms import WeeklyWodProjectionForm, WeeklyWodSmartPasteForm
 from operations.models import ClassSession, ClassType, WorkoutTemplate
-from student_app.models import SessionWorkout, SessionWorkoutStatus, WeeklyWodPlan, WeeklyWodPlanStatus
+from student_app.models import (
+    ReplicationBatch,
+    SessionWorkout,
+    SessionWorkoutStatus,
+    WeeklyWodPlan,
+    WeeklyWodPlanStatus,
+)
+from tests.test_workout_smart_paste_freeform import MESSY_SAMPLE
 from tests.workout_test_support import WorkoutFlowBaseTestCase
 
 
@@ -934,3 +941,166 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
             })
         self.assertIn(response.status_code, [200, 302])
         mock_resolver.assert_called_once()
+
+
+class WorkoutSmartPasteFreeformViewTests(WorkoutFlowBaseTestCase):
+    """A view organiza texto cru (sem cabecalho) em 5 dias via o parser freeform."""
+
+    def test_messy_paste_is_organized_into_five_days(self):
+        response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'week_start': '20/04/2026',
+                'label': 'Semana crua',
+                'source_text': MESSY_SAMPLE,
+                'action': 'parse_text',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        plan = WeeklyWodPlan.objects.get()
+        self.assertEqual(plan.status, WeeklyWodPlanStatus.DRAFT)
+        days = plan.parsed_payload['days']
+        self.assertEqual(
+            [day['weekday_label'] for day in days],
+            ['Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta'],
+        )
+        # Quinta funde o cabecalho "Hyrox / Cap 45m" com seus 10 movimentos
+        quinta = days[3]
+        self.assertEqual(len(quinta['blocks']), 2)
+        self.assertTrue(any(block.get('timecap_min') == 45 for block in quinta['blocks']))
+
+
+class WorkoutSmartPasteProjectionGuardTests(WorkoutFlowBaseTestCase):
+    """A projecao bloqueia (com erro acionavel) quando nao ha aulas para receber o WOD."""
+
+    TARGET_WEEK = '27/04/2026'  # 2026-04-27 e uma segunda-feira
+
+    def _confirmed_plan(self):
+        return WeeklyWodPlan.objects.create(
+            week_start='2026-04-27',
+            label='Semana confirmada',
+            source_text='Segunda\nWod\n400m run',
+            parsed_payload={
+                'week_label': None,
+                'parse_warnings': [],
+                'days': [
+                    {
+                        'weekday': 0,
+                        'weekday_label': 'Segunda',
+                        'blocks': [
+                            {
+                                'kind': 'metcon',
+                                'title': 'WOD',
+                                'notes': '',
+                                'movements': [
+                                    {
+                                        'movement_slug': 'run',
+                                        'movement_label_raw': 'run',
+                                        'reps_spec': '400',
+                                        'load_spec': '',
+                                        'notes': '',
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            created_by=self.coach,
+            status=WeeklyWodPlanStatus.CONFIRMED,
+        )
+
+    def test_blocks_creation_when_no_class_session_in_target_week(self):
+        plan = self._confirmed_plan()
+        # A unica aula da base esta em "hoje" (junho), nao na semana-alvo (abril) -> zero aulas.
+
+        response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'plan_id': plan.id,
+                'target_week_start': self.TARGET_WEEK,
+                'class_types': [ClassType.CROSS],
+                'action': 'create_projection',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nenhuma aula cadastrada na semana')
+        self.assertContains(response, '/grade-aulas/')
+        self.assertEqual(SessionWorkout.objects.count(), 0)
+        self.assertEqual(ReplicationBatch.objects.count(), 0)
+
+    def test_blocks_creation_when_no_session_of_selected_type(self):
+        plan = self._confirmed_plan()
+        ClassSession.objects.create(
+            title='Mobilidade 09h',
+            coach=self.coach,
+            scheduled_at=timezone.make_aware(datetime(2026, 4, 27, 9, 0)),
+            duration_minutes=60,
+            capacity=16,
+            class_type=ClassType.MOBILITY,
+        )
+
+        response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'plan_id': plan.id,
+                'target_week_start': self.TARGET_WEEK,
+                'class_types': [ClassType.CROSS],
+                'action': 'create_projection',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nenhuma aula do(s) tipo(s)')
+        self.assertEqual(SessionWorkout.objects.count(), 0)
+        self.assertEqual(ReplicationBatch.objects.count(), 0)
+
+    def test_preview_also_reports_missing_sessions_instead_of_empty_preview(self):
+        plan = self._confirmed_plan()
+
+        response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'plan_id': plan.id,
+                'target_week_start': self.TARGET_WEEK,
+                'class_types': [ClassType.CROSS],
+                'action': 'preview_projection',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nenhuma aula cadastrada na semana')
+        self.assertEqual(SessionWorkout.objects.count(), 0)
+
+    def test_creation_succeeds_when_session_of_selected_type_exists(self):
+        plan = self._confirmed_plan()
+        ClassSession.objects.create(
+            title='Cross 09h',
+            coach=self.coach,
+            scheduled_at=timezone.make_aware(datetime(2026, 4, 27, 9, 0)),
+            duration_minutes=60,
+            capacity=16,
+            class_type=ClassType.CROSS,
+        )
+
+        response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'plan_id': plan.id,
+                'target_week_start': self.TARGET_WEEK,
+                'class_types': [ClassType.CROSS],
+                'action': 'create_projection',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Nenhuma aula cadastrada na semana')
+        self.assertEqual(SessionWorkout.objects.count(), 1)
+        self.assertEqual(ReplicationBatch.objects.count(), 1)

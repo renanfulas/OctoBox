@@ -154,6 +154,9 @@ def build_projection_preview(*, weekly_plan, target_week_start, class_types):
     class_types = list(class_types or [ClassType.CROSS])
     filter_class_types = _expand_projection_class_types(class_types)
     range_start, range_end = _week_range(target_week_start)
+    sessions_in_week_total = ClassSession.objects.filter(
+        scheduled_at__gte=range_start, scheduled_at__lt=range_end
+    ).count()
     sessions = (
         ClassSession.objects.select_related('coach')
         .select_related('workout')
@@ -281,6 +284,7 @@ def build_projection_preview(*, weekly_plan, target_week_start, class_types):
         'entries': entries,
         'totals': totals,
         'type_summary': type_summary,
+        'sessions_in_week_total': sessions_in_week_total,
         'collision_policy': 'skip_existing_workout',
     }
 
