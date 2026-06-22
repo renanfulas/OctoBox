@@ -17,6 +17,7 @@ PONTOS CRITICOS:
 """
 
 import logging
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 
@@ -44,7 +45,13 @@ def notify_payment_confirmed(payment) -> dict:
 
 def _build_confirmation_copy(payment) -> tuple[str, str, str]:
     name = (getattr(payment.student, 'full_name', '') or 'Aluno').strip()
-    amount = f'{payment.amount:.2f}'.replace('.', ',')
+    # payment.amount e Decimal no runtime, mas coagimos defensivamente (em testes
+    # / fontes diversas pode chegar como str) antes de formatar.
+    try:
+        amount_value = Decimal(str(payment.amount))
+    except (InvalidOperation, TypeError):
+        amount_value = Decimal('0')
+    amount = f'{amount_value:.2f}'.replace('.', ',')
     subject = 'Pagamento confirmado — OctoBox'
     text_body = (
         f'Ola {name}, recebemos a confirmacao do seu pagamento de R$ {amount}. '
