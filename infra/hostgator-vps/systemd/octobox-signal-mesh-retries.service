@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=oneshot
 WorkingDirectory=/srv/octobox/app
 EnvironmentFile=-/srv/octobox/shared/octobox.env
-ExecStart=/srv/octobox/app/.venv/bin/python manage.py run_signal_mesh_retry_sweep --job-limit 25 --webhook-limit 25
+ExecStart=/srv/octobox/app/.venv/bin/python manage.py run_signal_mesh_retry_sweep --job-limit 25 --webhook-limit 25 --stripe-limit 25
 User=root
 
 [Install]
