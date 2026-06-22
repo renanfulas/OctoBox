@@ -91,4 +91,47 @@ def create_checkout_session(payment: Payment, request) -> str:
         raise RuntimeError(f'Erro de comunicacao com a adquirente: {str(exc)}')
 
 
-__all__ = ['create_checkout_session', 'generate_idempotency_key']
+def refund_payment(payment: Payment) -> str:
+    """
+    Inicia o estorno do pagamento na Stripe. NAO da baixa no banco — a baixa
+    oficial (status REFUNDED) vem do webhook charge.refunded (handler do router).
+
+    Idempotente por payment+version via idempotency_key (re-clique nao duplica o
+    estorno). Levanta:
+    - ValueError se o pagamento nao tem vinculo Stripe (estorno deve ser manual).
+    - RuntimeError em falha de comunicacao com a Stripe.
+    """
+    payment_intent_id = getattr(payment, 'stripe_payment_intent_id', '') or ''
+    charge_id = getattr(payment, 'stripe_charge_id', '') or ''
+    if not payment_intent_id and not charge_id:
+        raise ValueError('Pagamento sem vinculo Stripe (payment_intent/charge) para estornar.')
+
+    idem_key = generate_idempotency_key(payment, 'refund')
+    refund_kwargs = {'idempotency_key': idem_key}
+    if payment_intent_id:
+        refund_kwargs['payment_intent'] = payment_intent_id
+    else:
+        refund_kwargs['charge'] = charge_id
+
+    try:
+        refund = stripe.Refund.create(**refund_kwargs)
+        refund_id = getattr(refund, 'id', '') or ''
+        log_audit_event(
+            actor=None,
+            action='stripe_refund_initiated',
+            target=payment,
+            description='Estorno iniciado no gateway Stripe',
+            metadata={'refund_id': refund_id, 'idempotency_key': idem_key},
+        )
+        return refund_id
+    except stripe.StripeError as exc:
+        log_audit_event(
+            actor=None,
+            action='stripe_refund_failed',
+            target=payment,
+            description=f'Falha ao estornar na Stripe: {str(exc)}',
+        )
+        raise RuntimeError(f'Erro ao estornar na adquirente: {str(exc)}')
+
+
+__all__ = ['create_checkout_session', 'generate_idempotency_key', 'refund_payment']
