@@ -162,6 +162,14 @@ class Payment(TimeStampedModel):
     notes = models.TextField(blank=True)
     version = models.PositiveIntegerField(default=0, help_text="Controle de concorrência otimista")
 
+    # Linkage Stripe: vincula a cobranca ao charge real para auditoria,
+    # idempotencia por charge e estorno via API. Preenchido na reconciliacao do
+    # webhook. currency em ISO-4217 minusculo (padrao Stripe), default brl.
+    stripe_session_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_charge_id = models.CharField(max_length=255, blank=True)
+    currency = models.CharField(max_length=3, default='brl')
+
     class Meta:
         app_label = HISTORICAL_BOXCORE_APP_LABEL
         ordering = ['due_date', 'student__full_name']

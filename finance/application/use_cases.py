@@ -104,7 +104,18 @@ def execute_reconcile_payment_use_case(command: ReconcilePaymentCommand) -> Reco
         payment.status = PaymentStatus.PAID
         payment.paid_at = timezone.now()
         payment.version += 1
-        payment.save(update_fields=['status', 'paid_at', 'version', 'updated_at'])
+        # Linkage Stripe: vincula a baixa ao charge real (auditoria/idempotencia/
+        # estorno). Preserva valor existente quando o command nao trouxer o dado.
+        payment.stripe_session_id = command.stripe_session_id or payment.stripe_session_id
+        payment.stripe_payment_intent_id = (
+            command.stripe_payment_intent_id or payment.stripe_payment_intent_id
+        )
+        payment.currency = command.currency or payment.currency
+        payment.save(update_fields=[
+            'status', 'paid_at', 'version',
+            'stripe_session_id', 'stripe_payment_intent_id', 'currency',
+            'updated_at',
+        ])
 
         log_audit_event(
             actor=None,

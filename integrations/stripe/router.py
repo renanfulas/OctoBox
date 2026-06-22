@@ -92,18 +92,56 @@ def _handle_student_payment(event, session, metadata):
 
     box_schema = _resolve_box_schema(metadata.get('box_schema'), event)
 
+    payment_intent_id = session.get('payment_intent') or ''
+    session_id = session.get('id') or ''
+    currency = session.get('currency') or 'brl'
+
     command = ReconcilePaymentCommand(
         payment_id=int(payment_id),
         amount_cents=int(amount_cents),
         stripe_event_id=event.event_id,
         version_locked=int(version_locked),
+        stripe_session_id=session_id,
+        stripe_payment_intent_id=payment_intent_id,
+        currency=currency,
     )
+
+    # Mapa public payment_intent -> box: fonte de verdade do roteamento de tenant
+    # para eventos charge.* (refund/dispute) que NAO carregam nossa metadata.
+    # Gravado em public (o router roda em public), antes do reconcile.
+    _record_stripe_payment_ref(
+        payment_intent_id=payment_intent_id,
+        session_id=session_id,
+        box_schema=box_schema,
+        payment_id=int(payment_id),
+    )
+
     # O webhook chega no schema public (esta em PUBLIC_SCHEMA_PATHS), mas Payment
     # vive no schema do box (TENANT_APP). Sem este schema_context, o reconcile
     # faz SELECT em public e estoura 'relation does not exist'. O box e resolvido
     # pela metadata gravada no checkout (em contexto de tenant) e validado abaixo.
     with schema_context(box_schema):
         execute_reconcile_payment_use_case(command)
+
+
+def _record_stripe_payment_ref(*, payment_intent_id, session_id, box_schema, payment_id) -> None:
+    """Grava/atualiza o mapa public payment_intent -> box (StripePaymentRef).
+
+    Sem payment_intent nao da pra mapear (ex.: Sessions antigas ou metodos sem PI):
+    nesse caso o evento charge.* correspondente cairia no fallback de operador.
+    """
+    if not payment_intent_id:
+        return
+    from integrations.stripe.models import StripePaymentRef
+
+    StripePaymentRef.objects.update_or_create(
+        payment_intent_id=payment_intent_id,
+        defaults={
+            'session_id': session_id,
+            'box_schema': box_schema,
+            'payment_id': payment_id,
+        },
+    )
 
 
 def _resolve_box_schema(box_schema, event) -> str:
