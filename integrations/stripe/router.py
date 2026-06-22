@@ -121,7 +121,25 @@ def _handle_student_payment(event, session, metadata):
     # faz SELECT em public e estoura 'relation does not exist'. O box e resolvido
     # pela metadata gravada no checkout (em contexto de tenant) e validado abaixo.
     with schema_context(box_schema):
-        execute_reconcile_payment_use_case(command)
+        result = execute_reconcile_payment_use_case(command)
+        # Confirmacao ao aluno na baixa (T5): so na primeira reconciliacao, dentro
+        # do schema do box (dados do aluno). Nunca falha o webhook.
+        if getattr(result, 'reconciled', False):
+            _notify_student_payment_confirmed(result.payment_id, event)
+
+
+def _notify_student_payment_confirmed(payment_id, event) -> None:
+    from finance.models import Payment
+    from finance.payment_notifications import notify_payment_confirmed
+
+    try:
+        payment = Payment.objects.select_related('student').get(pk=payment_id)
+        notify_payment_confirmed(payment)
+    except Exception:
+        logger.exception(
+            '_notify_student_payment_confirmed: falha ao confirmar baixa. payment=%s event=%s',
+            payment_id, event.event_id,
+        )
 
 
 def _record_stripe_payment_ref(*, payment_intent_id, session_id, box_schema, payment_id) -> None:
