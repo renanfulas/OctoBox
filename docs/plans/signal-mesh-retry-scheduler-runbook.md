@@ -19,13 +19,15 @@ python manage.py run_signal_mesh_retry_sweep
 Ele aciona:
 
 1. retries vencidos de `AsyncJob`
-2. retries vencidos de `WebhookEvent`
+2. retries vencidos de `WebhookEvent` (WhatsApp)
+3. retries vencidos de `PaymentWebhookEvent` (Stripe) — drena baixas de pagamento que falharam de forma reprocessavel
 
 Arquivos centrais:
 
 1. [../../shared_support/management/commands/run_signal_mesh_retry_sweep.py](../../shared_support/management/commands/run_signal_mesh_retry_sweep.py)
 2. [../../jobs/reprocessing.py](../../jobs/reprocessing.py)
 3. [../../integrations/whatsapp/reprocessing.py](../../integrations/whatsapp/reprocessing.py)
+4. [../../integrations/stripe/reprocessing.py](../../integrations/stripe/reprocessing.py)
 
 ## Settings operacionais
 
@@ -33,6 +35,7 @@ Configuracoes default:
 
 1. [../../config/settings/base.py](../../config/settings/base.py) com `JOB_RETRY_SWEEP_LIMIT`
 2. [../../config/settings/base.py](../../config/settings/base.py) com `WEBHOOK_RETRY_SWEEP_LIMIT`
+3. [../../config/settings/base.py](../../config/settings/base.py) com `STRIPE_RETRY_SWEEP_LIMIT`
 
 ## Render
 
@@ -46,7 +49,7 @@ Exemplo recomendado de cron service para anexar ao stack atual:
   runtime: python
   schedule: "*/1 * * * *"
   buildCommand: pip install -r requirements.txt
-  startCommand: python manage.py run_signal_mesh_retry_sweep --job-limit 25 --webhook-limit 25
+  startCommand: python manage.py run_signal_mesh_retry_sweep --job-limit 25 --webhook-limit 25 --stripe-limit 25
   envVars:
     - key: DJANGO_ENV
       value: production
@@ -91,7 +94,7 @@ Programa:
 
 Argumentos:
 
-1. `manage.py run_signal_mesh_retry_sweep --job-limit 25 --webhook-limit 25`
+1. `manage.py run_signal_mesh_retry_sweep --job-limit 25 --webhook-limit 25 --stripe-limit 25`
 
 Pasta inicial:
 
