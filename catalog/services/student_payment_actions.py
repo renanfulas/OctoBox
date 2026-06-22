@@ -59,6 +59,18 @@ def handle_student_payment_action(*, actor, student, payment, action, payload=No
     amount = payload.get('amount')
     if amount is None:
         amount = payment.amount
+
+    # Estorno real: se a cobranca foi paga via Stripe, devolve o dinheiro no
+    # gateway ANTES da baixa local. A baixa oficial (REFUNDED) chega tambem pelo
+    # webhook charge.refunded (idempotente). Para pagamentos manuais (PIX/dinheiro)
+    # nada e chamado na Stripe — segue so a baixa local. Se a Stripe falhar, o
+    # RuntimeError sobe e a baixa local NAO acontece (evita "estornado" sem grana).
+    if action == 'refund-payment' and (
+        getattr(payment, 'stripe_payment_intent_id', '') or getattr(payment, 'stripe_charge_id', '')
+    ):
+        from integrations.stripe.services import refund_payment
+        refund_payment(payment)
+
     result = run_student_payment_action(
         actor_id=getattr(actor, 'id', None),
         student_id=student.id,

@@ -142,12 +142,23 @@ def handle_student_payment_action_request(*, request, student):
             payment = updated_payment
         success_message = 'Cobranca atualizada com sucesso.'
     else:
-        updated_payment = handle_student_payment_action(
-            actor=request.user,
-            student=student,
-            payment=payment,
-            action=action,
-        )
+        try:
+            updated_payment = handle_student_payment_action(
+                actor=request.user,
+                student=student,
+                payment=payment,
+                action=action,
+            )
+        except RuntimeError as exc:
+            # Falha do gateway no estorno real (Stripe). A baixa local nao ocorreu,
+            # entao o pagamento continua PAID — sem "estornado" sem dinheiro de volta.
+            return _payment_error_response(
+                request=request,
+                student=student,
+                expects_json=expects_json,
+                message=f'Nao foi possivel concluir o estorno no gateway de pagamento. {exc}',
+                status=502,
+            )
         if updated_payment is not None:
             payment = updated_payment
         action_success_messages = {
