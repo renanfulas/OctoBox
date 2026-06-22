@@ -41,6 +41,14 @@ class PaymentAdmin(AuditedAdminMixin, admin.ModelAdmin):
     search_fields = ('student__full_name', 'student__phone', 'reference')
     autocomplete_fields = ('student', 'enrollment')
     exclude = ('billing_group', 'installment_number', 'installment_total')
+    # Linkage Stripe: preenchido pelo webhook, nao editavel a mao. readonly (em vez
+    # de exclude) para o suporte conseguir cruzar o charge no painel da Stripe.
+    readonly_fields = (
+        'stripe_session_id',
+        'stripe_payment_intent_id',
+        'stripe_charge_id',
+        'currency',
+    )
 
 
 __all__ = ['EnrollmentAdmin', 'MembershipPlanAdmin', 'PaymentAdmin']
