@@ -13,11 +13,18 @@ PONTOS CRITICOS:
 - Se houver sobrecarga, deve retornar HTTP 429 sem consumir banco.
 """
 
+import hashlib
+
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from django.core.cache import cache
+from django.db import connection
 
 CHECKOUT_RATE_LIMIT_MAX = 10
 CHECKOUT_RATE_LIMIT_WINDOW_SECONDS = 3600
+
+# Janela curta do guard de duplo-submit do create-payment: pega o double-click /
+# re-POST sem bloquear cobrancas legitimamente repetidas minutos depois.
+CREATE_PAYMENT_IDEMPOTENCY_WINDOW_SECONDS = 15
 
 
 def checkout_rate_limit_exceeded(request) -> bool:
@@ -37,6 +44,39 @@ def checkout_rate_limit_exceeded(request) -> bool:
         return True
     cache.set(key, attempts + 1, timeout=CHECKOUT_RATE_LIMIT_WINDOW_SECONDS)
     return False
+
+
+def _create_payment_idempotency_key(request, student, cleaned_data) -> str:
+    schema = getattr(connection, 'schema_name', '') or ''
+    user_id = getattr(getattr(request, 'user', None), 'id', None)
+    raw = '|'.join(str(part) for part in (
+        schema,
+        getattr(student, 'id', None),
+        user_id,
+        cleaned_data.get('amount'),
+        cleaned_data.get('due_date'),
+    ))
+    digest = hashlib.sha256(raw.encode('utf-8')).hexdigest()[:32]
+    return f'octo_create_pay_idem_{digest}'
+
+
+def claim_create_payment_idempotency(request, student, cleaned_data) -> str | None:
+    """Reserva (atomicamente) a criacao de uma cobranca avulsa para evitar
+    duplo-submit. Retorna a chave reservada se for um submit fresco, ou None se
+    for uma duplicata na janela curta. cache.add e atomico: so o primeiro vence.
+
+    Em caso de falha posterior na criacao, chame release_create_payment_idempotency
+    para liberar a chave e permitir retry imediato.
+    """
+    key = _create_payment_idempotency_key(request, student, cleaned_data)
+    claimed = cache.add(key, True, timeout=CREATE_PAYMENT_IDEMPOTENCY_WINDOW_SECONDS)
+    return key if claimed else None
+
+
+def release_create_payment_idempotency(key: str) -> None:
+    """Libera a reserva (usar quando a criacao falhou, para permitir retry)."""
+    if key:
+        cache.delete(key)
 
 
 class AntiCardTestingUserThrottle(UserRateThrottle):
@@ -59,4 +99,6 @@ __all__ = [
     'AntiCardTestingUserThrottle',
     'AntiCardTestingAnonThrottle',
     'checkout_rate_limit_exceeded',
+    'claim_create_payment_idempotency',
+    'release_create_payment_idempotency',
 ]
