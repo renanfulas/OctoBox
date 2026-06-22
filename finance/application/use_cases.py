@@ -132,9 +132,61 @@ def execute_reconcile_payment_use_case(command: ReconcilePaymentCommand) -> Reco
     )
 
 
+class RefundPaymentResult:
+    __slots__ = ('payment_id', 'already_refunded', 'refunded')
+
+    def __init__(self, *, payment_id: int, already_refunded: bool, refunded: bool):
+        self.payment_id = payment_id
+        self.already_refunded = already_refunded
+        self.refunded = refunded
+
+
+def execute_refund_payment_from_stripe_use_case(
+    *, payment_id: int, stripe_charge_id: str, stripe_event_id: str
+) -> RefundPaymentResult:
+    """
+    Marca o Payment como REFUNDED a partir de um evento charge.refunded do Stripe.
+    Idempotente (ja REFUNDED -> no-op) e com lock pessimista. Chamado pelo router
+    JA dentro de schema_context(box) — o tenant e resolvido via StripePaymentRef.
+    """
+    from finance.models import Payment, PaymentStatus
+    from auditing import log_audit_event
+
+    with transaction.atomic():
+        try:
+            payment = Payment.objects.select_for_update().get(pk=payment_id)
+        except Payment.DoesNotExist:
+            logger.error(
+                'RefundPayment: payment %s nao encontrado. stripe_event=%s',
+                payment_id, stripe_event_id,
+            )
+            raise
+
+        if payment.status == PaymentStatus.REFUNDED:
+            return RefundPaymentResult(payment_id=payment.id, already_refunded=True, refunded=False)
+
+        payment.status = PaymentStatus.REFUNDED
+        payment.version += 1
+        if stripe_charge_id:
+            payment.stripe_charge_id = stripe_charge_id
+        payment.save(update_fields=['status', 'version', 'stripe_charge_id', 'updated_at'])
+
+        log_audit_event(
+            actor=None,
+            action='payment_refunded_via_stripe',
+            target=payment,
+            description=f'Pagamento estornado via evento Stripe {stripe_event_id}',
+            metadata={'stripe_event_id': stripe_event_id, 'stripe_charge_id': stripe_charge_id},
+        )
+
+    return RefundPaymentResult(payment_id=payment.id, already_refunded=False, refunded=True)
+
+
 __all__ = [
     'execute_create_membership_plan_use_case',
     'execute_reconcile_payment_use_case',
+    'execute_refund_payment_from_stripe_use_case',
     'execute_update_membership_plan_use_case',
     'ReconcilePaymentResult',
+    'RefundPaymentResult',
 ]

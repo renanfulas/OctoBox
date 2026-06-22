@@ -338,10 +338,98 @@ def _handle_invoice_payment_succeeded(event: PaymentWebhookEvent) -> None:
         logger.exception('_handle_invoice_payment_succeeded: falha ao registrar PlatformAuditEvent')
 
 
+def _lookup_payment_ref(payment_intent_id):
+    """Resolve o StripePaymentRef (mapa public payment_intent -> box) ou None."""
+    if not payment_intent_id:
+        return None
+    from integrations.stripe.models import StripePaymentRef
+
+    return StripePaymentRef.objects.filter(payment_intent_id=payment_intent_id).first()
+
+
+def _handle_charge_refunded(event: PaymentWebhookEvent) -> None:
+    """charge.refunded: reflete no OctoBox um estorno feito do lado da Stripe.
+
+    O evento traz um charge com payment_intent; resolvemos o box pelo
+    StripePaymentRef (gravado na reconciliacao do checkout) e marcamos o Payment
+    como REFUNDED no schema do box. Charge sem ref conhecido (ex.: checkout de
+    early adopter) e ignorado (no-op) para nao poluir o dead-letter.
+    """
+    from django_tenants.utils import schema_context
+    from finance.application.use_cases import execute_refund_payment_from_stripe_use_case
+
+    charge = event.payload.get('data', {}).get('object', {})
+    payment_intent_id = charge.get('payment_intent') or ''
+    ref = _lookup_payment_ref(payment_intent_id)
+    if ref is None:
+        logger.info(
+            '_handle_charge_refunded: sem StripePaymentRef para pi=%s. event=%s (ignorado).',
+            payment_intent_id, event.event_id,
+        )
+        return
+
+    with schema_context(ref.box_schema):
+        execute_refund_payment_from_stripe_use_case(
+            payment_id=ref.payment_id,
+            stripe_charge_id=charge.get('id') or '',
+            stripe_event_id=event.event_id,
+        )
+
+
+def _handle_charge_dispute(event: PaymentWebhookEvent) -> None:
+    """charge.dispute.created/closed: registra a disputa (chargeback) para
+    observabilidade. Resolve o box via StripePaymentRef e grava audit event no
+    schema do box. Nao muda o status do Payment — o desfecho financeiro chega
+    como charge.refunded (perdida) ou nada (ganha).
+    """
+    from django_tenants.utils import schema_context
+
+    dispute = event.payload.get('data', {}).get('object', {})
+    payment_intent_id = dispute.get('payment_intent') or ''
+    ref = _lookup_payment_ref(payment_intent_id)
+    if ref is None:
+        logger.info(
+            '_handle_charge_dispute: sem StripePaymentRef para pi=%s. event=%s',
+            payment_intent_id, event.event_id,
+        )
+        return
+
+    logger.warning(
+        '_handle_charge_dispute: DISPUTA box=%s payment=%s status=%s event=%s',
+        ref.box_schema, ref.payment_id, dispute.get('status', ''), event.event_id,
+    )
+    with schema_context(ref.box_schema):
+        _record_dispute_audit(ref.payment_id, dispute, event)
+
+
+def _record_dispute_audit(payment_id, dispute, event) -> None:
+    from auditing import log_audit_event
+    from finance.models import Payment
+
+    payment = Payment.objects.filter(pk=payment_id).first()
+    if payment is None:
+        return
+    log_audit_event(
+        actor=None,
+        action='payment_dispute_via_stripe',
+        target=payment,
+        description=f'Disputa/chargeback Stripe ({event.event_type}) status={dispute.get("status", "")}',
+        metadata={
+            'stripe_event_id': event.event_id,
+            'event_type': event.event_type,
+            'dispute_status': dispute.get('status', ''),
+            'dispute_reason': dispute.get('reason', ''),
+        },
+    )
+
+
 _HANDLERS = {
     'checkout.session.completed': _handle_checkout_session_completed,
     'invoice.payment_failed': _handle_invoice_payment_failed,       # Sprint 3: suspende Box
     'invoice.payment_succeeded': _handle_invoice_payment_succeeded, # Sprint 3: reativa Box
+    'charge.refunded': _handle_charge_refunded,                     # P2.2: estorno do lado Stripe
+    'charge.dispute.created': _handle_charge_dispute,               # P2.2: chargeback (observabilidade)
+    'charge.dispute.closed': _handle_charge_dispute,
 }
 
 __all__ = ['route_payment_webhook_event']
