@@ -134,4 +134,34 @@ def refund_payment(payment: Payment) -> str:
         raise RuntimeError(f'Erro ao estornar na adquirente: {str(exc)}')
 
 
-__all__ = ['create_checkout_session', 'generate_idempotency_key', 'refund_payment']
+def get_stripe_payment_state(payment_intent_id: str) -> dict | None:
+    """
+    Le o estado atual de um PaymentIntent na Stripe para a reconciliacao Stripe<->DB.
+
+    Retorna um dict normalizado {'pi_status', 'refunded', 'charge_id'} ou None se
+    o PI nao existe / a Stripe falhar (a reconciliacao apenas reporta, nunca muta
+    com base em leitura ausente). Isola o formato do SDK aqui — o caller so ve o dict.
+    """
+    if not payment_intent_id:
+        return None
+    try:
+        intent = stripe.PaymentIntent.retrieve(payment_intent_id, expand=['latest_charge'])
+    except stripe.StripeError:
+        return None
+
+    charge = getattr(intent, 'latest_charge', None)
+    refunded = bool(getattr(charge, 'refunded', False)) if charge else False
+    charge_id = getattr(charge, 'id', '') if charge else ''
+    return {
+        'pi_status': getattr(intent, 'status', '') or '',
+        'refunded': refunded,
+        'charge_id': charge_id or '',
+    }
+
+
+__all__ = [
+    'create_checkout_session',
+    'generate_idempotency_key',
+    'get_stripe_payment_state',
+    'refund_payment',
+]
