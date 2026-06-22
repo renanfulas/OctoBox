@@ -103,4 +103,31 @@ class PaymentWebhookEvent(TimeStampedModel):
         self.save(update_fields=['status', 'next_retry_at', 'last_error_message', 'updated_at'])
 
 
-__all__ = ['PaymentWebhookEvent', 'PaymentWebhookStatus']
+class StripePaymentRef(TimeStampedModel):
+    """
+    Mapa public payment_intent -> box, para eventos Stripe que chegam SEM a nossa
+    metadata (charge.refunded, charge.dispute.*). O webhook roda no schema public
+    e nao consegue, sozinho, descobrir em qual box vive o Payment a partir de um
+    charge/payment_intent. Este registro — gravado na reconciliacao do checkout,
+    quando ainda temos box_schema + payment_intent — e a fonte de verdade do
+    roteamento de tenant para esses eventos.
+
+    SHARED (public): app_label='integrations'. Nunca expor fora de integrations/.
+    """
+
+    payment_intent_id = models.CharField(max_length=255, unique=True, db_index=True)
+    session_id = models.CharField(max_length=255, blank=True, db_index=True)
+    charge_id = models.CharField(max_length=255, blank=True, db_index=True)
+    box_schema = models.CharField(max_length=63, db_index=True)
+    payment_id = models.IntegerField()
+
+    class Meta:
+        app_label = 'integrations'
+        db_table = 'stripe_payment_ref'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.payment_intent_id} -> {self.box_schema}#{self.payment_id}'
+
+
+__all__ = ['PaymentWebhookEvent', 'PaymentWebhookStatus', 'StripePaymentRef']

@@ -56,6 +56,10 @@ class ReconcilePaymentCommand:
     amount_cents: int
     stripe_event_id: str
     version_locked: int
+    # Linkage Stripe (opcional p/ retrocompat): vincula a baixa ao charge real.
+    stripe_session_id: str = ''
+    stripe_payment_intent_id: str = ''
+    currency: str = 'brl'
 
 
 __all__ = ['MembershipPlanCommand', 'ReconcilePaymentCommand', 'build_membership_plan_command']

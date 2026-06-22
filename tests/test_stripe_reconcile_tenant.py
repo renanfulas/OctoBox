@@ -27,24 +27,34 @@ from django.test import TestCase
 from django_tenants.utils import schema_context
 
 from finance.models import Payment, PaymentStatus
-from integrations.stripe.models import PaymentWebhookEvent, PaymentWebhookStatus
+from integrations.stripe.models import PaymentWebhookEvent, PaymentWebhookStatus, StripePaymentRef
 from integrations.stripe.router import route_payment_webhook_event
 from tests.factories import PaymentFactory
 
 TENANT_SCHEMA = 'box_test'
 
 
-def _checkout_completed_event(*, event_id, payment_id, amount_cents, box_schema, version=0):
+def _checkout_completed_event(
+    *, event_id, payment_id, amount_cents, box_schema, version=0,
+    payment_intent=None, currency=None, session_object_id=None,
+):
     metadata = {'payment_id': str(payment_id), 'version_locked': str(version)}
     if box_schema is not None:
         metadata['box_schema'] = box_schema
+    session_object = {'amount_total': amount_cents, 'metadata': metadata}
+    if payment_intent is not None:
+        session_object['payment_intent'] = payment_intent
+    if currency is not None:
+        session_object['currency'] = currency
+    if session_object_id is not None:
+        session_object['id'] = session_object_id
     return PaymentWebhookEvent.objects.create(
         event_id=event_id,
         event_type='checkout.session.completed',
         payload={
             'id': event_id,
             'type': 'checkout.session.completed',
-            'data': {'object': {'amount_total': amount_cents, 'metadata': metadata}},
+            'data': {'object': session_object},
         },
     )
 
@@ -75,6 +85,34 @@ class StripeReconcileTenantTests(TestCase):
             payment = Payment.objects.get(pk=payment_id)
             self.assertEqual(payment.status, PaymentStatus.PAID)
             self.assertIsNotNone(payment.paid_at)
+
+    def test_reconcile_records_stripe_linkage_and_payment_ref(self):
+        payment_id, amount_cents = self._make_tenant_payment()
+
+        event = _checkout_completed_event(
+            event_id='evt_linkage',
+            payment_id=payment_id,
+            amount_cents=amount_cents,
+            box_schema=TENANT_SCHEMA,
+            payment_intent='pi_test_123',
+            session_object_id='cs_test_123',
+            currency='brl',
+        )
+
+        route_payment_webhook_event(event)
+
+        # Linkage gravado no Payment (schema do box).
+        with schema_context(TENANT_SCHEMA):
+            payment = Payment.objects.get(pk=payment_id)
+            self.assertEqual(payment.status, PaymentStatus.PAID)
+            self.assertEqual(payment.stripe_payment_intent_id, 'pi_test_123')
+            self.assertEqual(payment.stripe_session_id, 'cs_test_123')
+            self.assertEqual(payment.currency, 'brl')
+
+        # Mapa public payment_intent -> box criado (resolve tenant em charge.*).
+        ref = StripePaymentRef.objects.get(payment_intent_id='pi_test_123')
+        self.assertEqual(ref.box_schema, TENANT_SCHEMA)
+        self.assertEqual(ref.payment_id, payment_id)
 
     def test_missing_box_schema_fails_non_retryable_and_leaves_payment_pending(self):
         payment_id, amount_cents = self._make_tenant_payment()
