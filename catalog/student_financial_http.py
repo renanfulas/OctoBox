@@ -27,6 +27,10 @@ from catalog.presentation.student_financial_fragments import render_student_fina
 from catalog.services.student_enrollment_actions import handle_student_enrollment_action
 from catalog.services.student_payment_actions import handle_student_payment_action, handle_student_payment_creation
 from finance.models import Enrollment, Payment
+from shared_support.security.fintech_throttles import (
+    claim_create_payment_idempotency,
+    release_create_payment_idempotency,
+)
 
 
 STUDENT_FINANCIAL_FRAGMENT = 'student-financial-overview'
@@ -255,6 +259,19 @@ def _handle_student_payment_creation_request(*, request, student, expects_json: 
             status=400,
         )
 
+    # Guard de duplo-submit (F8): reserva atomicamente esta criacao. Um re-POST /
+    # double-click identico na janela curta e rejeitado, evitando cobranca
+    # duplicada. A reserva e liberada se a criacao falhar (retry imediato).
+    idempotency_key = claim_create_payment_idempotency(request, student, form.cleaned_data)
+    if idempotency_key is None:
+        return _payment_error_response(
+            request=request,
+            student=student,
+            expects_json=expects_json,
+            message='Esta cobranca acabou de ser registrada. Aguarde alguns segundos antes de repetir.',
+            status=409,
+        )
+
     new_payment = handle_student_payment_creation(
         actor=request.user,
         student=student,
@@ -272,6 +289,8 @@ def _handle_student_payment_creation_request(*, request, student, expects_json: 
         messages.success(request, success_message)
         return redirect_to_student_financial_overview(student_id=student.id)
 
+    # Criacao falhou: libera a reserva para permitir retry imediato.
+    release_create_payment_idempotency(idempotency_key)
     return _payment_error_response(
         request=request,
         student=student,
