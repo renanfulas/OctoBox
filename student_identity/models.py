@@ -131,6 +131,16 @@ class StudentBoxMembershipStatus(models.TextChoices):
     EXPIRED = 'expired', 'Expirado'
 
 
+class StudentConsentDocumentKind(models.TextChoices):
+    WAIVER = 'waiver', 'Termo de responsabilidade'
+    PARQ = 'parq', 'PAR-Q'
+
+
+class StudentParqOutcome(models.TextChoices):
+    CLEAR = 'clear', 'Sem risco'
+    FLAGGED = 'flagged', 'Risco sinalizado'
+
+
 class StudentIdentity(TimeStampedModel):
     # Sprint 2: student_id e referencia fraca (IntegerField, sem FK constraint).
     # A FK OneToOneField(Student) foi removida — era cross-schema (public->tenant).
@@ -245,6 +255,18 @@ class StudentBoxMembership(TimeStampedModel):
     revoked_at = models.DateTimeField(null=True, blank=True)
     revoked_reason = models.CharField(max_length=255, blank=True)
 
+    # Gate de entrada (PAR-Q): ortogonal ao status, evita fan-out nos leitores de status.
+    # clearance_required = barrado na ENTRADA do app ate liberacao manual (atestado no box).
+    clearance_required = models.BooleanField(default=False, db_index=True)
+    cleared_at = models.DateTimeField(null=True, blank=True)
+    cleared_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cleared_student_box_memberships',
+    )
+
     class Meta:
         # Sprint 2: era ['student__full_name', 'box_root_slug'] — cross-schema JOIN removido
         ordering = ['box_root_slug']
@@ -278,8 +300,89 @@ class StudentBoxMembership(TimeStampedModel):
         self.revoked_at = timezone.now()
         self.revoked_reason = reason
 
+    def mark_cleared(self, *, by=None):
+        # set-once: segunda liberacao e no-op (idempotente). Mantemos
+        # clearance_required como fato historico; o gate de entrada usa cleared_at.
+        if self.cleared_at is not None:
+            return
+        self.cleared_at = timezone.now()
+        self.cleared_by = by
+
     def __str__(self):
         return f'{self.identity.student_name} [{self.box_root_slug}] ({self.status})'
+
+
+class StudentConsentDocument(TimeStampedModel):
+    """Versao publicada de um termo (waiver) ou triagem (PAR-Q).
+
+    Vive em SHARED_APPS (public): catalogo unico de versoes cross-box. O `body`
+    pode ser placeholder enquanto o texto juridico/clinico nao for final
+    (ver marcadores PLACEHOLDER_NAO_VINCULANTE / PENDENTE_REVISAO_CLINICA no seed).
+    So uma versao ativa por kind (constraint parcial).
+    """
+
+    kind = models.CharField(max_length=16, choices=StudentConsentDocumentKind.choices, db_index=True)
+    version = models.CharField(max_length=32)
+    effective_at = models.DateTimeField(default=timezone.now)
+    body = models.TextField(blank=True)
+    is_active = models.BooleanField(default=False, db_index=True)
+
+    class Meta:
+        ordering = ['kind', '-effective_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['kind', 'version'],
+                name='unique_consent_document_kind_version',
+            ),
+            models.UniqueConstraint(
+                fields=['kind'],
+                condition=models.Q(is_active=True),
+                name='unique_active_consent_document_per_kind',
+            ),
+        ]
+
+    def __str__(self):
+        suffix = ' (ativo)' if self.is_active else ''
+        return f'{self.kind} v{self.version}{suffix}'
+
+
+class StudentConsent(TimeStampedModel):
+    """Aceite de um termo/triagem por uma identidade de aluno em um box.
+
+    Vive em public (junto de StudentIdentity) para o gate de entrada funcionar
+    nos 3 corredores, inclusive o que nao passa pelo wizard. Guarda apenas o
+    RESULTADO do PAR-Q (clear/flagged) — nunca quais respostas. Dado de saude
+    detalhado nao entra no schema publico (ver plano do gate de entrada).
+    """
+
+    identity = models.ForeignKey(StudentIdentity, on_delete=models.CASCADE, related_name='consents')
+    box = models.ForeignKey(
+        'control.Box',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_consents',
+        db_index=True,
+    )
+    box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)
+    document_kind = models.CharField(max_length=16, choices=StudentConsentDocumentKind.choices, db_index=True)
+    version = models.CharField(max_length=32)
+    accepted_at = models.DateTimeField(default=timezone.now)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=400, blank=True)
+    parq_outcome = models.CharField(max_length=16, choices=StudentParqOutcome.choices, blank=True)
+
+    class Meta:
+        ordering = ['-accepted_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['identity', 'box_root_slug', 'document_kind', 'version'],
+                name='unique_student_consent_identity_box_kind_version',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.identity.student_name} {self.document_kind} v{self.version}'
 
 
 class StudentAppInvitation(TimeStampedModel):
