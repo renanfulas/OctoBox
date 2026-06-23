@@ -42,6 +42,7 @@ from student_app.models import (
     StudentProfileChangeRequest,
     StudentProfileChangeRequestStatus,
 )
+from student_app.student_payments_presentation import build_student_payment_rows, count_open_payments
 from student_app.workflows import AttendanceNotAvailableError, cancel_student_attendance, confirm_student_attendance
 from .base import StudentIdentityRequiredMixin
 from .wod_context import build_student_wod_context
@@ -466,15 +467,20 @@ class StudentSettingsView(StudentIdentityRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        student = self.request.student_identity.student
         context['pending_profile_request'] = (
             StudentProfileChangeRequest.objects
             .filter(
-                student=self.request.student_identity.student,
+                student=student,
                 identity=self.request.student_identity,
                 status=StudentProfileChangeRequestStatus.PENDING,
             )
             .first()
         )
+        # Self-service (read-only): o aluno ve as proprias cobrancas no Perfil.
+        payment_rows = build_student_payment_rows(student)
+        context['student_payments'] = payment_rows
+        context['student_payments_open_count'] = count_open_payments(payment_rows)
         context['student_shell_nav'] = 'settings'
         context['student_shell_title'] = 'Perfil'
         return self._attach_student_shell_context(context)

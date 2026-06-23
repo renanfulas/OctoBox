@@ -98,6 +98,28 @@
         </div>
     </details>
 
+    <details class="student-set-row">
+        <summary class="student-set-row__summary">
+            <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg></span>
+            <span class="student-set-row__label">Pagamentos</span>
+            <span class="student-set-row__end">{% if student_payments_open_count %}{{ student_payments_open_count }} em aberto{% else %}Em dia{% endif %} <svg class="student-set-row__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+        </summary>
+        <div class="student-set-row__body">
+            {% if student_payments %}
+            <dl class="student-profile-readonly">
+                {% for payment in student_payments %}
+                <div>
+                    <dt>{{ payment.due_date|date:"d/m/Y" }}</dt>
+                    <dd>R$ {{ payment.amount|floatformat:2 }} — {{ payment.status_label }}</dd>
+                </div>
+                {% endfor %}
+            </dl>
+            {% else %}
+            <dl class="student-profile-readonly"><div><dt>Cobranças</dt><dd>Nenhuma cobrança registrada.</dd></div></dl>
+            {% endif %}
+        </div>
+    </details>
+
     <button type="button" class="student-set-row student-set-row--button student-theme-toggle theme-toggle" data-ui="student-theme-toggle" aria-label="Alternar tema">
         <span class="student-set-row__lead" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A8.5 8.5 0 1 1 11.21 3 6.6 6.6 0 0 0 21 12.79z"/></svg></span>
         <span class="student-set-row__label">Tema</span>
