@@ -14,6 +14,7 @@ from shared_support.form_inputs import (
 )
 from shared_support.phone_numbers import normalize_phone_number
 from student_identity.models import StudentIdentity, StudentIdentityStatus
+from student_app.consent_content import PARQ_QUESTIONS
 from student_app.models import StudentExerciseMax
 from students.models import Student
 
@@ -233,3 +234,36 @@ class StudentProfileEditForm(forms.ModelForm):
 
     def clean_email(self):
         return (self.cleaned_data.get('email') or '').strip().lower()
+
+
+class StudentConsentForm(forms.Form):
+    """Gate de entrada: aceite do termo + triagem PAR-Q (Onda B).
+
+    Botao sempre habilitado; validacao no submit (waiver obrigatorio). PAR-Q em
+    toggles Sim/Nao com default 'nao' (estado seguro). `is_flagged` = qualquer 'sim'.
+    """
+
+    waiver_accepted = forms.BooleanField(
+        required=True,
+        label='Li e aceito o termo de responsabilidade.',
+        error_messages={'required': 'Marque que voce leu e aceita o termo para continuar.'},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for key, label in PARQ_QUESTIONS:
+            self.fields[key] = forms.ChoiceField(
+                label=label,
+                choices=(('nao', 'Não'), ('sim', 'Sim')),
+                initial='nao',
+                widget=forms.RadioSelect,
+                required=True,
+            )
+
+    @property
+    def parq_fields(self):
+        return [self[key] for key, _ in PARQ_QUESTIONS]
+
+    @property
+    def is_flagged(self) -> bool:
+        return any(self.cleaned_data.get(key) == 'sim' for key, _ in PARQ_QUESTIONS)

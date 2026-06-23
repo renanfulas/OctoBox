@@ -155,6 +155,14 @@ class StudentIdentityRequiredMixin:
             if runtime_memberships and len(suspended_memberships) == len(runtime_memberships):
                 return redirect('student-app-suspended-financial')
             return redirect('student-app-no-active-box')
+        if (
+            getattr(settings, 'STUDENT_CONSENT_GATE_ENABLED', False)
+            and active_membership is not None
+            and request.path != reverse('student-app-consent')
+        ):
+            from student_app.workflows.consent_workflows import consent_is_pending
+            if consent_is_pending(identity=identity, box_root_slug=active_membership.box_root_slug):
+                return redirect('student-app-consent')
         request.student_identity = identity
         request.student_box_memberships = memberships
         request.student_active_box_root_slug = active_membership.box_root_slug if active_membership is not None else ''
