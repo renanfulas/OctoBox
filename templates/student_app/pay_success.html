@@ -1,0 +1,14 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Pagamento | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">Pagamento</p>
+    <h1>Pagamento recebido.</h1>
+    <p class="student-copy">
+        Estamos confirmando com a operadora. Em instantes sua cobranca aparece como paga aqui no app. Se nao atualizar em alguns minutos, recarregue o Perfil.
+    </p>
+    <a class="student-primary-action" href="{% url 'student-app-settings' %}">Voltar ao Perfil</a>
+</section>
+{% endblock %}

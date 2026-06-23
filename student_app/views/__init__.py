@@ -18,6 +18,11 @@ from .membership_views import (
     StudentSwitchBoxView,
 )
 from .onboarding_views import StudentOnboardingWizardView
+from .payment_views import (
+    StudentPayCancelView,
+    StudentPayInvoiceView,
+    StudentPaySuccessView,
+)
 from .public_workout_views import (
     PublicWorkoutDetailView,
     PublicWorkoutManifestView,
@@ -59,6 +64,9 @@ __all__ = [
     'StudentMembershipPendingView',
     'StudentNoActiveBoxView',
     'StudentOfflineView',
+    'StudentPayCancelView',
+    'StudentPayInvoiceView',
+    'StudentPaySuccessView',
     'StudentRequestFreezeView',
     'StudentOnboardingWizardView',
     'StudentPushSubscribeView',
