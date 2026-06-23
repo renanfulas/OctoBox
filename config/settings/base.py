@@ -540,6 +540,10 @@ STUDENT_INVITE_ACCEPT_IP_ALERT_THRESHOLD = env_int('STUDENT_INVITE_ACCEPT_IP_ALE
 STUDENT_INVITE_ACCEPT_BOX_ALERT_WINDOW_SECONDS = env_int('STUDENT_INVITE_ACCEPT_BOX_ALERT_WINDOW_SECONDS', 600)
 STUDENT_INVITE_ACCEPT_BOX_ALERT_THRESHOLD = env_int('STUDENT_INVITE_ACCEPT_BOX_ALERT_THRESHOLD', 12)
 
+# Gate de entrada com PAR-Q + termo (Onda A). Default OFF: o gate so liga em staging
+# apos validacao. Envolve os redirects de consentimento e de clearance no dispatch.
+STUDENT_CONSENT_GATE_ENABLED = env_bool('STUDENT_CONSENT_GATE_ENABLED', False)
+
 # Forçar DEBUG para loggers de segurança (modo depuração solicitado).
 EFFECTIVE_SECURITY_LOG_LEVEL = 'DEBUG' if is_local_runtime_mode() else SECURITY_LOG_LEVEL
 DATA_UPLOAD_MAX_MEMORY_SIZE = env_int('DATA_UPLOAD_MAX_MEMORY_SIZE', 15728640)
