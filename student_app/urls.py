@@ -3,6 +3,7 @@ from django.urls import include, path
 from .views import (
     StudentAddRmView,
     StudentCancelAttendanceView,
+    StudentClearanceView,
     StudentConfirmAttendanceView,
     StudentConsentView,
     StudentGradeView,
@@ -32,6 +33,7 @@ urlpatterns = [
     path('', StudentHomeView.as_view(), name='student-app-home'),
     path('onboarding/', StudentOnboardingWizardView.as_view(), name='student-app-onboarding'),
     path('liberacao/', StudentConsentView.as_view(), name='student-app-consent'),
+    path('aguardando-liberacao/', StudentClearanceView.as_view(), name='student-app-clearance'),
     path('grade/', StudentGradeView.as_view(), name='student-app-grade'),
     path('aguardando-aprovacao/', StudentMembershipPendingView.as_view(), name='student-app-membership-pending'),
     path('suspenso-financeiro/', StudentSuspendedFinancialView.as_view(), name='student-app-suspended-financial'),

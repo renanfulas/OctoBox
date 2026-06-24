@@ -1,0 +1,22 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Liberação pendente | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">Quase lá</p>
+    <h1>Falta a liberação do seu box para você treinar.</h1>
+    <p class="student-copy">
+        Pela sua triagem de saúde, por segurança pedimos um atestado médico antes do primeiro treino.
+        Leve o atestado ao seu box{% if clearance_box %} <strong>{{ clearance_box.display_name }}</strong>{% endif %}
+        e a equipe libera seu acesso na hora.
+    </p>
+    <ul class="student-settings-list">
+        <li><strong>Box:</strong> {% if clearance_box %}{{ clearance_box.display_name }}{% else %}{{ student_active_box_root_slug }}{% endif %}</li>
+    </ul>
+    <p class="student-form-note">
+        Assim que o box confirmar o atestado, seu acesso abre automaticamente.
+        Se você já entregou e esta tela continua, fale com a equipe.
+    </p>
+</section>
+{% endblock %}
