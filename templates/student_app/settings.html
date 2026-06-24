@@ -110,7 +110,15 @@
                 {% for payment in student_payments %}
                 <div>
                     <dt>{{ payment.due_date|date:"d/m/Y" }}</dt>
-                    <dd>R$ {{ payment.amount|floatformat:2 }} — {{ payment.status_label }}</dd>
+                    <dd>
+                        R$ {{ payment.amount|floatformat:2 }} — {{ payment.status_label }}
+                        {% if payment.is_open %}
+                        <form method="post" action="{% url 'student-app-pay-invoice' payment.id %}" style="margin-top:8px;">
+                            {% csrf_token %}
+                            <button type="submit" class="student-primary-action">Pagar</button>
+                        </form>
+                        {% endif %}
+                    </dd>
                 </div>
                 {% endfor %}
             </dl>

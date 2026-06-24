@@ -27,7 +27,9 @@ def generate_idempotency_key(payment: Payment, action: str) -> str:
     )
 
 
-def create_checkout_session(payment: Payment, request) -> str:
+def create_checkout_session(
+    payment: Payment, request, *, success_url: str | None = None, cancel_url: str | None = None
+) -> str:
     if payment.status == 'paid':
         raise ValueError('Pagamento ja consta como PAGO no banco de dados.')
 
@@ -48,8 +50,17 @@ def create_checkout_session(payment: Payment, request) -> str:
     if payment.enrollment and payment.enrollment.plan:
         product_name = f'Plano {payment.enrollment.plan.name} - {payment.installment_number}/{payment.installment_total}'
 
-    success_url = request.build_absolute_uri(reverse('checkout_success', args=[payment.id])) + '?session_id={CHECKOUT_SESSION_ID}'
-    cancel_url = request.build_absolute_uri(reverse('checkout_cancel', args=[payment.id]))
+    # URLs de retorno parametrizaveis: o staff usa as rotas do catalogo (default),
+    # o app do aluno passa as proprias rotas do /aluno/. Default preserva o
+    # comportamento atual.
+    if success_url is None:
+        success_url = request.build_absolute_uri(reverse('checkout_success', args=[payment.id])) + '?session_id={CHECKOUT_SESSION_ID}'
+    if cancel_url is None:
+        cancel_url = request.build_absolute_uri(reverse('checkout_cancel', args=[payment.id]))
+
+    # O aluno nao e um request.user autenticado do Django (auth por cookie proprio):
+    # nesse caso o ator do audit e None. Staff continua com o proprio user.
+    actor = request.user if getattr(getattr(request, 'user', None), 'is_authenticated', False) else None
 
     try:
         session = stripe.checkout.Session.create(
@@ -74,7 +85,7 @@ def create_checkout_session(payment: Payment, request) -> str:
         )
 
         log_audit_event(
-            actor=request.user,
+            actor=actor,
             action='stripe_checkout_initiated',
             target=payment,
             description='Redirecionando para portal seguro da Stripe',
@@ -83,7 +94,7 @@ def create_checkout_session(payment: Payment, request) -> str:
         return session.url
     except stripe.StripeError as exc:
         log_audit_event(
-            actor=request.user,
+            actor=actor,
             action='stripe_checkout_failed',
             target=payment,
             description=f'Falha na malha da Stripe: {str(exc)}',
