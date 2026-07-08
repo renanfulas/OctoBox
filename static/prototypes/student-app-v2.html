@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OctoBox Aluno — Protótipo v2 (estudo de redesign)</title>
+<!--
+ARQUIVO: protótipo navegável do redesign mobile do app do aluno.
+- Artefato de estudo (2026-06-11), não é código de produção.
+- Não importa CSS do app; é autocontido de propósito para iterar rápido.
+- Telas: Início, Agenda, WOD, RMs, Perfil. Tema dark/light.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Roboto+Mono:wght@500;700&display=swap">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Manrope',system-ui,sans-serif;background:#05080f;display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 10px;min-height:100dvh}
+.tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tools button{font-family:inherit;font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px;border:1px solid rgba(128,151,190,.35);background:rgba(15,23,37,.9);color:#cad7ec;cursor:pointer}
+.phone{width:392px;max-width:100%;border-radius:46px;padding:10px;background:#05080f;border:1px solid rgba(128,151,190,.35)}
+.phone[data-t="dark"]{--bg:linear-gradient(180deg,#080b12 0%,#0b1120 44%,#121b2d 100%);--sf:rgba(15,23,37,.92);--sf2:rgba(20,30,48,.92);--ln:rgba(128,151,190,.20);--tx:#eff4ff;--tx2:#cad7ec;--mu:#91a4c4;--cy:#00e5ff;--cyd:#67e8f9;--bl:#4a90e2;--mg:#ff5fd8;--gr:#29d398;--am:#f7b84d;--rd:#ff5f7e;--ctaA:#00e5ff;--ctaB:#4a90e2;--ctaT:#06121f;--tint:rgba(0,229,255,.10);--tintb:rgba(0,229,255,.30)}
+.phone[data-t="light"]{--bg:linear-gradient(180deg,#f8fafe 0%,#f2f6fb 50%,#edf2f8 100%);--sf:#ffffff;--sf2:#f4f7fc;--ln:rgba(99,122,159,.22);--tx:#091a2f;--tx2:#29415f;--mu:#60738f;--cy:#0590ad;--cyd:#067a93;--bl:#3374e0;--mg:#c2188f;--gr:#0e9f6e;--am:#b97509;--rd:#d33b5c;--ctaA:#68d9ee;--ctaB:#5f8ff7;--ctaT:#091a2f;--tint:rgba(8,145,178,.08);--tintb:rgba(8,145,178,.28)}
+.bodyp{border-radius:38px;overflow:hidden;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;min-height:780px}
+.sbar{display:flex;justify-content:space-between;align-items:center;padding:14px 24px 4px;font-size:13px;font-weight:700;color:var(--tx2)}
+.scr{display:none;padding:12px 16px 16px;flex:1}
+.scr.on{display:block}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:20px;padding:16px;margin-bottom:12px}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--cyd)}
+.cta{display:block;width:100%;text-align:center;padding:14px;border-radius:14px;border:none;background:linear-gradient(90deg,var(--ctaA),var(--ctaB));color:var(--ctaT);font-family:inherit;font-size:15px;font-weight:800;cursor:pointer}
+.ghost{display:block;width:100%;text-align:center;padding:11px;border-radius:14px;border:1px solid var(--ln);background:transparent;color:var(--tx2);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--ln)}
+.row:last-child{border-bottom:none}
+.timebox{min-width:52px;text-align:center;font-weight:800;font-size:15px;color:var(--tx)}
+.timebox small{display:block;font-size:11px;font-weight:600;color:var(--mu)}
+.pill{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pill-g{background:rgba(41,211,152,.14);color:var(--gr);border:1px solid rgba(41,211,152,.35)}
+.pill-c{background:var(--tint);color:var(--cyd);border:1px solid var(--tintb)}
+.pill-a{background:rgba(247,184,77,.14);color:var(--am);border:1px solid rgba(247,184,77,.4)}
+.pill-m{background:rgba(255,95,216,.10);color:var(--mg);border:1px solid rgba(255,95,216,.35)}
+.bar{height:4px;border-radius:99px;background:var(--sf2);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--bl)}
+.bnav{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:auto 12px 12px;padding:6px;border-radius:22px;background:var(--sf);border:1px solid var(--ln);position:sticky;bottom:10px;backdrop-filter:blur(18px)}
+.bnav button{display:grid;place-items:center;gap:2px;padding:8px 2px;border-radius:16px;border:1px solid transparent;background:transparent;color:var(--mu);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.bnav button.on{color:var(--tx);background:var(--tint);border-color:var(--tintb)}
+.bnav i{font-size:19px}
+.sec{font-size:13px;font-weight:800;letter-spacing:.02em;color:var(--mu);margin:18px 4px 6px;text-transform:uppercase}
+.day{flex:1;display:grid;place-items:center;gap:2px;padding:9px 0;border-radius:14px;border:1px solid var(--ln);background:var(--sf);color:var(--mu);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+.day b{font-size:13px;color:var(--tx)}
+.day.on{border-color:var(--tintb);background:var(--tint);color:var(--cyd)}
+.mono{font-family:'Roboto Mono',monospace;font-weight:500}
+.setrow{display:flex;align-items:center;gap:14px;padding:14px 6px;border-bottom:1px solid var(--ln);font-size:14px;font-weight:700;color:var(--tx)}
+.setrow:last-child{border-bottom:none}
+.setrow i.lead{font-size:19px;color:var(--cyd);width:24px;text-align:center}
+.setrow .end{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--mu);font-size:12px;font-weight:600}
+.blk{margin-bottom:12px}
+.mv{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 2px;border-bottom:1px solid var(--ln);font-size:14px}
+.mv:last-child{border-bottom:none}
+.mv b{font-weight:700;color:var(--tx)}
+.mv span{color:var(--mu);font-size:12.5px;text-align:right}
+.spark{display:flex;align-items:flex-end;gap:3px;height:26px}
+.spark i{width:7px;border-radius:3px;background:var(--sf2)}
+.spark i.hi{background:var(--gr)}
+@media (max-width:480px){
+body{padding:0;background:#05080f}
+.tools{position:fixed;top:8px;right:8px;z-index:50}
+.tools button{font-size:11px;padding:5px 10px;opacity:.85}
+.tools button:not(#theme){display:none}
+.phone{width:100%;border:none;border-radius:0;padding:0}
+.bodyp{border-radius:0;min-height:100dvh}
+}
+</style>
+</head>
+<body>
+<div class="tools">
+<button data-go="home">Início</button><button data-go="agenda">Agenda</button><button data-go="wod">WOD</button><button data-go="rm">RMs</button><button data-go="perfil">Perfil</button><button id="theme"><i class="ti ti-sun" aria-hidden="true"></i> Tema</button>
+</div>
+<div class="phone" data-t="dark" id="phone">
+<div class="bodyp">
+<div class="sbar"><span>19:41</span><span style="display:flex;gap:6px"><i class="ti ti-antenna-bars-5" aria-hidden="true"></i><i class="ti ti-wifi" aria-hidden="true"></i><i class="ti ti-battery-3" aria-hidden="true"></i></span></div>
+
+<div class="scr on" data-scr="home">
+<div style="display:flex;align-items:center;gap:12px;padding:6px 2px 14px">
+<div style="width:42px;height:42px;border-radius:50%;background:var(--tint);border:1px solid var(--tintb);display:grid;place-items:center;font-weight:800;color:var(--cyd)">R</div>
+<div style="min-width:0"><div style="font-size:16px;font-weight:800">Boa tarde, Renan</div><div style="font-size:12px;color:var(--mu)">CrossBox Test</div></div>
+<div style="margin-left:auto;position:relative"><i class="ti ti-bell" style="font-size:21px;color:var(--tx2)" aria-hidden="true"></i><span style="position:absolute;top:-1px;right:-2px;width:8px;height:8px;border-radius:50%;background:var(--mg)"></span></div>
+</div>
+<div class="card" style="background:linear-gradient(150deg,var(--tint),transparent 55%),var(--sf);border-color:var(--tintb)">
+<span class="eyebrow"><i class="ti ti-clock" aria-hidden="true"></i> Próxima aula · hoje</span>
+<div style="display:flex;align-items:baseline;gap:10px;margin-top:8px"><span style="font-size:52px;font-weight:800;letter-spacing:-.04em;line-height:1">19:00</span><span style="font-size:14px;font-weight:800;color:var(--cyd)">em 1h 20min</span></div>
+<div style="margin-top:6px;font-size:15px;font-weight:700">CrossFit 18h <span style="color:var(--mu);font-weight:600">· Coach Carla</span></div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--mu)"><i class="ti ti-users" aria-hidden="true"></i> 14 de 16 vagas<div class="bar" style="flex:1;margin:0"><i style="width:87%"></i></div></div>
+<div style="margin-top:14px"><button class="cta">Confirmar presença</button></div>
+<div style="margin-top:8px"><button class="ghost" data-go="wod">Ver o WOD de hoje</button></div>
+</div>
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center"><span class="eyebrow" style="color:var(--mg)"><i class="ti ti-flame" aria-hidden="true"></i> Sua semana</span><span style="font-size:12px;color:var(--mu);font-weight:700">3 de 4 treinos</span></div>
+<div style="display:flex;gap:6px;margin-top:12px">
+<div class="day on" style="cursor:default"><b><i class="ti ti-check" aria-hidden="true"></i></b>Seg</div>
+<div class="day on" style="cursor:default"><b><i class="ti ti-check" aria-hidden="true"></i></b>Ter</div>
+<div class="day" style="cursor:default"><b>–</b>Qua</div>
+<div class="day on" style="cursor:default"><b><i class="ti ti-check" aria-hidden="true"></i></b>Qui</div>
+<div class="day" style="cursor:default;border-style:dashed"><b>19h</b>Hoje</div>
+<div class="day" style="cursor:default"><b>·</b>Sáb</div>
+<div class="day" style="cursor:default"><b>·</b>Dom</div>
+</div>
+</div>
+<div class="card" data-go="wod" style="display:flex;align-items:center;gap:12px;cursor:pointer">
+<div style="width:40px;height:40px;border-radius:12px;background:var(--tint);display:grid;place-items:center;color:var(--cyd)"><i class="ti ti-barbell" style="font-size:20px" aria-hidden="true"></i></div>
+<div style="min-width:0;flex:1"><div style="font-size:14px;font-weight:800">WOD de amanhã · Snatch Day</div><div style="font-size:12px;color:var(--mu)">Técnica acima de carga</div></div>
+<i class="ti ti-chevron-right" style="color:var(--mu)" aria-hidden="true"></i>
+</div>
+<div class="sec">Hoje na grade</div>
+<div class="card" style="padding:6px 14px">
+<div class="row">
+<div class="timebox">19:00<small>60min</small></div>
+<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800">CrossFit 18h</div><div style="font-size:12px;color:var(--mu)">Coach Carla</div></div>
+<span class="pill pill-g"><i class="ti ti-check" aria-hidden="true"></i> Reservado</span>
+</div>
+<div class="row">
+<div class="timebox">20:00<small>60min</small></div>
+<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800">CrossFit 19h</div><div style="font-size:12px;color:var(--mu)">Coach Carla</div></div>
+<span class="pill pill-c">8 vagas</span>
+</div>
+</div>
+</div>
+
+<div class="scr" data-scr="agenda">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px 12px">
+<div style="font-size:20px;font-weight:800">Agenda</div>
+<button class="ghost" style="width:auto;padding:7px 14px;font-size:12px"><i class="ti ti-calendar" aria-hidden="true"></i> Ver mês</button>
+</div>
+<div style="display:flex;gap:6px;margin-bottom:6px">
+<button class="day on"><b>11</b>Hoje</button><button class="day"><b>12</b>Sex</button><button class="day"><b>13</b>Sáb</button><button class="day"><b>14</b>Dom</button><button class="day"><b>15</b>Seg</button><button class="day"><b>16</b>Ter</button>
+</div>
+<div style="font-size:11.5px;color:var(--mu);margin:8px 4px 12px;display:flex;gap:6px;align-items:center"><i class="ti ti-info-circle" aria-hidden="true"></i> Cancele até 2h antes sem perder crédito</div>
+<div class="card">
+<div style="display:flex;gap:12px">
+<div class="timebox">19:00<small>60min</small></div>
+<div style="flex:1;min-width:0">
+<div style="font-size:15px;font-weight:800">CrossFit 18h</div>
+<div style="font-size:12px;color:var(--mu)">Coach Carla · 14/16</div>
+<div class="bar"><i style="width:87%"></i></div>
+</div>
+</div>
+<div style="display:flex;gap:8px;margin-top:12px">
+<span class="pill pill-g" style="align-self:center"><i class="ti ti-check" aria-hidden="true"></i> Reservado</span>
+<button class="ghost" style="flex:1;padding:9px;font-size:13px">Cancelar reserva</button>
+</div>
+</div>
+<div class="card">
+<div style="display:flex;gap:12px">
+<div class="timebox">20:00<small>60min</small></div>
+<div style="flex:1;min-width:0">
+<div style="font-size:15px;font-weight:800">CrossFit 19h</div>
+<div style="font-size:12px;color:var(--mu)">Coach Carla · 8/16</div>
+<div class="bar"><i style="width:50%"></i></div>
+</div>
+</div>
+<div style="margin-top:12px"><button class="cta" style="padding:11px;font-size:14px">Reservar vaga</button></div>
+</div>
+<div class="card" style="opacity:.85">
+<div style="display:flex;gap:12px">
+<div class="timebox">21:00<small>60min</small></div>
+<div style="flex:1;min-width:0">
+<div style="font-size:15px;font-weight:800">Open Gym</div>
+<div style="font-size:12px;color:var(--mu)">Coach Bruno · 25/25</div>
+<div class="bar"><i style="width:100%;background:var(--am)"></i></div>
+</div>
+<span class="pill pill-a" style="align-self:flex-start">Lotada</span>
+</div>
+<div style="margin-top:12px"><button class="ghost" style="padding:9px;font-size:13px">Entrar na lista de espera</button></div>
+</div>
+<div class="sec">Amanhã · sexta 12</div>
+<div class="card" style="padding:6px 14px">
+<div class="row">
+<div class="timebox">18:00<small>60min</small></div>
+<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800">Halterofilia</div><div style="font-size:12px;color:var(--mu)">Coach Carla · WOD: Snatch Day</div></div>
+<span class="pill pill-c">5 vagas</span>
+</div>
+</div>
+</div>
+
+<div class="scr" data-scr="wod">
+<div style="display:flex;gap:6px;align-items:center;padding:6px 2px 10px;flex-wrap:wrap">
+<span class="pill pill-c">Hoje · 11/06 · 19:00</span><span class="pill pill-c" style="background:transparent">CrossFit 18h</span><span class="pill pill-m">Smartplan</span>
+</div>
+<div style="font-size:30px;font-weight:800;letter-spacing:-.03em;padding:0 2px">Engine Builder</div>
+<div style="font-size:13px;color:var(--mu);padding:4px 2px 14px">Coach Carla · "Ritmo constante. Escala o peso se perder a técnica."</div>
+<div class="card" style="border-color:var(--tintb);background:linear-gradient(140deg,var(--tint),transparent 60%),var(--sf)">
+<span class="eyebrow"><i class="ti ti-target-arrow" aria-hidden="true"></i> Carga pra você</span>
+<div style="display:flex;align-items:baseline;gap:10px;margin-top:8px">
+<span class="mono" style="font-size:34px;letter-spacing:-.02em">107,5 kg</span>
+<span style="font-size:13px;font-weight:800;color:var(--cyd)">75% do seu RM</span>
+</div>
+<div style="font-size:12px;color:var(--mu);margin-top:4px">Back Squat · seu RM atual: 142,5 kg</div>
+</div>
+<div class="card blk">
+<span class="eyebrow" style="color:var(--gr)">Aquecimento · 2 rounds</span>
+<div style="margin-top:6px">
+<div class="mv"><b>Remo</b><span class="mono">250 m · leve</span></div>
+<div class="mv"><b>Air Squat</b><span class="mono">2 × 15</span></div>
+</div>
+</div>
+<div class="card blk">
+<span class="eyebrow" style="color:var(--bl)">Força</span>
+<div style="margin-top:6px">
+<div class="mv"><b>Back Squat</b><span class="mono" style="color:var(--cyd);font-weight:700">5 × 5 · 107,5 kg</span></div>
+</div>
+</div>
+<div class="card blk">
+<span class="eyebrow" style="color:var(--rd)">Metcon · AMRAP 12 min</span>
+<div style="margin-top:6px">
+<div class="mv"><b>Wall Ball</b><span class="mono">15 · 9 kg</span></div>
+<div class="mv"><b>Box Jump</b><span class="mono">12</span></div>
+<div class="mv"><b>Burpee</b><span class="mono">9</span></div>
+</div>
+</div>
+<button class="cta">Registrar resultado</button>
+</div>
+
+<div class="scr" data-scr="rm">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px 12px">
+<div style="font-size:20px;font-weight:800">Seus recordes</div>
+<button class="ghost" style="width:auto;padding:7px 14px;font-size:12px"><i class="ti ti-plus" aria-hidden="true"></i> Novo RM</button>
+</div>
+<div class="card" style="border-color:var(--tintb);background:linear-gradient(150deg,var(--tint),transparent 55%),var(--sf)">
+<span class="eyebrow"><i class="ti ti-trophy" aria-hidden="true"></i> Maior carga</span>
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:8px">
+<div>
+<div style="font-size:15px;font-weight:800">Deadlift</div>
+<div style="display:flex;align-items:baseline;gap:8px"><span class="mono" style="font-size:38px;letter-spacing:-.02em">180 kg</span><span class="pill pill-g"><i class="ti ti-arrow-up-right" aria-hidden="true"></i> +5 kg</span></div>
+<div style="font-size:12px;color:var(--mu)">atualizado há 2 semanas</div>
+</div>
+<div class="spark" aria-hidden="true"><i style="height:8px"></i><i style="height:12px"></i><i style="height:13px"></i><i style="height:17px"></i><i style="height:20px"></i><i class="hi" style="height:26px"></i></div>
+</div>
+</div>
+<div class="card" style="padding:6px 14px">
+<div class="row">
+<div style="flex:1"><div style="font-size:14px;font-weight:800">Back Squat</div><div style="font-size:12px;color:var(--mu)">+5 kg em 11/06</div></div>
+<span class="mono" style="font-size:17px">142,5 kg</span><i class="ti ti-chevron-right" style="color:var(--mu)" aria-hidden="true"></i>
+</div>
+<div class="row">
+<div style="flex:1"><div style="font-size:14px;font-weight:800">Bench Press</div><div style="font-size:12px;color:var(--mu)">+5 kg em 11/06</div></div>
+<span class="mono" style="font-size:17px">105 kg</span><i class="ti ti-chevron-right" style="color:var(--mu)" aria-hidden="true"></i>
+</div>
+<div class="row">
+<div style="flex:1"><div style="font-size:14px;font-weight:800">Clean &amp; Jerk</div><div style="font-size:12px;color:var(--mu)">+5 kg em 11/06</div></div>
+<span class="mono" style="font-size:17px">95 kg</span><i class="ti ti-chevron-right" style="color:var(--mu)" aria-hidden="true"></i>
+</div>
+<div class="row">
+<div style="flex:1"><div style="font-size:14px;font-weight:800">Snatch</div><div style="font-size:12px;color:var(--mu)">+2,5 kg em 11/06</div></div>
+<span class="mono" style="font-size:17px">72,5 kg</span><i class="ti ti-chevron-right" style="color:var(--mu)" aria-hidden="true"></i>
+</div>
+</div>
+<div class="card">
+<span class="eyebrow"><i class="ti ti-calculator" aria-hidden="true"></i> Calculadora de carga</span>
+<div style="display:flex;gap:6px;margin-top:10px">
+<button class="day on" data-pc="60"><b>60%</b></button><button class="day" data-pc="70"><b>70%</b></button><button class="day" data-pc="80"><b>80%</b></button><button class="day" data-pc="90"><b>90%</b></button>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px">
+<span style="font-size:13px;color:var(--mu)">Back Squat · <span id="pc">60</span>%</span>
+<span class="mono" style="font-size:24px" id="load">85,5 kg</span>
+</div>
+</div>
+</div>
+
+<div class="scr" data-scr="perfil">
+<div style="display:grid;place-items:center;gap:6px;padding:18px 0 16px">
+<div style="width:72px;height:72px;border-radius:50%;background:var(--tint);border:1px solid var(--tintb);display:grid;place-items:center;font-size:26px;font-weight:800;color:var(--cyd)">R</div>
+<div style="font-size:18px;font-weight:800">Renan Demo</div>
+<div style="font-size:12px;color:var(--mu)">aluno.demo@example.com</div>
+<span class="pill pill-c">Box atual: CrossBox Test</span>
+</div>
+<div class="card" style="padding:4px 14px">
+<div class="setrow"><i class="ti ti-arrows-exchange lead" aria-hidden="true"></i>Trocar de box<span class="end">test <i class="ti ti-chevron-right" aria-hidden="true"></i></span></div>
+<div class="setrow"><i class="ti ti-user lead" aria-hidden="true"></i>Dados pessoais<span class="end"><i class="ti ti-chevron-right" aria-hidden="true"></i></span></div>
+<div class="setrow"><i class="ti ti-bell lead" aria-hidden="true"></i>Notificações<span class="end"><span class="pill pill-a">bloqueadas</span></span></div>
+<div class="setrow" id="themerow" style="cursor:pointer"><i class="ti ti-moon lead" aria-hidden="true"></i>Tema escuro<span class="end" id="themelabel">ativado</span></div>
+</div>
+<div class="card" style="padding:4px 14px">
+<div class="setrow"><i class="ti ti-download lead" aria-hidden="true"></i>Instalar o app<span class="end"><span class="pill pill-c">PWA</span></span></div>
+<div class="setrow"><i class="ti ti-help-circle lead" aria-hidden="true"></i>Fale com a recepção<span class="end"><i class="ti ti-chevron-right" aria-hidden="true"></i></span></div>
+</div>
+<div class="card" style="padding:4px 14px">
+<div class="setrow" style="color:var(--rd)"><i class="ti ti-logout lead" style="color:var(--rd)" aria-hidden="true"></i>Sair da conta</div>
+</div>
+</div>
+
+<nav class="bnav" aria-label="Navegação do protótipo">
+<button class="on" data-go="home"><i class="ti ti-home" aria-hidden="true"></i>Início</button>
+<button data-go="agenda"><i class="ti ti-calendar" aria-hidden="true"></i>Agenda</button>
+<button data-go="wod"><i class="ti ti-barbell" aria-hidden="true"></i>WOD</button>
+<button data-go="rm"><i class="ti ti-trophy" aria-hidden="true"></i>RMs</button>
+<button data-go="perfil"><i class="ti ti-user" aria-hidden="true"></i>Perfil</button>
+</nav>
+</div>
+</div>
+<script>
+(function(){
+var root=document.getElementById('phone');
+function go(name){
+root.querySelectorAll('.scr').forEach(function(s){s.classList.toggle('on',s.dataset.scr===name)});
+root.querySelectorAll('.bnav button').forEach(function(b){b.classList.toggle('on',b.dataset.go===name)});
+window.scrollTo(0,0);
+}
+document.querySelectorAll('[data-go]').forEach(function(el){el.addEventListener('click',function(e){e.stopPropagation();go(el.dataset.go)})});
+function setTheme(t){
+root.dataset.t=t;
+var lbl=document.getElementById('themelabel');
+if(lbl)lbl.textContent=(t==='dark'?'ativado':'desativado');
+}
+document.getElementById('theme').addEventListener('click',function(){setTheme(root.dataset.t==='dark'?'light':'dark')});
+var tr=document.getElementById('themerow');
+if(tr)tr.addEventListener('click',function(){setTheme(root.dataset.t==='dark'?'light':'dark')});
+var rm=142.5;
+document.querySelectorAll('[data-pc]').forEach(function(b){b.addEventListener('click',function(){
+document.querySelectorAll('[data-pc]').forEach(function(x){x.classList.remove('on')});
+b.classList.add('on');
+var pc=parseInt(b.dataset.pc,10);
+document.getElementById('pc').textContent=pc;
+var load=Math.round(rm*pc/100*2)/2;
+document.getElementById('load').textContent=load.toLocaleString('pt-BR')+' kg';
+})});
+})();
+</script>
+</body>
+</html>
