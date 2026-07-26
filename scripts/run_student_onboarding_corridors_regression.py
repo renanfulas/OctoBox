@@ -20,6 +20,11 @@ TESTS = [
     "student_identity/tests.py::StudentIdentityFlowTests::test_registered_student_invite_redirects_directly_to_app_with_funnel_events",
     "student_identity/tests.py::StudentIdentityFlowTests::test_open_box_invite_redirects_student_to_membership_pending",
     "student_app/tests.py::StudentAppExperienceTests::test_student_profile_edit_creates_pending_request_without_direct_write",
+    # Gate de entrada PAR-Q + termo (Onda B/C) — docs/plans/student-parq-waiver-entry-gate-corda.md
+    "student_app/test_consent_gate.py::StudentConsentGateTests::test_home_redirects_to_consent_when_missing",
+    "student_app/test_consent_gate.py::StudentConsentGateTests::test_flagged_outcome_blocks_entry_until_cleared",
+    "student_app/test_consent_gate.py::StudentConsentGateTests::test_no_active_box_route_is_never_gated",
+    "student_app/test_consent_gate.py::StudentConsentGateDisabledTests::test_home_is_not_gated_when_flag_off",
 ]
 
 

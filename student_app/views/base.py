@@ -18,6 +18,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 
 from finance.models import Enrollment, EnrollmentStatus
+from student_identity.consent import has_current_consent
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
 from student_identity.infrastructure.session import (
     attach_student_session_cookie,
@@ -158,6 +159,22 @@ class StudentIdentityRequiredMixin:
         request.student_identity = identity
         request.student_box_memberships = memberships
         request.student_active_box_root_slug = active_membership.box_root_slug if active_membership is not None else ''
+        request.student_active_membership = active_membership
+        # Gate de entrada (PAR-Q + termo, Onda B). So roda para membership ACTIVE
+        # resolvido: telas-parede com StudentAnyMembershipMixin (active_membership
+        # pode ser None) ou StudentSessionIdentityMixin (PENDING_APPROVAL) ficam de
+        # fora por definicao — ver docs/plans/student-parq-waiver-entry-gate-corda.md
+        # secao 6.1. As proprias rotas do gate sao excluidas para nao formar loop.
+        if (
+            getattr(settings, 'STUDENT_CONSENT_GATE_ENABLED', False)
+            and active_membership is not None
+            and active_membership.status == StudentBoxMembershipStatus.ACTIVE
+            and request.path not in (reverse('student-app-consent'), reverse('student-app-clearance'))
+        ):
+            if not has_current_consent(identity=identity, box_root_slug=active_membership.box_root_slug):
+                return redirect('student-app-consent')
+            if active_membership.clearance_required and not active_membership.cleared_at:
+                return redirect('student-app-clearance')
         response = super().dispatch(request, *args, **kwargs)
         attach_student_session_cookie(
             response,

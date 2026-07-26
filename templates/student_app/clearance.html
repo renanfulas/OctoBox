@@ -1,0 +1,22 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Liberacao pendente | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">Quase la</p>
+    <h1>Recebemos suas respostas.</h1>
+    <p class="student-copy">
+        Por seguranca, alguma resposta do PAR-Q indicou risco. Antes de liberar seu acesso ao
+        treino, precisamos que voce entregue um atestado medico no seu box — e a equipe libera
+        sua entrada em um clique.
+    </p>
+    <ul class="student-settings-list">
+        <li><strong>Box:</strong> {{ clearance_membership.box_root_slug }}</li>
+        <li><strong>O que fazer agora:</strong> leve um atestado medico liberando a pratica de atividade fisica na recepcao do seu box.</li>
+    </ul>
+    <p class="student-form-note">
+        Assim que a equipe confirmar o atestado, este aviso some sozinho e voce entra normalmente.
+    </p>
+</section>
+{% endblock %}

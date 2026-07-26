@@ -174,7 +174,7 @@ Cada onda e um PR pequeno, verde no gate Postgres (`--create-db --migrations`).
 
 Sem UI nesta onda.
 
-### Onda B - Tela de consentimento + gate (a)
+### Onda B - Tela de consentimento + gate (a) — IMPLEMENTADO
 
 1. tela unica de consentimento pos-auth (reuso de `student-card`, `student-form-stack`, `student-form-note`, `student-button`)
 2. PAR-Q em toggles Sim/Nao curtos; termo em caixa rolavel com altura limitada
@@ -184,13 +184,41 @@ Sem UI nesta onda.
 6. PAR-Q funcional; waiver exibido mas SEM gravar aceite vinculante
 7. decisao `clear|flagged` em workflow/use-case, nunca em template/view
 
-### Onda C - Parede de clearance + gate (b)
+Decisoes tomadas na implementacao que o texto acima nao especificava (ver secao 6.1):
+
+1. **fonte unica das perguntas**: `student_identity/parq_questions.py` — o mesmo
+   `PARQ_V1_QUESTIONS` alimenta o `body` seedado (`seed_consent_documents.py`) E os
+   toggles do form (`StudentConsentForm`), indexado por versao
+   (`PARQ_QUESTIONS_BY_VERSION`). Evita form e documento divergirem.
+2. **journey para o funil quando nao ha invite**: `membership.created_from_invite`
+   costuma ser `None` mesmo para `mass_box_invite`/`imported_lead_invite` (o
+   proprio `OnboardingWorkflow` salva a identidade com `invitation=None`). Default
+   escolhido: `StudentOnboardingJourney.REGISTERED_STUDENT_INVITE` quando nao ha
+   invite associado. Os eventos ficam corretos para o corredor sem wizard; para os
+   outros dois, o `journey` do evento de consentimento pode nao bater com o
+   `journey` do `wizard_completed` original — aceitavel para este uso (funil de
+   consentimento, nao o funil de aquisicao), mas registrado aqui para nao
+   surpreender quem for analisar os dados depois.
+3. **fail-open se faltar documento ATIVO**: se `seed_consent_documents` nao rodou
+   no ambiente, `has_current_consent()` retorna `True` (deixa entrar) em vez de
+   travar todo mundo por uma falha operacional de seed. Ver `student_identity/consent.py`.
+4. **`parq_version`/`waiver_version` submetidos sao validados contra documentos
+   REAIS** antes de aceitar qualquer resposta (existência na tabela + perguntas
+   conhecidas no registry) — fecha a brecha de um `parq_version` forjado que
+   produziria outcome "clear" por ausencia de perguntas.
+5. **gate so roda com `active_membership.status == ACTIVE`** (nao so
+   `is not None`) — ver guarda detalhada na secao 6.1.
+
+### Onda C - Parede de clearance + gate (b) — IMPLEMENTADO
 
 1. parede `student-app-clearance` no molde de `membership_pending.html`
    - copy acolhedora: "Recebemos suas respostas. Por seguranca, entregue um atestado medico no seu box para liberar o acesso." + nome/contato do box
 2. no flagged: `complete_*_onboarding` (ou o submit do gate) seta `membership.clearance_required = True`
 3. gate (b) em `dispatch()`: se `clearance_required and not cleared_at` -> `redirect('student-app-clearance')`
 4. aluno flagged nao acessa nenhuma rota do app
+
+Implementado junto com a Onda B (mesmo commit/gate em `dispatch()`) por serem
+tightly coupled — o proximo passo agora e a Onda D (liberacao por staff).
 
 ### Onda D - Liberacao por staff + fila operacional
 
@@ -222,7 +250,7 @@ Idempotencia onde ha marcador de sessao.
 Em `dispatch()`, apos resolver `active_membership`, nesta ordem (ambos atras da feature flag):
 
 1. se falta consentimento da versao vigente -> `redirect('student-app-consent')`
-2. se `active_membership.clearance_required and not cleared_at` -> `redirect('student-app-clearance')`
+2. se `active_membership is not None and active_membership.clearance_required and not active_membership.cleared_at` -> `redirect('student-app-clearance')`
 
 Convergencia:
 
@@ -230,6 +258,29 @@ Convergencia:
 2. `registered_student_invite` (sem wizard): autentica -> gate (1) direto -> idem
 
 `clearance_required` e por membership (por box), nao por identidade.
+
+### 6.1 Guarda contra `active_membership is None` (achado na revisao do plano)
+
+`StudentIdentityRequiredMixin.dispatch()` tem variantes com `requires_active_membership = False`
+(`StudentAnyMembershipMixin`, usada por `StudentNoActiveBoxView`, `StudentSuspendedFinancialView`,
+`StudentInviteEntryView` e as views de push subscribe/unsubscribe em `student_app/views/`). Nessas,
+`active_membership` chega `None` ao gate. Sem guarda, o gate (2) quebra com `AttributeError`.
+
+Decisao original (revisao do plano) e o que a implementacao efetivamente usou:
+
+1. gate (1) e (2) so podem rodar quando `active_membership` existe. A implementacao foi MAIS
+   precisa do que "checar `requires_active_membership`": a condicao real em
+   `StudentIdentityRequiredMixin.dispatch()` e
+   `active_membership is not None and active_membership.status == StudentBoxMembershipStatus.ACTIVE`.
+   Isso cobre de graca um caso que a formulacao original nao pegava: `StudentSessionIdentityMixin`
+   (usada por `StudentMembershipPendingView`) tem `requires_active_membership = True` mas aceita
+   `PENDING_APPROVAL`; sem o check de `.status == ACTIVE`, um aluno com aprovacao pendente cairia
+   no gate de consentimento ANTES de ver a parede de aprovacao pendente — sequencia errada. Com o
+   check de status, essas rotas ficam de fora automaticamente, sem precisar de excecao por mixin.
+2. as duas rotas do proprio gate (`student-app-consent`, `student-app-clearance`) sao excluidas
+   explicitamente por `request.path` para nao formar loop.
+3. risco que isso evita: loop de redirect, crash em rota que nunca deveria ver este gate, e um
+   aluno pendente de aprovacao sendo questionado sobre saude antes de saber se foi aceito no box.
 
 ## 7. Aceite / testes (gate Postgres)
 
@@ -258,6 +309,7 @@ Convergencia:
 4. liberacao dupla / corrida -> `cleared_at` set-once; segunda e no-op
 5. `registered_student_invite` cai direto no gate sem passar pelo wizard -> testar isolado (ponto que mais quebra)
 6. dado de saude -> so `clear|flagged` no publico; nunca quais respostas
+7. rota com `StudentAnyMembershipMixin` (`active_membership is None`, ex.: `no-active-box`, `suspenso-financeiro`) -> NAO passa pelo gate (1)/(2); testar que essas telas continuam acessiveis sem loop de redirect
 
 ## 10. Guardrails
 
@@ -267,16 +319,32 @@ Convergencia:
 4. dado de saude detalhado nunca no schema publico
 5. gate sempre atras de feature flag ate validacao em staging
 6. se qualquer ancora de codigo divergir, PARAR e reportar o delta antes de prosseguir
+7. gate (1)/(2) nunca roda em mixin com `requires_active_membership = False`; e gate (2) sempre
+   guarda `active_membership is not None` antes de ler seus campos (ver secao 6.1)
 
 ## 11. Ancoras de codigo (confirmar antes de editar)
 
 1. gate de entrada: `student_app/views/base.py` (`StudentIdentityRequiredMixin.dispatch`)
+1.1. variante sem membership garantido: `student_app/views/base.py` (`StudentAnyMembershipMixin`,
+   `requires_active_membership = False`) — gate (1)/(2) nao roda aqui (ver secao 6.1)
 2. telas-parede: `student_app/views/membership_views.py` + `templates/student_app/membership_pending.html`
 3. wizard: `templates/student_app/onboarding_wizard.html` + `student_app/forms.py`
 4. conclusao dos corredores: `student_app/workflows/onboarding_workflows.py`
 5. funil: `student_identity/funnel_events.py`
 6. status de membership: `student_identity/models.py` (`StudentBoxMembershipStatus`)
 7. regressao (gate CI): `scripts/run_student_onboarding_corridors_regression.py`
+8. **(Onda B/C, implementado)** perguntas canonicas + versoes: `student_identity/parq_questions.py`
+9. **(Onda B/C, implementado)** leitura de consentimento: `student_identity/consent.py`
+   (`has_current_consent`, usado por `dispatch()` E pela `StudentConsentView` — nao duplicar a regra)
+10. **(Onda B/C, implementado)** form: `student_app/forms.py` (`StudentConsentForm`)
+11. **(Onda B/C, implementado)** views: `student_app/views/consent_views.py`
+    (`StudentConsentView`, `StudentClearanceView`)
+12. **(Onda B/C, implementado)** templates: `templates/student_app/consent.html`,
+    `templates/student_app/clearance.html`
+13. **(Onda B/C, implementado)** testes: `student_app/test_consent_gate.py`
+14. **(pendente, Onda D)** `scripts/run_student_onboarding_corridors_regression.py` ainda NAO foi
+    estendido com os cenarios de consentimento/clearance (secao 7, item 9) — fazer na Onda D junto
+    com a acao de staff "Liberar acesso"
 
 ## 12. Formula curta
 

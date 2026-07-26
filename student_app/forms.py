@@ -13,7 +13,7 @@ from shared_support.form_inputs import (
     apply_text_input_attrs,
 )
 from shared_support.phone_numbers import normalize_phone_number
-from student_identity.models import StudentIdentity, StudentIdentityStatus
+from student_identity.models import StudentIdentity, StudentIdentityStatus, StudentParqOutcome
 from student_app.models import StudentExerciseMax
 from students.models import Student
 
@@ -233,3 +233,44 @@ class StudentProfileEditForm(forms.ModelForm):
 
     def clean_email(self):
         return (self.cleaned_data.get('email') or '').strip().lower()
+
+
+PARQ_ANSWER_CHOICES = (
+    ('no', 'Nao'),
+    ('yes', 'Sim'),
+)
+
+
+class StudentConsentForm(forms.Form):
+    """PAR-Q em toggles Sim/Nao curtos (gate de entrada, Onda B).
+
+    As perguntas nao sao fixas no form: vem de `questions` (lista imutavel de
+    textos, resolvida pela view a partir da versao ATIVA do documento PAR-Q em
+    student_identity.parq_questions). Isso evita que form e documento divirjam.
+    `parq_version`/`waiver_version` carregam a versao LIDA na tela — a
+    submissao grava essa versao, nunca a que estiver vigente no momento do
+    submit (ver edge case de troca de versao no meio do preenchimento).
+    """
+
+    parq_version = forms.CharField(widget=forms.HiddenInput)
+    waiver_version = forms.CharField(widget=forms.HiddenInput)
+
+    def __init__(self, *args, questions=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.question_field_names = []
+        for index, question_text in enumerate(questions, start=1):
+            field_name = f'parq_{index}'
+            self.fields[field_name] = forms.ChoiceField(
+                label=question_text,
+                choices=PARQ_ANSWER_CHOICES,
+                widget=forms.RadioSelect,
+                required=True,
+                error_messages={'required': 'Responda esta pergunta para continuar.'},
+            )
+            self.question_field_names.append(field_name)
+
+    def compute_parq_outcome(self):
+        any_yes = any(
+            self.cleaned_data.get(field_name) == 'yes' for field_name in self.question_field_names
+        )
+        return StudentParqOutcome.FLAGGED if any_yes else StudentParqOutcome.CLEAR
