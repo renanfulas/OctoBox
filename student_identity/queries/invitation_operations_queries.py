@@ -77,6 +77,25 @@ class StudentInvitationOperationsQueries:
             )
         ]
 
+    def build_pending_clearance_memberships(self) -> list[dict]:
+        return [
+            {
+                'id': membership.id,
+                'student_name': membership.identity.student_name,  # Sprint 2: via identity (denorm)
+                'box_root_slug': membership.box_root_slug,
+                'updated_at': membership.updated_at,
+            }
+            for membership in (
+                StudentBoxMembership.objects.select_related('identity')  # Sprint 2: sem 'student'
+                .filter(
+                    box_root_slug=self.box_root_slug,
+                    clearance_required=True,
+                    cleared_at__isnull=True,
+                )
+                .order_by('updated_at')
+            )
+        ]
+
     def build_managed_memberships(self) -> list[dict]:
         managed_memberships = []
         for membership in (

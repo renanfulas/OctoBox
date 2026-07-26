@@ -218,13 +218,48 @@ Decisoes tomadas na implementacao que o texto acima nao especificava (ver secao 
 4. aluno flagged nao acessa nenhuma rota do app
 
 Implementado junto com a Onda B (mesmo commit/gate em `dispatch()`) por serem
-tightly coupled — o proximo passo agora e a Onda D (liberacao por staff).
+tightly coupled.
 
-### Onda D - Liberacao por staff + fila operacional
+### Onda D - Liberacao por staff + fila operacional — IMPLEMENTADO
 
 1. acao de staff "Liberar acesso" seta `cleared_at`/`cleared_by` (set-once, idempotente)
 2. fila operacional filtrando `clearance_required=True, cleared_at IS NULL` (reuso da superficie de operacoes)
 3. evento `clearance_granted`
+
+Ownership seguiu `docs/plans/student-identity-staff-views-refactor-corda.md`: capability
+de membership-lifecycle, nao role-based — reusa o MESMO corredor/tela
+(`StudentInvitationOperationsView` + `operations_invites.html`), nao um app/URL novo.
+
+Decisoes tomadas na implementacao que o texto acima nao especificava:
+
+1. **papel exigido = mesmo de `approve-membership`** (`membership_approval_roles`:
+   Recepcao/Manager/Owner/DEV), nao o de `membership_lifecycle_roles` (que exclui
+   Recepcao). Raciocinio: liberar acesso apos conferir um atestado fisico e a
+   mesma natureza de decisao operacional que aprovar uma matricula na recepcao —
+   nao e uma decisao financeira/de governanca como suspender ou revogar.
+2. **um unico evento cobre auditoria de staff E funil**: em vez de duas escritas
+   (`AuditEvent` generico `student_membership.cleared` + evento de funil
+   `clearance_granted`), a implementacao chama SO
+   `record_student_onboarding_event(actor=request.user, event='clearance_granted', ...)`.
+   A action gravada fica `student_onboarding.<journey>.clearance_granted` (nao
+   `student_membership.cleared`, diferente da convencao dos irmãos
+   approve/suspend/revoke) — mantem toda a familia PAR-Q/clearance
+   (`parq_flagged`, `clearance_pending`, `clearance_granted`) sob o mesmo
+   namespace, facil de consultar junta.
+3. **fila operacional usa `updated_at` como proxy de "desde quando"**, nao um
+   campo dedicado `clearance_required_at` (que nao existe no schema da Onda A).
+   O template evita reivindicar precisao ("Ultima atividade em", nao "aguardando
+   desde") porque `updated_at` pode ser tocado por outras escritas no membership.
+   Se isso incomodar operacionalmente, um campo dedicado e um follow-up de schema.
+4. **`pending_clearance_memberships` tambem aparece em `managed_memberships`**
+   (a tabela de governanca completa nao exclui por `clearance_required`) — isso
+   replica o padrao ja existente de `pending_memberships` (PENDING_APPROVAL)
+   tambem aparecer duplicado na tabela de baixo; nao e um bug novo, e a
+   convencao ja estabelecida deste corredor (fila de acao no topo + tabela de
+   leitura completa embaixo).
+5. `scripts/run_student_onboarding_corridors_regression.py` foi estendido com
+   uma amostra representativa dos testes de Onda B/C/D (nao a suite inteira,
+   seguindo o proprio proposito do script).
 
 ### Onda E - Waiver vinculante (BLOQUEADA por juridico)
 
@@ -342,9 +377,23 @@ Decisao original (revisao do plano) e o que a implementacao efetivamente usou:
 12. **(Onda B/C, implementado)** templates: `templates/student_app/consent.html`,
     `templates/student_app/clearance.html`
 13. **(Onda B/C, implementado)** testes: `student_app/test_consent_gate.py`
-14. **(pendente, Onda D)** `scripts/run_student_onboarding_corridors_regression.py` ainda NAO foi
-    estendido com os cenarios de consentimento/clearance (secao 7, item 9) — fazer na Onda D junto
-    com a acao de staff "Liberar acesso"
+14. **(Onda D, implementado)** `scripts/run_student_onboarding_corridors_regression.py` estendido
+    com amostra representativa de Onda B/C/D
+15. **(Onda D, implementado)** acao de staff: `student_identity/staff_membership_actions.py`
+    (`_handle_clear_membership`), registrada em `student_identity/staff_action_dispatcher.py`
+16. **(Onda D, implementado)** permissao: `student_identity/staff_policies.py`
+    (`can_clear_membership`, mesma faixa de `membership_approval_roles`)
+17. **(Onda D, implementado)** fila: `student_identity/queries/invitation_operations_queries.py`
+    (`build_pending_clearance_memberships`) + `student_identity/staff_operations_context.py` +
+    `student_identity/presentation.py` (wiring do payload)
+18. **(Onda D, implementado)** UI: `templates/student_identity/operations_invites.html`
+    (secao "Aguardando atestado") — reusa CSS de `static/css/student_identity/operations_invites.css`
+19. **(Onda D, implementado)** testes de staff: `student_identity/tests.py`
+    (`test_reception_can_clear_flagged_membership`, `test_clear_membership_is_idempotent_on_second_click`,
+    `test_coach_cannot_clear_membership`)
+
+Com a Onda D fechada, so resta a **Onda E (bloqueada por juridico)**: substituir o waiver
+placeholder pelo texto vinculante real e ligar o evento `waiver_accepted`.
 
 ## 12. Formula curta
 

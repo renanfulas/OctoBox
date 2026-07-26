@@ -13,6 +13,7 @@ def get_student_invitation_post_action_handler(view, action: str):
         'send-email': view._handle_send_email,
         'open-whatsapp': view._handle_open_whatsapp,
         'approve-membership': view._handle_approve_membership,
+        'clear-membership': view._handle_clear_membership,
         'change-email': view._handle_change_email,
         'suspend-membership': view._handle_suspend_membership,
         'reactivate-membership': view._handle_reactivate_membership,

@@ -359,6 +359,43 @@
 </section>
 {% endif %}
 
+{% if page.data.pending_clearance_memberships %}
+<section class="table-card section-gap-top-sm" aria-label="Liberações pendentes do gate de entrada">
+    <div class="student-invite-list-header">
+        <div>
+            <p class="eyebrow">Aguardando atestado</p>
+            <h3>Alunos com PAR-Q sinalizado esperando liberação</h3>
+            <p class="system-map-copy">O PAR-Q apontou risco para esses alunos. Confira o atestado médico físico entregue no box antes de liberar o acesso.</p>
+        </div>
+    </div>
+    <div class="student-invite-list">
+        {% for membership in page.data.pending_clearance_memberships %}
+        <article class="student-invite-item">
+            <div class="student-invite-meta">
+                <strong>{{ membership.student_name }}</strong>
+                <span class="student-invite-pill student-invite-pill-danger">Aguardando atestado</span>
+            </div>
+            <p class="student-invite-detail">
+                Ultima atividade em {{ membership.updated_at|date:"d/m/Y H:i" }} no box {{ membership.box_root_slug }}.
+            </p>
+            {% if page.data.access_matrix.can_clear_membership %}
+            <div class="actions actions-tight student-invite-actions">
+                <form method="post" class="student-invite-inline-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="clear-membership">
+                    <input type="hidden" name="membership_id" value="{{ membership.id }}">
+                    <button class="button" type="submit">Liberar acesso</button>
+                </form>
+            </div>
+            {% else %}
+            <p class="student-invite-detail">Esse papel acompanha a fila, mas a liberação do acesso fica com recepção, manager, owner ou DEV.</p>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
 {% if page.data.managed_memberships %}
 <section class="table-card section-gap-top-sm" aria-label="Governança operacional do acesso do aluno">
     <div class="student-invite-list-header">

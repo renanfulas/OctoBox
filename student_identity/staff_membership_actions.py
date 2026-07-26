@@ -25,6 +25,8 @@ from access.roles import ROLE_RECEPTION
 from auditing.models import AuditEvent
 from shared_support.box_runtime import get_box_runtime_slug
 
+from .consent import resolve_onboarding_journey_for_membership
+from .funnel_events import record_student_onboarding_event
 from .models import StudentBoxMembership, StudentBoxMembershipStatus
 
 
@@ -195,6 +197,49 @@ class StudentInvitationMembershipActionsMixin:
             },
         )
         messages.success(request, f'E-mail do aluno {membership.identity.student_name} atualizado para {new_email}.')
+        return redirect('student-invitation-operations')
+
+    def _handle_clear_membership(self, request):
+        """Onda D do gate PAR-Q: staff libera acesso apos conferir atestado fisico no box.
+
+        Mesma faixa de papel que aprovar membership (Recepcao/Manager/Owner/DEV) —
+        e a mesma natureza de decisao: alguem na ponta confere um documento fisico
+        e libera a entrada. `mark_cleared` e set-once/idempotente no model, entao
+        clique duplo nao reabre nem duplica o evento de funil.
+        """
+        denied_response = self._require_action_roles(
+            request,
+            allowed_roles=self.membership_approval_roles,
+            denied_message='Liberação de acesso exige Recepção, Manager, Owner ou DEV.',
+        )
+        if denied_response is not None:
+            return denied_response
+        membership = self._get_membership_for_management(request)
+        if membership is None:
+            messages.error(request, 'O vínculo do aluno não foi encontrado para liberação de acesso.')
+            return redirect('student-invitation-operations')
+        if not membership.clearance_required or membership.cleared_at is not None:
+            messages.info(request, 'Esse aluno não está em espera por atestado no momento.')
+            return redirect('student-invitation-operations')
+
+        membership.mark_cleared(by=request.user)
+        membership.save(update_fields=['cleared_at', 'cleared_by', 'updated_at'])
+        record_student_onboarding_event(
+            actor=request.user,
+            actor_role=self._get_actor_role_slug(request),
+            journey=resolve_onboarding_journey_for_membership(membership),
+            event='clearance_granted',
+            target_model='student_identity.StudentBoxMembership',
+            target_id=str(membership.id),
+            target_label=membership.identity.student_name,  # Sprint 2: denorm
+            description=f'Acesso liberado manualmente apos atestado no box {membership.box_root_slug}.',
+            metadata={
+                'student_id': membership.student_id,
+                'identity_id': membership.identity_id,
+                'box_root_slug': membership.box_root_slug,
+            },
+        )
+        messages.success(request, f'Acesso liberado para {membership.identity.student_name}.')
         return redirect('student-invitation-operations')
 
     def _handle_suspend_membership(self, request):
