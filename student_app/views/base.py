@@ -163,6 +163,14 @@ class StudentIdentityRequiredMixin:
             from student_app.workflows.consent_workflows import consent_is_pending
             if consent_is_pending(identity=identity, box_root_slug=active_membership.box_root_slug):
                 return redirect('student-app-consent')
+        if (
+            getattr(settings, 'STUDENT_CONSENT_GATE_ENABLED', False)
+            and active_membership is not None
+            and active_membership.clearance_required
+            and active_membership.cleared_at is None
+            and request.path != reverse('student-app-clearance')
+        ):
+            return redirect('student-app-clearance')
         request.student_identity = identity
         request.student_box_memberships = memberships
         request.student_active_box_root_slug = active_membership.box_root_slug if active_membership is not None else ''

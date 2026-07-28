@@ -12,7 +12,7 @@ PONTOS CRITICOS:
 from __future__ import annotations
 
 from django.shortcuts import redirect
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 
 from student_identity.funnel_events import record_student_onboarding_event
 from student_identity.models import StudentConsentDocument, StudentConsentDocumentKind
@@ -57,3 +57,28 @@ class StudentConsentView(StudentAnyMembershipMixin, FormView):
             user_agent=request.META.get('HTTP_USER_AGENT', ''),
         )
         return redirect('student-app-home')
+
+
+class StudentClearanceView(StudentAnyMembershipMixin, TemplateView):
+    """Parede de bloqueio do gate de entrada (Onda C).
+
+    Mostrada quando o membership do box ativo esta clearance_required e ainda nao
+    foi liberado. Nao e dead-end: instrui a levar o atestado ao box. A liberacao e
+    manual (Onda D). O gate (b) em dispatch pula esta rota (evita loop).
+    """
+
+    template_name = 'student_app/clearance.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        membership = next(
+            (
+                m for m in self.request.student_box_memberships
+                if m.box_root_slug == self.request.student_active_box_root_slug
+            ),
+            None,
+        )
+        context['clearance_membership'] = membership
+        context['clearance_box'] = getattr(membership, 'box', None) if membership is not None else None
+        context.setdefault('student_shell_nav', 'home')
+        return self._attach_student_shell_context(context)
