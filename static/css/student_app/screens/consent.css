@@ -1,0 +1,105 @@
+/*
+ARQUIVO: tela do gate de entrada (consentimento + PAR-Q) do app do aluno.
+
+POR QUE ELE EXISTE:
+- mantem o waiver rolavel e a triagem Sim/Nao legiveis e tapaveis no mobile,
+  sem "role ate o fim pra habilitar" e reusando os tokens canonicos do tema.
+
+PONTOS CRITICOS:
+- seletores escopados em .student-consent para vencer a regra generica de label
+  do forms.css sem !important.
+- alvo de toque >= 44px; contraste valido em light e dark.
+*/
+
+.student-consent {
+    display: grid;
+    gap: 16px;
+}
+
+.student-consent .student-consent-doc__title {
+    margin: 0 0 8px;
+    font-size: 1rem;
+}
+
+.student-consent .student-consent-doc__body {
+    max-height: 220px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+    color: var(--theme-text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.student-consent .student-consent-accept {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-weight: 700;
+    color: var(--theme-text-primary);
+}
+
+.student-consent .student-consent-accept input {
+    width: auto;
+    min-height: 0;
+    margin-top: 3px;
+}
+
+.student-consent .student-consent-parq {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
+    border-radius: 18px;
+}
+
+.student-consent .student-consent-parq legend {
+    padding: 0 8px;
+    font-weight: 800;
+    color: var(--theme-text-primary);
+}
+
+.student-consent .student-consent-question {
+    display: grid;
+    gap: 8px;
+}
+
+.student-consent .student-consent-question__label {
+    font-weight: 600;
+    color: var(--theme-text-primary);
+}
+
+.student-consent .student-consent-question__options ul {
+    list-style: none;
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.student-consent .student-consent-question__options li {
+    flex: 1;
+}
+
+.student-consent .student-consent-question__options label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 90%, transparent);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.student-consent .student-consent-question__options input {
+    width: auto;
+    min-height: 0;
+}

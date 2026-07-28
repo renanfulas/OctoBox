@@ -17,6 +17,7 @@ from .membership_views import (
     StudentSuspendedFinancialView,
     StudentSwitchBoxView,
 )
+from .consent_views import StudentConsentView
 from .onboarding_views import StudentOnboardingWizardView
 from .public_workout_views import (
     PublicWorkoutDetailView,
@@ -52,6 +53,7 @@ __all__ = [
     'StudentAddRmView',
     'StudentCancelAttendanceView',
     'StudentConfirmAttendanceView',
+    'StudentConsentView',
     'StudentGradeView',
     'StudentHomeView',
     'StudentInviteEntryView',

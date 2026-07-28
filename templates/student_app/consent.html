@@ -1,0 +1,45 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Liberação de acesso | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card student-consent">
+    <p class="student-eyebrow">Liberação de acesso</p>
+    <h1>Falta pouco para você entrar</h1>
+    <p>Antes do primeiro treino, confirme o termo e responda uma triagem rápida de saúde. Leva menos de um minuto.</p>
+
+    <form method="post" class="student-form-stack" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        {% if waiver_document %}
+        <div class="student-consent-doc">
+            <h2 class="student-consent-doc__title">Termo de responsabilidade</h2>
+            <div class="student-consent-doc__body">{{ waiver_document.body|linebreaksbr }}</div>
+        </div>
+        {% endif %}
+
+        <label class="student-consent-accept">
+            {{ form.waiver_accepted }}
+            <span>{{ form.waiver_accepted.label }}</span>
+        </label>
+        {{ form.waiver_accepted.errors }}
+
+        <fieldset class="student-consent-parq">
+            <legend>Triagem de saúde (PAR-Q)</legend>
+            <p class="student-form-note">Responda com sinceridade. Se algo for "Sim", a gente confirma com você antes de liberar o treino.</p>
+            {% for field in form.parq_fields %}
+            <div class="student-consent-question">
+                <span class="student-consent-question__label">{{ field.label }}</span>
+                <div class="student-consent-question__options">{{ field }}</div>
+                {{ field.errors }}
+            </div>
+            {% endfor %}
+        </fieldset>
+
+        <div class="actions actions-tight">
+            <button type="submit" class="student-button">Continuar</button>
+        </div>
+    </form>
+</section>
+{% endblock %}
