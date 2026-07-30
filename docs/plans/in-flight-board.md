@@ -76,6 +76,7 @@ git -C C:\dev\OctoBox worktree list
 
 | Frente | Branch | Worktree | Dono/sessão | Status |
 |---|---|---|---|---|
+| ML de leads — fundação + inteligência de rede | (a criar) | — | sessão 2026-07-28 | Plano fechado, auditoria feita. Próxima: Onda 1 (trilho de job por tenant). Ver [leads-ml-foundation-and-network-intelligence-plan.md](leads-ml-foundation-and-network-intelligence-plan.md) |
 | Docs de prontidão (registry + este quadro) | `docs/ops-readiness` | `octobox-wt/ops-docs` | sessão 2026-06-20 | PR aberto |
 | Hardening de pagamentos — P1 sweep de dead-letter do Stripe | `feat/payment-p1-stripe-deadletter` | `octobox-wt/payment-p1-deadletter` | sessão 2026-06-21 | P1 em andamento (verificação no CI) |
 
