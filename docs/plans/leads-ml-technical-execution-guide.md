@@ -618,6 +618,14 @@ Pendente: rodar contra Postgres real assim que o Docker estabilizar.
 
 ## Onda 6 — Feature layer minimo por tenant
 
+> **STATUS: IMPLEMENTADA em 2026-07-30** (codigo + migration + testes
+> escritos e compilados; verificacao contra Postgres real pendente — ver
+> "Resultado real" no fim desta onda. Nesta sessao, confirmado que ATE
+> `SimpleTestCase` sem banco trava, porque as fixtures `autouse` do
+> `conftest.py` deste repo tentam `Box.objects.get_or_create(...)` para
+> qualquer teste, independente de precisar de DB — entao nao ha caminho de
+> teste real possivel sem Postgres vivo, nem para logica pura).
+
 ### Estrutura
 
 Novo app TENANT `intelligence` (registrar em `TENANT_APPS` no `config/settings/base.py`), com `intelligence/leads/`:
@@ -702,6 +710,59 @@ def test_taxa_suprimida_abaixo_do_piso(self)
 def test_saida_carrega_contrato_de_ml(self)              # rule_version/computed_at/input_window
 def test_job_nao_escreve_em_studentintake(self)          # ML nao escreve verdade primaria
 ```
+
+### Resultado real (2026-07-30)
+
+Implementado como planejado, com 3 desvios registrados conscientemente:
+
+1. **`confidence_bucket` substituido por `provenance`.** O rascunho original
+   pedia estratificacao por `confidence_bucket` (high/medium/low/unknown),
+   copiando o conceito de `Student.source_confidence`. Mas
+   `source_confidence` so existe no nivel de `Student`, calculado por
+   `students/domain/acquisition_resolution.py` **depois** da conversao —
+   `StudentIntake` (a materia-prima desta onda) nunca teve esse dado.
+   Adicionar uma coluna `confidence_bucket` copiando `provenance` seria
+   fabricar uma dimensao sem informacao nova. `provenance`
+   (`declared`/`confirmed`/`legacy_inferred`/`missing`, da Onda 3) ja e o
+   eixo de estratificacao honesto disponivel neste estagio, e entrou tambem
+   na `UniqueConstraint` (o rascunho original a omitia, uma inconsistencia
+   do proprio texto — sem ela, `declared` e `legacy_inferred` do mesmo
+   canal/janela colidiriam na mesma celula, exatamente o que a
+   estratificacao deveria impedir).
+2. **`is_recommendation` nao virou coluna.** Toda linha desta tabela e
+   sempre e so um fato (nunca recomendacao) — uma coluna sempre `False`
+   nao carrega informacao nova. O contrato fica documentado no docstring
+   do model em vez de repetido em cada linha.
+3. **Migration escrita a mao** (mesmo motivo da Onda 4: `manage.py`
+   trava tentando conectar no Postgres, indisponivel na sessao). Nome de
+   indice explicito (`lead_channel_fact_window_idx`) em vez de tentar
+   reproduzir o hash que o Django geraria automaticamente — mais seguro
+   que adivinhar.
+
+Arquivos criados:
+
+1. `intelligence/` (app novo, registrado em `TENANT_APPS`) — `apps.py`,
+   `model_definitions.py` (`LeadChannelDailyFact`, `LeadChannelProvenance`),
+   `models.py`, `migrations/0001_initial.py`
+2. `intelligence/leads/features.py` — calculo puro: `deduplicate_by_phone`,
+   `compute_lead_channel_facts`, `resolve_publishable_conversion_rate`
+3. `intelligence/leads/jobs.py` — orquestracao idempotente
+   (`compute_and_persist_lead_channel_facts`, upsert por
+   window_start+channel+provenance+rule_version)
+4. `intelligence/management/commands/compute_lead_features.py` — usa
+   `shared_support.tenant_sweep` (Onda 1); `LeadChannelDailyFact` e
+   `StudentIntake` sao ambos TENANT
+5. `tests/test_intelligence_lead_features.py` — 13 testes: agregacao pura
+   (7, via `SimpleTestCase`), integracao com banco (3, via `TestCase`),
+   piso de publicacao (3)
+
+Verificado fora do Django/pytest (script standalone, ja que nem
+`SimpleTestCase` consegue rodar nesta sessao): a logica de agregacao +
+mediana confere exatamente com o esperado (3 capturados, 2 convertidos,
+1 aberto, mediana de 10 e 20 dias = 15.0). Pendente: rodar a suite real
+contra Postgres assim que o Docker estabilizar — inclui os 3 testes de
+integracao que tocam banco (idempotencia, maturacao, "nao escreve em
+StudentIntake").
 
 ---
 
