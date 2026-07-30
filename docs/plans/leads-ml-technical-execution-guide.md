@@ -768,6 +768,10 @@ StudentIntake").
 
 ## Onda 7 — Segmento do aluno (per-tenant)
 
+> **STATUS: IMPLEMENTADA em 2026-07-30** (codigo + testes escritos e
+> compilados; verificacao contra Postgres real pendente. Ver "Resultado
+> real" no fim desta onda).
+
 `Student.status` e ciclo de vida (lead/active/paused/inactive), nao segmento. Esta onda cria o segmento como **regra transparente versionada**, dentro de `intelligence/students/`.
 
 ### Dimensoes (materia-prima ja existente)
@@ -796,6 +800,51 @@ StudentIntake.converted_at -> Student -> segment (Onda 7) -> churn/retencao (tri
 ```
 
 A pergunta vira **"qual canal traz aluno que fica"**, nao "qual canal traz mais lead". Canal de aquisicao vira feature de risco de churn; risco por segmento vira qualidade de canal. As duas trilhas de ML viram um circuito so.
+
+### Resultado real (2026-07-30)
+
+Implementado como **calculo puro, sem model novo nem migration** — leitura
+mais estrita do que o rascunho sugeria, e deliberada: a instrucao "nao
+gravar no model Student" so faz sentido plenamente se a onda inteira for
+uma funcao pura (`intelligence/students/segments.py:resolve_student_segment`),
+recalculada sob demanda pelo chamador, e nao um novo data product
+persistido (isso ficaria pesado demais para "so 3 dimensoes de regra
+explicita" e contradiria "menor custo, mais valor").
+
+Dois desvios registrados:
+
+1. **`segment_key` usa 3 dimensoes, nao 4.** O canal resolvido
+   (`Student.resolved_acquisition_source`) ficou de fora do proposito: ele
+   ja existe como campo proprio no `Student` e serve para ser lido AO LADO
+   do segmento (ex: comparar segmento por canal), nao amassado dentro da
+   mesma string — isso so inflaria a cardinalidade sem necessidade. O
+   exemplo do rascunho (`'trimestral|pontual|30-40'`) ja so tinha 3 partes,
+   entao isso confirma a leitura, nao contradiz.
+2. **Chave de ciclo usa o valor bruto (`quarterly`), nao o rotulo em
+   portugues (`trimestral`)** — consistente com o padrao ja usado para
+   canal de aquisicao em todo o resto do repo (chave estavel tipo
+   `instagram`/`referral`, rotulo traduzido separado). Faixa etaria usa
+   bandas de largura 10 (`30-39`, nao `30-40`), pela mesma razao: chave
+   previsivel e sem sobreposicao entre bandas adjacentes.
+
+`resolve_student_segment()` recebe `latest_enrollment` e
+`payments_queryset` ja resolvidos pelo chamador — evita criar dependencia
+de `intelligence/` sobre camadas de apresentacao (`catalog/`) so para
+buscar a matricula mais recente.
+
+Arquivos criados:
+
+1. `intelligence/students/segments.py` — `resolve_student_segment()`,
+   `StudentSegment` (dataclass), constantes de regra
+2. `tests/test_intelligence_student_segments.py` — 11 testes: 7 puros
+   (`SimpleTestCase`, usando `Payment.objects.none()` e instancias nao
+   salvas — Django curto-circuita `EmptyQuerySet` sem tocar o Postgres) +
+   4 de integracao (`TestCase`, contagem real de atraso)
+
+Verificado fora do Django (script standalone): a logica de banda etaria
+(incluindo o caso de fronteira — aniversario ainda nao alcancado no ano)
+confere exatamente com o esperado. Os 4 testes de integracao (contagem de
+atraso via `finance/overdue_metrics.py`) seguem pendentes de Postgres.
 
 ---
 
