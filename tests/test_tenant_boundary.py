@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock, patch
 
+import pytest
 from django.http import JsonResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase, tag
 from django.urls import reverse
@@ -774,3 +775,126 @@ class TenantHealthEndpointTest(SimpleTestCase):
         self.assertEqual(data['tenants_active'], 3)
         self.assertEqual(data['runtime'], 'control')
         self.assertTrue(data['healthy'])
+
+
+# ---------------------------------------------------------------------------
+# B13 — Trilho de job por tenant (sweep_active_tenants)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.public_schema
+@tag('tenant', 'jobs')
+class B13TenantSweepTest(TestCase):
+    """B13: comando agendado roda a partir do public e precisa entrar no schema
+    de cada box. Sem isso, a query bate numa tabela TENANT que nao existe no
+    public e o job noturno morre em silencio (achado B1 da auditoria de leads).
+    """
+
+    def test_sweep_runs_handler_inside_each_active_schema(self):
+        from shared_support.tenant_sweep import sweep_active_tenants
+
+        visited = []
+
+        def handler(box):
+            from django.db import connection
+            visited.append(connection.schema_name)
+            return connection.schema_name
+
+        sweep = sweep_active_tenants(handler)
+
+        self.assertGreaterEqual(sweep.schemas_touched, 1)
+        self.assertEqual(sweep.schemas_failed, 0)
+        self.assertNotIn('public', visited)
+        self.assertTrue(all(name.startswith('box_') for name in visited), visited)
+
+    def test_sweep_only_schema_restricts_to_a_single_box(self):
+        from control.models import Box
+        from shared_support.tenant_sweep import sweep_active_tenants
+
+        target = Box.objects.filter(status=Box.Status.ACTIVE).order_by('schema_name').first()
+        self.assertIsNotNone(target, 'ambiente de teste precisa de ao menos um box ativo')
+
+        sweep = sweep_active_tenants(lambda box: box.schema_name, only_schema=target.schema_name)
+
+        self.assertEqual(sweep.schemas_touched, 1)
+        self.assertEqual([name for name, _ in sweep.results], [target.schema_name])
+
+    def test_sweep_isolates_failure_per_box_and_keeps_going(self):
+        from control.models import Box
+        from shared_support.tenant_sweep import sweep_active_tenants
+
+        owner_box = Box.objects.filter(status=Box.Status.ACTIVE).first()
+        Box.objects.create(
+            slug='sweep-broken',
+            schema_name='box_sweep_broken',
+            display_name='Sweep Broken',
+            status=Box.Status.ACTIVE,
+            owner_user=getattr(owner_box, 'owner_user', None),
+        )
+
+        def handler(box):
+            if box.schema_name == 'box_sweep_broken':
+                raise RuntimeError('boom')
+            return 'ok'
+
+        sweep = sweep_active_tenants(handler)
+
+        self.assertEqual(sweep.schemas_failed, 1)
+        self.assertGreaterEqual(sweep.schemas_touched, 1)
+        self.assertIn('box_sweep_broken', [schema for schema, _ in sweep.failures])
+        self.assertIn('boom', sweep.failures[0][1])
+
+    def test_sweep_reraises_when_asked(self):
+        from shared_support.tenant_sweep import sweep_active_tenants
+
+        def handler(box):
+            raise RuntimeError('boom')
+
+        with self.assertRaises(RuntimeError):
+            sweep_active_tenants(handler, raise_on_error=True)
+
+    def test_sweep_skips_non_active_boxes(self):
+        from control.models import Box
+        from shared_support.tenant_sweep import sweep_active_tenants
+
+        owner_box = Box.objects.filter(status=Box.Status.ACTIVE).first()
+        Box.objects.create(
+            slug='sweep-suspended',
+            schema_name='box_sweep_suspended',
+            display_name='Sweep Suspended',
+            status=Box.Status.SUSPENDED,
+            owner_user=getattr(owner_box, 'owner_user', None),
+        )
+
+        sweep = sweep_active_tenants(lambda box: box.schema_name)
+
+        self.assertNotIn('box_sweep_suspended', [name for name, _ in sweep.results])
+
+    def test_scheduled_commands_run_from_public_without_programming_error(self):
+        """Regressao do achado B1: os 3 comandos agendados rodavam no public
+        contra tabelas TENANT. Se algum voltar a fazer isso, este teste quebra.
+
+        A assercao de "sem falha" e essencial: `sweep_active_tenants` isola erro
+        por box, entao um ProgrammingError viraria falha CONTABILIZADA em vez de
+        excecao. Verificar so a linha de sumario deixaria o teste verde com todos
+        os schemas quebrados.
+        """
+        import re
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        for command_name in (
+            'evaluate_finance_followups',
+            'run_due_async_job_retries',
+        ):
+            with self.subTest(command=command_name):
+                out = StringIO()
+                call_command(command_name, stdout=out, stderr=StringIO())
+                output = out.getvalue()
+
+                # Regex em vez de substring: '10 schema(s) processado(s)' contem
+                # literalmente '0 schema(s) processado(s)'.
+                match = re.search(r'(\d+) schema\(s\) processado\(s\)', output)
+                self.assertIsNotNone(match, f'sem sumario de varredura em: {output!r}')
+                self.assertGreaterEqual(int(match.group(1)), 1, output)
+                self.assertNotIn('com falha', output)
