@@ -36,6 +36,7 @@ def _build_recommendation_contract(
     open_amount,
     finance_touches_30d,
     reactivated_after_inactive,
+    is_holdout=False,
 ):
     prediction_window = 'next_30_days'
 
@@ -55,6 +56,15 @@ def _build_recommendation_contract(
             'prediction_window': prediction_window,
             'rule_version': 'finance_queue_v1',
             'is_recommendation': True,
+        }
+
+    if signal_bucket == 'high_signal' and is_holdout:
+        return {
+            'recommended_action': 'holdout_observe',
+            'confidence': 'medium',
+            'prediction_window': prediction_window,
+            'rule_version': 'finance_queue_v1+holdout_v1',
+            'is_recommendation': False,
         }
 
     if signal_bucket == 'high_signal':
@@ -101,9 +111,11 @@ def _build_recommendation_contract(
     }
 
 
-def _resolve_priority_contract(*, actual_status, signal_bucket, confidence, finance_touches_30d):
+def _resolve_priority_contract(*, actual_status, signal_bucket, confidence, finance_touches_30d, is_holdout=False):
     if actual_status == 'inactive':
         return {'priority_rank': 0, 'priority_label': 'Winback imediato'}
+    if signal_bucket == 'high_signal' and is_holdout:
+        return {'priority_rank': 4, 'priority_label': 'Observação controlada'}
     if signal_bucket == 'high_signal':
         if finance_touches_30d > 0:
             return {'priority_rank': 1, 'priority_label': 'Escalada manual'}
@@ -118,10 +130,21 @@ def _resolve_priority_contract(*, actual_status, signal_bucket, confidence, fina
     }
 
 
-def _build_reason_codes(*, actual_status, overdue_60d, open_amount, latest_enrollment_status, finance_touches_30d, reactivated_after_inactive):
+def _build_reason_codes(
+    *,
+    actual_status,
+    overdue_60d,
+    open_amount,
+    latest_enrollment_status,
+    finance_touches_30d,
+    reactivated_after_inactive,
+    is_holdout=False,
+):
     reason_codes = []
     if actual_status == 'inactive':
         reason_codes.append('student_inactive')
+    if is_holdout:
+        reason_codes.append('holdout_observation')
     if overdue_60d >= 2:
         reason_codes.append('recurring_overdue_60d')
     elif overdue_60d == 1:

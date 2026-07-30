@@ -10,6 +10,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from finance.model_definitions import EnrollmentStatus, PaymentStatus
+from finance.overdue_metrics import is_overdue_payment
 
 
 ZERO_MONEY = Decimal('0.00')
@@ -28,15 +29,6 @@ def days_since(reference_date, value):
     if normalized is None:
         return None
     return max((reference_date - normalized).days, 0)
-
-
-def is_payment_open(payment, *, today):
-    return (
-        payment.status in {PaymentStatus.PENDING, PaymentStatus.OVERDUE}
-        and payment.due_date < today
-    ) or (
-        payment.status == PaymentStatus.OVERDUE
-    )
 
 
 def build_student_churn_facts(
@@ -65,7 +57,7 @@ def build_student_churn_facts(
             if last_paid_at is None or payment_paid_at > last_paid_at:
                 last_paid_at = payment_paid_at
 
-        if not is_payment_open(payment, today=today):
+        if not is_overdue_payment(payment, today=today):
             continue
 
         overdue_days = max((today - payment.due_date).days, 0)
