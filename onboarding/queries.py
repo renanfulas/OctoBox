@@ -97,7 +97,7 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
         copy = 'Leia o acumulado do mês atual para entender quais canais sustentam a captação agora.'
     elif source_period == 'all':
         period_label = 'Todos'
-        copy = 'Leia o histórico inteiro para enxergar quais canais mais sustentam a captação.'
+        copy = 'Leia a fila aberta acumulada para enxergar quais canais mais sustentam a captação. Lead já convertido não entra nesta contagem.'
     else:
         radar_queryset = radar_queryset.filter(created_at__date=today)
         period_label = 'Hoje'
@@ -296,9 +296,9 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'is_selected': active_panel == 'tab-intake-queue' and created_window == 'today',
             },
             {
-                'label': 'Captação',
+                'label': 'Fila por canal',
                 'display_value': str(radar_board['total']),
-                'note': 'Abre o radar de origem para ler Instagram, WhatsApp, site, indicação e importação externa.',
+                'note': 'Abre o radar de origem para ler Instagram, WhatsApp, site, indicação e importação externa. Conta a fila ainda aberta, não a captação histórica — lead já convertido sai desta contagem.',
                 'href': '?panel=tab-intake-source',
                 'target_panel': 'tab-intake-source',
                 'tone_class': 'kpi-purple',
@@ -309,7 +309,7 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         'hero_stats': [
             {'label': 'Pendentes', 'value': pending_count},
             {'label': 'Na fila', 'value': len(queue)},
-            {'label': 'Captação', 'value': radar_board['total']},
+            {'label': 'Fila por canal', 'value': radar_board['total']},
             {'label': 'Hoje', 'value': created_today},
         ],
         'radar_board': radar_board,
