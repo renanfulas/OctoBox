@@ -373,6 +373,12 @@ Onda sem migration — reverter por commit. `schema_version=2` convive com `1`; 
 
 ## Onda 4 — Marcadores de desfecho
 
+> **STATUS: IMPLEMENTADA em 2026-07-30** (codigo + migrations + testes escritos
+> e compilados; verificacao contra Postgres real pendente — Docker Desktop
+> instavel na sessao, ver "Resultado real" no fim desta onda). Definicao de
+> "lead convertido" adotada: a recomendacao do plano pai (`approved` = conversao
+> comercial, nunca `linked_student`), sem objecao do dono ate o momento.
+
 ### Migration: `boxcore/migrations/0028_studentintake_outcome_markers.py`
 
 Campos novos em `StudentIntake` (`onboarding/model_definitions.py`):
@@ -485,9 +491,53 @@ def test_backfill_recupera_converted_at_do_audit_event(self)
 
 Migration reversivel (campos nullable, drop limpo). Backfill tem `noop` reverso — dado backfillado permanece, o que e seguro.
 
+### Resultado real (2026-07-30)
+
+Implementado como planejado, com 3 ajustes:
+
+1. **`first_contacted_at` nao veio de `StudentInvitationDelivery.sent_at`.**
+   Esse model nao tem `intake_id`. A fonte real e o `AuditEvent` de
+   `record_student_onboarding_event(event='whatsapp_handoff_opened', ...)`,
+   que ja carrega `metadata['intake_id']` — action
+   `student_onboarding.imported_lead_invite.whatsapp_handoff_opened`, ja
+   coberta por teste existente (`onboarding/tests.py`). O backfill e o
+   registro em tempo real (`mark_intake_first_contact`, chamado em
+   `intake_invite_actions.py` no envio do convite) usam essa mesma trilha.
+2. **Migration escrita a mao, nao via `makemigrations`.** `manage.py` travava
+   indefinidamente tentando resolver `DATABASE_URL` contra o Postgres (fora
+   do ar na sessao) mesmo para uma migration que nao precisa de conexao real.
+   A migration `0028` segue o padrao autogerado exato de `0027` (mesmo
+   projeto, `AddField` simples, sem ambiguidade). Nao usar este atalho para
+   migrations com `RunPython` complexo ou alteracao de campo existente sem
+   verificar `makemigrations --check` antes de mergear.
+3. **Guarda de regressao com escopo restrito.** Um grep global por
+   `update_fields=[...'status'...]` bateria em dezenas de outros models
+   (`Payment`, `Enrollment`, `Membership`, `WorkoutApproval`, etc.) que nada
+   tem a ver com este contrato. A guarda em
+   `tests/test_intake_stage_transitions.py::NoDirectStatusMutationOutsideHelperTests`
+   e escopada aos 3 arquivos migrados, nao ao repositorio inteiro.
+
+Arquivos alterados:
+
+1. `onboarding/model_definitions.py` — 4 campos novos em `StudentIntake`
+2. `boxcore/migrations/0028_studentintake_outcome_markers.py` (novo)
+3. `boxcore/migrations/0029_backfill_intake_outcome_markers.py` (novo)
+4. `onboarding/stage_transitions.py` (novo) — `transition_intake_status` + `mark_intake_first_contact`
+5. `onboarding/facade.py` — `run_intake_queue_action` usa o helper
+6. `onboarding/intake_invite_actions.py` — `MATCHED` via helper (sem `converted_at`) + `mark_intake_first_contact` no envio do convite
+7. `students/infrastructure/django_intakes.py` — `APPROVED` via helper com `conversion_kind='enrollment'`
+8. `boxcore/tests/test_onboarding.py` — `test_reception_can_reject_from_intake_center` estendido com `rejected_at` + audit event
+9. `tests/test_intake_stage_transitions.py` (novo) — 10 testes: transicoes, audit event, backfill (3 casos), guarda de regressao
+
+Pendente: rodar a suite contra Postgres real assim que o Docker estabilizar.
+
 ---
 
 ## Onda 5 — Separar leitura operacional de leitura analitica
+
+> **STATUS: IMPLEMENTADA em 2026-07-30** (codigo + testes escritos e
+> compilados; verificacao contra Postgres real pendente — Docker Desktop
+> segue instavel na sessao, ver "Resultado real" no fim desta onda).
 
 ### O defeito
 
@@ -526,6 +576,43 @@ def test_fila_operacional_continua_excluindo_convertido(self)
 ### Nao fazer
 
 Nada de ML aqui. Nada de persistencia dentro do GET — o anti-padrao de `catalog/finance_snapshot/snapshot.py` (persiste `queue_preview[:8]` durante o render) e exatamente o que nao replicar.
+
+### Resultado real (2026-07-30)
+
+Implementado com um ajuste de desenho em relacao ao rascunho original:
+
+1. **3 querysets, nao 2.** Alem de `queue_queryset` (fila operacional) e
+   `analytics_queryset` (universo inteiro, sem recorte), foi preciso manter
+   um terceiro — `operational_metrics_queryset` — para os KPIs
+   "Leads"/"Em conversa"/"Pendentes" continuarem lidos sobre o recorte
+   aberto exatamente como antes. Sem ele, esses numeros operacionais
+   passariam a incluir intake ja vinculado a aluno, mudando silenciosamente
+   o significado de KPIs que o time ja usa todo dia — fora do escopo desta
+   onda (essa e' uma leitura operacional, nao a analitica que estava quebrada).
+2. **`radar_board` mantem o filtro `status__in=[NEW,REVIEWING,MATCHED]`**
+   (agora aplicado sobre `analytics_queryset`, nao mais sobre a base com
+   `linked_student__isnull=True`). Ele continua sendo "fila aberta por
+   canal" — o `channel_analytics` novo (sem esse filtro) e' quem enxerga
+   convertido/rejeitado. Efeito colateral positivo: um intake `MATCHED` que
+   ja tem `linked_student` (sempre acontece, e' o que MATCHED significa)
+   deixa de ser silenciosamente descartado do radar so por causa do
+   `linked_student__isnull=True` que existia na base antiga.
+3. **`ACQUISITION_CHANNEL_LABELS`/`ACQUISITION_CHANNEL_MODEL_CHOICES`
+   importados direto de `shared_support.acquisition`**, nao via
+   `onboarding.attribution` (que so reexporta `ACQUISITION_CHANNEL_LABELS`,
+   nao a variante `_MODEL_CHOICES`).
+4. Radar passou de 7 para 11 cards (os 3 que faltavam: Evento, Nao
+   identificado, Legado). Verificado que o template
+   (`intake_radar_metric_card.html`) e generico — itera `cards` sem chave
+   fixa — e que nenhum teste existente dependia do numero/chaves antigas
+   (zero cobertura previa de `_build_intake_radar_board`).
+
+Arquivos alterados:
+
+1. `onboarding/queries.py` — 3 querysets, `_build_intake_channel_analytics` (nova), cards dinamicos, filtro `resolved` corrigido
+2. `tests/test_onboarding_queries_analytics.py` (novo) — 4 testes cobrindo os 4 itens do "Testes" acima
+
+Pendente: rodar contra Postgres real assim que o Docker estabilizar.
 
 ---
 
