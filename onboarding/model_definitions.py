@@ -73,6 +73,18 @@ class StudentIntake(TimeStampedModel):
     raw_payload = models.JSONField(blank=True, default=dict)
     notes = models.TextField(blank=True)
 
+    # Marcadores de desfecho do funil. Sem eles, so o estado ATUAL era
+    # conhecido — impossivel montar janela de maturacao ou separar "lead
+    # perdido" de "lead recente que ainda nao teve tempo de converter"
+    # (censura a direita). Ver auditoria de leads 2026-07-28, achado M18.
+    first_contacted_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    converted_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    rejected_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    # Distingue COMO a conversao aconteceu (ex: 'enrollment'), para nao
+    # confundir com o marcador de vinculo de identidade (linked_student),
+    # que o convite tambem preenche sem que isso seja conversao comercial.
+    conversion_kind = models.CharField(max_length=24, blank=True)
+
     class Meta:
         app_label = HISTORICAL_BOXCORE_APP_LABEL
         ordering = ['status', '-created_at']
