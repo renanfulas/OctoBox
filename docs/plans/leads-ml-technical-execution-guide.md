@@ -850,6 +850,14 @@ atraso via `finance/overdue_metrics.py`) seguem pendentes de Postgres.
 
 ## Onda 8 — Hub de rede (SHARED app no public)
 
+> **STATUS: IMPLEMENTADA em 2026-07-30, FORA DE ORDEM.** O plano pai gateia
+> esta onda a "Trilho A rodando em producao" + volume real de boxes — nada
+> disso aconteceu ainda nesta sessao (Postgres nunca ficou disponivel para
+> verificar sequer as Ondas 1-7). Implementada a pedido explicito do dono,
+> registrado aqui para nao se perder: **o codigo existe e compila, mas nao
+> deve ser ATIVADO (comando de contribuicao rodado contra dado real) antes
+> do gate ser atendido de verdade.** Ver "Resultado real" no fim desta onda.
+
 ### Estrutura
 
 Novo app `intelligence_network` em **`SHARED_APPS`** (precedente: `student_identity` e SHARED).
@@ -904,9 +912,57 @@ def test_cohort_separa_boxes_heterogeneas(self)
 
 Nenhum prior aplicado nesta onda — so leitura comparativa.
 
+### Resultado real (2026-07-30)
+
+Implementado como planejado, com o cohort resolvido de forma mais estreita
+que o rascunho sugeria:
+
+1. **Cohort so por porte (alunos ativos), nao por porte+ticket+regiao.**
+   `control.Box` nao tem campo de ticket medio nem de regiao hoje — os
+   dois exigiriam schema novo em `control.Box`, uma mudanca cross-cutting
+   (afeta provisioning/billing) que e decisao de produto, nao tecnica.
+   Cohort desta primeira rodada usa 4 bandas por contagem de alunos ativos
+   (`micro`/`pequeno`/`medio`/`grande`), a unica dimensao ja computavel
+   sem alterar o modelo `Box`.
+2. **Dois pisos de k-anonimato, nao um.** O rascunho falava de "N >= k"
+   sem distinguir onde o piso se aplica. Implementados os dois, que
+   protegem coisas diferentes: (a) piso de CONTRIBUICAO
+   (`captured_total >= 10` por celula box+canal — nao sobe cedula com
+   amostra tao pequena que vira quase-identificacao) e (b) piso de LEITURA
+   (`>= 5` boxes DISTINTAS precisam compor um cohort+canal+janela antes do
+   benchmark publicar — protege contra inferir uma box especifica quando
+   so 1-2 contribuiram). `NetworkChannelAggregate` guarda `box_slug` (e
+   por isso NAO e anonimo por si so); o anonimato mora na regra de
+   LEITURA do benchmark, nao na tabela crua.
+3. **`segment_key` existe no model mas fica vazio nesta onda.** Cruzar
+   canal x segmento de aluno (Onda 7) e natural depois, mas exigiria o
+   feature layer da Onda 6 e o segmento da Onda 7 acoplados por aluno
+   convertido — fora do escopo desta rodada.
+
+Arquivos criados: `intelligence_network/` (app SHARED novo, registrado em
+`SHARED_APPS`) — `apps.py`, `model_definitions.py`
+(`NetworkChannelAggregate`), `models.py`, `migrations/0001_initial.py`,
+`cohort.py` (`resolve_box_cohort`), `contribution.py`
+(`contribute_box_channel_aggregates` — usa `sweep_active_tenants` da Onda 1),
+`benchmark.py` (`resolve_channel_benchmark`),
+`management/commands/contribute_network_channel_aggregates.py`;
+`tests/test_intelligence_network_hub.py` (14 testes, incluindo varredura
+estatica de campos PII no model).
+
+**Aviso operacional, nao tecnico:** este comando NUNCA deve ser agendado
+em producao ate o Trilho A estar validado com dado real. Rodar contra
+poucas boxes (ex: o beta fechado inicial) faria o piso de leitura suprimir
+quase tudo — nao e perigoso, mas e inutil, e cada mes de espera sem essa
+validacao e exatamente o que o gate do plano pai queria evitar.
+
 ---
 
 ## Onda 9 — Priors e correcao local (shrinkage)
+
+> **STATUS: IMPLEMENTADA em 2026-07-30, FORA DE ORDEM** (mesma ressalva da
+> Onda 8: implementada a pedido explicito, mas nao deve ser ativada com
+> dado real antes do Trilho A estar validado em producao). Ver "Resultado
+> real" no fim desta onda para o gap encontrado na aplicacao ao churn.
 
 ### Formula
 
@@ -948,6 +1004,52 @@ def test_convergencia_e_monotonica(self)
 def test_leitura_marca_is_network_prior(self)
 def test_prior_expirado_nao_e_usado(self)      # input_window rolante
 ```
+
+### Resultado real (2026-07-30)
+
+`apply_shrinkage()` implementada exatamente como o rascunho, em
+`intelligence_network/shrinkage.py`. `resolve_channel_reading_with_network_prior()`
+(`intelligence_network/benchmark.py`) combina isso com o benchmark da
+Onda 8: cold start puro (`local_captured_total=0` -> `is_network_prior=True`,
+leitura = prior) convergindo para o dado local. Adicionado tambem
+`max_staleness_days` (default 45) ao `resolve_channel_benchmark` — prior
+contribuido ha mais tempo que isso e ignorado, satisfazendo
+`test_prior_expirado_nao_e_usado` de verdade (o rascunho citava "input_window
+rolante" mas nao especificava o mecanismo; usei `contributed_at` por ser o
+dado que realmente existe no model).
+
+**GAP HONESTO na "aplicacao retroativa no churn":** o rascunho pedia para
+`build_recommendation_historical_score_map` (`catalog/finance_snapshot/ai/scoring.py`)
+passar a usar prior de rede em vez de `0.0`. Fiz isso — a funcao ganhou um
+parametro opcional `network_prior_score_map` (default vazio, comportamento
+IDENTICO a antes para quem nao passar nada) que aplica shrinkage quando ha
+prior disponivel. **Mas nao existe fonte real desse prior ainda**: o hub da
+Onda 8 (`NetworkChannelAggregate`) so agrega CANAL DE LEAD, nao desempenho
+de ACOES DE CHURN (`send_financial_followup`, `review_winback`, etc.) — sao
+dominios diferentes. Fabricar uma ligacao entre os dois so para "fechar a
+onda" seria inventar dado que nao existe, exatamente o anti-padrao que essa
+frente inteira foi feita para evitar. A funcao fica PRONTA para receber o
+prior assim que uma tabela de rede especifica para acoes de churn existir
+(ex: `NetworkChurnActionAggregate`, uma extensao futura fora do escopo
+desta rodada) — ate la, ninguem chama com esse parametro e o comportamento
+em producao nao muda nem um pouco.
+
+Arquivos criados/alterados:
+
+1. `intelligence_network/shrinkage.py` (novo) — `apply_shrinkage()`
+2. `intelligence_network/benchmark.py` — `resolve_channel_reading_with_network_prior()`,
+   `max_staleness_days` em `resolve_channel_benchmark()`
+3. `catalog/finance_snapshot/ai/scoring.py` — `network_prior_score_map`
+   opcional em `build_recommendation_historical_score_map()`, backward
+   compatible (zero chamador existente precisou mudar)
+4. `tests/test_intelligence_network_shrinkage.py` (novo) — 9 testes:
+   formula pura (4, `SimpleTestCase`), leitura combinada com banco (4,
+   `TestCase`), integracao com o score de churn (4, `SimpleTestCase`)
+
+Verificado fora do Django (script standalone): a sequencia de convergencia
+para `local_n` crescente e estritamente monotonica e o caso `n_local=peso_do_prior`
+bate exatamente com a media simples esperada (20.0 para local=30, prior=10,
+peso=10).
 
 ---
 
