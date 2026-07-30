@@ -325,6 +325,11 @@ TENANT_APPS = [
     'quick_sales.apps.QuickSalesConfig',
     'api.apps.ApiConfig',
 
+    # Camada de inteligencia operacional (feature layer, sem migrations
+    # dependentes de boxcore — nasce com estado proprio, so fatos, nunca
+    # verdade primaria). Ver docs/architecture/operational-intelligence-ml-layer.md.
+    'intelligence.apps.IntelligenceConfig',
+
     # App do aluno (views + modelos per-tenant como Student, SessionWorkout)
     'student_app.apps.StudentAppConfig',
 ]
