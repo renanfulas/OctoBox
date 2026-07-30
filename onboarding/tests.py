@@ -94,3 +94,32 @@ class IntakeCenterStudentInviteSmokeTests(TestCase):
         )
 
         self.assertEqual(created_entry.status, IntakeStatus.REVIEWING)
+
+    def test_quick_create_source_is_always_manual_regardless_of_declared_channel(self):
+        """Regressao do achado A1: source (origem operacional) nao pode mais
+        ser derivado do canal declarado. A Central de Intake e sempre
+        digitacao manual, entao source deve ser MANUAL mesmo quando o
+        operador declara um canal que antes disparava outro IntakeSource
+        (ex: 'instagram' virava IMPORT, 'event' virava WHATSAPP)."""
+        for index, declared_channel in enumerate(('instagram', 'website', 'event', 'walk_in', '')):
+            with self.subTest(declared_channel=declared_channel):
+                form = IntakeQuickCreateForm(
+                    data={
+                        'full_name': f'Lead {declared_channel or "sem canal"}',
+                        'phone': f'55119999{index:04d}',
+                        'email': '',
+                        'source': IntakeSource.MANUAL,
+                        'acquisition_channel': declared_channel,
+                        'acquisition_detail': '',
+                    }
+                )
+                self.assertTrue(form.is_valid(), form.errors)
+                created_entry = create_intake_quick_entry(
+                    actor=self.user,
+                    form=form,
+                    entry_kind='lead',
+                )
+                self.assertEqual(created_entry.source, IntakeSource.MANUAL)
+                attribution = created_entry.raw_payload['attribution']
+                self.assertEqual(attribution['operational_source'], IntakeSource.MANUAL)
+                self.assertIsNotNone(attribution['captured_at'])

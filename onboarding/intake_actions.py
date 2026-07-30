@@ -16,14 +16,14 @@ PONTOS CRITICOS:
 """
 
 from django.db import transaction
+from django.utils import timezone
 
 from monitoring.lead_attribution_metrics import record_lead_attribution_capture
 from onboarding.attribution import (
     build_intake_attribution_payload,
-    derive_operational_source,
     normalize_acquisition_channel,
 )
-from onboarding.models import IntakeStatus
+from onboarding.models import IntakeSource, IntakeStatus
 from shared_support.manager_event_stream import publish_manager_stream_event
 
 from .facade import run_intake_queue_action
@@ -33,10 +33,12 @@ def create_intake_quick_entry(*, actor, form, entry_kind: str):
     with transaction.atomic():
         created_entry = form.save(commit=False)
         created_entry.status = IntakeStatus.REVIEWING if entry_kind == 'intake' else IntakeStatus.NEW
-        created_entry.source = derive_operational_source(
-            acquisition_channel=form.cleaned_data.get('acquisition_channel', ''),
-            entry_kind=entry_kind,
-        )
+        # A origem operacional deste corredor e sempre 'manual': e a digitacao
+        # humana na Central de Intake. O canal declarado (Instagram, WhatsApp,
+        # etc.) e um eixo separado — antes esta linha derivava um do outro,
+        # tornando os dois colineares e gravando origem operacional falsa
+        # (ver auditoria de leads 2026-07-28, achado A1).
+        created_entry.source = IntakeSource.MANUAL
         created_entry.raw_payload = {
             **(created_entry.raw_payload or {}),
             **build_intake_attribution_payload(
@@ -45,6 +47,8 @@ def create_intake_quick_entry(*, actor, form, entry_kind: str):
                 acquisition_detail=form.cleaned_data.get('acquisition_detail', ''),
                 entry_kind=entry_kind,
                 actor_id=getattr(actor, 'id', None),
+                captured_via='intake-center',
+                captured_at=timezone.now(),
             ),
         }
         created_entry.save()
