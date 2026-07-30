@@ -1,4 +1,6 @@
+import unittest
 from io import StringIO
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -1751,7 +1753,7 @@ class FinanceChurnFoundationTests(TestCase):
                     'suggestion_window_stage': 'fresh',
                     'signal_bucket': 'high_signal',
                     'realized_action_kind': 'overdue',
-                    'realized_count': 2,
+                    'realized_count': 5,
                     'success_rate': 75.0,
                 },
                 {
@@ -1759,7 +1761,7 @@ class FinanceChurnFoundationTests(TestCase):
                     'suggestion_window_stage': 'fresh',
                     'signal_bucket': 'high_signal',
                     'realized_action_kind': 'reactivation',
-                    'realized_count': 3,
+                    'realized_count': 6,
                     'success_rate': 100.0,
                 },
             ]
@@ -1771,7 +1773,87 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertEqual(guidance['suggested_action_kind'], 'reactivation')
         self.assertEqual(guidance['suggested_recommended_action'], 'review_winback')
         self.assertEqual(guidance['success_rate'], 100.0)
-        self.assertEqual(guidance['realized_count'], 3)
+        self.assertEqual(guidance['realized_count'], 6)
+
+    def test_build_contextual_recommendation_map_ignores_small_sample_cells(self):
+        analytics = {
+            'compound_divergent_action_matrix': [
+                {
+                    'recommended_action': 'monitor_and_nudge',
+                    'suggestion_window_stage': 'fresh',
+                    'signal_bucket': 'high_signal',
+                    'realized_action_kind': 'reactivation',
+                    'realized_count': 2,
+                    'success_rate': 100.0,
+                },
+            ]
+        }
+
+        contextual_map = build_contextual_recommendation_map(analytics)
+
+        self.assertEqual(contextual_map, {})
+
+    def _create_high_signal_student(self, *, full_name, phone):
+        student = Student.objects.create(full_name=full_name, phone=phone, status='active')
+        enrollment = Enrollment.objects.create(
+            student=student,
+            plan=self.plan,
+            start_date=self.today - timezone.timedelta(days=60),
+            end_date=self.today - timezone.timedelta(days=1),
+            status=EnrollmentStatus.EXPIRED,
+        )
+        Payment.objects.create(
+            student=student,
+            enrollment=enrollment,
+            due_date=self.today - timezone.timedelta(days=40),
+            amount='299.90',
+            status=PaymentStatus.PENDING,
+            method=PaymentMethod.PIX,
+        )
+        return student
+
+    @patch('catalog.finance_snapshot.ai.recommendation.resolve_high_signal_holdout', return_value=True)
+    def test_high_signal_holdout_gets_observation_instead_of_action(self, _mock_holdout):
+        student = self._create_high_signal_student(full_name='Duda Holdout', phone='5511910000050')
+
+        foundation = build_financial_churn_foundation(
+            students=Student.objects.filter(pk=student.pk),
+            payments=Payment.objects.all(),
+            enrollments=Enrollment.objects.all(),
+            today=self.today,
+        )
+
+        row = foundation['rows'][0]
+        self.assertEqual(row['signal_bucket'], 'high_signal')
+        self.assertTrue(row['is_holdout'])
+        self.assertEqual(row['recommended_action'], 'holdout_observe')
+        self.assertFalse(row['is_recommendation'])
+        self.assertIn('holdout_observation', row['reason_codes'])
+        self.assertEqual(row['priority_rank'], 4)
+        self.assertEqual(row['priority_label'], 'Observação controlada')
+        self.assertEqual(foundation['summary']['high_signal_count'], 1)
+        self.assertEqual(foundation['summary']['high_signal_holdout_count'], 1)
+        self.assertEqual(foundation['summary']['high_signal_treated_count'], 0)
+
+    @patch('catalog.finance_snapshot.ai.recommendation.resolve_high_signal_holdout', return_value=False)
+    def test_high_signal_non_holdout_keeps_action_recommendation(self, _mock_holdout):
+        student = self._create_high_signal_student(full_name='Duda Tratada', phone='5511910000051')
+
+        foundation = build_financial_churn_foundation(
+            students=Student.objects.filter(pk=student.pk),
+            payments=Payment.objects.all(),
+            enrollments=Enrollment.objects.all(),
+            today=self.today,
+        )
+
+        row = foundation['rows'][0]
+        self.assertEqual(row['signal_bucket'], 'high_signal')
+        self.assertFalse(row['is_holdout'])
+        self.assertEqual(row['recommended_action'], 'send_financial_followup')
+        self.assertTrue(row['is_recommendation'])
+        self.assertNotIn('holdout_observation', row['reason_codes'])
+        self.assertEqual(foundation['summary']['high_signal_holdout_count'], 0)
+        self.assertEqual(foundation['summary']['high_signal_treated_count'], 1)
 
     def test_financial_churn_foundation_exposes_contextual_guidance_on_queue_row(self):
         student = Student.objects.create(full_name='Wes Contexto', phone='5511910000043', status='active')
@@ -1898,3 +1980,36 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertEqual(row['turn_priority_tension_guidance']['tendency'], 'mixed')
         self.assertEqual(row['turn_priority_tension_guidance']['realized_count'], 2)
         self.assertIn('ainda não mostra lado dominante', row['turn_priority_tension_guidance']['note'])
+
+
+class ResolveHighSignalHoldoutTests(unittest.TestCase):
+    def test_is_deterministic_for_the_same_student(self):
+        from catalog.finance_snapshot.rules.holdout import resolve_high_signal_holdout
+
+        first_call = resolve_high_signal_holdout(student_id=4242)
+        second_call = resolve_high_signal_holdout(student_id=4242)
+        self.assertEqual(first_call, second_call)
+
+    def test_false_when_fraction_is_zero(self):
+        from catalog.finance_snapshot.rules.holdout import resolve_high_signal_holdout
+
+        for student_id in range(1, 50):
+            self.assertFalse(resolve_high_signal_holdout(student_id=student_id, holdout_fraction=0.0))
+
+    def test_false_when_student_id_is_missing(self):
+        from catalog.finance_snapshot.rules.holdout import resolve_high_signal_holdout
+
+        self.assertFalse(resolve_high_signal_holdout(student_id=None))
+
+    def test_selects_roughly_the_configured_fraction(self):
+        from catalog.finance_snapshot.rules.holdout import resolve_high_signal_holdout
+
+        sample_size = 2000
+        selected = sum(
+            1 for student_id in range(1, sample_size + 1)
+            if resolve_high_signal_holdout(student_id=student_id, holdout_fraction=0.1)
+        )
+        # Faixa larga de proposito: e um hash, nao uma amostragem controlada por
+        # semente; so queremos pegar um erro grosseiro de escala (ex: fracao
+        # aplicada em base 100 em vez de 1000).
+        self.assertTrue(150 <= selected <= 250, f'esperado ~10% de {sample_size}, obteve {selected}')
