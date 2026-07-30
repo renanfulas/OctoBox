@@ -195,6 +195,12 @@ LOGIN_REDIRECT_URL = 'role-operations'
 LOGOUT_REDIRECT_URL = 'login'
 OPERATIONS_MANAGER_WORKSPACE_ENABLED = env_bool('OPERATIONS_MANAGER_WORKSPACE_ENABLED', False)
 
+# Validade do link de recuperacao de senha da equipe (access/password_reset.py).
+# O default do Django e 3 dias — folgado demais para conta de staff, que abre
+# caixa, edita financeiro e mexe em cadastro de aluno. 30 minutos casa com o
+# SESSION_COOKIE_AGE logo abaixo: mesma ordem de grandeza de confianca.
+PASSWORD_RESET_TIMEOUT = env_int('PASSWORD_RESET_TIMEOUT', 1800)  # 30 minutos
+
 # 🚀 Segurança de Elite (Fintech Hardening): Session Lifecycle
 # Sessão expira em 30 minutos de inatividade para evitar sessões órfãs.
 SESSION_COOKIE_AGE = 1800  # 30 minutos
@@ -295,6 +301,11 @@ SHARED_APPS = [
 
     # Shared support (sem modelos de domínio)
     'shared_support.apps.SharedSupportConfig',
+
+    # Hub de rede cross-tenant: agregados anonimos de canal por cohort de
+    # box (Onda 8 do plano de ML de leads). So contagem, nunca dado
+    # individual de aluno/lead.
+    'intelligence_network.apps.IntelligenceNetworkConfig',
 
     # Índice de conhecimento do repositório (RAG interno). É conteúdo do REPO,
     # idêntico para todo box → vive no public, indexado UMA vez (não por tenant).
