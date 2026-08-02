@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#141414">
-<title>Juliana Alves — Quadríceps & Glúteo 4 Dias</title>
+<title>Juliana Alves — Pernas & Quadríceps 6 Semanas</title>
 <style>
 /* ══════════════════════════════════════════════
    BASE RESET — Safari iOS hardened
@@ -477,8 +477,8 @@ body.simplified .sets-tbl-wrap{display:none}
 
 <div class="header">
   <div class="prog-name">Juliana Alves</div>
-  <div class="prog-title">Programa Quadríceps & Glúteo — 4 Dias</div>
-  <div class="prog-sub">4 dias de musculação (Ter/Qua/Qui/Sáb) · Força e hipertrofia alternadas · 3 cardios na semana<br>Clique em cada exercício para assistir o vídeo no MuscleWiki ↗</div>
+  <div class="prog-title">Programa Pernas & Quadríceps — 6 Semanas</div>
+  <div class="prog-sub">6 dias · Superior 2× + ênfase forte em quadríceps/glúteo · 3 cardios na semana<br>Clique em cada exercício para assistir o vídeo no MuscleWiki ↗</div>
 </div>
 
 <div class="stats">
@@ -494,26 +494,26 @@ body.simplified .sets-tbl-wrap{display:none}
     <div class="gloss-item"><span class="gloss-term">RIR</span><span class="gloss-def">Repetições na Reserva — quantas reps sobravam antes da falha</span></div>
     <div class="gloss-item"><span class="gloss-term">AMRAP</span><span class="gloss-def">Até a falha — máximo de repetições com boa forma</span></div>
     <div class="gloss-item"><span class="gloss-term">Superset</span><span class="gloss-def">Dois exercícios emendados; descanso só depois do par</span></div>
-    <div class="gloss-item"><span class="gloss-term">RPE</span><span class="gloss-def">Esforço percebido de 1 a 10 (RPE 9 = quase falha)</span></div>
     <div class="gloss-item"><span class="gloss-term">ADM</span><span class="gloss-def">Amplitude de movimento — quanto o músculo estica e contrai</span></div>
     <div class="gloss-item"><span class="gloss-term">SFR</span><span class="gloss-def">Relação estímulo ÷ fadiga — alto SFR = mais resultado, menos desgaste</span></div>
+    <div class="gloss-item"><span class="gloss-term">Pré-exaustão</span><span class="gloss-def">Isolar o músculo antes do composto pra cansá-lo primeiro</span></div>
   </div>
 </div>
 
 <div class="legend">
   <div class="leg-item"><span class="st st-p">Preparatória</span> Ativação, custo zero de SNC</div>
   <div class="leg-item"><span class="st st-f">Feeder</span> RIR 4-5, calibra a carga</div>
-  <div class="leg-item"><span class="st st-t">Top Set</span> trabalho principal</div>
+  <div class="leg-item"><span class="st st-t">Top Set</span> RIR 1-2, trabalho principal</div>
   <div class="leg-item"><span class="st st-m">Max Set</span> AMRAP — até a falha técnica</div>
 </div>
 
 <div class="week">
-  <div class="dp rest" aria-label="Segunda — Descanso"><div class="dn">Seg</div><div class="dt">Rest</div></div>
-  <div class="dp active" onclick="goDay('ter',this)" role="button" aria-label="Terça — Quadríceps Força"><div class="dn">Ter</div><div class="dt">Quad Força</div></div>
-  <div class="dp" onclick="goDay('qua',this)" role="button" aria-label="Quarta — Superior Força"><div class="dn">Qua</div><div class="dt">Sup Força</div></div>
-  <div class="dp" onclick="goDay('qui',this)" role="button" aria-label="Quinta — Inferior Glúteo"><div class="dn">Qui</div><div class="dt">Glúteo</div></div>
-  <div class="dp rest" aria-label="Sexta — Descanso"><div class="dn">Sex</div><div class="dt">Rest</div></div>
-  <div class="dp" onclick="goDay('sab',this)" role="button" aria-label="Sábado — Superior Braço"><div class="dn">Sáb</div><div class="dt">Braço</div></div>
+  <div class="dp active" onclick="goDay('seg',this)" role="button" aria-label="Segunda — Superior A"><div class="dn">Seg</div><div class="dt">Sup A</div></div>
+  <div class="dp" onclick="goDay('ter',this)" role="button" aria-label="Terça — Quadríceps A"><div class="dn">Ter</div><div class="dt">Quad A</div></div>
+  <div class="dp" onclick="goDay('qua',this)" role="button" aria-label="Quarta — Posterior e Glúteo"><div class="dn">Qua</div><div class="dt">Glúteo</div></div>
+  <div class="dp" onclick="goDay('qui',this)" role="button" aria-label="Quinta — Superior B"><div class="dn">Qui</div><div class="dt">Sup B</div></div>
+  <div class="dp" onclick="goDay('sex',this)" role="button" aria-label="Sexta — Fullbody"><div class="dn">Sex</div><div class="dt">Full</div></div>
+  <div class="dp" onclick="goDay('sab',this)" role="button" aria-label="Sábado — Quadríceps B"><div class="dn">Sáb</div><div class="dt">Quad B</div></div>
   <div class="dp rest" aria-label="Domingo — Descanso"><div class="dn">Dom</div><div class="dt">Rest</div></div>
 </div>
 
@@ -524,41 +524,184 @@ body.simplified .sets-tbl-wrap{display:none}
 </div>
 
 <div id="tab-treino">
-
-<!-- ══════════════════════════════════════
-     TERÇA — Inferiores · Quadríceps (Força)
-     ══════════════════════════════════════ -->
-<div id="ter" class="session on">
+<div id="seg" class="session on">
   <div class="sess-hdr">
-    <div><div class="sess-title">Inferiores — Quadríceps</div><div class="sess-meta">Terça · ~58 min + 20 min bike leve · Quadríceps, Panturrilha, Core</div></div>
-    <span class="badge b-forca">Força</span>
+    <div><div class="sess-title">Superior A</div><div class="sess-meta">Segunda · ~60 min · Peito, Costas, Ombro, Braços · Bike HIIT pós-treino</div></div>
+    <span class="badge b-hiper">Superior</span>
   </div>
-
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">A1 · Peito — Compound</div>
+        <div class="ex-name">Supino com barra</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-bench-press" target="_blank" rel="noopener">Supino com halteres</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-bench-press" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Supino com barra</strong><div class="gym-reps">2× Prep → 3× Top (8-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/barbell-bench-press" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Desça controlado, cotovelos ~45-60° do tronco. Escápulas retraídas. Pega na largura confortável.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-p">Preparatória</span></td><td>2×</td><td>10 / 6</td><td>Leve → 70% · ativa o padrão</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-12</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+    <div class="tracker">
+      <div class="tracker-title"><span>⚖️</span> Registro de carga — Supino com barra (Top Set)</div>
+      <div class="tracker-grid">
+        <div class="wk-box"><div class="wk-label">Semana 1</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s1"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 2</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s2"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 3</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s3"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 4</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s4"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 5</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="seg-A1-s5"><div class="wk-unit">kg</div></div>
+      </div>
+      <div class="tracker-prog" id="prog-seg-A1"></div>
+      <div class="tracker-save"><button class="save-btn" onclick="saveTracker('seg-A1')">Salvar progressão</button><span class="save-msg" id="msg-seg-A1">✓ Salvo!</span></div>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">B1 · Costas — Largura</div>
+        <div class="ex-name">Puxador alto (pulldown)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-seated-cable-row" target="_blank" rel="noopener">Remada no cabo sentada</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-pulldown" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Puxador alto</strong><div class="gym-reps">3× Top (10-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-pulldown" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Puxa com os cotovelos em direção às costelas, não só pra baixo. Squeeze nas escápulas embaixo.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">C1 · Ombro anterior</div>
+        <div class="ex-name">Desenvolvimento com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/barbell-overhead-press" target="_blank" rel="noopener">Desenvolvimento com barra</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-overhead-press" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Desenvolvimento c/ halteres</strong><div class="gym-reps">3× Top (10-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-overhead-press" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Full ADM, desce os halteres na linha das orelhas. Não arqueia a lombar pra empurrar.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">D1 · Ombro medial</div>
+        <div class="ex-name">Elevação lateral com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-low-single-arm-lateral-raise" target="_blank" rel="noopener">Elevação lateral no cabo</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-lateral-raise" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Elevação lateral</strong><div class="gym-reps">3× Top (15-20)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-lateral-raise" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Sobe até a linha dos ombros, sem balanço. Cabo no alongamento é variação de alto SFR.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">E1 · Bíceps</div>
+        <div class="ex-name">Rosca direta com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-bar-curl" target="_blank" rel="noopener">Rosca no cabo</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-curl" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Rosca direta</strong><div class="gym-reps">3× Top (10-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-curl" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Cotovelos fixos, supinação completa no topo. Excêntrico controlado.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">F1 · Tríceps</div>
+        <div class="ex-name">Tríceps corda no pulldown</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-bar-pushdown" target="_blank" rel="noopener">Tríceps barra no pulldown</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-rope-pushdown" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Tríceps corda</strong><div class="gym-reps">3× Top (12-15)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/cable-rope-pushdown" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Abre a corda no fim para extensão total. Cotovelos colados ao tronco.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 1</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">Cardio · pós-treino</div><div class="ex-name">🚴 Bike HIIT — 15 min</div></div><span class="badge b-cardio">Após o treino</span></div>
+    <div class="ex-note">3 min pedalando forte / 1 min leve, repetindo por ~15 min (mais 2-3 min de aquecimento). Joga o gasto calórico pro alto sem roubar a recuperação das pernas.</div>
+  </div>
+</div><!-- /seg -->
+<div id="ter" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Quadríceps A</div><div class="sess-meta">Terça · ~55 min · Quadríceps + Panturrilha</div></div>
+    <span class="badge b-forca">Quads</span>
+  </div>
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
         <div class="ex-code">A1 · Quad — Compound</div>
-        <div class="ex-name">Agachamento livre com barra</div>
-        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-hack-squat" target="_blank" rel="noopener">Hack squat</a></div>
+        <div class="ex-name">Agachamento no Hack Squat</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank" rel="noopener">Leg press 45°</a><a class="var-link" href="https://musclewiki.com/exercise/barbell-squat" target="_blank" rel="noopener">Agachamento livre</a></div>
       </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-squat" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-hack-squat" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Agachamento livre</strong><div class="gym-reps">2× Prep → 1× Feeder → 4× Top (6-8) → 1× AMRAP</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/barbell-squat" target="_blank" rel="noopener">Ver ↗</a>
+      <div class="gym-summary"><strong>Hack Squat</strong><div class="gym-reps">2× Prep → 1× Feeder → 3× Top (6-8)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-hack-squat" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Desce abaixo do paralelo, tronco ereto, joelho segue a linha do pé. É o exercício mais pesado da semana — capricha no aquecimento.</div>
+    <div class="ex-note">Pés médios na plataforma. Profundidade abaixo do paralelo respeitando o joelho. Desce controlado, sobe com força.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-p">Preparatória</span></td><td>2×</td><td>8 / 5</td><td>50% → 75% do Top Set</td></tr>
-      <tr><td><span class="st st-f">Feeder</span></td><td>1×</td><td>8</td><td>RIR 4-5 · sente o padrão do dia</td></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>4×</td><td>6-8</td><td>RIR 1-2 · progressão semanal</td></tr>
-      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>Mesma carga do top set</td></tr>
+      <tr><td><span class="st st-p">Preparatória</span></td><td>2×</td><td>10 / 8</td><td>Leve → moderado</td></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1×</td><td>10</td><td>RIR 4 · sente o padrão</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>6-8</td><td>RIR 1-2</td></tr>
     </table>
     </div>
     <div class="tracker">
-      <div class="tracker-title"><span>⚖️</span> Registro de carga — Agachamento (Top Set)</div>
+      <div class="tracker-title"><span>⚖️</span> Registro de carga — Hack Squat (Top Set)</div>
       <div class="tracker-grid">
         <div class="wk-box"><div class="wk-label">Semana 1</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="ter-A1-s1"><div class="wk-unit">kg</div></div>
         <div class="wk-box"><div class="wk-label">Semana 2</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="ter-A1-s2"><div class="wk-unit">kg</div></div>
@@ -570,126 +713,98 @@ body.simplified .sets-tbl-wrap{display:none}
       <div class="tracker-save"><button class="save-btn" onclick="saveTracker('ter-A1')">Salvar progressão</button><span class="save-msg" id="msg-ter-A1">✓ Salvo!</span></div>
     </div>
   </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
         <div class="ex-code">B1 · Quad — Compound</div>
-        <div class="ex-name">Leg press 45° (pés baixos e fechados)</div>
+        <div class="ex-name">Leg press 45° (pés médios/baixos)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-hack-squat" target="_blank" rel="noopener">Hack Squat</a></div>
       </div>
       <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Leg press pés baixos</strong><div class="gym-reps">3× Top (8-10)</div></div>
+      <div class="gym-summary"><strong>Leg press 45°</strong><div class="gym-reps">3× Top (10-12)</div></div>
       <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Pés baixos e fechados na plataforma joga a ênfase pro quadríceps. Amplitude completa, sem tirar a lombar do encosto.</div>
+    <div class="ex-note">Pés mais baixos = mais quadríceps. Não trava o joelho no topo. Amplitude completa sem descolar o quadril.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-10</td><td>RIR 1-2</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
     </table>
     </div>
   </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
         <div class="ex-code">C1 · Quad — Isolamento</div>
-        <div class="ex-name">Cadeira extensora</div>
+        <div class="ex-name">Leg extension (cadeira extensora)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank" rel="noopener">Leg press pés baixos</a></div>
       </div>
       <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-leg-extension" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Cadeira extensora</strong><div class="gym-reps">3× Top (10-12) · pausa 1s no topo</div></div>
+      <div class="gym-summary"><strong>Leg extension</strong><div class="gym-reps">3× Top (12-15)</div></div>
       <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-leg-extension" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Único exercício que isola o quadríceps sem ajuda do glúteo. Pausa de 1s no topo — a tensão no pico é onde mora o estímulo.</div>
+    <div class="ex-note">Pausa 1s no topo, tensão no pico de extensão. Alto SFR — não precisa de carga máxima.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1 · pausa 1s no topo</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 0-1 · pausa 1s no topo</td></tr>
     </table>
     </div>
   </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
-        <div class="ex-code">D1 · Panturrilha — Gastrocnêmio</div>
+        <div class="ex-code">D1 · Panturrilha</div>
         <div class="ex-name">Panturrilha em pé (calf raise)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-horizontal-leg-press-calf-raise" target="_blank" rel="noopener">Panturrilha no leg press</a></div>
       </div>
       <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-standing-calf-raises" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Panturrilha em pé</strong><div class="gym-reps">4× Top (12-15) · pausa 2s embaixo</div></div>
+      <div class="gym-summary"><strong>Panturrilha em pé</strong><div class="gym-reps">3× Top (12-15)</div></div>
       <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-standing-calf-raises" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Amplitude completa é obrigatória — pausa 2s com o calcanhar abaixo da plataforma. Sem ADM completa o estímulo cai muito.</div>
+    <div class="ex-note">Full ADM: calcanhar bem abaixo, pausa 2s no fundo, contração no topo.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>4×</td><td>12-15</td><td>RIR 0-1 · pausa 2s embaixo</td></tr>
-    </table>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">E1 · Core — Isométrico</div>
-        <div class="ex-name">Prancha isométrica (antebraço)</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/forearm-plank" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Prancha isométrica</strong><div class="gym-reps">2× 60s</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/forearm-plank" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Corpo em linha reta da cabeça ao calcanhar, sem deixar o quadril cair ou subir. Fecha o treino ativando o core que estabilizou o agachamento.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Tempo</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>2×</td><td>60s</td><td>Isometria · sem pausa no meio</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 0-1 · pausa 2s no fundo</td></tr>
     </table>
     </div>
   </div>
 </div><!-- /ter -->
-
-<!-- ══════════════════════════════════════
-     QUARTA — Superiores (Força)
-     ══════════════════════════════════════ -->
 <div id="qua" class="session">
   <div class="sess-hdr">
-    <div><div class="sess-title">Superiores — Força</div><div class="sess-meta">Quarta · ~58 min + 10-15 min esteira HIIT · Peito, Costas, Ombro, Abdômen</div></div>
-    <span class="badge b-forca">Força</span>
+    <div><div class="sess-title">Posterior de coxa + Glúteo</div><div class="sess-meta">Quarta · ~60 min · Glúteo, posterior, glúteo médio</div></div>
+    <span class="badge b-hiper">Glúteo</span>
   </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
-        <div class="ex-code">A1 · Peito — Compound</div>
-        <div class="ex-name">Supino reto com barra</div>
-        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-bench-press" target="_blank" rel="noopener">Supino com halteres</a></div>
+        <div class="ex-code">A1 · Glúteo — Compound</div>
+        <div class="ex-name">Hip thrust (máquina ou barra)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-hip-thrust" target="_blank" rel="noopener">Hip thrust com halteres</a></div>
       </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-bench-press" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-hip-thrust" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Supino reto c/ barra</strong><div class="gym-reps">2× Prep → 1× Feeder → 4× Top (6-8) → 1× AMRAP</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/barbell-bench-press" target="_blank" rel="noopener">Ver ↗</a>
+      <div class="gym-summary"><strong>Hip thrust</strong><div class="gym-reps">1× Prep → 3-4× Top (8-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/barbell-hip-thrust" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Desce controlado 2-3s, cotovelos a ~60° do tronco. Não quica no peito — o alongamento é onde acontece o estímulo.</div>
+    <div class="ex-note">Queixo no peito, costelas pra baixo. Pausa 1s no topo com glúteo contraído. Empurra pelo calcanhar.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-p">Preparatória</span></td><td>2×</td><td>8 / 5</td><td>50% → 75% do Top Set</td></tr>
-      <tr><td><span class="st st-f">Feeder</span></td><td>1×</td><td>8</td><td>RIR 4-5</td></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>4×</td><td>6-8</td><td>RIR 1-2 · progressão semanal</td></tr>
-      <tr><td><span class="st st-m">Max Set</span></td><td>1×</td><td>AMRAP (até a falha)</td><td>Mesma carga do top set</td></tr>
+      <tr><td><span class="st st-p">Preparatória</span></td><td>1×</td><td>10</td><td>Leve · ativa o glúteo</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3-4×</td><td>8-12</td><td>RIR 1-2 · pausa 1s no topo</td></tr>
     </table>
     </div>
     <div class="tracker">
-      <div class="tracker-title"><span>⚖️</span> Registro de carga — Supino reto (Top Set)</div>
+      <div class="tracker-title"><span>⚖️</span> Registro de carga — Hip thrust (Top Set)</div>
       <div class="tracker-grid">
         <div class="wk-box"><div class="wk-label">Semana 1</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="qua-A1-s1"><div class="wk-unit">kg</div></div>
         <div class="wk-box"><div class="wk-label">Semana 2</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="qua-A1-s2"><div class="wk-unit">kg</div></div>
@@ -701,203 +816,54 @@ body.simplified .sets-tbl-wrap{display:none}
       <div class="tracker-save"><button class="save-btn" onclick="saveTracker('qua-A1')">Salvar progressão</button><span class="save-msg" id="msg-qua-A1">✓ Salvo!</span></div>
     </div>
   </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
-        <div class="ex-code">B1 · Costas — Largura</div>
-        <div class="ex-name">Puxador aberto na polia (pulldown)</div>
+        <div class="ex-code">B1 · Posterior — Compound</div>
+        <div class="ex-name">Stiff / RDL com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/barbell-romanian-deadlift" target="_blank" rel="noopener">RDL com barra</a></div>
       </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-pulldown" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-romanian-deadlift" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Puxador aberto</strong><div class="gym-reps">4× Top (6-8)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-pulldown" target="_blank" rel="noopener">Ver ↗</a>
+      <div class="gym-summary"><strong>Stiff / RDL halteres</strong><div class="gym-reps">3× Top (8-10)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-romanian-deadlift" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Peito estufado, puxa liderando com os cotovelos, não com as mãos. Controla a volta — não solta a barra.</div>
+    <div class="ex-note">Quadril pra trás, não pra baixo. Desce até sentir o alongamento no posterior — não force a lombar. Coluna neutra.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>4×</td><td>6-8</td><td>RIR 1-2</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-10</td><td>RIR 1-2 · foco no alongamento</td></tr>
     </table>
     </div>
   </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">C1 · Costas — Espessura</div>
-        <div class="ex-name">Remada sentada no cabo</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-seated-cable-row" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Remada sentada</strong><div class="gym-reps">3× Top (8-10) · pausa 1s</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-seated-cable-row" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Tronco fixo, quase 90°. Pausa 1s na contração, cotovelo para trás e não para cima.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-10</td><td>RIR 1-2 · pausa 1s</td></tr>
-    </table>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">D1 · Ombro anterior</div>
-        <div class="ex-name">Desenvolvimento sentado com halteres</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-seated-overhead-press" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Desenvolvimento sentado</strong><div class="gym-reps">3× Top (8-10)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-seated-overhead-press" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Amplitude completa — desce até os halteres na linha das orelhas. Encosto reto pra não vazar carga pra lombar.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-10</td><td>RIR 1-2</td></tr>
-    </table>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">E1 · Abdômen — Superior</div>
-        <div class="ex-name">Abdominal supra (crunch)</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/crunches" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Abdominal supra</strong><div class="gym-reps">3× 15-20</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/crunches" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Sobe só até a escápula descolar do chão — não precisa sentar completo. Contrai e segura 1s no topo.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1 · pausa 1s no topo</td></tr>
-    </table>
-    </div>
-  </div>
-</div><!-- /qua -->
-
-<!-- ══════════════════════════════════════
-     QUINTA — Inferiores · Posterior/Glúteo (Hipertrofia)
-     ══════════════════════════════════════ -->
-<div id="qui" class="session">
-  <div class="sess-hdr">
-    <div><div class="sess-title">Inferiores — Posterior & Glúteo</div><div class="sess-meta">Quinta · ~58 min · Posterior de coxa, Glúteo, Quadríceps</div></div>
-    <span class="badge b-hiper">Hipertrofia</span>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">A1 · Posterior — Compound</div>
-        <div class="ex-name">Levantamento terra (deadlift) com barra</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-deadlift" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Levantamento terra</strong><div class="gym-reps">3× Top (8-10)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/barbell-deadlift" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Barra raspando a canela, quadril sobe junto com o peito — nunca o quadril primeiro. Reps mais baixas que o resto do dia: é um levantamento técnico, prioriza a forma.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-10</td><td>RIR 1-2</td></tr>
-    </table>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">B1 · Glúteo — Compound</div>
-        <div class="ex-name">Hip thrust com barra</div>
-        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-hip-thrust" target="_blank" rel="noopener">Hip thrust com halteres</a></div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-hip-thrust" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Hip thrust c/ barra</strong><div class="gym-reps">4× Top (10-12) · pausa 2s no topo</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/barbell-hip-thrust" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Contração isométrica de 2s no topo, queixo no peito pra neutralizar a lombar. O principal exercício de glúteo da semana.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>4×</td><td>10-12</td><td>RIR 1 · pausa 2s no topo</td></tr>
-    </table>
-    </div>
-    <div class="tracker">
-      <div class="tracker-title"><span>⚖️</span> Registro de carga — Hip thrust (Top Set)</div>
-      <div class="tracker-grid">
-        <div class="wk-box"><div class="wk-label">Semana 1</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="qui-B1-s1"><div class="wk-unit">kg</div></div>
-        <div class="wk-box"><div class="wk-label">Semana 2</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="qui-B1-s2"><div class="wk-unit">kg</div></div>
-        <div class="wk-box"><div class="wk-label">Semana 3</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="qui-B1-s3"><div class="wk-unit">kg</div></div>
-        <div class="wk-box"><div class="wk-label">Semana 4</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="qui-B1-s4"><div class="wk-unit">kg</div></div>
-        <div class="wk-box"><div class="wk-label">Semana 5</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="qui-B1-s5"><div class="wk-unit">kg</div></div>
-      </div>
-      <div class="tracker-prog" id="prog-qui-B1"></div>
-      <div class="tracker-save"><button class="save-btn" onclick="saveTracker('qui-B1')">Salvar progressão</button><span class="save-msg" id="msg-qui-B1">✓ Salvo!</span></div>
-    </div>
-  </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
         <div class="ex-code">C1 · Posterior — Isolamento</div>
-        <div class="ex-name">Cadeira flexora sentada (leg curl)</div>
+        <div class="ex-name">Leg curl deitado</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-seated-leg-curl" target="_blank" rel="noopener">Leg curl sentado</a></div>
       </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-seated-leg-curl" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-hamstring-curl" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Cadeira flexora</strong><div class="gym-reps">3× Top (12-15)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-seated-leg-curl" target="_blank" rel="noopener">Ver ↗</a>
+      <div class="gym-summary"><strong>Leg curl deitado</strong><div class="gym-reps">3× Top (10-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-hamstring-curl" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Complementa o stiff isolando o posterior sem o glúteo entrar tanto. Pausa curta na contração máxima.</div>
+    <div class="ex-note">Excêntrico 3s. Quadril estendido = bíceps femoral no comprimento total. Myo-reps são ótimos aqui.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 1</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 0-1</td></tr>
     </table>
     </div>
   </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
-        <div class="ex-code">D1 · Quad — Isolamento</div>
-        <div class="ex-name">Cadeira extensora</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-leg-extension" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Cadeira extensora</strong><div class="gym-reps">4-5× Top (12-15)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-leg-extension" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Volume extra de quadríceps na semana, sem o desgaste articular do agachamento. Pausa 1s no topo em cada série.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>4-5×</td><td>12-15</td><td>RIR 0-1 · pausa 1s no topo</td></tr>
-    </table>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">E1 · Glúteo médio — Isolamento</div>
+        <div class="ex-code">D1 · Glúteo médio</div>
         <div class="ex-name">Abdução de quadril na máquina</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-standing-hip-abduction" target="_blank" rel="noopener">Abdução no cabo</a></div>
       </div>
       <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-hip-abduction" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
@@ -905,7 +871,28 @@ body.simplified .sets-tbl-wrap{display:none}
       <div class="gym-summary"><strong>Abdução de quadril</strong><div class="gym-reps">3× Top (15-20)</div></div>
       <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-hip-abduction" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Foca o glúteo médio — dá o "arredondado" lateral. Reps altas, controla a volta em vez de deixar cair. Fecha o treino, isolado e sem carga pesada.</div>
+    <div class="ex-note">Pausa 1s na abertura. Glúteo médio dá largura ao quadril e estabiliza a pelve — essencial pro shape.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1 · pausa 1s na abertura</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">E1 · Panturrilha — Sóleo</div>
+        <div class="ex-name">Panturrilha sentado</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-standing-calf-raises" target="_blank" rel="noopener">Panturrilha em pé</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-seated-calf-raises" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Panturrilha sentado</strong><div class="gym-reps">3× Top (15-20)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-seated-calf-raises" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Joelho dobrado ativa o sóleo. Complementa o gastrocnêmio da terça. Full ADM.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
@@ -913,190 +900,68 @@ body.simplified .sets-tbl-wrap{display:none}
     </table>
     </div>
   </div>
-</div><!-- /qui -->
-
-<!-- ══════════════════════════════════════
-     SÁBADO — Superiores · Braço (Hipertrofia)
-     ══════════════════════════════════════ -->
-<div id="sab" class="session">
+</div><!-- /qua -->
+<div id="qui" class="session">
   <div class="sess-hdr">
-    <div><div class="sess-title">Superiores — Braço</div><div class="sess-meta">Sábado · ~60 min + 20-30 min cardio pesado · Costas, Peito, Bíceps, Tríceps, Ombro medial</div></div>
-    <span class="badge b-hiper">Hipertrofia</span>
+    <div><div class="sess-title">Superior B — Peito + Ombro + Braços</div><div class="sess-meta">Quinta · ~55 min · Peito, ombro medial, 2× bíceps, 2× tríceps</div></div>
+    <span class="badge b-hiper">Superior</span>
   </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
-        <div class="ex-code">SUPERSET A · A1 — Costas</div>
-        <div class="ex-name">Remada curvada com barra</div>
+        <div class="ex-code">A1 · Peito — Isolamento</div>
+        <div class="ex-name">Crucifixo na máquina (peck deck)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-pec-fly" target="_blank" rel="noopener">Crucifixo no cabo</a></div>
       </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-bent-over-row" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-bent-arm-pec-fly" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Remada curvada (SS A1)</strong><div class="gym-reps">3× Top (10-12) → emenda A2</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/barbell-bent-over-row" target="_blank" rel="noopener">Ver ↗</a>
+      <div class="gym-summary"><strong>Crucifixo na máquina</strong><div class="gym-reps">3× Top (10-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-bent-arm-pec-fly" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Tronco ~45°, cotovelo pra trás puxando com as costas. Faça A1 e emenda direto no A2 — descanso só depois do par completo.</div>
+    <div class="ex-note">Tensão constante no arco. Contração 1s no fechamento. Alto SFR, fácil de controlar.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2 · contração 1s</td></tr>
     </table>
     </div>
   </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
-        <div class="ex-code">SUPERSET A · A2 — Peito</div>
-        <div class="ex-name">Flexão de braço</div>
+        <div class="ex-code">B1 · Ombro medial</div>
+        <div class="ex-name">Elevação lateral no cabo</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-lateral-raise" target="_blank" rel="noopener">Elevação lateral com halteres</a></div>
       </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/push-up" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-low-single-arm-lateral-raise" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Flexão de braço (SS A2)</strong><div class="gym-reps">3× AMRAP → descanso 60-90s</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/push-up" target="_blank" rel="noopener">Ver ↗</a>
+      <div class="gym-summary"><strong>Elevação lateral no cabo</strong><div class="gym-reps">3× Top (15-20)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/cable-low-single-arm-lateral-raise" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Corpo reto da cabeça aos pés, desce até o peito quase tocar o chão. AMRAP até a falha técnica — descanso 60-90s só depois do par completo (A1 + A2).</div>
+    <div class="ex-note">Cabo atrás do corpo = tensão no alongamento onde o halter perde torque. Sem swing.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-m">Max Set</span></td><td>3×</td><td>AMRAP</td><td>Até falha técnica · forma sempre prioridade</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1</td></tr>
     </table>
     </div>
   </div>
-
   <div class="ex">
     <div class="ex-top">
       <div class="ex-left">
-        <div class="ex-code">B1 · Bíceps — Compound</div>
-        <div class="ex-name">Rosca direta na barra do cabo</div>
+        <div class="ex-code">C1 · Bíceps</div>
+        <div class="ex-name">Rosca no cabo</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-curl" target="_blank" rel="noopener">Rosca direta com halteres</a></div>
       </div>
       <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-bar-curl" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
     </div>
     <div class="gym-card">
-      <div class="gym-summary"><strong>Rosca direta no cabo</strong><div class="gym-reps">3× Top (10-12)</div></div>
+      <div class="gym-summary"><strong>Rosca no cabo</strong><div class="gym-reps">3× Top (12-15)</div></div>
       <a class="gym-wiki" href="https://musclewiki.com/exercise/cable-bar-curl" target="_blank" rel="noopener">Ver ↗</a>
     </div>
-    <div class="ex-note">Cabo mantém tensão constante do início ao fim, diferente do halter. Cotovelo fixo ao lado do corpo, sem balançar o tronco.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
-    </table>
-    </div>
-    <div class="tracker">
-      <div class="tracker-title"><span>⚖️</span> Registro de carga — Rosca direta cabo (Top Set)</div>
-      <div class="tracker-grid">
-        <div class="wk-box"><div class="wk-label">Semana 1</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="1" data-key="sab-B1-s1"><div class="wk-unit">kg</div></div>
-        <div class="wk-box"><div class="wk-label">Semana 2</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="1" data-key="sab-B1-s2"><div class="wk-unit">kg</div></div>
-        <div class="wk-box"><div class="wk-label">Semana 3</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="1" data-key="sab-B1-s3"><div class="wk-unit">kg</div></div>
-        <div class="wk-box"><div class="wk-label">Semana 4</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="1" data-key="sab-B1-s4"><div class="wk-unit">kg</div></div>
-        <div class="wk-box"><div class="wk-label">Semana 5</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="1" data-key="sab-B1-s5"><div class="wk-unit">kg</div></div>
-      </div>
-      <div class="tracker-prog" id="prog-sab-B1"></div>
-      <div class="tracker-save"><button class="save-btn" onclick="saveTracker('sab-B1')">Salvar progressão</button><span class="save-msg" id="msg-sab-B1">✓ Salvo!</span></div>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">C1 · Bíceps — Braquial</div>
-        <div class="ex-name">Rosca martelo inclinada com halteres</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-incline-hammer-curl" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Rosca martelo inclinada</strong><div class="gym-reps">3× Top (10-12)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-incline-hammer-curl" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Banco inclinado joga o ombro para trás, alongando mais o bíceps no início do movimento — mais estímulo na cabeça longa.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1</td></tr>
-    </table>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">D1 · Bíceps — Finisher</div>
-        <div class="ex-name">Rosca Scott com halteres</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-preacher-curl" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Rosca Scott</strong><div class="gym-reps">2× Top (12-15)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-preacher-curl" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">O banco trava o cotovelo e tira o balanço do corpo — isolamento puro pra fechar o bíceps no fim do dia.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>2×</td><td>12-15</td><td>RIR 0-1</td></tr>
-    </table>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">E1 · Tríceps — Compound</div>
-        <div class="ex-name">Tríceps corda no cabo</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-rope-pushdown" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Tríceps corda</strong><div class="gym-reps">3× Top (10-12)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/cable-rope-pushdown" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Cotovelo colado ao corpo, abre a corda no fim do movimento pra ativar a cabeça lateral do tríceps.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
-    </table>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">F1 · Tríceps — Testa</div>
-        <div class="ex-name">Tríceps testa com halteres</div>
-        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-rope-skullcrusher" target="_blank" rel="noopener">Testa com corda no cabo</a></div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-skullcrusher" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Tríceps testa</strong><div class="gym-reps">3× Top (10-12)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-skullcrusher" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Cotovelos apontando pro teto e fixos — só o antebraço se move. Trabalha a cabeça longa, a maior das três.</div>
-    <div class="sets-tbl-wrap">
-    <table class="sets-tbl">
-      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
-      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1</td></tr>
-    </table>
-    </div>
-  </div>
-
-  <div class="ex">
-    <div class="ex-top">
-      <div class="ex-left">
-        <div class="ex-code">G1 · Ombro medial</div>
-        <div class="ex-name">Elevação lateral com halteres</div>
-      </div>
-      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-lateral-raise" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
-    </div>
-    <div class="gym-card">
-      <div class="gym-summary"><strong>Elevação lateral</strong><div class="gym-reps">3× Top (12-15)</div></div>
-      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-lateral-raise" target="_blank" rel="noopener">Ver ↗</a>
-    </div>
-    <div class="ex-note">Leve flexão no cotovelo, sobe até a linha do ombro sem usar impulso do tronco. Controla a descida — é onde a maior parte do estímulo acontece.</div>
+    <div class="ex-note">Tensão constante do início ao fim. Cotovelos fixos.</div>
     <div class="sets-tbl-wrap">
     <table class="sets-tbl">
       <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
@@ -1104,46 +969,402 @@ body.simplified .sets-tbl-wrap{display:none}
     </table>
     </div>
   </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">C2 · Bíceps — Braquial</div>
+        <div class="ex-name">Rosca martelo com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-curl" target="_blank" rel="noopener">Rosca alternada</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-hammer-curl" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Rosca martelo</strong><div class="gym-reps">3× Top (10-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-hammer-curl" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Pega neutra (polegar pra cima). Trabalha braquial e braquiorradial — dá densidade ao braço.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">D1 · Tríceps — Cabeça longa</div>
+        <div class="ex-name">Tríceps testa (ou francês no cabo)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-rope-skullcrusher" target="_blank" rel="noopener">Tríceps francês no cabo</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-skullcrusher" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Tríceps testa</strong><div class="gym-reps">3× Top (10-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-skullcrusher" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Cotovelo apontado pro teto. Carrega a cabeça longa no alongamento.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">D2 · Tríceps — Cabo</div>
+        <div class="ex-name">Tríceps corda no pulldown</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-bar-pushdown" target="_blank" rel="noopener">Tríceps barra no pulldown</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-rope-pushdown" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Tríceps corda</strong><div class="gym-reps">3× Top (12-15)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/cable-rope-pushdown" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Abre a corda no fim. Cotovelos colados ao tronco.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 1</td></tr>
+    </table>
+    </div>
+  </div>
+</div><!-- /qui -->
+<div id="sex" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Fullbody (Agonista/Antagonista)</div><div class="sess-meta">Sexta · ~60 min · Superior em superset + pernas com pré-exaustão · Escada pós-treino</div></div>
+    <span class="badge b-forca">Fullbody</span>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">SUPERSET A · A1 — Costas</div>
+        <div class="ex-name">Remada no cabo sentada</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-pulldown" target="_blank" rel="noopener">Pulldown</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-seated-cable-row" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Remada cabo (SS A1)</strong><div class="gym-reps">3× Top (10-12) → emenda A2</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-seated-cable-row" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Faça A1 e emenda direto no A2. Descanso 60-90s só depois do par completo. Agonista-antagonista = pouca fadiga sistêmica, alta eficiência.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">SUPERSET A · A2 — Peito</div>
+        <div class="ex-name">Flexão de braços com joelho apoiado</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/incline-push-up" target="_blank" rel="noopener">Flexão joelho com inclinação (banco)</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/bodyweight-incline-knee-push-up" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Flexão joelho (SS A2)</strong><div class="gym-reps">3× AMRAP → descanso 60-90s</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/bodyweight-incline-knee-push-up" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Joelhos no chão, corpo reto da cabeça aos joelhos (não cair de quadril). Desce até o peito quase tocar. AMRAP — até a falha técnica.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-m">Max Set</span></td><td>3×</td><td>AMRAP</td><td>Até falha técnica · forma sempre prioridade</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">SUPERSET B · B1 — Bíceps</div>
+        <div class="ex-name">Rosca direta com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-bar-curl" target="_blank" rel="noopener">Rosca no cabo</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-curl" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Rosca halteres (SS B1)</strong><div class="gym-reps">3× Top (12-15) → emenda B2</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-curl" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Cotovelos fixos, supinação no topo. Emenda direto no B2 (sem pausa).</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">SUPERSET B · B2 — Tríceps</div>
+        <div class="ex-name">Tríceps corda no pulldown</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-bar-pushdown" target="_blank" rel="noopener">Tríceps na máquina/barra</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-rope-pushdown" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Tríceps corda (SS B2)</strong><div class="gym-reps">3× Top (12-15) → descanso 60-90s</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/cable-rope-pushdown" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Abre a corda no final. Descanso 60-90s só depois do par completo (B1 + B2).</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">C1 · Quad — Pré-exaustão</div>
+        <div class="ex-name">Leg extension (cadeira extensora)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank" rel="noopener">Leg press pés baixos</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-leg-extension" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Leg extension (pré-exaustão)</strong><div class="gym-reps">2-3× Top (12-15)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-leg-extension" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Pré-exausta o quadríceps antes do búlgaro — assim ele recruta mais glúteo com menos carga, poupando o joelho.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>2-3×</td><td>12-15</td><td>RIR 1 · pausa 1s no topo</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">C2 · Quad + Glúteo unilateral</div>
+        <div class="ex-name">Afundo Búlgaro com halteres</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-goblet-bulgarian-split-squat" target="_blank" rel="noopener">Búlgaro goblet</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-bulgarian-split-squat" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Búlgaro c/ halteres</strong><div class="gym-reps">2× Top (10-12) cada perna</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-bulgarian-split-squat" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Cues de joelho: pé da frente mais à frente · tronco levemente inclinado pra frente · sem elevar o calcanhar · controle total da descida. Vira mais glúteo, menos joelho.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>2×</td><td>10-12 cada perna</td><td>RIR 1-2 · cues acima</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">D1 · Glúteo — Isolamento</div>
+        <div class="ex-name">Coice no cabo (glute kickback)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-glute-kickback" target="_blank" rel="noopener">Coice na máquina</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/cable-standing-mid-kickback" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Coice no cabo</strong><div class="gym-reps">3× Top (12-15) cada lado</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/cable-standing-mid-kickback" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Cabo no tornozelo, perna estendendo pra trás. Pausa 1s na contração — sente o glúteo. Tronco estável, sem balanço de lombar.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15 cada lado</td><td>RIR 0-1 · pausa 1s</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">E1 · Glúteo médio</div>
+        <div class="ex-name">Abdução de quadril na máquina</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/cable-standing-hip-abduction" target="_blank" rel="noopener">Abdução no cabo</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-hip-abduction" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Abdução de quadril</strong><div class="gym-reps">3× Top (15-20)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-hip-abduction" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Pausa 1s na abertura. Largura do quadril e estabilidade de pelve.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1 · pausa 1s na abertura</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">F1 · Adutor</div>
+        <div class="ex-name">Adução de quadril na máquina</div>
+        
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-hip-adduction" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Adução de quadril</strong><div class="gym-reps">3× Top (15-20)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-hip-adduction" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Adutor é cronicamente subtreinado em mulheres. Fecha as pernas com controle, segura 1s no fechamento.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1 · pausa 1s no fechamento</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">Cardio · pós-treino</div><div class="ex-name">🪜 Escada (stairmaster) — 20 min</div></div><span class="badge b-cardio">Após o treino</span></div>
+    <div class="ex-note">20 min em ritmo moderado contínuo. Cardio que casa com dia de glúteo/perna e adiciona gasto sem impacto articular.</div>
+  </div>
+</div><!-- /sex -->
+<div id="sab" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Quadríceps B</div><div class="sess-meta">Sábado · ~55 min · Quadríceps (variação da terça)</div></div>
+    <span class="badge b-forca">Quads</span>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">A1 · Quad — Compound</div>
+        <div class="ex-name">Agachamento (Smith ou livre)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-hack-squat" target="_blank" rel="noopener">Hack Squat (pés baixos)</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-squat" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Agachamento</strong><div class="gym-reps">2× Prep → 3× Top (8-12)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/barbell-squat" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Variação do dia de quad da terça (não cópia). No Smith é mais estável pra carregar com segurança. Profundidade abaixo do paralelo.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-p">Preparatória</span></td><td>2×</td><td>10 / 8</td><td>Leve → moderado</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>8-12</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+    <div class="tracker">
+      <div class="tracker-title"><span>⚖️</span> Registro de carga — Agachamento (Top Set)</div>
+      <div class="tracker-grid">
+        <div class="wk-box"><div class="wk-label">Semana 1</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="sab-A1-s1"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 2</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="sab-A1-s2"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 3</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="sab-A1-s3"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 4</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="sab-A1-s4"><div class="wk-unit">kg</div></div>
+        <div class="wk-box"><div class="wk-label">Semana 5</div><input class="wk-input" type="number" inputmode="decimal" placeholder="kg" min="0" step="2.5" data-key="sab-A1-s5"><div class="wk-unit">kg</div></div>
+      </div>
+      <div class="tracker-prog" id="prog-sab-A1"></div>
+      <div class="tracker-save"><button class="save-btn" onclick="saveTracker('sab-A1')">Salvar progressão</button><span class="save-msg" id="msg-sab-A1">✓ Salvo!</span></div>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">B1 · Quad + Glúteo</div>
+        <div class="ex-name">Afundo com halteres (passada/reverso)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-bulgarian-split-squat" target="_blank" rel="noopener">Afundo búlgaro</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/dumbbell-reverse-lunge" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Afundo com halteres</strong><div class="gym-reps">3× Top (10-12) cada perna</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/dumbbell-reverse-lunge" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Afundo reverso é mais amigo do joelho que a passada à frente. Tronco levemente à frente recruta mais glúteo.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>10-12 cada perna</td><td>RIR 1-2</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">C1 · Quad — Compound</div>
+        <div class="ex-name">Leg press 45° (pés baixos)</div>
+        <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-hack-squat" target="_blank" rel="noopener">Hack Squat</a></div>
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Leg press pés baixos</strong><div class="gym-reps">3× Top (12-15)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Pés baixos joga a ênfase no quadríceps. Amplitude completa, sem travar o joelho no topo.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>12-15</td><td>RIR 1</td></tr>
+    </table>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-top">
+      <div class="ex-left">
+        <div class="ex-code">D1 · Quad — Isolamento</div>
+        <div class="ex-name">Leg extension (cadeira extensora)</div>
+        
+      </div>
+      <a class="wiki-btn" href="https://musclewiki.com/exercise/machine-leg-extension" target="_blank" rel="noopener">Ver no MuscleWiki ↗</a>
+    </div>
+    <div class="gym-card">
+      <div class="gym-summary"><strong>Leg extension</strong><div class="gym-reps">3× Top (15-20)</div></div>
+      <a class="gym-wiki" href="https://musclewiki.com/exercise/machine-leg-extension" target="_blank" rel="noopener">Ver ↗</a>
+    </div>
+    <div class="ex-note">Fechamento do quadríceps. Myo-reps opcionais pra esticar o estímulo com pouca carga.</div>
+    <div class="sets-tbl-wrap">
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Séries</th><th>Reps</th><th>Intensidade / Nota</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3×</td><td>15-20</td><td>RIR 0-1 · myo-reps opcional</td></tr>
+    </table>
+    </div>
+  </div>
 </div><!-- /sab -->
-
 </div><!-- /tab-treino -->
 
-<!-- ═══════════════════════════════════════════════════════
-     TAB CARDIO
-     ═══════════════════════════════════════════════════════ -->
 <div id="tab-cardio" style="display:none">
-  <div style="display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:8px;margin-bottom:1.1rem;-webkit-flex-wrap:wrap;flex-wrap:wrap">
+  <div style="display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:8px;margin-bottom:1rem;-webkit-flex-wrap:wrap;flex-wrap:wrap">
     <div style="font-size:15px;font-weight:700">Cardio da semana</div>
     <span class="badge b-cardio" style="font-size:12px;padding:5px 14px">3 sessões</span>
   </div>
   <div class="c-card">
-    <div class="c-head">Bike leve <span class="km-badge">Terça · pós-treino</span></div>
+    <div class="c-head">Bike HIIT <span class="km-badge">Segunda · pós-treino</span></div>
+    <div class="c-row"><span class="c-lbl">Protocolo</span><span>3 min pedalando forte / 1 min leve</span></div>
+    <div class="c-row"><span class="c-lbl">Duração</span><span>~15 min (≈ 3 ciclos) + 2-3 min de aquecimento</span></div>
+    <div class="c-row"><span class="c-lbl">Esforço no forte</span><span>RPE 8-9 · pedala pesado</span></div>
+    <div class="c-note">Feito depois da musculação pra não pré-fatigar as pernas. Ótimo pra gasto calórico e condicionamento.</div>
+  </div>
+  <div class="c-card">
+    <div class="c-head">Escada / Stairmaster <span class="km-badge">Sexta · pós-treino</span></div>
     <div class="c-row"><span class="c-lbl">Duração</span><span>20 min contínuos</span></div>
-    <div class="c-row"><span class="c-lbl">Resistência</span><span>Peso/carga médio da bike</span></div>
-    <div class="c-row"><span class="c-lbl">Esforço</span><span>RPE 3-4 · leve, conversa fácil</span></div>
-    <div class="c-row"><span class="c-lbl">FC alvo</span><span>110-130 bpm</span></div>
-    <div class="c-note">Feito depois do treino de quadríceps mais pesado da semana. Carga média mantém algum estímulo cardiovascular sem comprometer a recuperação das pernas.</div>
+    <div class="c-row"><span class="c-lbl">Ritmo</span><span>moderado · RPE 5-6 (consegue conversar com esforço)</span></div>
+    <div class="c-row"><span class="c-lbl">Bônus</span><span>recruta glúteo e quadril — casa com o dia</span></div>
+    <div class="c-note">Baixo impacto articular. Mantém o tronco ereto, sem se pendurar no corrimão.</div>
   </div>
   <div class="c-card">
-    <div class="c-head">Esteira HIIT <span class="km-badge">Quarta · pós-treino</span></div>
-    <div class="c-row"><span class="c-lbl">Protocolo</span><span>Corre 2 min / anda 1:30 (intervalado)</span></div>
-    <div class="c-row"><span class="c-lbl">Duração</span><span>10-15 min total</span></div>
-    <div class="c-row"><span class="c-lbl">Esforço na corrida</span><span>RPE 7-8</span></div>
-    <div class="c-row"><span class="c-lbl">Esforço na caminhada</span><span>RPE 3 · recuperação ativa</span></div>
-    <div class="c-note">Intensidade média-alta, mais curta que o cardio de sábado. Fica entre o dia leve de terça e o pesado de sábado — intervalado ajuda a sustentar o RPE 7-8 sem esgotar.</div>
-  </div>
-  <div class="c-card">
-    <div class="c-head">Escada ou corrida contínua <span class="km-badge">Sábado · pesado</span></div>
-    <div class="c-row"><span class="c-lbl">Opção 1</span><span>Escada (stairmaster) · 20-30 min</span></div>
-    <div class="c-row"><span class="c-lbl">Opção 2</span><span>Corrida contínua na esteira · 20-30 min</span></div>
-    <div class="c-row"><span class="c-lbl">Esforço</span><span>RPE 7-8 · o mais puxado da semana</span></div>
-    <div class="c-note">Sábado é dia de braço — pernas descansadas permitem intensidade alta no cardio sem prejudicar o treino de força de terça ou quarta.</div>
+    <div class="c-head">Cardio contínuo leve/moderado <span class="km-badge">1×/sem · livre</span></div>
+    <div class="c-row"><span class="c-lbl">Duração</span><span>30-40 min</span></div>
+    <div class="c-row"><span class="c-lbl">Ritmo</span><span>Zona 2 · RPE 4-6 · conversa possível</span></div>
+    <div class="c-row"><span class="c-lbl">Quando</span><span>sugerido no domingo (recuperação ativa) — ou onde encaixar</span></div>
+    <div class="c-note">Esteira, bike ou caminhada inclinada. Base aeróbica e recuperação, sem competir com a musculação.</div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     TAB PERIODIZAÇÃO
-     ═══════════════════════════════════════════════════════ -->
 <div id="tab-period" style="display:none">
   <div class="period-chart">
     <div class="chart-title">Progressão de carga e intensidade ao longo do mesociclo</div>
@@ -1158,28 +1379,27 @@ body.simplified .sets-tbl-wrap{display:none}
   <div class="period-tbl">
     <table>
       <tr><th>Semana</th><th>Foco</th><th>Reps (top sets)</th><th>Diretriz de carga</th></tr>
-      <tr><td><strong>Semana 1</strong></td><td>Adaptação</td><td>Teto da faixa</td><td>Carga base — referência do ciclo</td></tr>
-      <tr><td><strong>Semana 2</strong></td><td>Volume</td><td>Meio da faixa</td><td>+2,5 kg (força) / +1-2 kg (braço) vs. Semana 1</td></tr>
-      <tr><td><strong>Semana 3</strong></td><td>Força-Hiper</td><td>Meio da faixa</td><td>+2,5 kg vs. Semana 2</td></tr>
-      <tr><td><strong>Semana 4</strong></td><td>Intensidade</td><td>Piso da faixa</td><td>+2,5-5 kg vs. Semana 3 · RIR 1</td></tr>
-      <tr><td><strong>Semana 5</strong></td><td>Pico</td><td>Piso da faixa</td><td>Melhor desempenho do ciclo</td></tr>
+      <tr><td><strong>Semana 1</strong></td><td>Adaptação</td><td>12-15 reps</td><td>Aprende o padrão · carga leve/moderada</td></tr>
+      <tr><td><strong>Semana 2</strong></td><td>Volume</td><td>10-12 reps</td><td>+ carga mantendo a técnica</td></tr>
+      <tr><td><strong>Semana 3</strong></td><td>Força-Hiper</td><td>10-12 reps</td><td>+2,5 kg vs. Semana 2</td></tr>
+      <tr><td><strong>Semana 4</strong></td><td>Intensidade</td><td>8-10 reps</td><td>+ carga · RIR 1-2</td></tr>
+      <tr><td><strong>Semana 5</strong></td><td>Pico</td><td>8-10 reps</td><td>Melhor desempenho do ciclo</td></tr>
       <tr class="deload-row"><td><strong>Semana 6</strong></td><td>DELOAD 🟢</td><td>Livre</td><td>50% volume · 70-80% intensidade</td></tr>
     </table>
   </div>
-  <div class="vnote">Terça e quarta (dias de força) usam a Preparatória → Feeder → Top → Max com faixa de 6-8 reps — a carga é o que progride. Quinta e sábado (dias de hipertrofia) ficam em torno de 10-15 reps o ciclo inteiro — quem progride é a carga dentro da mesma faixa de repetição, não a repetição em si. Deload na Semana 6 não é fraqueza — é onde o crescimento se consolida.</div>
+  <div class="vnote">Progressão simples e consistente: aprende o movimento, ganha carga semana a semana mantendo a técnica, e descarrega na Semana 6. Para iniciante/intermediária, consistência bate complexidade — o segredo é registrar a carga e bater (ou superar) na semana seguinte.</div>
   <table class="vol-tbl">
     <tr><th>Grupo muscular</th><th>Séries/sem</th><th>Frequência</th><th>Onde</th></tr>
-    <tr><td>Quadríceps</td><td>14-17</td><td>2×/sem</td><td>Terça + Cadeira extensora (Quinta)</td></tr>
-    <tr><td>Glúteo</td><td>10-13</td><td>1×/sem direto</td><td>Quinta (hip thrust + terra + abdução)</td></tr>
-    <tr><td>Posterior de coxa</td><td>6</td><td>1×/sem</td><td>Levantamento terra + Cadeira flexora (Quinta)</td></tr>
-    <tr><td>Glúteo médio</td><td>3</td><td>1×/sem</td><td>Abdução de quadril (Quinta)</td></tr>
-    <tr><td>Core / Abdômen</td><td>5</td><td>2×/sem</td><td>Prancha (Terça) + Abdominal supra (Quarta)</td></tr>
-    <tr><td>Panturrilha</td><td>4</td><td>1×/sem</td><td>Em pé (Terça)</td></tr>
-    <tr><td>Peito</td><td>4 + indireto</td><td>2×/sem</td><td>Supino (Quarta) + Flexão superset (Sábado)</td></tr>
-    <tr><td>Costas</td><td>7 + 3</td><td>2×/sem</td><td>Pulldown + Remada (Quarta) + Remada curvada superset (Sábado)</td></tr>
-    <tr><td>Ombro anterior/medial</td><td>6</td><td>2×/sem</td><td>Desenvolvimento (Quarta) + Lateral halteres (Sábado)</td></tr>
-    <tr><td>Bíceps</td><td>8-10</td><td>1×/sem direto</td><td>Sábado (3 exercícios)</td></tr>
-    <tr><td>Tríceps</td><td>6</td><td>1×/sem direto</td><td>Sábado — + indireto do supino de quarta</td></tr>
+    <tr><td>Quadríceps</td><td>12-14</td><td>3×/sem</td><td>Ter + Sex (pré-exaustão) + Sáb</td></tr>
+    <tr><td>Glúteo</td><td>9-11</td><td>3×/sem</td><td>Qua (hip thrust + abdução) + Sex + Sáb</td></tr>
+    <tr><td>Posterior de coxa</td><td>6</td><td>1×/sem</td><td>RDL + Leg curl (Qua)</td></tr>
+    <tr><td>Adutor / glúteo médio</td><td>6</td><td>1-2×/sem</td><td>Abdução/adução (Qua + Sex)</td></tr>
+    <tr><td>Panturrilha</td><td>6</td><td>2×/sem</td><td>Em pé (Ter) + Sentado (Qua)</td></tr>
+    <tr><td>Peito</td><td>6-7</td><td>3×/sem</td><td>Supino (Seg) + Crucifixo (Qui) + Flexão (Sex)</td></tr>
+    <tr><td>Costas</td><td>6</td><td>2×/sem</td><td>Pulldown (Seg) + Remada (Sex)</td></tr>
+    <tr><td>Ombro medial</td><td>6</td><td>2×/sem</td><td>Lateral halteres (Seg) + cabo (Qui)</td></tr>
+    <tr><td>Bíceps</td><td>9</td><td>3×/sem</td><td>Seg + Qui (2×) + Sex</td></tr>
+    <tr><td>Tríceps</td><td>9</td><td>3×/sem</td><td>Seg + Qui (2×) + Sex</td></tr>
   </table>
 </div>
 
@@ -1215,11 +1435,11 @@ function toggleMode(btn){
 
 /* ══ PERIOD CHART ══ */
 const weekData=[
-  {label:'S1',focus:'Adaptação',reps:'Teto',color:'#FB7185',bg:'#FFF1F2',fg:'#BE123C',h:65},
-  {label:'S2',focus:'Volume',reps:'Meio',color:'#F43F5E',bg:'#FFF1F2',fg:'#BE123C',h:78},
-  {label:'S3',focus:'Força-Hiper',reps:'Meio',color:'#E11D48',bg:'#FFE4E6',fg:'#9F1239',h:88},
-  {label:'S4',focus:'Intensidade',reps:'Piso',color:'#BE123C',bg:'#FFE4E6',fg:'#9F1239',h:97},
-  {label:'S5',focus:'Pico',reps:'Piso',color:'#E11D48',bg:'#FFE4E6',fg:'#9F1239',h:92},
+  {label:'S1',focus:'Adaptação',reps:'12-15',color:'#FB7185',bg:'#FFF1F2',fg:'#BE123C',h:62},
+  {label:'S2',focus:'Volume',reps:'10-12',color:'#F43F5E',bg:'#FFF1F2',fg:'#BE123C',h:76},
+  {label:'S3',focus:'Força-Hiper',reps:'10-12',color:'#E11D48',bg:'#FFE4E6',fg:'#9F1239',h:88},
+  {label:'S4',focus:'Intensidade',reps:'8-10',color:'#BE123C',bg:'#FFE4E6',fg:'#9F1239',h:97},
+  {label:'S5',focus:'Pico',reps:'8-10',color:'#E11D48',bg:'#FFE4E6',fg:'#9F1239',h:92},
   {label:'S6',focus:'Deload',reps:'Livre',color:'#10B981',bg:'#D1FAE5',fg:'#065F46',h:35},
 ];
 function buildChart(){
@@ -1244,7 +1464,7 @@ function buildChart(){
 }
 
 /* ══ WEIGHT TRACKER ══ */
-const STORE_KEY='juliana_alves_v3';
+const STORE_KEY='juliana_alves_v2';
 function loadAll(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}catch{return{}}}
 function saveAll(d){try{localStorage.setItem(STORE_KEY,JSON.stringify(d))}catch{}}
 
@@ -1255,7 +1475,7 @@ function initTrackers(){
     if(data[k])inp.value=data[k];
     inp.addEventListener('input',()=>renderBar(k.split('-').slice(0,2).join('-')));
   });
-  ['ter-A1','qua-A1','qui-B1','sab-B1'].forEach(id=>renderBar(id));
+  ['seg-A1','ter-A1','qua-A1','sab-A1'].forEach(id=>renderBar(id));
 }
 
 function getVals(id){
@@ -1276,14 +1496,14 @@ function renderBar(id){
   const range=maxV-minV||1;
   const MAXH=36;
   prog.innerHTML=vals.map((v,i)=>{
-    if(v===null)return`<div style="flex:1;opacity:.25;border-bottom:1px dashed #FECDD3;font-size:8px;color:#FECDD3;text-align:center;padding-bottom:2px">S${i+1}</div>`;
+    if(v===null)return`<div style="flex:1;opacity:.25;border-bottom:1px dashed #BFDBFE;font-size:8px;color:#BFDBFE;text-align:center;padding-bottom:2px">S${i+1}</div>`;
     const h=Math.max(6,Math.round(((v-minV)/range)*(MAXH-6)+6));
     const isMax=v===maxV&&filled.length>1;
     const color=isMax?'#BE123C':'#FB7185';
     return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">
       <div style="font-size:8px;font-weight:700;color:${color}">${v}kg</div>
       <div style="width:100%;height:${h}px;background:${color};border-radius:3px 3px 0 0;transition:height .3s"></div>
-      <div style="font-size:8px;color:#FDA4AF">S${i+1}</div>
+      <div style="font-size:8px;color:#93C5FD">S${i+1}</div>
     </div>`;
   }).join('');
 }
