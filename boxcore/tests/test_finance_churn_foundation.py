@@ -287,7 +287,8 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertEqual(follow_up.outcome_status, FinanceFollowUpOutcomeStatus.PENDING)
         self.assertEqual(follow_up.outcome_window, '30d')
 
-    def test_finance_follow_up_is_marked_realized_after_operational_action(self):
+    @patch('catalog.finance_snapshot.ai.recommendation.resolve_high_signal_holdout', return_value=False)
+    def test_finance_follow_up_is_marked_realized_after_operational_action(self, _mock_holdout):
         student = Student.objects.create(full_name='Yara Realizada', phone='5511910000012', status='active')
         enrollment = Enrollment.objects.create(
             student=student,
@@ -454,7 +455,8 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertEqual(follow_up.outcome_status, FinanceFollowUpOutcomeStatus.FAILED)
         self.assertEqual(follow_up.outcome_reason, 'still_overdue')
 
-    def test_evaluate_finance_followups_command_processes_matured_records(self):
+    @patch('catalog.finance_snapshot.ai.recommendation.resolve_high_signal_holdout', return_value=False)
+    def test_evaluate_finance_followups_command_processes_matured_records(self, _mock_holdout):
         student = Student.objects.create(full_name='Mia Command', phone='5511910000016', status='active')
         enrollment = Enrollment.objects.create(
             student=student,
