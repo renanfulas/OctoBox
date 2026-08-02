@@ -274,6 +274,7 @@ Alinhado a [growth-engine-activation-plan.md](growth-engine-activation-plan.md):
 4. nao criar FK cross-schema
 5. nao persistir dado de treino dentro de request GET
 6. nao apresentar prior de rede como se fosse dado da propria box
+7. **nao agendar/rodar `contribute_network_channel_aggregates` (Onda 8) em producao** — implementado fora de ordem em 2026-07-30, mas o gate deste plano ("Trilho A validado com dado real + volume de boxes suficiente") ainda nao foi atendido. Rodar cedo demais nao e perigoso (o piso k so suprime a leitura), mas normaliza pular o gate — exatamente o habito que este plano tenta evitar. Ver "Resultado real" da Onda 8 no [guia tecnico](leads-ml-technical-execution-guide.md#onda-8--hub-de-rede-shared-app-no-public).
 
 ## Riscos
 
