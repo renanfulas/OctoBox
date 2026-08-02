@@ -15,16 +15,17 @@ O QUE ESTE ARQUIVO FAZ:
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
-
-from onboarding.model_definitions import IntakeSource
 
 LEGACY_SOURCE_TO_ACQUISITION_CHANNEL = {
     'csv': 'referral',
     'whatsapp': 'whatsapp',
 }
-ATTRIBUTION_SCHEMA_VERSION = 1
+# v2 (2026-07-29): captured_at passa a ser preenchido de verdade no quick
+# create (antes ficava sempre null); ver auditoria de leads, achado M3.
+ATTRIBUTION_SCHEMA_VERSION = 2
 
 from shared_support.acquisition import (
     ACQUISITION_CHANNEL_CHOICES,
@@ -124,7 +125,15 @@ def merge_qualification_response(
     return payload
 
 
-def extract_acquisition_channel(*, raw_payload: dict[str, Any] | None, fallback_source: str = '') -> str:
+@dataclass(frozen=True, slots=True)
+class AcquisitionChannelReading:
+    channel: str
+    provenance: str  # 'confirmed' | 'declared' | 'legacy_inferred' | 'missing'
+
+
+def extract_acquisition_channel_reading(
+    *, raw_payload: dict[str, Any] | None, fallback_source: str = ''
+) -> AcquisitionChannelReading:
     payload = raw_payload or {}
     attribution = payload.get('attribution') if isinstance(payload, dict) else {}
     if isinstance(attribution, dict):
@@ -132,54 +141,58 @@ def extract_acquisition_channel(*, raw_payload: dict[str, Any] | None, fallback_
         if isinstance(qualification, dict):
             confirmed_channel = normalize_acquisition_channel(qualification.get('confirmed_channel'))
             if confirmed_channel:
-                return confirmed_channel
+                return AcquisitionChannelReading(channel=confirmed_channel, provenance='confirmed')
 
         acquisition = attribution.get('acquisition') or {}
         if isinstance(acquisition, dict):
             declared_channel = normalize_acquisition_channel(acquisition.get('declared_channel'))
             if declared_channel:
-                return declared_channel
+                return AcquisitionChannelReading(channel=declared_channel, provenance='declared')
 
-    return LEGACY_SOURCE_TO_ACQUISITION_CHANNEL.get(str(fallback_source or '').strip().lower(), '')
+    legacy_channel = LEGACY_SOURCE_TO_ACQUISITION_CHANNEL.get(str(fallback_source or '').strip().lower(), '')
+    if legacy_channel:
+        return AcquisitionChannelReading(channel=legacy_channel, provenance='legacy_inferred')
+
+    return AcquisitionChannelReading(channel='', provenance='missing')
+
+
+def extract_acquisition_channel(*, raw_payload: dict[str, Any] | None, fallback_source: str = '') -> str:
+    return extract_acquisition_channel_reading(raw_payload=raw_payload, fallback_source=fallback_source).channel
 
 
 def summarize_acquisition_channels(rows: list[tuple[str, dict[str, Any] | None]]) -> dict[str, int]:
+    """Conta leads por canal.
+
+    PONTOS CRITICOS:
+    - canal 'legacy_inferred' (inferido de um source legado, ex: CSV -> referral)
+      NAO entra na contagem do canal real: e inferencia, nao declaracao. Ele soma
+      em 'legacy_inferred', um balde proprio, para nao inflar 'referral' com
+      registros que ninguem de fato declarou (ver auditoria de leads, achado M6).
+    """
     counts = {key: 0 for key in ACQUISITION_CHANNEL_LABELS}
     missing_total = 0
+    legacy_inferred_total = 0
     for source, raw_payload in rows:
-        channel = extract_acquisition_channel(raw_payload=raw_payload, fallback_source=source)
-        if channel:
-            counts[channel] += 1
-        else:
+        reading = extract_acquisition_channel_reading(raw_payload=raw_payload, fallback_source=source)
+        if reading.provenance == 'missing':
             missing_total += 1
+        elif reading.provenance == 'legacy_inferred':
+            legacy_inferred_total += 1
+        else:
+            counts[reading.channel] += 1
     counts['missing'] = missing_total
+    counts['legacy_inferred'] = legacy_inferred_total
     return counts
-
-
-def derive_operational_source(*, acquisition_channel: str = '', entry_kind: str = '') -> str:
-    normalized_channel = normalize_acquisition_channel(acquisition_channel)
-    normalized_kind = str(entry_kind or '').strip().lower()
-
-    if normalized_channel == 'whatsapp':
-        return IntakeSource.WHATSAPP
-    if normalized_channel == 'referral':
-        return IntakeSource.CSV
-    if normalized_channel in {'instagram', 'website', 'google', 'meta_ads', 'other'}:
-        return IntakeSource.IMPORT
-    if normalized_channel == 'walk_in':
-        return IntakeSource.MANUAL
-    if normalized_kind == 'intake':
-        return IntakeSource.WHATSAPP
-    return IntakeSource.MANUAL
 
 
 __all__ = [
     'ACQUISITION_CHANNEL_CHOICES',
     'ACQUISITION_CHANNEL_LABELS',
     'ATTRIBUTION_SCHEMA_VERSION',
+    'AcquisitionChannelReading',
     'build_intake_attribution_payload',
-    'derive_operational_source',
     'extract_acquisition_channel',
+    'extract_acquisition_channel_reading',
     'get_acquisition_channel_label',
     'merge_qualification_response',
     'normalize_acquisition_channel',

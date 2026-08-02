@@ -25,7 +25,9 @@ import os
 import re
 
 from django.db import transaction
+from django.utils import timezone
 
+from onboarding.attribution import build_intake_attribution_payload
 from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
 from shared_support.crypto_fields import generate_blind_index
 from shared_support.validators import validate_file_security
@@ -202,6 +204,13 @@ def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=No
         'ios_vcard': IntakeSource.IMPORT,
     }
     db_source = source_map.get(source_platform, IntakeSource.IMPORT)
+    # Só 'whatsapp' é de fato um canal de aquisição (a lista veio de conversas
+    # de WhatsApp). tecnofit/nextfit/ios_vcard são formatos de exportação de
+    # outro software, não um canal — declarar um canal aqui seria fabricar
+    # dado que ninguém informou. Melhor ausente e honesto do que inferido e
+    # errado (ver auditoria de leads 2026-07-28, achado M11).
+    declared_channel = 'whatsapp' if source_platform == 'whatsapp' else ''
+    imported_at = timezone.now()
 
     phone_lookup_indexes_to_check = set()
     for row in contact_list:
@@ -302,6 +311,14 @@ def import_contacts_from_list(contact_list, source_platform='whatsapp', actor=No
                     status=IntakeStatus.NEW,
                     assigned_to=actor,
                     notes=f"Importado via {source_platform.upper()} (Batch Process).",
+                    raw_payload=build_intake_attribution_payload(
+                        source=db_source,
+                        acquisition_channel=declared_channel,
+                        entry_kind='import',
+                        actor_id=getattr(actor, 'id', None),
+                        captured_via='lead-import',
+                        captured_at=imported_at,
+                    ),
                 )
             )
 

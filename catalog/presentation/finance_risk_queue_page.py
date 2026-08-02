@@ -237,6 +237,20 @@ def build_finance_risk_queue(financial_churn_foundation, *, follow_up_analytics_
                 'secondary_label': 'Ver caso',
                 'secondary_href': student_url,
             }
+        elif item['recommended_action'] == 'holdout_observe':
+            playbook = {
+                'playbook_label': 'Observação controlada',
+                'playbook_note': (
+                    'Sinal de risco real, mas fora da sugestão automática de propósito: '
+                    'faz parte do grupo de controle usado para medir se a intervenção funciona.'
+                ),
+                'primary_label': 'Abrir ficha',
+                'primary_href': student_url,
+                'primary_mode': 'link',
+                'primary_action_kind': '',
+                'secondary_label': 'Ver caso',
+                'secondary_href': student_url,
+            }
         else:
             playbook = {
                 'playbook_label': 'Base sob controle',

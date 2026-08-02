@@ -18,10 +18,11 @@ from urllib.parse import urlencode
 
 from django.db.models import Count, Max, Q
 from django.utils import timezone
-from onboarding.attribution import summarize_acquisition_channels
+from onboarding.attribution import extract_acquisition_channel_reading, summarize_acquisition_channels
 from onboarding.facade import build_intake_queue_item
 from onboarding.forms import IntakeCenterFilterForm, IntakeQuickCreateForm
 from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
+from shared_support.acquisition import ACQUISITION_CHANNEL_LABELS, ACQUISITION_CHANNEL_MODEL_CHOICES
 from shared_support.kpi_icons import build_kpi_icon
 
 
@@ -97,7 +98,7 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
         copy = 'Leia o acumulado do mês atual para entender quais canais sustentam a captação agora.'
     elif source_period == 'all':
         period_label = 'Todos'
-        copy = 'Leia o histórico inteiro para enxergar quais canais mais sustentam a captação.'
+        copy = 'Leia a fila aberta acumulada para enxergar quais canais mais sustentam a captação. Lead já convertido não entra nesta contagem.'
     else:
         radar_queryset = radar_queryset.filter(created_at__date=today)
         period_label = 'Hoje'
@@ -107,6 +108,19 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
     acquisition_counts = summarize_acquisition_channels(radar_rows)
     source_counts = dict(radar_queryset.values_list('source').annotate(total=Count('id')))
     total = len(radar_rows)
+
+    # Cards derivados da taxonomia canonica (nao de lista literal): antes 3
+    # dos 11 canais (evento, nao identificado, legado) nao tinham card nem
+    # bucket e sumiam sem cair em 'missing' — invariante quebrada. Agora
+    # sum(cards) + missing + legacy_inferred == total sempre (achado M9).
+    cards = [
+        {
+            'key': channel_key,
+            'label': ACQUISITION_CHANNEL_LABELS[channel_key],
+            'value': acquisition_counts.get(channel_key, 0),
+        }
+        for channel_key, _ in ACQUISITION_CHANNEL_MODEL_CHOICES
+    ]
 
     base_params = params.copy() if hasattr(params, 'copy') else dict(params)
     base_params.pop('source_period', None)
@@ -135,17 +149,10 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
         'period_label': period_label,
         'total': total,
         'periods': periods,
-        'cards': [
-            {'key': 'referral', 'label': 'Indicação', 'value': acquisition_counts.get('referral', 0)},
-            {'key': 'instagram', 'label': 'Instagram', 'value': acquisition_counts.get('instagram', 0)},
-            {'key': 'walk_in', 'label': 'Passei na frente', 'value': acquisition_counts.get('walk_in', 0)},
-            {'key': 'google', 'label': 'Google', 'value': acquisition_counts.get('google', 0)},
-            {'key': 'whatsapp', 'label': 'WhatsApp', 'value': acquisition_counts.get('whatsapp', 0)},
-            {'key': 'website', 'label': 'Site', 'value': acquisition_counts.get('website', 0)},
-            {'key': 'other', 'label': 'Outro', 'value': acquisition_counts.get('other', 0) + acquisition_counts.get('meta_ads', 0)},
-        ],
+        'cards': cards,
         'analytics': {
             'missing_attribution_total': acquisition_counts.get('missing', 0),
+            'legacy_inferred_total': acquisition_counts.get('legacy_inferred', 0),
             'operational_source_counts': {
                 'manual': source_counts.get(IntakeSource.MANUAL, 0),
                 'csv': source_counts.get(IntakeSource.CSV, 0),
@@ -157,16 +164,62 @@ def _build_intake_radar_board(*, params, metrics_queryset, today):
     }
 
 
+def _build_intake_channel_analytics(*, analytics_queryset):
+    """Leitura por canal sobre o universo INTEIRO de intakes da janela —
+    inclui convertido e rejeitado. Ao lado da fila aberta (radar_board, que
+    so mostra o que ainda esta pendente), esta e a leitura que responde
+    "qual canal traz aluno que fica", nao so "qual canal traz mais lead"
+    (ver achado A6 da auditoria de leads 2026-07-28).
+    """
+    rows = list(analytics_queryset.values_list('source', 'raw_payload', 'status'))
+    totals_by_channel = {
+        channel_key: {'captured_total': 0, 'converted_total': 0, 'rejected_total': 0, 'open_total': 0}
+        for channel_key, _ in ACQUISITION_CHANNEL_MODEL_CHOICES
+    }
+    missing_total = 0
+
+    for source, raw_payload, status in rows:
+        reading = extract_acquisition_channel_reading(raw_payload=raw_payload, fallback_source=source)
+        if reading.provenance == 'missing':
+            missing_total += 1
+            continue
+        bucket = totals_by_channel[reading.channel]
+        bucket['captured_total'] += 1
+        if status == IntakeStatus.APPROVED:
+            bucket['converted_total'] += 1
+        elif status == IntakeStatus.REJECTED:
+            bucket['rejected_total'] += 1
+        else:
+            bucket['open_total'] += 1
+
+    channels = [
+        {'key': channel_key, 'label': ACQUISITION_CHANNEL_LABELS[channel_key], **totals}
+        for channel_key, totals in totals_by_channel.items()
+    ]
+    return {
+        'channels': channels,
+        'missing_attribution_total': missing_total,
+        'total_captured': len(rows),
+    }
+
+
 def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None, queue_limit=12, queue_offset=0):
     today = today or timezone.localdate()
     params = params or {}
     queue_offset = max(int(queue_offset or 0), 0)
-    base_queryset = StudentIntake.objects.filter(
+    operational_base = StudentIntake.objects.filter(
         status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING, IntakeStatus.MATCHED],
         linked_student__isnull=True,
     )
-    queue_queryset = base_queryset
-    metrics_queryset = base_queryset
+    queue_queryset = operational_base
+    # KPIs operacionais (Leads/Em conversa/Pendentes) continuam lidos sobre o
+    # recorte aberto — igual ao comportamento anterior, sem semantic_stage.
+    operational_metrics_queryset = operational_base
+    # Leitura analitica: universo INTEIRO de intakes, sem recorte de status
+    # nem de vinculo. Antes radar e metricas comecavam do MESMO queryset
+    # operacional, entao todo lead convertido sumia dos agregados por canal
+    # (ver achados A6/M2 da auditoria de leads 2026-07-28).
+    analytics_queryset = StudentIntake.objects.all()
     active_panel = (params.get('panel') or '').strip()
     semantic_stage = ''
     created_window = ''
@@ -188,31 +241,43 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         created_window = filter_form.cleaned_data.get('created_window') or ''
         assignment = filter_form.cleaned_data.get('assignment')
 
-        if query:
-            search_filter = Q(full_name__icontains=query)
-            queue_queryset = queue_queryset.filter(search_filter)
-            metrics_queryset = metrics_queryset.filter(search_filter)
-        if status:
-            queue_queryset = queue_queryset.filter(status=status)
-            metrics_queryset = metrics_queryset.filter(status=status)
-        if source:
-            queue_queryset = queue_queryset.filter(source=source)
-            metrics_queryset = metrics_queryset.filter(source=source)
         if semantic_stage == 'new-leads':
             queue_queryset = queue_queryset.filter(status=IntakeStatus.NEW)
         elif semantic_stage == 'lead-open':
             queue_queryset = queue_queryset.filter(status__in=[IntakeStatus.REVIEWING, IntakeStatus.MATCHED])
         elif semantic_stage == 'resolved':
-            queue_queryset = queue_queryset.filter(status__in=[IntakeStatus.APPROVED, IntakeStatus.REJECTED])
+            # 'Resolvido' e estagio TERMINAL: sai da base operacional aberta
+            # (que exige linked_student__isnull=True) em vez de so empilhar
+            # mais um filtro sobre uma base que ja exclui esses status por
+            # construcao — o filtro antigo interceptava um conjunto vazio e
+            # sempre retornava zero linhas (achado M2 da auditoria de leads).
+            queue_queryset = StudentIntake.objects.filter(status__in=[IntakeStatus.APPROVED, IntakeStatus.REJECTED])
+
+        if query:
+            search_filter = Q(full_name__icontains=query)
+            queue_queryset = queue_queryset.filter(search_filter)
+            operational_metrics_queryset = operational_metrics_queryset.filter(search_filter)
+            analytics_queryset = analytics_queryset.filter(search_filter)
+        if status:
+            queue_queryset = queue_queryset.filter(status=status)
+            operational_metrics_queryset = operational_metrics_queryset.filter(status=status)
+            analytics_queryset = analytics_queryset.filter(status=status)
+        if source:
+            queue_queryset = queue_queryset.filter(source=source)
+            operational_metrics_queryset = operational_metrics_queryset.filter(source=source)
+            analytics_queryset = analytics_queryset.filter(source=source)
         if created_window == 'today':
             queue_queryset = queue_queryset.filter(created_at__date=today)
-            metrics_queryset = metrics_queryset.filter(created_at__date=today)
+            operational_metrics_queryset = operational_metrics_queryset.filter(created_at__date=today)
+            analytics_queryset = analytics_queryset.filter(created_at__date=today)
         if assignment == 'assigned':
             queue_queryset = queue_queryset.exclude(assigned_to__isnull=True)
-            metrics_queryset = metrics_queryset.exclude(assigned_to__isnull=True)
+            operational_metrics_queryset = operational_metrics_queryset.exclude(assigned_to__isnull=True)
+            analytics_queryset = analytics_queryset.exclude(assigned_to__isnull=True)
         elif assignment == 'unassigned':
             queue_queryset = queue_queryset.filter(assigned_to__isnull=True)
-            metrics_queryset = metrics_queryset.filter(assigned_to__isnull=True)
+            operational_metrics_queryset = operational_metrics_queryset.filter(assigned_to__isnull=True)
+            analytics_queryset = analytics_queryset.filter(assigned_to__isnull=True)
     else:
         sort = ''
 
@@ -234,8 +299,9 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         build_intake_queue_item(intake=intake, actor_role_slug=actor_role_slug, today=today)
         for intake in queue
     ]
-    radar_board = _build_intake_radar_board(params=params, metrics_queryset=metrics_queryset, today=today)
-    summary = metrics_queryset.aggregate(
+    radar_board = _build_intake_radar_board(params=params, metrics_queryset=analytics_queryset, today=today)
+    channel_analytics = _build_intake_channel_analytics(analytics_queryset=analytics_queryset)
+    summary = operational_metrics_queryset.aggregate(
         lead_total=Count('id', filter=Q(status=IntakeStatus.NEW)),
         pending_total=Count('id', filter=Q(status__in=[IntakeStatus.NEW, IntakeStatus.REVIEWING])),
         today_funnel_total=Count(
@@ -296,9 +362,9 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
                 'is_selected': active_panel == 'tab-intake-queue' and created_window == 'today',
             },
             {
-                'label': 'Captação',
+                'label': 'Fila por canal',
                 'display_value': str(radar_board['total']),
-                'note': 'Abre o radar de origem para ler Instagram, WhatsApp, site, indicação e importação externa.',
+                'note': 'Abre o radar de origem para ler Instagram, WhatsApp, site, indicação e importação externa. Conta a fila ainda aberta, não a captação histórica — lead já convertido sai desta contagem.',
                 'href': '?panel=tab-intake-source',
                 'target_panel': 'tab-intake-source',
                 'tone_class': 'kpi-purple',
@@ -309,10 +375,11 @@ def build_intake_center_snapshot(*, params=None, actor_role_slug='', today=None,
         'hero_stats': [
             {'label': 'Pendentes', 'value': pending_count},
             {'label': 'Na fila', 'value': len(queue)},
-            {'label': 'Captação', 'value': radar_board['total']},
+            {'label': 'Fila por canal', 'value': radar_board['total']},
             {'label': 'Hoje', 'value': created_today},
         ],
         'radar_board': radar_board,
+        'channel_analytics': channel_analytics,
         'filter_form': filter_form,
         'create_form': IntakeQuickCreateForm(),
         'intake_queue': queue,

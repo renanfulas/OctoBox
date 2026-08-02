@@ -12,10 +12,10 @@ O QUE ESTE ARQUIVO FAZ:
 import time
 
 from django.conf import settings
-from django.core.cache import cache
 
 from access.navigation_contracts import get_navigation_contract
 from access.roles import ROLE_RECEPTION
+from control.cache import tcache_get, tcache_set, tenant_cache_key
 from finance.overdue_metrics import count_overdue_students, get_overdue_payments_queryset
 from onboarding.queries import count_pending_intakes
 
@@ -57,9 +57,10 @@ def get_shell_counts(*, use_cache=True, return_telemetry=False):
 
     started_at = time.perf_counter()
     today = timezone.localdate()
-    cache_key = f'octobox:shell-counts:{today}'
+    cache_key = f'shell-counts:{today}'
     telemetry = {
-        'cache_key': cache_key,
+        # chave com prefixo de tenant, para bater com o que de fato e lido/escrito.
+        'cache_key': tenant_cache_key(cache_key),
         'cache_hit': False,
         'cache_lookup_ms': 0.0,
         'build_ms': 0.0,
@@ -74,7 +75,7 @@ def get_shell_counts(*, use_cache=True, return_telemetry=False):
 
     if use_cache:
         cache_lookup_started_at = time.perf_counter()
-        cached_counts = cache.get(cache_key)
+        cached_counts = tcache_get(cache_key)
         telemetry['cache_lookup_ms'] = round((time.perf_counter() - cache_lookup_started_at) * 1000, 2)
         if cached_counts is not None:
             telemetry['cache_hit'] = True
@@ -127,7 +128,7 @@ def get_shell_counts(*, use_cache=True, return_telemetry=False):
         from shared_support.performance import get_cache_ttl_with_jitter
 
         ttl = getattr(settings, 'SHELL_COUNTS_CACHE_TTL_SECONDS', 60)
-        cache.set(cache_key, counts, timeout=get_cache_ttl_with_jitter(ttl))
+        tcache_set(cache_key, counts, timeout=get_cache_ttl_with_jitter(ttl))
 
     telemetry['total_ms'] = round((time.perf_counter() - started_at) * 1000, 2)
     if return_telemetry:

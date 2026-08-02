@@ -24,6 +24,7 @@ from onboarding.domain import (
     resolve_intake_action_permissions,
 )
 from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
+from onboarding.stage_transitions import transition_intake_status
 from shared_support.whatsapp_links import build_whatsapp_message_href
 
 
@@ -104,19 +105,26 @@ def run_intake_queue_action(*, actor, intake_id: int, action: str) -> IntakeQueu
     if action == 'move-to-conversation':
         if intake.status != IntakeStatus.NEW:
             raise ValueError('So leads novos podem ser movidos para Em conversa por esta tela.')
-        intake.status = IntakeStatus.REVIEWING
-        update_fields = ['status', 'updated_at']
+        transition_intake_status(
+            intake=intake,
+            to_status=IntakeStatus.REVIEWING,
+            actor=actor,
+            surface='intake_center',
+        )
         message = f'{intake.full_name} foi movido para Em conversa.'
     elif action == 'reject-intake':
         if not permissions['can_reject']:
             raise ValueError('Esta entrada nao pode ser rejeitada por esta tela.')
-        intake.status = IntakeStatus.REJECTED
-        update_fields = ['status', 'updated_at']
+        transition_intake_status(
+            intake=intake,
+            to_status=IntakeStatus.REJECTED,
+            actor=actor,
+            surface='intake_center',
+        )
         message = f'{intake.full_name} foi rejeitado e saiu da fila ativa.'
     else:
         raise ValueError('Acao de entradas desconhecida para esta central.')
 
-    intake.save(update_fields=update_fields)
     return IntakeQueueActionResult(
         intake_id=intake.id,
         status=intake.status,
