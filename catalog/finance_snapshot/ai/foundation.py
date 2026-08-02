@@ -55,11 +55,15 @@ def _load_finance_messages_by_student(*, student_ids):
     return finance_messages_by_student
 
 
-def _update_summary(summary, *, actual_status, signal_bucket, finance_touches_30d):
+def _update_summary(summary, *, actual_status, signal_bucket, finance_touches_30d, is_holdout):
     if actual_status == 'inactive':
         summary['actual_churn_count'] += 1
     if signal_bucket == 'high_signal':
         summary['high_signal_count'] += 1
+        if is_holdout:
+            summary['high_signal_holdout_count'] += 1
+        else:
+            summary['high_signal_treated_count'] += 1
     elif signal_bucket == 'watch':
         summary['watch_count'] += 1
     elif signal_bucket == 'recovered':
@@ -83,6 +87,7 @@ def _build_queue_row(*, student, facts, recommendation_state, today):
         'actual_student_status': student.status,
         'actual_churn_event': student.status == 'inactive',
         'signal_bucket': recommendation_state['signal_bucket'],
+        'is_holdout': recommendation_state['is_holdout'],
         'reason_codes': recommendation_state['reason_codes'],
         'recommended_action': recommendation['recommended_action'],
         'recommended_action_base': base_recommendation['recommended_action'],
@@ -177,6 +182,8 @@ def build_financial_churn_foundation(
         'students_in_scope': len(scoped_students),
         'actual_churn_count': 0,
         'high_signal_count': 0,
+        'high_signal_treated_count': 0,
+        'high_signal_holdout_count': 0,
         'watch_count': 0,
         'recovered_count': 0,
         'recent_finance_touch_count': 0,
@@ -197,6 +204,7 @@ def build_financial_churn_foundation(
         facts['student_enrollments'] = student_enrollments
 
         recommendation_state = build_recommendation_state(
+            student_id=student.id,
             actual_status=student.status,
             facts=facts,
             today=today,
@@ -214,6 +222,7 @@ def build_financial_churn_foundation(
             actual_status=student.status,
             signal_bucket=recommendation_state['signal_bucket'],
             finance_touches_30d=facts['finance_touches_30d'],
+            is_holdout=recommendation_state['is_holdout'],
         )
         rows.append(
             _build_queue_row(

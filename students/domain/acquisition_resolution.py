@@ -8,7 +8,7 @@ POR QUE ELE EXISTE:
 
 from dataclasses import dataclass
 
-from shared_support.acquisition import normalize_acquisition_channel
+from shared_support.acquisition import SENTINEL_ACQUISITION_CHANNELS, normalize_acquisition_channel
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +35,20 @@ def resolve_acquisition_resolution(
     declared_detail = (declared_detail or '').strip()
     operational_method = (operational_method or '').strip()
 
+    # Sentinela ('unidentified'/'legacy') nao e evidencia de canal em nenhum
+    # dos dois lados — e' "nao sei" ou "veio de antes do contrato atual".
+    # Zerar aqui, antes dos branches de conflito, evita conflito falso quando
+    # um lado e sentinela e o outro tem uma origem real (ver auditoria de
+    # leads 2026-07-28, achado M15). A branch antiga que tratava
+    # operational_source == 'unidentified' como caso especial fica redundante
+    # depois disso e foi removida: ela cai naturalmente em declared_only.
+    if operational_source in SENTINEL_ACQUISITION_CHANNELS:
+        operational_source = ''
+        operational_detail = ''
+    if declared_source in SENTINEL_ACQUISITION_CHANNELS:
+        declared_source = ''
+        declared_detail = ''
+
     if operational_source and declared_source and operational_source == declared_source:
         return AcquisitionResolution(
             resolved_acquisition_source=operational_source,
@@ -43,16 +57,6 @@ def resolve_acquisition_resolution(
             source_conflict_flag=False,
             source_resolution_method=operational_method or 'manual_form',
             source_resolution_reason='operational_declared_match',
-        )
-
-    if operational_source and declared_source and operational_source == 'unidentified':
-        return AcquisitionResolution(
-            resolved_acquisition_source=declared_source,
-            resolved_source_detail=declared_detail,
-            source_confidence='medium',
-            source_conflict_flag=False,
-            source_resolution_method='declared_only',
-            source_resolution_reason='declared_replaced_unidentified_operational',
         )
 
     if operational_source and declared_source:

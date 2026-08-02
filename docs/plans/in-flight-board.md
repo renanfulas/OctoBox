@@ -76,6 +76,7 @@ git -C C:\dev\OctoBox worktree list
 
 | Frente | Branch | Worktree | Dono/sessão | Status |
 |---|---|---|---|---|
+| ML de leads — fundação + inteligência de rede | `fix/leads-ml-foundation-waves-1-3` | — | sessão 2026-07-31 | Ondas 1-9 implementadas e verificadas contra Postgres real (1406 passed, 2 falhas pré-existentes não relacionadas). **PENDÊNCIA: NÃO agendar/rodar `contribute_network_channel_aggregates` (Onda 8) em produção** até o Trilho A estar validado com dado real — ver [plano](leads-ml-foundation-and-network-intelligence-plan.md#o-que-nao-fazer-em-nenhuma-onda). |
 | Docs de prontidão (registry + este quadro) | `docs/ops-readiness` | `octobox-wt/ops-docs` | sessão 2026-06-20 | PR aberto |
 | Hardening de pagamentos — P1 sweep de dead-letter do Stripe | `feat/payment-p1-stripe-deadletter` | `octobox-wt/payment-p1-deadletter` | sessão 2026-06-21 | P1 em andamento (verificação no CI) |
 

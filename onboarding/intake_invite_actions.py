@@ -22,6 +22,7 @@ from django.utils import timezone
 from django.contrib import messages
 
 from onboarding.models import IntakeSource, IntakeStatus, StudentIntake
+from onboarding.stage_transitions import mark_intake_first_contact, transition_intake_status
 from shared_support.box_runtime import get_box_runtime_slug
 from shared_support.crypto_fields import generate_blind_index
 from student_identity.application.commands import CreateStudentInvitationCommand
@@ -65,8 +66,16 @@ def send_intake_whatsapp_invite(*, request, role_slug: str, get_success_url):
     student = intake.linked_student or resolve_or_create_student_from_intake(intake=intake)
     if intake.linked_student_id is None:
         intake.linked_student = student
-        intake.status = IntakeStatus.MATCHED
-        intake.save(update_fields=['linked_student', 'status', 'updated_at'])
+        # MATCHED != conversao comercial: e so o vinculo de identidade criado
+        # pelo convite. converted_at fica reservado para APPROVED (ver
+        # onboarding/stage_transitions.py e achado A3 da auditoria de leads).
+        transition_intake_status(
+            intake=intake,
+            to_status=IntakeStatus.MATCHED,
+            actor=request.user,
+            surface='intake_center_whatsapp_invite',
+            extra_update_fields=('linked_student',),
+        )
 
     result = CreateStudentInvitation(DjangoStudentIdentityRepository()).execute(
         CreateStudentInvitationCommand(
@@ -92,6 +101,7 @@ def send_intake_whatsapp_invite(*, request, role_slug: str, get_success_url):
         messages.error(request, 'Nao foi possivel abrir o WhatsApp para esse lead agora.')
         return redirect(get_success_url(return_query))
 
+    mark_intake_first_contact(intake=intake)
     record_student_invitation_whatsapp_handoff(
         invitation=invitation,
         actor=request.user,

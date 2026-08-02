@@ -29,6 +29,13 @@ ACQUISITION_CHANNEL_LABELS = {
     key: label for key, label in ACQUISITION_CHANNEL_MODEL_CHOICES
 }
 
+# Canais que nao carregam evidencia real de origem — sao "nao sei" ou "veio de
+# antes do contrato atual", nao uma declaracao de canal de fato. Reconciliacao
+# de atribuicao deve tratar estes valores como ausencia de dado dos DOIS lados
+# (operacional e declarado), nunca como um canal que pode entrar em conflito
+# com o outro lado (ver auditoria de leads 2026-07-28, achado M15).
+SENTINEL_ACQUISITION_CHANNELS = frozenset({'unidentified', 'legacy'})
+
 SOURCE_RESOLUTION_METHOD_CHOICES = (
     ('', 'Nao definido'),
     ('intake_auto', 'Intake automatico'),
@@ -64,6 +71,7 @@ __all__ = [
     'ACQUISITION_CHANNEL_CHOICES',
     'ACQUISITION_CHANNEL_LABELS',
     'ACQUISITION_CHANNEL_MODEL_CHOICES',
+    'SENTINEL_ACQUISITION_CHANNELS',
     'SOURCE_CONFIDENCE_CHOICES',
     'SOURCE_RESOLUTION_METHOD_CHOICES',
     'get_acquisition_channel_label',

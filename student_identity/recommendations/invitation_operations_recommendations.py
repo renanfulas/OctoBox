@@ -93,10 +93,16 @@ class StudentInvitationOperationsRecommendations:
                 )
             first_step_value = steps[0]['value'] if steps else 0
             last_step_value = steps[-1]['value'] if steps else 0
+            # PONTOS CRITICOS: isto NAO e taxa de conversao de coorte. E a razao entre
+            # a contagem de dois eventos independentes na mesma janela rolante de 30
+            # dias — nao ha garantia de que quem gerou o evento final esta entre quem
+            # gerou o evento inicial (o primeiro pode ter acontecido fora da janela).
+            # Pode passar de 100% e nao suporta o alerta de "conversao baixa" que
+            # existia aqui antes (removido — ver auditoria de leads 2026-07-28,
+            # achado A7). Consertar de verdade exige coorte com janela de maturacao
+            # (ver docs/plans/leads-ml-technical-execution-guide.md, Onda 6).
             conversion_rate = round((last_step_value / first_step_value) * 100, 1) if first_step_value else 0
             alerts = []
-            if first_step_value >= 5 and conversion_rate < 30:
-                alerts.append('Conversão baixa nesta janela. Vale revisar copy, handoff ou fricção da jornada.')
             if len(steps) >= 3 and steps[-2]['value'] > steps[-1]['value']:
                 alerts.append('Existe atrito perto da reta final: tem gente chegando quase lá e não entrando no app.')
             biggest_drop = self._find_biggest_funnel_drop(steps=steps)
@@ -112,8 +118,8 @@ class StudentInvitationOperationsRecommendations:
                     'title': item['title'],
                     'copy': item['copy'],
                     'steps': steps,
-                    'headline_value': f'{conversion_rate:.1f}%',
-                    'headline_label': 'Conversão final da janela',
+                    'headline_value': f'{conversion_rate:.1f}% ({last_step_value}/{first_step_value})',
+                    'headline_label': 'Eventos finais / eventos iniciais (30d) — não é taxa de conversão de coorte',
                     'headline_tone': (
                         'ok'
                         if conversion_rate >= 60
@@ -144,9 +150,9 @@ class StudentInvitationOperationsRecommendations:
                             'tone': 'ok' if last_step_value else 'muted',
                         },
                         {
-                            'eyebrow': 'Conversão final',
+                            'eyebrow': 'Eventos finais / iniciais',
                             'value': f'{conversion_rate:.1f}%',
-                            'detail': 'Do primeiro ao último passo.',
+                            'detail': f'{last_step_value} de {first_step_value} — leitura de volume, não coorte fechada.',
                             'tone': (
                                 'ok'
                                 if conversion_rate >= 60

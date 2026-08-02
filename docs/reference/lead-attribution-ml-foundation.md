@@ -124,3 +124,12 @@ Quando entrar o Google Forms ou mensagem automatica, a regra ideal e:
 2. nao transformar origem comercial em unico campo do dominio
 3. nao prender a arquitetura a uma integracao especifica antes da hora
 4. nao alimentar ML com dado sem separar declarado, confirmado e ausente
+
+## Plano ativo desta trilha
+
+A auditoria de 2026-07-28 encontrou divergencias entre este contrato e o runtime
+(colinearidade entre `operational_source` e canal declarado; camada de
+qualificacao sem chamador de producao; `captured_at` nunca preenchido).
+A correcao e a expansao para inteligencia de rede estao em
+[../plans/leads-ml-foundation-and-network-intelligence-plan.md](../plans/leads-ml-foundation-and-network-intelligence-plan.md),
+que vence este documento em ordem de execucao.

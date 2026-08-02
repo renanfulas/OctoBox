@@ -16,6 +16,7 @@ PONTOS CRITICOS:
 from django.db import transaction
 
 from communications.models import StudentIntake
+from onboarding.stage_transitions import transition_intake_status
 from students.application.commands import StudentIntakeSyncCommand
 from students.application.ports import StudentIntakeWorkflowPort
 from students.application.use_cases import execute_student_intake_sync_use_case
@@ -58,9 +59,17 @@ class DjangoStudentIntakeWorkflowPort(StudentIntakeWorkflowPort):
             linked_intake.phone = conversion_decision.normalized_phone
 
         linked_intake.linked_student = student
-        linked_intake.status = conversion_decision.status
         linked_intake.notes = conversion_decision.notes
-        linked_intake.save(update_fields=['phone', 'linked_student', 'status', 'notes', 'updated_at'])
+        # Esta e a conversao comercial de verdade (vira matricula), diferente
+        # do MATCHED do convite por WhatsApp — grava converted_at e
+        # conversion_kind='enrollment' (ver achado A3 da auditoria de leads).
+        transition_intake_status(
+            intake=linked_intake,
+            to_status=conversion_decision.status,
+            conversion_kind='enrollment',
+            surface='student_quick_flow',
+            extra_update_fields=('phone', 'linked_student', 'notes'),
+        )
         return linked_intake.id
 
 

@@ -21,6 +21,7 @@ from ..rules.base import (
     _resolve_priority_contract,
     _resolve_signal_bucket,
 )
+from ..rules.holdout import resolve_high_signal_holdout
 from ..rules.timing import (
     _build_recommendation_momentum,
     _resolve_prediction_window_adjustment,
@@ -30,6 +31,7 @@ from ..rules.timing import (
 
 def build_recommendation_state(
     *,
+    student_id,
     actual_status,
     facts,
     today,
@@ -49,6 +51,7 @@ def build_recommendation_state(
         latest_enrollment_status=facts['latest_enrollment_status'],
         reactivated_after_inactive=facts['reactivated_after_inactive'],
     )
+    is_holdout = signal_bucket == 'high_signal' and resolve_high_signal_holdout(student_id=student_id)
 
     reason_codes = _build_reason_codes(
         actual_status=actual_status,
@@ -57,6 +60,7 @@ def build_recommendation_state(
         latest_enrollment_status=facts['latest_enrollment_status'],
         finance_touches_30d=facts['finance_touches_30d'],
         reactivated_after_inactive=facts['reactivated_after_inactive'],
+        is_holdout=is_holdout,
     )
     base_recommendation = _build_recommendation_contract(
         actual_status=actual_status,
@@ -65,12 +69,14 @@ def build_recommendation_state(
         open_amount=facts['open_amount'],
         finance_touches_30d=facts['finance_touches_30d'],
         reactivated_after_inactive=facts['reactivated_after_inactive'],
+        is_holdout=is_holdout,
     )
     priority = _resolve_priority_contract(
         actual_status=actual_status,
         signal_bucket=signal_bucket,
         confidence=base_recommendation['confidence'],
         finance_touches_30d=facts['finance_touches_30d'],
+        is_holdout=is_holdout,
     )
     base_historical_score = historical_score_map.get(base_recommendation['recommended_action'], 0.0) or 0.0
     recommendation_anchor_at = _resolve_recommendation_anchor(
@@ -166,6 +172,7 @@ def build_recommendation_state(
 
     return {
         'signal_bucket': signal_bucket,
+        'is_holdout': is_holdout,
         'reason_codes': reason_codes,
         'base_recommendation': base_recommendation,
         'recommendation': recommendation,

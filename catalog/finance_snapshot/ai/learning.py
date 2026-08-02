@@ -3,6 +3,12 @@ ARQUIVO: builders de aprendizado contextual da IA financeira.
 
 POR QUE ELE EXISTE:
 - separa as heuristicas de divergencia e tensao do motor historico bruto.
+
+PONTOS CRITICOS:
+- min_realized_count=5 e piso, nao alvo: com poucos tenants, uma celula
+  (acao x janela x sinal) pode bater esse minimo com poucos casos e ainda
+  assim ser ruido. Nao baixar sem adicionar suavizacao de taxa (Wilson/
+  Laplace) para compensar.
 """
 
 from .common import ACTION_KIND_CONTEXTUAL_RECOMMENDATION_MAP
@@ -11,7 +17,7 @@ from .common import ACTION_KIND_CONTEXTUAL_RECOMMENDATION_MAP
 def build_contextual_recommendation_map(
     analytics,
     *,
-    min_realized_count=2,
+    min_realized_count=5,
     min_success_rate=70.0,
 ):
     analytics = analytics or {}
@@ -60,7 +66,7 @@ def build_contextual_recommendation_map(
 def build_turn_priority_tension_context_map(
     analytics,
     *,
-    min_realized_count=2,
+    min_realized_count=5,
     min_rate_gap=10.0,
 ):
     analytics = analytics or {}

@@ -267,6 +267,8 @@ Motivo:
 
 Para a trilha especifica de churn financeiro com saida em fila operacional, leia tambem [finance-churn-ml-foundation.md](finance-churn-ml-foundation.md).
 
+Para a execucao da trilha de leads e a expansao cross-tenant (inteligencia de rede, priors e benchmark anonimo entre boxes), o plano ativo e [../plans/leads-ml-foundation-and-network-intelligence-plan.md](../plans/leads-ml-foundation-and-network-intelligence-plan.md).
+
 ## A arquitetura de atribuicao como caso exemplar
 
 No caso da origem do aluno, a camada de ML deve partir de tres niveis:

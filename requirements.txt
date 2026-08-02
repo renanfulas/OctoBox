@@ -1,4 +1,4 @@
-Django==6.0.6
+Django==6.0.7
 django-tenants==3.10.1
 djangorestframework==3.17.1
 dj-database-url==2.3.0
@@ -14,6 +14,6 @@ python-magic==0.4.27
 stripe==15.0.0
 cryptography==48.0.1
 # Security floor for transitive environment dependencies flagged by Safety.
-pillow==12.2.0
+pillow==12.3.0
 requests==2.33.1
 pywebpush==2.3.0

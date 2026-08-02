@@ -82,7 +82,7 @@ class StudentSourceDeclarationTests(TestCase):
         self.assertEqual(student.resolved_acquisition_source, 'google')
         self.assertEqual(student.resolved_source_detail, 'Google Maps')
         self.assertEqual(student.source_resolution_method, 'declared_only')
-        self.assertEqual(student.source_resolution_reason, 'declared_replaced_unidentified_operational')
+        self.assertEqual(student.source_resolution_reason, 'declared_only')
 
     def test_new_declared_source_deactivates_previous_active_response(self):
         student = Student.objects.create(

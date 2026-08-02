@@ -225,6 +225,7 @@ class IntakeCenterViewTests(TestCase):
 
     def test_reception_can_reject_from_intake_center(self):
         self.client.force_login(self.reception)
+        before = timezone.now()
 
         response = self.client.post(
             reverse('intake-center'),
@@ -240,3 +241,19 @@ class IntakeCenterViewTests(TestCase):
         self.intake.refresh_from_db()
         self.assertEqual(self.intake.status, IntakeStatus.REJECTED)
         self.assertContains(response, 'foi rejeitado e saiu da fila ativa')
+
+        # Regressao do achado M18: rejeicao precisa ficar datada, senao o
+        # historico nao consegue distinguir "perdido" de "recem-criado".
+        self.assertIsNotNone(self.intake.rejected_at)
+        self.assertGreaterEqual(self.intake.rejected_at, before)
+        self.assertIsNone(self.intake.converted_at)
+
+        from auditing.models import AuditEvent
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action='intake_stage_changed',
+                target_model='studentintake',
+                target_id=str(self.intake.id),
+                metadata__to_status=IntakeStatus.REJECTED,
+            ).exists()
+        )

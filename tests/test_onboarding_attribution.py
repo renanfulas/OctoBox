@@ -11,6 +11,7 @@ if PROJECT_ROOT not in sys.path:
 from onboarding.attribution import (
     build_intake_attribution_payload,
     extract_acquisition_channel,
+    extract_acquisition_channel_reading,
     merge_qualification_response,
     summarize_acquisition_channels,
 )
@@ -32,6 +33,8 @@ class OnboardingAttributionTest(unittest.TestCase):
         self.assertEqual(payload['attribution']['acquisition']['declared_channel'], 'instagram')
         self.assertEqual(payload['attribution']['acquisition']['declared_detail'], 'story da unidade')
         self.assertEqual(payload['attribution']['captured_by_actor_id'], 9)
+        self.assertEqual(payload['attribution']['captured_at'], '2026-04-09T10:30:00')
+        self.assertEqual(payload['attribution']['schema_version'], 2)
 
     def test_confirmed_channel_wins_over_declared_channel(self):
         payload = build_intake_attribution_payload(
@@ -70,8 +73,41 @@ class OnboardingAttributionTest(unittest.TestCase):
         summary = summarize_acquisition_channels(rows)
 
         self.assertEqual(summary['instagram'], 1)
-        self.assertEqual(summary['referral'], 1)
         self.assertEqual(summary['missing'], 1)
+        # 'csv' sem raw_payload cai no fallback legado -> inferido, nao
+        # declarado. Nao deve inflar 'referral' como se alguem tivesse
+        # declarado indicacao (ver auditoria de leads, achado M6).
+        self.assertEqual(summary['referral'], 0)
+        self.assertEqual(summary['legacy_inferred'], 1)
+
+    def test_extract_acquisition_channel_reading_reports_provenance(self):
+        confirmed_payload = merge_qualification_response(
+            raw_payload=build_intake_attribution_payload(source='manual', acquisition_channel='instagram'),
+            confirmed_channel='referral',
+        )
+        confirmed = extract_acquisition_channel_reading(raw_payload=confirmed_payload)
+        self.assertEqual(confirmed.channel, 'referral')
+        self.assertEqual(confirmed.provenance, 'confirmed')
+
+        declared = extract_acquisition_channel_reading(
+            raw_payload=build_intake_attribution_payload(source='manual', acquisition_channel='instagram')
+        )
+        self.assertEqual(declared.channel, 'instagram')
+        self.assertEqual(declared.provenance, 'declared')
+
+        legacy = extract_acquisition_channel_reading(raw_payload={}, fallback_source='csv')
+        self.assertEqual(legacy.channel, 'referral')
+        self.assertEqual(legacy.provenance, 'legacy_inferred')
+
+        missing = extract_acquisition_channel_reading(raw_payload={}, fallback_source='')
+        self.assertEqual(missing.channel, '')
+        self.assertEqual(missing.provenance, 'missing')
+
+    def test_extract_acquisition_channel_wrapper_keeps_only_the_channel(self):
+        self.assertEqual(
+            extract_acquisition_channel(raw_payload={}, fallback_source='csv'),
+            'referral',
+        )
 
 
 if __name__ == '__main__':

@@ -3,6 +3,11 @@ ARQUIVO: testes do comando operacional de retry de jobs.
 
 POR QUE ELE EXISTE:
 - protege a ligacao entre o corredor oficial da malha e o scheduler institucional.
+
+PONTOS CRITICOS:
+- `AsyncJob` e TENANT, entao o comando passa por `sweep_active_tenants`, que
+  consulta `Box` (banco). Estes testes seguem `SimpleTestCase` (sem DB) fingindo
+  a varredura com `_fake_sweep`, equivalente a um unico box ativo.
 """
 
 from io import StringIO
@@ -11,8 +16,20 @@ from unittest.mock import patch
 from django.core.management import call_command
 from django.test import SimpleTestCase, override_settings
 
+from shared_support.tenant_sweep import TenantSweepResult
+
+
+def _fake_sweep(handler, *, only_schema='', raise_on_error=False):
+    """Simula uma varredura com um unico box ativo, sem tocar no banco."""
+    fake_box = type('Box', (), {'schema_name': 'box_test'})()
+    return TenantSweepResult(
+        schemas_touched=1,
+        results=[('box_test', handler(fake_box))],
+    )
+
 
 class JobsManagementCommandTests(SimpleTestCase):
+    @patch('jobs.management.commands.run_due_async_job_retries.sweep_active_tenants', _fake_sweep)
     @patch('jobs.management.commands.run_due_async_job_retries.reprocess_due_async_jobs')
     @override_settings(JOB_RETRY_SWEEP_LIMIT=13)
     def test_run_due_async_job_retries_uses_configured_default_limit(self, reprocess_mock):
@@ -24,6 +41,7 @@ class JobsManagementCommandTests(SimpleTestCase):
         reprocess_mock.assert_called_once_with(limit=13)
         self.assertIn('Jobs reprocessados: 2 disparados, 1 ignorados.', stdout.getvalue())
 
+    @patch('jobs.management.commands.run_due_async_job_retries.sweep_active_tenants', _fake_sweep)
     @patch('jobs.management.commands.run_due_async_job_retries.reprocess_due_async_jobs')
     def test_run_due_async_job_retries_accepts_explicit_limit(self, reprocess_mock):
         reprocess_mock.return_value = {'dispatched_count': 1, 'skipped_count': 0}
