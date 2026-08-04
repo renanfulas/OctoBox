@@ -216,9 +216,9 @@ As ambiguidades estruturais graves foram sanadas. O que resta para o beta assist
 
 Ultima rodada concluida:
 
-1. a rodada assistida inicial de `2026-03-28` foi registrada em [../experience/mobile-real-validation-round-2-2026-03-28-assisted.md](../experience/mobile-real-validation-round-2-2026-03-28-assisted.md)
-2. a revalidacao focada do diretorio de alunos ficou registrada em [../experience/mobile-real-validation-round-3-2026-03-28-students-postfix.md](../experience/mobile-real-validation-round-3-2026-03-28-students-postfix.md)
-3. a rodada consolidada mais recente ficou registrada em [../experience/mobile-real-validation-round-4-2026-03-29-browser-assisted-postfix.md](../experience/mobile-real-validation-round-4-2026-03-29-browser-assisted-postfix.md)
+1. a rodada assistida inicial de `2026-03-28` foi registrada em [../experience/mobile-real-validation-round-2-2026-03-28-assisted.md](../experience/archive/mobile-real-validation-round-2-2026-03-28-assisted.md)
+2. a revalidacao focada do diretorio de alunos ficou registrada em [../experience/mobile-real-validation-round-3-2026-03-28-students-postfix.md](../experience/archive/mobile-real-validation-round-3-2026-03-28-students-postfix.md)
+3. a rodada consolidada mais recente ficou registrada em [../experience/mobile-real-validation-round-4-2026-03-29-browser-assisted-postfix.md](../experience/archive/mobile-real-validation-round-4-2026-03-29-browser-assisted-postfix.md)
 4. login, dashboard, recepcao e alunos ficaram sem overflow horizontal em `320px`, `390px` e `430px`
 5. o pan lateral residual do shell foi removido antes do piloto
 6. a busca global ficou visualmente estavel, mas o autocomplete permaneceu inconclusivo porque o dataset local nao devolveu resultados
