@@ -8,7 +8,7 @@ AUTORIDADE:
 - media
 
 DOCUMENTO PAI:
-- [../experience/front-display-wall.md](../experience/front-display-wall.md)
+- [../../experience/front-display-wall.md](../../experience/front-display-wall.md)
 
 QUANDO USAR:
 - quando a duvida for qual frente visual atacar agora e qual ordem de melhoria de UI e UX seguir
@@ -28,6 +28,11 @@ PONTOS CRITICOS:
 
 # Plano UI/UX Fase 1
 
+> **STATUS: FECHADO.** Fase 1 encerrada; o beta fechou em 2026-05
+> (`docs/plans/archive/front-beta-closure-board.md`). Documento movido para
+> `archive/` — para a fachada visual atual consulte
+> `../../experience/front-display-wall.md`.
+
 ## Objetivo da fase
 
 Deixar o produto visualmente maduro para uso real no dia a dia, com navegacao clara, leitura rapida, acoes obvias, formularios menos cansativos e base pronta para automacoes futuras sem inflar a interface com firula.
@@ -36,9 +41,9 @@ Deixar o produto visualmente maduro para uso real no dia a dia, com navegacao cl
 
 Esta fase deve ser conduzida sobre tres bases complementares:
 
-1. [../experience/front-display-wall.md](../experience/front-display-wall.md) como criterio de linguagem visual e de fachada do produto
+1. [../../experience/front-display-wall.md](../../experience/front-display-wall.md) como criterio de linguagem visual e de fachada do produto
 2. [ui-ux-phase1-plan.md](ui-ux-phase1-plan.md) como ordem de ataque e checklist de execucao
-3. [../history/v1-retrospective.md](../history/v1-retrospective.md) como relatorio de risco para nao repetir erro de priorizacao
+3. [../../history/v1-retrospective.md](../../history/v1-retrospective.md) como relatorio de risco para nao repetir erro de priorizacao
 
 Traducao pratica:
 
@@ -455,7 +460,7 @@ Esta fase pode ser considerada redonda quando:
 
 ## Riscos de priorizacao que nao podem voltar
 
-Com base em [../history/v1-retrospective.md](../history/v1-retrospective.md), esta fase nao pode repetir estes erros:
+Com base em [../../history/v1-retrospective.md](../../history/v1-retrospective.md), esta fase nao pode repetir estes erros:
 
 1. confundir quantidade de informacao com qualidade de orientacao
 2. deixar a tela mostrar estado sem deixar clara a proxima acao
