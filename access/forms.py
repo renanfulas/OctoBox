@@ -44,9 +44,17 @@ class AccessAuthenticationForm(AuthenticationForm):
 
 
 class AccessProfileCreateForm(forms.Form):
+    # E-mail e OBRIGATORIO desde a entrega da recuperacao de senha
+    # (access/password_reset.py): sem ele o funcionario nao consegue se
+    # recuperar sozinho e vira dependencia manual do gestor. Contas antigas
+    # criadas sem e-mail continuam validas — o gestor preenche pelo form de
+    # edicao ou usa o reset direto na tela de acessos.
     full_name = forms.CharField(label='Nome completo', max_length=150)
     username = forms.CharField(label='Usuário', max_length=150)
-    email = forms.EmailField(label='E-mail', required=False)
+    email = forms.EmailField(
+        label='E-mail',
+        help_text='Usado para recuperar a senha. Sem e-mail, só o gestor consegue redefinir.',
+    )
     password = forms.CharField(label='Senha provisória', widget=forms.PasswordInput(render_value=True), max_length=128)
     role = forms.ChoiceField(
         label='Papel',
@@ -68,8 +76,14 @@ class AccessProfileCreateForm(forms.Form):
 
 
 class AccessProfileUpdateForm(forms.Form):
+    # Tambem obrigatorio: e por esta tela que as contas antigas (criadas quando
+    # o campo era opcional) ganham e-mail. Exigir aqui converte o passivo em vez
+    # de deixar o funcionario preso no reset manual pra sempre.
     full_name = forms.CharField(label='Nome completo', max_length=150)
-    email = forms.EmailField(label='E-mail', required=False)
+    email = forms.EmailField(
+        label='E-mail',
+        help_text='Usado para recuperar a senha.',
+    )
     role = forms.ChoiceField(
         label='Papel',
         choices=OPERATIONAL_ROLE_CHOICES,

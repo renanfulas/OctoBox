@@ -243,6 +243,47 @@ POR QUE ELE EXISTE:
     gap: 10px;
 }
 
+/* Aviso de "sem e-mail cadastrado" no card de perfil. Frase corrida, entao
+   NAO reusa .pill (components/pills.css): aquele componente e inline-flex com
+   border-radius:999px pensado para rotulo curto tipo "Ativo" — texto de frase
+   nessa forma vira um comprimido de ~74px de altura com as pontas cortando o
+   texto. Aqui e bloco normal, com trilho lateral em vez de badge redondo.
+
+   NAO usar var(--ink) aqui: e um alias declarado uma unica vez em :root
+   (tokens.css) como `--ink: var(--theme-text-primary)`. Como custom property
+   herda o VALOR JA RESOLVIDO (nao a referencia), --ink fica travado no tom
+   claro (#091a2f) mesmo com body[data-theme="dark"] ativo — o dark so
+   redeclara --theme-text-primary no proprio body, e --ink nunca e
+   redeclarado la. --theme-text-primary direto acompanha o tema corretamente
+   (mesmo bug afeta --metric-card-value-ink em cards.css, mas aquele alias e
+   redeclarado localmente em .metric-card, por isso escapa do problema). */
+.access-profile-item__email-warning {
+    margin: 0;
+    padding: 8px 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    border-radius: 10px;
+    border-left: 3px solid var(--theme-accent-danger);
+    background: color-mix(in srgb, var(--theme-accent-danger-alpha) 30%, var(--theme-surface-strong) 70%);
+    /* 70/30 (nao o 82/18 usado em cards.css .metric-number.is-bad) porque o
+       fundo aqui e quase branco (theme-surface-strong claro) e o convite
+       82/18 mede ~3.8:1 contra ele — abaixo de AA 4.5:1 pra texto normal.
+       70/30 escurece o suficiente pra ~4.8:1 sem perder o tom de "alerta". */
+    color: color-mix(in srgb, var(--theme-accent-danger) 70%, var(--theme-text-primary) 30%);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Dark mode: --theme-accent-danger NAO muda de valor entre temas (so o fundo
+   escurece), entao a mesma proporcao clara measure ~3.96:1 no escuro — tambem
+   abaixo de AA. Aqui o problema e o oposto do claro: precisa de MENOS ink (que
+   no escuro e quase branco) pra nao clarear demais o vermelho. 94/6 mede
+   ~5.7:1 contra o fundo escuro. */
+body[data-theme="dark"] .access-profile-item__email-warning {
+    color: color-mix(in srgb, var(--theme-accent-danger) 94%, var(--theme-text-primary) 6%);
+}
+
 .access-role-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;

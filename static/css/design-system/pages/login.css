@@ -224,6 +224,14 @@ input:focus {
     margin: 0;
 }
 
+/* O link e a valvula de escape de quem nao consegue entrar: nunca pode ser
+   espremido pela nota ao lado. Sem isso, "Esqueci minha senha" cai numa coluna
+   de 88px e quebra em 3 linhas no desktop. Abaixo de 640px o .form-meta vira
+   coluna e o encolhimento deixa de existir. */
+.form-meta .support-link {
+    flex-shrink: 0;
+}
+
 .support-link,
 .support-copy a {
     color: #7dd3fc;
