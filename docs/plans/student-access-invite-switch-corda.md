@@ -39,6 +39,14 @@ PONTOS CRITICOS:
 
 # C.O.R.D.A. - Acesso do aluno, invite e switch box
 
+> **STATUS: IMPLEMENTADO.** Todos os 9 itens de "Status atual" registrados neste
+> documento (2026-04-17) estao marcados `concluida`. `StudentIdentity`,
+> `StudentBoxMembership`, `primary_box`/`active_box` e switch box existem no runtime
+> atual. Documento ainda referenciado como base arquitetural por
+> `intelligent-student-onboarding-plan.md`, `schema-per-tenant-migration-plan.md`,
+> `student-app-grade-wod-rm-corda.md`, `student-app-views-refactor-corda.md` e
+> `student-registration-oauth-polish-plan.md` — nao mover para `archive/`.
+
 ## C - Contexto
 
 O OctoBox ja possui duas superficies diferentes:

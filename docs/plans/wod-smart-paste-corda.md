@@ -1,5 +1,10 @@
 # WOD Smart Paste — Plano Corda
 
+> **STATUS: IMPLEMENTADO** (commit `7346748` e a serie de commits de Smart Paste que a
+> seguiram — redesign de chips de dia, resolucao de slugs via GPT, aceite de output
+> completo do SmartPlan). Documento ainda referenciado por `wod-smartplan-spec.md` e
+> `wod-llm-in-product-corda-plan.md` — nao mover para `archive/`.
+
 ## Problema
 
 Coaches colam treinos semanais em texto livre (formato verbal PT-BR). Hoje precisam montar bloco a bloco no editor, para cada `ClassSession` individualmente. Não existe conceito de semana, tipo de aula explícito, ou replicação em massa.

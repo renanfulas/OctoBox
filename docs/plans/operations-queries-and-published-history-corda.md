@@ -41,6 +41,15 @@ PONTOS CRITICOS:
 
 # C.O.R.D.A. - Refatoracao de `operations/queries.py` e `operations/workout_published_history.py`
 
+> **STATUS: Ondas 1-6 IMPLEMENTADAS.** Todos os modulos-alvo existem no runtime:
+> `manager_workspace_queries.py`, `reception_workspace_queries.py`,
+> `workout_publication_metrics.py`, `workout_publication_follow_up.py`,
+> `workout_publication_executive.py`; `operations/queries.py` esta reduzido a 340
+> linhas (casca de compatibilidade). **Onda 7 (poda e limpeza final) nao confirmada**
+> — verificar imports orfaos antes de considerar fechado. Documento ainda referenciado
+> por `hotspots-builders-and-queries-corda.md` e `wod-ui-ux-revolution-corda.md` —
+> nao mover para `archive/`.
+
 ## C - Contexto
 
 Hoje existem dois hotspots diferentes dentro de `operations/`:
