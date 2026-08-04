@@ -41,6 +41,11 @@ PONTOS CRITICOS:
 
 # C.O.R.D.A. - Coach monta o WOD, owner ou manager aprovam
 
+> **STATUS: IMPLEMENTADO** (commit `050653b` — "Implement student workout approval flow
+> and WOD suite ownership split"). Documento ainda referenciado por
+> `docs/reference/operations-wod-ownership-map.md` e por outros planos de WOD —
+> nao mover para `archive/`.
+
 ## C - Contexto
 
 O OctoBox ja possui uma base funcional importante para a trilha de treino:

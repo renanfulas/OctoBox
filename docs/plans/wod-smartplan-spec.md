@@ -37,6 +37,12 @@ PONTOS CRITICOS:
 
 # SmartPlan — Normalizacao de WOD e Tier Bifurcado
 
+> **STATUS: IMPLEMENTADO** (commit `abdcf3e` / PR #64 — "Onda E - SmartPlan GPT, WOD
+> rich tier, MovementLibrary e telemetria" — e a serie de commits que a seguiram, incl.
+> #65 e o v2 server-side parsing). Onda E.7 (pricing do tier Pro) permanece
+> explicitamente adiada, aguardando telemetria. Documento ainda referenciado por
+> `wod-llm-in-product-corda-plan.md` — nao mover para `archive/`.
+
 ## Documentos canonicos consultados
 
 Este plano respeita a hierarquia de [documentation-authority-map.md](../map/documentation-authority-map.md). As decisoes deste documento sao subordinadas a:

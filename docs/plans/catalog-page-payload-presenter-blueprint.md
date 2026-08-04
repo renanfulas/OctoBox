@@ -36,6 +36,13 @@ PONTOS CRITICOS:
 
 # Blueprint de page payload e presenter do catalogo
 
+> **STATUS: IMPLEMENTADO.** O proximo passo recomendado deste blueprint foi executado:
+> `catalog/presentation/shared.py`, `class_grid_page.py` e o padrao se espalhou por
+> `finance_*_page.py`, `student_directory_page.py`, `student_form_page.py`,
+> `membership_plan_page.py`. Este documento continua valendo como REFERENCIA do
+> padrao (e citado por `documentation-authority-map.md`, `README.md` e guides de
+> arquitetura) — nao mover para `archive/`.
+
 ## Tese central
 
 O catalogo do OctoBox precisa falar uma lingua unica entre backend e front.
