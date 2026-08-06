@@ -2108,16 +2108,17 @@ class PublicWorkoutPwaTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "goDay('qua',this)")
-        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Sup A</div>', html=True)
-        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Quad A</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Glúteo</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Sup B</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Full</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Quad B</div>', html=True)
+        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Rest</div>', html=True)
+        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Quad Força</div>', html=True)
+        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Sup Força</div>', html=True)
+        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Glúteo</div>', html=True)
+        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
+        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Braço</div>', html=True)
         self.assertContains(response, '<div class="dn">Dom</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, 'Terça · ~55 min · Quadríceps + Panturrilha')
-        self.assertContains(response, 'Quarta · ~60 min · Glúteo, posterior, glúteo médio')
-        self.assertContains(response, 'Sábado · ~55 min · Quadríceps (variação da terça)')
+        self.assertContains(response, 'Terça · ~58 min + 20 min bike leve · Quadríceps, Panturrilha, Core')
+        self.assertContains(response, 'Quarta · ~58 min + 10-15 min esteira HIIT · Peito, Costas, Ombro, Abdômen')
+        self.assertContains(response, 'Quinta · ~58 min · Posterior de coxa, Glúteo, Quadríceps')
+        self.assertContains(response, 'Sábado · ~60 min + 20-30 min cardio pesado · Costas, Peito, Bíceps, Tríceps, Ombro medial')
 
 
 class StudentAuthMiddlewareTests(TestCase):
