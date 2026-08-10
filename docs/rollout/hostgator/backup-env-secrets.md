@@ -44,7 +44,8 @@ sudo OCTOBOX_ENV_BACKUP_AGE_RECIPIENT='age1qy3z9...' \
 ```
 Isso instala `age`, grava a chave pública no próprio `octobox.env` (ela é
 pública, não é segredo), instala o timer `octobox-env-backup.timer` (roda
-diariamente às 03:05 UTC, antes do backup do Postgres) e dispara o primeiro
+a cada 10 dias — `octobox.env` muda muito menos que o banco, não precisa de
+cadência diária) e dispara o primeiro
 backup na hora.
 
 > Pré-requisito: `setup_r2_backup.sh` já deve ter sido rodado antes (usa o
@@ -62,7 +63,7 @@ Na sua máquina, com o arquivo de chave privada do cofre de senhas em mãos:
 ```bash
 # baixe o .age mais recente do R2 (rclone já está configurado na VPS,
 # ou use o painel/CLI do Cloudflare R2 direto)
-rclone copy r2:octobox-backups/octoboxfit-production/env-secrets/ ./ --max-age 1d
+rclone copy r2:octobox-backups/octoboxfit-production/env-secrets/ ./ --max-age 11d
 
 age -d -i octobox-env-backup-key.txt octobox-env-<timestamp>.age > octobox.env.restaurado
 ```
@@ -85,6 +86,6 @@ backup mais antigo.
 
 - `OCTOBOX_ENV_BACKUP_AGE_RECIPIENT` vazio ou não começa com `age1`;
 - timer inativo;
-- `last_env_backup_remote_path` mais antigo que 24h;
+- `last_env_backup_remote_path` mais antigo que 11 dias (janela de 10 dias + folga);
 - a chave privada não está confirmada no cofre de senhas do time — sem ela,
   todo esse backup é decorativo.
