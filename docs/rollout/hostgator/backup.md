@@ -37,7 +37,29 @@ idade máx. aceitável **36h**, alerta de disco em **85%**. O script:
 2. escreve `OCTOBOX_BACKUP_REMOTE*` e retenção no `octobox.env`;
 3. instala as units de `infra/hostgator-vps/systemd/` e dá `enable --now` em `octobox-backup.timer` e `octobox-runtime-check.timer`.
 
-→ A partir daqui o backup roda sozinho. Confira: `systemctl status octobox-backup.timer`.
+→ A partir daqui o backup roda sozinho.
+
+**Confirme que ficou rodando de verdade — não assuma.** Foi exatamente a
+ausência dessa confirmação que deixou os backups pararem sem ninguém notar
+(achado em 2026-08: só existiam 4 dumps no R2, todos de abril, resquício do
+provisionamento inicial — o timer nunca esteve realmente ativo em produção):
+
+```bash
+sudo systemctl status octobox-backup.timer      # tem que estar "active (waiting)"
+sudo systemctl list-timers | grep octobox        # confere o proximo disparo agendado
+sudo systemctl start octobox-backup.service      # forca uma execucao agora, nao espera ate 03:15
+cat /srv/octobox/shared/deploy-state/last_backup_remote_path   # tem que apontar pro R2, timestamp de agora
+```
+
+**Configure o alerta de backup velho, não deixe implícito.** `check_octobox_runtime.sh`
+já verifica idade do último backup (§2 de [smoke.md](smoke.md)), mas só avisa
+alguém se `OCTOBOX_ALERT_WEBHOOK_URL` estiver definido:
+```bash
+# no octobox.env
+OCTOBOX_ALERT_WEBHOOK_URL=<webhook do Slack/Discord/etc>
+```
+Sem isso, um timer que parou de rodar fica invisível até o dia em que alguém
+precisa restaurar e descobre que o "backup diário" não existe há meses.
 
 ## 2. Backup manual (sob demanda) — `backup_and_sync_postgres.sh`
 

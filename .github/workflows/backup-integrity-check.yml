@@ -1,0 +1,202 @@
+name: Backup Integrity Check
+
+# Valida que os scripts de backup (Postgres + env cifrado) realmente
+# funcionam de ponta a ponta, nao so que "parseiam" sem erro de sintaxe.
+#
+# Por que existe: em 2026-08 descobrimos que o backup de producao (dump do
+# Postgres e o octobox.env) parou de rodar de verdade sem que nenhum teste
+# ou alerta pegasse isso — os scripts existiam e "pareciam certos" lendo o
+# codigo, mas nunca foram exercitados em CI. Este workflow fecha esse gap:
+# roda os scripts reais contra um Postgres de verdade e um par de chaves
+# age de verdade, e falha o PR se o dump nao for restauravel ou se o
+# roundtrip de criptografia do env quebrar.
+#
+# Roda em todo PR/push que toque nos scripts de backup ou nos workflows.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/linux/backup_postgres.sh"
+      - "scripts/linux/backup_and_sync_postgres.sh"
+      - "scripts/linux/backup_env_secrets.sh"
+      - "scripts/linux/setup_env_secrets_backup.sh"
+      - "scripts/linux/setup_r2_backup.sh"
+      - "infra/hostgator-vps/systemd/octobox-backup.*"
+      - "infra/hostgator-vps/systemd/octobox-env-backup.*"
+      - ".github/workflows/backup-integrity-check.yml"
+  pull_request:
+    paths:
+      - "scripts/linux/backup_postgres.sh"
+      - "scripts/linux/backup_and_sync_postgres.sh"
+      - "scripts/linux/backup_env_secrets.sh"
+      - "scripts/linux/setup_env_secrets_backup.sh"
+      - "scripts/linux/setup_r2_backup.sh"
+      - "infra/hostgator-vps/systemd/octobox-backup.*"
+      - "infra/hostgator-vps/systemd/octobox-env-backup.*"
+      - ".github/workflows/backup-integrity-check.yml"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Shellcheck em todos os scripts de backup/rollout — pega bug de quoting,
+  # variavel nao definida, etc antes de chegar na VPS.
+  # ---------------------------------------------------------------------------
+  shellcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Shellcheck nos scripts de backup
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          shellcheck -S warning \
+            scripts/linux/backup_postgres.sh \
+            scripts/linux/backup_and_sync_postgres.sh \
+            scripts/linux/backup_env_secrets.sh \
+            scripts/linux/setup_env_secrets_backup.sh \
+            scripts/linux/setup_r2_backup.sh \
+            scripts/linux/check_octobox_runtime.sh
+
+  # ---------------------------------------------------------------------------
+  # Postgres: dump real com backup_postgres.sh, restore num banco vazio
+  # separado, confere que o schema/dado sobrevive. E o teste que realmente
+  # importa — um dump corrompido ou incompleto passaria em qualquer lint.
+  # ---------------------------------------------------------------------------
+  postgres-dump-restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:15
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_DB: backup_check_source
+          POSTGRES_USER: backup_check
+          POSTGRES_PASSWORD: backup_check_password
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Popular banco de origem com dado de canário
+        env:
+          PGPASSWORD: backup_check_password
+        run: |
+          psql --host 127.0.0.1 --port 5432 --username backup_check --dbname backup_check_source <<'SQL'
+          CREATE TABLE backup_canary (id serial PRIMARY KEY, marker text NOT NULL);
+          INSERT INTO backup_canary (marker) VALUES ('octobox-backup-integrity-check');
+          SQL
+
+      - name: Rodar backup_postgres.sh de verdade
+        env:
+          PGPASSWORD: backup_check_password
+        run: |
+          bash scripts/linux/backup_postgres.sh \
+            --host 127.0.0.1 --port 5432 \
+            --database backup_check_source --user backup_check \
+            --output-dir /tmp/backup-check-dumps
+
+      - name: Confere que o dump existe e nao esta vazio
+        run: |
+          dump_file="$(ls /tmp/backup-check-dumps/octobox-*.dump)"
+          size="$(stat -c%s "${dump_file}")"
+          echo "Dump: ${dump_file} (${size} bytes)"
+          if [[ "${size}" -lt 100 ]]; then
+            echo "Dump suspeito de vazio/truncado." >&2
+            exit 1
+          fi
+
+      - name: Restaurar num banco separado e validar o dado de canario
+        env:
+          PGPASSWORD: backup_check_password
+        run: |
+          dump_file="$(ls /tmp/backup-check-dumps/octobox-*.dump)"
+          psql --host 127.0.0.1 --port 5432 --username backup_check --dbname postgres \
+            -c "CREATE DATABASE backup_check_restored;"
+          pg_restore --host 127.0.0.1 --port 5432 --username backup_check \
+            --dbname backup_check_restored --no-owner --no-privileges "${dump_file}"
+          marker="$(psql --host 127.0.0.1 --port 5432 --username backup_check --dbname backup_check_restored \
+            -tAc "SELECT marker FROM backup_canary LIMIT 1;")"
+          echo "Marker restaurado: ${marker}"
+          if [[ "${marker}" != "octobox-backup-integrity-check" ]]; then
+            echo "Restore nao trouxe o dado esperado — dump nao e confiavel." >&2
+            exit 1
+          fi
+          echo "✅ Dump do Postgres e restauravel e integro."
+
+  # ---------------------------------------------------------------------------
+  # Env cifrado: roda backup_env_secrets.sh de verdade (via sudo, como na
+  # VPS), usando um par de chaves age gerado na hora e um diretorio local
+  # como "remote" (rclone trata caminho local como remote valido, sem
+  # precisar de credencial real de R2). Confere que decifra de volta pro
+  # conteudo original byte a byte.
+  # ---------------------------------------------------------------------------
+  env-secrets-backup-roundtrip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Instalar age e rclone
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age rclone
+
+      - name: Gerar par de chaves age (fora de qualquer coisa parecida com producao)
+        run: |
+          age-keygen -o /tmp/ci-env-backup-key.txt 2> /tmp/ci-env-backup-key.pub
+          recipient="$(grep -oP 'age1[a-z0-9]+' /tmp/ci-env-backup-key.pub)"
+          echo "AGE_RECIPIENT=${recipient}" >> "$GITHUB_ENV"
+
+      - name: Montar octobox.env de mentira e rodar o backup real
+        run: |
+          mkdir -p /tmp/octobox-ci/shared /tmp/octobox-ci/backups
+          cat > /tmp/octobox-ci/shared/octobox.env <<'ENVEOF'
+          DJANGO_SECRET_KEY=ci-fake-secret-nao-real
+          STUDENT_GOOGLE_OAUTH_CLIENT_SECRET=ci-fake-oauth-secret
+          MARKER=octobox-env-backup-integrity-check
+          ENVEOF
+          sudo OCTOBOX_APP_HOME=/tmp/octobox-ci \
+               OCTOBOX_ENV_BACKUP_AGE_RECIPIENT="${AGE_RECIPIENT}" \
+               OCTOBOX_BACKUP_REMOTE=/tmp/octobox-ci-remote \
+               OCTOBOX_BACKUP_REMOTE_PREFIX=env-check \
+               bash scripts/linux/backup_env_secrets.sh
+
+      - name: Confere que subiu cifrado pro "remote" e nao em texto plano
+        run: |
+          remote_file="$(find /tmp/octobox-ci-remote -name 'octobox-env-*.age')"
+          echo "Backup remoto: ${remote_file}"
+          if grep -q "ci-fake-secret-nao-real" "${remote_file}"; then
+            echo "Backup subiu em TEXTO PLANO — vazamento de segredo." >&2
+            exit 1
+          fi
+
+      - name: Decifrar com a chave privada e comparar byte a byte com o original
+        run: |
+          remote_file="$(find /tmp/octobox-ci-remote -name 'octobox-env-*.age')"
+          age -d -i /tmp/ci-env-backup-key.txt "${remote_file}" > /tmp/octobox-env-restaurado
+          diff /tmp/octobox-ci/shared/octobox.env /tmp/octobox-env-restaurado
+          echo "✅ Roundtrip de criptografia do env OK — decifrado e identico ao original."
+
+      - name: Confere retencao/local state files
+        run: |
+          test -s /tmp/octobox-ci/shared/deploy-state/last_env_backup_path
+          test -s /tmp/octobox-ci/shared/deploy-state/last_env_backup_remote_path
+          echo "✅ Arquivos de estado gravados."

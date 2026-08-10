@@ -1,0 +1,15 @@
+[Unit]
+Description=OctoBOX env secrets encrypted backup and remote sync (every 10 days)
+
+# octobox.env muda raramente (so quando alguem mexe em credencial/config) —
+# nao precisa do mesmo cadenciamento diario do backup do Postgres, que muda
+# o tempo todo. OnUnitActiveSec (nao OnCalendar) porque queremos "a cada 10
+# dias contados da ultima execucao", nao um dia fixo do calendario.
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=10d
+Persistent=true
+Unit=octobox-env-backup.service
+
+[Install]
+WantedBy=timers.target
