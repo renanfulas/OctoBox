@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily OctoBOX env secrets encrypted backup and remote sync
+
+[Timer]
+OnCalendar=*-*-* 03:05:00
+Persistent=true
+Unit=octobox-env-backup.service
+
+[Install]
+WantedBy=timers.target
