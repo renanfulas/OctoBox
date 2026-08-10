@@ -73,6 +73,13 @@ class StudentIdentityRequiredMixin:
         if not all_memberships:
             # Sprint 2: student/box_root_slug eram cross-schema. Agora usa
             # student_id (referencia fraca) + student_name (denormalizado).
+            # So auto-cria a membership legada quando a rota EXIGE membership
+            # ativa — nas paredes de estado (StudentAnyMembershipMixin, ex.:
+            # sem-box/suspenso-financeiro) isso mascarava "zero membership"
+            # como ACTIVE e acionava o gate de consentimento por engano
+            # (regressao coberta por test_no_active_box_route_is_never_gated).
+            if not self.requires_active_membership:
+                return []
             fallback_membership = StudentBoxMembership.objects.create(
                 identity=identity,
                 student_id=identity.student_id,

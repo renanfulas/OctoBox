@@ -24,7 +24,7 @@ from .forms import AccessProfileCreateForm, AccessProfileUpdateForm
 
 # Alfabeto sem caracteres ambiguos (0/O, 1/l/I) — a senha e lida em voz alta ou
 # copiada a mao no balcao do box, entao confundir caractere custa suporte.
-_PROVISIONAL_PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
+_PROVISIONAL_PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'  # gitleaks:allow -- alfabeto de geracao, nao segredo
 _PROVISIONAL_PASSWORD_LENGTH = 14
 
 
