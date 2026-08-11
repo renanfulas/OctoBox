@@ -107,6 +107,12 @@ Rodar no ambiente alvo, na ordem. Todos são idempotentes (seguro repetir).
 ### Workspace do Manager (piloto)
 - **Var:** `OPERATIONS_MANAGER_WORKSPACE_ENABLED=True` quando o papel Manager faz parte do pacote do dia 1.
 
+### Backup cifrado do `octobox.env`
+- **Vars:** `OCTOBOX_ENV_BACKUP_AGE_RECIPIENT` (chave pública age, não é segredo), `OCTOBOX_ENV_BACKUP_RETENTION_DAYS`.
+- **Comandos:** `setup_env_secrets_backup.sh` (1ª vez — a chave privada nasce FORA da VPS, via `age-keygen` local) → timer `octobox-env-backup.timer` (a cada 10 dias — cadência menor que o Postgres porque o env muda com pouca frequência).
+- **Verificar:** `systemctl status octobox-env-backup.timer`; `deploy-state/last_env_backup_remote_path` aponta pro R2.
+- **Por quê existe:** incidente de 2026-08 — VPS falhou antes de qualquer backup do `octobox.env` sobreviver, perdendo `DJANGO_SECRET_KEY` (também usada para cifrar PII, ver `shared_support/crypto_fields.py`) e todos os segredos de terceiros de uma vez. Ver [hostgator/backup-env-secrets.md](hostgator/backup-env-secrets.md).
+
 ---
 
 ## Regra de manutenção

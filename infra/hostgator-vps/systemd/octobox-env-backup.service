@@ -1,0 +1,14 @@
+[Unit]
+Description=OctoBOX env secrets encrypted backup and remote sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=OCTOBOX_APP_HOME=/srv/octobox
+EnvironmentFile=-/srv/octobox/shared/octobox.env
+ExecStart=/srv/octobox/app/scripts/linux/backup_env_secrets.sh
+User=root
+
+[Install]
+WantedBy=multi-user.target
