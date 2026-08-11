@@ -1674,7 +1674,7 @@ class StudentIdentityFlowTests(TestCase):
         membership.refresh_from_db()
         self.assertIsNone(membership.cleared_at)
         messages = list(post_response.context['messages'])
-        self.assertTrue(any('Liberação de acesso exige Recepção, Manager, Owner ou DEV' in str(message) for message in messages))
+        self.assertTrue(any('modo leitura' in str(message) for message in messages))
 
     def test_owner_revoke_promotes_another_active_membership_to_primary(self):
         owner = get_user_model().objects.create_superuser(
