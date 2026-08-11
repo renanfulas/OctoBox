@@ -34,6 +34,7 @@ def build_student_operations_access_matrix(
         'role_slug': role_slug,
         'can_operate_invites': role_slug in invite_operator_roles,
         'can_approve_membership': role_slug in membership_approval_roles,
+        'can_clear_membership': role_slug in membership_approval_roles,
         'can_manage_membership_lifecycle': role_slug in membership_lifecycle_roles,
         'can_change_email': role_slug in invite_operator_roles,
         'can_view_sensitive_identity_data': not is_read_only_identity_observer,

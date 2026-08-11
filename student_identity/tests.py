@@ -1556,6 +1556,126 @@ class StudentIdentityFlowTests(TestCase):
         messages = list(response.context['messages'])
         self.assertTrue(any('Suspensão financeira exige Manager, Owner ou DEV' in str(message) for message in messages))
 
+    def test_reception_can_clear_flagged_membership(self):
+        reception = self._create_role_user(
+            username='recepcao-clear',
+            email='recepcao-clear@example.com',
+            role_name='Recepcao',
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=self.student.id, student_name=self.student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-reception-clear',
+            email='aluno@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        membership = StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=self.student.id,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+            clearance_required=True,
+        )
+        self.client.force_login(reception)
+
+        response = self.client.post(
+            reverse('student-invitation-operations'),
+            {
+                'action': 'clear-membership',
+                'membership_id': str(membership.id),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        membership.refresh_from_db()
+        self.assertIsNotNone(membership.cleared_at)
+        self.assertEqual(membership.cleared_by_id, reception.id)
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                action=f'student_onboarding.{StudentOnboardingJourney.REGISTERED_STUDENT_INVITE}.clearance_granted',
+                target_id=str(membership.id),
+            ).exists()
+        )
+
+    def test_clear_membership_is_idempotent_on_second_click(self):
+        owner = get_user_model().objects.create_superuser(
+            username='owner-clear-twice',
+            email='owner-clear-twice@example.com',
+            password='Senha@123456',
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=self.student.id, student_name=self.student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-owner-clear-twice',
+            email='aluno@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        membership = StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=self.student.id,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+            clearance_required=True,
+        )
+        self.client.force_login(owner)
+        post_data = {'action': 'clear-membership', 'membership_id': str(membership.id)}
+
+        self.client.post(reverse('student-invitation-operations'), post_data)
+        membership.refresh_from_db()
+        first_cleared_at = membership.cleared_at
+        self.assertIsNotNone(first_cleared_at)
+
+        response = self.client.post(reverse('student-invitation-operations'), post_data, follow=True)
+
+        membership.refresh_from_db()
+        self.assertEqual(membership.cleared_at, first_cleared_at)
+        messages = list(response.context['messages'])
+        self.assertTrue(any('não está em espera' in str(message) for message in messages))
+
+    def test_coach_cannot_clear_membership(self):
+        coach = self._create_role_user(
+            username='coach-clear-denied',
+            email='coach-clear-denied@example.com',
+            role_name='Coach',
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=self.student.id, student_name=self.student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-coach-clear-denied',
+            email='aluno@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        membership = StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=self.student.id,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+            clearance_required=True,
+        )
+        self.client.force_login(coach)
+
+        response = self.client.get(reverse('student-invitation-operations'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Aguardando atestado')
+        self.assertNotContains(response, 'Liberar acesso')
+
+        post_response = self.client.post(
+            reverse('student-invitation-operations'),
+            {'action': 'clear-membership', 'membership_id': str(membership.id)},
+            follow=True,
+        )
+        membership.refresh_from_db()
+        self.assertIsNone(membership.cleared_at)
+        messages = list(post_response.context['messages'])
+        self.assertTrue(any('modo leitura' in str(message) for message in messages))
+
     def test_owner_revoke_promotes_another_active_membership_to_primary(self):
         owner = get_user_model().objects.create_superuser(
             username='owner-revoke',

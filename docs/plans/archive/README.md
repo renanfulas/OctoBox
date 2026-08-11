@@ -31,3 +31,8 @@ Para planos ativos consulte `docs/plans/`.
 | `front-end-performance-sprint-6-dynamic-visuals-corda.md` | C.O.R.D.A. Sprint 6 — visuais dinâmicos | 2026-05 — executada |
 | `front-end-performance-sprint-7-budgets-corda.md` | C.O.R.D.A. Sprint 7 — budgets de performance | 2026-05 — executada |
 | `front-end-performance-sprint-8-controlled-consolidation-corda.md` | C.O.R.D.A. Sprint 8 — consolidação controlada | 2026-05 — executada |
+| `student-app-grade-reserva-rm-wod-pwa-corda.md` | Diagnóstico e correção de bugs de Grade/Reserva/RM/WOD/PWA do app do aluno | 2026-04 — commit `fbb469e` aplicou as ondas descritas |
+| `student-app-wireframes-grade-wod-rm.md` | Wireframes de Início/Grade/WOD/RM do app do aluno | 2026-04 — telas construídas (`templates/student_app/{home,grade,wod,rm}.html`) |
+| `StudentPageRefactorPrompt.md` | Prompt de IA para planejar o refactor da página do aluno | Já cumpriu o papel de gerar os planos de refactor (`student-app-views-refactor-corda.md` etc.); nenhuma referência ativa no repo |
+| `dashboard-futuristic-luxury-blueprint.md` | Blueprint visual do dashboard "Luxo Futurista 2050" | Tema implementado em `static/css/design-system/dashboard.css`; a frente ativa agora é `dashboard-pattern-propagation-plan.md` (propagar o padrão às outras páginas) |
+| `ui-ux-phase1-plan.md` | Fase 1 de UI/UX antes das automações | Beta fechado (2026-05, ver `front-beta-closure-board.md`); fase substituída pelo Front Display Wall e planos posteriores |

@@ -33,6 +33,7 @@ def build_student_invitation_operations_context(view, *, context, **kwargs):
     box_root_slug = operations_queries.get_box_root_slug()
     active_box_invite_link = operations_queries.get_active_box_invite_link()
     pending_memberships = operations_queries.build_pending_memberships()
+    pending_clearance_memberships = operations_queries.build_pending_clearance_memberships()
     managed_memberships = operations_queries.build_managed_memberships()
     recent_invites, stalled_invites = operations_queries.build_recent_invites_snapshot()
     observability_snapshot = operations_queries.build_observability_snapshot(
@@ -63,6 +64,7 @@ def build_student_invitation_operations_context(view, *, context, **kwargs):
         recent_invites=recent_invites,
         stalled_invites=stalled_invites,
         pending_memberships=pending_memberships,
+        pending_clearance_memberships=pending_clearance_memberships,
         managed_memberships=managed_memberships,
         observability_cards=observability_snapshot['observability_cards'],
         observability_alerts=observability_snapshot['observability_alerts'],

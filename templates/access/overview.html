@@ -105,6 +105,12 @@ PONTOS CRITICOS:
                                 </div>
                                 <span class="pill {% if profile.is_active %}accent{% else %}warning{% endif %}">{% if profile.is_active %}Ativo{% else %}Inativo{% endif %}</span>
                             </div>
+                            {% if not profile.email %}
+                            <p class="access-profile-item__email-warning" role="alert">
+                                <span aria-hidden="true">⚠</span>
+                                Sem e-mail — esta pessoa não consegue recuperar a senha sozinha. Preencha o campo abaixo.
+                            </p>
+                            {% endif %}
                             <form method="post" class="form-stack section-gap-top-xs">
                                 {% csrf_token %}
                                 <input type="hidden" name="access_action" value="update">
@@ -141,6 +147,18 @@ PONTOS CRITICOS:
                                 <button class="button {% if profile.is_active %}secondary{% endif %}" type="submit"{% if profile.is_current_user and profile.is_active %} disabled{% endif %}>
                                     {% if profile.is_active %}Desativar perfil{% else %}Reativar perfil{% endif %}
                                 </button>
+                            </form>
+                            <!-- Saida de emergencia do fluxo por e-mail: gera senha provisoria
+                                 exibida UMA vez. Bloqueado para a propria conta de proposito —
+                                 o gestor usa "Esqueci minha senha" no login. -->
+                            <form method="post" class="actions actions-tight section-gap-top-xs">
+                                {% csrf_token %}
+                                <input type="hidden" name="access_action" value="reset_password">
+                                <input type="hidden" name="target_profile_id" value="{{ profile.id }}">
+                                <button class="button secondary" type="submit"{% if profile.is_current_user %} disabled{% endif %}>
+                                    Gerar senha provisória
+                                </button>
+                                <span class="field-note">{% if profile.is_current_user %}Para a sua própria conta, use "Esqueci minha senha" na tela de login.{% else %}Use quando a pessoa não tem e-mail ou precisa entrar agora. A senha aparece uma única vez.{% endif %}</span>
                             </form>
                         </div>
                     </article>

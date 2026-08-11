@@ -226,3 +226,74 @@ body.student-app-body[data-theme="dark"] .student-input {
         align-items: end;
     }
 }
+
+/* GATE DE ENTRADA (PAR-Q + termo) ──────────────────────── */
+
+.student-consent-block {
+    display: grid;
+    gap: 12px;
+    padding-top: 8px;
+}
+
+.student-consent-block-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--theme-text-primary);
+}
+
+.student-parq-item {
+    display: grid;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-strong) 92%, transparent);
+}
+
+.student-parq-question {
+    margin: 0;
+    font-weight: 700;
+    color: var(--theme-text-primary);
+    line-height: 1.5;
+}
+
+.student-parq-toggle {
+    display: flex;
+    gap: 10px;
+}
+
+.student-parq-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-muted) 90%, transparent);
+    color: var(--theme-text-secondary);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.student-parq-option:has(input:checked) {
+    border-color: var(--theme-accent-primary);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, var(--theme-surface-strong) 78%);
+    color: var(--theme-text-primary);
+}
+
+.student-parq-option input {
+    accent-color: var(--theme-accent-primary);
+}
+
+.student-waiver-box {
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-muted) 90%, transparent);
+    color: var(--theme-text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+}

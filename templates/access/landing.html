@@ -295,5 +295,33 @@ PONTOS CRITICOS:
             </div>
         </section>
     </main>
+    <script>
+        (function () {
+            // iOS Safari ignora o atributo autoplay quando "Reduzir Movimento"
+            // esta ativo em Acessibilidade, mesmo com muted+playsinline. Isso
+            // deixa o hero preso no poster/fallback no mobile. Chamar .play()
+            // via JS ainda funciona nesse caso, entao forcamos aqui.
+            var heroVideo = document.querySelector('.landing-hero-video');
+            if (!heroVideo) {
+                return;
+            }
+
+            function tryPlay() {
+                var playPromise = heroVideo.play();
+                if (playPromise && typeof playPromise.catch === 'function') {
+                    playPromise.catch(function () {
+                        document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
+                        document.addEventListener('click', tryPlay, { once: true });
+                    });
+                }
+            }
+
+            if (heroVideo.readyState >= 2) {
+                tryPlay();
+            } else {
+                heroVideo.addEventListener('loadedmetadata', tryPlay, { once: true });
+            }
+        })();
+    </script>
 </body>
 </html>

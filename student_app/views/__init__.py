@@ -9,6 +9,7 @@ O QUE ESTE ARQUIVO FAZ:
 2. concentra o ponto unico de importacao usado por `urls.py` e `public_urls.py`.
 """
 
+from .consent_views import StudentClearanceView, StudentConsentView
 from .membership_views import (
     StudentInviteEntryView,
     StudentMembershipPendingView,
@@ -56,7 +57,9 @@ __all__ = [
     'PublicWorkoutServiceWorkerView',
     'StudentAddRmView',
     'StudentCancelAttendanceView',
+    'StudentClearanceView',
     'StudentConfirmAttendanceView',
+    'StudentConsentView',
     'StudentGradeView',
     'StudentHomeView',
     'StudentInviteEntryView',

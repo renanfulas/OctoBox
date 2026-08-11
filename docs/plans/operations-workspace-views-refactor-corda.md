@@ -40,6 +40,14 @@ PONTOS CRITICOS:
 
 # C.O.R.D.A. - Refatoracao segura das views de workspace operacional
 
+> **STATUS: IMPLEMENTADO.** `operations/workspace_views.py` saiu de 878 linhas (baseline
+> 2026-04-24) para 231 apos as Ondas 1-4 (medida objetiva no fim deste documento). Os
+> corredores novos (`workout_template_views.py`, `workout_planner_views.py`,
+> `workout_board_views.py`, `workout_editor_views.py`, `workout_action_views.py`,
+> `workout_approval_board_context.py`, `workout_support.py`) existem no runtime. Este
+> documento continua sendo referenciado por `docs/reference/operations-wod-ownership-map.md`
+> e por outros planos de WOD — nao mover para `archive/`.
+
 ## C - Contexto
 
 O runtime atual do OctoBox ja evoluiu para um modelo melhor do que um Django solto por paginas:

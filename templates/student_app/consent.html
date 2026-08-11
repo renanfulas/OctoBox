@@ -1,0 +1,51 @@
+{% extends "student_app/layout.html" %}
+
+{% block title %}Consentimento | OctoBox Aluno{% endblock %}
+
+{% block body %}
+<section class="student-card">
+    <p class="student-eyebrow">Antes de entrar</p>
+    <h1>Duas coisas rapidas antes do seu primeiro treino.</h1>
+    <p class="student-copy">
+        Isso leva menos de um minuto. Se alguma resposta indicar risco, seu acesso fica
+        em espera ate voce levar um atestado medico ao seu box — nada e decidido pelo app.
+    </p>
+
+    <form method="post" class="student-form-stack student-consent-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+        <div class="student-consent-block">
+            <h2 class="student-consent-block-title">PAR-Q — Prontidao para atividade fisica</h2>
+            {% for field in form.visible_fields %}
+            <div class="student-parq-item">
+                <p class="student-parq-question">{{ field.label }}</p>
+                <div class="student-parq-toggle">
+                    {% for subwidget in field.subwidgets %}
+                    <label class="student-parq-option">
+                        {{ subwidget }}
+                        <span>{{ subwidget.data.label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {{ field.errors }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="student-consent-block">
+            <h2 class="student-consent-block-title">Termo de responsabilidade</h2>
+            <div class="student-waiver-box" tabindex="0">{{ waiver_body|linebreaksbr }}</div>
+            <p class="student-form-note">
+                Este texto ainda e um modelo provisorio do box e nao substitui o termo definitivo,
+                que sera enviado assim que estiver pronto.
+            </p>
+        </div>
+
+        <div class="actions actions-tight">
+            <button type="submit" class="student-button">Continuar</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

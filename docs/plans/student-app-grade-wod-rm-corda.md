@@ -40,6 +40,13 @@ PONTOS CRITICOS:
 
 # C.O.R.D.A. - App do aluno com Grade, WOD e RM
 
+> **STATUS: IMPLEMENTADO** (commits `c57bbda` "Redesign student app shell with grade
+> WOD and RM surfaces" e `e97479b`; bugs de acompanhamento cobertos depois em
+> `docs/plans/archive/student-app-grade-reserva-rm-wod-pwa-corda.md`). Telas em
+> `templates/student_app/{home,grade,wod,rm}.html`. Documento ainda referenciado por
+> `student-app-views-refactor-corda.md` e `wod-ui-ux-revolution-corda.md` — nao mover
+> para `archive/`.
+
 ## C - Contexto
 
 O app do aluno ja saiu da fase de acesso basico e hoje possui uma fundacao importante:

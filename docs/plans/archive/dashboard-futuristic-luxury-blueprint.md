@@ -8,7 +8,7 @@ AUTORIDADE:
 - media para execucao de dashboard; subordinado ao themeOctoBox para conflitos de tema
 
 DOCUMENTO PAI:
-- [../architecture/themeOctoBox.md](../architecture/themeOctoBox.md)
+- [../../architecture/themeOctoBox.md](../../architecture/themeOctoBox.md)
 
 QUANDO USAR:
 - quando for desenhar, evoluir ou revisar o dashboard principal

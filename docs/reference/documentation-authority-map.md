@@ -146,6 +146,7 @@ Exemplos fortes:
 3. [../plans/catalog-page-payload-presenter-blueprint.md](../plans/catalog-page-payload-presenter-blueprint.md)
 4. [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md) para a ordem pratica de implantacao do tema oficial
 5. [../plans/in-flight-board.md](../plans/in-flight-board.md) para "o que esta em voo agora" entre sessoes/worktrees e higiene de branch orfa
+6. [../plans/STATUS.md](../plans/STATUS.md) para "isso ja foi implementado?" — indice unico de status de todos os planos (bloqueado/referencia viva/ativo/aberto/precisa verificacao/dormente), snapshot datado
 
 ### 4. Reference
 

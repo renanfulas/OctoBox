@@ -35,6 +35,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from access.access_overview_context import build_access_overview_context
 from access.access_profile_actions import (
     handle_access_profile_create,
+    handle_access_profile_password_reset,
     handle_access_profile_toggle,
     handle_access_profile_update,
 )
@@ -283,6 +284,32 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
 
             status_label = 'ativado' if result['user'].is_active else 'desativado'
             messages.success(request, f'Perfil de {result["user"].username} {status_label} com sucesso.')
+            return redirect('access-overview')
+
+        if access_action == 'reset_password':
+            result = handle_access_profile_password_reset(
+                actor=request.user,
+                post_data=request.POST,
+            )
+            if not result['ok']:
+                if result['reason'] == 'self-reset-blocked':
+                    messages.error(
+                        request,
+                        'Não é permitido redefinir a própria senha por esta tela. '
+                        'Use "Esqueci minha senha" na tela de login.',
+                    )
+                else:
+                    messages.error(request, 'Perfil não encontrado para redefinição de senha.')
+                return redirect('access-overview')
+
+            # A senha aparece UMA vez, aqui. Não fica no banco em claro, não vai
+            # pro log e não volta em nenhum GET seguinte — se o gestor perder,
+            # gera outra. Entregue presencialmente e peça a troca no primeiro acesso.
+            messages.success(
+                request,
+                f'Senha provisória de {result["user"].username}: {result["provisional_password"]} — '
+                'anote agora, ela não será exibida de novo. Peça para a pessoa trocar no primeiro acesso.',
+            )
             return redirect('access-overview')
 
         result = handle_access_profile_create(

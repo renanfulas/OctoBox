@@ -20,7 +20,10 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from student_identity.models import StudentConsentDocument, StudentConsentDocumentKind
+from student_identity.parq_questions import PARQ_V1_VERSION, build_parq_v1_body
 
+
+WAIVER_V1_VERSION = '1'
 
 WAIVER_V1_BODY = """[PLACEHOLDER_NAO_VINCULANTE]
 
@@ -28,25 +31,14 @@ Termo de responsabilidade provisorio. NAO usar como documento juridico.
 O texto vinculante real entra na Onda E, validado pelo juridico.""".strip()
 
 
-PARQ_V1_BODY = """[PENDENTE_REVISAO_CLINICA]
-
-Questionario de Prontidao para Atividade Fisica (PAR-Q). 7 perguntas canonicas.
-Responder "sim" a qualquer uma sinaliza risco e exige liberacao por atestado no box.
-
-1. Algum medico ja disse que voce possui algum problema de coracao e que so deveria
-   realizar atividade fisica supervisionada por profissionais de saude?
-2. Voce sente dores no peito quando pratica atividade fisica?
-3. No ultimo mes, voce sentiu dores no peito quando praticou atividade fisica?
-4. Voce apresenta desequilibrio devido a tontura e/ou perda de consciencia?
-5. Voce possui algum problema osseo ou articular que poderia ser piorado pela
-   mudanca na sua atividade fisica?
-6. Voce toma atualmente algum medicamento para pressao arterial e/ou problema de coracao?
-7. Sabe de alguma outra razao pela qual voce nao deveria praticar atividade fisica?""".strip()
+# Corpo montado a partir de student_identity.parq_questions — fonte unica com o
+# formulario de consentimento da Onda B. Nao duplique as perguntas aqui.
+PARQ_V1_BODY = build_parq_v1_body()
 
 
 _SEEDS = [
-    (StudentConsentDocumentKind.WAIVER, '1', WAIVER_V1_BODY),
-    (StudentConsentDocumentKind.PARQ, '1', PARQ_V1_BODY),
+    (StudentConsentDocumentKind.WAIVER, WAIVER_V1_VERSION, WAIVER_V1_BODY),
+    (StudentConsentDocumentKind.PARQ, PARQ_V1_VERSION, PARQ_V1_BODY),
 ]
 
 

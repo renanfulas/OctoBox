@@ -9,9 +9,9 @@ AUTORIDADE:
 - media-alta para a fase visual e estrutural da area do aluno
 
 DOCUMENTOS PAIS:
-- [student-app-grade-wod-rm-corda.md](student-app-grade-wod-rm-corda.md)
-- [octobox-mobile-screen-blueprint.md](octobox-mobile-screen-blueprint.md)
-- [../experience/octobox-mobile-guide.md](../experience/octobox-mobile-guide.md)
+- [student-app-grade-wod-rm-corda.md](../student-app-grade-wod-rm-corda.md)
+- [octobox-mobile-screen-blueprint.md](../octobox-mobile-screen-blueprint.md)
+- [../../experience/octobox-mobile-guide.md](../../experience/octobox-mobile-guide.md)
 
 QUANDO USAR:
 - antes de codar a shell do aluno
