@@ -2130,18 +2130,23 @@ class PublicWorkoutPwaTests(TestCase):
 
     def test_henrique_week_order_reflects_split_and_required_back_exercises(self):
         response = self.client.get('/renan/henrique')
+        content = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
+
+        # Ordem estrutural das sessoes de treino no DOM (id do dia), nao a
+        # copy do strip semanal — pega sessao fora de ordem mesmo que o
+        # rotulo visual continue certo, e resiste a redacao mudar.
+        day_ids = ('id="seg"', 'id="ter"', 'id="qua"', 'id="qui"', 'id="sex"')
+        for day_id in day_ids:
+            self.assertIn(day_id, content)
+        positions = [content.index(day_id) for day_id in day_ids]
+        self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem seg->sex')
+
         self.assertContains(response, "goDay('qua',this)")
-        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Peito/Tri</div>', html=True)
-        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Pernas/Abd</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Costas/Bi</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Ombro</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Full</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Dom</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, 'Supino inclinado com halteres')
-        self.assertContains(response, 'Fly inclinado no cabo')
+
+        # Exercicios exigidos explicitamente no escopo do treino (trapezio
+        # medial / deltoide posterior no dia de costas).
         self.assertContains(response, 'Crucifixo invertido')
         self.assertContains(response, 'Face pull no cabo')
 

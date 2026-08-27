@@ -102,6 +102,31 @@ def box_scoped_filename(filename: str) -> str:
     return name if name.startswith(prefix) else f'{prefix}{name}'
 
 
+def get_deployed_commit_sha() -> str | None:
+    """Le o SHA do commit que o deploy escreveu no disco, se houver.
+
+    POR QUE: producao ficou 17 dias (10/08-27/08) rodando codigo desatualizado
+    porque o deploy automatico falhava silenciosamente (chave SSH perdida em
+    rebuild) e nada comparava "o que esta rodando" com "o que devia estar
+    rodando". Expor esse SHA no healthcheck (api/v1/health/) permite que um
+    job de CI separado detecte o descompasso sem precisar de SSH.
+
+    O arquivo e escrito pelo job `deploy` em .github/workflows/deploy-vps.yml
+    logo apos `git reset --hard origin/main`. Local dev/CI nunca tem esse
+    arquivo — retorna None, e o healthcheck expoe null (nao quebra nada).
+    """
+    path = os.getenv(
+        'OCTOBOX_DEPLOYED_SHA_FILE',
+        '/srv/octobox/shared/deploy-state/deployed_sha',
+    )
+    try:
+        with open(path, encoding='utf-8') as handle:
+            sha = handle.read().strip()
+        return sha or None
+    except OSError:
+        return None
+
+
 def box_scoped_export_dir(media_root: str) -> str:
     """Diretorio de exports isolado por box: ``<media_root>/exports/<slug>/``.
 
@@ -120,5 +145,6 @@ __all__ = [
     'build_box_cache_key_prefix',
     'get_box_runtime_namespace',
     'get_box_runtime_slug',
+    'get_deployed_commit_sha',
     'normalize_box_runtime_slug',
 ]
