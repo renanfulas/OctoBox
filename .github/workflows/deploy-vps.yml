@@ -143,6 +143,10 @@ jobs:
             git -C "$APP" fetch origin main
             git -C "$APP" reset --hard origin/main
 
+            echo "==> Registrando SHA deployado (para o healthcheck comparar depois)..."
+            mkdir -p /srv/octobox/shared/deploy-state
+            git -C "$APP" rev-parse HEAD > /srv/octobox/shared/deploy-state/deployed_sha
+
             echo "==> Atualizando dependências Python..."
             "$VENV/bin/pip" install --quiet -r "$APP/requirements.txt"
 
@@ -169,3 +173,44 @@ jobs:
           sleep 8
           curl --fail --silent --show-error https://app.octoboxfit.com.br/api/v1/health/
           echo " — OK"
+
+  # ---------------------------------------------------------------------------
+  # 2026-08-27: producao ficou 17 dias (10/08-27/08) rodando codigo desatualizado
+  # porque o passo "Deploy no VPS via SSH" falhava (chave SSH perdida em rebuild)
+  # e ISSO PULAVA o "Health check pós-deploy" acima (step seguinte na mesma job —
+  # nao roda se o anterior falhar). Ninguem notou por semanas.
+  #
+  # Este job roda em `always()` — mesmo se `deploy` falhar — e compara o
+  # deployed_sha que api/v1/health/ expoe contra a HEAD real de main agora.
+  # Se nao bater, falha alto (job vermelho, e-mail de falha do GitHub Actions),
+  # independente de qual passo do deploy quebrou ou nao rodou.
+  # ---------------------------------------------------------------------------
+  check-deployed-version:
+    needs: [verify-gates, deploy]
+    if: always() && needs.verify-gates.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout main (SHA de referencia)
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Confirmar que produção está no commit mais recente de main
+        run: |
+          set -euo pipefail
+          EXPECTED="$(git rev-parse HEAD)"
+          echo "origin/main atual: $EXPECTED"
+
+          RESPONSE="$(curl --fail --silent --show-error --max-time 15 https://app.octoboxfit.com.br/api/v1/health/)"
+          echo "Resposta do health check: $RESPONSE"
+
+          DEPLOYED="$(echo "$RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("deployed_sha") or "ausente")')"
+          echo "Commit rodando em produção: $DEPLOYED"
+
+          if [ "$DEPLOYED" != "$EXPECTED" ]; then
+            echo "::error::Produção desatualizada — rodando $DEPLOYED, main atual é $EXPECTED. O job 'deploy' falhou ou não completou; veja os logs dele acima."
+            exit 1
+          fi
+          echo "OK: produção confirmada em $EXPECTED"

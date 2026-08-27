@@ -1,0 +1,25 @@
+# Baseline de excecoes da ADR-012 (docs/adr/ADR-012-test-design-structural-asserts.md).
+#
+# Auditoria em 2026-08-27 encontrou estes 12 test methods com mais de 8
+# assertContains(copy) no mesmo metodo -- divida legada, anterior ao gate de
+# scripts/check_assert_contains_density.py. Nao bloqueiam o build.
+#
+# Escopo deliberado: reescrever estes 12 para asserts estruturais e trabalho
+# a parte (entender o contrato real de cada pagina por arquivo), nao entrou
+# nesta rodada. So teste NOVO que ultrapassar o limite quebra o CI.
+#
+# Ao corrigir um teste daqui, remova a linha -- o script avisa (nao falha)
+# quando uma entrada da baseline nao viola mais, pra lembrar de limpar.
+
+tests/test_workout_post_publication_history.py::test_approval_board_renders_post_publication_executive_history
+tests/test_workout_planner_builders.py::test_planner_renders_week_grid_for_coach
+tests/test_workout_post_publication_history.py::test_approval_board_surfaces_post_publication_operational_alerts
+boxcore/tests/test_catalog.py::test_student_directory_renders
+boxcore/tests/test_onboarding.py::test_intake_center_renders_queue_and_primary_actions
+student_app/tests.py::test_juliana_week_order_reflects_legs_program
+tests/test_workout_approval_board.py::test_approval_board_renders_rm_readiness_against_real_consumption
+boxcore/tests/test_dashboard.py::test_dashboard_renders_reading_list_metrics_and_sessions_for_authenticated_user
+student_app/tests.py::test_student_home_renders_without_staff_shell
+tests/test_workout_weekly_governance.py::test_approval_board_surfaces_light_management_alert_for_consistent_improvement
+tests/test_workout_planner_builders.py::test_owner_planner_renders_template_usage_panel
+tests/test_workout_post_publication_history.py::test_manager_can_register_follow_up_result_for_suggested_action

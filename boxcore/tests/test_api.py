@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 
 import json
 import os
+import tempfile
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -55,6 +56,25 @@ class ApiFoundationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["runtime_slug"], "box-piloto-centro")
         self.assertEqual(response.json()["runtime_namespace"], "octobox:box-piloto-centro")
+
+    def test_api_v1_health_exposes_null_deployed_sha_when_file_missing(self):
+        with patch.dict(os.environ, {"OCTOBOX_DEPLOYED_SHA_FILE": "/nao/existe/deployed_sha"}, clear=False):
+            response = self.client.get(reverse("api-v1-health"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()["deployed_sha"])
+
+    def test_api_v1_health_exposes_deployed_sha_written_by_deploy_script(self):
+        with tempfile.NamedTemporaryFile("w", delete=False) as handle:
+            handle.write("abc1234\n")
+            sha_path = handle.name
+        self.addCleanup(os.unlink, sha_path)
+
+        with patch.dict(os.environ, {"OCTOBOX_DEPLOYED_SHA_FILE": sha_path}, clear=False):
+            response = self.client.get(reverse("api-v1-health"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["deployed_sha"], "abc1234")
 
 
 class ApiFinanceSurfaceTests(TestCase):

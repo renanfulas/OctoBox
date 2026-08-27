@@ -21,7 +21,11 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
 
-from shared_support.box_runtime import get_box_runtime_namespace, get_box_runtime_slug
+from shared_support.box_runtime import (
+    get_box_runtime_namespace,
+    get_box_runtime_slug,
+    get_deployed_commit_sha,
+)
 from student_identity.resend_webhooks import (
     ResendWebhookHeaders,
     ResendWebhookVerificationError,
@@ -69,6 +73,11 @@ class ApiV1HealthView(View):
 
     Sprint 4: adicionado tenants_active para observabilidade do control plane.
     Rota listada em PUBLIC_SCHEMA_PATHS do TenantBySessionMiddleware.
+
+    2026-08-27: adicionado deployed_sha. Producao ficou 17 dias rodando codigo
+    velho porque nada comparava "o que esta no ar" com "o que devia estar" —
+    ver get_deployed_commit_sha() e o job check-deployed-version em
+    .github/workflows/deploy-vps.yml.
     """
 
     def get(self, request, *args, **kwargs):
@@ -88,6 +97,7 @@ class ApiV1HealthView(View):
                 'runtime_slug': get_box_runtime_slug(),
                 'runtime_namespace': get_box_runtime_namespace(),
                 'tenants_active': tenants_active,
+                'deployed_sha': get_deployed_commit_sha(),
                 'healthy': True,
             }
         )
