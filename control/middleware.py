@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import logging
 
+from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.db import connection
 from django.http import HttpResponseForbidden
@@ -44,7 +45,13 @@ OCTOBOX_MEMBERSHIP_REQUEST_ATTR = '_octobox_membership'
 # Paths que NUNCA devem entrar em tenant — ficam em public schema.
 # Qualquer URL que precisa funcionar antes de um Box existir vai aqui.
 PUBLIC_SCHEMA_PATHS = (
-    '/admin/',
+    # O admin (settings.ADMIN_URL_PATH) e verificado a parte, em _is_public_path
+    # — nao aqui. settings.ADMIN_URL_PATH e customizavel via DJANGO_ADMIN_URL_PATH
+    # (obscuridade de seguranca em producao, ex.: 'painel-<hash>/', nunca o
+    # literal 'admin/'), entao um valor fixo nesta tupla nunca bateria com o
+    # path real — e o admin (SHARED app, nao deveria exigir Box nenhum) caia na
+    # resolucao de tenant como path privado comum. Usuario sem Membership
+    # parava no seletor de box vazio em vez de chegar no admin.
     '/signup/',
     '/financeiro/stripe/webhook/',
     # Captura segura de origem declarada — link externo para alunos (anon)
@@ -191,6 +198,11 @@ class TenantBySessionMiddleware:
     # ------------------------------------------------------------------
 
     def _is_public_path(self, path: str) -> bool:
+        # Checado a parte (nao na tupla PUBLIC_SCHEMA_PATHS): settings.ADMIN_URL_PATH
+        # e lido em tempo de chamada, nao congelado em import time — override_settings
+        # em teste (e um eventual reload de settings) precisa refletir aqui.
+        if path.startswith(f'/{settings.ADMIN_URL_PATH}'):
+            return True
         if any(path.startswith(prefix) for prefix in PUBLIC_SCHEMA_PATHS):
             return True
         return path in PUBLIC_SCHEMA_EXACT_PATHS

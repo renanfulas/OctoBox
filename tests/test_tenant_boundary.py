@@ -25,7 +25,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from django.http import JsonResponse
-from django.test import RequestFactory, SimpleTestCase, TestCase, tag
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings, tag
 from django.urls import reverse
 
 
@@ -711,6 +711,47 @@ class WebhookIdempotencyPublicSchemaTest(SimpleTestCase):
         with patch('django.db.connection') as mock_conn:
             middleware(request)
             mock_conn.set_schema_to_public.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# TenantBySessionMiddleware._is_public_path — admin precisa ser public
+# independente do path customizado (DJANGO_ADMIN_URL_PATH)
+# ---------------------------------------------------------------------------
+
+class AdminPathIsPublicRegardlessOfCustomUrlTest(SimpleTestCase):
+    """settings.ADMIN_URL_PATH e customizavel (obscuridade de seguranca em
+    producao) e precisa ser tratado como path publico SEJA QUAL FOR o valor
+    configurado — o admin e SHARED app, nao deveria exigir Box nenhum.
+
+    Bug real encontrado em producao: PUBLIC_SCHEMA_PATHS tinha '/admin/' fixo,
+    que nunca bate quando DJANGO_ADMIN_URL_PATH e customizado (ex.:
+    '/painel-<hash>/'). O middleware tratava o admin como path privado comum
+    e redirecionava o superuser (sem Membership em nenhum box ainda) para o
+    seletor de box, que aparece vazio — bloqueando o primeiro login do
+    ambiente, sem 403 nem erro explicito."""
+
+    def _is_public(self, path):
+        from control.middleware import TenantBySessionMiddleware
+        middleware = TenantBySessionMiddleware(get_response=lambda r: None)
+        return middleware._is_public_path(path)
+
+    @override_settings(ADMIN_URL_PATH='painel-interno/')
+    def test_default_admin_path_is_public(self):
+        self.assertTrue(self._is_public('/painel-interno/'))
+        self.assertTrue(self._is_public('/painel-interno/auth/user/add/'))
+
+    @override_settings(ADMIN_URL_PATH='painel-c2f9c04f917e1f61/')
+    def test_custom_obscured_admin_path_is_public(self):
+        """Reproduz o bug relatado: um DJANGO_ADMIN_URL_PATH customizado
+        precisa continuar publico, nao so o default."""
+        self.assertTrue(self._is_public('/painel-c2f9c04f917e1f61/'))
+        self.assertTrue(self._is_public('/painel-c2f9c04f917e1f61/auth/user/add/'))
+
+    @override_settings(ADMIN_URL_PATH='painel-c2f9c04f917e1f61/')
+    def test_literal_admin_slash_is_not_special_cased(self):
+        """Trava a regressao: o literal '/admin/' nao deve voltar a ficar
+        hardcoded — so o path efetivamente configurado importa."""
+        self.assertFalse(self._is_public('/admin/'))
 
 
 # ---------------------------------------------------------------------------
