@@ -352,8 +352,14 @@ class B12SuspendedBoxRedirectsStaffTest(SimpleTestCase):
         with patch('control.models.Box.objects') as mock_box_qs, \
              patch('control.models.PlatformAuditEvent.objects') as mock_audit:
 
-            mock_box_qs.filter.return_value.first.return_value = mock_box
+            # _resolve_box_for_billing usa `list(filter(...)[:2])`, nao `.first()`:
+            # busca 2 de proposito para detectar ambiguidade (mesmo subscription_id
+            # em 2 boxes => recusa agir em vez de escolher um arbitrariamente).
+            # O mock precisa refletir a fatia, senao devolve lista vazia e o
+            # handler sai sem resolver box.
+            mock_box_qs.filter.return_value.__getitem__.return_value = [mock_box]
             mock_box.status = 'active'  # nao SUSPENDED ainda
+            mock_box.billing_event_at = None  # sem evento anterior => guarda de ordem nao barra
 
             _handle_invoice_payment_failed(mock_event)
 

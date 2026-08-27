@@ -9,13 +9,21 @@ O QUE ESTE ARQUIVO FAZ:
 1. derive_slug(box_name) — slugifica + sufixo numérico em colisão.
 2. provision_box(pending_signup, owner_user, display_name, plan) — cria Box + schema + roles + plans.
 3. archive_box(box) — muda status para ARCHIVED e renomeia schema.
-4. reprovision_box(box) — retoma provisioning a partir do step pendente.
+4. unarchive_box(box) — desfaz o archive: schema volta ao nome original, Box vai a SUSPENDED.
+5. activate_box(box) — reativa SUSPENDED->ACTIVE manualmente, com reason obrigatório e audit.
+6. reprovision_box(box) — retoma provisioning a partir do step pendente.
 
 PONTOS CRITICOS:
 - CREATE SCHEMA não é transacional — cada step tem checkpoint em BoxProvisioningEvent.
 - provision_box é idempotente: chamar 2x com mesmo pending_signup retorna mesmo Box.
 - schema_name = f'box_{slug}' — slug máx 59 chars para respeitar limite de 63 do Postgres.
 - archive_box NÃO deleta dados — apenas renomeia schema para archived_box_<slug>_<ts>.
+- Nome de schema não é parametrizável em SQL: tudo que entra em DDL passa por
+  _validate_schema_ident() antes de ser interpolado.
+- unarchive_box devolve SUSPENDED, nunca ACTIVE: acesso só volta por billing (ou por activate_box).
+- reprovision_box NÃO promove SUSPENDED/ARCHIVED->ACTIVE: só PROVISIONING->ACTIVE, e via UPDATE
+  atômico condicionado no banco (não checagem em memória) — imune à corrida com webhook de billing
+  suspendendo o box durante os steps de provisioning (que levam minutos).
 """
 
 from __future__ import annotations
@@ -34,6 +42,32 @@ User = get_user_model()
 
 # Regex validação: 2 a 59 chars, começa com letra, só lowercase + dígitos + hífens
 SLUG_RE = re.compile(r'^[a-z][a-z0-9-]{1,58}$')
+
+# Schema de box arquivado: archived_box_<slug>_<YYYYMMDDHHMMSS>
+ARCHIVED_SCHEMA_RE = re.compile(r'^archived_box_[a-z][a-z0-9-]{1,58}_\d{14}$')
+
+# Quanto do slug cabe no nome do schema arquivado sem estourar os 63 chars do
+# Postgres: 63 - len('archived_box_') - len('_') - len('YYYYMMDDHHMMSS') = 35.
+MAX_SLUG_EM_SCHEMA_ARQUIVADO = 35
+
+# Identificador aceito em DDL. Nome de schema NÃO é parametrizável em SQL
+# (%s não funciona para identificadores), então todo nome que chega a um
+# CREATE/ALTER SCHEMA passa por aqui antes de ser interpolado. Whitelist
+# estrita: sem aspas, sem espaço, sem ponto, sem maiúscula — nada que possa
+# escapar do par de aspas duplas e virar SQL.
+SCHEMA_IDENT_RE = re.compile(r'^[a-z][a-z0-9_-]{1,62}$')
+
+
+def _validate_schema_ident(name: str) -> str:
+    """Valida um nome de schema antes de interpolá-lo em DDL. Levanta ValueError.
+
+    Defesa em profundidade: os nomes já vêm de slugs validados, mas esta função
+    é o único ponto por onde eles entram em SQL — se um dia um nome vier de
+    outra fonte (import, admin, fixture), ele para aqui e não no banco.
+    """
+    if not isinstance(name, str) or not SCHEMA_IDENT_RE.match(name):
+        raise ValueError(f'Nome de schema inválido para DDL: {name!r}')
+    return name
 
 PROVISIONING_STEPS = [
     'create_schema',
@@ -106,7 +140,10 @@ def provision_box(
     3. bootstrap_roles — criar Groups no schema
     4. seed_plans     — criar MembershipPlan default
 
-    Retorna Box com status ACTIVE se todos os steps passaram.
+    Retorna Box com status ACTIVE se todos os steps passaram — válido aqui porque
+    o Box criado acima sempre nasce PROVISIONING, e é esse status que a promoção
+    final de reprovision_box exige. Chamar reprovision_box() isoladamente (resume/
+    backfill) NÃO tem essa garantia — ver contrato na docstring de reprovision_box.
     """
     from control.models import Box, Membership
 
@@ -156,6 +193,24 @@ def reprovision_box(box: 'Box') -> 'Box':
     """
     Retoma provisioning a partir do step pendente (idempotente).
     Pula steps com evento status='ok'. Recria steps com status='failed'.
+
+    CONTRATO: NÃO promete devolver Box com status ACTIVE. Só promove
+    PROVISIONING -> ACTIVE (fluxo novo / resume de provisioning incompleto).
+    Box SUSPENDED (inadimplência ou cancelamento) ou ARCHIVED permanece como
+    está — reprovision_box é o chokepoint de cura do superdev/schema (attach
+    de Membership + steps de provisioning), não um caminho de billing. Só o
+    webhook `invoice.payment_succeeded` (integrations/stripe/router.py) ou
+    `manage.py activate_box` reativam um box suspenso.
+
+    Antes desta guarda, `update(status=ACTIVE)` era incondicional: rodar este
+    comando num box SUSPENDED — inclusive um que acabou de ser suspenso por
+    `customer.subscription.deleted` — devolvia acesso sem passar por
+    pagamento. O UPDATE abaixo é condicionado a `status=PROVISIONING` no
+    próprio banco (não numa checagem em memória no início da função) de
+    propósito: `_migrate_schema` leva minutos, e um webhook de cancelamento
+    pode suspender o box PROVISIONING nesse intervalo. Checar em memória no
+    topo da função leria um status velho e promoveria por cima da suspensão
+    de qualquer forma.
     """
     from control.models import BoxProvisioningEvent
 
@@ -180,15 +235,26 @@ def reprovision_box(box: 'Box') -> 'Box':
             logger.error('provision_box: step=%s FALHOU para %s: %s', step, box.slug, exc)
             raise
 
-    # Todos os steps concluídos → ativar
+    # Todos os steps concluídos → promover, MAS só se ainda estiver
+    # PROVISIONING. `filter(status=PROVISIONING).update(...)` é atômico no
+    # banco: se o status já mudou (SUSPENDED por webhook durante os steps,
+    # ou ARCHIVED por offboarding manual), o UPDATE afeta zero linhas e o
+    # status atual do banco vence — sem corrida, sem checagem em memória.
     from django.utils import timezone as dj_tz
     Box = box.__class__
-    Box.objects.filter(pk=box.pk).update(
+    promoted = Box.objects.filter(pk=box.pk, status=Box.Status.PROVISIONING).update(
         status=Box.Status.ACTIVE,
         provisioned_at=dj_tz.now(),
     )
     box.refresh_from_db()
-    logger.info('provision_box: Box %s ATIVO em %s', box.slug, box.schema_name)
+    if promoted:
+        logger.info('provision_box: Box %s ATIVO em %s', box.slug, box.schema_name)
+    else:
+        logger.info(
+            'provision_box: Box %s NÃO promovido (status atual=%s, não era PROVISIONING) — '
+            'steps de provisioning concluídos, mas ativação de billing preservada.',
+            box.slug, box.status,
+        )
 
     # Anexar a conta de suporte (superdev) — SEMPRE, para a equipe OctoBox poder
     # dar suporte sem pedir credencial ao cliente. Chamado aqui (e nao em
@@ -230,7 +296,7 @@ def _create_schema(box: 'Box') -> None:
         if cursor.fetchone():
             logger.info('_create_schema: schema %s já existe — pulando CREATE.', box.schema_name)
             return
-        cursor.execute(f'CREATE SCHEMA "{box.schema_name}"')
+        cursor.execute(f'CREATE SCHEMA "{_validate_schema_ident(box.schema_name)}"')
     logger.info('_create_schema: schema %s criado.', box.schema_name)
 
 
@@ -278,13 +344,13 @@ def archive_box(box: 'Box', *, reason: str = '') -> 'Box':
     Arquiva um Box: status ARCHIVED + renomeia schema.
 
     NÃO deleta dados — schema fica acessível como archived_box_<slug>_<timestamp>.
-    Reversível manualmente via SQL (renomear schema de volta + status=ACTIVE).
 
-    AVISO: depois de archived, o Box não pode mais ser ativado via provision_box.
-    Criar novo Box com novo slug se necessário.
+    Reversível via unarchive_box() / manage.py unarchive_box, que devolve o
+    schema ao nome original e o Box para SUSPENDED (não ACTIVE — ver lá o porquê).
+    provision_box continua não servindo para reativar: o schema mudou de nome.
     """
     from django.utils import timezone as dj_tz
-    from django.db import connections
+    from django.db import connections, transaction
     from django_tenants.utils import get_tenant_database_alias
 
     if box.status == box.__class__.Status.ARCHIVED:
@@ -292,24 +358,204 @@ def archive_box(box: 'Box', *, reason: str = '') -> 'Box':
         return box
 
     ts = datetime.now(tz=timezone.utc).strftime('%Y%m%d%H%M%S')
-    archived_schema = f'archived_box_{box.slug}_{ts}'
+
+    # 'archived_box_' (13) + slug + '_' (1) + timestamp (14) = 28 + len(slug).
+    # Postgres corta identificador em 63 chars SILENCIOSAMENTE: com slug > 35 o
+    # schema real ficaria com nome diferente do gravado em Box.schema_name — o
+    # tenant vira inalcançável. Truncar aqui é seguro porque o slug nunca é
+    # extraído de volta deste nome: unarchive_box reconstrói o destino a partir
+    # de Box.slug, que continua íntegro na linha.
+    slug_no_nome = box.slug[:MAX_SLUG_EM_SCHEMA_ARQUIVADO]
+    archived_schema = f'archived_box_{slug_no_nome}_{ts}'
+
+    origem = _validate_schema_ident(box.schema_name)
+    destino = _validate_schema_ident(archived_schema)
 
     db_alias = get_tenant_database_alias()
-    with connections[db_alias].cursor() as cursor:
-        cursor.execute(
-            f'ALTER SCHEMA "{box.schema_name}" RENAME TO "{archived_schema}"'
-        )
 
-    now = dj_tz.now()
-    box.__class__.objects.filter(pk=box.pk).update(
-        status=box.__class__.Status.ARCHIVED,
-        archived_at=now,
-        schema_name=archived_schema,
-    )
+    # Mesma razão do unarchive_box: o RENAME e o UPDATE da linha precisam entrar
+    # ou sair juntos. Sem isso, uma falha entre os dois deixa Box.schema_name
+    # apontando para um schema que não existe mais.
+    with transaction.atomic(using=db_alias):
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(f'ALTER SCHEMA "{origem}" RENAME TO "{destino}"')
+
+        now = dj_tz.now()
+        box.__class__.objects.filter(pk=box.pk).update(
+            status=box.__class__.Status.ARCHIVED,
+            archived_at=now,
+            schema_name=archived_schema,
+        )
     box.refresh_from_db()
     logger.info('archive_box: %s arquivado como %s.', box.slug, archived_schema)
 
     _record_platform_audit(box, 'box.archived', {'reason': reason})
+    return box
+
+
+def unarchive_box(box: 'Box', *, reason: str = '', actor=None) -> 'Box':
+    """
+    Reverte archive_box: devolve o schema ao nome original e o Box ao ciclo de vida.
+
+    Renomeia archived_box_<slug>_<ts> de volta para box_<slug> e coloca o Box em
+    SUSPENDED — deliberadamente NÃO em ACTIVE.
+
+    POR QUE SUSPENDED E NÃO ACTIVE:
+    Arquivar significa que a cobrança acabou. Se unarchive devolvesse ACTIVE,
+    existiria um caminho que restaura acesso completo sem nenhuma assinatura
+    viva do outro lado — e esse caminho seria acionável por quem tem acesso ao
+    management command, sem passar por billing. Em SUSPENDED os dados voltam
+    intactos e a reativação continua sendo o mesmo caminho de sempre:
+    invoice.payment_succeeded → ACTIVE. Um único portão para dar acesso.
+
+    Não mexe em Membership: archive_box nunca apagou vínculo (o Box permanece na
+    linha, só muda de status), então o dono continua sendo dono ao voltar.
+
+    Idempotente por guarda, não por repetição: chamar em Box não-ARCHIVED levanta
+    ValueError em vez de fazer algo silencioso.
+    """
+    from django.db import transaction
+    from django.utils import timezone as dj_tz
+    from django.db import connections
+    from django_tenants.utils import get_tenant_database_alias
+
+    Box = box.__class__
+
+    if box.status != Box.Status.ARCHIVED:
+        raise ValueError(
+            f'unarchive_box: Box {box.slug!r} está {box.status!r}, não ARCHIVED. '
+            f'Nada a restaurar.'
+        )
+
+    origem = box.schema_name
+    if not ARCHIVED_SCHEMA_RE.match(origem or ''):
+        raise ValueError(
+            f'unarchive_box: schema atual {origem!r} não tem forma de schema '
+            f'arquivado (archived_box_<slug>_<timestamp>). Recusando renomear — '
+            f'restaure à mão e confira o que gravou esse nome.'
+        )
+
+    if not SLUG_RE.match(box.slug or ''):
+        raise ValueError(f'unarchive_box: slug inválido {box.slug!r}.')
+
+    destino = f'box_{box.slug}'
+    _validate_schema_ident(origem)
+    _validate_schema_ident(destino)
+
+    db_alias = get_tenant_database_alias()
+
+    # ALTER SCHEMA RENAME é transacional no Postgres, então o rename e o UPDATE
+    # da linha do Box entram ou saem juntos. Sem isso, uma falha entre os dois
+    # deixaria Box.schema_name apontando para um schema que não existe mais —
+    # o pior estado possível para um tenant.
+    with transaction.atomic(using=db_alias):
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                'SELECT 1 FROM information_schema.schemata WHERE schema_name = %s',
+                [origem],
+            )
+            if cursor.fetchone() is None:
+                raise ValueError(
+                    f'unarchive_box: schema {origem!r} não existe no banco. '
+                    f'O Box está marcado ARCHIVED mas o schema sumiu — '
+                    f'restaure do backup antes de tentar de novo.'
+                )
+
+            # Nunca sobrescrever um schema vivo. Se box_<slug> já existe, algo
+            # recriou o tenant enquanto este estava arquivado: abortar e deixar
+            # os dois lados intactos para inspeção humana.
+            cursor.execute(
+                'SELECT 1 FROM information_schema.schemata WHERE schema_name = %s',
+                [destino],
+            )
+            if cursor.fetchone() is not None:
+                raise ValueError(
+                    f'unarchive_box: schema destino {destino!r} JÁ EXISTE. '
+                    f'Restaurar por cima destruiria dados. Abortado.'
+                )
+
+            cursor.execute(f'ALTER SCHEMA "{origem}" RENAME TO "{destino}"')
+
+        Box.objects.filter(pk=box.pk).update(
+            status=Box.Status.SUSPENDED,
+            schema_name=destino,
+            archived_at=None,
+            suspended_at=dj_tz.now(),
+        )
+
+    box.refresh_from_db()
+    logger.warning(
+        'unarchive_box: %s restaurado de %s para %s — status SUSPENDED '
+        '(reativa via pagamento).', box.slug, origem, destino,
+    )
+
+    _record_platform_audit(box, 'box.unarchived', {
+        'reason': reason,
+        'schema_origem': origem,
+        'schema_destino': destino,
+        'actor_user_id': getattr(actor, 'pk', None),
+    })
+    return box
+
+
+def activate_box(box: 'Box', *, reason: str, actor=None) -> 'Box':
+    """
+    Reativa manualmente um Box SUSPENDED — para suporte, sem esperar o
+    webhook de pagamento.
+
+    POR QUE ELE EXISTE: fechar o UPDATE incondicional de reprovision_box
+    (que promovia SUSPENDED->ACTIVE sem checar billing) fechou uma porta,
+    mas reativação manual continua sendo uma necessidade operacional real
+    (ex.: cliente pagou por fora, disputa resolvida a favor do cliente,
+    erro de suspensão). Sem este comando, o primeiro chamado de suporte
+    vira UPDATE manual direto no banco de produção — pior que ter um portão
+    auditado.
+
+    Só aceita origem SUSPENDED (não ARCHIVED — isso é unarchive_box; não
+    PROVISIONING — isso é reprovision_box). `reason` é obrigatório: ao
+    contrário de archive_box/unarchive_box, esta é a ÚNICA reativação
+    manual do sistema sem confirmação de pagamento — a trilha de motivo
+    não é opcional aqui.
+
+    UPDATE condicionado a status=SUSPENDED no banco (mesmo padrão de
+    reprovision_box): atômico, sem corrida com um webhook concorrente.
+    """
+    from django.utils import timezone as dj_tz
+
+    Box = box.__class__
+
+    if not (reason or '').strip():
+        raise ValueError('activate_box: reason é obrigatório — reativação manual sem motivo não é permitida.')
+
+    if box.status != Box.Status.SUSPENDED:
+        raise ValueError(
+            f'activate_box: Box {box.slug!r} está {box.status!r}, não SUSPENDED. '
+            f'ARCHIVED usa unarchive_box; PROVISIONING resolve sozinho via reprovision_box.'
+        )
+
+    activated = Box.objects.filter(pk=box.pk, status=Box.Status.SUSPENDED).update(
+        status=Box.Status.ACTIVE,
+        suspended_at=None,
+    )
+    box.refresh_from_db()
+
+    if not activated:
+        # Corrida: o status mudou entre a checagem acima e o UPDATE (ex.: o
+        # webhook de pagamento reativou no meio, ou outro operador arquivou).
+        raise ValueError(
+            f'activate_box: Box {box.slug!r} mudou de status durante a operação '
+            f'(agora é {box.status!r}) — nada foi promovido. Rode de novo se ainda fizer sentido.'
+        )
+
+    logger.warning(
+        'activate_box: Box %s REATIVADO manualmente. reason=%r actor=%s',
+        box.slug, reason, getattr(actor, 'username', None) or 'sistema',
+    )
+
+    _record_platform_audit(box, 'box.activated_manual_support', {
+        'reason': reason,
+        'actor_user_id': getattr(actor, 'pk', None),
+    })
     return box
 
 

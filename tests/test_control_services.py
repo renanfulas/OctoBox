@@ -253,6 +253,205 @@ class ProvisionBoxTest(TestCase):
 
 
 # ---------------------------------------------------------------------------
+# L2 — reprovision_box NÃO reativa SUSPENDED/ARCHIVED (Onda 2, 2026-08-25)
+#
+# Antes: reprovision_box fazia `Box.objects.filter(pk=box.pk).update(status=ACTIVE)`
+# incondicional — rodar o comando num box suspenso por inadimplência (ou por
+# customer.subscription.deleted) devolvia acesso sem passar por pagamento.
+# Estes testes são o gate de saída da onda: (1) SUSPENDED continua SUSPENDED
+# e o attach/audit do superdev continuam rodando (não é um early-return que
+# mataria a cura tardia do ADR-013); (2) activate_box reativa manualmente
+# com reason obrigatório e audit.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.public_schema
+class ReprovisionBoxDoesNotBypassBillingTest(TestCase):
+    """Gate de saída da Onda 2."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        self.owner = User.objects.create_user(
+            username='owner_reprov_billing_test',
+            email='owner@reprov-billing.test',
+        )
+
+    @patch('control.services._run_step')
+    def _active_box(self, mock_step, slug='billing-guard'):
+        from control.services import provision_box
+        mock_step.return_value = None
+        return provision_box(owner_user=self.owner, display_name=slug, slug=slug)
+
+    @patch('control.services._run_step')
+    def test_reprovision_does_not_promote_suspended_box(self, mock_step):
+        """Item (1) do gate: box SUSPENDED continua SUSPENDED após reprovision_box.
+
+        Este é o teste que faltava e que teria pego a regressão original —
+        `test_reprovision_skips_completed_steps` (pré-existente) só cobria
+        idempotência de steps, nunca colocava o box em SUSPENDED antes de
+        chamar reprovision_box.
+        """
+        from control.models import Box
+        from control.services import reprovision_box
+        mock_step.return_value = None
+
+        box = self._active_box(slug='billing-guard-suspended')
+        Box.objects.filter(pk=box.pk).update(status=Box.Status.SUSPENDED)
+        box.refresh_from_db()
+        self.assertEqual(box.status, Box.Status.SUSPENDED)
+        provisioned_at_antes = box.provisioned_at  # já setado pelo provision_box inicial
+
+        result = reprovision_box(box)
+
+        result.refresh_from_db()
+        self.assertEqual(
+            result.status, Box.Status.SUSPENDED,
+            'reprovision_box promoveu um box SUSPENDED para ACTIVE — '
+            'o portão de billing foi contornado.',
+        )
+        self.assertEqual(
+            result.provisioned_at, provisioned_at_antes,
+            'provisioned_at foi re-carimbado mesmo sem promoção — o UPDATE condicional disparou.',
+        )
+
+    @patch('control.services._run_step')
+    def test_reprovision_does_not_promote_archived_box(self, mock_step):
+        from control.models import Box
+        from control.services import reprovision_box
+        mock_step.return_value = None
+
+        box = self._active_box(slug='billing-guard-archived')
+        Box.objects.filter(pk=box.pk).update(status=Box.Status.ARCHIVED)
+        box.refresh_from_db()
+
+        result = reprovision_box(box)
+
+        result.refresh_from_db()
+        self.assertEqual(result.status, Box.Status.ARCHIVED)
+
+    @patch('control.services._run_step')
+    def test_reprovision_still_cures_missing_superdev_membership_on_suspended_box(self, mock_step):
+        """Item (2) do gate: a cura do ADR-013 (attach de superdev) não pode
+        morrer como efeito colateral da guarda — early-return mataria isso.
+
+        Cenário: box foi provisionado ANTES do superdev existir (Membership
+        do superdev nunca foi criado — falha de proposito, ver ADR-013),
+        depois foi suspenso por billing, depois o superdev passou a existir.
+        reprovision_box deve anexar o superdev mesmo sem promover o status.
+        """
+        from django.conf import settings
+        from django.contrib.auth import get_user_model
+        from control.models import Box, Membership
+        from control.services import reprovision_box
+        mock_step.return_value = None
+
+        box = self._active_box(slug='billing-guard-superdev-cure')
+        Box.objects.filter(pk=box.pk).update(status=Box.Status.SUSPENDED)
+        box.refresh_from_db()
+
+        superdev_username = getattr(settings, 'SUPERDEV_USERNAME', 'superdev') or 'superdev'
+        User = get_user_model()
+        superdev = User.objects.create_user(
+            username=superdev_username,
+            email='superdev@octobox.test',
+            is_active=True,
+        )
+        self.assertFalse(
+            Membership.objects.filter(user=superdev, box=box).exists(),
+            'setup invalido: superdev ja tinha Membership antes do reprovision',
+        )
+
+        reprovision_box(box)
+
+        self.assertTrue(
+            Membership.objects.filter(user=superdev, box=box, is_primary_box=False).exists(),
+            'reprovision_box nao curou o Membership do superdev — a guarda de billing '
+            'quebrou o chokepoint de cura que o ADR-013 exige.',
+        )
+        box.refresh_from_db()
+        self.assertEqual(
+            box.status, Box.Status.SUSPENDED,
+            'a cura do superdev nao deveria, por si so, promover o box.',
+        )
+
+
+@pytest.mark.public_schema
+class ActivateBoxTest(TestCase):
+    """activate_box: reativação manual de SUSPENDED, reason obrigatório, audit."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        self.owner = User.objects.create_user(
+            username='owner_activate_test',
+            email='owner@activate.test',
+        )
+
+    @patch('control.services._run_step')
+    def _suspended_box(self, mock_step, slug='ativar-teste'):
+        from control.models import Box
+        from control.services import provision_box
+        mock_step.return_value = None
+        box = provision_box(owner_user=self.owner, display_name=slug, slug=slug)
+        Box.objects.filter(pk=box.pk).update(status=Box.Status.SUSPENDED)
+        box.refresh_from_db()
+        return box
+
+    def test_activates_suspended_box_with_reason(self):
+        from control.models import Box, PlatformAuditEvent
+        from control.services import activate_box
+
+        box = self._suspended_box(slug='ativar-com-motivo')
+
+        result = activate_box(box, reason='Cliente pagou por fora, confirmado com financeiro')
+
+        result.refresh_from_db()
+        self.assertEqual(result.status, Box.Status.ACTIVE)
+        self.assertIsNone(result.suspended_at)
+        self.assertTrue(
+            PlatformAuditEvent.objects.filter(
+                target_box=box, kind='box.activated_manual_support'
+            ).exists()
+        )
+
+    def test_rejects_empty_reason(self):
+        from control.models import Box
+        from control.services import activate_box
+
+        box = self._suspended_box(slug='ativar-sem-motivo')
+
+        with self.assertRaises(ValueError) as ctx:
+            activate_box(box, reason='')
+        self.assertIn('reason', str(ctx.exception))
+
+        box.refresh_from_db()
+        self.assertEqual(box.status, Box.Status.SUSPENDED)
+
+    def test_rejects_non_suspended_box(self):
+        from control.models import Box
+        from control.services import activate_box
+
+        box = self._suspended_box(slug='ativar-ja-ativo')
+        Box.objects.filter(pk=box.pk).update(status=Box.Status.ACTIVE)
+        box.refresh_from_db()
+
+        with self.assertRaises(ValueError) as ctx:
+            activate_box(box, reason='motivo qualquer')
+        self.assertIn('não SUSPENDED', str(ctx.exception))
+
+    def test_rejects_archived_box(self):
+        from control.models import Box
+        from control.services import activate_box
+
+        box = self._suspended_box(slug='ativar-arquivado')
+        Box.objects.filter(pk=box.pk).update(status=Box.Status.ARCHIVED)
+        box.refresh_from_db()
+
+        with self.assertRaises(ValueError):
+            activate_box(box, reason='motivo qualquer')
+
+
+# ---------------------------------------------------------------------------
 # L3 — archive_box (requer PostgreSQL — skip em SQLite)
 # ---------------------------------------------------------------------------
 
