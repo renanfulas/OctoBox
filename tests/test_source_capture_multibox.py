@@ -84,10 +84,26 @@ def _source_capture_box_b(django_db_setup, django_db_blocker):
     Fix: nasce SUSPENDED aqui (estado permanente/baseline da sessão). Cada
     teste desta classe ativa via UPDATE dentro da PRÓPRIA transação (ver
     setUp abaixo) — o rollback automático do TestCase ao fim de cada teste
-    devolve pra SUSPENDED sozinho, sem precisar de teardown explícito."""
+    devolve pra SUSPENDED sozinho, sem precisar de teardown explícito.
+
+    TERCEIRO BUG REAL ACHADO EM CI: fixture de escopo 'session' resolve
+    ANTES de fixtures de escopo 'class' (session > class > function na
+    ordem do pytest) — mesmo quando só esta classe (marcada
+    @pytest.mark.public_schema) depende dela. Isso significa que o reset
+    pra public do autouse `_class_tenant_schema_context` (conftest.py) NEM
+    SEMPRE já rodou quando este fixture executa pela primeira vez — sob
+    certos agendamentos do xdist, a conexão ainda está no schema que um
+    teste anterior (de OUTRA classe) deixou ativo, e django-tenants recusa
+    criar/alterar Box fora de public ("Can't create tenant outside the
+    public schema"). Fix: forçar public explicitamente aqui, sem depender
+    da ordem de nenhum outro fixture."""
     from django.core.management import call_command
+    from django_tenants.utils import get_public_schema_name
 
     with django_db_blocker.unblock():
+        if getattr(db_connection, 'schema_name', None) != get_public_schema_name():
+            db_connection.set_schema_to_public()
+
         owner, _ = get_user_model().objects.get_or_create(
             username='__pytest_source_capture_box_b_owner__',
             defaults={'email': '__pytest_box_b__@example.test'},
