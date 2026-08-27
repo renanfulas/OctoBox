@@ -17,6 +17,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from auditing.models import AuditEvent
+from control.models import PlatformAuditEvent
 from finance.models import PaymentStatus
 from tests.factories import PaymentFactory, StudentFactory, UserFactory
 
@@ -38,22 +39,27 @@ class AuditTrailTests(TestCase):
             status=PaymentStatus.PENDING,
         )
 
-    def test_login_creates_audit_event(self):
+    def test_login_creates_platform_audit_event(self):
+        """Onda 5b: login migrou de AuditEvent (per-tenant) para
+        PlatformAuditEvent (SHARED_APP) — ver auditing/signals.py."""
         response = self.client.post(
             reverse('login'),
             data={'username': 'auditor-user', 'password': 'senha-forte-123'},
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(AuditEvent.objects.filter(action='user_login', actor=self.user).exists())
+        event = PlatformAuditEvent.objects.filter(kind='auth.login', actor_user=self.user).first()
+        self.assertIsNotNone(event)
+        self.assertIsNone(event.target_box, 'login nao deve adivinhar box — ver docstring de log_platform_audit_event')
+        self.assertEqual(event.payload.get('path'), reverse('login'))
 
-    def test_logout_creates_audit_event(self):
+    def test_logout_creates_platform_audit_event(self):
         self.client.force_login(self.user)
 
         response = self.client.post(reverse('logout'))
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(AuditEvent.objects.filter(action='user_logout', actor=self.user).exists())
+        self.assertTrue(PlatformAuditEvent.objects.filter(kind='auth.logout', actor_user=self.user).exists())
 
     def test_admin_payment_change_creates_financial_audit_event(self):
         self.client.force_login(self.superuser)

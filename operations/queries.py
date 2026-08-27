@@ -12,6 +12,7 @@ PONTOS CRITICOS:
 - mudancas aqui afetam a leitura operacional por papel e a performance dessas telas.
 """
 
+from dataclasses import dataclass
 from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.db.models import Count
@@ -122,16 +123,92 @@ def build_owner_workspace_snapshot(*, today):
     return build_owner_workspace_snapshot_data(today=today)
 
 
+@dataclass(frozen=True, slots=True)
+class _AuditRow:
+    """Vista unificada pro template templates/operations/dev.html (mesmos
+    atributos que `event.*` usa) — venha de AuditEvent (per-tenant) ou de
+    PlatformAuditEvent (SHARED_APP, ver Onda 5b / log_platform_audit_event
+    em auditing/services.py).
+
+    target_model existe só porque o template faz
+    `event.target_label|default:event.target_model` — o filtro `default`
+    resolve os DOIS lados antes de escolher, então o atributo precisa
+    existir mesmo quando target_label já veio pronto (caso de
+    PlatformAuditEvent, que não tem um "target_model" real)."""
+    created_at: object
+    actor: object
+    actor_role: str
+    action: str
+    target_label: str
+    target_model: str = ''
+
+
+def _tenant_audit_rows(limit):
+    return [
+        _AuditRow(
+            created_at=event.created_at,
+            actor=event.actor,
+            actor_role=event.actor_role,
+            action=event.action,
+            target_label=event.target_label or event.target_model,
+        )
+        for event in AuditEvent.objects.select_related('actor')[:limit]
+    ]
+
+
+def _platform_audit_rows(limit):
+    # Import local: control é SHARED_APP, operations é TENANT_APP — mesma
+    # cautela de import tardio já usada no resto do projeto pra cruzar essa
+    # fronteira (ver control/middleware.py, access/roles/__init__.py).
+    from control.models import PlatformAuditEvent
+
+    return [
+        _AuditRow(
+            created_at=event.created_at,
+            actor=event.actor_user,
+            actor_role=(event.payload or {}).get('actor_role', ''),
+            action=event.kind,
+            target_label=event.target_box.slug if event.target_box_id else '',
+        )
+        for event in PlatformAuditEvent.objects.select_related('actor_user', 'target_box').order_by('-created_at')[:limit]
+    ]
+
+
+def _build_recent_audit_events(limit=10):
+    """Onda 5b: mescla AuditEvent (per-tenant, schema atual) com
+    PlatformAuditEvent (SHARED_APP, platform-wide) — login/logout de staff
+    migraram pra lá (auditing/signals.py), então sem essa mesclagem eles
+    somem do painel. PlatformAuditEvent NÃO é filtrado pelo box atual de
+    propósito: quem olha este painel é DEV/superdev, que quer visão
+    cross-box (é literalmente o motivo do papel existir — ver ADR-013)."""
+    merged = _tenant_audit_rows(limit) + _platform_audit_rows(limit)
+    merged.sort(key=lambda row: row.created_at, reverse=True)
+    return merged[:limit]
+
+
+def _platform_audit_event_count(*, since=None):
+    from control.models import PlatformAuditEvent
+
+    qs = PlatformAuditEvent.objects.all()
+    if since is not None:
+        qs = qs.filter(created_at__gte=since)
+    return qs.count()
+
+
 def build_dev_workspace_snapshot():
     red_beacon_snapshot = build_red_beacon_snapshot()
+    last_24h = timezone.now() - timedelta(days=1)
     technical_metrics = {
-        'eventos_auditados': AuditEvent.objects.count(),
-        'eventos_24h': AuditEvent.objects.filter(created_at__gte=timezone.now() - timedelta(days=1)).count(),
+        'eventos_auditados': AuditEvent.objects.count() + _platform_audit_event_count(),
+        'eventos_24h': (
+            AuditEvent.objects.filter(created_at__gte=last_24h).count()
+            + _platform_audit_event_count(since=last_24h)
+        ),
         'usuarios_com_papel': get_user_model().objects.filter(groups__isnull=False).distinct().count(),
     }
     student_realtime_metrics = build_student_realtime_metrics_snapshot()
     manager_realtime_metrics = build_manager_realtime_metrics_snapshot()
-    recent_audit_events = list(AuditEvent.objects.select_related('actor')[:10])
+    recent_audit_events = _build_recent_audit_events()
     return {
         'technical_metrics': technical_metrics,
         'student_realtime_metrics': student_realtime_metrics,
