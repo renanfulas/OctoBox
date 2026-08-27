@@ -69,7 +69,22 @@ def _source_capture_box_b(django_db_setup, django_db_blocker):
     """Segundo Box + schema migrado de verdade, criado UMA VEZ por sessão,
     fora do atomic() de qualquer TestCase — ver "BUG REAL ACHADO EM CI"
     acima. Idempotente via get_or_create, mesmo padrão do fixture
-    test_tenant em conftest.py."""
+    test_tenant em conftest.py.
+
+    SEGUNDO BUG REAL ACHADO EM CI: a primeira versão criava o box já
+    `status=ACTIVE` aqui — como isto roda FORA de qualquer transação de
+    teste (django_db_blocker.unblock), o UPDATE é permanente pro resto da
+    sessão daquele worker xdist, não só deste arquivo. Qualquer OUTRO
+    teste (não deste arquivo) que rode depois no mesmo worker e dependa de
+    `SINGLE_ACTIVE_BOX` (exatamente 1 box ATIVO no sistema) passa a ver 2
+    boxes ativos e quebra — foi exatamente o que aconteceu com
+    boxcore/tests/test_student_source_capture_view.py (teste pré-existente,
+    não relacionado a esta onda) em 2 dos 3 seeds do order-dependence-check.
+
+    Fix: nasce SUSPENDED aqui (estado permanente/baseline da sessão). Cada
+    teste desta classe ativa via UPDATE dentro da PRÓPRIA transação (ver
+    setUp abaixo) — o rollback automático do TestCase ao fim de cada teste
+    devolve pra SUSPENDED sozinho, sem precisar de teardown explícito."""
     from django.core.management import call_command
 
     with django_db_blocker.unblock():
@@ -82,10 +97,15 @@ def _source_capture_box_b(django_db_setup, django_db_blocker):
             defaults={
                 'schema_name': 'box_b_source_capture',
                 'display_name': 'Box B (source capture)',
-                'status': Box.Status.ACTIVE,
+                'status': Box.Status.SUSPENDED,
                 'owner_user': owner,
             },
         )
+        # --reuse-db: se sobrou ACTIVE de uma run anterior (ex.: antes
+        # deste fix), força de volta pro baseline seguro.
+        if box.status != Box.Status.SUSPENDED:
+            Box.objects.filter(pk=box.pk).update(status=Box.Status.SUSPENDED)
+            box.status = Box.Status.SUSPENDED
         with db_connection.cursor() as cur:
             cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{box.schema_name}"')
         call_command('migrate_schemas', schema=box.schema_name, verbosity=0, interactive=False)
@@ -101,9 +121,11 @@ class SourceCaptureTokenMultiBoxTests(TestCase):
 
     def setUp(self):
         self.test_tenant = Box.objects.get(slug='test')
-        # Testes anteriores podem ter suspendido o box_b (ver o teste de
-        # fallback abaixo) — reafirma ACTIVE a cada teste, já que o fixture
-        # é session-scoped e não passa pelo rollback do TestCase.
+        # box_b nasce SUSPENDED no fixture de sessão (ver docstring de
+        # _source_capture_box_b) — ativa aqui, DENTRO da transação deste
+        # teste. O rollback automático do TestCase ao fim do teste devolve
+        # sozinho pra SUSPENDED, sem vazar "2 boxes ATIVOS" pra nenhum
+        # outro teste que rode depois no mesmo worker.
         Box.objects.filter(pk=self.box_b.pk).update(status=Box.Status.ACTIVE)
 
         if not _table_exists(self.box_b.schema_name, 'boxcore_student'):
