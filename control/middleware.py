@@ -231,9 +231,25 @@ class TenantBySessionMiddleware:
         return path.startswith(f'/{settings.ADMIN_URL_PATH}')
 
     def _set_public(self, request) -> None:
-        """Reset explícito para public schema. Corrige herança de search_path (C1)."""
+        """Reset explícito para public schema. Corrige herança de search_path (C1).
+
+        NAO seta request.tenant = None. O template tag {% is_public_schema %}
+        de django_tenants (django_tenants/templatetags/tenant.py) testa
+        `not hasattr(context.request, 'tenant')` para decidir "sem tenant" —
+        setar o atributo COM valor None faz hasattr voltar True, e o tag
+        segue pra `context.request.tenant.schema_name`, estourando
+        AttributeError: 'NoneType' object has no attribute 'schema_name'.
+        Bug real em producao (2026-08-27): so foi exercitado quando o
+        fallback de bootstrap do superuser (__call__, ramo `box is None`)
+        passou a deixar a request continuar para o admin (antes, esse
+        caminho sempre redirecionava pra /box/ sem renderizar nenhum
+        template). access/access_overview_context.py:29 le via
+        getattr(request, 'tenant', None), que se comporta igual com o
+        atributo ausente ou None — nao ha regressao ao remover a atribuicao.
+        """
         connection.set_schema_to_public()
-        request.tenant = None
+        if hasattr(request, 'tenant'):
+            del request.tenant
 
     def _resolve_box(self, request) -> 'Box | None':
         """

@@ -766,6 +766,44 @@ class AdminPathHelpersTest(SimpleTestCase):
         self.assertFalse(self._is_admin('/admin/'))
 
 
+class SetPublicDoesNotSetTenantAttributeTest(SimpleTestCase):
+    """Bug real em producao (2026-08-27): _set_public fazia request.tenant =
+    None. O template tag {% is_public_schema %} de django_tenants
+    (django_tenants/templatetags/tenant.py) testa
+    `not hasattr(context.request, 'tenant')` para decidir "sem tenant" — com
+    o atributo presente (mesmo valendo None), hasattr volta True e o tag
+    segue para context.request.tenant.schema_name, estourando AttributeError:
+    'NoneType' object has no attribute 'schema_name'.
+
+    So foi exercitado em producao quando o fallback de bootstrap do
+    superuser-sem-box (__call__, ramo `box is None` + _is_admin_path) passou
+    a deixar a request continuar e RENDERIZAR o admin, em vez de sempre
+    redirecionar pra /box/ sem tocar em nenhum template. Antes disso, nenhum
+    path publico chegava a renderizar uma pagina que usa esse template tag.
+
+    access/access_overview_context.py:29 le via getattr(request, 'tenant',
+    None), que se comporta identico com o atributo ausente ou valendo None —
+    remover a atribuicao nao regride esse consumidor."""
+
+    def test_set_public_leaves_tenant_attribute_unset(self):
+        from control.middleware import TenantBySessionMiddleware
+        middleware = TenantBySessionMiddleware(get_response=lambda r: None)
+        request = RequestFactory().get('/painel-interno/')
+        middleware._set_public(request)
+        self.assertFalse(hasattr(request, 'tenant'))
+
+    def test_set_public_clears_a_previously_set_tenant_attribute(self):
+        """Defesa adicional: se algo setou request.tenant antes (nao deveria
+        acontecer nesta middleware, mas e barato garantir), _set_public
+        remove o atributo em vez de deixar um Box stale visivel."""
+        from control.middleware import TenantBySessionMiddleware
+        middleware = TenantBySessionMiddleware(get_response=lambda r: None)
+        request = RequestFactory().get('/painel-interno/')
+        request.tenant = object()
+        middleware._set_public(request)
+        self.assertFalse(hasattr(request, 'tenant'))
+
+
 # ---------------------------------------------------------------------------
 # box_runtime.py — get_box_runtime_slug usa schema_name quando tenant ativo
 # ---------------------------------------------------------------------------
