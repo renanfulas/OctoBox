@@ -62,9 +62,20 @@ def create_checkout_session(
     # nesse caso o ator do audit e None. Staff continua com o proprio user.
     actor = request.user if getattr(getattr(request, 'user', None), 'is_authenticated', False) else None
 
+    # NAO passar payment_method_types explicito de proposito. Pix e
+    # invite-only em conta Stripe BR — confirmado por leitura direta da
+    # conta em 2026-08-26: capabilities so tem boleto_payments,
+    # card_payments, transfers, SEM pix_payments. Pedir ['card','pix'] sem
+    # essa capability derruba o Session.create() INTEIRO (StripeError), nao
+    # so o Pix — o aluno perderia tambem a opcao de pagar com cartao.
+    #
+    # Correcao: omitir o parametro. Sem payment_method_types, a Stripe usa
+    # "dynamic payment methods" — decide por request, no lado dela, quais
+    # metodos mostrar, com base no que esta ativo no Dashboard da conta.
+    # Pix aparece sozinho no dia que o invite for aprovado, sem precisar de
+    # flag, sonda de capability (custaria latencia por checkout) ou redeploy.
     try:
         session = stripe.checkout.Session.create(
-            payment_method_types=['card', 'pix'],
             line_items=[{
                 'price_data': {
                     'currency': 'brl',

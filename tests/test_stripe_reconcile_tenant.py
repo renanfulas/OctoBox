@@ -36,12 +36,15 @@ TENANT_SCHEMA = 'box_test'
 
 def _checkout_completed_event(
     *, event_id, payment_id, amount_cents, box_schema, version=0,
-    payment_intent=None, currency=None, session_object_id=None,
+    payment_intent=None, currency=None, session_object_id=None, payment_status='paid',
 ):
     metadata = {'payment_id': str(payment_id), 'version_locked': str(version)}
     if box_schema is not None:
         metadata['box_schema'] = box_schema
-    session_object = {'amount_total': amount_cents, 'metadata': metadata}
+    # Onda 3: default 'paid' — cartao confirma na hora, e e o que o payload
+    # real da Stripe sempre traz. Pix chegaria 'unpaid' e nao reconciliaria
+    # (ver test_stripe_pix_async_confirmation.py).
+    session_object = {'amount_total': amount_cents, 'metadata': metadata, 'payment_status': payment_status}
     if payment_intent is not None:
         session_object['payment_intent'] = payment_intent
     if currency is not None:
