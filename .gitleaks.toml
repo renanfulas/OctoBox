@@ -13,4 +13,8 @@ paths = [
   '''(^|[\\/])\.github[\\/]workflows[\\/]e2e-nightly\.yml$''',
   # E2E guide documents test fixture credentials inline (not real secrets)
   '''(^|[\\/])docs[\\/]testing[\\/]e2e-guide\.md$''',
+  # Public workout PWA pages: static HTML/JS with no backend secrets. Each page
+  # sets a client-side localStorage namespace like `const STORE_KEY='nome_v1'`,
+  # which the generic-api-key rule flags as a false positive.
+  '''(^|[\\/])templates[\\/]public_workouts[\\/].*$''',
 ]
