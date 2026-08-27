@@ -45,13 +45,17 @@ OCTOBOX_MEMBERSHIP_REQUEST_ATTR = '_octobox_membership'
 # Paths que NUNCA devem entrar em tenant — ficam em public schema.
 # Qualquer URL que precisa funcionar antes de um Box existir vai aqui.
 PUBLIC_SCHEMA_PATHS = (
-    # O admin (settings.ADMIN_URL_PATH) e verificado a parte, em _is_public_path
-    # — nao aqui. settings.ADMIN_URL_PATH e customizavel via DJANGO_ADMIN_URL_PATH
-    # (obscuridade de seguranca em producao, ex.: 'painel-<hash>/', nunca o
-    # literal 'admin/'), entao um valor fixo nesta tupla nunca bateria com o
-    # path real — e o admin (SHARED app, nao deveria exigir Box nenhum) caia na
-    # resolucao de tenant como path privado comum. Usuario sem Membership
-    # parava no seletor de box vazio em vez de chegar no admin.
+    # Literal '/admin/' (nao settings.ADMIN_URL_PATH): safety net para o path
+    # default 404ar naturalmente quando o admin real esta em outro lugar
+    # (obscuridade de seguranca via DJANGO_ADMIN_URL_PATH). O path REAL do
+    # admin (settings.ADMIN_URL_PATH) NAO entra aqui — ver _is_admin_path().
+    # Torna-lo sempre-publico incondicionalmente (como uma correcao anterior
+    # tentou) quebra admin actions em modelos tenant-scoped (ex.: editar
+    # Payment): a requisicao nunca chega a resolver o Box do usuario, entao
+    # roda contra o schema errado ("relation nao existe"). O caminho certo
+    # para "superuser sem Box ainda" e o fallback em __call__ (box is None),
+    # nao um bypass cego de toda a subarvore do admin.
+    '/admin/',
     '/signup/',
     '/financeiro/stripe/webhook/',
     # Captura segura de origem declarada — link externo para alunos (anon)
@@ -165,6 +169,13 @@ class TenantBySessionMiddleware:
             from control.models import Membership
 
             has_membership = Membership.objects.filter(user=request.user).exists()
+            if request.user.is_superuser and self._is_admin_path(request.path):
+                # Superuser sem NENHUM Box/Membership ainda (primeiro acesso
+                # administrativo do ambiente, ex.: bootstrap inicial) —
+                # deixa entrar no admin hardened em public schema em vez de
+                # mandar pro seletor de box vazio (dead-end sem 403 nem erro
+                # explicito). Bug original corrigido no commit ad20277.
+                return self.get_response(request)
             if has_membership or request.user.is_superuser:
                 return redirect(f'/box/?{REDIRECT_FIELD_NAME}={request.path}')
 
@@ -198,14 +209,26 @@ class TenantBySessionMiddleware:
     # ------------------------------------------------------------------
 
     def _is_public_path(self, path: str) -> bool:
-        # Checado a parte (nao na tupla PUBLIC_SCHEMA_PATHS): settings.ADMIN_URL_PATH
-        # e lido em tempo de chamada, nao congelado em import time — override_settings
-        # em teste (e um eventual reload de settings) precisa refletir aqui.
-        if path.startswith(f'/{settings.ADMIN_URL_PATH}'):
-            return True
         if any(path.startswith(prefix) for prefix in PUBLIC_SCHEMA_PATHS):
             return True
         return path in PUBLIC_SCHEMA_EXACT_PATHS
+
+    def _is_admin_path(self, path: str) -> bool:
+        """settings.ADMIN_URL_PATH e customizavel via DJANGO_ADMIN_URL_PATH
+        (obscuridade de seguranca em producao, ex.: 'painel-<hash>/'). Lido em
+        tempo de chamada (nao congelado em import time) — override_settings
+        em teste precisa refletir aqui.
+
+        Deliberadamente SEPARADO de _is_public_path: o admin so deve ignorar
+        a resolucao normal de tenant quando o usuario nao tem Box nenhum
+        ainda (ver __call__, ramo `box is None`) — nao sempre. Uma correcao
+        anterior (2026-08-27, commit ad20277) tratava a subarvore inteira do
+        admin como sempre-publica incondicionalmente, o que quebrava admin
+        actions em modelos tenant-scoped (ex.: editar Payment): a requisicao
+        nunca chegava a resolver o Box do usuario, rodava contra o schema
+        errado ("relation nao existe").
+        """
+        return path.startswith(f'/{settings.ADMIN_URL_PATH}')
 
     def _set_public(self, request) -> None:
         """Reset explícito para public schema. Corrige herança de search_path (C1)."""
