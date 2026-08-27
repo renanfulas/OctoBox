@@ -88,9 +88,14 @@ Para a evidencia da execucao, consultar:
 | Doc | Status |
 |-----|--------|
 | [phase1-closed-beta-operations-matrix.md](phase1-closed-beta-operations-matrix.md) | ATIVO (matriz de acompanhamento) |
-| [restore-and-rollback-drill.md](restore-and-rollback-drill.md) | ATIVO (drill repetivel) |
+| [restore-and-rollback-drill.md](restore-and-rollback-drill.md) | **PARCIAL** (Partes A e B aprovadas em 2026-04; Parte C — restore por tenant — nunca executada) |
+| [phase1-commercial-gate-audit-2026-08-06.md](phase1-commercial-gate-audit-2026-08-06.md) | ATIVO (gate para vender os boxes 2 a 20; aponta o bloqueador de restore por tenant) |
 
 Evidencia datada arquivada em [archive/phase1-execution-evidence-2026-04-13.md](archive/phase1-execution-evidence-2026-04-13.md).
+
+Atencao de leitura: a evidencia de 2026-04 foi coletada **antes** da virada schema-per-tenant
+(2026-05). Ela prova que o time sabe operar backup, restore e rollback, mas nao prova nada sobre
+schemas de tenant — por isso a Parte C do drill existe.
 
 ---
 
