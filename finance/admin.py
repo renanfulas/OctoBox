@@ -16,7 +16,7 @@ PONTOS CRITICOS:
 from django.contrib import admin
 
 from auditing.admin_mixins import AuditedAdminMixin
-from finance.models import Enrollment, MembershipPlan, Payment
+from finance.models import Enrollment, MembershipPlan, Payment, PartnerCheckInCharge
 
 
 @admin.register(MembershipPlan)
@@ -28,8 +28,8 @@ class MembershipPlanAdmin(AuditedAdminMixin, admin.ModelAdmin):
 
 @admin.register(Enrollment)
 class EnrollmentAdmin(AuditedAdminMixin, admin.ModelAdmin):
-    list_display = ('student', 'plan', 'status', 'start_date', 'end_date')
-    list_filter = ('status', 'plan')
+    list_display = ('student', 'plan', 'payment_source', 'status', 'start_date', 'end_date')
+    list_filter = ('status', 'payment_source', 'plan')
     search_fields = ('student__full_name', 'student__phone', 'plan__name')
     autocomplete_fields = ('student', 'plan')
 
@@ -51,4 +51,19 @@ class PaymentAdmin(AuditedAdminMixin, admin.ModelAdmin):
     )
 
 
-__all__ = ['EnrollmentAdmin', 'MembershipPlanAdmin', 'PaymentAdmin']
+@admin.register(PartnerCheckInCharge)
+class PartnerCheckInChargeAdmin(AuditedAdminMixin, admin.ModelAdmin):
+    list_display = (
+        'enrollment', 'partner', 'status', 'reminder_attempts',
+        'declared_value', 'confirmed_at', 'reconciled_at',
+    )
+    list_filter = ('partner', 'status')
+    search_fields = (
+        'enrollment__student__full_name', 'enrollment__student__phone',
+        'statement_reference',
+    )
+    autocomplete_fields = ('enrollment', 'attendance')
+    readonly_fields = ('reminder_attempts', 'last_reminder_at', 'confirmed_at', 'reconciled_at')
+
+
+__all__ = ['EnrollmentAdmin', 'MembershipPlanAdmin', 'PartnerCheckInChargeAdmin', 'PaymentAdmin']

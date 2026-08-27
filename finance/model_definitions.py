@@ -27,6 +27,7 @@ HISTORICAL_BOXCORE_STUDENT_MODEL = 'boxcore.Student'
 HISTORICAL_BOXCORE_MEMBERSHIP_PLAN_MODEL = 'boxcore.MembershipPlan'
 HISTORICAL_BOXCORE_ENROLLMENT_MODEL = 'boxcore.Enrollment'
 HISTORICAL_BOXCORE_PAYMENT_MODEL = 'boxcore.Payment'
+HISTORICAL_BOXCORE_ATTENDANCE_MODEL = 'boxcore.Attendance'
 
 
 class EnrollmentStatus(models.TextChoices):
@@ -75,6 +76,34 @@ class FinanceFollowUpOutcomeStatus(models.TextChoices):
     EXPIRED = 'expired', 'Expirado'
 
 
+class PaymentSource(models.TextChoices):
+    """Quem paga o box por essa matricula: o proprio aluno ou um agregador
+    (Wellhub/TotalPass). Deliberadamente separado do MembershipPlan: a
+    modalidade de treino (sessions_per_week) nao deve se misturar com quem
+    fecha a conta com o box."""
+
+    DIRECT = 'direct', 'Direto (aluno)'
+    WELLHUB = 'wellhub', 'Wellhub (Gympass)'
+    TOTALPASS = 'totalpass', 'TotalPass'
+
+
+class PartnerCheckInStatus(models.TextChoices):
+    """Ciclo de vida da confirmacao de um check-in de aluno de parceiro.
+
+    pending    -> attendance com check_in_at, aguardando lembrete/confirmacao.
+    reminded   -> pelo menos um lembrete (0/10/30min) ja foi disparado.
+    confirmed  -> aluno confirmou manualmente no app do parceiro (via link).
+    reconciled -> extrato oficial do parceiro bateu com este check-in (fonte da verdade).
+    disputed   -> passou do prazo sem confirmacao nem reconciliacao; revisao do dono.
+    """
+
+    PENDING = 'pending', 'Pendente'
+    REMINDED = 'reminded', 'Lembrete enviado'
+    CONFIRMED = 'confirmed', 'Confirmado pelo aluno'
+    RECONCILED = 'reconciled', 'Reconciliado com extrato'
+    DISPUTED = 'disputed', 'Em disputa'
+
+
 class MembershipPlan(TimeStampedModel):
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -113,6 +142,13 @@ class Enrollment(TimeStampedModel):
         choices=EnrollmentStatus.choices,
         default=EnrollmentStatus.ACTIVE,
         db_index=True,
+    )
+    payment_source = models.CharField(
+        max_length=16,
+        choices=PaymentSource.choices,
+        default=PaymentSource.DIRECT,
+        db_index=True,
+        help_text='Quem fecha essa mensalidade com o box: o aluno direto ou um parceiro (Wellhub/TotalPass).',
     )
     notes = models.TextField(blank=True)
 
@@ -176,6 +212,54 @@ class Payment(TimeStampedModel):
 
     def __str__(self):
         return f'{self.student} - {self.amount}'
+
+
+class PartnerCheckInCharge(TimeStampedModel):
+    """Ledger de reconciliacao para alunos de parceiro (Wellhub/TotalPass).
+
+    Um registro por Attendance com check-in confirmado, para um aluno cujo
+    Enrollment.payment_source nao e DIRECT. Nunca reconhece receita de parceiro
+    sozinho: 'declared_value' so e preenchido quando o extrato oficial bate
+    (status=RECONCILED). Ate la e apenas presenca interna aguardando confirmacao.
+    """
+
+    enrollment = models.ForeignKey(
+        HISTORICAL_BOXCORE_ENROLLMENT_MODEL,
+        on_delete=models.CASCADE,
+        related_name='partner_checkin_charges',
+    )
+    attendance = models.OneToOneField(
+        HISTORICAL_BOXCORE_ATTENDANCE_MODEL,
+        on_delete=models.CASCADE,
+        related_name='partner_checkin_charge',
+    )
+    partner = models.CharField(max_length=16, choices=PaymentSource.choices, db_index=True)
+    status = models.CharField(
+        max_length=16,
+        choices=PartnerCheckInStatus.choices,
+        default=PartnerCheckInStatus.PENDING,
+        db_index=True,
+    )
+    declared_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='So preenchido na reconciliacao com o extrato oficial do parceiro.',
+    )
+    reminder_attempts = models.PositiveSmallIntegerField(default=0)
+    last_reminder_at = models.DateTimeField(null=True, blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    reconciled_at = models.DateTimeField(null=True, blank=True)
+    statement_reference = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        app_label = HISTORICAL_BOXCORE_APP_LABEL
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.enrollment.student} - {self.partner} - {self.status}'
 
 
 class FinanceFollowUp(TimeStampedModel):
@@ -250,6 +334,7 @@ __all__ = [
     'Enrollment',
     'EnrollmentStatus',
     'HISTORICAL_BOXCORE_APP_LABEL',
+    'HISTORICAL_BOXCORE_ATTENDANCE_MODEL',
     'HISTORICAL_BOXCORE_ENROLLMENT_MODEL',
     'HISTORICAL_BOXCORE_MEMBERSHIP_PLAN_MODEL',
     'HISTORICAL_BOXCORE_PAYMENT_MODEL',
@@ -259,6 +344,9 @@ __all__ = [
     'FinanceFollowUpOutcomeStatus',
     'FinanceFollowUpStatus',
     'Payment',
+    'PartnerCheckInCharge',
+    'PartnerCheckInStatus',
     'PaymentMethod',
+    'PaymentSource',
     'PaymentStatus',
 ]
