@@ -342,6 +342,13 @@ class ManagerPasswordResetTests(TestCase):
             password='senha-coach-123',
             email='coach@boxexemplo.com.br',
         )
+        # Onda 1c: Membership.role agora e autoritativo (nao so Group). O
+        # fixture de teste (conftest._auto_membership_for_test_users) da
+        # Membership(role=OWNER) por padrao a todo user — atribuir o Group
+        # Coach aqui sincroniza o Membership.role para 'coach' via
+        # m2m_changed, senao este user seria Owner e o teste não provaria
+        # nada sobre restricao de papel.
+        coach.groups.add(Group.objects.get(name='Coach'))
         self.client.force_login(coach)
 
         response = self._reset(self.funcionario.pk)

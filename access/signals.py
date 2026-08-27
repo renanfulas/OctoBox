@@ -12,7 +12,8 @@ O QUE ESTE ARQUIVO FAZ:
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
+
+from shared_support.platform_cache import platform_cache as cache
 
 User = get_user_model()
 
@@ -22,6 +23,12 @@ def invalidate_shadow_role_on_group_change(sender, instance, action, **kwargs):
     Invalida instantaneamente a Role guardada no Redis quando um papel do usuário muda.
     Explicação AAA: Isso permite que a leitura da Role tenha cache infinito (ou 24h) e custo Zero de Banco,
     mas se um admin demitir alguém ou rebaixá-lo, o efeito é IMEDIATO para o usuário na proxima requisição.
+
+    Onda 4, Passo 3 (2026-08-26): usa o alias 'platform' de CACHES (import
+    `platform_cache as cache` acima), o MESMO que access/roles/__init__.py
+    usa pra gravar essa chave — precisa ser o mesmo alias, senão a
+    invalidação vira no-op silencioso (apaga uma chave que não existe no
+    schema onde este signal roda, deixando intacta a que get_user_role lê).
     """
     if action in ['post_add', 'post_remove', 'post_clear']:
         # Verifica a instância: ela pode ser o User ou o Group contendo os Users.

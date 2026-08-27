@@ -34,6 +34,13 @@ from django_tenants.utils import get_public_schema_name
 
 logger = logging.getLogger('control.middleware')
 
+# Nome do atributo em request.user onde o Membership do box ativo fica anexado
+# (setado em TenantBySessionMiddleware._resolve_box). access.roles.get_user_role
+# lê este atributo para resolver papel POR BOX. Constante compartilhada em vez
+# de string mágica duplicada — control é SHARED_APP e carrega antes de access
+# (TENANT_APP), então a dependência access -> control é segura (sem circular).
+OCTOBOX_MEMBERSHIP_REQUEST_ATTR = '_octobox_membership'
+
 # Paths que NUNCA devem entrar em tenant — ficam em public schema.
 # Qualquer URL que precisa funcionar antes de um Box existir vai aqui.
 PUBLIC_SCHEMA_PATHS = (
@@ -161,6 +168,17 @@ class TenantBySessionMiddleware:
             )
             return HttpResponseForbidden('Nenhum box associado a este usuário.')
 
+        # Onda 1c: expõe o Membership do box ativo em request.user para
+        # access.roles.get_user_role resolver papel POR BOX. NUNCA thread-local
+        # (vazaria entre requests/usuários no mesmo worker em runtime síncrono)
+        # — o atributo vive só na instância deste request.user, que morre com
+        # o request.
+        setattr(
+            request.user,
+            OCTOBOX_MEMBERSHIP_REQUEST_ATTR,
+            getattr(request, '_resolved_membership', None),
+        )
+
         # Setar tenant — django-tenants emite SET search_path TO box_xxx, public
         connection.set_tenant(box)
         request.tenant = box
@@ -189,6 +207,12 @@ class TenantBySessionMiddleware:
         Prioridade:
         1. session['active_box_id'] — set pelo /box/switch/ ou pelo onboarding.
         2. Membership.is_primary_box=True — padrão após login.
+
+        Efeito colateral: anexa o Membership resolvido em
+        request._resolved_membership. __call__ o expõe em request.user logo
+        depois (ver OCTOBOX_MEMBERSHIP_REQUEST_ATTR) para get_user_role
+        resolver papel por box sem query adicional — o Membership já foi
+        buscado aqui de qualquer forma.
         """
         from control.models import Box, Membership  # import local para evitar circular no boot
 
@@ -196,8 +220,11 @@ class TenantBySessionMiddleware:
         if active_box_id:
             try:
                 box = Box.objects.get(pk=active_box_id, status=Box.Status.ACTIVE)
-                # Confirmar que o user ainda tem Membership neste box
-                if Membership.objects.filter(user=request.user, box=box).exists():
+                # C1c: .first() em vez de .exists() — o Membership (com o role
+                # do box ativo) já estava sendo buscado e descartado aqui.
+                membership = Membership.objects.filter(user=request.user, box=box).first()
+                if membership is not None:
+                    request._resolved_membership = membership
                     return box
                 else:
                     # Box na session mas user não tem mais Membership → limpar session
@@ -220,6 +247,7 @@ class TenantBySessionMiddleware:
             if membership:
                 # Setar na session para próximos requests (evita query a cada request)
                 request.session['active_box_id'] = membership.box_id
+                request._resolved_membership = membership
                 return membership.box
         except Exception:
             logger.exception('Erro ao resolver Membership para user=%s', request.user.pk)

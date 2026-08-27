@@ -10,6 +10,11 @@ PONTOS CRITICOS:
   sem acesso a caixa de entrada, ou com pressa no balcao. A senha gerada e
   devolvida em texto UMA vez para o gestor ler em voz alta — nunca e persistida
   em claro nem logada, inclusive no AuditEvent.
+- Onda 1-pre (2026-08-26): create/update passaram a manter control.Membership
+  em sincronia com o Group escolhido no form. access.roles.get_user_role lê
+  Membership.role ANTES de Group — sem este sync, criar um perfil o deixaria
+  sem Membership (sumindo da listagem escopada por box da Onda 1b) e editar
+  o papel de alguém que já tem Membership viraria no-op silencioso.
 """
 
 import secrets
@@ -45,7 +50,67 @@ def split_access_full_name(full_name):
     return chunks[0], ' '.join(chunks[1:])
 
 
-def handle_access_profile_update(*, post_data, ensure_role_group):
+def _guard_target_is_manageable(*, target_user, box):
+    """Recusa alvo fora do escopo do ator: superusuário sempre, e qualquer
+    usuário com Membership em OUTRO box (nega cross-box).
+
+    ONDA 1a — FASE 1 (antes do backfill de Onda 1-pré estar confirmado em
+    produção, via `manage.py backfill_staff_membership`). NÃO recusa ainda
+    alvo sem Membership nenhuma: staff legado não migrado continuaria
+    gerenciável, para não travar operação real antes do backfill rodar.
+    Apertar para "recusa alvo sem Membership no box do ator" é a fase 2,
+    só depois do backfill confirmado — ver docs/plans/ondas-correcao-
+    tenancy-billing-2026-08-25.md, Onda 1.
+
+    Retorna uma reason string se deve recusar, ou None se o alvo é gerenciável.
+    """
+    if target_user.is_superuser:
+        return 'superuser-target-denied'
+
+    if box is not None:
+        from control.models import Membership
+
+        has_membership_elsewhere = (
+            Membership.objects.filter(user=target_user).exclude(box=box).exists()
+        )
+        if has_membership_elsewhere:
+            return 'cross-box-denied'
+
+    return None
+
+
+def _sync_membership_role(*, user, box, role_slug):
+    """Cria ou atualiza o Membership do usuário neste box com o papel escolhido.
+
+    is_primary_box só é setado True na CRIAÇÃO — update não mexe nisso, para
+    não atropelar o box primário de um usuário multi-box (ex.: superdev)
+    sendo editado a partir de outro box.
+
+    Retorna None (no-op) se role_slug não tem Membership.Role equivalente —
+    não deveria acontecer via form (OPERATIONAL_ROLE_CHOICES já filtra fora
+    o único caso sem equivalente, honeypot), mas falha aberta em vez de
+    levantar: perfil criado/editado sem Membership não é pior que o estado
+    anterior a esta onda, só não corrige o gap.
+    """
+    from control.models import Membership
+    from access.roles import SLUG_TO_MEMBERSHIP_ROLE
+
+    membership_role = SLUG_TO_MEMBERSHIP_ROLE.get(role_slug)
+    if membership_role is None or box is None:
+        return None
+
+    membership, created = Membership.objects.get_or_create(
+        user=user,
+        box=box,
+        defaults={'role': membership_role, 'is_primary_box': True},
+    )
+    if not created and membership.role != membership_role:
+        membership.role = membership_role
+        membership.save(update_fields=['role'])
+    return membership
+
+
+def handle_access_profile_update(*, post_data, ensure_role_group, box=None):
     profile_id = post_data.get('target_profile_id', '').strip()
     form = AccessProfileUpdateForm(post_data, prefix=f'profile-{profile_id}')
     if not form.is_valid():
@@ -66,6 +131,13 @@ def handle_access_profile_update(*, post_data, ensure_role_group):
             'reason': 'not-found',
         }
 
+    denial_reason = _guard_target_is_manageable(target_user=target_user, box=box)
+    if denial_reason is not None:
+        return {
+            'ok': False,
+            'reason': denial_reason,
+        }
+
     role_slug = form.cleaned_data['role']
     first_name, last_name = split_access_full_name(form.cleaned_data['full_name'])
     with transaction.atomic():
@@ -75,6 +147,7 @@ def handle_access_profile_update(*, post_data, ensure_role_group):
         target_user.save(update_fields=['first_name', 'last_name', 'email'])
         group = ensure_role_group(role_slug)
         target_user.groups.set([group])
+        _sync_membership_role(user=target_user, box=box, role_slug=role_slug)
 
     return {
         'ok': True,
@@ -82,7 +155,7 @@ def handle_access_profile_update(*, post_data, ensure_role_group):
     }
 
 
-def handle_access_profile_toggle(*, actor, post_data):
+def handle_access_profile_toggle(*, actor, post_data, box=None):
     profile_id = post_data.get('target_profile_id', '').strip()
     user_model = get_user_model()
     target_user = user_model.objects.filter(pk=profile_id).first()
@@ -97,6 +170,13 @@ def handle_access_profile_toggle(*, actor, post_data):
             'reason': 'self-disable-blocked',
         }
 
+    denial_reason = _guard_target_is_manageable(target_user=target_user, box=box)
+    if denial_reason is not None:
+        return {
+            'ok': False,
+            'reason': denial_reason,
+        }
+
     target_user.is_active = not target_user.is_active
     target_user.save(update_fields=['is_active'])
     return {
@@ -105,7 +185,7 @@ def handle_access_profile_toggle(*, actor, post_data):
     }
 
 
-def handle_access_profile_password_reset(*, actor, post_data):
+def handle_access_profile_password_reset(*, actor, post_data, box=None):
     """Redefine a senha de um funcionario para uma provisoria, gerada na hora.
 
     Existe para o caso que o fluxo por e-mail nao cobre: conta sem e-mail
@@ -115,6 +195,12 @@ def handle_access_profile_password_reset(*, actor, post_data):
     O gestor NAO pode resetar a propria senha por aqui — para isso existe o
     fluxo por e-mail. Sem essa trava, uma sessao sequestrada de owner trocaria
     a senha do dono sem passar por nenhum segundo fator.
+
+    ONDA 1a: alvo superusuário ou com Membership em outro box é recusado por
+    _guard_target_is_manageable — é o caminho que permitia Owner de um box
+    resetar a senha do superdev (ou de staff de outro box) e recebê-la em
+    texto na tela. Ver docs/plans/ondas-correcao-tenancy-billing-2026-08-25.md,
+    Onda 1.
     """
     profile_id = post_data.get('target_profile_id', '').strip()
     user_model = get_user_model()
@@ -128,6 +214,13 @@ def handle_access_profile_password_reset(*, actor, post_data):
         return {
             'ok': False,
             'reason': 'self-reset-blocked',
+        }
+
+    denial_reason = _guard_target_is_manageable(target_user=target_user, box=box)
+    if denial_reason is not None:
+        return {
+            'ok': False,
+            'reason': denial_reason,
         }
 
     provisional_password = build_provisional_password()
@@ -156,7 +249,7 @@ def handle_access_profile_password_reset(*, actor, post_data):
     }
 
 
-def handle_access_profile_create(*, post_data, ensure_role_group):
+def handle_access_profile_create(*, post_data, ensure_role_group, box=None):
     form = AccessProfileCreateForm(post_data)
     if not form.is_valid():
         return {
@@ -187,6 +280,7 @@ def handle_access_profile_create(*, post_data, ensure_role_group):
         )
         group = ensure_role_group(role_slug)
         user.groups.set([group])
+        _sync_membership_role(user=user, box=box, role_slug=role_slug)
 
     return {
         'ok': True,
