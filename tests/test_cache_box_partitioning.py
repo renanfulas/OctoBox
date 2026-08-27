@@ -33,6 +33,7 @@ from django.core.cache import cache, caches
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils.module_loading import import_string
 
 from access.roles import ROLE_HONEYPOT
 from shared_support.box_runtime import box_partitioned_key_function
@@ -182,20 +183,44 @@ _REAL_REDIS_CACHES = {
 }
 
 
+def _real_redis_is_reachable() -> bool:
+    try:
+        _real_redis_config = _real_redis_cache_config('octobox-test-realredis-healthcheck')
+        backend_cls = import_string(_real_redis_config['BACKEND'])
+        backend = backend_cls(_real_redis_config['LOCATION'], _real_redis_config)
+        backend.set('onda4_healthcheck', '1', timeout=5)
+        return True
+    except Exception:
+        return False
+
+
+@unittest.skipUnless(
+    _real_redis_is_reachable(),
+    'Redis real indisponivel para este gate (ver ADR/plano da Onda 4) — '
+    'CI hoje declara REDIS_URL mas nao sobe um service container de Redis.',
+)
 @override_settings(CACHES=_REAL_REDIS_CACHES)
 class RealRedisLoginCycleTests(TestCase):
     """Gate (3) do plano. IMPORTANTE: nunca chamar .clear() nos aliases
     aqui — django-redis faz FLUSHDB da conexao inteira, que pode ser
     compartilhada com o Redis de dev local. Limpeza e sempre por chave
-    explicita, sob o KEY_PREFIX exclusivo deste teste."""
+    explicita, sob o KEY_PREFIX exclusivo deste teste.
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        try:
-            caches['default'].set('onda4_healthcheck', '1', timeout=5)
-        except Exception as exc:  # pragma: no cover - so em ambiente sem Redis
-            raise unittest.SkipTest(f'Redis real indisponivel para este gate: {exc!r}')
+    BUG REAL ACHADO EM CI (docs/plans/ondas-correcao-tenancy-billing-
+    2026-08-25.md, bloco da Onda 4): a versao anterior checava
+    disponibilidade do Redis DENTRO de setUpClass, DEPOIS de chamar
+    super().setUpClass() — que ja abre o bloco atomic() de classe do
+    TestCase. Levantar unittest.SkipTest a partir dai faz o unittest pular
+    tearDownClass (e assim o rollback desse atomic) por design — a
+    conexao do worker xdist fica com uma transacao pendurada, e QUALQUER
+    teste rodando depois no mesmo worker (nao so deste arquivo) quebra com
+    psycopg.OperationalError('the connection is closed'). Reproduzido
+    isolando os 3 arquivos de teste novos desta PR um a um contra o CI real
+    (que declara REDIS_URL mas nao sobe nenhum service container de Redis
+    — a causa raiz nao e concorrencia, e essa combinacao especifica).
+    Fix: decidir o skip ANTES de super().setUpClass() rodar, via
+    @unittest.skipUnless no nivel da classe — nao ha atomic() pra sobrar
+    pendurado se a classe inteira nunca chega a ser montada."""
 
     def test_authenticated_request_cycle_does_not_400_or_logout(self):
         """Reproduz o mecanismo do bug descrito no corpo da Onda 4: sem o
