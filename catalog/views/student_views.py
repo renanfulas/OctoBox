@@ -98,6 +98,7 @@ from shared_support.security import check_export_quota
 from students.facade import (
     run_student_source_capture_token_build,
     run_student_source_capture_token_read,
+    run_student_source_capture_token_read_payload,
     run_student_source_declaration_record,
 )
 from students.models import Student
@@ -149,7 +150,13 @@ def _build_student_return_context(request):
 
 
 def _build_student_source_capture_url(*, request, student):
-    token = run_student_source_capture_token_build(student_id=student.id)
+    # Onda 6 / ADR-014: embute o schema do box ativo AGORA (contexto staff já
+    # resolvido — Student só existe dentro de um tenant) para o link
+    # funcionar corretamente com N boxes ATIVOS ao mesmo tempo. Sem isso, a
+    # view pública que lê o token dependeria do fallback SINGLE_ACTIVE_BOX.
+    from django.db import connection
+    box_root_slug = getattr(connection, 'schema_name', '') or ''
+    token = run_student_source_capture_token_build(student_id=student.id, box_root_slug=box_root_slug)
     return f"{request.build_absolute_uri(reverse('student-source-capture'))}?token={token}"
 
 
@@ -862,21 +869,55 @@ class StudentSourceCaptureView(View):
     template_name = 'catalog/student-source-capture.html'
 
     def dispatch(self, request, *args, **kwargs):
-        # Center Layer: rota e PUBLIC (/alunos/origem/qualificar/ esta em
-        # PUBLIC_SCHEMA_PATHS pq aluno anonimo precisa abrir o link). Mas
-        # Student vive em TENANT_APP. Ativar tenant via SINGLE_ACTIVE_BOX
-        # em pilot. Em multi-tenant prod, o token deveria carregar box_id
-        # (refactor futuro).
-        try:
-            from django.db import connection
-            if getattr(connection, 'schema_name', 'public') == 'public':
-                from control.models import Box
-                active_boxes = list(Box.objects.filter(status=Box.Status.ACTIVE)[:2])
-                if len(active_boxes) == 1:
-                    connection.set_tenant(active_boxes[0])
-        except Exception:
-            pass
+        # Center Layer / Onda 6 (ver ADR-014): rota e PUBLIC
+        # (/alunos/origem/qualificar/ esta em PUBLIC_SCHEMA_PATHS pq aluno
+        # anonimo precisa abrir o link). Student vive em TENANT_APP — ativa
+        # o tenant certo ANTES do resto da view rodar, lendo box_root_slug
+        # do PROPRIO token (embutido na emissao, ver
+        # _build_student_source_capture_url). Isso substitui a
+        # reimplementacao inline do fallback SINGLE_ACTIVE_BOX que existia
+        # aqui antes — violava o anti-padrao da ADR-006 (resolver tenant
+        # fora de uma facade) e so funcionava com exatamente 1 box ATIVO.
+        token = (request.GET.get('token') or request.POST.get('token') or '').strip()
+        if token and not self._activate_tenant_for_token(token):
+            # Token presente mas tenant nao pode ser resolvido (token
+            # invalido, ou 2+ boxes ATIVOS sem box_root_slug embutido — ver
+            # ADR-014). Sem isto, a query de Student abaixo estoura
+            # ProgrammingError cru (500) em vez de 404 gracioso: a conexao
+            # fica em public, onde boxcore_student nao existe.
+            raise Http404('Link de qualificacao invalido.')
         return super().dispatch(request, *args, **kwargs)
+
+    def _activate_tenant_for_token(self, token: str) -> bool:
+        """Retorna True se a connection terminou num schema de tenant
+        (resolvido agora ou ja resolvido antes), False se ficou em public."""
+        from django.db import connection
+        if getattr(connection, 'schema_name', 'public') != 'public':
+            return True  # ja resolvido (ex.: staff autenticado abrindo o proprio link)
+
+        try:
+            payload = run_student_source_capture_token_read_payload(token=token)
+        except (BadSignature, SignatureExpired, ValueError):
+            return False  # token ilegivel — 404, nao ha schema pra tentar
+
+        from control.models import Box
+
+        box = None
+        if payload.box_root_slug:
+            box = Box.objects.filter(schema_name=payload.box_root_slug, status=Box.Status.ACTIVE).first()
+
+        if box is None:
+            # Token emitido antes da Onda 6 (ate 30 dias em voo, sem
+            # box_root_slug) — fallback pilot, so funciona com 1 box ATIVO.
+            active_boxes = list(Box.objects.filter(status=Box.Status.ACTIVE)[:2])
+            if len(active_boxes) == 1:
+                box = active_boxes[0]
+
+        if box is None:
+            return False  # nao deu pra desambiguar — fica em public, 404
+
+        connection.set_tenant(box)
+        return True
 
     def _resolve_student(self, token: str):
         student_id = run_student_source_capture_token_read(token=token)
