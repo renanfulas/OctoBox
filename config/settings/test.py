@@ -7,11 +7,41 @@ os.environ.setdefault('ENABLE_DEBUG_TOOLBAR', 'false')
 
 from .development import *
 
+from shared_support.box_runtime import box_partitioned_key_function
+
 # Forca cache em memoria para os testes de telemetria.
+#
+# Onda 4, Passo 1 (2026-08-26): espelha a MESMA KEY_FUNCTION de producao no
+# alias 'default' — sem isso o gate de saida da onda ("suite inteira verde
+# com KEY_FUNCTION espelhada") nao provaria nada: a suite rodaria 100% verde
+# contra uma config que nao tem a particao por schema, e so quebraria depois,
+# em producao. LocMemCache honra KEY_FUNCTION igual Redis (a logica de
+# key_func vive em BaseCache, nao por backend) — o teste de fronteira
+# (mesma chave logica, dois schemas, sem colisao) e real, nao teatro.
+#
+# Precisa dos TRES aliases que base.py define:
+# - 'default': particionado por schema via KEY_FUNCTION (dado de tenant).
+# - 'sessions': SESSION_CACHE_ALIAS aponta aqui, sem KEY_FUNCTION (Onda 4,
+#   Passo 0) — sem este alias, todo request autenticado em teste levantaria
+#   InvalidCacheBackendError na hora de ler/gravar a sessao.
+# - 'platform': chaves globais por design (papel/honeypot por user_id,
+#   anti-card-testing), sem KEY_FUNCTION — ver shared_support/platform_cache.py.
+# LOCATION diferente entre os tres mantem LocMemCache isolado por alias
+# (mesma garantia que KEY_PREFIX diferente da em Redis).
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    }
+        'LOCATION': 'test-default',
+        'KEY_FUNCTION': box_partitioned_key_function,
+    },
+    'sessions': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'test-sessions',
+    },
+    'platform': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'test-platform',
+    },
 }
 
 # Redireciona o Redis para evitar timeouts em testes.

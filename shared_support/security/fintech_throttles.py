@@ -19,6 +19,8 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from django.core.cache import cache
 from django.db import connection
 
+from shared_support.platform_cache import platform_cache
+
 CHECKOUT_RATE_LIMIT_MAX = 10
 CHECKOUT_RATE_LIMIT_WINDOW_SECONDS = 3600
 
@@ -35,14 +37,20 @@ def checkout_rate_limit_exceeded(request) -> bool:
     politica por IP+usuario via cache, compartilhando a mesma chave entre as duas
     views (um contador unico por operador). Retorna True quando o limite ja foi
     atingido — a view deve responder 429 sem tocar a Stripe nem o banco.
+
+    Onda 4, Passo 3 (2026-08-26): usa platform_cache (alias 'platform', sem
+    KEY_FUNCTION) de proposito — a conta Stripe e UNICA, compartilhada por
+    todos os boxes. Particionar por schema (alias 'default') daria a um
+    atacante de card-testing um jeito trivial de resetar a cota: bastaria
+    trocar de box na URL do checkout.
     """
     ip = request.META.get('REMOTE_ADDR')
     user_id = getattr(getattr(request, 'user', None), 'id', None)
     key = f'octo_stripe_rl_{ip}_{user_id}'
-    attempts = cache.get(key, 0)
+    attempts = platform_cache.get(key, 0)
     if attempts >= CHECKOUT_RATE_LIMIT_MAX:
         return True
-    cache.set(key, attempts + 1, timeout=CHECKOUT_RATE_LIMIT_WINDOW_SECONDS)
+    platform_cache.set(key, attempts + 1, timeout=CHECKOUT_RATE_LIMIT_WINDOW_SECONDS)
     return False
 
 
@@ -83,17 +91,26 @@ class AntiCardTestingUserThrottle(UserRateThrottle):
     """
     Limita usuários logados a iniciarem sessões de pagamento um número seguro de vezes.
     Impede que contas comprometidas testem cartões roubados.
+
+    Onda 4, Passo 3 (2026-08-26): `cache` sobrescrito para o alias 'platform'
+    (mesmo motivo de checkout_rate_limit_exceeded acima — conta Stripe unica
+    e compartilhada, nao deve particionar por box).
     """
     scope = 'fintech_checkout_user'
     rate = '5/hour'
+    cache = platform_cache
 
 class AntiCardTestingAnonThrottle(AnonRateThrottle):
     """
     Limita IPs não logados. Protege rotas sensíveis como webhooks
     ou endpoints públicos de pagamento contra scripts automatizados.
+
+    Onda 4, Passo 3: mesmo motivo do throttle acima — `cache` no alias
+    'platform', nao particionado por schema.
     """
     scope = 'fintech_checkout_anon'
     rate = '10/hour'
+    cache = platform_cache
 
 __all__ = [
     'AntiCardTestingUserThrottle',

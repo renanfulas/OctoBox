@@ -20,6 +20,7 @@ from django.test import RequestFactory, TestCase
 
 from api.v1.finance_views import PaymentBulkActionView
 from finance.models import PaymentStatus
+from shared_support.platform_cache import platform_cache
 from shared_support.security.fintech_throttles import (
     CHECKOUT_RATE_LIMIT_MAX,
     checkout_rate_limit_exceeded,
@@ -30,6 +31,11 @@ from tests.factories import PaymentFactory
 class CheckoutRateLimitTests(TestCase):
     def setUp(self):
         cache.clear()
+        # Onda 4, Passo 3: checkout_rate_limit_exceeded migrou para o alias
+        # 'platform' (contador global — a conta Stripe é única, compartilhada
+        # por todos os boxes). cache.clear() sozinho não limpa mais o estado
+        # que este teste depende de zerar entre execuções.
+        platform_cache.clear()
 
     def _request(self, user_id):
         req = RequestFactory().get('/')

@@ -24,7 +24,7 @@ import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 
 from config.env_loader import load_project_env
-from shared_support.box_runtime import build_box_cache_key_prefix
+from shared_support.box_runtime import box_partitioned_key_function, build_box_cache_key_prefix
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ACTIVE_SETTINGS_MODULE = os.getenv('DJANGO_SETTINGS_MODULE', '').strip().lower()
@@ -162,11 +162,24 @@ def build_database_config(default_sqlite_path):
     return parsed
 
 
-def build_cache_config():
+def build_cache_config(*, key_prefix_override=None, key_function=None):
+    """Monta a config de um alias de CACHES.
+
+    key_prefix_override: quando passado, substitui o KEY_PREFIX calculado por
+    build_box_cache_key_prefix(). Existe para os aliases 'sessions' e
+    'platform' (ver Onda 4, docs/plans/ondas-correcao-tenancy-billing-
+    2026-08-25.md) terem namespace PRÓPRIO e ESTÁVEL, deliberadamente
+    diferente do 'default' — nunca devem colidir nem ganhar KEY_FUNCTION.
+
+    key_function: callable (ou dotted path) passado como KEY_FUNCTION do
+    alias. Só o 'default' recebe — particiona toda chave pelo schema ATIVO
+    NO MOMENTO DA CHAMADA (diferente de KEY_PREFIX, congelado no boot).
+    Ver shared_support.box_runtime.box_partitioned_key_function.
+    """
     cache_url = env_str('REDIS_URL') or env_str('CACHE_URL')
-    cache_key_prefix = build_box_cache_key_prefix(env_str('CACHE_KEY_PREFIX', 'octobox'))
+    cache_key_prefix = key_prefix_override or build_box_cache_key_prefix(env_str('CACHE_KEY_PREFIX', 'octobox'))
     if cache_url:
-        return {
+        config = {
             'BACKEND': 'django_redis.cache.RedisCache',
             'LOCATION': cache_url,
             'OPTIONS': {
@@ -179,15 +192,21 @@ def build_cache_config():
             },
             'KEY_PREFIX': cache_key_prefix,
         }
+        if key_function is not None:
+            config['KEY_FUNCTION'] = key_function
+        return config
 
     # 🚀 Performance de Elite (Epic 8): Garante Redis em Produção
     if not is_local_runtime_mode():
          raise ImproperlyConfigured('REDIS_URL obrigatoria para Cache em Producao/Homologacao.')
 
-    return {
+    config = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': build_box_cache_key_prefix('octobox-default'),
+        'LOCATION': key_prefix_override or build_box_cache_key_prefix('octobox-default'),
     }
+    if key_function is not None:
+        config['KEY_FUNCTION'] = key_function
+    return config
 
 
 LOGIN_URL = 'login'
@@ -208,7 +227,28 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # 🚀 Performance AAA (Ghost Session): Sessões 100% na RAM em vez de disco/SQL
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+#
+# ONDA 4, PASSO 0 (2026-08-26) — pré-requisito BLOQUEANTE antes de qualquer
+# KEY_FUNCTION particionada por schema entrar no alias 'default'.
+#
+# Por que a sessão NÃO PODE dividir alias com um cache futuro particionado
+# por tenant: a ordem dos middlewares faz SessionMiddleware ler a sessão
+# ANTES do tenant existir (search_path ainda herdado da conexão anterior,
+# CONN_MAX_AGE=60) e salvar DEPOIS que TenantBySessionMiddleware já setou o
+# schema do box. Se o cache particionasse por schema, a leitura e a escrita
+# da MESMA sessão cairiam em chaves DIFERENTES dentro do mesmo request —
+# resultado determinístico: SessionStore.save() não acha a chave de
+# origem, levanta UpdateError -> SessionInterrupted -> HTTP 400 no primeiro
+# request autenticado. Em path público (sessão nunca resolve tenant), o
+# efeito é logout silencioso: toda visita a '/', '/box/', '/aluno/' etc.
+# é tratada como sessão nova.
+#
+# Este alias usa Redis/backend idêntico ao 'default', mas com KEY_PREFIX
+# PRÓPRIO — nunca deve ganhar KEY_FUNCTION, mesmo que 'default' venha a
+# ter uma no futuro. Trocar o prefixo aqui invalida sessões ativas no
+# deploy (mesmo custo operacional que a KEY_FUNCTION completa: avisar
+# relogin geral antes de subir, não é "ciclo frio").
+SESSION_CACHE_ALIAS = 'sessions'
 
 # Mandatory SECRET_KEY check (Epic 8 Security Hardening)
 SECRET_KEY = env_str('DJANGO_SECRET_KEY') or env_str('SECRET_KEY')
@@ -596,7 +636,23 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_SSL_REDIRECT = env_bool('ENFORCE_SSL', False)
 
 CACHES = {
-    'default': build_cache_config()
+    # Onda 4 (2026-08-26): KEY_FUNCTION particiona toda chave pelo schema
+    # ATIVO NO MOMENTO DA CHAMADA — corrige o vazamento que o KEY_PREFIX
+    # sozinho não fechava (congelado no boot, antes de qualquer tenant
+    # existir — ver docstring de build_cache_config). Pré-requisitos que
+    # tornam isto seguro (Onda 4, Passo 0 e Passo 2) já estavam prontos:
+    # sessão vive em alias próprio sem KEY_FUNCTION (abaixo) e a thread de
+    # job em background herda o schema certo antes de gravar/ler.
+    'default': build_cache_config(key_function=box_partitioned_key_function),
+    # Onda 4, Passo 0 — ver comentário longo em SESSION_CACHE_ALIAS acima.
+    # Prefixo próprio e estável: NUNCA deve receber KEY_FUNCTION.
+    'sessions': build_cache_config(key_prefix_override='octobox-sessions'),
+    # Onda 4, Passo 3 — chaves GLOBAIS por natureza (papel/honeypot indexado
+    # por user_id — auth_user só existe em public; anti-card-testing, que
+    # protege uma única conta Stripe compartilhada por todos os boxes).
+    # Nunca deve receber KEY_FUNCTION — ver shared_support/platform_cache.py
+    # para o motivo completo e a lista de consumidores.
+    'platform': build_cache_config(key_prefix_override='octobox-platform'),
 }
 
 LOGGING = {

@@ -12,6 +12,7 @@ O QUE ESTE ARQUIVO FAZ:
 import os
 from unittest.mock import patch
 
+from django.conf import settings
 from django.test import SimpleTestCase
 
 from config.settings.base import build_cache_config, is_local_runtime_mode
@@ -69,3 +70,28 @@ class SettingsHelperTests(SimpleTestCase):
             cache_config = build_cache_config()
 
         self.assertFalse(cache_config['OPTIONS']['IGNORE_EXCEPTIONS'])
+
+    def test_build_cache_config_key_function_is_opt_in(self):
+        # Onda 4: sem key_function explicito, nenhum alias ganha KEY_FUNCTION
+        # por acidente — só 'default' deve receber (ver CACHES em base.py).
+        with patch.dict(os.environ, {'DJANGO_DEBUG': 'true'}, clear=True):
+            cache_config = build_cache_config()
+        self.assertNotIn('KEY_FUNCTION', cache_config)
+
+    def test_build_cache_config_key_function_is_passed_through_when_given(self):
+        def _dummy_key_function(key, key_prefix, version):
+            return f'{key_prefix}:{version}:{key}'
+
+        with patch.dict(os.environ, {'DJANGO_DEBUG': 'true'}, clear=True):
+            cache_config = build_cache_config(key_function=_dummy_key_function)
+        self.assertIs(cache_config['KEY_FUNCTION'], _dummy_key_function)
+
+    def test_only_default_alias_has_key_function_in_real_settings(self):
+        # Onda 4, Passo 0 e Passo 3: 'sessions' e 'platform' NUNCA podem
+        # ganhar KEY_FUNCTION — sessão particionada por schema derruba login
+        # em produção (ver comentário em SESSION_CACHE_ALIAS); chave global
+        # particionada por schema quebra invalidação de papel e o labirinto
+        # do honeypot (ver shared_support/platform_cache.py).
+        self.assertIn('KEY_FUNCTION', settings.CACHES['default'])
+        self.assertNotIn('KEY_FUNCTION', settings.CACHES['sessions'])
+        self.assertNotIn('KEY_FUNCTION', settings.CACHES['platform'])
