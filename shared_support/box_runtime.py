@@ -62,6 +62,27 @@ def build_box_cache_key_prefix(base_prefix: str = 'octobox') -> str:
     return f'{normalized_base}:{get_box_runtime_slug()}'
 
 
+def box_partitioned_key_function(key: str, key_prefix: str, version) -> str:
+    """KEY_FUNCTION do alias 'default' de CACHES (Onda 4, docs/plans/ondas-
+    correcao-tenancy-billing-2026-08-25.md).
+
+    Diferenca crucial em relacao a KEY_PREFIX (settings estatico): o Django
+    chama esta funcao a cada get/set/delete/etc, DENTRO do ciclo de vida do
+    request — nao uma unica vez na importacao dos settings, antes de
+    qualquer tenant existir. get_box_runtime_slug() ja tem a guarda
+    apps.ready; em runtime (sempre True depois do boot) ela sempre le
+    connection.schema_name da conexao REAL do request atual.
+
+    NUNCA usar em CACHES['sessions'] (derruba login — ver comentario longo
+    em SESSION_CACHE_ALIAS no settings base) nem em CACHES['platform']
+    (chaves globais por design: papel/honeypot por user_id, anti-card-
+    testing — particionar por box daria ao atacante um jeito de resetar a
+    cota trocando de box; ver shared_support/platform_cache.py).
+    """
+    slug = get_box_runtime_slug()
+    return f'{key_prefix}:{slug}:{version}:{key}'
+
+
 def get_box_runtime_namespace(base_prefix: str = 'octobox') -> str:
     return build_box_cache_key_prefix(base_prefix)
 
@@ -93,6 +114,7 @@ def box_scoped_export_dir(media_root: str) -> str:
 
 __all__ = [
     'DEFAULT_BOX_RUNTIME_SLUG',
+    'box_partitioned_key_function',
     'box_scoped_export_dir',
     'box_scoped_filename',
     'build_box_cache_key_prefix',

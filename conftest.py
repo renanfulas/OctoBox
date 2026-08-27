@@ -320,16 +320,45 @@ def _auto_membership_for_test_users(test_tenant, django_db_setup):
     Sem escopo class, o signal nao estava instalado quando User era
     criado em setUpTestData, e os tests caiam em 403 mesmo com schema
     correto.
+
+    ONDA 1c (2026-08-26) — sync Group -> Membership.role via m2m_changed:
+    Antes de access.roles.get_user_role() ler Membership, o role=OWNER
+    hardcoded aqui era inerte para autorizacao (so Group era lido). Virou
+    LIVE: centenas de testes existentes simulam papel de baixo privilegio
+    fazendo `user.groups.add(coach_group)` e NUNCA tocam Membership —
+    esperando que o usuario NAO tenha acesso de Owner. Sem este sync, todo
+    esses testes passam a ver Owner (do Membership auto-criado) e ignoram
+    o Group que o teste atribuiu de proposito — inversao silenciosa do
+    resultado esperado (visto em producao: test_non_manager_role_cannot_reset
+    comecou a deixar um "coach" resetar senha como se fosse Owner).
+    `m2m_changed` dispara DEPOIS do post_save de User (Group so pode ser
+    associado depois que o User tem pk), entao o Membership ja existe
+    quando o sync roda — so precisa de update, nao get_or_create.
+    Grupos sem Membership.Role equivalente (ex.: honeypot) nao alteram o
+    Membership — get_user_role nem consulta Membership para honeypot,
+    resolve pela chave de cache antes disso.
     """
     if test_tenant is None:
         yield
         return
 
     from django.contrib.auth import get_user_model
-    from django.db.models.signals import post_save
+    from django.db.models.signals import post_save, m2m_changed
     from control.models import Membership
 
     User = get_user_model()
+
+    # Inverso de access.roles.MEMBERSHIP_ROLE_TO_SLUG — nome do Group ->
+    # Membership.Role. Duplicado aqui (nao importado) de proposito: conftest
+    # nao deveria depender de import-time de access.roles so para isso, e o
+    # mapa e pequeno o bastante pra nao valer o acoplamento.
+    GROUP_NAME_TO_MEMBERSHIP_ROLE = {
+        'Owner': Membership.Role.OWNER,
+        'Manager': Membership.Role.MANAGER,
+        'Coach': Membership.Role.COACH,
+        'Recepcao': Membership.Role.RECEPTION,
+        'DEV': Membership.Role.DEV,
+    }
 
     def _ensure_membership(sender, instance, created, **kwargs):
         if not created:
@@ -339,6 +368,18 @@ def _auto_membership_for_test_users(test_tenant, django_db_setup):
                 user=instance,
                 box=test_tenant,
                 defaults={
+                    # ONDA 1c: tentei trocar para COACH (menor privilegio) e
+                    # reverti — o padrao DOMINANTE em ~1200 testes fora de
+                    # access/ e "self.user = create_user() sem Group, espera
+                    # acesso Owner completo" (sao testes de feature, nao de
+                    # autorizacao — nao lhes interessa qual role, so querem
+                    # ver a tela). Trocar o default quebrou 91 testes desse
+                    # padrao. Mantido OWNER; os poucos testes que QUEREM
+                    # simular baixo privilegio (ex.:
+                    # test_non_manager_role_cannot_reset) agora atribuem
+                    # Group explicitamente e o sync abaixo (m2m_changed)
+                    # propaga isso pro Membership — essa e a via correta
+                    # pra pedir privilegio nao-Owner, nao um default global.
                     'role': Membership.Role.OWNER,
                     'is_primary_box': True,
                 },
@@ -346,8 +387,36 @@ def _auto_membership_for_test_users(test_tenant, django_db_setup):
         except Exception:
             pass
 
+    def _sync_membership_role_from_groups(sender, instance, action, pk_set, **kwargs):
+        if action not in ('post_add', 'post_remove', 'post_clear'):
+            return
+        try:
+            group_names = set(instance.groups.values_list('name', flat=True))
+            matched_roles = {
+                GROUP_NAME_TO_MEMBERSHIP_ROLE[name]
+                for name in group_names
+                if name in GROUP_NAME_TO_MEMBERSHIP_ROLE
+            }
+            if len(matched_roles) != 1:
+                # Nenhum Group mapeavel (ex.: so honeypot) ou mais de um
+                # (ambiguo) — nao mexe no Membership.role, mantem OWNER
+                # default. Testes que dependem de multi-Group + Membership
+                # explicito devem setar Membership.role a mao.
+                return
+            Membership.objects.filter(user=instance, box=test_tenant).update(
+                role=matched_roles.pop()
+            )
+        except Exception:
+            pass
+
     post_save.connect(_ensure_membership, sender=User, dispatch_uid='conftest_auto_membership')
+    m2m_changed.connect(
+        _sync_membership_role_from_groups,
+        sender=User.groups.through,
+        dispatch_uid='conftest_auto_membership_role_sync',
+    )
     try:
         yield
     finally:
         post_save.disconnect(dispatch_uid='conftest_auto_membership', sender=User)
+        m2m_changed.disconnect(dispatch_uid='conftest_auto_membership_role_sync', sender=User.groups.through)

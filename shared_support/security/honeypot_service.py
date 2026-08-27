@@ -4,10 +4,17 @@ ARQUIVO: serviço de gatilho automático para o labirinto.
 POR QUE ELE EXISTE:
 - Centraliza a lógica de "decisão" de quem deve ser jogado no Honeypot.
 - Permite automação 24/7 sem intervenção do mestre.
+
+Onda 4, Passo 3 (2026-08-26): todas as chaves daqui são globais por design
+(GLOBAL_THREAT_BIT é platform-wide; SHADOW_ROLE_CACHE_PREFIX é indexado por
+user_id, que só existe em public; IP_HONEYPOT_CACHE_PREFIX marca um IP
+independente de qual box ele está tentando acessar). Usam o alias
+'platform' de CACHES — nunca o 'default' (particionado por schema desde a
+Onda 4), senão um atacante marcado escaparia do labirinto trocando de box.
 """
 
-from django.core.cache import cache
 from access.roles import ROLE_HONEYPOT
+from shared_support.platform_cache import platform_cache as cache
 
 SHADOW_ROLE_CACHE_PREFIX = "octobox:user_role_slug:uid_"
 IP_HONEYPOT_CACHE_PREFIX = "octobox:ip_honeypot:addr_"

@@ -11,8 +11,10 @@ from datetime import datetime
 
 from students.infrastructure.django_attribution import record_student_source_declaration
 from students.infrastructure.source_capture_links import (
+    SourceCaptureTokenPayload,
     build_student_source_capture_token,
     read_student_source_capture_token,
+    read_student_source_capture_token_payload,
 )
 
 
@@ -55,17 +57,25 @@ def run_student_source_declaration_record(
     )
 
 
-def run_student_source_capture_token_build(*, student_id: int) -> str:
-    return build_student_source_capture_token(student_id=student_id)
+def run_student_source_capture_token_build(*, student_id: int, box_root_slug: str = '') -> str:
+    return build_student_source_capture_token(student_id=student_id, box_root_slug=box_root_slug)
 
 
 def run_student_source_capture_token_read(*, token: str, max_age: int = 60 * 60 * 24 * 30) -> int:
     return read_student_source_capture_token(token=token, max_age=max_age)
 
 
+def run_student_source_capture_token_read_payload(
+    *, token: str, max_age: int = 60 * 60 * 24 * 30,
+) -> SourceCaptureTokenPayload:
+    return read_student_source_capture_token_payload(token=token, max_age=max_age)
+
+
 __all__ = [
     'StudentSourceDeclarationFacadeResult',
+    'SourceCaptureTokenPayload',
     'run_student_source_capture_token_build',
     'run_student_source_capture_token_read',
+    'run_student_source_capture_token_read_payload',
     'run_student_source_declaration_record',
 ]

@@ -42,6 +42,18 @@ from access.access_profile_actions import (
 from .roles import ROLE_DEV, ROLE_OWNER, ROLE_PERMISSION_MAP, get_user_role
 
 
+def _access_profile_denial_message(reason, fallback):
+    """Mensagem para as reasons de _guard_target_is_manageable (Onda 1a),
+    compartilhada entre update/toggle/reset_password. `fallback` é a
+    mensagem específica de cada ação para 'not-found' (reason desconhecida).
+    """
+    if reason == 'superuser-target-denied':
+        return 'Não é permitido gerenciar uma conta de superusuário por esta tela.'
+    if reason == 'cross-box-denied':
+        return 'Esse perfil pertence a outro box e não pode ser gerenciado por aqui.'
+    return fallback
+
+
 def _ensure_role_group(role_slug):
     group, _ = Group.objects.get_or_create(name=role_slug)
     permission_map = ROLE_PERMISSION_MAP.get(role_slug, {})
@@ -259,12 +271,15 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
             result = handle_access_profile_update(
                 post_data=request.POST,
                 ensure_role_group=_ensure_role_group,
+                box=getattr(request, 'tenant', None),
             )
             if not result['ok']:
                 if result['reason'] == 'invalid-form':
                     context = self.get_context_data(forms_by_user_id=result['forms_by_user_id'])
                     return self.render_to_response(context)
-                messages.error(request, 'Perfil não encontrado para atualização.')
+                messages.error(request, _access_profile_denial_message(
+                    result['reason'], 'Perfil não encontrado para atualização.'
+                ))
                 return redirect('access-overview')
 
             messages.success(request, f'Perfil de {result["user"].username} atualizado com sucesso.')
@@ -274,12 +289,15 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
             result = handle_access_profile_toggle(
                 actor=request.user,
                 post_data=request.POST,
+                box=getattr(request, 'tenant', None),
             )
             if not result['ok']:
                 if result['reason'] == 'self-disable-blocked':
                     messages.error(request, 'Não é permitido desativar o próprio usuário por esta tela.')
                 else:
-                    messages.error(request, 'Perfil não encontrado para alteração de status.')
+                    messages.error(request, _access_profile_denial_message(
+                        result['reason'], 'Perfil não encontrado para alteração de status.'
+                    ))
                 return redirect('access-overview')
 
             status_label = 'ativado' if result['user'].is_active else 'desativado'
@@ -290,6 +308,7 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
             result = handle_access_profile_password_reset(
                 actor=request.user,
                 post_data=request.POST,
+                box=getattr(request, 'tenant', None),
             )
             if not result['ok']:
                 if result['reason'] == 'self-reset-blocked':
@@ -299,7 +318,9 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
                         'Use "Esqueci minha senha" na tela de login.',
                     )
                 else:
-                    messages.error(request, 'Perfil não encontrado para redefinição de senha.')
+                    messages.error(request, _access_profile_denial_message(
+                        result['reason'], 'Perfil não encontrado para redefinição de senha.'
+                    ))
                 return redirect('access-overview')
 
             # A senha aparece UMA vez, aqui. Não fica no banco em claro, não vai
@@ -315,6 +336,7 @@ class AccessOverviewView(AppHostRequiredMixin, LoginRequiredMixin, TemplateView)
         result = handle_access_profile_create(
             post_data=request.POST,
             ensure_role_group=_ensure_role_group,
+            box=getattr(request, 'tenant', None),
         )
         if not result['ok']:
             context = self.get_context_data(profile_create_form=result['form'])

@@ -37,6 +37,7 @@ aceitas, e **anti-patterns proibidos** (quando aplicável).
 ### Plataforma & control plane
 
 - [ADR-013](ADR-013-superdev-support-access-per-box.md) — Superdev: acesso de suporte (Membership) anexado a todo box provisionado.
+- [ADR-014](ADR-014-anonymous-tenant-resolution-multibox.md) — Resolução de tenant em rotas anônimas do aluno com N boxes ATIVOS: token de source-capture ganha `box_root_slug`; middleware de prefixo de path descartado (viola ADR-006).
 
 ## Como criar um novo ADR
 

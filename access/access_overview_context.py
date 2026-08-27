@@ -3,6 +3,14 @@ ARQUIVO: contexto da visao geral de acessos.
 
 POR QUE ELE EXISTE:
 - tira de `access/views.py` a montagem de perfis e payload da tela de governanca.
+
+PONTOS CRITICOS:
+- Onda 1b (2026-08-26): build_access_profile_entries passou a escopar a
+  listagem por Membership(box=box ativo). Antes listava `user_model.objects.
+  order_by(...)` sem filtro nenhum — todo Owner via todo staff da plataforma
+  inteira, de todos os clientes. Falha FECHADA se request.tenant vier None
+  (não deveria acontecer nesta view — TenantBySessionMiddleware já barra
+  antes — mas lista vazia é o modo de falha seguro, não "mostrar todo mundo").
 """
 
 from django.contrib.auth import get_user_model
@@ -15,9 +23,20 @@ from .roles import ROLE_DEFINITIONS, get_user_capabilities, get_user_role
 
 
 def build_access_profile_entries(*, request, forms_by_user_id=None):
+    from control.models import Membership
+
     user_model = get_user_model()
+    box = getattr(request, 'tenant', None)
+
+    queryset = user_model.objects.order_by('-is_active', 'username').prefetch_related('groups')
+    if box is not None:
+        member_user_ids = Membership.objects.filter(box=box).values_list('user_id', flat=True)
+        queryset = queryset.filter(pk__in=member_user_ids)
+    else:
+        queryset = queryset.none()
+
     profiles = []
-    for user in user_model.objects.order_by('-is_active', 'username').prefetch_related('groups'):
+    for user in queryset:
         role = get_user_role(user)
         profile_form = (
             forms_by_user_id[user.id]

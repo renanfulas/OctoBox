@@ -1,8 +1,8 @@
 {
-  "level": 2,
-  "label": "\u00c2MBAR",
+  "level": 3,
+  "label": "VERMELHA",
   "activated_by": "system",
-  "activated_at": "2026-03-26T12:29:55.577684",
-  "backup_ref": null,
+  "activated_at": "2026-08-25T21:48:50.295883",
+  "backup_ref": "56dd1a7d6949e70611ef4495e813f858865ab820",
   "last_audit_log": null
 }

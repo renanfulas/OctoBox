@@ -77,6 +77,16 @@ class Box(TenantMixin):
     suspended_at = models.DateTimeField(null=True, blank=True)
     archived_at = models.DateTimeField(null=True, blank=True)
 
+    # Guarda de ordenacao dos eventos de billing da Stripe.
+    # Guarda o `created` (relogio da Stripe) do ultimo evento que mudou o estado
+    # de billing deste box. Eventos mais antigos que isso sao descartados.
+    #
+    # POR QUE: a Stripe NAO garante ordem de entrega, e
+    # reprocess_due_stripe_webhook_events reentrega eventos antigos por design.
+    # Sem esta guarda, um invoice.payment_succeeded atrasado da assinatura
+    # CANCELADA reativa um box que nao paga mais — acesso gratis indefinido.
+    billing_event_at = models.DateTimeField(null=True, blank=True)
+
     # Célula de infraestrutura (escalonamento horizontal futuro)
     cell = models.CharField(max_length=32, default='cell-1', db_index=True)
 
@@ -120,6 +130,12 @@ class Membership(models.Model):
         MANAGER = 'manager', 'Manager'
         COACH = 'coach', 'Coach'
         RECEPTION = 'reception', 'Recepção'
+        # Onda 1c / ADR-013: papel de suporte least-privilege. Antes do DEV,
+        # o superdev era anexado como OWNER em todo box (cosmético — a
+        # autorização real vinha só de is_superuser) porque não havia papel
+        # de Membership que representasse "suporte" sem ser dono. Ver
+        # control.services.get_superdev_user / _attach_support_membership.
+        DEV = 'dev', 'DEV (suporte)'
 
     user = models.ForeignKey(
         'auth.User',

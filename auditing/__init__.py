@@ -18,4 +18,10 @@ def log_audit_event(*args, **kwargs):
 	return _log_audit_event(*args, **kwargs)
 
 
-__all__ = ['log_audit_event']
+def log_platform_audit_event(*args, **kwargs):
+	from .services import log_platform_audit_event as _log_platform_audit_event
+
+	return _log_platform_audit_event(*args, **kwargs)
+
+
+__all__ = ['log_audit_event', 'log_platform_audit_event']

@@ -76,7 +76,7 @@ class PaymentConfirmationOnReconcileTests(TestCase):
             payment = PaymentFactory(student=student, amount=amount, status=PaymentStatus.PENDING)
             return payment.id, int(Decimal(amount) * 100)
 
-    def _event(self, *, event_id, payment_id, amount_cents):
+    def _event(self, *, event_id, payment_id, amount_cents, payment_status='paid'):
         return PaymentWebhookEvent.objects.create(
             event_id=event_id,
             event_type='checkout.session.completed',
@@ -86,6 +86,12 @@ class PaymentConfirmationOnReconcileTests(TestCase):
                 'data': {'object': {
                     'amount_total': amount_cents,
                     'payment_intent': 'pi_confirm',
+                    # Onda 3: payment_status='paid' — cartao confirma na hora,
+                    # e e o que o payload real da Stripe sempre traz nesse
+                    # caso. Pix (delayed-notification) chegaria 'unpaid' aqui
+                    # e so reconciliaria depois, via async_payment_succeeded
+                    # — ver test_stripe_pix_async_confirmation.py.
+                    'payment_status': payment_status,
                     'metadata': {
                         'payment_id': str(payment_id),
                         'version_locked': '0',

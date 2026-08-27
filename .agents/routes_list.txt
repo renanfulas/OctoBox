@@ -1,9 +1,40 @@
 # Lista de rotas relativas a checar (uma por linha)
 # Comentários começam com #
+#
+# LIMITE CONHECIDO: este é um smoke scanner ANÔNIMO (GET sem sessão). Ele prova
+# que a rota resolve sem 500 — não prova autorização correta. 403 é tratado
+# como saudável de propósito (rota protegida deve responder 403/302 sem sessão).
+# Uma regressão que deveria dar 403 e passa a dar 200 NÃO é pega por este beacon.
+# Rotas POST-only (ex.: /financeiro/stripe/webhook/) não entram aqui — GET
+# nelas dá 405, que o beacon trataria como erro por engano.
+#
+# Corrigido em 2026-08-25: /health/ e /status/ não existem no urlconf atual
+# (removidas); /api/health/ nunca existiu — o endpoint real é /api/v1/health/.
+
+# Público
 /
+/produto/
+/login/
+/login/funcionario/
+/checkout/
+/onboarding/
+/api/v1/health/
+/api/v1/health/tenant/
+
+# Admin (django) — espera 302 (redirect pra login) sem sessão
 /admin/
 /admin/login/
-/health/
-/status/
-/api/health/
-/login/
+
+# Staff — path público mas exige sessão: espera 302 sem sessão, não 500
+/acessos/
+/box/
+
+# Tenant — protegidas pelo TenantBySessionMiddleware: espera 302 sem sessão
+/dashboard/
+/alunos/
+/financeiro/
+/grade-aulas/
+
+# Aluno — prefixo próprio, PUBLIC_SCHEMA_PATHS
+/aluno/
+/aluno/auth/login/

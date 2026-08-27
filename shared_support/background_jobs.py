@@ -113,27 +113,60 @@ def _save_job(job_id: str, data: Dict):
 def submit_background_job(job_fn: Callable, job_id: str, *args, **kwargs):
     """
     Submete uma funcao pesada para background.
-    
+
     Uso:
     job_id = create_job('import_students', total_items=100)
     submit_background_job(importar_csv_service, job_id, file_path)
-    
+
     A funcao `job_fn` deve aceitar `job_id` para atualizar seu progresso via
     `update_job_progress(job_id, 1)` a cada 'n' linhas processadas.
+
+    Onda 4, Passo 2 (2026-08-26): `job_fn` roda numa Thread com conexao de
+    banco PROPRIA (threads nao herdam o schema/tenant da conexao do request
+    — cada Thread do Python tem sua conexao Django, thread-local). O caller
+    real de hoje (catalog/views/student_views.py::_run, via
+    StudentImporter().import_from_file) escreve em Student — TENANT_APP.
+    Sem capturar e reaplicar o schema aqui, essa escrita roda contra
+    qualquer schema default da conexao nova da thread (nao o box do
+    request), nao contra o box do cliente que fez upload — bug de
+    correcao real, nao so questao de cache.
+
+    `schema` e capturado ANTES de abrir a thread (na conexao do request,
+    onde TenantBySessionMiddleware ja resolveu o tenant certo) e reaplicado
+    DENTRO dela via schema_context, cobrindo job_fn e os tres mark_*/
+    update_job_progress — para quando Onda 4 adicionar KEY_FUNCTION
+    particionada por schema no cache 'default', as tres pontas (cria job no
+    request, atualiza na thread, le no polling) authorem a MESMA chave.
     """
+    from django.db import connection
+    schema = getattr(connection, 'schema_name', None)
+
     def thread_worker():
-        from django.db import connection
+        from django.db import connection as thread_connection
+        from django_tenants.utils import schema_context
+
         try:
-            # Envia a thread. Cuidado com requests fora da transacao web!
-            job_fn(job_id, *args, **kwargs)
-            mark_job_completed(job_id)
+            if schema:
+                with schema_context(schema):
+                    job_fn(job_id, *args, **kwargs)
+                    mark_job_completed(job_id)
+            else:
+                # Sem schema resolvido no request de origem (ex.: chamado de
+                # um path publico/management command) — roda como antes,
+                # sem forcar tenant que nao existe.
+                job_fn(job_id, *args, **kwargs)
+                mark_job_completed(job_id)
         except Exception as e:
             logger.exception(f"Erro nao tratado no job {job_id}")
-            mark_job_failed(job_id, str(e))
+            if schema:
+                with schema_context(schema):
+                    mark_job_failed(job_id, str(e))
+            else:
+                mark_job_failed(job_id, str(e))
         finally:
             # Em threads separadas, essencial fechar a conexao de banco manualmente
             # para evitar estourar o limite de conexoes do pool.
-            connection.close()
+            thread_connection.close()
 
     thread = threading.Thread(target=thread_worker, daemon=True)
     thread.start()

@@ -123,7 +123,12 @@ def create_checkout_session(pending_signup, request):
                 'plan': pending_signup.plan,
             },
         },
-        idempotency_key=f'pending-signup-{pending_signup.pk}-{pending_signup.plan}',
+        # Onda 3: a chave inclui os ultimos 8 chars do price_id, nao so o nome
+        # do plano. Sem isso, trocar STRIPE_PRICE_EARLY_MONTHLY/_ANNUAL no
+        # .env (correcao de preco, nova moeda, etc.) reusa a MESMA chave para
+        # um price_id diferente — a Stripe devolveria a resposta cacheada
+        # apontando pro price_id ANTIGO, silenciosamente, ate a chave expirar.
+        idempotency_key=f'pending-signup-{pending_signup.pk}-{pending_signup.plan}-{price_id[-8:]}',
     )
 
     pending_signup.stripe_session_id = session.id
