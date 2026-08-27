@@ -65,6 +65,39 @@ def _wait_for_terminal_status(job_id, *, timeout=5.0):
     raise AssertionError(f'job {job_id} nao terminou em {timeout}s')
 
 
+def _submit_and_wait(job_fn, job_id, *, timeout=5.0):
+    """submit_background_job + poll, mas ALEM disso junta a thread spawnada
+    antes de devolver o controle ao teste.
+
+    Achado em CI, nao local (docs/plans/ondas-correcao-tenancy-billing-
+    2026-08-25.md, bloco da Onda 4): submit_background_job nao expoe o
+    objeto Thread, e _wait_for_terminal_status so espera o STATUS aparecer
+    no cache — que e escrito dentro do `try`, ANTES do `finally:
+    thread_connection.close()` rodar. Sob processo unico isso e uma janela
+    de microsegundos, inofensiva. Sob pytest-xdist (-n 4, como o CI roda de
+    verdade) com varios testes desta classe abrindo threads em sequencia
+    rapida, a thread pode sobreviver ao retorno do metodo de teste com sua
+    conexao Postgres ainda aberta — sob CPU/IO contencionados o suficiente,
+    isso acumula conexoes penduradas entre workers e um teste COMPLETAMENTE
+    nao relacionado, rodando depois, recebe psycopg.OperationalError('the
+    connection is closed'). Reproduzido no CI (full-test-suite e 3/3 seeds
+    do order-dependence-check), nao reproduzido localmente em processo
+    unico nem sob -n 4 num run isolado deste arquivo — exatamente o
+    padrao de uma corrida de recursos, nao um bug logico.
+
+    Fix: capturar o conjunto de threads vivas ANTES de submeter, e depois
+    do status virar terminal, joinar qualquer thread NOVA que tenha
+    aparecido — garante que finally/close() ja rodou antes do teste (e o
+    proximo) seguir.
+    """
+    before = set(threading.enumerate())
+    submit_background_job(job_fn, job_id)
+    result = _wait_for_terminal_status(job_id, timeout=timeout)
+    for t in set(threading.enumerate()) - before:
+        t.join(timeout=5.0)
+    return result
+
+
 def _delete_via_own_thread(schema, model, pks):
     """Apaga fora de qualquer transacao gerenciada pelo Django — mesma tecnica
     (conexao nova, thread propria) que criou a escrita a ser limpa. Ver
@@ -133,9 +166,7 @@ class BackgroundJobInheritsRequestSchemaTests(TestCase):
             # bloco da Onda 4).
             self.addCleanup(lambda: _delete_via_own_thread(TENANT_SCHEMA, Student, list(created_ids)))
 
-            submit_background_job(_job_fn, job_id)
-
-            result = _wait_for_terminal_status(job_id)
+            result = _submit_and_wait(_job_fn, job_id)
 
         self.assertEqual(result['status'], JobStatus.COMPLETED)
         self.assertEqual(len(created_ids), 1)
@@ -172,9 +203,7 @@ class BackgroundJobInheritsRequestSchemaTests(TestCase):
             def _job_fn(job_id_arg):
                 raise RuntimeError('linha invalida no CSV')
 
-            submit_background_job(_job_fn, job_id)
-
-            result = _wait_for_terminal_status(job_id)
+            result = _submit_and_wait(_job_fn, job_id)
 
         self.assertEqual(result['status'], JobStatus.FAILED)
         self.assertIn('linha invalida', result['error_message'])
@@ -190,8 +219,6 @@ class BackgroundJobInheritsRequestSchemaTests(TestCase):
         def _job_fn(job_id_arg):
             calls.append(job_id_arg)
 
-        submit_background_job(_job_fn, job_id)  # ambiente do teste ja esta em public
-
-        result = _wait_for_terminal_status(job_id)
+        result = _submit_and_wait(_job_fn, job_id)  # ambiente do teste ja esta em public
         self.assertEqual(result['status'], JobStatus.COMPLETED)
         self.assertEqual(calls, [job_id])
