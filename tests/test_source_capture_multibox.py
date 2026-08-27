@@ -24,6 +24,23 @@ o schema novo só ganha as tabelas TENANT_APPS de verdade rodando com
 de pytest.ini — ver docstring de conftest.py). Sob o padrão, `migrate_schemas`
 não cria `boxcore_student` no schema recém-criado — setUp detecta isso e
 skipa a classe inteira, em vez de falhar com ProgrammingError.
+
+BUG REAL ACHADO EM CI (não local): a primeira versão deste arquivo rodava
+`call_command('migrate_schemas', ...)` dentro de `TestCase.setUp()` — ou
+seja, DENTRO do atomic() que TestCase já abre por padrão. Localmente
+(processo único, sem xdist) isso não dava sinal de erro visível. Sob
+`-n 4` (pytest-xdist, 4 workers paralelos, é assim que o CI roda) a DDL
+real de `migrate_schemas` corrompia a conexão compartilhada do worker —
+TODO teste agendado para aquele worker pelo resto da run falhava com
+`psycopg.OperationalError: the connection is closed`, em cascata, em
+arquivos completamente não relacionados a este. Reproduzido em 2 dos 3
+seeds do order-dependence-check e no full-test-suite.
+
+Fix: migrar o schema UMA VEZ por sessão, fora de qualquer transação de
+teste, via `django_db_blocker.unblock()` — o MESMO padrão que o fixture
+`test_tenant` já usa em conftest.py para o box_test. `_inject_box_b`
+injeta o resultado na instância da TestCase (pytest-django suporta
+fixtures pytest dentro de unittest.TestCase via método autouse).
 """
 
 import pytest
@@ -47,25 +64,47 @@ def _table_exists(schema_name: str, table_name: str) -> bool:
         return cur.fetchone() is not None
 
 
+@pytest.fixture(scope='session')
+def _source_capture_box_b(django_db_setup, django_db_blocker):
+    """Segundo Box + schema migrado de verdade, criado UMA VEZ por sessão,
+    fora do atomic() de qualquer TestCase — ver "BUG REAL ACHADO EM CI"
+    acima. Idempotente via get_or_create, mesmo padrão do fixture
+    test_tenant em conftest.py."""
+    from django.core.management import call_command
+
+    with django_db_blocker.unblock():
+        owner, _ = get_user_model().objects.get_or_create(
+            username='__pytest_source_capture_box_b_owner__',
+            defaults={'email': '__pytest_box_b__@example.test'},
+        )
+        box, _created = Box.objects.get_or_create(
+            slug='box-b-source-capture',
+            defaults={
+                'schema_name': 'box_b_source_capture',
+                'display_name': 'Box B (source capture)',
+                'status': Box.Status.ACTIVE,
+                'owner_user': owner,
+            },
+        )
+        with db_connection.cursor() as cur:
+            cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{box.schema_name}"')
+        call_command('migrate_schemas', schema=box.schema_name, verbosity=0, interactive=False)
+
+    return box
+
+
 @pytest.mark.public_schema
 class SourceCaptureTokenMultiBoxTests(TestCase):
+    @pytest.fixture(autouse=True)
+    def _inject_box_b(self, _source_capture_box_b):
+        self.box_b = _source_capture_box_b
+
     def setUp(self):
         self.test_tenant = Box.objects.get(slug='test')
-
-        owner = get_user_model().objects.create_user(
-            username='box-b-source-capture-owner', email='owner@boxb.example.com',
-        )
-        self.box_b = Box.objects.create(
-            slug='box-b-source-capture',
-            schema_name='box_b_source_capture',
-            display_name='Box B (source capture)',
-            status=Box.Status.ACTIVE,
-            owner_user=owner,
-        )
-        from django.core.management import call_command
-        with db_connection.cursor() as cur:
-            cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{self.box_b.schema_name}"')
-        call_command('migrate_schemas', schema=self.box_b.schema_name, verbosity=0, interactive=False)
+        # Testes anteriores podem ter suspendido o box_b (ver o teste de
+        # fallback abaixo) — reafirma ACTIVE a cada teste, já que o fixture
+        # é session-scoped e não passa pelo rollback do TestCase.
+        Box.objects.filter(pk=self.box_b.pk).update(status=Box.Status.ACTIVE)
 
         if not _table_exists(self.box_b.schema_name, 'boxcore_student'):
             self.skipTest(
