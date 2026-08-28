@@ -75,6 +75,12 @@ PUBLIC_WORKOUT_LIBRARY = {
         'background_color': '#f6f5f2',
         'template_file': 'henrique.html',
     },
+    'johnespanha': {
+        'title': 'Treino John Espanha',
+        'theme_color': '#141414',
+        'background_color': '#fdf2f8',
+        'template_file': 'johnespanha.html',
+    },
 }
 PUBLIC_WORKOUT_TEMPLATE_DIR = Path(settings.BASE_DIR) / 'templates' / 'public_workouts'
 
