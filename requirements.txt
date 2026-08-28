@@ -8,7 +8,7 @@ psycopg2-binary==2.9.10
 reportlab==4.4.1
 chardet<6
 whitenoise==6.9.0
-django-redis==5.4.0
+django-redis==7.0.0
 sentry-sdk==2.12.0
 prometheus-client==0.22.1
 python-magic==0.4.27
