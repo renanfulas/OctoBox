@@ -2181,7 +2181,7 @@ class PublicWorkoutPwaTests(TestCase):
         # (ela ganha massa nas costas com facilidade). Se alguem futuramente
         # remover o hip thrust ou a nota de volume baixo, esse teste quebra.
         self.assertContains(response, 'Hip thrust com barra')
-        self.assertContains(response, 'Volume de peito e costas propositalmente baixo')
+        self.assertContains(response, 'RIR 3 · ADM parcial no alongamento')
 
         # 1x escada/HIIT por semana, pedido explicitamente pela cliente.
         self.assertContains(response, 'Escada / HIIT')
