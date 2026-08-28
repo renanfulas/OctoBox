@@ -863,7 +863,11 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
     def test_resolve_rejects_invalid_slugs_from_llm_response(self):
         from operations.services.wod_slug_resolver import _parse_and_validate
         valid_slugs = {'pull_up', 'push_up', 'run'}
-        raw_json = '{"Pistol Squat": "pistol_squat", "Pull-up": "pull_up", "Invented": "fake_slug_xyz"}'
+        raw_json = (
+            '{"Pistol Squat": {"slug": "pistol_squat", "note": "x"}, '
+            '"Pull-up": {"slug": "pull_up", "note": "Troquei por Pull-up"}, '
+            '"Invented": {"slug": "fake_slug_xyz", "note": "x"}}'
+        )
         result = _parse_and_validate(
             raw_text=raw_json,
             valid_slugs=valid_slugs,
@@ -871,10 +875,66 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
         )
         # pistol_squat não está em valid_slugs → rejeitado
         self.assertNotIn('Pistol Squat', result)
-        # pull_up está → aceito
-        self.assertEqual(result.get('Pull-up'), 'pull_up')
+        # pull_up está → aceito, com nota
+        self.assertEqual(result.get('Pull-up'), {'slug': 'pull_up', 'note': 'Troquei por Pull-up'})
         # fake_slug_xyz não está → rejeitado
         self.assertNotIn('Invented', result)
+
+    def test_resolve_accepts_legacy_flat_string_response(self):
+        from operations.services.wod_slug_resolver import _parse_and_validate
+        valid_slugs = {'pull_up'}
+        raw_json = '{"Pull-up": "pull_up"}'
+        result = _parse_and_validate(
+            raw_text=raw_json,
+            valid_slugs=valid_slugs,
+            unrecognized_names=['Pull-up'],
+        )
+        self.assertEqual(result.get('Pull-up'), {'slug': 'pull_up', 'note': ''})
+
+    def test_resolve_unknown_slugs_uses_learned_memory_without_calling_llm(self):
+        """Nome ja aprendido antes resolve pela memoria, sem gastar chamada de API."""
+        from knowledge.models import WodMovementLearnedAlias
+        from operations.services.wod_slug_resolver import resolve_unknown_slugs
+
+        WodMovementLearnedAlias.objects.create(
+            raw_text_normalized='agachamnto',
+            raw_text_sample='agachamnto',
+            movement_slug='box_jump',
+            note='Troquei "agachamnto" por Box Jump',
+            hit_count=1,
+        )
+
+        with patch('operations.services.wod_slug_resolver._call_anthropic') as mock_call:
+            result = resolve_unknown_slugs(
+                unrecognized_names=['agachamnto'],
+                slug_dictionary=self._make_slug_dict(),
+            )
+
+        mock_call.assert_not_called()
+        self.assertEqual(result.get('agachamnto'), {'slug': 'box_jump', 'note': 'Troquei "agachamnto" por Box Jump'})
+        self.assertEqual(
+            WodMovementLearnedAlias.objects.get(raw_text_normalized='agachamnto').hit_count, 2,
+        )
+
+    def test_resolve_unknown_slugs_remembers_new_llm_resolution(self):
+        """Resolucao nova do LLM fica gravada na memoria para a proxima vez."""
+        from knowledge.models import WodMovementLearnedAlias
+        from operations.services.wod_slug_resolver import resolve_unknown_slugs
+
+        mock_response = '{"Pistol Squat": {"slug": "box_jump", "note": "Troquei por Box Jump"}}'
+        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-key'}, clear=False):
+            with patch(
+                'operations.services.wod_slug_resolver._call_anthropic', return_value=mock_response,
+            ):
+                result = resolve_unknown_slugs(
+                    unrecognized_names=['Pistol Squat'],
+                    slug_dictionary=self._make_slug_dict(),
+                )
+
+        self.assertEqual(result.get('Pistol Squat'), {'slug': 'box_jump', 'note': 'Troquei por Box Jump'})
+        self.assertTrue(
+            WodMovementLearnedAlias.objects.filter(raw_text_normalized='pistol squat', movement_slug='box_jump').exists(),
+        )
 
     def test_apply_llm_slug_resolution_fills_unresolved_movements(self):
         from operations.services.wod_slug_resolver import apply_llm_slug_resolution
@@ -897,12 +957,14 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
         }
         slug_dict = self._make_slug_dict()
 
-        mock_resolved = {'PullUp': 'pull_up'}
+        mock_resolved = {'PullUp': {'slug': 'pull_up', 'note': 'Troquei "PullUp" por Pull-up'}}
         with patch('operations.services.wod_slug_resolver.resolve_unknown_slugs', return_value=mock_resolved):
             apply_llm_slug_resolution(parsed_payload, slug_dict)
 
         movements = parsed_payload['days'][0]['blocks'][0]['movements']
         self.assertEqual(movements[0]['movement_slug'], 'pull_up')
+        self.assertTrue(movements[0]['llm_resolved'])
+        self.assertEqual(movements[0]['llm_fix_note'], 'Troquei "PullUp" por Pull-up')
         # Movimento já resolvido não deve ser alterado
         self.assertEqual(movements[1]['movement_slug'], 'run')
 

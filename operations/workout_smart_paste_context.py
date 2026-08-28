@@ -65,6 +65,7 @@ def _smart_paste_display_label(movement):
 
 def _decorate_preview_payload(parsed_payload):
     unresolved_items = []
+    auto_fixed_items = []
     total_blocks = 0
     total_movements = 0
     first_unresolved_target_id = ''
@@ -81,6 +82,15 @@ def _decorate_preview_payload(parsed_payload):
                 movement['display_label'] = _smart_paste_display_label(movement)
                 movement['review_target_id'] = f'review-item-{day_index}-{block_index}-{movement_index}'
                 total_movements += 1
+                if movement.get('llm_resolved'):
+                    auto_fixed_items.append(
+                        {
+                            'day_label': day.get('weekday_label', ''),
+                            'block_title': block.get('title') or block.get('kind', ''),
+                            'display_label': movement.get('display_label') or movement.get('movement_label_raw', ''),
+                            'note': movement.get('llm_fix_note') or '',
+                        }
+                    )
                 if not movement.get('movement_slug'):
                     day_has_unresolved = True
                     day_unresolved_count += 1
@@ -116,6 +126,8 @@ def _decorate_preview_payload(parsed_payload):
         'unresolved_items': unresolved_items[:8],
         'first_unresolved_target_id': first_unresolved_target_id,
         'current_unresolved_item': unresolved_items[0] if unresolved_items else None,
+        'auto_fixed_count': len(auto_fixed_items),
+        'auto_fixed_items': auto_fixed_items[:8],
     }
     return parsed_payload
 

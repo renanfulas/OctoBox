@@ -108,10 +108,10 @@ def parse_session_text_to_payload(
 
     valid_slugs = {slug for slug, _ in slug_dictionary}
     slugs_line = ', '.join(sorted(valid_slugs))
-    user_message = (
-        f'Valid movement slugs:\n{slugs_line}\n\n'
-        f'Workout text to parse:\n{normalized_text}'
-    )
+    # Slugs entram no bloco de sistema (estatico entre chamadas) para aproveitar
+    # prompt caching — so o texto do treino (user_message) muda a cada paste.
+    slugs_block = f'Valid movement slugs:\n{slugs_line}'
+    user_message = f'Workout text to parse:\n{normalized_text}'
 
     openai_key = os.getenv('OPENAI_API_KEY', '').strip()
     anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
@@ -121,9 +121,9 @@ def parse_session_text_to_payload(
     # entao nao pode ser o desempate — senao o Haiku nunca roda mesmo quando configurado.
     raw_text = None
     if anthropic_key:
-        raw_text = _call_anthropic(system=_SYSTEM_PROMPT, user=user_message, api_key=anthropic_key)
+        raw_text = _call_anthropic(system=_SYSTEM_PROMPT, slugs_block=slugs_block, user=user_message, api_key=anthropic_key)
     elif openai_key:
-        raw_text = _call_openai(system=_SYSTEM_PROMPT, user=user_message, api_key=openai_key)
+        raw_text = _call_openai(system=f'{_SYSTEM_PROMPT}\n\n{slugs_block}', user=user_message, api_key=openai_key)
     else:
         logger.debug('wod_session_llm_parser: nenhuma chave LLM configurada.')
         return None
@@ -165,7 +165,9 @@ def _call_openai(*, system: str, user: str, api_key: str) -> str | None:
     return None
 
 
-def _call_anthropic(*, system: str, user: str, api_key: str) -> str | None:
+def _call_anthropic(*, system: str, slugs_block: str, user: str, api_key: str) -> str | None:
+    # system + slugs_block sao identicos em toda chamada (schema/regras fixos, dicionario
+    # estavel) — cache_control:ephemeral evita repagar esses tokens a cada paste.
     try:
         response = requests.post(
             _ANTHROPIC_MESSAGES_URL,
@@ -177,7 +179,10 @@ def _call_anthropic(*, system: str, user: str, api_key: str) -> str | None:
             json={
                 'model': _ANTHROPIC_MODEL,
                 'max_tokens': 1024,
-                'system': system,
+                'system': [
+                    {'type': 'text', 'text': system},
+                    {'type': 'text', 'text': slugs_block, 'cache_control': {'type': 'ephemeral'}},
+                ],
                 'messages': [{'role': 'user', 'content': user}],
             },
             timeout=_TIMEOUT_SECONDS,
