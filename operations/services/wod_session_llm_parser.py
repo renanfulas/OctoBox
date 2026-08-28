@@ -8,7 +8,7 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. recebe o texto normalizado extraído da seção === WOD NORMALIZADO ===.
-2. chama OpenAI (gpt-4o-mini) ou Anthropic (claude-haiku) com o dicionário de slugs.
+2. chama Anthropic (claude-haiku) ou OpenAI (gpt-4o-mini) com o dicionário de slugs.
 3. retorna structured_payload compatível com _hydrate_workout_from_payload().
 4. falha silenciosamente (retorna None) quando LLM não está configurado.
 
@@ -16,6 +16,9 @@ PONTOS CRÍTICOS:
 - timeout curto (10s): o coach espera o redirect, não pode bloquear.
 - slugs retornados são validados contra o dicionário antes de aceitar.
 - structured_payload None → view cai no Caminho B/C (raw text) sem erro.
+- ANTHROPIC_API_KEY tem prioridade sobre OPENAI_API_KEY (provedor escolhido no design). Não
+  inverter: OPENAI_API_KEY costuma estar setada em produção só por causa do RAG
+  (knowledge/embeddings.py), o que faria o Haiku nunca rodar.
 """
 
 from __future__ import annotations
@@ -113,11 +116,14 @@ def parse_session_text_to_payload(
     openai_key = os.getenv('OPENAI_API_KEY', '').strip()
     anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
 
+    # Anthropic (Haiku) tem prioridade: e o provedor escolhido no design (docs/plans/wod-smart-paste-corda.md).
+    # OPENAI_API_KEY costuma estar setada em producao por causa do RAG (knowledge/embeddings.py exige),
+    # entao nao pode ser o desempate — senao o Haiku nunca roda mesmo quando configurado.
     raw_text = None
-    if openai_key:
-        raw_text = _call_openai(system=_SYSTEM_PROMPT, user=user_message, api_key=openai_key)
-    elif anthropic_key:
+    if anthropic_key:
         raw_text = _call_anthropic(system=_SYSTEM_PROMPT, user=user_message, api_key=anthropic_key)
+    elif openai_key:
+        raw_text = _call_openai(system=_SYSTEM_PROMPT, user=user_message, api_key=openai_key)
     else:
         logger.debug('wod_session_llm_parser: nenhuma chave LLM configurada.')
         return None

@@ -8,7 +8,7 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. recebe lista de nomes de movimento nao reconhecidos.
-2. chama OpenAI (gpt-4o-mini) ou Anthropic (claude-haiku) com o dicionario completo.
+2. chama Anthropic (claude-haiku) ou OpenAI (gpt-4o-mini) com o dicionario completo.
 3. retorna dict {nome_raw: slug_canonico}.
 4. falha silenciosamente (retorna {}) quando LLM nao esta configurado ou falha.
 
@@ -16,7 +16,9 @@ PONTOS CRITICOS:
 - nao lanca excecao: qualquer falha retorna {} e o comportamento original e preservado.
 - slugs retornados pelo LLM sao validados contra o dicionario antes de serem aplicados.
 - timeout curto (8s) para nao bloquear o render da pagina.
-- usa OPENAI_API_KEY por padrao, fallback para ANTHROPIC_API_KEY.
+- usa ANTHROPIC_API_KEY por padrao (provedor escolhido no design), fallback para OPENAI_API_KEY
+  quando so essa estiver configurada. Nao inverter: OPENAI_API_KEY costuma estar setada em
+  producao so por causa do RAG (knowledge/embeddings.py), o que faria o Haiku nunca rodar.
 """
 
 from __future__ import annotations
@@ -77,11 +79,14 @@ def resolve_unknown_slugs(
     openai_key = os.getenv('OPENAI_API_KEY', '').strip()
     anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
 
+    # Anthropic (Haiku) tem prioridade: e o provedor escolhido no design (docs/plans/wod-smart-paste-corda.md).
+    # OPENAI_API_KEY costuma estar setada em producao por causa do RAG (knowledge/embeddings.py exige),
+    # entao nao pode ser o desempate — senao o Haiku nunca roda mesmo quando configurado.
     raw_text = None
-    if openai_key:
-        raw_text = _call_openai(prompt=prompt, api_key=openai_key)
-    elif anthropic_key:
+    if anthropic_key:
         raw_text = _call_anthropic(prompt=prompt, api_key=anthropic_key)
+    elif openai_key:
+        raw_text = _call_openai(prompt=prompt, api_key=openai_key)
     else:
         logger.debug('wod_slug_resolver: nenhuma chave LLM configurada, retornando vazio.')
         return {}
