@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Treinos offline</title>
+  <style>
+    body{margin:0;font-family:Manrope,system-ui,sans-serif;background:#f4efe6;color:#11203b;min-height:100vh;display:grid;place-items:center;padding:24px}
+    main{width:min(100%,560px);background:rgba(255,255,255,.92);border:1px solid rgba(17,32,59,.12);border-radius:28px;padding:28px;box-shadow:0 24px 60px rgba(17,32,59,.12)}
+    h1{margin:0 0 12px;font-size:clamp(1.8rem,4vw,2.4rem)}
+    p{margin:0 0 12px;line-height:1.6;color:#52627e}
+    ul{margin:16px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+    a{display:inline-flex;padding:12px 16px;border-radius:999px;background:#11203b;color:#fff;text-decoration:none;font-weight:700}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Sem conexão agora.</h1>
+    <p>Quando a internet voltar, os links públicos de treino voltam a abrir normalmente.</p>
+    <p>Se você já abriu o seu treino antes neste aparelho, tente novamente em alguns segundos.</p>
+    <ul>
+{% for plan in plans %}      <li><a href="/renan/{{ plan.slug }}">{{ plan.short_name }}</a></li>
+{% endfor %}    </ul>
+  </main>
+</body>
+</html>

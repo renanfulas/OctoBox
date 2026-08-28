@@ -7,15 +7,30 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. entrega paginas HTML publicas dos treinos compartilhados.
 2. publica manifest, service worker e fallback offline do PWA publico.
+
+PONTOS CRITICOS:
+- roda no schema `public` sem tenant (ver PUBLIC_SCHEMA_PATHS em
+  control/middleware.py): NENHUMA view aqui pode tocar modelo de
+  TENANT_APPS. O conftest aplica schema_context('box_test') nos testes,
+  entao esse erro passa no teste e so quebra em producao.
+- usa render_to_string SEM request de proposito. render(request, ...)
+  dispararia access.context_processors.role_navigation, que consulta o
+  banco com usuario anonimo no schema public.
+- `slug` e `store_key` de PublicWorkoutPlan sao congelados: o primeiro
+  esta em links ja distribuidos, o segundo e o namespace do localStorage
+  onde o aluno guarda o historico de carga.
 """
 
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 from django.conf import settings
 from django.http import Http404, HttpResponse
+from django.template import TemplateDoesNotExist
+from django.template.loader import render_to_string
 from django.views.generic import View
 
 from .base import (
@@ -32,99 +47,250 @@ PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
 PUBLIC_WORKOUT_APPLE_TOUCH_ICON = STUDENT_APP_APPLE_TOUCH_ICON
-PUBLIC_WORKOUT_LIBRARY = {
-    'juliana': {
-        'title': 'Treino Juliana',
-        'theme_color': '#0f172a',
-        'background_color': '#f5efe4',
-        'template_file': 'juliana.html',
-    },
-    'bruno': {
-        'title': 'Treino Bruno',
-        'theme_color': '#11203b',
-        'background_color': '#f4efe6',
-        'template_file': 'bruno.html',
-    },
-    'milene': {
-        'title': 'Treino Milene',
-        'theme_color': '#1a1a1a',
-        'background_color': '#fafaf7',
-        'template_file': 'milene.html',
-    },
-    'giovanna': {
-        'title': 'Treino Giovanna',
-        'theme_color': '#172017',
-        'background_color': '#f8faf7',
-        'template_file': 'giovanna.html',
-    },
-    'thaislima': {
-        'title': 'Treino Thais Lima',
-        'theme_color': '#111111',
-        'background_color': '#f6f5f2',
-        'template_file': 'thaislima.html',
-    },
-    'john': {
-        'title': 'Treino John',
-        'theme_color': '#111111',
-        'background_color': '#f6f5f2',
-        'template_file': 'john.html',
-    },
-    'henrique': {
-        'title': 'Treino Henrique',
-        'theme_color': '#141414',
-        'background_color': '#f6f5f2',
-        'template_file': 'henrique.html',
-    },
-    'johnespanha': {
-        'title': 'Treino John Espanha',
-        'theme_color': '#141414',
-        'background_color': '#fdf2f8',
-        'template_file': 'johnespanha.html',
-    },
+
+# Assets estaticos que o service worker pre-carrega no install.
+# Caminhos SEM hash de proposito: o ManifestStaticFilesStorage mantem o
+# arquivo original ao lado do hasheado, e o PWA de /aluno/ ja depende disso
+# em producao (ver pwa_views.py).
+# CUIDADO: cache.addAll() rejeita o install INTEIRO se um item der 404 —
+# uma entrada errada aqui mata o modo offline de todos os alunos.
+PUBLIC_WORKOUT_STATIC_ASSETS: tuple[str, ...] = (
+    PUBLIC_WORKOUT_ICON_192,
+    PUBLIC_WORKOUT_ICON_512,
+    PUBLIC_WORKOUT_ICON_MASKABLE_512,
+    PUBLIC_WORKOUT_APPLE_TOUCH_ICON,
+    '/static/images/student-app-icon.svg',
+)
+
+
+@dataclass(frozen=True)
+class PublicWorkoutAccent:
+    """Rampa de accent do aluno — o UNICO eixo legitimo de branding.
+
+    Todo o resto dos tokens (neutros, raio, sombra, badges de serie) e
+    compartilhado. Os arquivos divergem no NOME da familia (--accent nos
+    5 modernos, --amber na milene, --blue na giovanna) mas nao no papel.
+    """
+
+    base: str
+    bg: str
+    border: str
+    light: str
+    dark: str
+
+
+@dataclass(frozen=True)
+class PublicWorkoutPlan:
+    """Configuracao de um treino publico.
+
+    CONGELADO — mexer aqui causa dano silencioso:
+    - `slug` esta em links ja distribuidos aos alunos (ver public_urls.py).
+    - `store_key` e o namespace do localStorage: trocar apaga o historico
+      de carga que o aluno digitou, sem aviso e sem backup.
+    - `title` alimenta o manifest e `short_name` e derivado dele.
+    """
+
+    slug: str
+    title: str
+    theme_color: str
+    background_color: str
+    template_file: str
+    accent: PublicWorkoutAccent
+    tabs: tuple[tuple[str, str], ...]
+    tracker_weeks: int = 0
+    store_key: str | None = None
+
+    @property
+    def short_name(self) -> str:
+        # Derivacao preservada: o teste do manifest assere 'Juliana'.
+        return self.title.replace('Treino ', '')[:12]
+
+    @property
+    def manifest_url(self) -> str:
+        return f'/renan/{self.slug}/manifest.webmanifest'
+
+
+_TAB_TREINO = ('treino', 'Treinos')
+_TAB_CARDIO = ('cardio', 'Cardio')
+_TAB_PERIOD = ('period', 'Periodização')
+
+PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
+    plan.slug: plan
+    for plan in (
+        PublicWorkoutPlan(
+            slug='juliana',
+            title='Treino Juliana',
+            theme_color='#0f172a',
+            background_color='#f5efe4',
+            template_file='juliana.html',
+            accent=PublicWorkoutAccent('#E11D48', '#FFF1F2', '#FECDD3', '#FBD7DF', '#BE123C'),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD),
+            tracker_weeks=5,
+            store_key='juliana_alves_v3',  # gitleaks:allow — namespace de localStorage, nao segredo
+        ),
+        PublicWorkoutPlan(
+            slug='bruno',
+            title='Treino Bruno',
+            theme_color='#11203b',
+            background_color='#f4efe6',
+            template_file='bruno.html',
+            accent=PublicWorkoutAccent('#EA580C', '#FFF7ED', '#FED7AA', '#FFEDD5', '#C2410C'),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, ('nutri', 'Nutrição'), _TAB_PERIOD),
+            tracker_weeks=5,
+            store_key='bruno_cutting_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
+        ),
+        PublicWorkoutPlan(
+            slug='milene',
+            title='Treino Milene',
+            theme_color='#1a1a1a',
+            background_color='#fafaf7',
+            template_file='milene.html',
+            accent=PublicWorkoutAccent('#D97706', '#FFFBEB', '#FDE68A', '#FEF3C7', '#92400E'),
+            tabs=(_TAB_TREINO, _TAB_PERIOD),
+            tracker_weeks=5,
+            store_key='milene_geraldes_treino',  # gitleaks:allow — namespace de localStorage, nao segredo
+        ),
+        PublicWorkoutPlan(
+            slug='giovanna',
+            title='Treino Giovanna',
+            theme_color='#172017',
+            background_color='#f8faf7',
+            template_file='giovanna.html',
+            # A giovanna so declara 3 degraus (--blue/-bg/-border), e sao os
+            # mesmos valores do henrique. Os dois faltantes vem dele.
+            accent=PublicWorkoutAccent('#2563EB', '#EFF6FF', '#BFDBFE', '#DBEAFE', '#1D4ED8'),
+            tabs=(_TAB_TREINO, _TAB_PERIOD),
+            tracker_weeks=5,
+            # store_key novo: esta pagina nunca teve tracker, entao nao ha
+            # historico anterior para preservar.
+            store_key='giovanna_fontes_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
+        ),
+        PublicWorkoutPlan(
+            slug='thaislima',
+            title='Treino Thais Lima',
+            theme_color='#111111',
+            background_color='#f6f5f2',
+            template_file='thaislima.html',
+            accent=PublicWorkoutAccent('#7C3AED', '#F5F3FF', '#DDD6FE', '#EDE9FE', '#5B21B6'),
+            tabs=(_TAB_TREINO, _TAB_CARDIO),
+            tracker_weeks=5,
+            store_key='thais_lima_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
+        ),
+        PublicWorkoutPlan(
+            slug='john',
+            title='Treino John',
+            theme_color='#111111',
+            background_color='#f6f5f2',
+            template_file='john.html',
+            accent=PublicWorkoutAccent('#0891B2', '#ECFEFF', '#A5F3FC', '#CFFAFE', '#0E7490'),
+            tabs=(_TAB_TREINO, _TAB_PERIOD),
+            tracker_weeks=6,  # unico plano com mesociclo de 6 semanas
+            store_key='john_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
+        ),
+        PublicWorkoutPlan(
+            slug='henrique',
+            title='Treino Henrique',
+            theme_color='#141414',
+            background_color='#f6f5f2',
+            template_file='henrique.html',
+            accent=PublicWorkoutAccent('#2563EB', '#EFF6FF', '#BFDBFE', '#DBEAFE', '#1D4ED8'),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD),
+            tracker_weeks=5,
+            store_key='henrique_santos_souza_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
+        ),
+        PublicWorkoutPlan(
+            slug='johnespanha',
+            title='Treino John Espanha',
+            theme_color='#141414',
+            background_color='#fdf2f8',
+            template_file='johnespanha.html',
+            accent=PublicWorkoutAccent('#DB2777', '#FDF2F8', '#FBCFE8', '#FCE7F3', '#BE185D'),
+            tabs=(_TAB_TREINO, _TAB_CARDIO),
+            tracker_weeks=5,
+            store_key='john_espanha_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
+            # NAO convertido para o design system compartilhado: chegou em
+            # main (PR #170/#171) depois desta refatoracao, ainda no formato
+            # monolitico antigo (CSS/JS proprios embutidos no arquivo). Os
+            # campos acima entram na PUBLIC_WORKOUT_LIBRARY so para manter o
+            # manifest/service-worker corretos; renderiza como pagina
+            # autocontida, igual os outros 7 rendiam antes desta PR.
+        ),
+    )
 }
-PUBLIC_WORKOUT_TEMPLATE_DIR = Path(settings.BASE_DIR) / 'templates' / 'public_workouts'
 
 
-def _get_public_workout_entry(plan_slug: str) -> dict[str, str]:
+# Ordem importa: tokens antes de tudo, mobile por ultimo (sobrescreve).
+# Estes MESMOS caminhos vao para o ALLOWLIST do service worker, entao
+# precisam ser planos (sem {% static %}): o allowlist nao sabe resolver
+# nome hasheado do ManifestStaticFilesStorage.
+PUBLIC_WORKOUT_STYLESHEETS: tuple[str, ...] = (
+    '/static/css/public_workouts/tokens.css',
+    '/static/css/public_workouts/layout.css',
+    '/static/css/public_workouts/components.css',
+    '/static/css/public_workouts/tracker.css',
+    '/static/css/public_workouts/period.css',
+    '/static/css/public_workouts/install-prompt.css',
+    '/static/css/public_workouts/mobile.css',
+)
+
+PUBLIC_WORKOUT_SCRIPTS: tuple[str, ...] = (
+    '/static/js/public_workouts/app.js',
+)
+
+_ASSET_VERSION_CACHE: dict[str, str] = {}
+
+
+def public_workout_asset_version() -> str:
+    """Versao usada no ?v= dos assets e no nome do cache do service worker.
+
+    ATENCAO: `STATIC_ASSET_VERSION` esta SEMPRE definida em settings, com
+    valor '1' quando o ambiente nao seta nada — e nenhum deploy seta
+    (`RENDER_GIT_COMMIT` era do Render, e o projeto migrou para VPS). Ou
+    seja: na producao de hoje o ?v= fica congelado em 1 para sempre, o
+    cache do navegador nunca invalida e o service worker nunca troca de
+    versao. Enquanto o CSS era inline isso nao aparecia, porque o estilo
+    chegava junto com o HTML. Agora que e arquivo externo, apareceria.
+
+    Quando o ambiente define a variavel de verdade, respeitamos. Caso
+    contrario caimos no mtime dos proprios assets, que muda sozinho a
+    cada deploy que altere um arquivo.
+    """
+    configured = getattr(settings, 'STATIC_ASSET_VERSION', '1')
+    if configured and configured != '1':
+        return configured
+
+    if 'value' in _ASSET_VERSION_CACHE and not settings.DEBUG:
+        return _ASSET_VERSION_CACHE['value']
+
+    base_dir = Path(settings.BASE_DIR)
+    mtimes = []
+    for url in PUBLIC_WORKOUT_STYLESHEETS + PUBLIC_WORKOUT_SCRIPTS:
+        path = base_dir / url.lstrip('/')
+        if path.exists():
+            mtimes.append(int(path.stat().st_mtime))
+    version = str(max(mtimes, default=1))
+    _ASSET_VERSION_CACHE['value'] = version
+    return version
+
+
+def _get_public_workout_entry(plan_slug: str) -> PublicWorkoutPlan:
     normalized_slug = (plan_slug or '').strip().lower()
-    entry = PUBLIC_WORKOUT_LIBRARY.get(normalized_slug)
-    if entry is None:
+    plan = PUBLIC_WORKOUT_LIBRARY.get(normalized_slug)
+    if plan is None:
         raise Http404('Treino publico nao encontrado.')
-    return {'slug': normalized_slug, **entry}
+    return plan
 
 
-def _build_public_workout_manifest_url(plan_slug: str) -> str:
-    return f'/renan/{plan_slug}/manifest.webmanifest'
+# Presente em qualquer pagina que estenda public_workouts/_base.html —
+# usado para distinguir template convertido de arquivo legado (ver baixo).
+_SHARED_BASE_MARKER = 'id="public-workout-install"'
 
+_LEGACY_VIEWPORT_MARKERS = (
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+)
 
-def _render_public_workout_html(plan_slug: str) -> str:
-    entry = _get_public_workout_entry(plan_slug)
-    template_path = PUBLIC_WORKOUT_TEMPLATE_DIR / entry['template_file']
-    if not template_path.exists():
-        raise Http404('Arquivo de treino publico indisponivel.')
-
-    html = template_path.read_text(encoding='utf-8')
-    viewport_markers = (
-        '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">',
-        '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-    )
-    head_injection = (
-        f'<meta name="theme-color" content="{entry["theme_color"]}">\n'
-        '<meta name="mobile-web-app-capable" content="yes">\n'
-        '<meta name="apple-mobile-web-app-capable" content="yes">\n'
-        '<meta name="apple-mobile-web-app-status-bar-style" content="default">\n'
-        f'<meta name="apple-mobile-web-app-title" content="{entry["title"]}">\n'
-        f'<link rel="manifest" href="{_build_public_workout_manifest_url(entry["slug"])}">\n'
-        f'<link rel="apple-touch-icon" href="{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}">\n'
-        '<link rel="icon" href="/static/images/student-app-icon.svg" type="image/svg+xml">\n'
-        f'<link rel="icon" href="{PUBLIC_WORKOUT_ICON_192}" sizes="192x192" type="image/png">'
-    )
-    for marker in viewport_markers:
-        if marker in html:
-            html = html.replace(marker, f'{marker}\n{head_injection}', 1)
-            break
-
-    install_prompt_markup = """
+_LEGACY_INSTALL_PROMPT_MARKUP = """
 <style>
 .public-workout-install{
   position:fixed;
@@ -169,7 +335,8 @@ def _render_public_workout_html(plan_slug: str) -> str:
   <button class="public-workout-install__button" id="public-workout-install-button" type="button"></button>
 </div>
 """.strip()
-    sw_registration_script = """
+
+_LEGACY_SW_REGISTRATION_SCRIPT = """
 <script>
 (function () {
   var installPrompt = null;
@@ -191,7 +358,7 @@ def _render_public_workout_html(plan_slug: str) -> str:
 
   if (!('serviceWorker' in navigator)) {
     if (isIos) {
-      showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar \u00e0 Tela de In\u00edcio.', 'Entendi', function () {
+      showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar \\u00e0 Tela de In\\u00edcio.', 'Entendi', function () {
         installRoot.classList.remove('is-visible');
       });
     }
@@ -199,7 +366,7 @@ def _render_public_workout_html(plan_slug: str) -> str:
   }
 
   if (isIos) {
-    showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar \u00e0 Tela de In\u00edcio.', 'Entendi', function () {
+    showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar \\u00e0 Tela de In\\u00edcio.', 'Entendi', function () {
       installRoot.classList.remove('is-visible');
     });
   }
@@ -233,8 +400,71 @@ def _render_public_workout_html(plan_slug: str) -> str:
 })();
 </script>
 """.strip()
+
+
+def _inject_legacy_pwa_head(html: str, plan: PublicWorkoutPlan) -> str:
+    """Injeta manifest/instalacao/service-worker em arquivo NAO convertido.
+
+    E o mecanismo original (substituicao de string), mantido vivo so para
+    templates que ainda nao viraram `{% extends '_base.html' %}` — hoje,
+    so `johnespanha.html`, que chegou num PR paralelo enquanto esta
+    refatoracao estava em andamento. Qualquer novo arquivo nesse formato
+    continua funcionando ate ser convertido.
+    """
+    head_injection = (
+        f'<meta name="theme-color" content="{plan.theme_color}">\n'
+        '<meta name="mobile-web-app-capable" content="yes">\n'
+        '<meta name="apple-mobile-web-app-capable" content="yes">\n'
+        '<meta name="apple-mobile-web-app-status-bar-style" content="default">\n'
+        f'<meta name="apple-mobile-web-app-title" content="{plan.title}">\n'
+        f'<link rel="manifest" href="{plan.manifest_url}">\n'
+        f'<link rel="apple-touch-icon" href="{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}">\n'
+        '<link rel="icon" href="/static/images/student-app-icon.svg" type="image/svg+xml">\n'
+        f'<link rel="icon" href="{PUBLIC_WORKOUT_ICON_192}" sizes="192x192" type="image/png">'
+    )
+    for marker in _LEGACY_VIEWPORT_MARKERS:
+        if marker in html:
+            html = html.replace(marker, f'{marker}\n{head_injection}', 1)
+            break
+
     if "navigator.serviceWorker.register('/renan/sw.js'" not in html:
-        html = html.replace('</body>', f'{install_prompt_markup}\n{sw_registration_script}\n</body>', 1)
+        html = html.replace(
+            '</body>',
+            f'{_LEGACY_INSTALL_PROMPT_MARKUP}\n{_LEGACY_SW_REGISTRATION_SCRIPT}\n</body>',
+            1,
+        )
+    return html
+
+
+def _render_public_workout_html(plan_slug: str) -> str:
+    """Renderiza a pagina do plano a partir do template do aluno.
+
+    O <head>, o prompt de instalacao e o registro do service worker vem
+    de public_workouts/_base.html PARA TEMPLATES CONVERTIDOS. Arquivos
+    ainda nao convertidos (ver `_inject_legacy_pwa_head`) continuam
+    recebendo isso por substituicao de string, como era antes.
+
+    render_to_string SEM request de proposito: render(request, ...)
+    dispararia access.context_processors.role_navigation, que consulta o
+    banco com usuario anonimo no schema public. Ver pwa_views.py.
+    """
+    plan = _get_public_workout_entry(plan_slug)
+    try:
+        html = render_to_string(
+            f'public_workouts/{plan.template_file}',
+            {
+                'plan': plan,
+                'stylesheet_urls': PUBLIC_WORKOUT_STYLESHEETS,
+                'static_asset_version': public_workout_asset_version(),
+                'apple_touch_icon': PUBLIC_WORKOUT_APPLE_TOUCH_ICON,
+                'icon_192': PUBLIC_WORKOUT_ICON_192,
+            },
+        )
+    except TemplateDoesNotExist:
+        raise Http404('Arquivo de treino publico indisponivel.')
+
+    if _SHARED_BASE_MARKER not in html:
+        html = _inject_legacy_pwa_head(html, plan)
     return html
 
 
@@ -247,16 +477,16 @@ class PublicWorkoutManifestView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         entry = _get_public_workout_entry(plan_slug)
         manifest = {
-            'id': f'/renan/{entry["slug"]}',
-            'name': entry['title'],
-            'short_name': entry['title'].replace('Treino ', '')[:12],
-            'description': f'{entry["title"]} no formato rapido do OctoBox.',
-            'start_url': f'/renan/{entry["slug"]}?source=pwa',
+            'id': f'/renan/{entry.slug}',
+            'name': entry.title,
+            'short_name': entry.short_name,
+            'description': f'{entry.title} no formato rapido do OctoBox.',
+            'start_url': f'/renan/{entry.slug}?source=pwa',
             'scope': PUBLIC_WORKOUT_SCOPE,
             'display': 'standalone',
             'orientation': 'portrait',
-            'background_color': entry['background_color'],
-            'theme_color': entry['theme_color'],
+            'background_color': entry.background_color,
+            'theme_color': entry.theme_color,
             'icons': [
                 {
                     'src': PUBLIC_WORKOUT_ICON_192,
@@ -283,139 +513,22 @@ class PublicWorkoutManifestView(View):
 
 class PublicWorkoutServiceWorkerView(View):
     def get(self, request, *args, **kwargs):
-        routes = ''.join(
-            [
-                f"  '/renan/{slug}',\n"
-                f"  '/renan/{slug}/',\n"
-                f"  '/renan/{slug}?source=pwa',\n"
-                f"  '/renan/{slug}/manifest.webmanifest',\n"
-                for slug in PUBLIC_WORKOUT_LIBRARY
-            ]
+        js = render_to_string(
+            'public_workouts/sw.js',
+            {
+                'asset_version': public_workout_asset_version(),
+                'offline_url': PUBLIC_WORKOUT_OFFLINE_URL,
+                'app_scope': PUBLIC_WORKOUT_SCOPE,
+                'plan_slugs': tuple(PUBLIC_WORKOUT_LIBRARY),
+                # CSS e JS compartilhados entram no precache: sem eles a
+                # pagina abre offline sem estilo e sem tracker.
+                'static_asset_urls': (
+                    PUBLIC_WORKOUT_STYLESHEETS
+                    + PUBLIC_WORKOUT_SCRIPTS
+                    + PUBLIC_WORKOUT_STATIC_ASSETS
+                ),
+            },
         )
-        js = f"""const VERSION = 'public-workouts-{getattr(settings, 'STATIC_ASSET_VERSION', '1')}';
-const STATIC_CACHE = `${{VERSION}}-static`;
-const PAGE_CACHE = `${{VERSION}}-pages`;
-const OFFLINE_URL = '{PUBLIC_WORKOUT_OFFLINE_URL}';
-const APP_SCOPE = '{PUBLIC_WORKOUT_SCOPE}';
-const ALLOWLIST = [
-{routes}  OFFLINE_URL,
-  '{PUBLIC_WORKOUT_ICON_192}',
-  '{PUBLIC_WORKOUT_ICON_512}',
-  '{PUBLIC_WORKOUT_ICON_MASKABLE_512}',
-  '{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}',
-  '/static/images/student-app-icon.svg',
-];
-
-function isAllowedStaticAsset(requestUrl) {{
-  if (requestUrl.origin !== self.location.origin) {{
-    return false;
-  }}
-  return ALLOWLIST.includes(requestUrl.pathname);
-}}
-
-function normalizedWorkoutPath(pathname) {{
-  if (!pathname.startsWith(APP_SCOPE)) {{
-    return pathname;
-  }}
-  if (pathname === APP_SCOPE || pathname === OFFLINE_URL) {{
-    return pathname;
-  }}
-  return pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-}}
-
-self.addEventListener('install', (event) => {{
-  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(ALLOWLIST)));
-  self.skipWaiting();
-}});
-
-self.addEventListener('activate', (event) => {{
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== STATIC_CACHE).map((key) => caches.delete(key)))
-    )
-  );
-  self.clients.claim();
-}});
-
-self.addEventListener('fetch', (event) => {{
-  const request = event.request;
-  const requestUrl = new URL(request.url);
-
-  if (request.method !== 'GET') {{
-    return;
-  }}
-
-  if (request.mode === 'navigate') {{
-    if (!requestUrl.pathname.startsWith(APP_SCOPE)) {{
-      return;
-    }}
-    event.respondWith(
-      (async () => {{
-        const pageCache = await caches.open(PAGE_CACHE);
-        const cacheKey = normalizedWorkoutPath(requestUrl.pathname);
-        try {{
-          const response = await fetch(request);
-          if (response.ok) {{
-            pageCache.put(cacheKey, response.clone());
-          }}
-          return response;
-        }} catch (error) {{
-          return (
-            await pageCache.match(cacheKey, {{ ignoreSearch: true }})
-            || await pageCache.match(requestUrl.pathname, {{ ignoreSearch: true }})
-            || await caches.match(cacheKey, {{ ignoreSearch: true }})
-            || await caches.match(request, {{ ignoreSearch: true }})
-            || await caches.match(OFFLINE_URL, {{ ignoreSearch: true }})
-          );
-        }}
-      }})()
-    );
-    return;
-  }}
-
-  if (requestUrl.origin !== self.location.origin) {{
-    return;
-  }}
-
-  if (requestUrl.pathname.startsWith(APP_SCOPE)) {{
-    event.respondWith(
-      (async () => {{
-        const cacheName = requestUrl.pathname.endsWith('.webmanifest') ? STATIC_CACHE : PAGE_CACHE;
-        const cache = await caches.open(cacheName);
-        const cacheKey = normalizedWorkoutPath(requestUrl.pathname);
-        const cached = await cache.match(cacheKey, {{ ignoreSearch: true }}) || await cache.match(request, {{ ignoreSearch: true }});
-        try {{
-          const response = await fetch(request);
-          if (response.ok) {{
-            cache.put(cacheKey, response.clone());
-          }}
-          return cached || response;
-        }} catch (error) {{
-          return cached || caches.match(OFFLINE_URL, {{ ignoreSearch: true }});
-        }}
-      }})()
-    );
-    return;
-  }}
-
-  if (!isAllowedStaticAsset(requestUrl)) {{
-    return;
-  }}
-
-  event.respondWith(
-    caches.open(STATIC_CACHE).then(async (cache) => {{
-      const cached = await cache.match(request, {{ ignoreSearch: true }});
-      const networkFetch = fetch(request).then((response) => {{
-        if (response.ok) {{
-          cache.put(request, response.clone());
-        }}
-        return response;
-      }});
-      return cached || networkFetch;
-    }})
-  );
-}});
-"""
         response = HttpResponse(js, content_type='application/javascript')
         response['Service-Worker-Allowed'] = PUBLIC_WORKOUT_SCOPE
         return response
@@ -423,27 +536,11 @@ self.addEventListener('fetch', (event) => {{
 
 class PublicWorkoutOfflineView(View):
     def get(self, request, *args, **kwargs):
-        html = """<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Treinos offline</title>
-  <style>
-    body{margin:0;font-family:Manrope,system-ui,sans-serif;background:#f4efe6;color:#11203b;min-height:100vh;display:grid;place-items:center;padding:24px}
-    main{width:min(100%,560px);background:rgba(255,255,255,.92);border:1px solid rgba(17,32,59,.12);border-radius:28px;padding:28px;box-shadow:0 24px 60px rgba(17,32,59,.12)}
-    h1{margin:0 0 12px;font-size:clamp(1.8rem,4vw,2.4rem)}
-    p{margin:0 0 12px;line-height:1.6;color:#52627e}
-    a{display:inline-flex;margin-top:12px;padding:12px 16px;border-radius:999px;background:#11203b;color:#fff;text-decoration:none;font-weight:700}
-  </style>
-</head>
-<body>
-  <main>
-    <h1>Sem conex\u00e3o agora.</h1>
-    <p>Quando a internet voltar, os links p\u00fablicos de treino da Juliana, do Bruno, da Milene e da Giovanna voltam a abrir normalmente.</p>
-    <p>Se voc\u00ea j\u00e1 abriu um dos treinos antes neste aparelho, tente novamente em alguns segundos.</p>
-    <a href="/renan/juliana">Abrir treino da Juliana</a>
-  </main>
-</body>
-</html>"""
+        # A lista de alunos sai da biblioteca, nao de copy fixa: a versao
+        # anterior citava so 4 nomes e linkava /renan/juliana, entao quem
+        # entrou depois (thaislima, john, henrique) ficava de fora.
+        html = render_to_string(
+            'public_workouts/offline.html',
+            {'plans': tuple(PUBLIC_WORKOUT_LIBRARY.values())},
+        )
         return HttpResponse(html)
