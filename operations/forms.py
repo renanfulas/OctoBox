@@ -425,6 +425,7 @@ class WeeklyWodSmartPasteForm(forms.Form):
         self.fields['week_start'].widget.attrs.update(
             {
                 'data-smart-date-input': 'true',
+                'data-smart-date-include-year': 'true',
                 'data-picker-target': 'smart-paste-week-start-picker',
                 'inputmode': 'numeric',
             }

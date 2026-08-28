@@ -33,8 +33,11 @@ POR QUE SÓ ESTE ARQUIVO GERENCIA O BOTÃO:
     return d;
   }
 
-  function formatDDMM(date) {
-    return pad(date.getDate()) + '/' + pad(date.getMonth() + 1);
+  // Formata sempre com ano: o picker nativo ja devolve a data completa, e
+  // exibir so dd/mm faz o usuario perder de vista qual ano foi selecionado
+  // (bug real: coach clicava no calendario e o ano sumia do campo).
+  function formatDDMMYYYY(date) {
+    return pad(date.getDate()) + '/' + pad(date.getMonth() + 1) + '/' + date.getFullYear();
   }
 
   function formatYMD(date) {
@@ -51,18 +54,23 @@ POR QUE SÓ ESTE ARQUIVO GERENCIA O BOTÃO:
     return isNaN(d.getTime()) ? null : d;
   }
 
-  function parseTextDate(ddmm) {
-    var normalized = String(ddmm || '').replace(/\D/g, '');
+  // Aceita dd/mm (ano inferido igual ao servidor: _coerce_smart_paste_date
+  // com allow_past=True usa o ano atual, sem empurrar pra frente) ou
+  // dd/mm/aaaa digitado a mao pelo usuario.
+  function parseTextDate(value) {
+    var normalized = String(value || '').replace(/\D/g, '');
     if (normalized.length < 4) return null;
     var day = Number(normalized.slice(0, 2));
     var month = Number(normalized.slice(2, 4));
-    var today = new Date();
-    var year = today.getFullYear();
-    var d = new Date(year, month - 1, day);
-    if (isNaN(d.getTime())) return null;
-    if (d < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-      d = new Date(year + 1, month - 1, day);
+    var year;
+    if (normalized.length >= 8) {
+      year = Number(normalized.slice(4, 8));
+    } else if (normalized.length >= 6) {
+      year = 2000 + Number(normalized.slice(4, 6));
+    } else {
+      year = new Date().getFullYear();
     }
+    var d = new Date(year, month - 1, day);
     return isNaN(d.getTime()) ? null : d;
   }
 
@@ -142,12 +150,12 @@ POR QUE SÓ ESTE ARQUIVO GERENCIA O BOTÃO:
       var monday = prevMonday(date);
       var isAlreadyMonday = date.getDay() === 1;
 
-      textField.value = formatDDMM(monday);
+      textField.value = formatDDMMYYYY(monday);
       picker.value = formatYMD(monday);
 
       if (hint) {
         if (!isAlreadyMonday) {
-          hint.textContent = 'Ajustado para segunda ' + formatDDMM(monday);
+          hint.textContent = 'Ajustado para segunda ' + formatDDMMYYYY(monday);
           hint.hidden = false;
         } else {
           hint.hidden = true;
