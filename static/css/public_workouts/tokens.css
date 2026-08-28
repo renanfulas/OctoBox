@@ -1,0 +1,78 @@
+/*
+ * ARQUIVO: tokens e reset das paginas publicas de treino (/renan/).
+ *
+ * POR QUE ELE EXISTE:
+ * - as 7 paginas carregavam cada uma o seu proprio :root copiado a mao,
+ *   e as copias divergiram (a milene pintou --top-* de ambar, a giovanna
+ *   ficou com --blue no lugar de --accent, os neutros derraparam de
+ *   #141414 para #1a1a1a). Um token so, num lugar so.
+ *
+ * PONTOS CRITICOS:
+ * - o accent NAO mora aqui. Ele e o unico eixo de branding por aluno e
+ *   e emitido inline no <head> a partir de PublicWorkoutPlan.accent.
+ * - o vocabulario de badge de sessao tambem nao mora aqui: cada plano
+ *   nomeia os dias do seu jeito (--force/--hiper, --inf/--sup/--muay,
+ *   --leg/--core/--upper/--hiit). Fica no bloco inline do plano.
+ */
+
+/* ══════════════════════════════════════════════
+   BASE RESET — Safari iOS hardened
+   ══════════════════════════════════════════════ */
+*{-webkit-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}
+a,button,[onclick],[role="button"]{-ms-touch-action:manipulation;touch-action:manipulation;cursor:pointer}
+a,button,input,[onclick]{-webkit-tap-highlight-color:rgba(0,0,0,0);-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+
+/* Quem pediu menos movimento nao deveria levar o scroll suave nem a
+   barra do tracker crescendo. Nenhum dos 7 arquivos respeitava isso. */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{
+    -webkit-animation-duration:.01ms !important;animation-duration:.01ms !important;
+    -webkit-animation-iteration-count:1 !important;animation-iteration-count:1 !important;
+    -webkit-transition-duration:.01ms !important;transition-duration:.01ms !important;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   DESIGN TOKENS — compartilhados pelos 7 planos
+   ══════════════════════════════════════════════ */
+:root{
+  /* Neutros. Valor dos 5 arquivos modernos; a milene e a giovanna
+     estavam meio tom fora (#FAFAF7/#F4F4F2, #1a1a1a, #888, #bbb). */
+  --bg:#F6F5F2;
+  --white:#FFFFFF;
+  --card:#FAFAF8;
+  --border:#E8E6E1;
+  --alt:#F2F1EE;
+  --dark:#141414;
+  --muted:#8A8883;
+  --light:#B5B3AE;
+
+  /* Tipos de serie. --prep/--feed/--max sao identicos nos 7 arquivos.
+     --top e o unico que divergia (a milene puxou pro ambar dela); um
+     plano que queira repetir isso sobrescreve no bloco inline. */
+  --prep-bg:#F1EFE8;--prep-fg:#57534E;
+  --feed-bg:#FEF3C7;--feed-fg:#92400E;
+  --top-bg:#EDE9FE;--top-fg:#5B21B6;
+  --max-bg:#FEE2E2;--max-fg:#991B1B;
+
+  /* Estados de dia/sessao comuns. */
+  --cardio-bg:#D1FAE5;--cardio-fg:#065F46;
+  --green-bg:#EAF3DE;--green-fg:#3A6F10;
+
+  /* Badges de sessao do vocabulario padrao (forca/hipertrofia), com o
+     mesmo valor em 5 dos 7 planos. Quem usa outro vocabulario — a
+     thaislima (inf/sup/muay) e a milene (leg/core/upper/hiit) — declara
+     o seu no bloco plan_tokens do proprio template. */
+  --force-bg:#DBEAFE;--force-fg:#1D4ED8;
+  --hiper-bg:#EDE9FE;--hiper-fg:#5B21B6;
+
+  /* Forma. */
+  --r-sm:8px;--r-md:11px;--r-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.03);
+
+  /* Semanas do tracker. O john roda mesociclo de 6 e por causa disso
+     tinha um .tracker-grid proprio; agora e so trocar o token. */
+  --tracker-weeks:5;
+}

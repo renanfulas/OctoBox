@@ -2146,6 +2146,72 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'Face pull no cabo')
 
 
+class PublicWorkoutContentSignatureTests(TestCase):
+    """Trava o CONTEUDO das paginas publicas, nao o markup.
+
+    As 7 paginas estao sendo refatoradas de HTML autocontido para
+    template + CSS + JS compartilhados. Markup e classes vao mudar de
+    proposito; o que o aluno le e o que o tracker grava, nao.
+
+    A assinatura ignora classes CSS justamente para nao brigar com a
+    refatoracao, e compara ids, data-key, hrefs, texto visivel e a
+    contagem de blocos semanticos.
+
+    Para regravar a baseline depois de uma mudanca INTENCIONAL de treino:
+        UPDATE_PUBLIC_WORKOUT_GOLDEN=1 pytest \
+            student_app/tests.py::PublicWorkoutContentSignatureTests
+    e conferir o diff no git antes de commitar.
+    """
+
+    def test_public_workout_content_signature_is_stable(self):
+        import os
+
+        from scripts.public_workout_signature import (
+            build_signature,
+            golden_path,
+            iter_slugs,
+        )
+
+        updating = os.environ.get('UPDATE_PUBLIC_WORKOUT_GOLDEN') == '1'
+        slugs = iter_slugs()
+        self.assertEqual(len(slugs), 7, 'esperado 7 planos publicos em PUBLIC_WORKOUT_LIBRARY')
+
+        for slug in slugs:
+            with self.subTest(slug=slug):
+                response = self.client.get(f'/renan/{slug}')
+                self.assertEqual(response.status_code, 200)
+                actual = build_signature(response.content.decode('utf-8'))
+
+                path = golden_path(slug)
+                if updating:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(
+                        json.dumps(actual, ensure_ascii=False, indent=2) + '\n',
+                        encoding='utf-8',
+                    )
+                    continue
+
+                self.assertTrue(
+                    path.exists(),
+                    f'baseline ausente para {slug}: rode com UPDATE_PUBLIC_WORKOUT_GOLDEN=1',
+                )
+                expected = json.loads(path.read_text(encoding='utf-8'))
+
+                # Um subTest por campo: numa refatoracao e comum quebrar
+                # mais de um de uma vez, e ver todos juntos economiza ciclo.
+                checks = (
+                    ('block_counts', 'sumiu ou surgiu bloco semantico (sessao/exercicio/tracker)'),
+                    ('data_keys', 'data-key do tracker mudou — isso orfana o historico de carga do aluno'),
+                    ('ids', 'ids do DOM mudaram'),
+                    ('hrefs', 'links mudaram'),
+                    ('text', 'texto visivel mudou'),
+                    ('data_islands', 'dados do grafico de periodizacao mudaram'),
+                )
+                for field, why in checks:
+                    with self.subTest(slug=slug, campo=field):
+                        self.assertEqual(expected[field], actual[field], f'{slug}: {why}')
+
+
 class StudentAuthMiddlewareTests(TestCase):
     def setUp(self):
         self.anonymous_client = Client()

@@ -1,0 +1,54 @@
+/*
+ * ARQUIVO: registro de carga por semana e a barrinha de progressao.
+ *
+ * Compartilhado pelos 7 treinos publicos de /renan/.
+ * Tokens em tokens.css; accent por aluno vem inline no <head>.
+ */
+
+/* ══════════════════════════════════════════════
+   WEIGHT TRACKER
+   ══════════════════════════════════════════════ */
+.tracker{border-top:1px solid var(--border);background:var(--accent-bg);padding:.9rem 1rem}
+.tracker-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:.7rem;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:6px}
+.tracker-title span{font-size:14px}
+.tracker-grid{display:grid;grid-template-columns:repeat(var(--tracker-weeks),1fr);gap:6px}
+.wk-box{background:var(--white);border:1px solid var(--accent-border);border-radius:var(--r-sm);padding:.55rem .4rem;text-align:center}
+.wk-label{font-size:8.5px;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
+.wk-input{
+  width:100%;border:1px solid var(--accent-border);border-radius:6px;
+  padding:6px 4px;font-size:16px;/* CRITICAL: 16px evita zoom Safari */
+  font-weight:700;text-align:center;
+  background:var(--white);color:var(--dark);font-family:inherit;
+  outline:none;-webkit-appearance:none;appearance:none;min-height:44px;
+}
+.wk-input:focus{border-color:var(--accent);-webkit-box-shadow:0 0 0 2px var(--accent-light);box-shadow:0 0 0 2px var(--accent-light)}
+.wk-input::placeholder{color:var(--light);font-weight:400}
+.wk-unit{font-size:8.5px;color:var(--muted);margin-top:2px}
+.tracker-prog{margin-top:.7rem;height:44px;position:relative;display:-webkit-flex;display:flex;-webkit-align-items:flex-end;align-items:flex-end;gap:4px}
+.tracker-save{margin-top:.7rem;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:8px}
+.save-btn{
+  padding:10px 18px;min-height:44px;border-radius:9px;border:none;
+  background:var(--accent);color:var(--white);
+  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+  -webkit-appearance:none;appearance:none;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:background .12s;
+}
+.save-btn:active{background:var(--accent-dark)}
+.save-msg{font-size:11px;color:var(--green-fg);opacity:0;transition:opacity .3s}
+
+/* Componentes que nasceram no treino da/do john, agora disponiveis a todos. */
+.wk-box.wk-current{border-color:var(--accent);background:var(--accent-bg);box-shadow:0 0 0 2px var(--accent-border)}
+.wk-box.wk-current .wk-label{color:var(--accent-dark)}
+.wk-box.wk-current::after{content:'HOJE';display:block;font-size:7px;font-weight:800;color:var(--accent);letter-spacing:.08em;margin-top:2px}
+
+/* Barrinha de progressao do tracker.
+   Antes cada arquivo montava isso com hex inline no JS — e por isso o
+   bruno tinha barra azul embaixo de um accent laranja. Agora e token. */
+.tp-col{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:flex-end;justify-content:flex-end;gap:2px}
+.tp-val{font-size:8px;font-weight:700;color:var(--accent)}
+.tp-bar{width:100%;background:var(--accent);border-radius:3px 3px 0 0;transition:height .3s}
+.tp-lbl{font-size:8px;color:var(--accent-border)}
+.tp-col--max .tp-val,.tp-col--max .tp-bar{color:var(--accent-dark)}
+.tp-col--max .tp-bar{background:var(--accent-dark)}
+.tp-empty{-webkit-flex:1;flex:1;opacity:.25;border-bottom:1px dashed var(--accent-border);font-size:8px;color:var(--accent-border);text-align:center;padding-bottom:2px}

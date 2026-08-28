@@ -1,0 +1,184 @@
+/*
+ * ARQUIVO: componentes: modo academia, glossario, legenda, cartao de exercicio, tabela de series e cardio.
+ *
+ * Compartilhado pelos 7 treinos publicos de /renan/.
+ * Tokens em tokens.css; accent por aluno vem inline no <head>.
+ */
+
+/* ══════════════════════════════════════════════
+   SIMPLIFIED MODE
+   ══════════════════════════════════════════════ */
+body.simplified .glossary{display:none}
+body.simplified .legend{display:none}
+body.simplified .tracker{display:none}
+body.simplified .ex-code{display:none}
+body.simplified .ex-var{display:none}
+body.simplified .ex-note{display:none}
+body.simplified .prog-sub{display:none}
+body.simplified .sess-meta{display:none}
+body.simplified .wiki-btn{display:none}
+body.simplified .prog-title{font-size:18px}
+body.simplified .stats{grid-template-columns:repeat(3,1fr)}
+body.simplified .stat:last-child{display:none}
+body.simplified .ex-top{background:var(--white);border-bottom:none;padding-bottom:.5rem}
+body.simplified .ex{box-shadow:none}
+body.simplified .gym-card{display:-webkit-flex;display:flex}
+body.simplified .sets-tbl-wrap{display:none}
+
+.gym-card{
+  display:none;
+  -webkit-align-items:center;align-items:center;
+  gap:10px;padding:.65rem 1rem;
+  background:var(--white);-webkit-flex-wrap:wrap;flex-wrap:wrap;
+}
+.gym-summary{-webkit-flex:1;flex:1;font-size:13px;font-weight:600;color:var(--dark);min-width:0}
+.gym-summary strong{font-size:14px}
+.gym-reps{font-size:12px;color:var(--muted);margin-top:2px}
+.gym-wiki{
+  display:-webkit-inline-flex;display:inline-flex;
+  -webkit-align-items:center;align-items:center;
+  gap:4px;font-size:11px;font-weight:700;
+  color:var(--accent);text-decoration:none;
+  background:var(--accent-bg);border:1px solid var(--accent-border);
+  border-radius:9px;padding:10px 13px;min-height:44px;
+  white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.gym-wiki:active{background:var(--accent-light)}
+
+/* ══════════════════════════════════════════════
+   GLOSSARY
+   ══════════════════════════════════════════════ */
+.glossary{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);padding:.75rem 1rem;margin-bottom:1.25rem;box-shadow:var(--shadow)}
+.glossary-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.55rem}
+.glossary-grid{display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:7px 14px}
+.gloss-item{display:-webkit-flex;display:flex;-webkit-align-items:baseline;align-items:baseline;gap:5px;font-size:11.5px}
+.gloss-term{font-weight:700;font-size:10.5px;background:var(--alt);border:1px solid var(--border);border-radius:5px;padding:2px 8px;white-space:nowrap}
+.gloss-def{color:var(--muted)}
+
+/* ══════════════════════════════════════════════
+   LEGEND
+   ══════════════════════════════════════════════ */
+.legend{display:-webkit-flex;display:flex;gap:8px;-webkit-flex-wrap:wrap;flex-wrap:wrap;margin-bottom:1.25rem;padding:.65rem 1rem;background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow)}
+.leg-item{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:5px;font-size:11px;color:#555}
+
+/* ══════════════════════════════════════════════
+   EXERCISE BLOCK
+   ══════════════════════════════════════════════ */
+.ex{margin-bottom:1.1rem;background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+.ex-top{
+  padding:.75rem 1rem .6rem;
+  display:-webkit-flex;display:flex;
+  -webkit-justify-content:space-between;justify-content:space-between;
+  -webkit-align-items:flex-start;align-items:flex-start;
+  gap:8px;background:var(--card);border-bottom:1px solid var(--border);
+}
+.ex-left{-webkit-flex:1;flex:1;min-width:0}
+.ex-code{font-size:9px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.ex-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.ex-var{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:5px;-webkit-flex-wrap:wrap;flex-wrap:wrap}
+.var-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.var-link{
+  font-size:11px;color:#6B7280;text-decoration:none;
+  background:#F3F4F6;border:1px solid #E5E7EB;border-radius:6px;
+  padding:6px 10px;min-height:34px;
+  display:-webkit-inline-flex;display:inline-flex;
+  -webkit-align-items:center;align-items:center;
+  transition:background .1s;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.var-link:active{background:#E5E7EB}
+.wiki-btn{
+  display:-webkit-inline-flex;display:inline-flex;
+  -webkit-align-items:center;align-items:center;
+  gap:4px;font-size:11px;font-weight:700;
+  color:var(--accent);text-decoration:none;
+  background:var(--accent-bg);border:1px solid var(--accent-border);
+  border-radius:9px;padding:10px 14px;min-height:44px;
+  white-space:nowrap;-webkit-flex-shrink:0;flex-shrink:0;
+  transition:background .12s;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.wiki-btn:active{background:var(--accent-light)}
+.ex-note{font-size:11px;color:#555;padding:.55rem 1rem;background:var(--card);border-bottom:1px solid var(--border);line-height:1.6;font-style:italic}
+
+/* ══════════════════════════════════════════════
+   SETS TABLE — scroll wrap for mobile
+   ══════════════════════════════════════════════ */
+.sets-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sets-tbl{width:100%;border-collapse:collapse;min-width:320px}
+.sets-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--white);border-bottom:1px solid #f5f4f2;font-weight:700}
+.sets-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f7f5;background:var(--white);vertical-align:middle}
+.sets-tbl tr:last-child td{border-bottom:none}
+.st{display:-webkit-inline-flex;display:inline-flex;-webkit-align-items:center;align-items:center;font-size:9px;font-weight:700;padding:3px 9px;border-radius:99px;min-width:88px;-webkit-justify-content:center;justify-content:center}
+.st-p{background:var(--prep-bg);color:var(--prep-fg)}
+.st-f{background:var(--feed-bg);color:var(--feed-fg)}
+.st-t{background:var(--top-bg);color:var(--top-fg)}
+.st-m{background:var(--max-bg);color:var(--max-fg)}
+
+/* ══════════════════════════════════════════════
+   CARDIO
+   ══════════════════════════════════════════════ */
+.c-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:1.1rem;box-shadow:var(--shadow)}
+.c-head{padding:.75rem 1rem;font-size:13.5px;font-weight:700;background:var(--card);border-bottom:1px solid var(--border);display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:center;align-items:center;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:6px}
+.km-badge{font-size:11px;font-weight:700;color:var(--green-fg);background:var(--green-bg);border-radius:99px;padding:2px 10px}
+.c-row{display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:center;align-items:center;padding:.55rem 1rem;border-bottom:1px solid #f8f7f5;font-size:12.5px;gap:8px}
+.c-row:last-child{border-bottom:none}
+.c-lbl{font-size:11.5px;color:var(--muted);font-weight:600;-webkit-flex-shrink:0;flex-shrink:0}
+.c-note{font-size:11px;color:#555;padding:.6rem 1rem;background:var(--card);font-style:italic;line-height:1.6}
+
+/* Componentes que nasceram no treino da/do thaislima, agora disponiveis a todos. */
+.stat.highlight{border-color:var(--accent-border);background:var(--accent-bg)}
+.stat.highlight .stat-v{color:var(--accent)}
+.dp.muay{background:var(--muay-bg);border-color:#FB923C}
+.dp.muay .dt{color:var(--muay-fg)}
+.b-inf{background:var(--inf-bg);color:var(--inf-fg)}
+.b-sup{background:var(--sup-bg);color:var(--sup-fg)}
+.b-muay{background:var(--muay-bg);color:var(--muay-fg)}
+.muay-card{background:var(--white);border:1px solid var(--border);
+  border-radius:var(--r-lg);overflow:hidden;margin-bottom:1.1rem;
+  box-shadow:var(--shadow);}
+.muay-head{padding:.75rem 1rem;font-size:13.5px;font-weight:700;
+  background:#FFF7ED;border-bottom:1px solid #FED7AA;
+  display:-webkit-flex;display:flex;
+  -webkit-align-items:center;align-items:center;gap:8px;}
+.muay-body{padding:.75rem 1rem;font-size:12.5px;color:#555;line-height:1.65}
+.int-badge{font-size:11px;font-weight:700;color:#92400E;background:#FEF3C7;border-radius:99px;padding:2px 10px}
+.hiit-badge{font-size:11px;font-weight:700;color:#991B1B;background:#FEE2E2;border-radius:99px;padding:2px 10px}
+.cardio-week{display:grid;grid-template-columns:repeat(4,1fr);
+  gap:8px;margin-bottom:1.25rem;}
+.cw-item{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);padding:.65rem .75rem;box-shadow:var(--shadow);text-align:center}
+.cw-day{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.cw-type{font-size:11px;font-weight:800;color:var(--dark);margin-bottom:2px}
+.cw-dur{font-size:10px;color:var(--muted)}
+
+/* Componentes que nasceram no treino da/do milene, agora disponiveis a todos. */
+.dp.hiit-d{background:var(--hiit-bg);border-color:#FCA5A5}
+.dp.hiit-d .dt{color:var(--hiit-fg)}
+.b-leg{background:var(--leg-bg);color:var(--amber-dark)}
+.b-core{background:var(--core-bg);color:var(--core-fg)}
+.b-upper{background:var(--upper-bg);color:var(--upper-fg)}
+.b-hiit{background:var(--hiit-bg);color:var(--hiit-fg)}
+.sec-divider{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:.75rem 0 .4rem;display:flex;align-items:center;gap:6px}
+.sec-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.biset-wrap{margin-bottom:.9rem}
+.biset-badge{display:flex;align-items:center;gap:7px;margin-bottom:.4rem}
+.biset-pill{font-size:9.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--biset-bg);border:1px solid var(--biset-border);color:var(--biset-fg)}
+.biset-note{font-size:10.5px;color:var(--biset-fg);font-style:italic}
+.biset-connector{display:flex;align-items:center;gap:6px;margin:.3rem 0;padding:0 .5rem}
+.biset-line{flex:1;height:1px;background:var(--biset-border);border-style:dashed}
+.biset-label{font-size:9px;font-weight:700;color:var(--biset-fg);text-transform:uppercase;letter-spacing:.08em;background:var(--biset-bg);padding:2px 7px;border-radius:99px;border:1px solid var(--biset-border)}
+.or-divider{text-align:center;margin:.6rem 0;font-size:10px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:8px}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.abs-label{display:inline-block;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--abs-bg);color:var(--abs-fg);margin-bottom:4px}
+.hiit-card{background:var(--hiit-bg);border:1px solid #FECACA;border-radius:11px;overflow:hidden;margin-bottom:1rem}
+.hiit-head{padding:.7rem 1rem;font-size:13px;font-weight:700;background:#FEE2E2;border-bottom:1px solid #FECACA;display:flex;justify-content:space-between;align-items:center}
+.hiit-row{display:flex;justify-content:space-between;align-items:center;padding:.5rem 1rem;border-bottom:1px solid #FEE2E2;font-size:12px;gap:8px}
+.hiit-row:last-child{border-bottom:none}
+.hiit-lbl{font-size:11px;color:#B91C1C;font-weight:600;flex-shrink:0}
+.hiit-note{font-size:11px;color:#B91C1C;padding:.6rem 1rem;background:#FEF2F2;font-style:italic;line-height:1.55}
+body.simplified .biset-badge{display:none}
+body.simplified .biset-note{display:none}
+
+/* Componentes que nasceram no treino da/do giovanna, agora disponiveis a todos. */
+.gloss-sep{width:1px;background:var(--border);height:14px;align-self:center;margin:0 4px}
