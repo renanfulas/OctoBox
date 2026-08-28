@@ -5,10 +5,23 @@
         <span class="pill success">{{ smart_paste_summary.days_count }} dia(s)</span>
         <span class="pill info">{{ smart_paste_summary.blocks_count }} bloco(s)</span>
         <span class="pill accent">{{ smart_paste_summary.movements_count }} movimento(s)</span>
+        {% if smart_paste_summary.auto_fixed_count %}
+        <span class="pill accent" title="Corrigidos automaticamente pelo Haiku, sem precisar de revisao">✨ {{ smart_paste_summary.auto_fixed_count }} ajustado{% if smart_paste_summary.auto_fixed_count != 1 %}s{% endif %} automaticamente</span>
+        {% endif %}
         <span class="pill {% if smart_paste_summary.unresolved_count %}warning{% else %}success{% endif %}">
             {% if smart_paste_summary.unresolved_count %}{{ smart_paste_summary.unresolved_count }} para revisar{% else %}Leitura pronta{% endif %}
         </span>
     </div>
+    {% if smart_paste_summary.auto_fixed_items %}
+    <details class="smart-paste-inline-review-disclosure smart-paste-autofix-summary">
+        <summary>Ver o que o Haiku ajustou sozinho</summary>
+        <ul class="smart-paste-movement-list">
+            {% for item in smart_paste_summary.auto_fixed_items %}
+            <li><span>{{ item.day_label }} · {{ item.block_title }}</span> <small>{{ item.note|default:item.display_label }}</small></li>
+            {% endfor %}
+        </ul>
+    </details>
+    {% endif %}
 
     {% if smart_paste_summary.current_unresolved_item %}
     <section class="smart-paste-review-queue" aria-label="Item pendente de revisao">
@@ -110,6 +123,9 @@
                                 <span>{{ movement.display_label|default:movement.movement_label_raw }}</span>
                                 {% if movement.movement_slug %}
                                     <code>{{ movement.movement_slug }}</code>
+                                    {% if movement.llm_resolved %}
+                                    <span class="pill accent" title="{{ movement.llm_fix_note }}">✨ ajustado</span>
+                                    {% endif %}
                                     {% if movement.reps_spec %}<small>Reps: {{ movement.reps_spec }}</small>{% endif %}
                                     {% if movement.load_spec %}<small>Carga: {{ movement.load_spec }}</small>{% endif %}
                                     {% if movement.notes %}<small>{{ movement.notes }}</small>{% endif %}
