@@ -198,6 +198,23 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             tracker_weeks=5,
             store_key='henrique_santos_souza_v1',
         ),
+        PublicWorkoutPlan(
+            slug='johnespanha',
+            title='Treino John Espanha',
+            theme_color='#141414',
+            background_color='#fdf2f8',
+            template_file='johnespanha.html',
+            accent=PublicWorkoutAccent('#DB2777', '#FDF2F8', '#FBCFE8', '#FCE7F3', '#BE185D'),
+            tabs=(_TAB_TREINO, _TAB_CARDIO),
+            tracker_weeks=5,
+            store_key='john_espanha_v1',
+            # NAO convertido para o design system compartilhado: chegou em
+            # main (PR #170/#171) depois desta refatoracao, ainda no formato
+            # monolitico antigo (CSS/JS proprios embutidos no arquivo). Os
+            # campos acima entram na PUBLIC_WORKOUT_LIBRARY so para manter o
+            # manifest/service-worker corretos; renderiza como pagina
+            # autocontida, igual os outros 7 rendiam antes desta PR.
+        ),
     )
 }
 
@@ -264,14 +281,168 @@ def _get_public_workout_entry(plan_slug: str) -> PublicWorkoutPlan:
     return plan
 
 
+# Presente em qualquer pagina que estenda public_workouts/_base.html —
+# usado para distinguir template convertido de arquivo legado (ver baixo).
+_SHARED_BASE_MARKER = 'id="public-workout-install"'
+
+_LEGACY_VIEWPORT_MARKERS = (
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+)
+
+_LEGACY_INSTALL_PROMPT_MARKUP = """
+<style>
+.public-workout-install{
+  position:fixed;
+  right:16px;
+  bottom:16px;
+  z-index:9999;
+  display:none;
+  align-items:center;
+  gap:10px;
+  max-width:min(320px,calc(100vw - 32px));
+  padding:12px 14px;
+  border-radius:18px;
+  background:rgba(17,32,59,.94);
+  color:#fff;
+  box-shadow:0 16px 34px rgba(15,23,42,.28);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.public-workout-install.is-visible{display:flex}
+.public-workout-install__copy{font-size:13px;line-height:1.35}
+.public-workout-install__button{
+  border:0;
+  border-radius:999px;
+  padding:10px 14px;
+  background:#f5efe4;
+  color:#11203b;
+  font-weight:700;
+  font-size:13px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+@media (max-width: 640px){
+  .public-workout-install{
+    left:12px;
+    right:12px;
+    bottom:12px;
+    max-width:none;
+  }
+}
+</style>
+<div class="public-workout-install" id="public-workout-install" aria-live="polite">
+  <div class="public-workout-install__copy" id="public-workout-install-copy"></div>
+  <button class="public-workout-install__button" id="public-workout-install-button" type="button"></button>
+</div>
+""".strip()
+
+_LEGACY_SW_REGISTRATION_SCRIPT = """
+<script>
+(function () {
+  var installPrompt = null;
+  var installRoot = document.getElementById('public-workout-install');
+  var installCopy = document.getElementById('public-workout-install-copy');
+  var installButton = document.getElementById('public-workout-install-button');
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+
+  function showInstall(copy, buttonLabel, onClick) {
+    if (!installRoot || !installCopy || !installButton || isStandalone) {
+      return;
+    }
+    installCopy.textContent = copy;
+    installButton.textContent = buttonLabel;
+    installButton.onclick = onClick;
+    installRoot.classList.add('is-visible');
+  }
+
+  if (!('serviceWorker' in navigator)) {
+    if (isIos) {
+      showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar \\u00e0 Tela de In\\u00edcio.', 'Entendi', function () {
+        installRoot.classList.remove('is-visible');
+      });
+    }
+    return;
+  }
+
+  if (isIos) {
+    showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar \\u00e0 Tela de In\\u00edcio.', 'Entendi', function () {
+      installRoot.classList.remove('is-visible');
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', function (event) {
+    event.preventDefault();
+    installPrompt = event;
+    showInstall('Instale este treino na tela inicial para abrir como app, sem login.', 'Instalar app', function () {
+      if (!installPrompt) {
+        return;
+      }
+      installPrompt.prompt();
+      installPrompt.userChoice.finally(function () {
+        installPrompt = null;
+        installRoot.classList.remove('is-visible');
+      });
+    });
+  });
+
+  window.addEventListener('appinstalled', function () {
+    if (installRoot) {
+      installRoot.classList.remove('is-visible');
+    }
+  });
+
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/renan/sw.js', { scope: '/renan/' }).catch(function () {
+      // O treino continua abrindo mesmo sem o service worker.
+    });
+  });
+})();
+</script>
+""".strip()
+
+
+def _inject_legacy_pwa_head(html: str, plan: PublicWorkoutPlan) -> str:
+    """Injeta manifest/instalacao/service-worker em arquivo NAO convertido.
+
+    E o mecanismo original (substituicao de string), mantido vivo so para
+    templates que ainda nao viraram `{% extends '_base.html' %}` — hoje,
+    so `johnespanha.html`, que chegou num PR paralelo enquanto esta
+    refatoracao estava em andamento. Qualquer novo arquivo nesse formato
+    continua funcionando ate ser convertido.
+    """
+    head_injection = (
+        f'<meta name="theme-color" content="{plan.theme_color}">\n'
+        '<meta name="mobile-web-app-capable" content="yes">\n'
+        '<meta name="apple-mobile-web-app-capable" content="yes">\n'
+        '<meta name="apple-mobile-web-app-status-bar-style" content="default">\n'
+        f'<meta name="apple-mobile-web-app-title" content="{plan.title}">\n'
+        f'<link rel="manifest" href="{plan.manifest_url}">\n'
+        f'<link rel="apple-touch-icon" href="{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}">\n'
+        '<link rel="icon" href="/static/images/student-app-icon.svg" type="image/svg+xml">\n'
+        f'<link rel="icon" href="{PUBLIC_WORKOUT_ICON_192}" sizes="192x192" type="image/png">'
+    )
+    for marker in _LEGACY_VIEWPORT_MARKERS:
+        if marker in html:
+            html = html.replace(marker, f'{marker}\n{head_injection}', 1)
+            break
+
+    if "navigator.serviceWorker.register('/renan/sw.js'" not in html:
+        html = html.replace(
+            '</body>',
+            f'{_LEGACY_INSTALL_PROMPT_MARKUP}\n{_LEGACY_SW_REGISTRATION_SCRIPT}\n</body>',
+            1,
+        )
+    return html
+
+
 def _render_public_workout_html(plan_slug: str) -> str:
     """Renderiza a pagina do plano a partir do template do aluno.
 
     O <head>, o prompt de instalacao e o registro do service worker vem
-    de public_workouts/_base.html. Antes eram concatenados aqui por
-    substituicao de string, procurando a tag <meta name="viewport"> por
-    correspondencia EXATA — reformatar essa linha em qualquer arquivo
-    desligava o PWA em silencio.
+    de public_workouts/_base.html PARA TEMPLATES CONVERTIDOS. Arquivos
+    ainda nao convertidos (ver `_inject_legacy_pwa_head`) continuam
+    recebendo isso por substituicao de string, como era antes.
 
     render_to_string SEM request de proposito: render(request, ...)
     dispararia access.context_processors.role_navigation, que consulta o
@@ -279,7 +450,7 @@ def _render_public_workout_html(plan_slug: str) -> str:
     """
     plan = _get_public_workout_entry(plan_slug)
     try:
-        return render_to_string(
+        html = render_to_string(
             f'public_workouts/{plan.template_file}',
             {
                 'plan': plan,
@@ -291,6 +462,10 @@ def _render_public_workout_html(plan_slug: str) -> str:
         )
     except TemplateDoesNotExist:
         raise Http404('Arquivo de treino publico indisponivel.')
+
+    if _SHARED_BASE_MARKER not in html:
+        html = _inject_legacy_pwa_head(html, plan)
+    return html
 
 
 class PublicWorkoutDetailView(View):

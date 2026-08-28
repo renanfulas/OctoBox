@@ -4,8 +4,9 @@ name: CI Gates
 # Cada job aqui falha o PR rapidamente por motivos especificos.
 #
 # Jobs:
-#   migration-check  — detecta migration nao-commitada
-#   markers-lint     — garante que todos os markers usados estao registrados
+#   migration-check              — detecta migration nao-commitada
+#   markers-lint                 — garante que todos os markers usados estao registrados
+#   assert-contains-density-lint — aplica ADR-012 (structural asserts > mega-copy asserts)
 #
 # Roda em todo PR e push para main.
 # Tempo alvo: < 60s total (sem banco de dados).
@@ -103,3 +104,24 @@ jobs:
             exit 1
           fi
           echo "✅ Todos os markers estao registrados."
+
+  # ---------------------------------------------------------------------------
+  # Aplica docs/adr/ADR-012-test-design-structural-asserts.md: teste de view
+  # nao pode virar mega-copy-assert. Divida legada fica na baseline (nao
+  # bloqueia); teste NOVO acima do limite quebra o PR.
+  # ---------------------------------------------------------------------------
+  assert-contains-density-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Checar densidade de assertContains(copy) por teste (ADR-012)
+        run: python scripts/check_assert_contains_density.py

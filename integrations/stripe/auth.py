@@ -26,10 +26,17 @@ def verify_stripe_webhook(raw_body: bytes, sig_header: str) -> dict:
     """
     Verifica assinatura HMAC e retorna o evento como dict.
     Levanta StripeWebhookAuthError para qualquer falha de autenticidade.
+
+    stripe.Webhook.construct_event() devolve um StripeObject, nao um dict
+    puro. Na SDK 15.x, StripeObject nao implementa mais o protocolo de
+    Mapping (sem keys()/__iter__ compativel) — dict(event) estoura
+    KeyError: 0 (dict() cai no fallback de iterar pares por indice
+    inteiro). Usar .to_dict() (metodo oficial da SDK) em vez do
+    construtor dict() built-in.
     """
     try:
         event = stripe.Webhook.construct_event(raw_body, sig_header, _WEBHOOK_SECRET)
-        return dict(event)
+        return event.to_dict()
     except ValueError as exc:
         raise StripeWebhookAuthError('Invalid payload') from exc
     except stripe.error.SignatureVerificationError as exc:

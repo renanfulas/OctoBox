@@ -497,6 +497,33 @@ class StudentIdentityFlowTests(TestCase):
         self.assertContains(response, 'Convite reconhecido.')
         self.assertContains(response, reverse('login-staff'))
 
+    def test_oauth_start_with_valid_invite_writes_audit_event_without_500(self):
+        """Bug real em producao (2026-08-28): StudentOAuthStartView escrevia
+        o AuditEvent de oauth_started sem resolver o tenant do convite
+        primeiro. /aluno/auth/* roda em public schema (PUBLIC_SCHEMA_PATHS)
+        e AuditEvent e TENANT_APP — sem resolve_tenant_for_student_invite_landing()
+        antes, estourava 'relation "boxcore_auditevent" does not exist'
+        (500) assim que um convite de verdade era usado. Nunca pego antes
+        porque os testes existentes (ex.: test_public_login_hub_preserves_
+        invite_token_in_student_oauth_buttons, acima) so verificam o link
+        RENDERIZADO, nunca navegam de fato ate este endpoint."""
+        invitation = StudentAppInvitation.objects.create(
+            student_id=self.student.id, student_name=self.student.full_name,
+            invited_email='aluno@example.com',
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+
+        response = self.client.get(
+            reverse('student-identity-oauth-start', kwargs={'provider': 'google'}),
+            {'invite': str(invitation.token)},
+        )
+
+        self.assertNotEqual(response.status_code, 500)
+        self.assertTrue(
+            AuditEvent.objects.filter(target_model='student_identity.StudentOAuthStart').exists(),
+            'audit de oauth_started nao foi gravado — tenant do convite nao foi resolvido antes do write',
+        )
+
     def test_invite_landing_points_student_to_student_login_with_invite_token(self):
         invitation = StudentAppInvitation.objects.create(
             student_id=self.student.id, student_name=self.student.full_name,
