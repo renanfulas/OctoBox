@@ -54,6 +54,11 @@ _TIMEOUT_SECONDS = 8
 _OPENAI_MODEL = 'gpt-4o-mini'
 _ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
 
+# Um treino real de uma semana tem no maximo ~60-80 movimentos ao todo; mais que
+# isso sobrando sem slug depois do parser deterministico + memoria aprendida e
+# sinal de spam/lixo colado, nao de treino. Corta antes de gastar chamada de LLM.
+_MAX_NAMES_PER_CALL = 40
+
 
 _STATIC_INSTRUCTIONS = (
     'Voce e um especialista em CrossFit e treinamento funcional. '
@@ -160,6 +165,14 @@ def resolve_unknown_slugs(
     learned = _lookup_learned_aliases(unrecognized_names)
     still_unknown = [name for name in unrecognized_names if name not in learned]
     if not still_unknown:
+        return learned
+
+    if len(still_unknown) > _MAX_NAMES_PER_CALL:
+        logger.warning(
+            'wod_slug_resolver: %d nomes nao reconhecidos (limite %d) — '
+            'provavel texto fora do escopo de treino, pulando chamada LLM.',
+            len(still_unknown), _MAX_NAMES_PER_CALL,
+        )
         return learned
 
     all_slugs_text = ', '.join(sorted(valid_slugs))

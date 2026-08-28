@@ -936,6 +936,21 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
             WodMovementLearnedAlias.objects.filter(raw_text_normalized='pistol squat', movement_slug='box_jump').exists(),
         )
 
+    def test_resolve_unknown_slugs_skips_llm_when_too_many_unrecognized_names(self):
+        """Muitos nomes nao reconhecidos de uma vez e sinal de spam, nao de treino real."""
+        from operations.services.wod_slug_resolver import resolve_unknown_slugs, _MAX_NAMES_PER_CALL
+
+        garbage_names = [f'linha de lixo {i}' for i in range(_MAX_NAMES_PER_CALL + 1)]
+        with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-key'}, clear=False):
+            with patch('operations.services.wod_slug_resolver._call_anthropic') as mock_call:
+                result = resolve_unknown_slugs(
+                    unrecognized_names=garbage_names,
+                    slug_dictionary=self._make_slug_dict(),
+                )
+
+        mock_call.assert_not_called()
+        self.assertEqual(result, {})
+
     def test_apply_llm_slug_resolution_fills_unresolved_movements(self):
         from operations.services.wod_slug_resolver import apply_llm_slug_resolution
         parsed_payload = {
@@ -1003,6 +1018,39 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
             })
         self.assertIn(response.status_code, [200, 302])
         mock_resolver.assert_called_once()
+
+    def test_source_text_over_500_lines_is_rejected(self):
+        from operations.forms import WeeklyWodSmartPasteForm
+
+        huge_text = 'Segunda\n' + '\n'.join(f'linha {i}' for i in range(600))
+        form = WeeklyWodSmartPasteForm(data={
+            'week_start': '28/04/2026',
+            'label': 'Semana gigante',
+            'source_text': huge_text,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('source_text', form.errors)
+
+    def test_smart_paste_endpoint_rate_limits_repeated_submissions(self):
+        """Depois do limite de submissoes na janela, a view recusa sem chamar o resolver LLM."""
+        from operations.services.smart_paste_rate_limit import SMART_PASTE_RATE_LIMIT_MAX
+
+        payload = {
+            'action': 'parse_text',
+            'week_start': '28/04/2026',
+            'label': 'Semana teste rate limit',
+            'source_text': 'Segunda\nWod\n10 pistol squats',
+        }
+        with patch('operations.workout_board_views.apply_llm_slug_resolution') as mock_resolver:
+            for _ in range(SMART_PASTE_RATE_LIMIT_MAX):
+                self.client.post(reverse('workout-smart-paste'), payload)
+            self.assertEqual(mock_resolver.call_count, SMART_PASTE_RATE_LIMIT_MAX)
+
+            response = self.client.post(reverse('workout-smart-paste'), payload)
+
+        self.assertIn(response.status_code, [200, 302])
+        # A submissao que estourou o limite nao deve ter chamado o resolver de novo.
+        self.assertEqual(mock_resolver.call_count, SMART_PASTE_RATE_LIMIT_MAX)
 
 
 class WorkoutSmartPasteFreeformViewTests(WorkoutFlowBaseTestCase):
