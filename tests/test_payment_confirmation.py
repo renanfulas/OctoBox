@@ -37,16 +37,26 @@ from tests.factories import PaymentFactory, StudentFactory
 TENANT_SCHEMA = 'box_test'
 
 
-def _create_push_subscription(*, student, box_root_slug=TENANT_SCHEMA, provider_subject='google-push-test'):
-    identity = StudentIdentity.objects.create(
+def _get_or_create_push_identity(*, student, box_root_slug=TENANT_SCHEMA):
+    """Um aluno tem UMA StudentIdentity por box (o vinculo OAuth), mas pode
+    ter varias StudentPushSubscription (uma por dispositivo) apontando pra
+    essa MESMA identity — nunca uma StudentIdentity por dispositivo, isso
+    viola unique_student_identity_email_box_when_live (email+box unico)."""
+    return StudentIdentity.objects.get_or_create(
         student_id=student.id,
         box_root_slug=box_root_slug,
-        primary_box_root_slug=box_root_slug,
-        provider=StudentIdentityProvider.GOOGLE,
-        provider_subject=provider_subject,
-        email=student.email or 'aluno@example.com',
-        status=StudentIdentityStatus.ACTIVE,
-    )
+        defaults={
+            'primary_box_root_slug': box_root_slug,
+            'provider': StudentIdentityProvider.GOOGLE,
+            'provider_subject': f'google-push-test-{student.id}',
+            'email': student.email or 'aluno@example.com',
+            'status': StudentIdentityStatus.ACTIVE,
+        },
+    )[0]
+
+
+def _create_push_subscription(*, student, box_root_slug=TENANT_SCHEMA, provider_subject='device'):
+    identity = _get_or_create_push_identity(student=student, box_root_slug=box_root_slug)
     return StudentPushSubscription.objects.create(
         identity=identity,
         box_root_slug=box_root_slug,
