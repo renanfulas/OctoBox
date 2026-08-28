@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 _INVITE_COOKIE = 'student_invite_pending'
 _INVITE_COOKIE_MAX_AGE = 900  # 15 min
@@ -127,20 +130,35 @@ class StudentOAuthStartView(View):
             invite_token=invite_token,
         )
         if journey:
-            record_student_onboarding_event(
-                actor=None,
-                actor_role='',
-                journey=journey,
-                event='oauth_started',
-                target_model='student_identity.StudentOAuthStart',
-                target_label=provider,
-                description='Fluxo de OAuth iniciado para onboarding do aluno.',
-                metadata={
-                    'box_root_slug': get_box_runtime_slug(),
-                    'invite_token': invite_token,
-                    'provider': provider,
-                },
-            )
+            # /aluno/auth/* roda em public schema (PUBLIC_SCHEMA_PATHS) e
+            # AuditEvent (auditing.AuditEvent, tabela boxcore_auditevent) e
+            # TENANT_APP — sem resolver e ativar o box do convite via Center
+            # Layer ANTES do write, cai em "relation does not exist" (500).
+            # Mesma facade que StudentInviteLandingView.dispatch usa (ver
+            # docstring de resolve_tenant_for_student_invite_landing).
+            resolve_tenant_for_student_invite_landing(invite_token=invite_token)
+            try:
+                record_student_onboarding_event(
+                    actor=None,
+                    actor_role='',
+                    journey=journey,
+                    event='oauth_started',
+                    target_model='student_identity.StudentOAuthStart',
+                    target_label=provider,
+                    description='Fluxo de OAuth iniciado para onboarding do aluno.',
+                    metadata={
+                        'box_root_slug': get_box_runtime_slug(),
+                        'invite_token': invite_token,
+                        'provider': provider,
+                    },
+                )
+            except Exception:
+                # Audit e nice-to-have aqui (ex.: token nao resolveu nenhum
+                # box) — nao pode bloquear o inicio do OAuth do aluno.
+                logger.exception(
+                    'StudentOAuthStartView: falha ao registrar audit de oauth_started. '
+                    'invite_token=%s provider=%s', invite_token, provider,
+                )
         try:
             oauth_provider = build_provider(provider)
             authorize_url = oauth_provider.get_authorize_url(
