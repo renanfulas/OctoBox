@@ -2027,6 +2027,7 @@ class PublicWorkoutPwaTests(TestCase):
         thaislima_response = self.client.get('/renan/thaislima')
         john_response = self.client.get('/renan/john')
         henrique_response = self.client.get('/renan/henrique')
+        johnespanha_response = self.client.get('/renan/johnespanha')
 
         self.assertEqual(juliana_response.status_code, 200)
         self.assertEqual(bruno_response.status_code, 200)
@@ -2035,6 +2036,7 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(thaislima_response.status_code, 200)
         self.assertEqual(john_response.status_code, 200)
         self.assertEqual(henrique_response.status_code, 200)
+        self.assertEqual(johnespanha_response.status_code, 200)
         self.assertContains(juliana_response, 'Juliana Alves')
         self.assertContains(bruno_response, 'Bruno Fulas')
         self.assertContains(milene_response, 'Milene Geraldes')
@@ -2042,6 +2044,7 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(thaislima_response, 'Thais Lima')
         self.assertContains(john_response, 'John')
         self.assertContains(henrique_response, 'Henrique Santos Souza')
+        self.assertContains(johnespanha_response, 'John Espanha')
         self.assertContains(juliana_response, "/renan/juliana/manifest.webmanifest")
         self.assertContains(bruno_response, "/renan/bruno/manifest.webmanifest")
         self.assertContains(milene_response, "/renan/milene/manifest.webmanifest")
@@ -2049,6 +2052,7 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(thaislima_response, "/renan/thaislima/manifest.webmanifest")
         self.assertContains(john_response, "/renan/john/manifest.webmanifest")
         self.assertContains(henrique_response, "/renan/henrique/manifest.webmanifest")
+        self.assertContains(johnespanha_response, "/renan/johnespanha/manifest.webmanifest")
         self.assertContains(juliana_response, "/renan/sw.js")
         self.assertContains(bruno_response, "/renan/sw.js")
         self.assertContains(milene_response, "/renan/sw.js")
@@ -2056,6 +2060,7 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(thaislima_response, "/renan/sw.js")
         self.assertContains(john_response, "/renan/sw.js")
         self.assertContains(henrique_response, "/renan/sw.js")
+        self.assertContains(johnespanha_response, "/renan/sw.js")
 
     def test_public_workout_manifest_is_dynamic_per_slug(self):
         response = self.client.get(reverse('public-workout-manifest', kwargs={'plan_slug': 'juliana'}))
@@ -2091,6 +2096,8 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertIn('/renan/john/manifest.webmanifest', sw_content)
         self.assertIn('/renan/henrique', sw_content)
         self.assertIn('/renan/henrique/manifest.webmanifest', sw_content)
+        self.assertIn('/renan/johnespanha', sw_content)
+        self.assertIn('/renan/johnespanha/manifest.webmanifest', sw_content)
         self.assertIn('/renan/offline/', sw_content)
         self.assertIn('const PAGE_CACHE', sw_content)
         self.assertIn('normalizedWorkoutPath', sw_content)
@@ -2100,6 +2107,7 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertIn("'/renan/thaislima?source=pwa'", sw_content)
         self.assertIn("'/renan/john?source=pwa'", sw_content)
         self.assertIn("'/renan/henrique?source=pwa'", sw_content)
+        self.assertIn("'/renan/johnespanha?source=pwa'", sw_content)
         self.assertEqual(offline_response.status_code, 200)
         self.assertContains(offline_response, 'Sem conexão agora.')
 
@@ -2149,6 +2157,34 @@ class PublicWorkoutPwaTests(TestCase):
         # medial / deltoide posterior no dia de costas).
         self.assertContains(response, 'Crucifixo invertido')
         self.assertContains(response, 'Face pull no cabo')
+
+    def test_johnespanha_week_order_reflects_glute_priority_and_low_back_volume(self):
+        response = self.client.get('/renan/johnespanha')
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+
+        # Ordem estrutural das sessoes de treino no DOM (id do dia), nao a
+        # copy do strip semanal — pega sessao fora de ordem mesmo que o
+        # rotulo visual continue certo, e resiste a redacao mudar.
+        day_ids = ('id="seg"', 'id="ter"', 'id="qua"', 'id="qui"', 'id="sex"')
+        for day_id in day_ids:
+            self.assertIn(day_id, content)
+        positions = [content.index(day_id) for day_id in day_ids]
+        self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem seg->sex')
+
+        self.assertContains(response, "goDay('qua',this)")
+
+        # Restricoes explicitamente pedidas pela cliente: glúteo é a única
+        # prioridade de crescimento (hip thrust como exercicio-ancora) e
+        # costas/peito ficam em volume minimo de manutencao de proposito
+        # (ela ganha massa nas costas com facilidade). Se alguem futuramente
+        # remover o hip thrust ou a nota de volume baixo, esse teste quebra.
+        self.assertContains(response, 'Hip thrust com barra')
+        self.assertContains(response, 'Volume de peito e costas propositalmente baixo')
+
+        # 1x escada/HIIT por semana, pedido explicitamente pela cliente.
+        self.assertContains(response, 'Escada / HIIT')
 
 
 class StudentAuthMiddlewareTests(TestCase):
