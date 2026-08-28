@@ -126,7 +126,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             accent=PublicWorkoutAccent('#E11D48', '#FFF1F2', '#FECDD3', '#FBD7DF', '#BE123C'),
             tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD),
             tracker_weeks=5,
-            store_key='juliana_alves_v3',
+            store_key='juliana_alves_v3',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
         PublicWorkoutPlan(
             slug='bruno',
@@ -137,7 +137,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             accent=PublicWorkoutAccent('#EA580C', '#FFF7ED', '#FED7AA', '#FFEDD5', '#C2410C'),
             tabs=(_TAB_TREINO, _TAB_CARDIO, ('nutri', 'Nutrição'), _TAB_PERIOD),
             tracker_weeks=5,
-            store_key='bruno_cutting_v1',
+            store_key='bruno_cutting_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
         PublicWorkoutPlan(
             slug='milene',
@@ -148,7 +148,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             accent=PublicWorkoutAccent('#D97706', '#FFFBEB', '#FDE68A', '#FEF3C7', '#92400E'),
             tabs=(_TAB_TREINO, _TAB_PERIOD),
             tracker_weeks=5,
-            store_key='milene_geraldes_treino',
+            store_key='milene_geraldes_treino',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
         PublicWorkoutPlan(
             slug='giovanna',
@@ -163,7 +163,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             tracker_weeks=5,
             # store_key novo: esta pagina nunca teve tracker, entao nao ha
             # historico anterior para preservar.
-            store_key='giovanna_fontes_v1',
+            store_key='giovanna_fontes_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
         PublicWorkoutPlan(
             slug='thaislima',
@@ -174,7 +174,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             accent=PublicWorkoutAccent('#7C3AED', '#F5F3FF', '#DDD6FE', '#EDE9FE', '#5B21B6'),
             tabs=(_TAB_TREINO, _TAB_CARDIO),
             tracker_weeks=5,
-            store_key='thais_lima_v1',
+            store_key='thais_lima_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
         PublicWorkoutPlan(
             slug='john',
@@ -185,7 +185,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             accent=PublicWorkoutAccent('#0891B2', '#ECFEFF', '#A5F3FC', '#CFFAFE', '#0E7490'),
             tabs=(_TAB_TREINO, _TAB_PERIOD),
             tracker_weeks=6,  # unico plano com mesociclo de 6 semanas
-            store_key='john_v1',
+            store_key='john_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
         PublicWorkoutPlan(
             slug='henrique',
@@ -196,7 +196,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             accent=PublicWorkoutAccent('#2563EB', '#EFF6FF', '#BFDBFE', '#DBEAFE', '#1D4ED8'),
             tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD),
             tracker_weeks=5,
-            store_key='henrique_santos_souza_v1',
+            store_key='henrique_santos_souza_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
         PublicWorkoutPlan(
             slug='johnespanha',
@@ -207,7 +207,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             accent=PublicWorkoutAccent('#DB2777', '#FDF2F8', '#FBCFE8', '#FCE7F3', '#BE185D'),
             tabs=(_TAB_TREINO, _TAB_CARDIO),
             tracker_weeks=5,
-            store_key='john_espanha_v1',
+            store_key='john_espanha_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
             # NAO convertido para o design system compartilhado: chegou em
             # main (PR #170/#171) depois desta refatoracao, ainda no formato
             # monolitico antigo (CSS/JS proprios embutidos no arquivo). Os
