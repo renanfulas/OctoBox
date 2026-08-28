@@ -160,17 +160,30 @@ def _handle_student_payment(event, session, metadata):
 
 
 def _notify_student_payment_confirmed(payment_id, event) -> None:
+    """Carrega o payment (sincrono, mesma conexao/schema ja resolvidos aqui) e
+    despacha a notificacao (e-mail/WhatsApp) em thread separada.
+
+    O envio e I/O de rede (SMTP ou HTTP da Resend) e NAO PODE travar a
+    resposta do webhook a Stripe — um provedor lento nesse caminho prende a
+    worker do gunicorn segurando a confirmacao de TODO pagamento (o endpoint
+    e o mesmo para todos os boxes). payment.student ja vem carregado
+    (select_related) antes de sair da thread do webhook, entao a thread de
+    background nao precisa abrir conexao nova com o banco.
+    """
     from finance.models import Payment
     from finance.payment_notifications import notify_payment_confirmed
+    from shared_support.background_jobs import run_in_background
 
     try:
         payment = Payment.objects.select_related('student').get(pk=payment_id)
-        notify_payment_confirmed(payment)
     except Exception:
         logger.exception(
-            '_notify_student_payment_confirmed: falha ao confirmar baixa. payment=%s event=%s',
+            '_notify_student_payment_confirmed: falha ao carregar payment para notificar. payment=%s event=%s',
             payment_id, event.event_id,
         )
+        return
+
+    run_in_background(notify_payment_confirmed, payment)
 
 
 def _record_stripe_payment_ref(*, payment_intent_id, session_id, box_schema, payment_id) -> None:
@@ -221,16 +234,17 @@ def _resolve_box_schema(box_schema, event) -> str:
 
 
 def _handle_early_adopter_signup(event, session, metadata):
-    """Marca o PendingSignup como pago e dispara email de ativacao.
+    """Marca o PendingSignup como pago e despacha o email de ativacao.
 
-    Falhas no envio do email sao logadas, mas nao falham o webhook — o
-    operador pode reenviar manualmente pelo Django admin.
+    O envio roda em thread separada pelo mesmo motivo do pagamento de aluno
+    (ver _notify_student_payment_confirmed): e o MESMO endpoint de webhook, e
+    um provedor de email lento aqui atrasaria tambem a confirmacao de
+    pagamento de aluno que estiver atras deste evento na fila do gunicorn.
+    Falhas no envio sao logadas, mas nao falham o webhook — o operador pode
+    reenviar manualmente pelo Django admin.
     """
-    from signup.services import (
-        generate_magic_token,
-        mark_pending_signup_paid,
-        send_onboarding_email,
-    )
+    from shared_support.background_jobs import run_in_background
+    from signup.services import generate_magic_token, mark_pending_signup_paid
 
     pending_id = metadata.get('pending_signup_id')
     try:
@@ -252,10 +266,17 @@ def _handle_early_adopter_signup(event, session, metadata):
     site_url = _resolve_marketing_site_url()
     activation_url = f'{site_url}{activation_path}'
 
+    # `pending` ja esta carregado em memoria — a thread nao precisa tocar o banco.
+    run_in_background(_deliver_onboarding_email, pending, activation_url)
+
+
+def _deliver_onboarding_email(pending, activation_url) -> None:
+    from signup.services import send_onboarding_email
+
     sent = send_onboarding_email(pending, activation_url=activation_url)
     if not sent:
         logger.warning(
-            '_handle_early_adopter_signup: email nao enviado para pending=%s. '
+            '_deliver_onboarding_email: email nao enviado para pending=%s. '
             'Operador pode reenviar pelo Django admin.',
             pending.pk,
         )
