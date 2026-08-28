@@ -107,6 +107,13 @@ Rodar no ambiente alvo, na ordem. Todos são idempotentes (seguro repetir).
 ### Workspace do Manager (piloto)
 - **Var:** `OPERATIONS_MANAGER_WORKSPACE_ENABLED=True` quando o papel Manager faz parte do pacote do dia 1.
 
+### Push web do aluno (pagamento confirmado)
+- **Vars:** `STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY`, `STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY` (**segredo**), `STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT` (`mailto:suporte@octoboxfit.com.br`, não é segredo).
+- **Como gerar:** par de chaves VAPID (`py_vapid`, já é dependência via `pywebpush`). A privada precisa estar em **formato PEM** — `_build_vapid_private_key()` em `student_identity/push_notifications.py` usa `Vapid02.from_pem(...)`, não `Vapid02.from_string(...)` (bug real documentado ali: `from_string`/passar a chave crua tenta decodificar os cabeçalhos `-----BEGIN...-----` como base64url e quebra). A pública precisa estar em base64url do ponto EC não-comprimido (formato `applicationServerKey` do Push API do navegador), não em PEM.
+- **Fora do código:** colar as 3 vars no `octobox.env` da VPS e reiniciar `octobox-gunicorn.service` (as vars só são lidas no boot do processo).
+- **Verificar:** `is_student_web_push_configured()` deve retornar `True`; sem as vars, `send_student_web_push_notification()` retorna `False` em silêncio (a confirmação de pagamento continua funcionando, só sem o push).
+- **Por quê existe:** feature mergeada no PR #175 (payment-confirmed push) sem nenhuma das 3 vars configuradas em produção — `is_student_web_push_configured()` ficava sempre `False`, então `webpush()` nunca chegou a rodar. Sintoma de "está no `main` mas não funciona" que este registro existe para prevenir.
+
 ### Backup cifrado do `octobox.env`
 - **Vars:** `OCTOBOX_ENV_BACKUP_AGE_RECIPIENT` (chave pública age, não é segredo), `OCTOBOX_ENV_BACKUP_RETENTION_DAYS`.
 - **Comandos:** `setup_env_secrets_backup.sh` (1ª vez — a chave privada nasce FORA da VPS, via `age-keygen` local) → timer `octobox-env-backup.timer` (a cada 10 dias — cadência menor que o Postgres porque o env muda com pouca frequência).
