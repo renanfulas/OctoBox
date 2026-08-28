@@ -21,6 +21,26 @@ def _normalized_vapid_private_key() -> str:
     return getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY', '').replace('\\n', '\n').strip()
 
 
+def _build_vapid_private_key():
+    """Constroi um objeto Vapid02 a partir do PEM configurado.
+
+    Bug real encontrado em 2026-08-28 (nunca exercitado: nenhuma
+    STUDENT_WEB_PUSH_VAPID_* esta configurada em producao ainda —
+    is_student_web_push_configured() sempre False, entao webpush() nunca
+    chegou a rodar). pywebpush.webpush(vapid_private_key=<string>) so
+    aceita RAW (32 bytes base64url) ou DER — py_vapid.Vapid.from_string
+    tenta base64url-decodificar a STRING INTEIRA, incluindo os cabecalhos
+    "-----BEGIN...-----" de um PEM, e falha com erro de parsing ASN.1.
+    Passar um objeto Vapid02 (via from_pem, que sabe descascar o PEM
+    corretamente) evita esse parsing: webpush() trata qualquer instancia
+    de Vapid como "ja valida" e usa direto.
+    """
+    from py_vapid import Vapid02
+
+    pem = _normalized_vapid_private_key()
+    return Vapid02.from_pem(pem.encode('utf-8'))
+
+
 def upsert_student_push_subscription(
     *,
     identity,
@@ -100,7 +120,7 @@ def send_student_web_push_notification(
         webpush(
             subscription_info=subscription.subscription,
             data=json.dumps(payload),
-            vapid_private_key=_normalized_vapid_private_key(),
+            vapid_private_key=_build_vapid_private_key(),
             vapid_claims={'sub': settings.STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT},
             ttl=60,
         )
@@ -126,6 +146,32 @@ def send_student_web_push_notification(
                 'box_root_slug': subscription.box_root_slug,
                 'endpoint': subscription.endpoint[:180],
                 'status_code': status_code,
+                'tag': tag,
+            },
+        )
+        return False
+    except Exception as exc:
+        # Defesa adicional (achado real 2026-08-28): erro de parsing de
+        # chave VAPID malformada, ou qualquer outra falha do SDK que nao
+        # seja WebPushException, nao pode propagar — derrubaria o caller
+        # (reconcile de pagamento, signal de aula cancelada). Tratado como
+        # falha de envio, nunca como revogacao (nao sabemos se o endpoint
+        # em si e invalido).
+        error_message = f'webpush-unexpected-error:{type(exc).__name__}'
+        subscription.mark_push_failed(error_message=error_message)
+        subscription.save(update_fields=['last_error_at', 'last_error_message', 'updated_at'])
+        AuditEvent.objects.create(
+            actor=None,
+            actor_role='',
+            action='student_push.delivery_failed',
+            target_model='student_identity.StudentPushSubscription',
+            target_id=str(subscription.id),
+            target_label=subscription.identity.student_name,  # Sprint 2: denorm
+            description='Erro inesperado do SDK ao enviar notificacao push para o app do aluno.',
+            metadata={
+                'box_root_slug': subscription.box_root_slug,
+                'endpoint': subscription.endpoint[:180],
+                'error_type': type(exc).__name__,
                 'tag': tag,
             },
         )
