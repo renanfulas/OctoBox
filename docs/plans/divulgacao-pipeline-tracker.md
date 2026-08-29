@@ -34,6 +34,22 @@ PONTOS CRITICOS:
 
 # Rastreador de pipeline — divulgação OctoBox
 
+## Ferramentas vivas do ciclo (verificadas em 2026-08-29)
+
+| Ferramenta | Estado | Para quê |
+|---|---|---|
+| TomTom Maps | ativo | enumeração geográfica de boxes-alvo |
+| Airtable — base `OctoBox — Pipeline de Divulgação` | ativo, 31 leads carregados | espelho deste tracker, legível/editável no celular |
+| Calendly — `calendly.com/renanfulas/octobox-conversa-com-dono-de-box` (30 min) | ativo | link de agendamento para colar em toda abordagem |
+| Gmail | ativo | rascunhos de cold e-mail |
+| Stripe (`Octoboxfit`, livemode) | ativo | leitura de conversão real e MRR |
+| Higgs | ativo | geração de imagem/vídeo para redes |
+| Apollo.io | ativo | 199 créditos de lead; créditos de discagem direta esgotados |
+| LetsBot (WhatsApp) | **conectado mas sem número pareado** | bloqueia o canal 2 do plano até parear |
+
+Este arquivo (versionado no repo) continua sendo a fonte de verdade; o Airtable é o espelho
+de conveniência. Em divergência, vale o que está aqui.
+
 ## Como ler este arquivo
 
 Cada linha é um lead (dono de box). Estágio segue sempre esta ordem:
