@@ -403,6 +403,9 @@ class WorkoutDuplicateForm(forms.Form):
     target_session_id = forms.IntegerField(min_value=1)
 
 
+SMART_PASTE_MAX_LINES = 500
+
+
 class WeeklyWodSmartPasteForm(forms.Form):
     plan_id = forms.IntegerField(required=False, min_value=1)
     week_start = forms.CharField(max_length=10)
@@ -425,6 +428,7 @@ class WeeklyWodSmartPasteForm(forms.Form):
         self.fields['week_start'].widget.attrs.update(
             {
                 'data-smart-date-input': 'true',
+                'data-smart-date-include-year': 'true',
                 'data-picker-target': 'smart-paste-week-start-picker',
                 'inputmode': 'numeric',
             }
@@ -449,7 +453,15 @@ class WeeklyWodSmartPasteForm(forms.Form):
         )
 
     def clean_source_text(self):
-        return (self.cleaned_data.get('source_text') or '').strip()
+        text = (self.cleaned_data.get('source_text') or '').strip()
+        if text:
+            line_count = text.count('\n') + 1
+            if line_count > SMART_PASTE_MAX_LINES:
+                raise forms.ValidationError(
+                    f'O texto colado tem {line_count} linhas — o limite e {SMART_PASTE_MAX_LINES}. '
+                    'Cole so o treino da semana, sem texto extra.'
+                )
+        return text
 
     def clean_week_start(self):
         return _coerce_smart_paste_date(

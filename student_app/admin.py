@@ -14,6 +14,7 @@ from .models import (
     StudentWorkoutView,
     StudentExerciseMax,
     WeeklyWodPlan,
+    WodGenerationCreditLedger,
     WorkoutWeeklyManagementCheckpoint,
 )
 
@@ -122,3 +123,9 @@ class PlanMovementAdmin(admin.ModelAdmin):
 class ReplicationBatchAdmin(admin.ModelAdmin):
     list_display = ('weekly_plan', 'created_by', 'sessions_targeted', 'sessions_created', 'undone_at', 'created_at')
     search_fields = ('weekly_plan__label',)
+
+
+@admin.register(WodGenerationCreditLedger)
+class WodGenerationCreditLedgerAdmin(admin.ModelAdmin):
+    list_display = ('period_start', 'free_credits_used', 'free_credits_total', 'purchased_credits_available', 'credits_remaining')
+    ordering = ('-period_start',)
