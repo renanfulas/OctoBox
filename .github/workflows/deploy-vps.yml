@@ -192,7 +192,7 @@ jobs:
     timeout-minutes: 3
     steps:
       - name: Checkout main (SHA de referencia)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 1
