@@ -128,7 +128,7 @@ Não re-verificado a fundo nesta auditoria (classificação herdada da varredura
 | [vertical-sky-beam-readiness-guide.md](vertical-sky-beam-readiness-guide.md) | Cross-capability | Guia de prontidão — acompanha o roadmap acima |
 | [top-layer-architecture-execution-plan.md](top-layer-architecture-execution-plan.md) | Arquitetura | Fase 0/1 já fechadas — próximo: frentes de Alert Siren / Red Beacon |
 | [PaymentUI.md](PaymentUI.md) | Pagamentos | Ondas 1-4 — sem evidência de conclusão, verificar contra a UI atual antes de retomar |
-| [divulgacao-launch-plan.md](divulgacao-launch-plan.md) | Comercial | Ciclo semanal 80/20 agente/humano (indicação, cold e-mail, LinkedIn, landing/SEO, Instagram/Facebook) — revisado em 2026-08-29; ver [divulgacao-pipeline-tracker.md](divulgacao-pipeline-tracker.md) para o estado do funil |
+| [divulgacao-launch-plan.md](divulgacao-launch-plan.md) | Comercial | Ciclo semanal 80/20 agente/humano (indicação, WhatsApp, cold e-mail, LinkedIn, landing/SEO, Instagram/Facebook) — revisado em 2026-08-29; 119 leads no [tracker](divulgacao-pipeline-tracker.md), gargalo passou a ser contato, não pesquisa |
 
 ## Precisa verificação manual (não dá pra confirmar só pelo repositório)
 

@@ -79,7 +79,7 @@ conversa de venda" — cai para o humano, já pronta para execução em segundos
 
 | Ordem | Canal | Por que aqui | Automatizável pelo agente |
 |---|---|---|---|
-| 1 | **Indicação do cliente atual** | Box de CrossFit é comunidade pequena e interconectada (competições, afiliação). Indicação calorosa converte muito mais que abordagem fria, e custa uma mensagem. Reforçado pela pesquisa: 7 dos 31 leads levantados são de Guarulhos, mesma cidade da Endorfina — o Fernando provavelmente conhece vários. | Pesquisa de contexto + redação da mensagem de pedido de indicação e do follow-up — 90% |
+| 1 | **Indicação do cliente atual** | Box de CrossFit é comunidade pequena e interconectada (competições, afiliação). Indicação calorosa converte muito mais que abordagem fria, e custa uma mensagem. Reforçado pela pesquisa: 7 dos 119 leads levantados são de Guarulhos, mesma cidade da Endorfina — o Fernando provavelmente conhece vários. | Pesquisa de contexto + redação da mensagem de pedido de indicação e do follow-up — 90% |
 | 2 | **WhatsApp (contato morno)** | É onde o público vive, e é o contato que a pesquisa efetivamente entrega. Restrito a contato morno: indicação do Fernando e quem já respondeu por outro canal. **Nunca disparo frio em massa** — queima o número. | Redação da mensagem — 90%; envio depende do conector de WhatsApp estar ativo |
 | 3 | **Cold e-mail** | Continua sendo o canal de melhor controle ponta a ponta (Gmail conectado), mas cai de posição porque o e-mail do box precisa ser garimpado site a site — não vem pronto na pesquisa. | Garimpo do e-mail + redação + rascunho pronto — 85%; envio inicial fica com humano por reputação (ver guardrail) |
 | 4 | **LinkedIn (abordagem direta)** | Decisor identificável, mas sem API — precisa de humano em cada envio. Cobertura de dono de box pequeno no LinkedIn tende a ser fraca no Brasil. | Pesquisa de perfil + redação da mensagem — 80%; enviar é sempre humano |
@@ -134,9 +134,10 @@ limite real de API nesta sessão.
 Cada semana, o agente:
 
 1. Varre uma região nova com o TomTom Maps (raio geográfico), deduplica por marca, filtra
-   não-boxes e adiciona ao rastreador já qualificado por afiliação oficial. Ordem de varredura
-   sugerida: Guarulhos e ZN/ZL de SP (feito) → zona sul/oeste de SP → ABC → Osasco → demais
-   capitais.
+   não-boxes e adiciona ao rastreador já qualificado por afiliação oficial. Guarulhos, ZN/ZL,
+   zona sul, ABC e zona oeste/Osasco já cobertos (119 leads no tracker) — a partir daqui o
+   gargalo é contato, não pesquisa; nova varredura só quando os tiers atuais se esgotarem sem
+   converter. Próxima fronteira, se necessário: litoral e interior próximo, ou outras capitais.
 2. Redige e deixa como **rascunho no Gmail** os e-mails frios da semana (um por lead novo).
 3. Redige as mensagens de LinkedIn da semana (5-10, no ritmo que um humano consegue mandar sem
    parecer bot) e entrega como lista pronta para copiar/colar.
