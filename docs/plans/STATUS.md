@@ -128,6 +128,7 @@ Não re-verificado a fundo nesta auditoria (classificação herdada da varredura
 | [vertical-sky-beam-readiness-guide.md](vertical-sky-beam-readiness-guide.md) | Cross-capability | Guia de prontidão — acompanha o roadmap acima |
 | [top-layer-architecture-execution-plan.md](top-layer-architecture-execution-plan.md) | Arquitetura | Fase 0/1 já fechadas — próximo: frentes de Alert Siren / Red Beacon |
 | [PaymentUI.md](PaymentUI.md) | Pagamentos | Ondas 1-4 — sem evidência de conclusão, verificar contra a UI atual antes de retomar |
+| [divulgacao-launch-plan.md](divulgacao-launch-plan.md) | Comercial | Fase 0 (pipeline via LinkedIn/landing) — criado em 2026-08-29, depende do gate de `phase1-commercial-gate-audit-2026-08-06.md` para liberar Fase 2 |
 
 ## Precisa verificação manual (não dá pra confirmar só pelo repositório)
 
