@@ -17,4 +17,4 @@ cryptography==50.0.0
 # Security floor for transitive environment dependencies flagged by Safety.
 pillow==12.3.0
 requests==2.33.1
-pywebpush==2.3.0
+pywebpush==2.4.0
