@@ -100,9 +100,100 @@ Pra facilitar: separei os boxes aqui de Guarulhos. Se conhecer alguém dessa lis
 
 ## Canal 2 — Primeiro contato em box indicado
 
-_(a redigir quando as primeiras indicações chegarem — a copy muda conforme quem indicou e o quê
-o Fernando contar sobre a relação)_
+Quando o Fernando (ou outro cliente) devolver nomes, a abordagem deixa de ser fria. A diferença
+não é cosmética: citar quem indicou logo na primeira linha é o que separa "número desconhecido
+vendendo algo" de "conhecido de conhecido".
+
+### Mensagem 1 — abertura com a indicação
+
+```text
+Oi, tudo bem? Meu nome é Renan.
+
+O Fernando, da Endorfina Cross, me passou seu contato — ele usa um sistema que eu desenvolvi pra gestão de box e comentou que talvez fizesse sentido pra você também.
+
+Posso te fazer uma pergunta rápida? Como você controla mensalidade e presença dos alunos hoje?
+```
+
+Regras:
+
+1. **Nunca citar quem indicou sem autorização.** Confirmar com o Fernando que ele topa ser
+   mencionado antes de mandar.
+2. Se ele indicou mas pediu para não ser citado, usar a copy fria do Canal 3.
+3. Se o Fernando contar algo específico da relação ("treinamos juntos", "ele abriu o box no mesmo
+   ano"), trocar a segunda linha por isso — vale mais que qualquer template.
 
 ## Canal 3 — Primeiro contato frio
 
-_(a redigir na próxima rodada do ciclo semanal)_
+**Meio principal:** WhatsApp (é o que os dados entregam — 24 dos 31 leads têm celular).
+**Meio secundário:** e-mail, quando houver.
+
+### Racional da copy
+
+1. **Curta de verdade.** Parede de texto vinda de número desconhecido no WhatsApp é bloqueio na
+   certa. A mensagem 1 cabe em uma tela de celular sem rolar.
+2. **Objetivo da mensagem 1 é resposta, não venda.** Nada de preço, nada de lista de recursos,
+   nada de "podemos agendar uma call?". Só uma pergunta fácil de responder.
+3. **Sem link no primeiro contato.** Link de número desconhecido tem cara de golpe e derruba a
+   taxa de resposta. O Calendly entra só depois que a pessoa respondeu.
+4. **Prova local em vez de credencial.** "Atendo um box aqui em Guarulhos" vale mais para um dono
+   vizinho do que qualquer adjetivo sobre o produto. Concreto, verificável, e ele provavelmente
+   conhece a Endorfina.
+5. **A pergunta é escolhida para dar vontade de responder.** Controle de mensalidade na mão é
+   dor universal e queixa fácil — dono de box gosta de falar disso. "Tem interesse em conhecer
+   nosso sistema?" só produz silêncio.
+
+### Mensagem 1 — abertura fria (WhatsApp)
+
+```text
+Oi, tudo bem? Meu nome é Renan, sou de Guarulhos.
+
+Desenvolvi um sistema de gestão pra box de CrossFit e hoje atendo a Endorfina Cross aqui na região.
+
+Posso te fazer uma pergunta rápida? Como vocês controlam mensalidade e presença dos alunos hoje — planilha, caderno, algum sistema?
+```
+
+### Mensagem 2 — só depois que a pessoa responder
+
+Encaixar na dor que ela **de fato** citou. Não mandar isso solto.
+
+```text
+É exatamente por isso que eu construí o OctoBox — [conectar com o que a pessoa respondeu].
+
+Tô abrindo poucas vagas agora, porque acompanho cada box de perto no começo. O primeiro mês é livre pra testar, sem cartão, e o preço é de fundador pra quem entra nessa fase.
+
+Se quiser ver funcionando, são 30 min: https://calendly.com/renanfulas/octobox-conversa-com-dono-de-box
+```
+
+### Variante e-mail (quando houver endereço)
+
+Assunto: `pergunta sobre a gestão do <nome do box>`
+
+```text
+Oi, tudo bem?
+
+Meu nome é Renan, sou de Guarulhos e desenvolvi um sistema de gestão pra box de CrossFit. Hoje atendo a Endorfina Cross aqui na região.
+
+Escrevo porque estou abrindo poucas vagas para os próximos boxes, e queria entender se faz sentido pra vocês antes de tomar mais do seu tempo.
+
+Como vocês controlam mensalidade, presença e cadastro de aluno hoje? Se for planilha somada a WhatsApp, é bem provável que eu consiga ajudar.
+
+Se quiser ver funcionando, são 30 minutos:
+https://calendly.com/renanfulas/octobox-conversa-com-dono-de-box
+
+Abraço,
+Renan
+```
+
+### Guardrails do contato frio
+
+1. **Volume:** no máximo 5-8 contatos novos por dia no WhatsApp, espaçados. Disparo em rajada
+   queima o número — e número queimado custa mais caro que qualquer lead.
+2. **Horário:** comercial, e nunca nos picos de aula (06:00-10:00 e 17:00-21:00) — é quando o
+   dono está no salão e a mensagem morre na rolagem.
+3. **Follow-up:** um único toque se não houver resposta em ~5 dias úteis. Depois disso, para.
+   Dois toques sem resposta é o limite; o terceiro vira incômodo e vira bloqueio.
+4. **Nunca** prometer recurso que não existe, nem SLA de recuperação de dados além do que já está
+   publicamente assumido hoje.
+5. Antes de contatar, conferir as notas do [tracker](divulgacao-pipeline-tracker.md): há marcas
+   com duas unidades (Saurus, ZN/ZN2) e um provável endereço duplicado (Crossfit Norte × Betta).
+   Abordar a mesma gestão duas vezes queima a impressão logo na largada.
