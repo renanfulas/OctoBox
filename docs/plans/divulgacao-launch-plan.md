@@ -71,16 +71,29 @@ conversa de venda" — cai para o humano, já pronta para execução em segundos
 
 ## Por que os canais estão nesta ordem (probabilidade x automatizabilidade)
 
+> **Revisão de 2026-08-29 (tarde):** esta ordem foi ajustada depois da primeira leva real de
+> pesquisa. A fonte de dados de boxes (TomTom Maps) entrega **telefone, não e-mail** — e a
+> maioria dos telefones é celular, ou seja, WhatsApp. O canal *disponível* para este público não
+> é e-mail; é telefone/WhatsApp. Ver "Achado que muda o plano" em
+> [divulgacao-pipeline-tracker.md](divulgacao-pipeline-tracker.md).
+
 | Ordem | Canal | Por que aqui | Automatizável pelo agente |
 |---|---|---|---|
-| 1 | **Indicação do cliente atual** | Box de CrossFit é comunidade pequena e interconectada (competições, afiliação). Indicação calorosa converte muito mais que abordagem fria, e custa uma mensagem. | Pesquisa de contexto + redação da mensagem de pedido de indicação e do follow-up — 90% |
-| 2 | **Cold e-mail** | Único canal onde o agente controla research → redação → envio → rastreio de resposta ponta a ponta (Gmail conectado). Maior volume por hora de trabalho humano. | Pesquisa de lead + redação + rascunho pronto — 90%; envio inicial fica com humano por reputação (ver guardrail) |
-| 3 | **LinkedIn (abordagem direta)** | Decisor identificável, mas sem API — precisa de humano em cada envio. | Pesquisa de perfil + redação da mensagem — 80%; enviar é sempre humano |
-| 4 | **Landing page + SEO** | Já existe, zero atrito, captura organicamente sem ação recorrente do humano. | Cópia, formulário, conteúdo de blog/SEO — 100%, é código no repo |
-| 5 | **Instagram / Facebook orgânico** | Onde donos de box efetivamente vivem, mas sem API de publicação — cada post exige um upload humano. | Roteiro, legenda e a imagem/vídeo em si via Higgs — 85%; postar é sempre humano |
+| 1 | **Indicação do cliente atual** | Box de CrossFit é comunidade pequena e interconectada (competições, afiliação). Indicação calorosa converte muito mais que abordagem fria, e custa uma mensagem. Reforçado pela pesquisa: 7 dos 31 leads levantados são de Guarulhos, mesma cidade da Endorfina — o Fernando provavelmente conhece vários. | Pesquisa de contexto + redação da mensagem de pedido de indicação e do follow-up — 90% |
+| 2 | **WhatsApp (contato morno)** | É onde o público vive, e é o contato que a pesquisa efetivamente entrega. Restrito a contato morno: indicação do Fernando e quem já respondeu por outro canal. **Nunca disparo frio em massa** — queima o número. | Redação da mensagem — 90%; envio depende do conector de WhatsApp estar ativo |
+| 3 | **Cold e-mail** | Continua sendo o canal de melhor controle ponta a ponta (Gmail conectado), mas cai de posição porque o e-mail do box precisa ser garimpado site a site — não vem pronto na pesquisa. | Garimpo do e-mail + redação + rascunho pronto — 85%; envio inicial fica com humano por reputação (ver guardrail) |
+| 4 | **LinkedIn (abordagem direta)** | Decisor identificável, mas sem API — precisa de humano em cada envio. Cobertura de dono de box pequeno no LinkedIn tende a ser fraca no Brasil. | Pesquisa de perfil + redação da mensagem — 80%; enviar é sempre humano |
+| 5 | **Landing page + SEO** | Já existe, zero atrito, captura organicamente sem ação recorrente do humano. | Cópia, formulário, conteúdo de blog/SEO — 100%, é código no repo |
+| 6 | **Instagram / Facebook orgânico** | Onde donos de box efetivamente vivem, mas **não existe conector de publicação** no registry (só analytics e ads) — cada post exige upload humano. | Roteiro, legenda e a imagem/vídeo em si via Higgs — 85%; postar é sempre humano |
 
-Ordem 1-2 são as de maior retorno por esforço humano — priorizar aí primeiro. 3-5 entram no ciclo
+Ordem 1-3 são as de maior retorno por esforço humano — priorizar aí primeiro. 4-6 entram no ciclo
 semanal em paralelo, não depois.
+
+### Sinal de qualificação descoberto na pesquisa
+
+Box com URL `crossfit.com/gym/...` é **afiliado oficial da CrossFit HQ** — paga taxa de
+afiliação, logo é negócio estabelecido, com operação real e carga administrativa de verdade.
+É o alvo mais qualificado e deve ser contatado primeiro dentro de cada região.
 
 ## Estado atual (verificado no repo + Stripe em 2026-08-29)
 
@@ -97,7 +110,7 @@ semanal em paralelo, não depois.
 
 | Atividade | Quem faz | Detalhe |
 |---|---|---|
-| Pesquisar boxes-alvo (nome, cidade, site, e-mail/Instagram público) | **Agente** | via busca web, sem precisar de lista pronta do humano |
+| Pesquisar boxes-alvo (nome, cidade, endereço, telefone, site) | **Agente** | via TomTom Maps — enumeração sistemática por raio geográfico, ~40 resultados por consulta, sem precisar de lista pronta do humano |
 | Redigir mensagem de pedido de indicação ao cliente atual | **Agente** | pronta para copiar/colar ou enviar por e-mail direto |
 | Redigir e-mail frio personalizado por lead | **Agente** | usa o que achou na pesquisa (dor real, não genérico) |
 | Enviar as primeiras levas de e-mail | **Humano** (1a fase) → **Agente** depois de validar | ver guardrail de reputação abaixo |
@@ -120,9 +133,10 @@ limite real de API nesta sessão.
 
 Cada semana, o agente:
 
-1. Pesquisa 15-20 boxes-alvo novos (cidade, porte, sinais de dor operacional visíveis
-   publicamente — Instagram cheio de post manual de horário, reclamação de aluno sobre cobrança,
-   etc.) e adiciona ao rastreador.
+1. Varre uma região nova com o TomTom Maps (raio geográfico), deduplica por marca, filtra
+   não-boxes e adiciona ao rastreador já qualificado por afiliação oficial. Ordem de varredura
+   sugerida: Guarulhos e ZN/ZL de SP (feito) → zona sul/oeste de SP → ABC → Osasco → demais
+   capitais.
 2. Redige e deixa como **rascunho no Gmail** os e-mails frios da semana (um por lead novo).
 3. Redige as mensagens de LinkedIn da semana (5-10, no ritmo que um humano consegue mandar sem
    parecer bot) e entrega como lista pronta para copiar/colar.
