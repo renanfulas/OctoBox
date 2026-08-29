@@ -39,13 +39,13 @@ PONTOS CRITICOS:
 | Ferramenta | Estado | Para quê |
 |---|---|---|
 | TomTom Maps | ativo | enumeração geográfica de boxes-alvo |
-| Airtable — base `OctoBox — Pipeline de Divulgação` | **31 de 119 leads carregados** — os 88 novos aguardam o conector voltar | espelho deste tracker, legível/editável no celular |
+| Airtable — base `OctoBox — Pipeline de Divulgação` | **119 de 119 leads sincronizados** (2026-08-29) | espelho deste tracker, legível/editável no celular |
 | Calendly — `calendly.com/renanfulas/octobox-conversa-com-dono-de-box` (30 min) | ativo | link de agendamento para colar em toda abordagem |
 | Gmail | ativo | rascunhos de cold e-mail |
-| Stripe (`Octoboxfit`, livemode) | ativo | leitura de conversão real e MRR |
+| Stripe (`Octoboxfit`, livemode) | **caiu de novo, precisa reautorizar** | leitura de conversão real e MRR — bloqueado até reconectar |
 | Higgs | ativo | geração de imagem/vídeo para redes |
 | Apollo.io | ativo | 199 créditos de lead; créditos de discagem direta esgotados |
-| LetsBot (WhatsApp) | **conectado mas sem número pareado** | bloqueia o canal 2 do plano até parear |
+| LetsBot (WhatsApp) | pareado, mas sem contatos carregados ainda | canal 2 do plano — pronto para uso morno assim que houver conversa iniciada |
 
 Este arquivo (versionado no repo) continua sendo a fonte de verdade; o Airtable é o espelho
 de conveniência. Em divergência, vale o que está aqui.
