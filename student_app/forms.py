@@ -5,6 +5,7 @@ from django import forms
 from django.utils import timezone
 
 from finance.models import MembershipPlan
+from operations.services.wod_paste_parser import resolve_movement_slug
 from shared_support.crypto_fields import generate_blind_index
 from shared_support.form_inputs import (
     LenientDateField,
@@ -85,7 +86,17 @@ class WorkoutPrescriptionForm(forms.Form):
 
 
 class StudentExerciseMaxForm(forms.Form):
-    exercise_label = forms.CharField(label='Movimento', max_length=120)
+    exercise_label = forms.CharField(
+        label='Movimento',
+        max_length=120,
+        widget=forms.TextInput(
+            attrs={
+                'autocomplete': 'off',
+                'placeholder': 'Ex.: Agachamento',
+                'data-ui': 'student-rm-movement-input',
+            }
+        ),
+    )
     one_rep_max_kg = forms.DecimalField(
         label='RM (kg)',
         min_value=Decimal('0.5'),
@@ -102,8 +113,14 @@ class StudentExerciseMaxForm(forms.Form):
         ),
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.resolved_exercise_slug = None
+
     def clean_exercise_label(self):
-        return (self.cleaned_data.get('exercise_label') or '').strip()
+        raw_label = (self.cleaned_data.get('exercise_label') or '').strip()
+        self.resolved_exercise_slug = resolve_movement_slug(raw_label)
+        return raw_label
 
 
 class StudentExerciseMaxUpdateForm(forms.Form):

@@ -346,6 +346,55 @@ ARQUIVO: tela RMs do aluno (skin v2 — visual do protótipo).
     width: 100%;
 }
 
+.student-rm-movement-field {
+    position: relative;
+}
+
+.student-rm-suggest {
+    position: absolute;
+    z-index: 4;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
+    background: var(--theme-surface-strong);
+    box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.45);
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.student-rm-suggest__item {
+    padding: 9px 10px;
+    border-radius: 10px;
+    color: var(--theme-text-secondary);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.student-rm-suggest__item.is-active,
+.student-rm-suggest__item:hover {
+    color: var(--theme-text-primary);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 45%, var(--theme-surface-secondary) 55%);
+}
+
+.student-rm-duplicate-warning {
+    grid-column: 1 / -1;
+    margin: -4px 0 0;
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-warning) 32%, transparent);
+    background: var(--theme-accent-warning-alpha);
+    color: color-mix(in srgb, var(--theme-accent-warning) 55%, var(--theme-text-primary) 45%);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
 /* ── Campo com unidade (compartilhado) ────────────────────── */
 .student-field-with-unit {
     position: relative;

@@ -23,6 +23,7 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import FormView, TemplateView, View
 
+from operations.services.wod_paste_parser import load_wod_movement_dictionary
 from student_app.application.activity import record_student_app_activity
 from student_app.application.rm_snapshots import get_student_rm_snapshot
 from student_app.application.timezone import resolve_box_timezone
@@ -325,6 +326,17 @@ class StudentRmView(StudentIdentityRequiredMixin, TemplateView):
         )
         context['add_rm_form'] = StudentExerciseMaxForm()
         context['percentage_choices'] = tuple(range(5, 105, 5))
+        context['movement_dictionary'] = [
+            {'slug': slug, 'label': slug.replace('_', ' ').title(), 'aliases': list(aliases)}
+            for slug, aliases in load_wod_movement_dictionary()
+        ]
+        context['rm_existing_records_json'] = {
+            card.record.exercise_slug: {
+                'label': card.record.exercise_label,
+                'kg': float(card.record.one_rep_max_kg),
+            }
+            for card in rm_snapshot['cards']
+        }
         return self._attach_student_shell_context(context)
 
 
@@ -335,7 +347,7 @@ class StudentAddRmView(StudentIdentityRequiredMixin, View):
             messages.error(request, 'Confira os dados e tente novamente.')
             return redirect('student-app-rm')
         label = form.cleaned_data['exercise_label']
-        slug = _slugify_exercise(label)
+        slug = form.resolved_exercise_slug or _slugify_exercise(label)
         kg = form.cleaned_data['one_rep_max_kg']
         obj, created = StudentExerciseMax.objects.get_or_create(
             student=request.student_identity.student,

@@ -9,10 +9,12 @@
     </div>
     <form method="post" action="{% url 'student-app-rm-add' %}" class="student-form student-form-grid student-rm-entry__form">
         {% csrf_token %}
-        <label>
+        <label class="student-rm-movement-field" data-ui="student-rm-movement-field">
             <span>Movimento</span>
             {{ add_rm_form.exercise_label }}
+            <ul class="student-rm-suggest" data-ui="student-rm-suggest" role="listbox" hidden></ul>
         </label>
+        <p class="student-rm-duplicate-warning" data-ui="student-rm-duplicate-warning" hidden></p>
         <label>
             <span>Carga base</span>
             <span class="student-field-with-unit">
@@ -23,3 +25,5 @@
         <button type="submit" class="student-primary-action student-rm-entry__submit">Salvar RM</button>
     </form>
 </section>
+{{ movement_dictionary|json_script:"rm-movement-dictionary" }}
+{{ rm_existing_records_json|json_script:"rm-existing-records" }}
