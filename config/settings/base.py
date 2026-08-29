@@ -581,6 +581,11 @@ STUDENT_EMAIL_PROVIDER = env_str('STUDENT_EMAIL_PROVIDER', 'smtp')
 STUDENT_EMAIL_FROM = env_str('STUDENT_EMAIL_FROM')
 STUDENT_RESEND_API_KEY = env_str('STUDENT_RESEND_API_KEY')
 STUDENT_RESEND_WEBHOOK_SECRET = env_str('STUDENT_RESEND_WEBHOOK_SECRET')
+# Sem isto, o backend SMTP do Django nao aplica timeout nenhum ao socket —
+# um provedor de email travado prenderia a thread de envio (background ou
+# nao) para sempre. A confirmacao de pagamento e o onboarding do Early
+# Adopter passam por aqui (finance/payment_notifications.py, signup/services.py).
+EMAIL_TIMEOUT = env_int('EMAIL_TIMEOUT', 10)
 STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS = env_int('STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS', 300)
 STUDENT_INVITE_LANDING_RATE_LIMIT_MAX_REQUESTS = env_int('STUDENT_INVITE_LANDING_RATE_LIMIT_MAX_REQUESTS', 20)
 STUDENT_OAUTH_CALLBACK_RATE_LIMIT_WINDOW_SECONDS = env_int('STUDENT_OAUTH_CALLBACK_RATE_LIMIT_WINDOW_SECONDS', 300)
