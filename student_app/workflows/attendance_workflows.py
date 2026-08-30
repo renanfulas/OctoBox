@@ -34,7 +34,16 @@ OCCUPANCY_STATUSES = (
 
 
 class AttendanceNotAvailableError(Exception):
-    """Levanta quando a aula nao pode ser reservada pelo app do aluno."""
+    """Levanta quando a aula nao pode ser reservada pelo app do aluno.
+
+    conflicting_session, quando presente, e a aula que esta bloqueando a nova
+    reserva (uma reserva ativa) — usado pela view para levar o aluno direto
+    pra ela em vez de so dizer "voce ja tem uma reserva" sem indicar qual.
+    """
+
+    def __init__(self, message, *, conflicting_session=None):
+        super().__init__(message)
+        self.conflicting_session = conflicting_session
 
 
 @dataclass(frozen=True)
@@ -102,8 +111,12 @@ def confirm_student_attendance(*, student, session_id) -> AttendanceConfirmation
             active_start = timezone.localtime(active_session.scheduled_at, box_timezone)
             active_end = active_start + timedelta(minutes=active_session.duration_minutes or 60)
             if active_end > now:
+                day_word = 'hoje' if active_start.date() == now.date() else 'amanhã'
                 raise AttendanceNotAvailableError(
-                    'Você já tem uma reserva ativa. Só pode reservar a próxima aula depois que a atual terminar.'
+                    f'Você já tem uma reserva ativa em {active_session.title} '
+                    f'({day_word} às {active_start.strftime("%H:%M")}). '
+                    'Cancele-a para reservar esta, ou espere ela terminar.',
+                    conflicting_session=active_session,
                 )
 
         attendance, created = Attendance.objects.get_or_create(

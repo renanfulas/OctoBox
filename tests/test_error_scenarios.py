@@ -175,6 +175,41 @@ class ErrorScenarioTests(TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
+    def test_freeze_returns_400_for_malformed_json_body(self):
+        """Corpo que não é JSON válido vira 400 com mensagem, não 500 cru."""
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse('api-v1-finance-freeze'),
+            data='isto nao e json{{{',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json())
+
+    # ── 3b. api-v1-finance-payments-bulk ────────────────────────────────────
+
+    def test_bulk_action_returns_400_for_malformed_json_body(self):
+        """Corpo que não é JSON válido vira 400 com mensagem, não 500 cru (C2)."""
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse('api-v1-finance-payments-bulk'),
+            data='isto nao e json{{{',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json())
+
+    def test_bulk_action_returns_400_when_body_is_not_a_json_object(self):
+        """JSON válido mas que não é um objeto (ex.: lista) também não deve crashar."""
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse('api-v1-finance-payments-bulk'),
+            data=json.dumps(['not', 'a', 'dict']),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json())
+
     # ── 4. attendance-action ───────────────────────────────────────────────
 
     def test_attendance_action_anonymous_redirects_to_login(self):
@@ -245,4 +280,31 @@ class ErrorScenarioTests(TestCase):
         self.assertTrue(
             any('nao foi aplicada' in msg for msg in flash_messages),
             msg=f'Mensagem de erro esperada não encontrada. Mensagens presentes: {flash_messages}',
+        )
+
+    def test_reception_payment_action_error_message_points_at_the_failing_field(self):
+        """A mensagem de erro deve citar so o(s) campo(s) que realmente falharam,
+        nao sempre os 3 possiveis (achado do relatorio de simulacao de 30 dias:
+        Maria via 'revise vencimento, metodo e referencia' mesmo quando so um
+        campo estava errado e nao sabia qual consertar)."""
+        self.client.force_login(self.reception)
+        response = self.client.post(
+            reverse('reception-payment-action', args=[self.payment.pk]),
+            data={
+                'payment_id': self.payment.pk,
+                'action': 'update-payment',
+                'due_date': '31/02/2026',  # data invalida (fevereiro nao tem 31 dias)
+                'method': 'pix',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        flash_messages = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertTrue(
+            any('revise vencimento.' in msg.lower() for msg in flash_messages),
+            msg=f'Esperava mensagem citando so "vencimento". Mensagens presentes: {flash_messages}',
+        )
+        self.assertFalse(
+            any('metodo' in msg.lower() or 'referencia' in msg.lower() for msg in flash_messages),
+            msg=f'Mensagem nao devia citar campos validos. Mensagens presentes: {flash_messages}',
         )

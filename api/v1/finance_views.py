@@ -12,6 +12,7 @@ PONTOS CRITICOS:
 - endpoints daqui devem continuar pequenos e previsiveis.
 """
 import json
+import logging
 from datetime import timedelta
 
 from django.db import transaction
@@ -29,6 +30,8 @@ from finance.models import EnrollmentStatus, Payment, PaymentStatus
 from integrations.stripe.services import create_checkout_session
 from shared_support.security.fintech_throttles import checkout_rate_limit_exceeded
 from students.models import Student
+
+logger = logging.getLogger(__name__)
 
 
 def _build_payment_management_form(student):
@@ -117,8 +120,19 @@ class PaymentLinkView(LoginRequiredMixin, View):
         try:
             url = create_checkout_session(payment, request)
             return JsonResponse({'url': url})
-        except Exception as exc:
-            return JsonResponse({'error': str(exc)}, status=500)
+        except ValueError as exc:
+            # Erro de negocio (ex.: pagamento ja consta como pago) — mensagem
+            # ja e segura para o usuario final.
+            return JsonResponse({'error': str(exc)}, status=400)
+        except Exception:
+            # Falha do gateway (Stripe fora do ar, egress bloqueado, etc): loga o
+            # detalhe interno e devolve 502 com mensagem de negocio, sem vazar o
+            # texto cru do provedor para quem esta na tela.
+            logger.exception('PaymentLinkView: falha ao gerar link de pagamento para payment_id=%s', payment_id)
+            return JsonResponse(
+                {'error': 'Não foi possível gerar o link agora. Tente novamente em instantes ou confirme o pagamento pelo balcão.'},
+                status=502,
+            )
 
 class StudentFreezeView(LoginRequiredMixin, View):
     """
@@ -127,15 +141,30 @@ class StudentFreezeView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
-            student_id = data.get('student_id')
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {'error': 'O corpo da requisicao nao e um JSON valido. Recarregue a pagina e tente novamente.'},
+                status=400,
+            )
+        if not isinstance(data, dict):
+            return JsonResponse(
+                {'error': 'O corpo da requisicao nao e um JSON valido. Recarregue a pagina e tente novamente.'},
+                status=400,
+            )
+
+        student_id = data.get('student_id')
+        try:
             days = int(data.get('days', 0))
+        except (TypeError, ValueError):
+            days = 0
 
-            if not student_id or days <= 0:
-                return JsonResponse({'error': 'Invalid student_id or days'}, status=400)
+        if not student_id or days <= 0:
+            return JsonResponse({'error': 'Informe o aluno e uma quantidade de dias maior que zero.'}, status=400)
 
+        try:
             with transaction.atomic():
                 student = Student.objects.get(pk=student_id)
-                
+
                 # 1. Update Active Enrollment
                 enrollment = student.enrollments.filter(status=EnrollmentStatus.ACTIVE).first()
                 if enrollment and enrollment.end_date:
@@ -155,8 +184,12 @@ class StudentFreezeView(LoginRequiredMixin, View):
 
         except Student.DoesNotExist:
             return JsonResponse({'error': 'Student not found'}, status=404)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+        except Exception:
+            logger.exception('StudentFreezeView: falha ao congelar student_id=%s por %s dias', student_id, days)
+            return JsonResponse(
+                {'error': 'Não foi possível congelar a matrícula agora. Tente novamente em instantes.'},
+                status=500,
+            )
 
 
 class PaymentBulkActionView(GenericBulkActionView):

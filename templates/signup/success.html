@@ -65,6 +65,16 @@ O QUE ESTE ARQUIVO FAZ:
                         com o link para ativar sua conta e configurar o box.
                     </p>
                 {% endif %}
+
+                {% if pending and pending.status == 'paid' %}
+                <div class="checkout-resend-panel" data-resend-activation data-resend-url="{% url 'signup-resend-activation' pending.pk %}">
+                    {% csrf_token %}
+                    <p class="checkout-resend-question">Não recebeu o e-mail? Confira o spam ou peça de novo.</p>
+                    <button type="button" class="checkout-resend-button" data-resend-button>Reenviar e-mail de ativação</button>
+                    <p class="checkout-resend-status" data-resend-status hidden aria-live="polite"></p>
+                </div>
+                {% endif %}
+
                 <p class="checkout-result-foot">
                     Em até 12h vamos te chamar no WhatsApp para guiar o setup juntos.
                 </p>
@@ -98,5 +108,8 @@ O QUE ESTE ARQUIVO FAZ:
             <a class="checkout-back-home" href="/">Voltar para a home</a>
         </section>
     </main>
+    {% if mode == 'success' and pending and pending.status == 'paid' %}
+    <script defer src="{% static 'js/pages/signup/resend_activation.js' %}?v={{ static_asset_version }}"></script>
+    {% endif %}
 </body>
 </html>

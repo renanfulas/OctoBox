@@ -332,6 +332,41 @@ class CatalogViewTests(TestCase):
         )
         self.assertTrue(all(item.coach_id == self.coach.id for item in created_sessions))
 
+    def test_class_grid_weekend_rotation_error_stays_visible_in_the_rail(self):
+        """Achado do relatorio de simulacao de 30 dias: quando o rodizio de fim
+        de semana falha (ex.: data base sem ciclo escolhido), a resposta
+        precisa trazer o erro especifico dentro do rail (para o JS reabrir o
+        <dialog> do calendario mensal) — nao so o aviso generico do topo."""
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'planner',
+                'title': 'Rodizio Weekend',
+                'coach': self.coach.id,
+                'start_date': '2026-04-01',
+                'end_date': '2026-04-30',
+                'anchor_date': '2026-04-11',
+                'interval_days': '',
+                'weekdays': ['5', '6'],
+                'start_time': '09:00',
+                'sequence_count': 0,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': 'scheduled',
+                'notes': '',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Revise os campos destacados do planejador')
+        self.assertContains(response, 'Escolha o ciclo do rodizio quando informar uma data base.')
+        # O rail so herda "hidden" quando NAO ha erro — com erro, ele precisa
+        # continuar sem o atributo para o JS conseguir reabrir o dialog.
+        self.assertNotContains(response, 'id="class-grid-weekend-rotation" hidden')
+
     def test_class_schedule_form_normalizes_single_digit_hour(self):
         start_date = timezone.localdate() + timezone.timedelta(days=1)
         form = ClassScheduleRecurringForm(

@@ -22,9 +22,10 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth import login
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.views import View
 from django.views.generic import FormView, TemplateView
 
 from .forms import CheckoutForm, OnboardingForm
@@ -36,8 +37,11 @@ from .services import (
     activate_and_provision,
     activate_pending_signup,
     create_checkout_session,
+    generate_magic_token,
     mark_pending_signup_paid,
     query_stripe_session_status,
+    resend_activation_rate_limit_exceeded,
+    send_onboarding_email,
     verify_magic_token,
 )
 
@@ -207,6 +211,67 @@ def _format_brl_cents(amount_cents: int) -> str:
     reais, c = divmod(cents, 100)
     integer_part = f'{reais:,}'.replace(',', '.')
     return f'R$ {integer_part},{c:02d}'
+
+
+class ResendActivationEmailView(View):
+    """Reenvio self-service do email de ativacao, a partir da tela de sucesso.
+
+    Achado S4 do relatorio de simulacao de 30 dias: quando o email de
+    ativacao falha (SMTP fora do ar, foi pro spam, etc.), o cliente que ja
+    pagou ficava olhando pra "em instantes voce vai receber um email" pra
+    sempre, sem nenhum botao — o unico reenvio possivel exigia o operador
+    entrar no Django admin (que nem tem uma acao pronta pra isso).
+
+    O magic-token e stateless (django.core.signing, sem persistencia — ver
+    generate_magic_token), entao reenviar e so gerar um token novo e mandar
+    o email de novo. Idempotente e seguro de repetir.
+    """
+
+    def post(self, request, pending_id, *args, **kwargs):
+        pending = PendingSignup.objects.filter(pk=pending_id).first()
+        if pending is None:
+            return JsonResponse({'ok': False, 'error': 'Cadastro não encontrado.'}, status=404)
+
+        if pending.status == PendingSignupStatus.ACTIVATED:
+            return JsonResponse(
+                {'ok': False, 'code': 'already-activated', 'error': 'Essa conta já foi ativada — você já pode entrar no OctoBox.'},
+                status=409,
+            )
+
+        if pending.status != PendingSignupStatus.PAID:
+            return JsonResponse(
+                {
+                    'ok': False,
+                    'code': 'not-paid-yet',
+                    'error': 'Ainda não identificamos seu pagamento. Aguarde alguns instantes e tente de novo.',
+                },
+                status=409,
+            )
+
+        if resend_activation_rate_limit_exceeded(request, pending_id=pending.pk):
+            return JsonResponse(
+                {
+                    'ok': False,
+                    'code': 'rate-limited',
+                    'error': 'Você já pediu isso há pouco. Espere um minuto e tente de novo.',
+                },
+                status=429,
+            )
+
+        token = generate_magic_token(pending)
+        activation_url = request.build_absolute_uri(reverse('signup-onboarding', kwargs={'token': token}))
+        sent = send_onboarding_email(pending, activation_url=activation_url)
+        if not sent:
+            return JsonResponse(
+                {
+                    'ok': False,
+                    'code': 'send-failed',
+                    'error': 'Não conseguimos enviar agora. Tente de novo em instantes.',
+                },
+                status=502,
+            )
+
+        return JsonResponse({'ok': True, 'message': f'E-mail reenviado para {pending.email}. Confira também a caixa de spam.'})
 
 
 # ─────────────────────────────────────────────────────────────────────────────

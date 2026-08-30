@@ -497,6 +497,65 @@ a { color: inherit; }
     border-color: var(--checkout-line-strong);
 }
 
+/* RESEND ATIVACAO (achado S4 — cliente pago sem caminho) ───────────── */
+
+.checkout-resend-panel {
+    margin: 0 0 28px;
+    padding: 18px 20px;
+    border-radius: 20px;
+    border: 1px solid var(--checkout-line);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.checkout-resend-question {
+    margin: 0 0 12px;
+    font-size: 0.92rem;
+    color: var(--checkout-text-muted);
+}
+
+.checkout-resend-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 22px;
+    border-radius: 999px;
+    border: 1px solid var(--checkout-line-strong);
+    background: transparent;
+    color: var(--checkout-text);
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: border-color 180ms ease, background 180ms ease;
+}
+
+.checkout-resend-button:hover:not(:disabled) {
+    border-color: var(--checkout-cyan-strong);
+    background: rgba(77, 141, 255, 0.1);
+}
+
+.checkout-resend-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.checkout-resend-status {
+    margin: 12px 0 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.checkout-resend-status--info {
+    color: var(--checkout-text-muted);
+}
+
+.checkout-resend-status--success {
+    color: #6ee7b7;
+}
+
+.checkout-resend-status--error {
+    color: #ff9b9b;
+}
+
 /* RESPONSIVE ────────────────────────────────────────── */
 
 @media (max-width: 980px) {
