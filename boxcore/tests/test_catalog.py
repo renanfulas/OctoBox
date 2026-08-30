@@ -1530,6 +1530,28 @@ class CatalogViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
 
+    def test_student_directory_can_export_xlsx(self):
+        """Achado B5 do relatorio de simulacao de 30 dias: a rota devolvia
+        404 cru para xlsx (so csv e pdf estavam implementados)."""
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('student-directory-export', args=['xlsx']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        from io import BytesIO
+
+        from openpyxl import load_workbook
+
+        workbook = load_workbook(BytesIO(response.content))
+        sheet = workbook.active
+        cell_values = [cell.value for row in sheet.iter_rows() for cell in row]
+        self.assertIn('Nome', cell_values)
+        self.assertIn('Bruna Costa', cell_values)
+
     def test_finance_communication_action_registers_whatsapp_log(self):
         self.client.force_login(self.user)
         payment = self.student.payments.first()

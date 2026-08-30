@@ -146,6 +146,10 @@ número um de abrir o app — está travada.
 | C2 | `POST /api/v1/finance/payments/bulk-action/` e `POST /api/v1/finance/freeze-student/` | `json.decoder.JSONDecodeError` em `api/v1/bulk_views.py:21` | `json.loads(request.body)` sem guarda: corpo não-JSON vira **500 em vez de 400**. Com JSON válido, ambas respondem 200/400 corretamente |
 | C3 | `GET /api/v1/finance/payment-link/<id>/` | 500 devolvendo o texto bruto do erro da Stripe no corpo | Falha de gateway deveria ser 502 com mensagem de negócio, não 500 vazando detalhe interno. *(Causa raiz aqui: egress bloqueado no ambiente.)* |
 
+**Status (2026-08-30):** C1, C2 e C3 corrigidos e com teste de regressão
+(`tests/test_workout_weekly_governance.py`, `tests/test_error_scenarios.py`,
+`tests/test_payment_views_coverage.py`).
+
 ## 6. O que bugou (sem 5xx, mas quebrado)
 
 | # | Achado | Evidência |
@@ -156,6 +160,20 @@ número um de abrir o app — está travada.
 | B4 | **Workspace do Manager não existe por padrão** | `OPERATIONS_MANAGER_WORKSPACE_ENABLED=False`. `/operacao/manager/` devolve **404 cru** para o próprio Manager, e `/operacao/` o joga no dashboard genérico |
 | B5 | **Export xlsx devolve 404** | `/alunos/exportar/xlsx/` e `/financeiro/exportar/xlsx/`. CSV e PDF funcionam |
 | B6 | **Rotas de fragmento respondem 405 sem corpo** | `GET /alunos/<id>/drawer/profile/` — 90 ocorrências no journal. Sem mensagem, sem `Allow` legível para o usuário |
+
+**Status (2026-08-30):**
+- B1, B2, B3, B5 corrigidos e com teste de regressão.
+- B4: já tinha a mitigação certa disponível (tela de "recurso desativado" em
+  vez do 404 cru — ver `docs/reports/simulation_30_days_e2e_box.md` PR de
+  recuperação de erro); ligar `OPERATIONS_MANAGER_WORKSPACE_ENABLED` por
+  padrão continua sendo decisão de produto, não bug.
+- **B6 investigado e reclassificado: não é bug do produto.** `/alunos/<id>/drawer/profile/`
+  é POST-only por design (salvar edição rápida do drawer); a leitura/abertura
+  da ficha é `GET /alunos/<id>/drawer/fragments/` (`StudentDrawerFragmentsView`),
+  usada de verdade pelo JS do diretório. As 90 ocorrências vinham do próprio
+  harness (`tools/simulations/e2e_box_30d/run_30d.py`) chamando a rota errada
+  para simular "abrir ficha do aluno" — corrigido no harness. Nenhum caminho
+  real de UI navega para a rota de save via GET.
 
 ## 7. Segurança (o que mais me preocupou)
 

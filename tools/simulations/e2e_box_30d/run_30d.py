@@ -78,7 +78,10 @@ def maria_day(p: Persona, day: int, d: date, students):
     for _ in range(3):
         st = RNG.choice(students)
         p.get(f'/api/v1/students/autocomplete/?q={st[1].split()[0]}', action='autocomplete de aluno')
-        p.get(f'/alunos/{st[0]}/drawer/profile/', action='abrir ficha do aluno', expect=(200, 404))
+        # /drawer/profile/ e POST-only (salvar edicao); abrir a ficha e /drawer/fragments/ (GET).
+        # Achado B6 do relatorio (docs/reports/simulation_30_days_e2e_box.md): o harness
+        # chamava a rota errada e via 405 em vez de 200/404 — nao era bug do produto.
+        p.get(f'/alunos/{st[0]}/drawer/fragments/', action='abrir ficha do aluno', expect=(200, 404))
     # lead novo no balcao
     if day % 2 == 0:
         p.post('/entradas/', {

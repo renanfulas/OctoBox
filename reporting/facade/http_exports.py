@@ -16,6 +16,7 @@ from reporting.infrastructure.http_exports import (
     build_csv_response,
     build_pdf_response,
     build_report_response,
+    build_xlsx_response,
 )
 
 
@@ -26,5 +27,6 @@ def run_report_response_build(report_payload: dict) -> HttpResponse:
 __all__ = [
     'build_csv_response',
     'build_pdf_response',
+    'build_xlsx_response',
     'run_report_response_build',
 ]
