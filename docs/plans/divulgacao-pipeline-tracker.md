@@ -253,10 +253,17 @@ box, nem mesmo o Fernando, passou pelo checkout de assinatura do OctoBox no Stri
 contradiz a leitura anterior deste tracker ("primeiro box pagante desde 2026-05-23"), que foi
 herdada dos docs do repo sem verificação direta no Stripe até agora.
 
-Consequência prática para o plano: **antes de fechar qualquer venda nova (Tier 1/2/3), vale
-confirmar com o Fernando como ele está sendo cobrado hoje** — se é manual/fora do Stripe, o
-checkout precisa ser testado ponta a ponta antes do segundo box passar por ele, para não
-descobrir um problema de cobrança só quando um lead novo tentar pagar.
+**Confirmado com o dono do produto em 2026-08-29: o Fernando está em acordo manual, fora do
+Stripe.** Não é mais uma dúvida em aberto — é fato registrado.
+
+Consequência prática para o plano, agora que a causa está confirmada: **o checkout de assinatura
+nunca foi provado ponta a ponta com pagamento real, e isso é um risco concreto para vender o
+Tier 1/2/3.** Antes de fechar o segundo box, o caminho mais seguro é rodar um checkout de teste
+completo (pode ser em modo test do Stripe, ou uma transação real pequena e cancelável em
+livemode) e confirmar que: 1) o pagamento é processado, 2) o webhook `checkout.session.completed`
+dispara, 3) o e-mail de ativação chega, 4) o onboarding cria Owner + Box corretamente. Sem isso
+provado, vender no Tier 1/2/3 corre o risco de o checkout falhar bem na hora que importa —
+o primeiro pagamento de um lead novo.
 
 ## Métricas semanais
 
