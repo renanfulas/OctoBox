@@ -18,8 +18,11 @@ class GenericBulkActionView(RoleRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         import json
-        payload = json.loads(request.body)
-        
+        try:
+            payload = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Corpo da requisicao nao e um JSON valido.'}, status=400)
+
         item_ids = payload.get('item_ids', [])
         action = payload.get('action')
         
