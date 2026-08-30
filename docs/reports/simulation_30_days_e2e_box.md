@@ -128,7 +128,7 @@ onboarding → **provisionamento do schema `box_crossfit-serra-norte`** → box 
 |---|---|---|
 | Clareza da tela | 8 | Workspace do owner, resumo executivo e relatórios contam a história do box |
 | Velocidade | 9 | p50 60 ms, p95 110 ms — o mais rápido de todos |
-| Autonomia | ~~3~~ → **6** | ✅ O painel de webhooks agora abre pra ele (era 403 por um erro de capitalização). **Ainda não consegue cadastrar a própria equipe pelo app** — P1 segue fora do escopo |
+| Autonomia | ~~3~~ → **8** | ✅ O painel de webhooks agora abre pra ele (era 403 por um erro de capitalização). **Correção (2026-08-30): o achado original P1 estava errado.** `/acessos/` (aba do avatar → "Papéis e acessos") já deixa o Owner cadastrar Coach, Recepção, Manager e DEV — `AccessOverviewView` + `handle_access_profile_create`, testado em `access/tests/test_access_overview.py`. O que resta é fricção, não ausência: o Owner ainda inventa usuário/senha na mão e entrega por fora (voz, WhatsApp) em vez de mandar um convite self-service |
 | Recuperação de erro | ~~5~~ → **9** | ✅ Reverificado de ponta a ponta: reenvio de e-mail responde 404 pra cadastro inexistente, 502 tratado quando o envio falha (não 500), **429 num segundo pedido imediato** (rate limit próprio), e o botão de reenvio aparece na tela de sucesso |
 | Confiança no sistema | 7 | O provisionamento do box funcionou na primeira, e isso vale muito |
 
@@ -150,13 +150,14 @@ O produto é rápido, bonito e bem escrito em português. O que derrubava a nota
 não era complexidade: era **falta de caminho** — e boa parte desse "falta de
 caminho" era, na verdade, mensagem de erro capenga em cima de uma
 funcionalidade que já existia (a baixa de pagamento da recepção sempre
-funcionou; ela só não dizia qual campo estava errado). Essa parte foi
-corrigida e reverificada (§0). O que **continua** faltando é caminho de
-verdade — funcionalidade que simplesmente não existe: o Owner não consegue
-cadastrar a própria equipe pelo app (P1), o aluno depende de um provider
-externo sem plano B (P2), a Recepção não pode dar check-in (P4), e o Manager
-segue sem workspace ligado por padrão (P4/B4-produto). Esses quatro seguem
-sem solução nesta rodada — são decisão de produto, não bug de mensagem.
+funcionou; ela só não dizia qual campo estava errado; o cadastro de equipe
+pelo Owner é outro exemplo do mesmo padrão — ver correção de P1 abaixo).
+Essa parte foi corrigida e reverificada (§0). O que **continua** faltando é
+caminho de verdade — funcionalidade que simplesmente não existe: o aluno
+depende de um provider externo sem plano B (P2), a Recepção não pode dar
+check-in (P4), e o Manager segue sem workspace ligado por padrão
+(P4/B4-produto). Esses três seguem sem solução nesta rodada — são decisão de
+produto, não bug de mensagem.
 
 ---
 
@@ -228,8 +229,8 @@ está no caminho e oferece cancelar — antes só travava.
 
 | # | Achado | Consequência medida |
 |---|---|---|
-| P1 | **O Owner não consegue cadastrar a equipe** | Não existe rota de gestão de staff. Maria, Eric e Diego só existem porque eu os criei fora do app (CLI/admin). Todo box novo depende do fornecedor no dia 1 |
-| P2 | **Aluno só entra com Google** | `/aluno/auth/login/`: *"O login social está em manutenção. Fale com a recepção do seu box."* A recepção não tem ferramenta para liberar. 90 atletas dependem de um provider externo, sem plano B |
+| ~~P1~~ | ~~O Owner não consegue cadastrar a equipe~~ | **❌ Achado inválido (corrigido em 2026-08-30).** A rota existe: `/acessos/` (aba do avatar → "Papéis e acessos"), `AccessOverviewView` + `handle_access_profile_create`, cobre Coach/Recepção/Manager/DEV, testada em `access/tests/test_access_overview.py`. Maria, Eric e Diego foram criados fora do app **nesta simulação por escolha de setup** (o harness usa fixture direto para não repetir o mesmo fluxo testado à exaustão em outras suites), não porque a rota não exista. O que sobra de fricção real: o Owner ainda digita usuário/senha à mão e entrega por fora — ver estratégia "O Convite Vivo" |
+| P2 | **Login do aluno só por Google/Apple, sem recurso quando o provider cai** | `/aluno/auth/login/`: *"O login social está em manutenção. Fale com a recepção do seu box."* A recepção não tem ferramenta para liberar. **Nota:** restringir a Google + Apple ID é decisão de produto deliberada (app é mobile-only; os dois cobrem ~99% de Android/iOS) — não é o achado. O achado é a ausência de qualquer saída quando o provider está fora do ar/mal configurado: 90 atletas ficam sem nenhum caminho, e a mensagem aponta para uma recepção que não pode ajudar |
 | P3 | **Uma reserva ativa por vez** | `attendance_workflows.py`: bloqueia se existir outra reserva cujo fim ainda está no futuro. Resultado medido: **88 alunos × 30 dias × 161 aulas = 88 reservas**. O atleta não consegue marcar segunda, quarta e sexta de uma vez — que é exatamente o ritual de um box |
 | P4 | **Check-in é exclusivo do Coach** | `AttendanceActionView.allowed_roles = (ROLE_COACH,)`. Recepção, Manager e Owner tomam 403. Quem está na porta não pode registrar quem entrou |
 | P5 | **Cadastro em massa esbarra no throttle** | 30 escritas/min por usuário. Maria tomou **5× 429** ao cadastrar os 88 alunos pelo formulário. Existe importação por CSV, mas a tela `/alunos/importar/` responde 405 no GET — só o POST funciona |
@@ -307,18 +308,19 @@ está no caminho e oferece cancelar — antes só travava.
 | 6 | Permitir N reservas futuras (limite por plano, não por "uma") | horas | O loop principal do app do aluno | ⚠️ Pendente (decisão de produto; mensagem de bloqueio já melhorou) |
 | 7 | Liberar check-in para Recepção e Owner | horas | Autonomia da Maria | ⚠️ Pendente |
 | 8 | Tela de sucesso do checkout com link de ativação + botão de reenviar | horas | Cliente que pagou não fica órfão | ✅ Feito, com rate limit próprio |
-| 9 | Fallback de login do aluno (código por e-mail ou WhatsApp) | dias | Remove o ponto único de falha dos 90 atletas | ⚠️ Pendente |
-| 10 | CRUD de equipe para o Owner | dias | Onboarding sem depender do fornecedor | ⚠️ Pendente |
+| 9 | Recurso de emergência para queda/má configuração do provider Google/Apple (não um 3º método de login — Google+Apple-only é decisão de produto deliberada, mobile-only) | dias | Remove o ponto único de falha em caso de outage, sem abrir mão do padrão | ⚠️ Pendente — decisão do dono do produto sobre se vale o risco aceito |
+| ~~10~~ | ~~CRUD de equipe para o Owner~~ | — | — | ❌ Achado inválido — já existe em `/acessos/`, testado. Ver correção de P1 (§8) |
 | 11 | Ligar `OPERATIONS_MANAGER_WORKSPACE_ENABLED` por padrão, ou dar tela de "recurso desativado" | horas | Cargo do Manager | ⚠️ Parcial — deu a tela de "desativado"; ligar por padrão é decisão de produto |
 | 12 | Throttle de escrita com bypass para importação em lote | horas | Mutirão de cadastro no dia 1 | ⚠️ Pendente |
 | 13 | Export xlsx (`/alunos/exportar/xlsx/`, `/financeiro/exportar/xlsx/`) | horas | B5 — CSV e PDF funcionavam, xlsx devolvia 404 | ✅ Feito (`build_xlsx_response`, nova dependência `openpyxl`) |
 
-**Ainda pendente após todas as rodadas de correção** (nenhum destes estava
-completo até este ponto): permitir N reservas futuras (6), check-in para
-Recepção/Owner (7), fallback de login do aluno sem Google (9), CRUD de
-equipe para o Owner (10), ligar o workspace do Manager por padrão (11),
-throttle com bypass para importação em lote (12) — todos decisão de
-produto ou escopo maior que uma correção pontual — e, fora da fila
+**Ainda pendente após todas as rodadas de correção:** permitir N reservas
+futuras (6), check-in para Recepção/Owner (7), recurso de emergência para
+outage do provider de login (9 — não é "adicionar um 3º método", Google+Apple
+é padrão deliberado), ligar o workspace do Manager por padrão (11), throttle
+com bypass para importação em lote (12) — todos decisão de produto ou escopo
+maior que uma correção pontual. O item 10 (CRUD de equipe) foi removido da
+fila: era achado inválido, a rota já existe em `/acessos/`. E, fora da fila
 original: **S2** (app do aluno sem rate limit de escrita), **S3** (rate
 limit de login por IP) e o **soft-404** de autenticação (rota inexistente
 redireciona para `/login/` em vez de 404).
