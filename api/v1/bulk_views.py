@@ -23,6 +23,9 @@ class GenericBulkActionView(RoleRequiredMixin, View):
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Corpo da requisicao nao e um JSON valido.'}, status=400)
 
+        if not isinstance(payload, dict):
+            return JsonResponse({'error': 'Corpo da requisicao precisa ser um objeto JSON.'}, status=400)
+
         item_ids = payload.get('item_ids', [])
         action = payload.get('action')
         
