@@ -230,12 +230,38 @@ class ReceptionPaymentActionView(LoginRequiredMixin, RoleRequiredMixin, View):
         )
 
 
+def _describe_invalid_fields(form):
+    """Transforma form.errors nos rotulos dos campos que realmente falharam.
+
+    Em vez de sempre citar os 3 campos possiveis ("revise vencimento, metodo
+    e referencia") mesmo quando so um deles esta errado, aponta exatamente
+    o(s) campo(s) que precisam de ajuste — a recepcao (Maria, no relatorio de
+    simulacao) nao devia ter que adivinhar qual dos tres esta com problema.
+    """
+    labels = []
+    for field_name in form.errors:
+        field = form.fields.get(field_name)
+        label = field.label if field is not None and field.label else field_name
+        label = label[:1].lower() + label[1:] if label else label
+        if label not in labels:
+            labels.append(label)
+
+    if not labels:
+        return 'os dados enviados'
+    if len(labels) == 1:
+        return labels[0]
+    return f"{', '.join(labels[:-1])} e {labels[-1]}"
+
+
 def _handle_reception_payment_action(request, *, payment_id, fallback_url, success_context):
     payment = get_object_or_404(Payment.objects.select_related('student'), pk=payment_id)
     form = ReceptionPaymentManagementForm(request.POST)
 
     if not form.is_valid():
-        messages.error(request, 'A cobranca curta nao foi aplicada. Revise vencimento, metodo e referencia.')
+        messages.error(
+            request,
+            f'A cobranca curta nao foi aplicada. Revise {_describe_invalid_fields(form)}.',
+        )
         return _redirect_back(request, fallback_url=fallback_url, fragment='reception-payment-board')
 
     action = form.cleaned_data['action']

@@ -550,7 +550,11 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Você já tem uma reserva ativa. Só pode reservar a próxima aula depois que a atual terminar.')
+        # A mensagem precisa apontar qual aula esta bloqueando (nome + horario),
+        # nao so dizer "voce ja tem uma reserva ativa" sem indicar qual — achado
+        # do relatorio de simulacao de 30 dias ("e claro mas nao oferece saida").
+        self.assertContains(response, 'Você já tem uma reserva ativa em Primeira aula')
+        self.assertContains(response, 'Cancele-a para reservar esta, ou espere ela terminar.')
         self.assertFalse(Attendance.objects.filter(student=self.student, session=second_session).exists())
 
     def test_confirm_attendance_blocks_booking_beyond_tomorrow(self):
@@ -998,7 +1002,7 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertContains(response, 'class="student-progress-day student-day-filter is-selected"', html=False)
-        self.assertContains(response, 'Você já tem uma reserva ativa. Libere a próxima só depois que essa aula terminar.')
+        self.assertContains(response, 'Você já tem uma reserva ativa em outro horário. Cancele-a na grade para liberar esta aula.')
 
     def test_student_canceled_booking_shows_reservar_novamente(self):
         session = ClassSession.objects.create(

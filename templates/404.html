@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Página não encontrada | OctoBox</title>
+    <link rel="stylesheet" href="{% static 'css/design-system/pages/checkout-status.css' %}?v={{ static_asset_version }}">
+</head>
+<body data-page="checkout-status" data-screen="cancel">
+    <main class="checkout-status-shell" aria-label="Erro 404">
+        <section class="checkout-status-panel checkout-status-panel--cancel" aria-label="Pagina nao encontrada">
+            <div class="checkout-status-chip">
+                <img class="checkout-status-chip__icon" src="{% static 'images/brand/octobox-mark.svg' %}?v={{ static_asset_version }}" alt="">
+                <span>OctoBox</span>
+                <span>Sistema</span>
+            </div>
+            <p class="checkout-status-eyebrow">404</p>
+            <h1 class="checkout-status-title">Essa página não existe.</h1>
+            <p class="checkout-status-copy">
+                {{ exception|default:"O endereço não corresponde a nada no sistema agora. Confira o link ou volte para um lugar conhecido." }}
+            </p>
+            <div class="checkout-status-actions" role="group" aria-label="Acoes">
+                <a class="checkout-status-button checkout-status-button--primary" href="/dashboard/">Voltar ao dashboard</a>
+                <a class="checkout-status-button checkout-status-button--secondary" href="/">Ir para a home</a>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

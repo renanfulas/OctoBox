@@ -28,10 +28,10 @@ def _money(value) -> float:
 
 def build_student_directory_report(*, students, report_format):
     student_rows = students.iterator(chunk_size=1000) if hasattr(students, 'iterator') else iter(students)
-    if report_format == 'csv':
+    if report_format in ('csv', 'xlsx'):
         return {
-            'format': 'csv',
-            'filename': 'relatorio-alunos.csv',
+            'format': report_format,
+            'filename': f'relatorio-alunos.{report_format}',
             'headers': [
                 'Nome',
                 'WhatsApp',
@@ -92,10 +92,10 @@ def build_finance_report(*, snapshot, report_format):
     enrollments = snapshot['enrollments']
     plans = snapshot['plans']
 
-    if report_format == 'csv':
+    if report_format in ('csv', 'xlsx'):
         return {
-            'format': 'csv',
-            'filename': 'relatorio-financeiro.csv',
+            'format': report_format,
+            'filename': f'relatorio-financeiro.{report_format}',
             'headers': ['Aluno', 'Data de Vencimento', 'Valor', 'Status', 'Método', 'Competência', 'Parcelas', 'Pago Em', 'Link Checkout'],
             'rows': [
                 [
