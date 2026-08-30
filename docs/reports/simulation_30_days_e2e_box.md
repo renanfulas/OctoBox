@@ -303,7 +303,7 @@ está no caminho e oferece cancelar — antes só travava.
 | 2 | Corrigir `allowed_roles` minúsculo em `integrations/views.py` | minutos | Painel de webhooks para todos os papéis | ✅ Feito |
 | 3 | `try/except` em `json.loads` nas views de `api/v1/` → 400 | minutos | 2 crashes | ✅ Feito (2 rodadas: malformado + JSON válido não-objeto) |
 | 4 | `template_name` (ou `HttpResponseNotAllowed`) no checkpoint semanal | minutos | 1 crash | ✅ Feito |
-| 5 | Filtrar o seletor de coach por `Membership` do box ativo | horas | Vazamento entre boxes + coach que não aparece | ⚠️ Pendente |
+| 5 | Filtrar o seletor de coach por `Membership` do box ativo | horas | Vazamento entre boxes + coach que não aparece | ✅ Feito (`_get_class_coach_queryset()` agora filtra por `Membership` do box ativo, não por `Group`) |
 | 6 | Permitir N reservas futuras (limite por plano, não por "uma") | horas | O loop principal do app do aluno | ⚠️ Pendente (decisão de produto; mensagem de bloqueio já melhorou) |
 | 7 | Liberar check-in para Recepção e Owner | horas | Autonomia da Maria | ⚠️ Pendente |
 | 8 | Tela de sucesso do checkout com link de ativação + botão de reenviar | horas | Cliente que pagou não fica órfão | ✅ Feito, com rate limit próprio |
@@ -311,10 +311,17 @@ está no caminho e oferece cancelar — antes só travava.
 | 10 | CRUD de equipe para o Owner | dias | Onboarding sem depender do fornecedor | ⚠️ Pendente |
 | 11 | Ligar `OPERATIONS_MANAGER_WORKSPACE_ENABLED` por padrão, ou dar tela de "recurso desativado" | horas | Cargo do Manager | ⚠️ Parcial — deu a tela de "desativado"; ligar por padrão é decisão de produto |
 | 12 | Throttle de escrita com bypass para importação em lote | horas | Mutirão de cadastro no dia 1 | ⚠️ Pendente |
+| 13 | Export xlsx (`/alunos/exportar/xlsx/`, `/financeiro/exportar/xlsx/`) | horas | B5 — CSV e PDF funcionavam, xlsx devolvia 404 | ✅ Feito (`build_xlsx_response`, nova dependência `openpyxl`) |
 
-**Ainda fora desta rodada, mas não estava na fila original:** S2 (app do aluno
-fora do rate limit de escrita) e S3 (rate limit de login por IP) — vale
-adicioná-los à próxima fila de prioridade.
+**Ainda pendente após todas as rodadas de correção** (nenhum destes estava
+completo até este ponto): permitir N reservas futuras (6), check-in para
+Recepção/Owner (7), fallback de login do aluno sem Google (9), CRUD de
+equipe para o Owner (10), ligar o workspace do Manager por padrão (11),
+throttle com bypass para importação em lote (12) — todos decisão de
+produto ou escopo maior que uma correção pontual — e, fora da fila
+original: **S2** (app do aluno sem rate limit de escrita), **S3** (rate
+limit de login por IP) e o **soft-404** de autenticação (rota inexistente
+redireciona para `/login/` em vez de 404).
 
 ---
 
