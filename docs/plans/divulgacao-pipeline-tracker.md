@@ -42,7 +42,7 @@ PONTOS CRITICOS:
 | Airtable — base `OctoBox — Pipeline de Divulgação` | **119 de 119 leads sincronizados** (2026-08-29) | espelho deste tracker, legível/editável no celular |
 | Calendly — `calendly.com/renanfulas/octobox-conversa-com-dono-de-box` (30 min) | ativo | link de agendamento para colar em toda abordagem |
 | Gmail | ativo | rascunhos de cold e-mail |
-| Stripe (`Octoboxfit`, livemode) | **caiu de novo, precisa reautorizar** | leitura de conversão real e MRR — bloqueado até reconectar |
+| Stripe (`Octoboxfit`, livemode) | ativo | leitura de conversão real e MRR |
 | Higgs | ativo | geração de imagem/vídeo para redes |
 | Apollo.io | ativo | 199 créditos de lead; créditos de discagem direta esgotados |
 | LetsBot (WhatsApp) | pareado, mas sem contatos carregados ainda | canal 2 do plano — pronto para uso morno assim que houver conversa iniciada |
@@ -236,11 +236,33 @@ Observação: os 7 boxes do Tier 1 são de Guarulhos, mesma cidade da Endorfina.
 Fernando conheça pessoalmente vários deles — cruzar a lista com ele no pedido de indicação
 transforma abordagem fria em apresentação.
 
+## Achado crítico do Stripe (2026-08-29, noite)
+
+Leitura direta da conta `Octoboxfit` (livemode) via API:
+
+| Item | Resultado |
+|---|---|
+| Preços "Early Adopter" configurados | sim — R$97/mês (`price_1U8ixbGhJX1lQkBYAxCgUZUB`) e R$997/ano (`price_1U8ixfGhJX1lQkBYKBhuA7Nf`) |
+| Assinaturas ativas (`GetSubscriptions`) | **0** |
+| Clientes cadastrados (`GetCustomers`) | **0** |
+| Faturas emitidas (`GetInvoices`) | **0** |
+| Sessões de checkout | 1 — mas é cobrança de **aluno** dentro do módulo financeiro da Endorfina Cross (R$1,00, `mode: payment`, metadata `box_schema: box_endorfina-cross`), não venda do OctoBox |
+
+**Conclusão: o funil de assinatura "Early Adopter" nunca foi usado de verdade.** Nenhum dono de
+box, nem mesmo o Fernando, passou pelo checkout de assinatura do OctoBox no Stripe. Isso
+contradiz a leitura anterior deste tracker ("primeiro box pagante desde 2026-05-23"), que foi
+herdada dos docs do repo sem verificação direta no Stripe até agora.
+
+Consequência prática para o plano: **antes de fechar qualquer venda nova (Tier 1/2/3), vale
+confirmar com o Fernando como ele está sendo cobrado hoje** — se é manual/fora do Stripe, o
+checkout precisa ser testado ponta a ponta antes do segundo box passar por ele, para não
+descobrir um problema de cobrança só quando um lead novo tentar pagar.
+
 ## Métricas semanais
 
 | Semana | Leads pesquisados | Contatos enviados | Respostas | Posts publicados | Checkouts iniciados | Checkouts completados | MRR |
 |---|---|---|---|---|---|---|---|
-| 2026-08-29 (semana 1) | 119 | 0 | 0 | 0 | a apurar | a apurar | a apurar |
+| 2026-08-29 (semana 1) | 119 | 0 | 0 | 0 | 0 | 0 | R$ 0 (confirmado via Stripe) |
 
 ## Notas do ciclo
 

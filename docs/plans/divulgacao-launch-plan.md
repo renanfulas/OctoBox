@@ -56,8 +56,12 @@ PONTOS CRITICOS:
 
 ## Tese central
 
-O OctoBox ja tem produto, ja tem funil de cobranca (Stripe + magic link + landing) e ja tem o
-primeiro box pagante em producao desde 2026-05-23.
+O OctoBox ja tem produto e ja tem o primeiro box em producao (Endorfina Cross, desde 2026-05-23).
+O funil de cobranca "Early Adopter" (Stripe + magic link + landing) ja esta configurado, mas uma
+leitura direta do Stripe em 2026-08-29 mostrou que **nunca foi usado de verdade** — zero
+assinaturas, zero clientes, zero faturas na conta livemode. O Fernando nunca passou pelo checkout;
+como ele esta sendo cobrado hoje ainda precisa ser confirmado. Ver "Achado critico do Stripe" em
+[divulgacao-pipeline-tracker.md](divulgacao-pipeline-tracker.md).
 
 O gargalo não é falta de canal — é que todo canal óbvio (LinkedIn, Instagram, Facebook) exige
 mãos humanas para postar e conversar, e o dono do produto é um time de uma pessoa só. Então a
@@ -99,10 +103,10 @@ afiliação, logo é negócio estabelecido, com operação real e carga administ
 
 | Peça | Status |
 |---|---|
-| Landing page dedicada + checkout Stripe + magic link | existe (`docs/history/mudaram-o-nivel-do-projeto.md` #78-80) |
-| Preço definido | R$97/mês ou R$997/ano, oferta "Early Adopter" + 1 mês grátis |
-| Conta Stripe conectada nesta sessão | `Octoboxfit`, **livemode** — dá para ler conversão real sem o humano abrir dashboard |
-| Primeiro box pagante | em produção desde 2026-05-23 |
+| Landing page dedicada + checkout Stripe + magic link | existe (`docs/history/mudaram-o-nivel-do-projeto.md` #78-80), **nunca testada ponta a ponta com pagamento real** |
+| Preço definido | R$97/mês ou R$997/ano, oferta "Early Adopter" + 1 mês grátis — preços configurados no Stripe, mas sem nenhuma venda registrada |
+| Conta Stripe conectada nesta sessão | `Octoboxfit`, **livemode** — confirmado: 0 assinaturas, 0 clientes, 0 faturas |
+| Primeiro box (Endorfina Cross) | em produção desde 2026-05-23, mas **não é cliente pagante via Stripe** — forma de cobrança real ainda não confirmada |
 | Teto técnico da Fase 1 | 20 boxes, 1 servidor, isolamento forte |
 | Gate de restore por tenant | pendente, tratado como frente paralela nesta rodada (não bloqueia divulgação) |
 
