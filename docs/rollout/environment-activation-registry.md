@@ -107,11 +107,30 @@ Rodar no ambiente alvo, na ordem. Todos são idempotentes (seguro repetir).
 ### Workspace do Manager (piloto)
 - **Var:** `OPERATIONS_MANAGER_WORKSPACE_ENABLED=True` quando o papel Manager faz parte do pacote do dia 1.
 
+### Push web do aluno (pagamento confirmado)
+- **Vars:** `STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY`, `STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY` (**segredo**), `STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT` (`mailto:suporte@octoboxfit.com.br`, não é segredo).
+- **Como gerar:** par de chaves VAPID (`py_vapid`, já é dependência via `pywebpush`). A privada precisa estar em **formato PEM** — `_build_vapid_private_key()` em `student_identity/push_notifications.py` usa `Vapid02.from_pem(...)`, não `Vapid02.from_string(...)` (bug real documentado ali: `from_string`/passar a chave crua tenta decodificar os cabeçalhos `-----BEGIN...-----` como base64url e quebra). A pública precisa estar em base64url do ponto EC não-comprimido (formato `applicationServerKey` do Push API do navegador), não em PEM.
+- **Fora do código:** colar as 3 vars no `octobox.env` da VPS e reiniciar `octobox-gunicorn.service` (as vars só são lidas no boot do processo).
+- **Verificar:** `is_student_web_push_configured()` deve retornar `True`; sem as vars, `send_student_web_push_notification()` retorna `False` em silêncio (a confirmação de pagamento continua funcionando, só sem o push).
+- **Por quê existe:** feature mergeada no PR #175 (payment-confirmed push) sem nenhuma das 3 vars configuradas em produção — `is_student_web_push_configured()` ficava sempre `False`, então `webpush()` nunca chegou a rodar. Sintoma de "está no `main` mas não funciona" que este registro existe para prevenir.
+
+### Backup do PostgreSQL (diário)
+- **Vars:** `OCTOBOX_BACKUP_REMOTE` (ex. `r2:octobox`, não é segredo — a credencial do provedor fica só no `rclone.conf` da VPS, nunca em env var), `OCTOBOX_BACKUP_REMOTE_PREFIX`, `OCTOBOX_BACKUP_RETENTION_DAYS`.
+- **Fora do código:** `rclone config create r2 s3 provider Cloudflare access_key_id ... secret_access_key ...` na VPS (ou `setup_r2_backup.sh`, que faz isso). A credencial do R2 nasce no painel Cloudflare, nunca no repo.
+- **Comandos:** `systemctl enable --now octobox-backup.timer` (diário, 03:15).
+- **Verificar:** `systemctl list-timers octobox-backup.timer`; `deploy-state/last_backup_remote_path` aponta pro remote configurado.
+- **Por quê existe:** este registro nunca tinha sido escrito, apesar do timer/service já existirem em `infra/hostgator-vps/systemd/` desde a criação da VPS — mesmo gap de "mergeado ≠ ativado" do resto deste arquivo. Achado em 2026-08 durante uma auditoria: os units nunca tinham sido copiados pra `/etc/systemd/system/`, então nenhum backup automático rodava desde o setup inicial (só 2 dumps manuais, de 19 dias antes da auditoria).
+
 ### Backup cifrado do `octobox.env`
 - **Vars:** `OCTOBOX_ENV_BACKUP_AGE_RECIPIENT` (chave pública age, não é segredo), `OCTOBOX_ENV_BACKUP_RETENTION_DAYS`.
 - **Comandos:** `setup_env_secrets_backup.sh` (1ª vez — a chave privada nasce FORA da VPS, via `age-keygen` local) → timer `octobox-env-backup.timer` (a cada 10 dias — cadência menor que o Postgres porque o env muda com pouca frequência).
 - **Verificar:** `systemctl status octobox-env-backup.timer`; `deploy-state/last_env_backup_remote_path` aponta pro R2.
 - **Por quê existe:** incidente de 2026-08 — VPS falhou antes de qualquer backup do `octobox.env` sobreviver, perdendo `DJANGO_SECRET_KEY` (também usada para cifrar PII, ver `shared_support/crypto_fields.py`) e todos os segredos de terceiros de uma vez. Ver [hostgator/backup-env-secrets.md](hostgator/backup-env-secrets.md).
+
+### Segundo destino de backup (redundância de provedor)
+- **Var:** `OCTOBOX_BACKUP_REMOTE_SECONDARY` — opcional; quando definida, os dois scripts de backup (Postgres e env) sincronizam pra esse remote também, além do `OCTOBOX_BACKUP_REMOTE` primário.
+- **Fora do código:** `rclone authorize "drive" --drive-scope drive.file` rodado **na máquina do operador** (nunca na VPS — o OAuth exige navegador), gera um token que é aplicado via `rclone config create gdrive drive scope drive.file token '<json>'` na VPS.
+- **Por quê existe:** não depender de um único provedor de nuvem — se a conta R2 tiver problema, o Google Drive é uma cópia independente dos mesmos backups.
 
 ---
 
