@@ -44,7 +44,7 @@ jobs:
           echo "Confirmacao OK. Prosseguindo com reset destrutivo de student_identity_*."
 
       - name: Backup + drop + recreate via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
