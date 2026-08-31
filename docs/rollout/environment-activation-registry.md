@@ -107,11 +107,23 @@ Rodar no ambiente alvo, na ordem. Todos são idempotentes (seguro repetir).
 ### Workspace do Manager (piloto)
 - **Var:** `OPERATIONS_MANAGER_WORKSPACE_ENABLED=True` quando o papel Manager faz parte do pacote do dia 1.
 
+### Backup do PostgreSQL (diário)
+- **Vars:** `OCTOBOX_BACKUP_REMOTE` (ex. `r2:octobox`, não é segredo — a credencial do provedor fica só no `rclone.conf` da VPS, nunca em env var), `OCTOBOX_BACKUP_REMOTE_PREFIX`, `OCTOBOX_BACKUP_RETENTION_DAYS`.
+- **Fora do código:** `rclone config create r2 s3 provider Cloudflare access_key_id ... secret_access_key ...` na VPS (ou `setup_r2_backup.sh`, que faz isso). A credencial do R2 nasce no painel Cloudflare, nunca no repo.
+- **Comandos:** `systemctl enable --now octobox-backup.timer` (diário, 03:15).
+- **Verificar:** `systemctl list-timers octobox-backup.timer`; `deploy-state/last_backup_remote_path` aponta pro remote configurado.
+- **Por quê existe:** este registro nunca tinha sido escrito, apesar do timer/service já existirem em `infra/hostgator-vps/systemd/` desde a criação da VPS — mesmo gap de "mergeado ≠ ativado" do resto deste arquivo. Achado em 2026-08 durante uma auditoria: os units nunca tinham sido copiados pra `/etc/systemd/system/`, então nenhum backup automático rodava desde o setup inicial (só 2 dumps manuais, de 19 dias antes da auditoria).
+
 ### Backup cifrado do `octobox.env`
 - **Vars:** `OCTOBOX_ENV_BACKUP_AGE_RECIPIENT` (chave pública age, não é segredo), `OCTOBOX_ENV_BACKUP_RETENTION_DAYS`.
 - **Comandos:** `setup_env_secrets_backup.sh` (1ª vez — a chave privada nasce FORA da VPS, via `age-keygen` local) → timer `octobox-env-backup.timer` (a cada 10 dias — cadência menor que o Postgres porque o env muda com pouca frequência).
 - **Verificar:** `systemctl status octobox-env-backup.timer`; `deploy-state/last_env_backup_remote_path` aponta pro R2.
 - **Por quê existe:** incidente de 2026-08 — VPS falhou antes de qualquer backup do `octobox.env` sobreviver, perdendo `DJANGO_SECRET_KEY` (também usada para cifrar PII, ver `shared_support/crypto_fields.py`) e todos os segredos de terceiros de uma vez. Ver [hostgator/backup-env-secrets.md](hostgator/backup-env-secrets.md).
+
+### Segundo destino de backup (redundância de provedor)
+- **Var:** `OCTOBOX_BACKUP_REMOTE_SECONDARY` — opcional; quando definida, os dois scripts de backup (Postgres e env) sincronizam pra esse remote também, além do `OCTOBOX_BACKUP_REMOTE` primário.
+- **Fora do código:** `rclone authorize "drive" --drive-scope drive.file` rodado **na máquina do operador** (nunca na VPS — o OAuth exige navegador), gera um token que é aplicado via `rclone config create gdrive drive scope drive.file token '<json>'` na VPS.
+- **Por quê existe:** não depender de um único provedor de nuvem — se a conta R2 tiver problema, o Google Drive é uma cópia independente dos mesmos backups.
 
 ---
 
