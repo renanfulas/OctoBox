@@ -2119,22 +2119,45 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'beforeinstallprompt')
         self.assertContains(response, 'Adicionar à Tela de Início')
 
-    def test_juliana_week_order_reflects_legs_program(self):
+    def test_juliana_week_order_reflects_quad_frequency_program(self):
         response = self.client.get('/renan/juliana')
+        content = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
+
+        # Ordem estrutural das sessoes de treino no DOM (id do dia), nao a
+        # copy do strip semanal — pega sessao fora de ordem mesmo que o
+        # rotulo visual continue certo, e resiste a redacao mudar.
+        day_ids = ('id="ter"', 'id="qua"', 'id="qui"', 'id="sab"')
+        for day_id in day_ids:
+            self.assertIn(day_id, content)
+        positions = [content.index(day_id) for day_id in day_ids]
+        self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem ter->sab')
+
         self.assertContains(response, "goDay('qua',this)")
         self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Rest</div>', html=True)
         self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Quad Força</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Sup Força</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Glúteo</div>', html=True)
+        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Superior A</div>', html=True)
+        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Quad Hiper</div>', html=True)
         self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Braço</div>', html=True)
+        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Superior B</div>', html=True)
         self.assertContains(response, '<div class="dn">Dom</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, 'Terça · ~58 min + 20 min bike leve · Quadríceps, Panturrilha, Core')
-        self.assertContains(response, 'Quarta · ~58 min + 10-15 min esteira HIIT · Peito, Costas, Ombro, Abdômen')
-        self.assertContains(response, 'Quinta · ~58 min · Posterior de coxa, Glúteo, Quadríceps')
-        self.assertContains(response, 'Sábado · ~60 min + 20-30 min cardio pesado · Costas, Peito, Bíceps, Tríceps, Ombro medial')
+        self.assertContains(response, 'Terça · ~65 min · Quadríceps, Panturrilha, Abdômen')
+        self.assertContains(response, 'Quarta · ~55 min + 20 min cardio leve · Peito, Costas, Ombro posterior, Bíceps, Tríceps, Core')
+        self.assertContains(response, 'Quinta · ~60 min · Quadríceps, Glúteo, Posterior de coxa, Panturrilha')
+        self.assertContains(response, 'Sábado · ~58 min + 20 min cardio leve-moderado · Peito, Costas, Ombro, Bíceps, Tríceps')
+
+        # Restricoes explicitamente pedidas pela cliente: quadriceps em alta
+        # frequencia (2x/semana) com os sets exatos pedidos — se alguem
+        # reduzir o volume por engano, esse teste quebra.
+        self.assertContains(response, '5× Top (12-15) · pausa 1s no topo')
+        self.assertContains(response, '4× Top (6-8)')
+        self.assertContains(response, 'Agachamento sumô com halteres')
+        self.assertContains(response, 'Cadeira extensora (pesado + leve)')
+
+        # Cardio 4x/semana pedido explicitamente (2 dias de 20min + 2 dias
+        # de 30min), fora dos dois dias de quadriceps pesados.
+        self.assertContains(response, '4 sessões · 100 min')
 
     def test_henrique_week_order_reflects_split_and_required_back_exercises(self):
         response = self.client.get('/renan/henrique')
