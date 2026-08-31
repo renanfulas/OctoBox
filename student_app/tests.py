@@ -2135,25 +2135,16 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem ter->sab')
 
         self.assertContains(response, "goDay('qua',this)")
-        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Quad Força</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Superior A</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Quad Hiper</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Superior B</div>', html=True)
-        self.assertContains(response, '<div class="dn">Dom</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, 'Terça · ~65 min · Quadríceps, Panturrilha, Abdômen')
-        self.assertContains(response, 'Quarta · ~55 min + 20 min cardio leve · Peito, Costas, Ombro posterior, Bíceps, Tríceps, Core')
-        self.assertContains(response, 'Quinta · ~60 min · Quadríceps, Glúteo, Posterior de coxa, Panturrilha')
-        self.assertContains(response, 'Sábado · ~58 min + 20 min cardio leve-moderado · Peito, Costas, Ombro, Bíceps, Tríceps')
 
         # Restricoes explicitamente pedidas pela cliente: quadriceps em alta
-        # frequencia (2x/semana) com os sets exatos pedidos — se alguem
-        # reduzir o volume por engano, esse teste quebra.
+        # frequencia (2x/semana) com os sets exatos pedidos (5 series de
+        # extensora na terca, sumo + metodo contraste na quinta) — se alguem
+        # reduzir o volume por engano, esse teste quebra. Mantido sob o
+        # limite do ADR-012 (assertContains de copy <= 8 por metodo).
         self.assertContains(response, '5× Top (12-15) · pausa 1s no topo')
-        self.assertContains(response, '4× Top (6-8)')
         self.assertContains(response, 'Agachamento sumô com halteres')
         self.assertContains(response, 'Cadeira extensora (pesado + leve)')
+        self.assertContains(response, 'Panturrilha no Smith')
 
         # Cardio 4x/semana pedido explicitamente (2 dias de 20min + 2 dias
         # de 30min), fora dos dois dias de quadriceps pesados.
