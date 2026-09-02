@@ -63,9 +63,11 @@ class StudentIntake(TimeStampedModel):
         blank=True,
         related_name='intake_records',
     )
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='assigned_intakes',

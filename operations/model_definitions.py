@@ -97,9 +97,11 @@ class ClassSession(TimeStampedModel):
         default=ClassType.OTHER,
         db_index=True,
     )
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     coach = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='class_sessions',
@@ -163,9 +165,11 @@ class BehaviorNote(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name='behavior_notes',
     )
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='behavior_notes',
@@ -188,9 +192,11 @@ class BehaviorNote(TimeStampedModel):
 
 
 class LeadImportJob(TimeStampedModel):
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='lead_import_jobs',
@@ -248,9 +254,11 @@ class WorkoutApprovalPolicySetting(TimeStampedModel):
         ),
         default='strict',
     )
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='workout_approval_policies_updated',
@@ -266,9 +274,11 @@ class WorkoutApprovalPolicySetting(TimeStampedModel):
 class WorkoutTemplate(TimeStampedModel):
     name = models.CharField(max_length=120)
     description = models.CharField(max_length=255, blank=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='workout_templates_created',
@@ -286,9 +296,11 @@ class WorkoutTemplate(TimeStampedModel):
     usage_count = models.PositiveIntegerField(default=0)
     last_used_at = models.DateTimeField(null=True, blank=True)
     archived_at = models.DateTimeField(null=True, blank=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     archived_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='workout_templates_archived',
@@ -417,9 +429,11 @@ class SmartPlanGateEvent(TimeStampedModel):
         db_index=True,
     )
     session_id = models.PositiveIntegerField(db_index=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='smartplan_gate_events',
@@ -450,9 +464,11 @@ class WorkoutPlannerTemplatePickerEvent(TimeStampedModel):
         blank=True,
         related_name='planner_picker_events',
     )
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='workout_planner_template_picker_events',
