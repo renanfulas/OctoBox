@@ -99,9 +99,11 @@ class StudentProfileChangeRequest(TimeStampedModel):
         default=StudentProfileChangeRequestStatus.PENDING,
     )
     resolved_at = models.DateTimeField(null=True, blank=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     resolved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='student_profile_change_requests_resolved',
@@ -222,9 +224,11 @@ class WeeklyWodPlan(TimeStampedModel):
     source_text = models.TextField(blank=True)
     parsed_payload = models.JSONField(default=dict, blank=True)
     status = models.CharField(max_length=24, choices=WeeklyWodPlanStatus.choices, default=WeeklyWodPlanStatus.DRAFT)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='weekly_wod_plans_created',
@@ -298,9 +302,11 @@ class PlanMovement(TimeStampedModel):
 
 class ReplicationBatch(TimeStampedModel):
     weekly_plan = models.ForeignKey(WeeklyWodPlan, on_delete=models.CASCADE, related_name='replication_batches')
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='weekly_wod_replication_batches_created',
@@ -329,16 +335,18 @@ class SessionWorkout(TimeStampedModel):
     title = models.CharField(max_length=140, blank=True)
     coach_notes = models.TextField(blank=True)
     status = models.CharField(max_length=24, choices=SessionWorkoutStatus.choices, default=SessionWorkoutStatus.DRAFT)
+    # on_delete=DO_NOTHING nos 4 campos abaixo: ver control.services.
+    # delete_user_safely e o comentario completo em dashboard/models.py.
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='session_workouts_created',
     )
     submitted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='session_workouts_submitted',
@@ -346,7 +354,7 @@ class SessionWorkout(TimeStampedModel):
     submitted_at = models.DateTimeField(null=True, blank=True)
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='session_workouts_approved',
@@ -354,7 +362,7 @@ class SessionWorkout(TimeStampedModel):
     approved_at = models.DateTimeField(null=True, blank=True)
     rejected_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='session_workouts_rejected',
@@ -380,9 +388,11 @@ class SessionWorkoutRevision(TimeStampedModel):
     workout = models.ForeignKey(SessionWorkout, on_delete=models.CASCADE, related_name='revisions')
     version = models.PositiveIntegerField(default=1)
     event = models.CharField(max_length=24, choices=SessionWorkoutRevisionEvent.choices)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='session_workout_revisions_created',
@@ -452,9 +462,11 @@ class SessionWorkoutFollowUpAction(TimeStampedModel):
     status = models.CharField(max_length=24, choices=WorkoutFollowUpStatus.choices, default=WorkoutFollowUpStatus.COMPLETED)
     outcome_note = models.CharField(max_length=255, blank=True)
     baseline_metrics = models.JSONField(default=dict, blank=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     resolved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='session_workout_follow_up_actions_resolved',
@@ -475,9 +487,11 @@ class SessionWorkoutOperationalMemory(TimeStampedModel):
     workout = models.ForeignKey(SessionWorkout, on_delete=models.CASCADE, related_name='operational_memories')
     kind = models.CharField(max_length=32, choices=WorkoutOperationalMemoryKind.choices, default=WorkoutOperationalMemoryKind.CUSTOM)
     note = models.CharField(max_length=255, blank=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='session_workout_operational_memories_created',
@@ -514,9 +528,11 @@ class WorkoutWeeklyManagementCheckpoint(TimeStampedModel):
     )
     governance_commitment_note = models.CharField(max_length=255, blank=True)
     summary_note = models.CharField(max_length=255, blank=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='workout_weekly_management_checkpoints_updated',
@@ -540,9 +556,11 @@ class SessionWorkoutRmGapAction(TimeStampedModel):
         default=WorkoutRmGapActionStatus.REQUESTED,
     )
     note = models.CharField(max_length=255, blank=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='session_workout_rm_gap_actions_updated',

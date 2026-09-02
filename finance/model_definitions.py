@@ -218,9 +218,11 @@ class FinanceFollowUp(TimeStampedModel):
     )
     suggested_at = models.DateTimeField(default=timezone.now, db_index=True)
     resolved_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     resolved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='resolved_finance_follow_ups',

@@ -23,9 +23,13 @@ HISTORICAL_BOXCORE_APP_LABEL = 'boxcore'
 
 
 class AuditEvent(TimeStampedModel):
+    # on_delete=DO_NOTHING (nao SET_NULL): model TENANT_APPS com FK pra User
+    # (SHARED_APPS) — o collector de delete do Django nao atravessa schema.
+    # Ver control.services.delete_user_safely, que faz o SET_NULL manualmente
+    # por schema, e o comentario em dashboard/models.py com a explicacao completa.
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='audit_events',
