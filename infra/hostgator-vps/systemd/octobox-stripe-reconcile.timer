@@ -1,0 +1,15 @@
+[Unit]
+Description=Daily OctoBOX Stripe<->DB drift reconciliation
+
+# Read-only, so cadencia diaria basta: e a rede de seguranca que pega
+# divergencias que sobreviveram as 5 tentativas do retry sweep
+# (octobox-signal-mesh-retries.timer, a cada 1 min) — nao precisa da mesma
+# frequencia. Horario apos o backup do Postgres (03:15) para nao competir
+# por IO no mesmo momento.
+[Timer]
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+Unit=octobox-stripe-reconcile.service
+
+[Install]
+WantedBy=timers.target

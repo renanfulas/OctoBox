@@ -44,7 +44,7 @@ sudo OCTOBOX_ENV_BACKUP_AGE_RECIPIENT='age1qy3z9...' \
 ```
 Isso instala `age`, grava a chave pública no próprio `octobox.env` (ela é
 pública, não é segredo), instala o timer `octobox-env-backup.timer` (roda
-a cada 10 dias — `octobox.env` muda muito menos que o banco, não precisa de
+a cada 7 dias — `octobox.env` muda muito menos que o banco, não precisa de
 cadência diária) e dispara o primeiro
 backup na hora.
 
@@ -57,13 +57,22 @@ backup na hora.
 sudo bash /srv/octobox/app/scripts/linux/backup_env_secrets.sh
 ```
 
+## Destino secundário opcional (Google Drive)
+
+Mesmo mecanismo do backup do Postgres: depois de rodar
+`sudo bash /srv/octobox/app/scripts/linux/setup_gdrive_backup.sh` (ver
+[backup.md](backup.md)), o `.age` cifrado passa a subir também pro Google Drive,
+em `env-secrets/` dentro da mesma pasta. Continua cifrado do mesmo jeito — a
+chave privada `age` segue fora da VPS, então o Drive não muda o modelo de
+segurança.
+
 ## 3. Restaurar (quando precisar de verdade)
 
 Na sua máquina, com o arquivo de chave privada do cofre de senhas em mãos:
 ```bash
 # baixe o .age mais recente do R2 (rclone já está configurado na VPS,
 # ou use o painel/CLI do Cloudflare R2 direto)
-rclone copy r2:octobox-backups/octoboxfit-production/env-secrets/ ./ --max-age 11d
+rclone copy r2:octobox-backups/octoboxfit-production/env-secrets/ ./ --max-age 8d
 
 age -d -i octobox-env-backup-key.txt octobox-env-<timestamp>.age > octobox.env.restaurado
 ```
@@ -86,6 +95,6 @@ backup mais antigo.
 
 - `OCTOBOX_ENV_BACKUP_AGE_RECIPIENT` vazio ou não começa com `age1`;
 - timer inativo;
-- `last_env_backup_remote_path` mais antigo que 11 dias (janela de 10 dias + folga);
+- `last_env_backup_remote_path` mais antigo que 8 dias (janela de 7 dias + folga);
 - a chave privada não está confirmada no cofre de senhas do time — sem ela,
   todo esse backup é decorativo.

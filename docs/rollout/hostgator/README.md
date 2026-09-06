@@ -38,8 +38,8 @@ sao **derivados dos scripts reais** — não da prosa antiga. Em conflito, o **s
 
 | operacao | runbook | script real |
 |---|---|---|
-| Backup (diário + cópia externa R2) | [backup.md](backup.md) | `scripts/linux/backup_and_sync_postgres.sh`, `scripts/linux/setup_r2_backup.sh` |
-| Backup cifrado do `octobox.env` (segredos) | [backup-env-secrets.md](backup-env-secrets.md) | `scripts/linux/backup_env_secrets.sh`, `scripts/linux/setup_env_secrets_backup.sh` |
+| Backup (diário + cópia externa R2, opcionalmente também Google Drive) | [backup.md](backup.md) | `scripts/linux/backup_and_sync_postgres.sh`, `scripts/linux/setup_r2_backup.sh`, `scripts/linux/setup_gdrive_backup.sh` |
+| Backup cifrado do `octobox.env` (segredos, a cada 7 dias) | [backup-env-secrets.md](backup-env-secrets.md) | `scripts/linux/backup_env_secrets.sh`, `scripts/linux/setup_env_secrets_backup.sh` |
 | Restore (em banco isolado) | [restore.md](restore.md) | `scripts/restore_postgres.ps1`, `pg_restore` |
 | Deploy | [deploy.md](deploy.md) | `scripts/linux/deploy_octobox.sh` |
 | Rollback | [rollback.md](rollback.md) | `scripts/linux/rollback_octobox.sh` |

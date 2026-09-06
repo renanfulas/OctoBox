@@ -11,8 +11,6 @@ fi
 : "${OCTOBOX_BACKUP_RETENTION_DAYS:=30}"
 : "${OCTOBOX_BACKUP_REMOTE:=}"
 : "${OCTOBOX_BACKUP_REMOTE_PREFIX:=octobox-production}"
-# Segundo destino opcional (ex.: gdrive:pasta) — vazio = so o remote primario,
-# mesmo comportamento de sempre. Serve pra nao depender de um provedor so.
 : "${OCTOBOX_BACKUP_REMOTE_SECONDARY:=}"
 
 APP_DIR="${OCTOBOX_APP_HOME}/app"
@@ -96,11 +94,13 @@ find "${BACKUP_DIR}" -maxdepth 1 -type f -name 'octobox-*.dump' -mtime +"$((OCTO
 rclone delete "${OCTOBOX_BACKUP_REMOTE}/${OCTOBOX_BACKUP_REMOTE_PREFIX}" --min-age "${OCTOBOX_BACKUP_RETENTION_DAYS}d"
 rclone rmdirs "${OCTOBOX_BACKUP_REMOTE}/${OCTOBOX_BACKUP_REMOTE_PREFIX}" --leave-root
 
-remote_secondary_target=""
+# Destino secundario opcional (ex.: Google Drive) — mesma logica do R2, sem
+# depender dele. So roda se OCTOBOX_BACKUP_REMOTE_SECONDARY estiver definido
+# (ver scripts/linux/setup_gdrive_backup.sh).
 if [[ -n "${OCTOBOX_BACKUP_REMOTE_SECONDARY}" ]]; then
-  remote_secondary_target="${OCTOBOX_BACKUP_REMOTE_SECONDARY}/${OCTOBOX_BACKUP_REMOTE_PREFIX}/${backup_name}"
-  echo "Destino remoto secundario: ${remote_secondary_target}"
-  rclone copyto "${backup_path}" "${remote_secondary_target}"
+  secondary_target="${OCTOBOX_BACKUP_REMOTE_SECONDARY}/${OCTOBOX_BACKUP_REMOTE_PREFIX}/${backup_name}"
+  echo "Destino secundario: ${secondary_target}"
+  rclone copyto "${backup_path}" "${secondary_target}"
   rclone delete "${OCTOBOX_BACKUP_REMOTE_SECONDARY}/${OCTOBOX_BACKUP_REMOTE_PREFIX}" --min-age "${OCTOBOX_BACKUP_RETENTION_DAYS}d"
   rclone rmdirs "${OCTOBOX_BACKUP_REMOTE_SECONDARY}/${OCTOBOX_BACKUP_REMOTE_PREFIX}" --leave-root
 fi
@@ -110,7 +110,7 @@ echo "Backup sincronizado."
 echo "Resumo final:"
 echo "- backup local: ${backup_path}"
 echo "- backup remoto: ${remote_target}"
-if [[ -n "${remote_secondary_target}" ]]; then
-  echo "- backup remoto (secundario): ${remote_secondary_target}"
+if [[ -n "${OCTOBOX_BACKUP_REMOTE_SECONDARY}" ]]; then
+  echo "- backup remoto (secundario): ${secondary_target}"
 fi
 echo "- retencao: ${OCTOBOX_BACKUP_RETENTION_DAYS} dias"

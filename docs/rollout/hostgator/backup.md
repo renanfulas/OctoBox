@@ -102,6 +102,29 @@ PGPASSWORD='<senha>' bash scripts/linux/backup_postgres.sh \
 - backup **só local**, sem cópia no R2 (disco da VPS morre = perde tudo junto);
 - timer `octobox-backup.timer` **inativo** (`systemctl status`).
 
+## Destino secundário opcional (Google Drive) — `setup_gdrive_backup.sh`
+
+Sincroniza o **mesmo** dump também pro Google Drive, em paralelo ao R2 (não substitui).
+Pré-requisito: autorizar o remote `rclone` na própria VPS (OAuth real contra sua conta
+Google, só pode ser feito por você):
+
+```bash
+sudo rclone config
+# n (new remote) -> nome "gdrive" -> tipo "drive" -> "Use auto config?" = n
+# -> abra o link em qualquer dispositivo, autorize, cole o código de volta
+```
+
+Depois:
+
+```bash
+sudo bash /srv/octobox/app/scripts/linux/setup_gdrive_backup.sh
+```
+
+Isso grava `OCTOBOX_BACKUP_REMOTE_SECONDARY=gdrive:octobox-backups` no `octobox.env` e reinicia
+os timers. A partir daí `backup_and_sync_postgres.sh` sobe pros dois destinos automaticamente —
+sem exigir o Drive para o backup continuar funcionando (se o R2 falhar, o Drive não é afetado, e
+vice-versa).
+
 ## Restore
 
 Backup só vale se o restore foi ensaiado → ver [restore.md](restore.md). Faça um restore de prova

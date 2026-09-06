@@ -1,0 +1,14 @@
+[Unit]
+Description=OctoBOX Stripe<->DB drift reconciliation (read-only safety net)
+After=network-online.target octobox-gunicorn.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/octobox/app
+EnvironmentFile=-/srv/octobox/shared/octobox.env
+ExecStart=/srv/octobox/app/.venv/bin/python manage.py reconcile_stripe_payments
+User=root
+
+[Install]
+WantedBy=multi-user.target
