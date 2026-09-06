@@ -47,6 +47,7 @@ from shared_support.background_jobs import (
     JobStatus,
     create_job,
     get_job_status,
+    run_in_background,
     submit_background_job,
 )
 
@@ -222,3 +223,48 @@ class BackgroundJobInheritsRequestSchemaTests(TestCase):
         result = _submit_and_wait(_job_fn, job_id)  # ambiente do teste ja esta em public
         self.assertEqual(result['status'], JobStatus.COMPLETED)
         self.assertEqual(calls, [job_id])
+
+
+@pytest.mark.public_schema
+class RunInBackgroundInheritsRequestSchemaTests(TestCase):
+    """Mesmo bug de classe que a suite acima (Onda 4), achado de novo em
+    2026-08-28: run_in_background nasceu assumindo que fn nunca tocava o
+    banco (uso original era so email), mas o canal de push de
+    notify_payment_confirmed passou a consultar StudentPushSubscription e
+    gravar AuditEvent dentro da thread — quebrando exatamente essa
+    suposicao. run_in_background agora reaplica schema_context igual
+    submit_background_job; este teste trava a regressao.
+
+    Ao contrario de submit_background_job, run_in_background devolve a
+    Thread direto — join() sem o truque de diff em threading.enumerate()."""
+
+    def test_fn_writes_land_in_the_request_schema_not_public(self):
+        import uuid as uuid_module
+        from students.models import Student
+
+        unique_phone = f'5511901{uuid_module.uuid4().int % 10**6:06d}'
+        created_ids = []
+
+        def _fn():
+            student = Student.objects.create(
+                full_name='Aluno via run_in_background', status='active', phone=unique_phone,
+            )
+            created_ids.append(student.id)
+
+        with schema_context(TENANT_SCHEMA):
+            self.addCleanup(lambda: _delete_via_own_thread(TENANT_SCHEMA, Student, list(created_ids)))
+            thread = run_in_background(_fn)
+            thread.join(timeout=5.0)
+
+        self.assertEqual(len(created_ids), 1)
+        with schema_context(TENANT_SCHEMA):
+            self.assertTrue(
+                Student.objects.filter(pk=created_ids[0]).exists(),
+                'Student nao foi encontrado no schema do box — a thread escreveu no lugar errado',
+            )
+
+    def test_fn_called_from_public_schema_does_not_crash(self):
+        calls = []
+        thread = run_in_background(lambda: calls.append(1))
+        thread.join(timeout=5.0)
+        self.assertEqual(calls, [1])

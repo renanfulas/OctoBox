@@ -1,0 +1,27 @@
+version: 2
+updates:
+  # Abre PR automatico por dependencia desatualizada (Python/pip).
+  # Cada PR roda contra o CI existente (full-test-suite, ci-gates) — pega
+  # incompatibilidade de SDK/versao NO MOMENTO do bump, nao meses depois em
+  # producao (caso real: stripe==15.0.0 mudou StripeObject e so foi
+  # descoberto com um pagamento real, 2026-08-28).
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Mantem as GitHub Actions usadas nos workflows tambem atualizadas.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"

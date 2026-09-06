@@ -2119,22 +2119,36 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'beforeinstallprompt')
         self.assertContains(response, 'Adicionar à Tela de Início')
 
-    def test_juliana_week_order_reflects_legs_program(self):
+    def test_juliana_week_order_reflects_quad_frequency_program(self):
         response = self.client.get('/renan/juliana')
+        content = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
+
+        # Ordem estrutural das sessoes de treino no DOM (id do dia), nao a
+        # copy do strip semanal — pega sessao fora de ordem mesmo que o
+        # rotulo visual continue certo, e resiste a redacao mudar.
+        day_ids = ('id="ter"', 'id="qua"', 'id="qui"', 'id="sab"')
+        for day_id in day_ids:
+            self.assertIn(day_id, content)
+        positions = [content.index(day_id) for day_id in day_ids]
+        self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem ter->sab')
+
         self.assertContains(response, "goDay('qua',this)")
-        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Quad Força</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Sup Força</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Glúteo</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Braço</div>', html=True)
-        self.assertContains(response, '<div class="dn">Dom</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, 'Terça · ~58 min + 20 min bike leve · Quadríceps, Panturrilha, Core')
-        self.assertContains(response, 'Quarta · ~58 min + 10-15 min esteira HIIT · Peito, Costas, Ombro, Abdômen')
-        self.assertContains(response, 'Quinta · ~58 min · Posterior de coxa, Glúteo, Quadríceps')
-        self.assertContains(response, 'Sábado · ~60 min + 20-30 min cardio pesado · Costas, Peito, Bíceps, Tríceps, Ombro medial')
+
+        # Restricoes explicitamente pedidas pela cliente: quadriceps em alta
+        # frequencia (2x/semana) com os sets exatos pedidos (5 series de
+        # extensora na terca, sumo + metodo contraste na quinta) — se alguem
+        # reduzir o volume por engano, esse teste quebra. Mantido sob o
+        # limite do ADR-012 (assertContains de copy <= 8 por metodo).
+        self.assertContains(response, '5× Top (12-15) · pausa 1s no topo')
+        self.assertContains(response, 'Agachamento sumô com halteres')
+        self.assertContains(response, 'Cadeira extensora (pesado + leve)')
+        self.assertContains(response, 'Panturrilha no Smith')
+
+        # Cardio 4x/semana pedido explicitamente (2 dias de 20min + 2 dias
+        # de 30min), fora dos dois dias de quadriceps pesados.
+        self.assertContains(response, '4 sessões · 100 min')
 
     def test_henrique_week_order_reflects_split_and_required_back_exercises(self):
         response = self.client.get('/renan/henrique')
@@ -2185,6 +2199,74 @@ class PublicWorkoutPwaTests(TestCase):
 
         # 1x escada/HIIT por semana, pedido explicitamente pela cliente.
         self.assertContains(response, 'Escada / HIIT')
+
+
+class PublicWorkoutContentSignatureTests(TestCase):
+    """Trava o CONTEUDO das paginas publicas, nao o markup.
+
+    A maioria das paginas foi refatorada de HTML autocontido para
+    template + CSS + JS compartilhados (johnespanha ainda nao — chegou
+    depois, num PR paralelo, e continua no formato monolitico antigo).
+    Markup e classes vao mudar de proposito; o que o aluno le e o que o
+    tracker grava, nao.
+
+    A assinatura ignora classes CSS justamente para nao brigar com a
+    refatoracao, e compara ids, data-key, hrefs, texto visivel e a
+    contagem de blocos semanticos.
+
+    Para regravar a baseline depois de uma mudanca INTENCIONAL de treino:
+        UPDATE_PUBLIC_WORKOUT_GOLDEN=1 pytest \
+            student_app/tests.py::PublicWorkoutContentSignatureTests
+    e conferir o diff no git antes de commitar.
+    """
+
+    def test_public_workout_content_signature_is_stable(self):
+        import os
+
+        from scripts.public_workout_signature import (
+            build_signature,
+            golden_path,
+            iter_slugs,
+        )
+
+        updating = os.environ.get('UPDATE_PUBLIC_WORKOUT_GOLDEN') == '1'
+        slugs = iter_slugs()
+        self.assertEqual(len(slugs), 8, 'esperado 8 planos publicos em PUBLIC_WORKOUT_LIBRARY')
+
+        for slug in slugs:
+            with self.subTest(slug=slug):
+                response = self.client.get(f'/renan/{slug}')
+                self.assertEqual(response.status_code, 200)
+                actual = build_signature(response.content.decode('utf-8'))
+
+                path = golden_path(slug)
+                if updating:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(
+                        json.dumps(actual, ensure_ascii=False, indent=2) + '\n',
+                        encoding='utf-8',
+                    )
+                    continue
+
+                self.assertTrue(
+                    path.exists(),
+                    f'baseline ausente para {slug}: rode com UPDATE_PUBLIC_WORKOUT_GOLDEN=1',
+                )
+                expected = json.loads(path.read_text(encoding='utf-8'))
+
+                # Um subTest por campo: numa refatoracao e comum quebrar
+                # mais de um de uma vez, e ver todos juntos economiza ciclo.
+                checks = (
+                    ('block_counts', 'sumiu ou surgiu bloco semantico (sessao/exercicio/tracker)'),
+                    ('data_keys', 'data-key do tracker mudou — isso orfana o historico de carga do aluno'),
+                    ('ids', 'ids do DOM mudaram'),
+                    ('hrefs', 'links mudaram'),
+                    ('text', 'texto visivel mudou'),
+                    ('data_islands', 'dados do grafico de periodizacao mudaram'),
+                )
+                for field, why in checks:
+                    with self.subTest(slug=slug, campo=field):
+                        self.assertEqual(expected[field], actual[field], f'{slug}: {why}')
 
 
 class StudentAuthMiddlewareTests(TestCase):

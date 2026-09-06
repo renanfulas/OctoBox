@@ -171,3 +171,54 @@ def submit_background_job(job_fn: Callable, job_id: str, *args, **kwargs):
     thread = threading.Thread(target=thread_worker, daemon=True)
     thread.start()
     return job_id
+
+
+# -----------------------------------------------------------------------------
+# Fire-and-forget sem acompanhamento (sem job_id/Redis)
+# -----------------------------------------------------------------------------
+
+def run_in_background(fn: Callable, *args, **kwargs) -> threading.Thread:
+    """
+    Executa fn em thread daemon, fora do ciclo request/response.
+
+    Uso: efeitos colaterais de I/O de rede (email, push, webhook de saida)
+    que NAO PODEM atrasar a resposta ao caller (ex.: o webhook da Stripe
+    espera 200 rapido) e cuja falha e best-effort — nao ha job_id/progresso
+    para acompanhar, so log em caso de erro.
+
+    Reaplica o schema/tenant da conexao de origem dentro da thread (mesma
+    tecnica de submit_background_job — threads tem conexao Django propria,
+    thread-local, entao nao herdam o search_path do request). Achado real
+    2026-08-28: a primeira versao desta funcao assumia que fn nunca tocava
+    o banco, mas o canal de push de notify_payment_confirmed (consulta
+    StudentPushSubscription + grava AuditEvent) quebrou exatamente essa
+    suposicao — sem isto, a query rodaria contra o schema default da
+    conexao nova da thread, nao o box do pagamento sendo confirmado.
+
+    Sem job_id/Redis (diferente de submit_background_job): mais leve, pra
+    fire-and-forget que nao precisa de acompanhamento de progresso.
+
+    Retorna a Thread (diferente de submit_background_job, que retorna
+    job_id) — em teste, da pra dar join() direto nela.
+    """
+    from django.db import connection
+    schema = getattr(connection, 'schema_name', None)
+
+    def _run():
+        from django.db import connection as thread_connection
+        from django_tenants.utils import schema_context
+
+        try:
+            if schema:
+                with schema_context(schema):
+                    fn(*args, **kwargs)
+            else:
+                fn(*args, **kwargs)
+        except Exception:
+            logger.exception('run_in_background: falha nao tratada em %r', fn)
+        finally:
+            thread_connection.close()
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+    return thread

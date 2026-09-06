@@ -28,6 +28,8 @@ FINDINGS (descobertos durante implementação): ver tests/sprint-5-8-findings.md
 from __future__ import annotations
 
 import sys
+import threading
+import time
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
@@ -38,6 +40,8 @@ from django.test import RequestFactory, SimpleTestCase, TestCase, override_setti
 from django.utils import timezone
 from freezegun import freeze_time
 
+from integrations.stripe.models import PaymentWebhookEvent, PaymentWebhookStatus
+from integrations.stripe.router import route_payment_webhook_event
 from signup.models import PendingSignup, PendingSignupPlan, PendingSignupStatus
 from signup.services import (
     InvalidMagicTokenError,
@@ -520,6 +524,83 @@ class QueryStripeSessionStatusTest(SimpleTestCase):
                 sys.modules['stripe'] = original
             else:
                 sys.modules.pop('stripe', None)
+
+
+# ===========================================================================
+# _handle_early_adopter_signup (webhook router) — envio de email em background
+#
+# Onda de hardening (2026-08-27): este handler roda no MESMO endpoint de
+# webhook que reconcilia pagamento de aluno (integrations/stripe/router.py).
+# O envio do email de onboarding foi movido para uma thread separada
+# (run_in_background) para um provedor de email lento aqui nao travar a
+# resposta a Stripe — o que, sendo o mesmo endpoint, atrasaria tambem a
+# confirmacao de pagamentos de aluno na fila atras deste evento.
+# ===========================================================================
+
+class EarlyAdopterWebhookAsyncEmailTests(TestCase):
+    def _event(self, *, event_id, pending_id):
+        return PaymentWebhookEvent.objects.create(
+            event_id=event_id,
+            event_type='checkout.session.completed',
+            payload={
+                'id': event_id,
+                'type': 'checkout.session.completed',
+                'data': {'object': {
+                    'id': 'cs_early_adopter_test',
+                    'customer': 'cus_test',
+                    'subscription': 'sub_test',
+                    'metadata': {'pending_signup_id': str(pending_id)},
+                }},
+            },
+        )
+
+    def _route_and_join_background_threads(self, event, *, timeout=5.0):
+        before = set(threading.enumerate())
+        route_payment_webhook_event(event)
+        for spawned in set(threading.enumerate()) - before:
+            spawned.join(timeout=timeout)
+
+    @patch('signup.email_sender.send_html_email')
+    def test_webhook_marks_paid_and_sends_onboarding_email_in_background(self, send_mock):
+        pending = _make_pending(status=PendingSignupStatus.PENDING, email='dono@academia.test')
+
+        event = self._event(event_id='evt_early_adopter_ok', pending_id=pending.pk)
+        self._route_and_join_background_threads(event)
+
+        event.refresh_from_db()
+        self.assertEqual(event.status, PaymentWebhookStatus.PROCESSED)
+
+        pending.refresh_from_db()
+        self.assertEqual(pending.status, PendingSignupStatus.PAID)
+
+        send_mock.assert_called_once()
+        self.assertEqual(send_mock.call_args.kwargs['to_email'], 'dono@academia.test')
+
+    @patch('signup.email_sender.send_html_email')
+    def test_webhook_response_does_not_wait_for_slow_email_provider(self, send_mock):
+        release = threading.Event()
+
+        def _slow_send(**kwargs):
+            release.wait(timeout=5.0)
+            return MagicMock(provider='smtp', recipient=kwargs.get('to_email'))
+
+        send_mock.side_effect = _slow_send
+
+        pending = _make_pending(status=PendingSignupStatus.PENDING)
+        event = self._event(event_id='evt_early_adopter_slow', pending_id=pending.pk)
+
+        started_at = time.monotonic()
+        route_payment_webhook_event(event)
+        elapsed = time.monotonic() - started_at
+
+        self.assertLess(elapsed, 1.0, 'webhook esperou o provedor de email — voltou a ser sincrono')
+
+        release.set()
+        for _ in range(50):
+            if send_mock.called:
+                break
+            time.sleep(0.05)
+        send_mock.assert_called_once()
 
     # Branch 4: erro da API Stripe → None (não propaga)
     @override_settings(STRIPE_SECRET_KEY='sk_test_xxx')

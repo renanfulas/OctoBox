@@ -39,7 +39,7 @@ jobs:
           echo "Confirmacao OK. Migrando dados para box_${{ github.event.inputs.slug }}"
 
       - name: Migrate data + smoke via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         env:
           SLUG: ${{ github.event.inputs.slug }}
         with:

@@ -1,0 +1,49 @@
+/*
+ * ARQUIVO: faixa de "instalar na tela inicial" das paginas publicas.
+ *
+ * POR QUE ELE EXISTE:
+ * - era uma string de CSS embutida no Python (public_workout_views.py),
+ *   concatenada na resposta a cada request. Virou arquivo estatico
+ *   cacheavel como o resto.
+ */
+
+.public-workout-install{
+  position:fixed;
+  right:16px;
+  bottom:16px;
+  z-index:9999;
+  display:none;
+  -webkit-align-items:center;align-items:center;
+  gap:10px;
+  max-width:min(320px,calc(100vw - 32px));
+  padding:12px 14px;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  border-radius:18px;
+  background:rgba(17,32,59,.94);
+  color:#fff;
+  box-shadow:0 16px 34px rgba(15,23,42,.28);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.public-workout-install.is-visible{display:-webkit-flex;display:flex}
+.public-workout-install__copy{font-size:13px;line-height:1.35}
+.public-workout-install__button{
+  border:0;
+  border-radius:999px;
+  padding:10px 14px;
+  min-height:44px;
+  background:#f5efe4;
+  color:#11203b;
+  font-weight:700;
+  font-size:13px;
+  cursor:pointer;
+  white-space:nowrap;
+  -webkit-appearance:none;appearance:none;
+}
+@media (max-width: 640px){
+  .public-workout-install{
+    left:12px;
+    right:12px;
+    bottom:12px;
+    max-width:none;
+  }
+}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="{{ plan.theme_color }}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="{{ plan.title }}">
+<link rel="manifest" href="{{ plan.manifest_url }}">
+<link rel="apple-touch-icon" href="{{ apple_touch_icon }}">
+<link rel="icon" href="/static/images/student-app-icon.svg" type="image/svg+xml">
+<link rel="icon" href="{{ icon_192 }}" sizes="192x192" type="image/png">
+<title>{% block page_title %}{{ plan.title }}{% endblock %}</title>
+{% for href in stylesheet_urls %}<link rel="stylesheet" href="{{ href }}?v={{ static_asset_version }}">
+{% endfor %}<style>
+/* Accent do aluno — unico eixo de branding por plano; o resto dos tokens
+   vem de tokens.css. O vocabulario de badge de sessao de cada plano entra
+   no bloco plan_tokens, porque cada treino nomeia os dias do seu jeito. */
+:root{
+  --accent:{{ plan.accent.base }};
+  --accent-bg:{{ plan.accent.bg }};
+  --accent-border:{{ plan.accent.border }};
+  --accent-light:{{ plan.accent.light }};
+  --accent-dark:{{ plan.accent.dark }};
+{% if plan.tracker_weeks %}  --tracker-weeks:{{ plan.tracker_weeks }};
+{% endif %}{% block plan_tokens %}{% endblock %}}
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body{% if plan.store_key %} data-store-key="{{ plan.store_key }}"{% endif %}>
+{% block body %}{% endblock %}
+<div class="public-workout-install" id="public-workout-install" aria-live="polite">
+  <div class="public-workout-install__copy" id="public-workout-install-copy"></div>
+  <button class="public-workout-install__button" id="public-workout-install-button" type="button"></button>
+</div>
+<script>
+/* Inline de proposito: e bootstrap de PWA, roda antes de tudo, e a pagina
+   inteira existe para abrir rapido no celular do aluno na academia. */
+(function () {
+  var installPrompt = null;
+  var installRoot = document.getElementById('public-workout-install');
+  var installCopy = document.getElementById('public-workout-install-copy');
+  var installButton = document.getElementById('public-workout-install-button');
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+
+  function showInstall(copy, buttonLabel, onClick) {
+    if (!installRoot || !installCopy || !installButton || isStandalone) {
+      return;
+    }
+    installCopy.textContent = copy;
+    installButton.textContent = buttonLabel;
+    installButton.onclick = onClick;
+    installRoot.classList.add('is-visible');
+  }
+
+  if (isIos) {
+    showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar à Tela de Início.', 'Entendi', function () {
+      installRoot.classList.remove('is-visible');
+    });
+  }
+
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+
+  window.addEventListener('beforeinstallprompt', function (event) {
+    event.preventDefault();
+    installPrompt = event;
+    showInstall('Instale este treino na tela inicial para abrir como app, sem login.', 'Instalar app', function () {
+      if (!installPrompt) {
+        return;
+      }
+      installPrompt.prompt();
+      installPrompt.userChoice.finally(function () {
+        installPrompt = null;
+        installRoot.classList.remove('is-visible');
+      });
+    });
+  });
+
+  window.addEventListener('appinstalled', function () {
+    if (installRoot) {
+      installRoot.classList.remove('is-visible');
+    }
+  });
+
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/renan/sw.js', { scope: '/renan/' }).catch(function () {
+      // O treino continua abrindo mesmo sem o service worker.
+    });
+  });
+})();
+</script>
+{% block plan_data %}{% endblock %}
+<script src="/static/js/public_workouts/app.js?v={{ static_asset_version }}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,502 +1,8 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#111111">
-<title>John — Treino Low Volume 6 Dias</title>
-<style>
-/* ══════════════════════════════════════════════
-   BASE RESET — Safari iOS hardened
-   ══════════════════════════════════════════════ */
-*{-webkit-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0}
-a,button,[onclick],[role="button"]{-ms-touch-action:manipulation;touch-action:manipulation;cursor:pointer}
-a,button,input,[onclick]{-webkit-tap-highlight-color:rgba(0,0,0,0);-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth}
+{% extends 'public_workouts/_base.html' %}
 
-/* ══════════════════════════════════════════════
-   DESIGN TOKENS
-   ══════════════════════════════════════════════ */
-:root{
-  --bg:#F6F5F2;
-  --white:#FFFFFF;
-  --card:#FAFAF8;
-  --border:#E8E6E1;
-  --alt:#F2F1EE;
-  --dark:#141414;
-  --muted:#8A8883;
-  --light:#B5B3AE;
-  --accent:#0891B2;
-  --accent-bg:#ECFEFF;
-  --accent-border:#A5F3FC;
-  --accent-light:#CFFAFE;
-  --accent-dark:#0E7490;
-  --prep-bg:#F1EFE8;--prep-fg:#57534E;
-  --feed-bg:#FEF3C7;--feed-fg:#92400E;
-  --top-bg:#EDE9FE;--top-fg:#5B21B6;
-  --max-bg:#FEE2E2;--max-fg:#991B1B;
-  --force-bg:#DBEAFE;--force-fg:#1D4ED8;
-  --hiper-bg:#EDE9FE;--hiper-fg:#5B21B6;
-  --cardio-bg:#D1FAE5;--cardio-fg:#065F46;
-  --green-bg:#EAF3DE;--green-fg:#3A6F10;
-  --r-sm:8px;--r-md:11px;--r-lg:14px;
-  --shadow:0 1px 3px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.03);
-}
+{% block page_title %}John — Treino Low Volume 6 Dias{% endblock %}
 
-/* ══════════════════════════════════════════════
-   BODY & PAGE
-   ══════════════════════════════════════════════ */
-body{
-  font-family:-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif;
-  background:var(--bg);color:var(--dark);min-height:100vh;
-  padding-left:env(safe-area-inset-left);
-  padding-right:env(safe-area-inset-right);
-  padding-bottom:env(safe-area-inset-bottom);
-  -webkit-text-size-adjust:100%;line-height:1.5;
-}
-.page{max-width:880px;margin:0 auto;padding:0 1.25rem 5rem}
-
-/* ══════════════════════════════════════════════
-   STICKY TOP BAR
-   ══════════════════════════════════════════════ */
-.top-bar{
-  position:-webkit-sticky;position:sticky;
-  top:0;z-index:100;
-  background:var(--dark);
-  display:-webkit-flex;display:flex;
-  -webkit-align-items:center;align-items:center;
-  -webkit-justify-content:space-between;justify-content:space-between;
-  padding:.55rem 1.25rem;
-  padding-top:calc(.55rem + env(safe-area-inset-top,0px));
-  border-bottom:2px solid var(--accent);
-  margin-bottom:1.5rem;
-}
-.top-bar-left{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:8px}
-.top-bar-name{font-size:12px;font-weight:700;color:#fff;opacity:.7;letter-spacing:.02em}
-.mode-btn{
-  display:-webkit-inline-flex;display:inline-flex;
-  -webkit-align-items:center;align-items:center;
-  gap:6px;padding:10px 18px;min-height:44px;
-  border-radius:10px;border:none;
-  font-size:13px;font-weight:700;font-family:inherit;
-  background:var(--accent);color:#fff;
-  -webkit-appearance:none;appearance:none;
-  white-space:nowrap;
-  transition:background .12s,transform .08s;
-}
-.mode-btn:active{background:var(--accent-dark);-webkit-transform:scale(.97);transform:scale(.97)}
-.mode-btn .mode-icon{font-size:15px}
-
-/* ══════════════════════════════════════════════
-   SIMPLIFIED MODE
-   ══════════════════════════════════════════════ */
-body.simplified .glossary{display:none}
-body.simplified .legend{display:none}
-body.simplified .tracker{display:none}
-body.simplified .ex-code{display:none}
-body.simplified .ex-var{display:none}
-body.simplified .ex-note{display:none}
-body.simplified .prog-sub{display:none}
-body.simplified .sess-meta{display:none}
-body.simplified .wiki-btn{display:none}
-body.simplified .prog-title{font-size:18px}
-body.simplified .stats{grid-template-columns:repeat(3,1fr)}
-body.simplified .stat:last-child{display:none}
-body.simplified .ex-top{background:var(--white);border-bottom:none;padding-bottom:.5rem}
-body.simplified .ex{box-shadow:none}
-body.simplified .gym-card{display:-webkit-flex;display:flex}
-body.simplified .sets-tbl-wrap{display:none}
-
-.gym-card{
-  display:none;
-  -webkit-align-items:center;align-items:center;
-  gap:10px;padding:.65rem 1rem;
-  background:var(--white);-webkit-flex-wrap:wrap;flex-wrap:wrap;
-}
-.gym-summary{-webkit-flex:1;flex:1;font-size:13px;font-weight:600;color:var(--dark);min-width:0}
-.gym-summary strong{font-size:14px}
-.gym-reps{font-size:12px;color:var(--muted);margin-top:2px}
-.gym-wiki{
-  display:-webkit-inline-flex;display:inline-flex;
-  -webkit-align-items:center;align-items:center;
-  gap:4px;font-size:11px;font-weight:700;
-  color:var(--accent);text-decoration:none;
-  background:var(--accent-bg);border:1px solid var(--accent-border);
-  border-radius:9px;padding:10px 13px;min-height:44px;
-  white-space:nowrap;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-}
-.gym-wiki:active{background:var(--accent-light)}
-
-/* ══════════════════════════════════════════════
-   HEADER
-   ══════════════════════════════════════════════ */
-.header{margin-bottom:1.4rem}
-.prog-name{font-size:13px;color:var(--accent);font-weight:700;margin-bottom:2px;letter-spacing:.01em}
-.prog-title{font-size:22px;font-weight:800;margin-bottom:4px;letter-spacing:-.02em;line-height:1.2}
-.prog-sub{font-size:11.5px;color:var(--muted);line-height:1.6}
-
-/* ══════════════════════════════════════════════
-   STATS
-   ══════════════════════════════════════════════ */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.4rem}
-.stat{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);padding:.7rem .9rem;box-shadow:var(--shadow)}
-.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;font-weight:600}
-.stat-v{font-size:18px;font-weight:800}
-
-/* ══════════════════════════════════════════════
-   GLOSSARY
-   ══════════════════════════════════════════════ */
-.glossary{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);padding:.75rem 1rem;margin-bottom:1.25rem;box-shadow:var(--shadow)}
-.glossary-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.55rem}
-.glossary-grid{display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:7px 14px}
-.gloss-item{display:-webkit-flex;display:flex;-webkit-align-items:baseline;align-items:baseline;gap:5px;font-size:11.5px}
-.gloss-term{font-weight:700;font-size:10.5px;background:var(--alt);border:1px solid var(--border);border-radius:5px;padding:2px 8px;white-space:nowrap}
-.gloss-def{color:var(--muted)}
-
-/* ══════════════════════════════════════════════
-   LEGEND
-   ══════════════════════════════════════════════ */
-.legend{display:-webkit-flex;display:flex;gap:8px;-webkit-flex-wrap:wrap;flex-wrap:wrap;margin-bottom:1.25rem;padding:.65rem 1rem;background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);box-shadow:var(--shadow)}
-.leg-item{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:5px;font-size:11px;color:#555}
-
-/* ══════════════════════════════════════════════
-   WEEK STRIP
-   ══════════════════════════════════════════════ */
-.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:1.25rem}
-.dp{
-  background:var(--white);border:1px solid var(--border);border-radius:var(--r-sm);
-  padding:.6rem .25rem;text-align:center;cursor:pointer;
-  transition:border-color .12s,background .12s,box-shadow .12s;
-  -webkit-user-select:none;-moz-user-select:none;user-select:none;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  min-height:54px;
-  display:-webkit-flex;display:flex;
-  -webkit-flex-direction:column;flex-direction:column;
-  -webkit-align-items:center;align-items:center;
-  -webkit-justify-content:center;justify-content:center;
-  box-shadow:var(--shadow);
-}
-.dp:active:not(.rest){border-color:var(--accent);background:var(--accent-bg)}
-.dp.active{border-color:var(--accent);background:var(--accent-bg);box-shadow:0 0 0 2px var(--accent-border)}
-.dp.active .dt{color:var(--accent-dark)}
-.dp.cardio-d{background:var(--green-bg);border-color:#86C04A}
-.dp.cardio-d .dt{color:var(--green-fg)}
-.dp.rest{opacity:.35;cursor:default;pointer-events:none}
-.dn{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:3px;letter-spacing:.04em}
-.dt{font-size:10.5px;font-weight:800;color:#444}
-
-/* ══════════════════════════════════════════════
-   TABS
-   ══════════════════════════════════════════════ */
-.tabs{display:-webkit-flex;display:flex;gap:5px;margin-bottom:1.25rem;-webkit-flex-wrap:wrap;flex-wrap:wrap}
-.tab{
-  padding:10px 18px;min-height:44px;border-radius:var(--r-sm);
-  border:1px solid var(--border);font-size:13px;cursor:pointer;
-  background:var(--white);color:#666;font-family:inherit;font-weight:500;
-  -webkit-transition:all .12s;transition:all .12s;
-  -webkit-appearance:none;appearance:none;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  display:-webkit-inline-flex;display:inline-flex;
-  -webkit-align-items:center;align-items:center;
-  box-shadow:var(--shadow);
-}
-.tab:active{background:var(--alt)}
-.tab.on{background:var(--dark);color:var(--white);border-color:var(--dark);font-weight:700;box-shadow:none}
-
-/* ══════════════════════════════════════════════
-   SESSION
-   ══════════════════════════════════════════════ */
-.session{display:none}
-.session.on{display:block}
-.sess-hdr{
-  display:-webkit-flex;display:flex;
-  -webkit-justify-content:space-between;justify-content:space-between;
-  -webkit-align-items:flex-start;align-items:flex-start;
-  margin-bottom:1.25rem;padding-bottom:.85rem;
-  border-bottom:1px solid var(--border);
-  gap:12px;-webkit-flex-wrap:wrap;flex-wrap:wrap;
-}
-.sess-title{font-size:16px;font-weight:800;margin-bottom:3px;letter-spacing:-.01em}
-.sess-meta{font-size:11px;color:var(--muted);line-height:1.55}
-.badge{font-size:10px;font-weight:700;padding:5px 12px;border-radius:99px;white-space:nowrap;letter-spacing:.02em}
-.b-forca{background:var(--force-bg);color:var(--force-fg)}
-.b-hiper{background:var(--hiper-bg);color:var(--hiper-fg)}
-.b-cardio{background:var(--cardio-bg);color:var(--cardio-fg)}
-
-/* ══════════════════════════════════════════════
-   EXERCISE BLOCK
-   ══════════════════════════════════════════════ */
-.ex{margin-bottom:1.1rem;background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
-.ex-top{
-  padding:.75rem 1rem .6rem;
-  display:-webkit-flex;display:flex;
-  -webkit-justify-content:space-between;justify-content:space-between;
-  -webkit-align-items:flex-start;align-items:flex-start;
-  gap:8px;background:var(--card);border-bottom:1px solid var(--border);
-}
-.ex-left{-webkit-flex:1;flex:1;min-width:0}
-.ex-code{font-size:9px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
-.ex-name{font-size:14px;font-weight:700;margin-bottom:4px}
-.ex-var{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:5px;-webkit-flex-wrap:wrap;flex-wrap:wrap}
-.var-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-.var-link{
-  font-size:11px;color:#6B7280;text-decoration:none;
-  background:#F3F4F6;border:1px solid #E5E7EB;border-radius:6px;
-  padding:6px 10px;min-height:34px;
-  display:-webkit-inline-flex;display:inline-flex;
-  -webkit-align-items:center;align-items:center;
-  transition:background .1s;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-}
-.var-link:active{background:#E5E7EB}
-.wiki-btn{
-  display:-webkit-inline-flex;display:inline-flex;
-  -webkit-align-items:center;align-items:center;
-  gap:4px;font-size:11px;font-weight:700;
-  color:var(--accent);text-decoration:none;
-  background:var(--accent-bg);border:1px solid var(--accent-border);
-  border-radius:9px;padding:10px 14px;min-height:44px;
-  white-space:nowrap;-webkit-flex-shrink:0;flex-shrink:0;
-  transition:background .12s;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-}
-.wiki-btn:active{background:var(--accent-light)}
-.ex-note{font-size:11px;color:#555;padding:.55rem 1rem;background:var(--card);border-bottom:1px solid var(--border);line-height:1.6;font-style:italic}
-
-/* ══════════════════════════════════════════════
-   SETS TABLE — scroll wrap for mobile
-   ══════════════════════════════════════════════ */
-.sets-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.sets-tbl{width:100%;border-collapse:collapse;min-width:320px}
-.sets-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--white);border-bottom:1px solid #f5f4f2;font-weight:700}
-.sets-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f7f5;background:var(--white);vertical-align:middle}
-.sets-tbl tr:last-child td{border-bottom:none}
-.st{display:-webkit-inline-flex;display:inline-flex;-webkit-align-items:center;align-items:center;font-size:9px;font-weight:700;padding:3px 9px;border-radius:99px;min-width:88px;-webkit-justify-content:center;justify-content:center}
-.st-p{background:var(--prep-bg);color:var(--prep-fg)}
-.st-f{background:var(--feed-bg);color:var(--feed-fg)}
-.st-t{background:var(--top-bg);color:var(--top-fg)}
-.st-m{background:var(--max-bg);color:var(--max-fg)}
-
-/* ══════════════════════════════════════════════
-   WEIGHT TRACKER
-   ══════════════════════════════════════════════ */
-.tracker{border-top:1px solid var(--border);background:var(--accent-bg);padding:.9rem 1rem}
-.tracker-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:.7rem;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:6px}
-.tracker-title span{font-size:14px}
-.tracker-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-/* Destaque da semana atual no tracker */
-.wk-box.wk-current{border-color:var(--accent);background:var(--accent-bg);box-shadow:0 0 0 2px var(--accent-border)}
-.wk-box.wk-current .wk-label{color:var(--accent-dark)}
-.wk-box.wk-current::after{content:'HOJE';display:block;font-size:7px;font-weight:800;color:var(--accent);letter-spacing:.08em;margin-top:2px}
-/* Banner de periodização */
-.period-banner{
-  display:-webkit-flex;display:flex;
-  -webkit-align-items:center;align-items:center;
-  gap:12px;
-  background:var(--dark);color:#fff;
-  border-radius:var(--r-md);
-  padding:.7rem 1rem;margin-bottom:1.25rem;
-  border-left:4px solid var(--accent);
-}
-.pb-week{
-  -webkit-flex-shrink:0;flex-shrink:0;
-  display:-webkit-flex;display:flex;
-  -webkit-flex-direction:column;flex-direction:column;
-  -webkit-align-items:center;align-items:center;
-  background:var(--accent);border-radius:var(--r-sm);
-  padding:.4rem .7rem;min-width:62px;
-}
-.pb-week-num{font-size:20px;font-weight:800;line-height:1}
-.pb-week-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.85;margin-top:2px}
-.pb-text{-webkit-flex:1;flex:1;min-width:0}
-.pb-title{font-size:12.5px;font-weight:700;margin-bottom:2px}
-.pb-sub{font-size:10.5px;opacity:.7;line-height:1.5}
-.pb-dots{display:-webkit-flex;display:flex;gap:4px;margin-top:5px}
-.pb-dot{width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.18);-webkit-flex:1;flex:1}
-.pb-dot.done{background:rgba(255,255,255,.45)}
-.pb-dot.now{background:var(--accent)}
-.wk-box{background:var(--white);border:1px solid var(--accent-border);border-radius:var(--r-sm);padding:.55rem .4rem;text-align:center}
-.wk-label{font-size:8.5px;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
-.wk-input{
-  width:100%;border:1px solid var(--accent-border);border-radius:6px;
-  padding:6px 4px;font-size:16px;/* CRITICAL: 16px evita zoom Safari */
-  font-weight:700;text-align:center;
-  background:var(--white);color:var(--dark);font-family:inherit;
-  outline:none;-webkit-appearance:none;appearance:none;min-height:44px;
-}
-.wk-input:focus{border-color:var(--accent);-webkit-box-shadow:0 0 0 2px var(--accent-light);box-shadow:0 0 0 2px var(--accent-light)}
-.wk-input::placeholder{color:var(--light);font-weight:400}
-.wk-unit{font-size:8.5px;color:var(--muted);margin-top:2px}
-.tracker-prog{margin-top:.7rem;height:44px;position:relative;display:-webkit-flex;display:flex;-webkit-align-items:flex-end;align-items:flex-end;gap:4px}
-.tracker-save{margin-top:.7rem;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:8px}
-.save-btn{
-  padding:10px 18px;min-height:44px;border-radius:9px;border:none;
-  background:var(--accent);color:var(--white);
-  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
-  -webkit-appearance:none;appearance:none;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  transition:background .12s;
-}
-.save-btn:active{background:var(--accent-dark)}
-.save-msg{font-size:11px;color:var(--green-fg);opacity:0;transition:opacity .3s}
-
-/* ══════════════════════════════════════════════
-   CARDIO
-   ══════════════════════════════════════════════ */
-.c-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:1.1rem;box-shadow:var(--shadow)}
-.c-head{padding:.75rem 1rem;font-size:13.5px;font-weight:700;background:var(--card);border-bottom:1px solid var(--border);display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:center;align-items:center;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:6px}
-.km-badge{font-size:11px;font-weight:700;color:var(--green-fg);background:var(--green-bg);border-radius:99px;padding:2px 10px}
-.c-row{display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:center;align-items:center;padding:.55rem 1rem;border-bottom:1px solid #f8f7f5;font-size:12.5px;gap:8px}
-.c-row:last-child{border-bottom:none}
-.c-lbl{font-size:11.5px;color:var(--muted);font-weight:600;-webkit-flex-shrink:0;flex-shrink:0}
-.c-note{font-size:11px;color:#555;padding:.6rem 1rem;background:var(--card);font-style:italic;line-height:1.6}
-
-/* ══════════════════════════════════════════════
-   PERIODIZAÇÃO
-   ══════════════════════════════════════════════ */
-.period-chart{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.2rem 1.2rem .75rem;margin-bottom:1.1rem;box-shadow:var(--shadow)}
-.chart-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:1.1rem}
-.chart-body{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;-webkit-align-items:end;align-items:end;min-height:120px;padding-top:.5rem}
-.chart-col{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;gap:5px}
-.chart-bar-wrap{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-justify-content:flex-end;justify-content:flex-end;-webkit-align-items:center;align-items:center;gap:3px;width:100%}
-.chart-bar{width:100%;border-radius:6px 6px 0 0;transition:all .3s;position:relative;min-height:8px}
-.chart-bar:hover{filter:brightness(1.07)}
-.chart-label{font-size:9.5px;font-weight:700;color:var(--muted);text-align:center;padding-bottom:3px}
-.chart-focus{font-size:9px;font-weight:700;text-align:center;padding:2px 4px;border-radius:5px;width:100%}
-.chart-legend{display:-webkit-flex;display:flex;gap:10px;-webkit-flex-wrap:wrap;flex-wrap:wrap;margin-top:.75rem;padding:.6rem .75rem;background:var(--alt);border-radius:var(--r-sm)}
-.chart-leg-item{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:5px;font-size:10.5px;color:#555}
-.chart-swatch{width:12px;height:12px;border-radius:3px;-webkit-flex-shrink:0;flex-shrink:0}
-.period-tbl{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:1.1rem;box-shadow:var(--shadow)}
-.period-tbl table{width:100%;border-collapse:collapse}
-.period-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--card);border-bottom:1px solid var(--border);font-weight:700}
-.period-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f7f5}
-.period-tbl tr:last-child td{border-bottom:none}
-.deload-row td{background:var(--green-bg);color:var(--green-fg)}
-.vnote{font-size:11.5px;color:#555;padding:.7rem 1rem;background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:1.1rem;line-height:1.65;font-style:italic;box-shadow:var(--shadow)}
-.vol-tbl{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
-.vol-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--card);border-bottom:1px solid var(--border);font-weight:700}
-.vol-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f7f5}
-.vol-tbl tr:last-child td{border-bottom:none}
-
-/* ══════════════════════════════════════════════
-   MEDIA: TABLET ≤600px
-   ══════════════════════════════════════════════ */
-@media only screen and (max-width:600px){
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .tracker-grid{grid-template-columns:repeat(3,1fr)}
-}
-
-/* ══════════════════════════════════════════════
-   MEDIA: MOBILE ≤430px — iPhone 15 Pro Max
-   ══════════════════════════════════════════════ */
-@media only screen and (max-width:430px){
-  .page{padding:0 .75rem calc(5rem + env(safe-area-inset-bottom,0px))}
-  .top-bar{padding:.5rem .75rem;padding-top:calc(.5rem + env(safe-area-inset-top,0px));margin-bottom:1.15rem}
-
-  .prog-title{font-size:19px}
-  .prog-sub{font-size:11px}
-
-  .stats{grid-template-columns:repeat(2,1fr);gap:6px}
-  .stat{padding:.55rem .75rem}
-  .stat-v{font-size:15px}
-
-  /* Week — horizontal scroll with snap */
-  .week{
-    display:-webkit-flex;display:flex;gap:5px;
-    overflow-x:auto;-webkit-overflow-scrolling:touch;
-    scroll-snap-type:x mandatory;
-    padding-bottom:6px;scrollbar-width:none;
-    margin-left:-.75rem;margin-right:-.75rem;
-    padding-left:.75rem;padding-right:.75rem;
-  }
-  .week::-webkit-scrollbar{display:none}
-  .dp{
-    -webkit-flex:0 0 calc((100% - 30px) / 5);
-    flex:0 0 calc((100% - 30px) / 5);
-    scroll-snap-align:start;
-    min-height:56px;border-radius:10px;padding:.4rem .15rem;
-  }
-  .dn{font-size:8px}
-  .dt{font-size:9px;font-weight:800}
-
-  /* Tabs — horizontal scroll */
-  .tabs{
-    -webkit-flex-wrap:nowrap;flex-wrap:nowrap;
-    overflow-x:auto;-webkit-overflow-scrolling:touch;
-    scroll-snap-type:x mandatory;
-    padding-bottom:4px;scrollbar-width:none;
-  }
-  .tabs::-webkit-scrollbar{display:none}
-  .tab{
-    -webkit-flex-shrink:0;flex-shrink:0;
-    scroll-snap-align:start;
-    padding:10px 14px;font-size:12px;border-radius:9px;
-  }
-
-  .sess-title{font-size:14.5px}
-  .sess-meta{font-size:10.5px}
-  .badge{font-size:9px;padding:4px 10px}
-
-  /* Exercise — stack wiki btn below */
-  .ex-top{-webkit-flex-direction:column;flex-direction:column;gap:8px;padding:.65rem .85rem .5rem}
-  .ex-name{font-size:13px}
-  .wiki-btn{-webkit-align-self:stretch;align-self:stretch;-webkit-justify-content:center;justify-content:center;font-size:12px;padding:12px 14px;min-height:46px;border-radius:10px;width:100%}
-  .var-link{font-size:11px;padding:7px 11px;min-height:36px;border-radius:7px}
-
-  .sets-tbl th{font-size:8px;padding:.4rem .55rem;letter-spacing:.04em}
-  .sets-tbl td{font-size:11px;padding:.45rem .55rem}
-  .st{font-size:8px;padding:3px 6px;min-width:66px}
-
-  .tracker{padding:.75rem}
-  .tracker-grid{grid-template-columns:repeat(3,1fr);gap:5px}
-  .wk-box{padding:.5rem .25rem}
-  .wk-label{font-size:8px}
-  .wk-input{font-size:16px;padding:7px 2px;min-height:44px;border-radius:7px}
-  .wk-unit{font-size:8px}
-  .save-btn{min-height:46px;padding:12px 20px;border-radius:10px;width:100%}
-  .tracker-save{-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:flex-start;align-items:flex-start;gap:6px}
-
-  .glossary-grid{gap:5px 10px}
-  .gloss-item{font-size:10px}
-  .gloss-term{font-size:10px}
-
-  .legend{gap:6px;padding:.5rem .75rem}
-  .leg-item{font-size:9.5px}
-
-  .c-row{-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:flex-start;align-items:flex-start;gap:2px;padding:.5rem .85rem}
-  .c-lbl{font-size:10.5px;font-weight:700}
-  .c-row>span:last-child{font-size:11.5px;color:var(--dark)}
-  .c-head{font-size:12px;padding:.6rem .85rem}
-  .c-note{font-size:10.5px;padding:.5rem .85rem}
-
-  .vol-tbl th,.vol-tbl td{font-size:10px;padding:.4rem .5rem}
-  .period-tbl th,.period-tbl td{font-size:10px;padding:.4rem .5rem}
-  .chart-body{gap:4px}
-  .chart-legend{gap:6px;padding:.45rem .6rem}
-  .chart-leg-item{font-size:9px}
-  .ex-note{font-size:10.5px;padding:.45rem .85rem}
-  .vnote{font-size:10.5px;padding:.6rem .85rem}
-}
-
-/* ══════════════════════════════════════════════
-   MEDIA: SMALL MOBILE ≤375px — iPhone SE
-   ══════════════════════════════════════════════ */
-@media only screen and (max-width:375px){
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .sets-tbl th{font-size:7.5px;padding:.35rem .45rem}
-  .sets-tbl td{font-size:10.5px;padding:.4rem .45rem}
-  .st{font-size:7.5px;min-width:60px}
-  .tracker-grid{grid-template-columns:repeat(3,1fr)}
-  .prog-title{font-size:17px}
-  .dp{-webkit-flex:0 0 calc((100% - 20px) / 4);flex:0 0 calc((100% - 20px) / 4)}
-}
-</style>
-</head>
-<body>
+{% block body %}
 <div class="page">
 
 <!-- ══════ STICKY TOP BAR ══════ -->
@@ -526,7 +32,7 @@ body.simplified .sets-tbl-wrap{display:none}
 </div>
 
 <!-- ══════ BANNER DE PERIODIZAÇÃO (auto-atualiza pela data) ══════ -->
-<div class="period-banner" id="period-banner">
+<div class="period-banner" id="period-banner" data-cycle-start="2026-06-01" data-cycle-weeks="6" data-cycle-increment="2.5">
   <div class="pb-week"><div class="pb-week-num" id="pb-num">1</div><div class="pb-week-lbl">Semana</div></div>
   <div class="pb-text">
     <div class="pb-title" id="pb-title">Semana 1 de 6 — Carga base</div>
@@ -1181,193 +687,65 @@ body.simplified .sets-tbl-wrap{display:none}
 </div>
 
 </div><!-- /page -->
-<script>
-/* ══ NAVIGATION ══ */
-function goDay(id,el){
-  document.querySelectorAll('.session').forEach(s=>s.classList.remove('on'));
-  document.querySelectorAll('.dp:not(.rest)').forEach(p=>{p.classList.remove('active');p.removeAttribute('aria-current')});
-  const s=document.getElementById(id);if(s)s.classList.add('on');
-  if(el){el.classList.add('active');el.setAttribute('aria-current','true')}
-  showTab('treino');
-  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.remove('on');if(i===0)t.classList.add('on')});
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function showTab(t){
-  document.getElementById('tab-treino').style.display=t==='treino'?'block':'none';
-  document.getElementById('tab-period').style.display=t==='period'?'block':'none';
-}
-function goTab(t,el){
-  showTab(t);
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
-  if(el)el.classList.add('on');
-  if(t==='period')buildChart();
-}
-function toggleMode(btn){
-  const simplified=document.body.classList.toggle('simplified');
-  const label=btn.querySelector('.mode-label');
-  const icon=btn.querySelector('.mode-icon');
-  if(simplified){label.textContent='Modo Completo';icon.textContent='📖';btn.style.background='#166534';}
-  else{label.textContent='Modo Academia';icon.textContent='🏋️';btn.style.background='';}
-}
+{% endblock %}
 
-/* ══ PERIOD CHART (estático, estilo Juliana) ══ */
-const chartData=[
-  {label:'S1',focus:'Base',reps:'base',color:'#67E8F9',bg:'#ECFEFF',fg:'#0E7490',h:55},
-  {label:'S2',focus:'Progressão',reps:'+2,5',color:'#22D3EE',bg:'#ECFEFF',fg:'#0E7490',h:68},
-  {label:'S3',focus:'Progressão',reps:'+5',color:'#22D3EE',bg:'#ECFEFF',fg:'#0E7490',h:80},
-  {label:'S4',focus:'Progressão',reps:'+7,5',color:'#22D3EE',bg:'#ECFEFF',fg:'#0E7490',h:90},
-  {label:'S5',focus:'Pico',reps:'+10',color:'#0891B2',bg:'#CFFAFE',fg:'#0E7490',h:100},
-  {label:'S6',focus:'Deload',reps:'leve',color:'#10B981',bg:'#D1FAE5',fg:'#065F46',h:38},
-];
-let chartBuilt=false;
-function buildChart(){
-  if(chartBuilt)return;chartBuilt=true;
-  const c=document.getElementById('period-chart-body');
-  const MAXH=120;
-  chartData.forEach(w=>{
-    const barH=Math.round((w.h/100)*MAXH);
-    const isNow=(typeof SEMANA_ATUAL!=='undefined') && (w.label==='S'+SEMANA_ATUAL);
-    const col=document.createElement('div');
-    col.className='chart-col';
-    col.innerHTML=`
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:${MAXH}px;gap:3px;width:100%">
-        <div style="font-size:9px;font-weight:700;color:${w.fg}">${w.reps}</div>
-        <div style="width:100%;height:${barH}px;background:${w.color};border-radius:5px 5px 0 0;position:relative;overflow:hidden;${isNow?'outline:2px solid var(--accent-dark);outline-offset:1px':''}">
-          <div style="position:absolute;top:0;left:0;right:0;height:40%;background:rgba(255,255,255,0.2);border-radius:5px 5px 0 0"></div>
-        </div>
-      </div>
-      <div style="font-size:9px;font-weight:700;text-align:center;padding:2px 3px;border-radius:5px;background:${w.bg};color:${w.fg};width:100%;margin-top:4px">${w.focus}</div>
-      <div style="font-size:9px;font-weight:800;color:${isNow?'var(--accent-dark)':'var(--muted)'};text-align:center">${w.label}${isNow?' •':''}</div>`;
-    c.appendChild(col);
-  });
-}
-
-/* ══════════════════════════════════════════════
-   PERIODIZAÇÃO — auto-detecta a semana pela data
-   ══════════════════════════════════════════════
-   COMO EDITAR POR ALUNO:
-   - INICIO: data do 1º dia do programa (formato AAAA-MM-DD)
-   - CICLO: nº de semanas antes de reiniciar
-   - INCREMENTO: kg somados por semana em cada exercício rastreado
-   Tudo roda no próprio aparelho — não precisa de servidor.
-   ══════════════════════════════════════════════ */
-const INICIO = new Date('2026-06-01T00:00:00'); // ← edite a data de início do aluno aqui
-const CICLO = 6;                                 // ciclo de 6 semanas, depois repete
-const INCREMENTO = { 'seg-A1':2.5, 'ter-A1':2.5, 'qui-A1':2.5, 'sab-A1':2.5 }; // kg/semana por exercício
-const SEMANAS = [1,2,3,4,5,6];
-
-function semanaDoCiclo(){
-  const hoje = new Date();
-  const diff = Math.floor((hoje - INICIO) / 86400000); // dias desde o início
-  if(diff < 0) return 1;                                // antes de começar → semana 1
-  return (Math.floor(diff / 7) % CICLO) + 1;            // 1..6, reinicia sozinho
-}
-const SEMANA_ATUAL = semanaDoCiclo();
-
-function renderBanner(){
-  const n = SEMANA_ATUAL;
-  document.getElementById('pb-num').textContent = n;
-  document.getElementById('pb-title').textContent = `Semana ${n} de ${CICLO} — Progressão de carga`;
-  const sub = document.getElementById('pb-sub');
-  if(n === 1){
-    sub.textContent = 'Registre suas cargas esta semana. As próximas vão sugerir +2,5 kg automaticamente.';
-  } else {
-    sub.textContent = `Meta: +${(2.5*(n-1)).toString().replace('.0','')} kg sobre a semana 1 nos exercícios principais. Mesmas reps, mais carga.`;
+{% block plan_data %}
+<script type="application/json" id="period-chart-data">
+[
+  {
+    "label": "S1",
+    "focus": "Base",
+    "reps": "base",
+    "color": "#67E8F9",
+    "bg": "#ECFEFF",
+    "fg": "#0E7490",
+    "h": 55
+  },
+  {
+    "label": "S2",
+    "focus": "Progressão",
+    "reps": "+2,5",
+    "color": "#22D3EE",
+    "bg": "#ECFEFF",
+    "fg": "#0E7490",
+    "h": 68
+  },
+  {
+    "label": "S3",
+    "focus": "Progressão",
+    "reps": "+5",
+    "color": "#22D3EE",
+    "bg": "#ECFEFF",
+    "fg": "#0E7490",
+    "h": 80
+  },
+  {
+    "label": "S4",
+    "focus": "Progressão",
+    "reps": "+7,5",
+    "color": "#22D3EE",
+    "bg": "#ECFEFF",
+    "fg": "#0E7490",
+    "h": 90
+  },
+  {
+    "label": "S5",
+    "focus": "Pico",
+    "reps": "+10",
+    "color": "#0891B2",
+    "bg": "#CFFAFE",
+    "fg": "#0E7490",
+    "h": 100
+  },
+  {
+    "label": "S6",
+    "focus": "Deload",
+    "reps": "leve",
+    "color": "#10B981",
+    "bg": "#D1FAE5",
+    "fg": "#065F46",
+    "h": 38
   }
-  const dots = document.getElementById('pb-dots');
-  dots.innerHTML = SEMANAS.map(w=>{
-    const cls = w < n ? 'done' : (w === n ? 'now' : '');
-    return `<div class="pb-dot ${cls}"></div>`;
-  }).join('');
-}
-
-/* ══ WEIGHT TRACKER ══ */
-const STORE_KEY='john_v1';
-function loadAll(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}catch{return{}}}
-function saveAll(d){try{localStorage.setItem(STORE_KEY,JSON.stringify(d))}catch{}}
-
-function initTrackers(){
-  renderBanner();
-  const data=loadAll();
-  document.querySelectorAll('.wk-input').forEach(inp=>{
-    const k=inp.dataset.key;
-    if(data[k])inp.value=data[k];
-    inp.addEventListener('input',()=>{
-      const prefix=k.split('-').slice(0,2).join('-');
-      renderBar(prefix);
-      sugerirCargas(prefix);
-    });
-  });
-  // Destaca a coluna da semana atual + sugere cargas + desenha gráfico
-  document.querySelectorAll('.wk-input').forEach(inp=>{
-    const i=parseInt(inp.dataset.key.split('-s')[1],10);
-    if(i===SEMANA_ATUAL) inp.closest('.wk-box').classList.add('wk-current');
-  });
-  ['seg-A1','ter-A1','qui-A1','sab-A1'].forEach(id=>{renderBar(id);sugerirCargas(id);});
-}
-
-// Sugere a carga das semanas futuras a partir da semana 1 + incremento
-function sugerirCargas(prefix){
-  const inc = INCREMENTO[prefix];
-  if(!inc) return;
-  const baseEl = document.querySelector(`[data-key="${prefix}-s1"]`);
-  const base = baseEl && baseEl.value ? parseFloat(baseEl.value) : null;
-  for(let i=2;i<=CICLO;i++){
-    const el=document.querySelector(`[data-key="${prefix}-s${i}"]`);
-    if(!el) continue;
-    if(base && !el.value){
-      el.placeholder = (base + inc*(i-1)).toFixed(1).replace(/\.0$/,'') + ' →';
-    } else if(!base && !el.value){
-      el.placeholder = 'kg';
-    }
-  }
-}
-
-function getVals(id){
-  return SEMANAS.map(i=>{
-    const el=document.querySelector(`[data-key="${id}-s${i}"]`);
-    return el&&el.value?parseFloat(el.value):null;
-  });
-}
-
-function renderBar(id){
-  const prog=document.getElementById('prog-'+id);
-  if(!prog)return;
-  const vals=getVals(id);
-  const filled=vals.filter(v=>v!==null);
-  if(filled.length===0){prog.innerHTML='';return;}
-  const maxV=Math.max(...filled);
-  const minV=Math.min(...filled);
-  const range=maxV-minV||1;
-  const MAXH=36;
-  prog.innerHTML=vals.map((v,i)=>{
-    if(v===null)return`<div style="flex:1;opacity:.25;border-bottom:1px dashed #A5F3FC;font-size:8px;color:#A5F3FC;text-align:center;padding-bottom:2px">S${i+1}</div>`;
-    const h=Math.max(6,Math.round(((v-minV)/range)*(MAXH-6)+6));
-    const isMax=v===maxV&&filled.length>1;
-    const color=isMax?'#0E7490':'#22D3EE';
-    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">
-      <div style="font-size:8px;font-weight:700;color:${color}">${v}kg</div>
-      <div style="width:100%;height:${h}px;background:${color};border-radius:3px 3px 0 0;transition:height .3s"></div>
-      <div style="font-size:8px;color:#67E8F9">S${i+1}</div>
-    </div>`;
-  }).join('');
-}
-
-function saveTracker(id){
-  const data=loadAll();
-  SEMANAS.forEach(i=>{
-    const el=document.querySelector(`[data-key="${id}-s${i}"]`);
-    if(el&&el.value)data[`${id}-s${i}`]=parseFloat(el.value);
-    else delete data[`${id}-s${i}`];
-  });
-  saveAll(data);
-  renderBar(id);
-  sugerirCargas(id);
-  const msg=document.getElementById('msg-'+id);
-  if(msg){msg.style.opacity='1';setTimeout(()=>msg.style.opacity='0',2000)}
-}
-
-document.addEventListener('DOMContentLoaded',initTrackers);
+]
 </script>
-</body>
-</html>
+{% endblock %}
