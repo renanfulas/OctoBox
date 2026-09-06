@@ -19,9 +19,11 @@ class OperationalRuntimeSetting(models.Model):
     key = models.CharField(max_length=120, unique=True)
     value = models.CharField(max_length=120)
     updated_at = models.DateTimeField(auto_now=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='operational_runtime_settings_updated',

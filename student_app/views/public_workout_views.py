@@ -215,6 +215,19 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             # manifest/service-worker corretos; renderiza como pagina
             # autocontida, igual os outros 7 rendiam antes desta PR.
         ),
+        PublicWorkoutPlan(
+            slug='franciele',
+            title='Treino Franciele',
+            theme_color='#241b2e',
+            background_color='#faf6f3',
+            template_file='franciele.html',
+            accent=PublicWorkoutAccent('#A21CAF', '#FDF4FF', '#F5D0FE', '#FAE8FF', '#86198F'),
+            tabs=(_TAB_TREINO, _TAB_PERIOD),
+            # NAO convertido para o design system compartilhado (mesmo caso
+            # da johnespanha): pagina autocontida, CSS/JS proprios embutidos
+            # no arquivo. Os campos acima entram so para manter o
+            # manifest/service-worker corretos.
+        ),
     )
 }
 

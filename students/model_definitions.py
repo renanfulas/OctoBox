@@ -80,9 +80,11 @@ class Student(TimeStampedModel):
     source_resolution_method = models.CharField(max_length=24, choices=SOURCE_RESOLUTION_METHOD_CHOICES, blank=True)
     source_resolution_reason = models.CharField(max_length=64, blank=True)
     source_captured_at = models.DateTimeField(null=True, blank=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     source_captured_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='captured_students',
@@ -179,9 +181,11 @@ class StudentSourceDeclaration(TimeStampedModel):
     declared_source_channel = models.CharField(max_length=32, blank=True)
     declared_source_response_id = models.CharField(max_length=120, blank=True, db_index=True)
     captured_at = models.DateTimeField(db_index=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     captured_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='captured_student_source_declarations',

@@ -1,0 +1,284 @@
+<!--
+ARQUIVO: one-pager comercial do Programa Fundador — a peca que se envia ao dono do box.
+
+POR QUE ELE EXISTE:
+- na Fase 1 a venda e assistida, mas o dono precisa de algo para reler sozinho, mostrar ao
+  socio e decidir sem ter voce do lado. Este arquivo e esse algo.
+
+O QUE ESTE ARQUIVO FAZ:
+1. entrega a promessa, a oferta, o preco travado e a garantia em uma pagina.
+2. mantem a linguagem visual oficial (Luxo Futurista 2050) na primeira impressao da marca.
+3. termina em uma unica acao: chamar no WhatsApp.
+
+PONTOS CRITICOS:
+- nao acrescente promessa que nao esteja no script de vendas. Recorrencia hoje e cartao;
+  PIX e assistido. Prometer PIX recorrente aqui gera churn no mes 3.
+- a garantia descrita aqui e a que a operacao sustenta hoje: 60 dias e exportacao de dados.
+  Nao prometa tempo de recuperacao individual de box enquanto o drill da Parte C nao rodar
+  (ver docs/rollout/phase1-commercial-gate-audit-2026-08-06.md).
+-->
+<title>OctoBox · Programa Fundador</title>
+<style>
+  :root {
+    --bg: #080B14;
+    --surface: rgba(20, 27, 46, .62);
+    --surface-lift: rgba(28, 38, 64, .72);
+    --text: #EAEFF9;
+    --muted: #8D9BBB;
+    --line: rgba(141, 155, 187, .18);
+    --cyan: #00E5FF;
+    --cyan-ink: #7BEFFF;
+    --blue: #4A90E2;
+    --magenta: #FF00C8;
+    --ok: #34D399;
+    --cta-ink: #04202A;
+    --font-display: "Segoe UI Variable Display", "Segoe UI", "Avenir Next", system-ui, sans-serif;
+    --font-body: "Segoe UI", "Avenir Next", system-ui, -apple-system, sans-serif;
+    --font-mono: "Cascadia Code", "Consolas", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #F4F6FB;
+      --surface: rgba(255, 255, 255, .86);
+      --surface-lift: #FFFFFF;
+      --text: #101728;
+      --muted: #56617E;
+      --line: rgba(16, 23, 40, .12);
+      --cyan: #0093A8;
+      --cyan-ink: #006E7F;
+      --blue: #3572C6;
+      --magenta: #C8009F;
+      --ok: #0E9F6E;
+      --cta-ink: #FFFFFF;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #080B14;
+    --surface: rgba(20, 27, 46, .62);
+    --surface-lift: rgba(28, 38, 64, .72);
+    --text: #EAEFF9;
+    --muted: #8D9BBB;
+    --line: rgba(141, 155, 187, .18);
+    --cyan: #00E5FF;
+    --cyan-ink: #7BEFFF;
+    --blue: #4A90E2;
+    --magenta: #FF00C8;
+    --ok: #34D399;
+    --cta-ink: #04202A;
+  }
+  :root[data-theme="light"] {
+    --bg: #F4F6FB;
+    --surface: rgba(255, 255, 255, .86);
+    --surface-lift: #FFFFFF;
+    --text: #101728;
+    --muted: #56617E;
+    --line: rgba(16, 23, 40, .12);
+    --cyan: #0093A8;
+    --cyan-ink: #006E7F;
+    --blue: #3572C6;
+    --magenta: #C8009F;
+    --ok: #0E9F6E;
+    --cta-ink: #FFFFFF;
+  }
+
+  body {
+    background:
+      radial-gradient(900px 460px at 50% -12%, color-mix(in srgb, var(--cyan) 9%, transparent), transparent 65%),
+      radial-gradient(700px 500px at 108% 112%, color-mix(in srgb, var(--magenta) 7%, transparent), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 720px; margin-inline: auto; padding: 0 22px 72px; }
+
+  /* ---------- topo ---------- */
+  header { padding: 52px 0 0; text-align: center; }
+  .logo {
+    font-family: var(--font-mono); font-size: .74rem; letter-spacing: .26em;
+    text-transform: uppercase; color: var(--cyan-ink);
+  }
+  .badge {
+    display: inline-block; margin-top: 22px;
+    font-family: var(--font-mono); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--cyan-ink); border: 1px solid color-mix(in srgb, var(--cyan) 42%, transparent);
+    background: color-mix(in srgb, var(--cyan) 10%, transparent);
+    padding: 6px 14px; border-radius: 999px;
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: clamp(2rem, 6vw, 3.1rem); line-height: 1.12; letter-spacing: -.025em;
+    text-wrap: balance; margin: 20px 0 16px;
+  }
+  h1 .em { color: var(--cyan-ink); }
+  .sub {
+    color: var(--muted); font-size: 1.06rem; max-width: 46ch;
+    margin-inline: auto; text-wrap: balance;
+  }
+
+  /* ---------- blocos ---------- */
+  section { margin-top: 52px; }
+  h2 {
+    font-family: var(--font-display); font-size: 1.22rem; font-weight: 720;
+    letter-spacing: -.012em; margin: 0 0 18px; display: flex; align-items: center; gap: 11px;
+  }
+  h2::before {
+    content: ""; width: 4px; height: 19px; border-radius: 2px;
+    background: var(--blue); flex: none;
+  }
+
+  .pains { display: grid; gap: 12px; }
+  .pain {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .pain .before {
+    font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .pain .after { margin-top: 7px; font-weight: 620; }
+  .pain .after span { color: var(--cyan-ink); }
+
+  .inc { list-style: none; padding: 0; display: grid; gap: 11px; }
+  .inc li { padding-left: 30px; position: relative; }
+  .inc li::before {
+    content: "✓"; position: absolute; left: 0; top: 0;
+    color: var(--ok); font-weight: 700;
+  }
+  .inc b { font-weight: 650; }
+
+  /* ---------- preço ---------- */
+  .price {
+    margin-top: 52px;
+    border: 1px solid color-mix(in srgb, var(--cyan) 38%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--cyan) 9%, transparent), transparent 72%), var(--surface-lift);
+    border-radius: 20px; padding: 30px 30px 26px; text-align: center;
+  }
+  .price .k {
+    font-family: var(--font-mono); font-size: .7rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .price .v {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: clamp(2.4rem, 8vw, 3.4rem); letter-spacing: -.03em; line-height: 1;
+    margin: 10px 0 6px; color: var(--cyan-ink);
+  }
+  .price .v small { font-size: 1rem; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+  .price .anchor { color: var(--muted); font-size: .92rem; }
+  .price .anchor s { opacity: .75; }
+  .price .alt {
+    margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: .92rem;
+  }
+  .price .alt b { color: var(--text); }
+  .frame {
+    margin-top: 18px; font-size: 1rem; font-weight: 620; text-wrap: balance;
+  }
+
+  /* ---------- garantia ---------- */
+  .guarantee {
+    margin-top: 18px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 16px; padding: 22px 24px;
+  }
+  .guarantee p { margin: 0; color: var(--muted); }
+  .guarantee p + p { margin-top: 10px; }
+  .guarantee b { color: var(--text); }
+
+  /* ---------- prova ---------- */
+  .proof {
+    border-left: 2px solid var(--blue); padding: 4px 0 4px 20px; color: var(--muted);
+  }
+  .proof b { color: var(--text); }
+
+  /* ---------- cta ---------- */
+  .cta { margin-top: 52px; text-align: center; }
+  .cta a {
+    display: inline-block; text-decoration: none;
+    background: var(--cyan); color: var(--cta-ink); font-weight: 720; font-size: 1.02rem;
+    padding: 15px 34px; border-radius: 999px;
+    box-shadow: 0 12px 34px color-mix(in srgb, var(--cyan) 26%, transparent);
+    transition: transform .15s ease;
+  }
+  .cta a:hover { transform: translateY(-2px); }
+  .cta a:focus-visible { outline: 2px solid var(--magenta); outline-offset: 4px; }
+  .cta .note { color: var(--muted); font-size: .88rem; margin-top: 14px; }
+
+  footer {
+    margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line);
+    text-align: center; color: var(--muted); font-size: .8rem;
+  }
+  @media (prefers-reduced-motion: reduce) { .cta a { transition: none; } }
+</style>
+
+<div class="page">
+
+  <header>
+    <div class="logo">🐙 OctoBox</div>
+    <span class="badge">Programa Fundador · 20 vagas</span>
+    <h1>Seu box inteiro em <span class="em">uma tela</span></h1>
+    <p class="sub">Alunos, cobrança, grade e treino do dia — sem planilha, sem caderno e sem caçar informação no WhatsApp.</p>
+  </header>
+
+  <section>
+    <h2>O que muda na sua rotina</h2>
+    <div class="pains">
+      <div class="pain">
+        <div class="before">Hoje: você descobre quem está devendo quando lembra de olhar</div>
+        <div class="after">Com o OctoBox: <span>a fila financeira te mostra quem está em atraso</span> e você cobra dali mesmo, em dois cliques.</div>
+      </div>
+      <div class="pain">
+        <div class="before">Hoje: o WOD vai pra foto do quadro branco e cada aluno chuta a carga</div>
+        <div class="after">Com o OctoBox: <span>cada aluno vê a carga dele</span>, calculada a partir do próprio 1RM.</div>
+      </div>
+      <div class="pain">
+        <div class="before">Hoje: grade, reserva e recorde vivem no grupo do WhatsApp</div>
+        <div class="after">Com o OctoBox: <span>seu aluno tem um app</span> com a grade da semana, check-in em um toque e a evolução dele.</div>
+      </div>
+      <div class="pain">
+        <div class="before">Hoje: a recepção pergunta pra você a cada dúvida</div>
+        <div class="after">Com o OctoBox: <span>cada pessoa vê só a tela do trabalho dela</span> — recepção, coach, gerente e dono.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>O que você recebe como fundador</h2>
+    <ul class="inc">
+      <li><b>Migração feita por mim.</b> Você me manda a lista de alunos e eu subo tudo — você não digita nada.</li>
+      <li><b>Setup do seu box.</b> Seus planos, seus valores e sua grade da semana, prontos antes de você entrar.</li>
+      <li><b>Acompanhamento nos primeiros 14 dias.</b> Kickoff, ajuste e uma conversa no fim da segunda semana.</li>
+      <li><b>Acesso direto a mim.</b> Não é suporte por ticket: é o meu WhatsApp.</li>
+      <li><b>Influência real no que vem primeiro.</b> São 20 pessoas decidindo a fila do roadmap, não 2.000.</li>
+      <li><b>App do aluno incluído.</b> Sem cobrança por aluno, sem taxa extra.</li>
+    </ul>
+  </section>
+
+  <div class="price">
+    <div class="k">Preço de fundador — travado por 12 meses</div>
+    <div class="v">R$ 97<small> / mês</small></div>
+    <div class="anchor">Depois das 20 vagas: <s>R$ 197/mês</s> para quem entrar</div>
+    <div class="alt">No plano anual: <b>R$ 997 por ano</b> — dois meses a menos, e a migração entra como cortesia.</div>
+    <p class="frame">É menos do que a mensalidade de um aluno seu. Se o sistema evitar a perda de <em>um</em> aluno por mês, ele já se pagou.</p>
+  </div>
+
+  <div class="guarantee">
+    <p><b>Garantia de 60 dias.</b> Se em dois meses você achar que não valeu, eu devolvo o valor pago — sem discussão e sem letra miúda.</p>
+    <p><b>Seus dados são seus.</b> Você exporta sua base a qualquer momento, sem precisar da minha autorização. O OctoBox é software de código aberto sob licença AGPL: não existe cenário em que você fique preso.</p>
+  </div>
+
+  <section>
+    <h2>Isso já roda de verdade</h2>
+    <p class="proof">O primeiro box entrou em produção em <b>maio de 2026</b> e opera desde então — alunos reais, cobranças reais, aula sendo dada. Você não vai ser o teste: vai ser o segundo passo de algo que já está de pé.</p>
+  </section>
+
+  <div class="cta">
+    <a href="https://wa.me/5511937350535?text=Oi%20Renan%2C%20vi%20o%20Programa%20Fundador%20do%20OctoBox%20e%20queria%20entender%20melhor"
+       data-edit="whatsapp">Quero uma das 20 vagas</a>
+    <p class="note">Me chama no WhatsApp. Em 20 minutos eu te mostro o sistema já montado com o seu box dentro.</p>
+  </div>
+
+  <footer>OctoBox · sistema operacional do box · feito no Brasil</footer>
+
+</div>
