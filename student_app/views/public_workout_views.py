@@ -81,6 +81,12 @@ PUBLIC_WORKOUT_LIBRARY = {
         'background_color': '#fdf2f8',
         'template_file': 'johnespanha.html',
     },
+    'franciele': {
+        'title': 'Treino Franciele',
+        'theme_color': '#241b2e',
+        'background_color': '#faf6f3',
+        'template_file': 'franciele.html',
+    },
 }
 PUBLIC_WORKOUT_TEMPLATE_DIR = Path(settings.BASE_DIR) / 'templates' / 'public_workouts'
 
