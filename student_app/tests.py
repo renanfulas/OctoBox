@@ -2231,7 +2231,7 @@ class PublicWorkoutContentSignatureTests(TestCase):
 
         updating = os.environ.get('UPDATE_PUBLIC_WORKOUT_GOLDEN') == '1'
         slugs = iter_slugs()
-        self.assertEqual(len(slugs), 9, 'esperado 9 planos publicos em PUBLIC_WORKOUT_LIBRARY')
+        self.assertEqual(len(slugs), 10, 'esperado 10 planos publicos em PUBLIC_WORKOUT_LIBRARY')
 
         for slug in slugs:
             with self.subTest(slug=slug):

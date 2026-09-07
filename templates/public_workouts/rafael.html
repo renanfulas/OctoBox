@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Rafael - Full Body Low Volume (Cutting)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F4F2;--white:#fff;--card:#FAFAF8;--border:#E8E8E5;
+  --dark:#1a1a1a;--muted:#888;--light:#bbb;--alt:#F9F9F7;
+  --blue:#0891B2;--blue-bg:#ECFEFF;--blue-border:#A5F3FC;
+  --prep-bg:#F1EFE8;--prep-fg:#57534E;
+  --feed-bg:#FEF3C7;--feed-fg:#92400E;
+  --top-bg:#DBEAFE;--top-fg:#1D4ED8;
+  --max-bg:#FEE2E2;--max-fg:#991B1B;
+  --cardio-bg:#D1FAE5;--cardio-fg:#065F46;
+  --green-bg:#EAF3DE;--green-fg:#3A6F10;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--dark);min-height:100vh}
+.page{max-width:880px;margin:0 auto;padding:1.75rem 1.25rem 4rem}
+.prog-title{font-size:22px;font-weight:700;margin-bottom:2px}
+.prog-name{font-size:14px;color:var(--blue);font-weight:700;margin-bottom:3px}
+.prog-sub{font-size:11.5px;color:var(--muted);margin-bottom:1.4rem;line-height:1.55}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.4rem}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:.7rem .9rem}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.stat-v{font-size:19px;font-weight:700}
+.glossary{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;margin-bottom:1.25rem}
+.glossary-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.55rem}
+.glossary-grid{display:flex;flex-wrap:wrap;gap:6px}
+.gloss-item{display:flex;align-items:baseline;gap:5px;font-size:11.5px}
+.gloss-term{font-weight:700;color:var(--dark);background:var(--alt);border:1px solid var(--border);border-radius:5px;padding:2px 7px}
+.gloss-def{color:var(--muted)}
+.gloss-sep{width:1px;background:var(--border);height:14px;align-self:center;margin:0 4px}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.1rem;padding:.65rem 1rem;background:var(--white);border:1px solid var(--border);border-radius:9px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:1.2rem}
+.dp{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:.6rem .25rem;text-align:center;cursor:pointer;transition:border-color .12s,background .12s;user-select:none}
+.dp:hover:not(.rest){border-color:#67E8F9}
+.dp.active{border-color:var(--blue);background:var(--blue-bg)}
+.dp.active .dt{color:var(--top-fg)}
+.dp.cardio-d{background:var(--green-bg);border-color:#86C04A}
+.dp.cardio-d .dt{color:var(--green-fg)}
+.dp.joker-d{background:#FEF3C7;border-color:#F5C453}
+.dp.joker-d .dt{color:var(--feed-fg)}
+.dp.rest{opacity:.38;cursor:default}
+.dn{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:3px}
+.dt{font-size:11px;font-weight:700;color:#444}
+.tabs{display:flex;gap:5px;margin-bottom:1.1rem;flex-wrap:wrap}
+.tab{padding:6px 15px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;cursor:pointer;background:var(--white);color:#666;font-family:inherit;transition:all .12s}
+.tab:hover{background:#f0f0ee}
+.tab.on{background:var(--dark);color:var(--white);border-color:var(--dark);font-weight:600}
+.session{display:none}
+.session.on{display:block}
+.sess-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:1px solid var(--border);gap:12px}
+.sess-title{font-size:16px;font-weight:700;margin-bottom:2px}
+.sess-meta{font-size:11px;color:var(--muted);line-height:1.5}
+.badge{font-size:10px;font-weight:700;padding:4px 11px;border-radius:99px;white-space:nowrap;flex-shrink:0}
+.b-forca{background:var(--top-bg);color:var(--top-fg)}
+.b-joker{background:var(--feed-bg);color:var(--feed-fg)}
+.b-cardio{background:var(--cardio-bg);color:var(--cardio-fg)}
+.stage-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:1.1rem 0 .6rem}
+.stage-title:first-child{margin-top:0}
+.ex{margin-bottom:1rem;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.ex-top{padding:.75rem 1rem .6rem;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;background:var(--card);border-bottom:1px solid var(--border)}
+.ex-left{flex:1;min-width:0}
+.ex-code{font-size:9.5px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px}
+.ex-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.ex-note{font-size:11px;color:#555;padding:.5rem 1rem;background:var(--card);border-bottom:1px solid var(--border);line-height:1.55;font-style:italic}
+.sets-tbl{width:100%;border-collapse:collapse}
+.sets-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--white);border-bottom:1px solid #f5f5f3;font-weight:700}
+.sets-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f8f6;background:var(--white);vertical-align:middle}
+.sets-tbl tr:last-child td{border-bottom:none}
+.st{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;padding:3px 9px;border-radius:99px;min-width:80px;justify-content:center}
+.st-p{background:var(--prep-bg);color:var(--prep-fg)}
+.st-f{background:var(--feed-bg);color:var(--feed-fg)}
+.st-t{background:var(--top-bg);color:var(--top-fg)}
+.st-m{background:var(--max-bg);color:var(--max-fg)}
+.c-card{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.c-head{padding:.75rem 1rem;font-size:13.5px;font-weight:700;background:var(--card);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.km-badge{font-size:11px;font-weight:700;color:var(--green-fg);background:var(--green-bg);border-radius:99px;padding:2px 9px}
+.c-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem 1rem;border-bottom:1px solid #f8f8f6;font-size:12.5px;gap:1rem}
+.c-row:last-child{border-bottom:none}
+.c-lbl{font-size:11.5px;color:var(--muted);font-weight:600;flex-shrink:0}
+.c-note{font-size:11px;color:#666;padding:.6rem 1rem;background:var(--card);font-style:italic;line-height:1.55}
+.period-tbl{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.period-tbl table{width:100%;border-collapse:collapse}
+.period-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--card);border-bottom:1px solid var(--border);font-weight:700}
+.period-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f8f6}
+.period-tbl tr:last-child td{border-bottom:none}
+.vnote{font-size:11.5px;color:#555;padding:.7rem 1rem;background:var(--white);border:1px solid var(--border);border-radius:9px;margin-bottom:1rem;line-height:1.65;font-style:italic}
+.vol-tbl{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem}
+.vol-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--light);padding:.5rem 1rem;text-align:left;background:var(--card);border-bottom:1px solid var(--border);font-weight:700}
+.vol-tbl td{font-size:12.5px;padding:.5rem 1rem;border-bottom:1px solid #f8f8f6}
+.vol-tbl tr:last-child td{border-bottom:none}
+@media(max-width:600px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .week{grid-template-columns:repeat(4,1fr)}
+  .ex-top{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="prog-name">Rafael</div>
+<div class="prog-title">Full Body Low Volume - Fase de Cutting</div>
+<div class="prog-sub">3x/semana fixo (Full Body A/B/C) + dia coringa opcional pra quando fechar a 4a sessao. Cardio: LISS pos-treino em 2 dias + 1 HIIT isolado na quinta.<br>Objetivo agora e perder % de gordura preservando forca e massa - o treino de forca aqui e sinal de manutencao, nao de maximizacao de estimulo.</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-l">Peso</div><div class="stat-v">70 kg</div></div>
+  <div class="stat"><div class="stat-l">Altura</div><div class="stat-v">1,75 m</div></div>
+  <div class="stat"><div class="stat-l">IMC</div><div class="stat-v">22,9</div></div>
+  <div class="stat"><div class="stat-l">Foco</div><div class="stat-v" style="font-size:13px;padding-top:2px">Cutting - preservar forca</div></div>
+</div>
+
+<div class="glossary">
+  <div class="glossary-title">Dicionario de termos</div>
+  <div class="glossary-grid">
+    <div class="gloss-item"><span class="gloss-term">RIR</span><span class="gloss-def">Repeticoes que ainda sobravam antes da falha</span></div>
+    <div class="gloss-sep"></div>
+    <div class="gloss-item"><span class="gloss-term">LISS</span><span class="gloss-def">Cardio continuo de baixa intensidade e constante</span></div>
+    <div class="gloss-sep"></div>
+    <div class="gloss-item"><span class="gloss-term">HIIT</span><span class="gloss-def">Intervalos de alta intensidade, curtos e intercalados</span></div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="leg-item"><span class="st st-p">Preparat.</span> Ativacao e aquecimento</div>
+  <div class="leg-item"><span class="st st-f">Feeder</span> Ajuste de carga antes das series principais</div>
+  <div class="leg-item"><span class="st st-t">Top Set</span> Trabalho principal com 1-2 RIR</div>
+  <div class="leg-item"><span class="st st-m">AMRAP</span> Opcional, apenas onde indicado</div>
+</div>
+
+<div class="week">
+  <div class="dp active" onclick="goDay('seg',this)"><div class="dn">Seg</div><div class="dt">Dia A</div></div>
+  <div class="dp rest"><div class="dn">Ter</div><div class="dt">Rest</div></div>
+  <div class="dp" onclick="goDay('qua',this)"><div class="dn">Qua</div><div class="dt">Dia B</div></div>
+  <div class="dp cardio-d" onclick="goDay('qui',this)"><div class="dn">Qui</div><div class="dt">HIIT</div></div>
+  <div class="dp" onclick="goDay('sex',this)"><div class="dn">Sex</div><div class="dt">Dia C</div></div>
+  <div class="dp joker-d" onclick="goDay('sab',this)"><div class="dn">Sab</div><div class="dt">Coringa</div></div>
+  <div class="dp rest"><div class="dn">Dom</div><div class="dt">Rest</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="goTab('treino',this)">Treinos</button>
+  <button class="tab" onclick="goTab('period',this)">Periodizacao</button>
+</div>
+
+<div id="tab-treino">
+
+<div id="seg" class="session on">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Segunda - Dia A: Agachamento + Peito + Costas</div><div class="sess-meta">Full body · ~40-45 min · low volume</div></div>
+    <span class="badge b-forca">Forca</span>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">A1 · Quadriceps</div><div class="ex-name">Agachamento livre (barra)</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-p">Preparat.</span></td><td>2x</td><td>Progressivo</td><td>-</td></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1x</td><td>8</td><td>4-5</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>6-8</td><td>1-2</td></tr>
+      <tr><td><span class="st st-m">AMRAP</span></td><td>1x</td><td>Opcional</td><td>Maximo</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">B1 · Peitoral</div><div class="ex-name">Supino reto (barra ou halteres)</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1x</td><td>8</td><td>4</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>8-10</td><td>2</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">C1 · Costas</div><div class="ex-name">Remada curvada ou remada cavalinho</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>8-10</td><td>2</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">D1 · Core</div><div class="ex-name">Prancha</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>30-40s</td><td>-</td></tr>
+    </table>
+  </div>
+
+  <div class="c-card">
+    <div class="c-head"><span>LISS pos-treino</span><span class="km-badge">20-25 min</span></div>
+    <div class="c-row"><span class="c-lbl">Modalidade</span><span>Bike ou esteira inclinada</span></div>
+    <div class="c-row"><span class="c-lbl">Intensidade</span><span>RPE 4-5/10, ritmo constante</span></div>
+    <div class="c-note">Feito depois do treino de forca. Custo de recuperacao baixo, soma no deficit sem competir com a forca da semana.</div>
+  </div>
+</div>
+
+<div id="qua" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Quarta - Dia B: Hinge + Ombro + Puxada vertical</div><div class="sess-meta">Full body · ~40-45 min · low volume</div></div>
+    <span class="badge b-forca">Forca</span>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">A1 · Posterior/Gluteo</div><div class="ex-name">RDL / Stiff</div></div></div>
+    <div class="ex-note">Foco em dobradica de quadril, sem flexionar a lombar.</div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-p">Preparat.</span></td><td>2x</td><td>Progressivo</td><td>-</td></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1x</td><td>8</td><td>4-5</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>6-8</td><td>1-2</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">B1 · Ombro</div><div class="ex-name">Desenvolvimento militar (barra ou halteres)</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1x</td><td>8</td><td>4</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>8-10</td><td>2</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">C1 · Costas</div><div class="ex-name">Puxada alta ou barra fixa</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>8-10</td><td>2</td></tr>
+      <tr><td><span class="st st-m">AMRAP</span></td><td>1x</td><td>Opcional</td><td>Maximo</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">D1 · Biceps</div><div class="ex-name">Rosca direta</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>2-3x</td><td>10-12</td><td>2</td></tr>
+    </table>
+  </div>
+
+  <div class="c-card">
+    <div class="c-head"><span>LISS pos-treino</span><span class="km-badge">20-25 min</span></div>
+    <div class="c-row"><span class="c-lbl">Modalidade</span><span>Bike ou esteira inclinada</span></div>
+    <div class="c-row"><span class="c-lbl">Intensidade</span><span>RPE 4-5/10, ritmo constante</span></div>
+    <div class="c-note">Mesma logica de segunda - baixo custo de recuperacao, nao compete com a quinta (HIIT) nem com a sexta (Dia C).</div>
+  </div>
+</div>
+
+<div id="qui" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Quinta - HIIT isolado</div><div class="sess-meta">Sem treino de forca no mesmo dia - separacao de interferencia</div></div>
+    <span class="badge b-cardio">Cardio</span>
+  </div>
+
+  <div class="c-card">
+    <div class="c-head"><span>HIIT - bike ou remo</span><span class="km-badge">~15-18 min</span></div>
+    <div class="c-row"><span class="c-lbl">Aquecimento</span><span>3-5 min leve</span></div>
+    <div class="c-row"><span class="c-lbl">Protocolo</span><span>8x (20s all-out / 40s leve) ou 30s/90s x6-8</span></div>
+    <div class="c-row"><span class="c-lbl">Modalidade</span><span>Bike ou remo - nunca corrida/sprint</span></div>
+    <div class="c-row"><span class="c-lbl">Volta a calma</span><span>3-5 min leve</span></div>
+    <div class="c-note">Isolado de proposito: um dia de folga de forca antes (quarta foi treino, mas LISS nao pesa) e um dia de folga completa depois, antes da sexta. Bike/remo em vez de corrida reduz o dano muscular excentrico que competiria com o agachamento/RDL/bulgaro da semana.</div>
+  </div>
+</div>
+
+<div id="sex" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Sexta - Dia C: Unilateral + Peito inclinado + Remada unilateral</div><div class="sess-meta">Full body · ~40-45 min · low volume · fecha a semana de forca</div></div>
+    <span class="badge b-forca">Forca</span>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">A1 · Pernas</div><div class="ex-name">Agachamento bulgaro</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1x</td><td>8 cada lado</td><td>4</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>8-10 cada lado</td><td>2</td></tr>
+      <tr><td><span class="st st-m">AMRAP</span></td><td>1x</td><td>Opcional (lado dominante)</td><td>Maximo</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">B1 · Peitoral</div><div class="ex-name">Supino inclinado (halteres)</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-f">Feeder</span></td><td>1x</td><td>8</td><td>4</td></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>8-10</td><td>2</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">C1 · Costas</div><div class="ex-name">Remada unilateral com halter</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>8-10 cada lado</td><td>2</td></tr>
+    </table>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">D1 · Panturrilha/Core</div><div class="ex-name">Panturrilha em pe + elevacao de pernas</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>3x</td><td>15 / 12</td><td>2</td></tr>
+    </table>
+  </div>
+
+  <div class="c-note" style="border-radius:9px;border:1px solid var(--border)">Sem cardio extra hoje - fecha a semana de forca, sem empilhar mais fadiga antes do fim de semana.</div>
+</div>
+
+<div id="sab" class="session">
+  <div class="sess-hdr">
+    <div><div class="sess-title">Sabado - Dia Coringa (condicional)</div><div class="sess-meta">So quando fechar a 4a sessao na semana - flexivel</div></div>
+    <span class="badge b-joker">Coringa</span>
+  </div>
+
+  <div class="c-card">
+    <div class="c-head"><span>Bloco metabolico</span><span class="km-badge">10-15 min</span></div>
+    <div class="c-row"><span class="c-lbl">Formato</span><span>Complexo com halteres/kettlebell ou bike/remo em intervalos</span></div>
+    <div class="c-note">Aqui entra o volume extra de gasto calorico que o corte pede, sem carregar mais fadiga nas series pesadas da semana.</div>
+  </div>
+
+  <div class="ex">
+    <div class="ex-top"><div class="ex-left"><div class="ex-code">A1 · Ponto fraco</div><div class="ex-name">Acessorio livre (braco, ombro ou panturrilha - o que precisar naquela semana)</div></div></div>
+    <table class="sets-tbl">
+      <tr><th>Tipo</th><th>Series</th><th>Reps</th><th>RIR</th></tr>
+      <tr><td><span class="st st-t">Top Set</span></td><td>2-3x</td><td>12-15</td><td>2</td></tr>
+    </table>
+  </div>
+
+  <div class="c-note" style="border-radius:9px;border:1px solid var(--border)">Sem Feeder/AMRAP de proposito - e o dia bonus, nao precisa da mesma estrutura de intensidade dos outros 3.</div>
+</div>
+
+</div>
+
+<div id="tab-period" style="display:none">
+
+  <div class="vnote">Objetivo agora e perder % de gordura preservando forca e massa. O treino de forca funciona como sinal de manutencao (por isso baixo volume, mas RIR 1-2 real nos top sets) - o deficit calorico e que faz o trabalho de perda de gordura.</div>
+
+  <div class="period-tbl">
+    <table>
+      <tr><th>Dia</th><th>Treino</th><th>Cardio</th></tr>
+      <tr><td>Segunda</td><td>Dia A</td><td>LISS 20-25min pos-treino</td></tr>
+      <tr><td>Terca</td><td>Descanso</td><td>-</td></tr>
+      <tr><td>Quarta</td><td>Dia B</td><td>LISS 20-25min pos-treino</td></tr>
+      <tr><td>Quinta</td><td>Descanso de forca</td><td>HIIT isolado (bike/remo)</td></tr>
+      <tr><td>Sexta</td><td>Dia C</td><td>-</td></tr>
+      <tr><td>Sabado</td><td>Coringa (condicional)</td><td>-</td></tr>
+      <tr><td>Domingo</td><td>Descanso total</td><td>-</td></tr>
+    </table>
+  </div>
+
+  <div class="vnote">Por que LISS carrega a base e o HIIT fica limitado a 1x/semana: o split e full body com perna pesada nas 3 sessoes (agachamento, RDL, bulgaro). HIIT de alta intensidade recruta a mesma musculatura e os mesmos estoques de glicogenio - empilhar isso em cima do treino de forca aumenta o risco de interferencia (Wilson et al., 2012) bem na fase em que o deficit calorico ja reduz a capacidade de recuperacao. O EPOC do HIIT e real, mas modesto (6-15% a mais de gasto sobre o proprio treino segundo a literatura) - nao e argumento pra virar a base do cardio. Por isso HIIT entra como dose controlada, isolado num dia sem treino de perna por perto, em vez de estrategia principal.</div>
+
+  <table class="vol-tbl">
+    <tr><th>Grupo</th><th>Series/sem (dias fixos)</th><th>Frequencia</th><th>Principal exercicio</th></tr>
+    <tr><td>Quadriceps</td><td>~6-9</td><td>2x/sem</td><td>Agachamento livre, bulgaro</td></tr>
+    <tr><td>Posterior/Gluteo</td><td>~3-4</td><td>1x/sem</td><td>RDL/Stiff</td></tr>
+    <tr><td>Peitoral</td><td>~6</td><td>2x/sem</td><td>Supino reto, supino inclinado</td></tr>
+    <tr><td>Costas</td><td>~6-9</td><td>2x/sem</td><td>Remada, puxada</td></tr>
+    <tr><td>Ombro</td><td>~3-4</td><td>1x/sem</td><td>Desenvolvimento militar</td></tr>
+  </table>
+
+  <div class="vnote">Reavaliar peso e circunferencias em 3-4 semanas pra confirmar que a perda de gordura esta acontecendo sem sacrificar carga nos top sets - se a carga cair muito, e sinal de ajustar o deficit, nao de aumentar o volume de treino.</div>
+
+</div>
+
+</div>
+<script>
+function goDay(id,el){
+  document.querySelectorAll('.session').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.dp:not(.rest)').forEach(p=>p.classList.remove('active'));
+  const s=document.getElementById(id);if(s)s.classList.add('on');
+  if(el)el.classList.add('active');
+  showTab('treino');
+  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.remove('on');if(i===0)t.classList.add('on')});
+}
+function showTab(t){
+  document.getElementById('tab-treino').style.display=t==='treino'?'block':'none';
+  document.getElementById('tab-period').style.display=t==='period'?'block':'none';
+}
+function goTab(t,el){
+  showTab(t);
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  if(el)el.classList.add('on');
+}
+</script>
+</body>
+</html>

@@ -228,6 +228,19 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             # no arquivo. Os campos acima entram so para manter o
             # manifest/service-worker corretos.
         ),
+        PublicWorkoutPlan(
+            slug='rafael',
+            title='Treino Rafael',
+            theme_color='#0e2933',
+            background_color='#f4fbfc',
+            template_file='rafael.html',
+            accent=PublicWorkoutAccent('#0891B2', '#ECFEFF', '#A5F3FC', '#CFFAFE', '#0E7490'),
+            tabs=(_TAB_TREINO, _TAB_PERIOD),
+            # NAO convertido para o design system compartilhado (mesmo caso
+            # da franciele/johnespanha): pagina autocontida, CSS/JS proprios
+            # embutidos no arquivo. Os campos acima entram so para manter o
+            # manifest/service-worker corretos.
+        ),
     )
 }
 
