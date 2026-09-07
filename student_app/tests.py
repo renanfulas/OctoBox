@@ -2123,22 +2123,36 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'beforeinstallprompt')
         self.assertContains(response, 'Adicionar à Tela de Início')
 
-    def test_juliana_week_order_reflects_legs_program(self):
+    def test_juliana_week_order_reflects_quad_frequency_program(self):
         response = self.client.get('/renan/juliana')
+        content = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
+
+        # Ordem estrutural das sessoes de treino no DOM (id do dia), nao a
+        # copy do strip semanal — pega sessao fora de ordem mesmo que o
+        # rotulo visual continue certo, e resiste a redacao mudar.
+        day_ids = ('id="ter"', 'id="qua"', 'id="qui"', 'id="sab"')
+        for day_id in day_ids:
+            self.assertIn(day_id, content)
+        positions = [content.index(day_id) for day_id in day_ids]
+        self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem ter->sab')
+
         self.assertContains(response, "goDay('qua',this)")
-        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Quad Força</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Sup Força</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Glúteo</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Braço</div>', html=True)
-        self.assertContains(response, '<div class="dn">Dom</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, 'Terça · ~58 min + 20 min bike leve · Quadríceps, Panturrilha, Core')
-        self.assertContains(response, 'Quarta · ~58 min + 10-15 min esteira HIIT · Peito, Costas, Ombro, Abdômen')
-        self.assertContains(response, 'Quinta · ~58 min · Posterior de coxa, Glúteo, Quadríceps')
-        self.assertContains(response, 'Sábado · ~60 min + 20-30 min cardio pesado · Costas, Peito, Bíceps, Tríceps, Ombro medial')
+
+        # Restricoes explicitamente pedidas pela cliente: quadriceps em alta
+        # frequencia (2x/semana) com os sets exatos pedidos (5 series de
+        # extensora na terca, sumo + metodo contraste na quinta) — se alguem
+        # reduzir o volume por engano, esse teste quebra. Mantido sob o
+        # limite do ADR-012 (assertContains de copy <= 8 por metodo).
+        self.assertContains(response, '5× Top (12-15) · pausa 1s no topo')
+        self.assertContains(response, 'Agachamento sumô com halteres')
+        self.assertContains(response, 'Cadeira extensora (pesado + leve)')
+        self.assertContains(response, 'Panturrilha no Smith')
+
+        # Cardio 4x/semana pedido explicitamente (2 dias de 20min + 2 dias
+        # de 30min), fora dos dois dias de quadriceps pesados.
+        self.assertContains(response, '4 sessões · 100 min')
 
     def test_henrique_week_order_reflects_split_and_required_back_exercises(self):
         response = self.client.get('/renan/henrique')
@@ -2191,6 +2205,44 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'Escada / HIIT')
 
 
+class PublicWorkoutAssessmentsEndpointTests(TestCase):
+    """GET /renan/<slug>/avaliacoes.json — publico, sem auth, so leitura."""
+
+    def test_returns_empty_shape_for_plan_without_assessments(self):
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload, {'assessments': [], 'summary': None, 'indicators': None})
+
+    def test_returns_404_for_unknown_plan_slug(self):
+        response = self.client.get('/renan/nao-existe/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_indicators_once_an_assessment_exists(self):
+        from public_workouts.services import record_assessment
+
+        record_assessment(
+            plan_slug='rafael',
+            measured_at='2026-01-01',
+            weight_kg=70,
+            measurements={'cintura': 82, 'pescoco': 38},
+        )
+        response = self.client.get('/renan/rafael/avaliacoes.json')
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload['assessments']), 1)
+        self.assertIsNotNone(payload['indicators']['bmi'])
+        self.assertIsNotNone(payload['indicators']['body_fat_percent'])
+
+    def test_endpoint_present_on_converted_and_legacy_pages(self):
+        # giovanna usa o design system compartilhado; johnespanha continua
+        # autocontido — os dois precisam do mesmo endpoint de leitura.
+        for slug in ('giovanna', 'johnespanha', 'rafael'):
+            response = self.client.get(f'/renan/{slug}')
+            self.assertContains(response, 'assessments.js')
+            self.assertContains(response, "goTab('avaliacoes',this)")
+
+
 class PublicWorkoutContentSignatureTests(TestCase):
     """Trava o CONTEUDO das paginas publicas, nao o markup.
 
@@ -2221,7 +2273,7 @@ class PublicWorkoutContentSignatureTests(TestCase):
 
         updating = os.environ.get('UPDATE_PUBLIC_WORKOUT_GOLDEN') == '1'
         slugs = iter_slugs()
-        self.assertEqual(len(slugs), 8, 'esperado 8 planos publicos em PUBLIC_WORKOUT_LIBRARY')
+        self.assertEqual(len(slugs), 10, 'esperado 10 planos publicos em PUBLIC_WORKOUT_LIBRARY')
 
         for slug in slugs:
             with self.subTest(slug=slug):

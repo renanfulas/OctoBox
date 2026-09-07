@@ -16,6 +16,7 @@ PONTOS CRITICOS:
 from django.urls import path, re_path
 
 from .views import (
+    PublicWorkoutAssessmentsView,
     PublicWorkoutDetailView,
     PublicWorkoutManifestView,
     PublicWorkoutOfflineView,
@@ -27,5 +28,6 @@ urlpatterns = [
     path('sw.js', PublicWorkoutServiceWorkerView.as_view(), name='public-workout-sw'),
     path('offline/', PublicWorkoutOfflineView.as_view(), name='public-workout-offline'),
     path('<slug:plan_slug>/manifest.webmanifest', PublicWorkoutManifestView.as_view(), name='public-workout-manifest'),
+    path('<slug:plan_slug>/avaliacoes.json', PublicWorkoutAssessmentsView.as_view(), name='public-workout-assessments'),
     re_path(r'^(?P<plan_slug>[-a-z0-9]+)/?$', PublicWorkoutDetailView.as_view(), name='public-workout-detail'),
 ]

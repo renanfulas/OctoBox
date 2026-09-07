@@ -36,6 +36,14 @@ O QUE ESTE ARQUIVO FAZ:
 
     <main class="checkout-shell">
         <section class="checkout-result">
+            {% if messages %}
+                <div class="checkout-messages" role="status">
+                    {% for message in messages %}
+                        <div class="checkout-message checkout-message--{{ message.tags|default:'info' }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             {% if mode == 'success' %}
                 {% if stripe_status and stripe_status.paid %}
                     <p class="checkout-kicker checkout-kicker--success">✦ Pagamento confirmado</p>

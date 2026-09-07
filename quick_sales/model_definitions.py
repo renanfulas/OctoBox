@@ -154,9 +154,11 @@ class QuickSale(TimeStampedModel):
     reference = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
     sold_at = models.DateTimeField(default=timezone.now, db_index=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='created_quick_sales',
