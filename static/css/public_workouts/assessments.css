@@ -1,0 +1,128 @@
+/*
+ * ARQUIVO: estilo da aba Avaliacoes (relatorio estilo bioimpedancia).
+ *
+ * POR QUE ELE EXISTE:
+ * - reusa --accent/--accent-bg/etc (definidos em _base.html por plano) com
+ *   fallback fixo, entao funciona tanto nos planos convertidos quanto no
+ *   johnespanha (legado, sem tokens de accent proprios).
+ * - cores de classificacao (good/warning/risk) sao FIXAS (verde/ambar/
+ *   vermelho) independente do accent do aluno — sao sinal de saude, nao
+ *   de marca.
+ */
+
+.assess-wrap{display:flex;flex-direction:column;gap:16px}
+
+.assess-empty{
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:12px;
+  padding:2rem 1.25rem;text-align:center;color:var(--muted,#888);font-size:13px;line-height:1.6;
+}
+
+/* ══ TIRA DE RESUMO (IMC / RCQ / %Gordura) ══ */
+.assess-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.assess-card{
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:12px;
+  padding:.85rem 1rem;display:flex;flex-direction:column;gap:6px;
+}
+.assess-card-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#888);font-weight:700}
+.assess-card-value{font-size:21px;font-weight:700;color:var(--dark,#1a1a1a)}
+.assess-card-note{font-size:10px;color:var(--muted,#888)}
+
+.assess-badge{display:inline-flex;align-self:flex-start;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px}
+.assess-badge--good{background:#EAF3DE;color:#3A6F10}
+.assess-badge--warning{background:#FEF3C7;color:#92400E}
+.assess-badge--risk{background:#FEE2E2;color:#991B1B}
+.assess-badge--neutral{background:var(--accent-bg,#ECFEFF);color:var(--accent-dark,#0E7490)}
+
+.assess-gauge{position:relative;height:6px;border-radius:99px;margin-top:2px;
+  background:linear-gradient(to right,#3A6F10 0 34%,#D97706 34% 66%,#B91C1C 66% 100%)}
+.assess-gauge-marker{
+  position:absolute;top:-3px;width:12px;height:12px;border-radius:50%;
+  background:#fff;border:3px solid var(--dark,#1a1a1a);transform:translateX(-50%);
+}
+
+/* ══ SILHUETA CENTRAL ══ */
+.assess-body{
+  background:
+    radial-gradient(120% 90% at 50% 0%, var(--accent-bg,#ECFEFF) 0%, transparent 60%),
+    var(--white,#fff);
+  border:1px solid var(--border,#e8e8e5);border-radius:16px;
+  padding:1.25rem .75rem;display:flex;justify-content:center;overflow:hidden;
+}
+.assess-silhouette{width:100%;max-width:440px;height:auto;display:block}
+
+/* Corpo: preenchimento em degradê do accent do aluno + contorno fino.
+   Antes eram 4 <line> retas (stick figure) sem preenchimento. */
+.assess-body-shape circle,
+.assess-body-shape path{
+  fill:url(#pw-body-fill);
+  stroke:var(--accent,#0891B2);stroke-width:1.4;stroke-opacity:.42;
+  stroke-linejoin:round;
+}
+
+/* Marcador: halo suave + ponto solido com anel branco, pra destacar do
+   corpo sem competir com o texto. */
+.assess-dot-halo{fill:var(--accent,#0891B2);opacity:.2}
+.assess-dot{fill:var(--accent,#0891B2);stroke:var(--white,#fff);stroke-width:2}
+.assess-dot-line{
+  fill:none;stroke:var(--accent,#0891B2);stroke-opacity:.38;
+  stroke-width:1.25;stroke-linejoin:round;stroke-linecap:round;
+}
+
+.assess-label-title{
+  font-size:8.5px;font-weight:700;fill:var(--muted,#888);
+  text-transform:uppercase;letter-spacing:.09em;
+}
+.assess-label-value{font-size:13px;font-weight:800;fill:var(--dark,#1a1a1a)}
+.assess-label-delta{font-size:9.5px;font-weight:700}
+.assess-label-delta--up{fill:#B91C1C}
+.assess-label-delta--down{fill:#3A6F10}
+
+/* Entrada escalonada: cada medida aparece em sequencia ao abrir a aba. */
+.assess-mark{animation:pw-mark-in .5s cubic-bezier(.22,.85,.3,1) both}
+@keyframes pw-mark-in{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .assess-mark{animation:none}
+}
+
+/* ══ MEDIDAS (lista acessivel, espelha a silhueta) ══ */
+.assess-measurements{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.assess-measure{
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:10px;
+  padding:.6rem .75rem;
+}
+.assess-measure-label{font-size:10px;color:var(--muted,#888);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.assess-measure-value{font-size:15px;font-weight:700}
+.assess-measure-delta{font-size:11px;font-weight:600;margin-left:4px}
+.assess-measure-delta--up{color:#B91C1C}
+.assess-measure-delta--down{color:#3A6F10}
+
+/* ══ TIMELINE ══ */
+.assess-timeline{display:flex;flex-direction:column;gap:6px}
+.assess-timeline-row{
+  display:flex;justify-content:space-between;gap:10px;padding:.6rem .85rem;
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:9px;font-size:12px;
+}
+.assess-timeline-date{font-weight:700;color:var(--dark,#1a1a1a)}
+.assess-timeline-meta{color:var(--muted,#888)}
+
+/* ══ GRAFICO DE EVOLUCAO DE PESO ══ */
+.assess-chart{background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:12px;padding:1rem}
+.assess-chart-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#888);margin-bottom:.6rem}
+.assess-chart svg{width:100%;height:120px;overflow:visible}
+.assess-chart-line{fill:none;stroke:var(--accent,#0891B2);stroke-width:2.5}
+.assess-chart-dot{fill:var(--accent,#0891B2)}
+.assess-chart-label{font-size:8.5px;fill:var(--muted,#888)}
+
+.assess-source-note{font-size:10px;color:var(--muted,#888);font-style:italic}
+
+@media(max-width:600px){
+  .assess-summary{grid-template-columns:1fr}
+  /* O SVG escala junto com a largura da tela, entao no celular o texto do
+     rotulo cairia pra ~6px. Como o tamanho e em unidades do viewBox, subir
+     a fonte aqui devolve legibilidade sem quebrar o layout — "PANTURRILHA"
+     a 11px ainda cabe nas 116 unidades reservadas pra coluna. */
+  .assess-body{padding:1rem .35rem}
+  .assess-label-title{font-size:11px;letter-spacing:.06em}
+  .assess-label-value{font-size:16px}
+  .assess-label-delta{font-size:12px}
+}
