@@ -150,6 +150,31 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--da
   <button class="tab" onclick="goTab('avaliacoes',this)">Avaliações</button>
 </div>
 
+<!-- Estatico: esta pagina nao carrega assessments.js (nao estende _base.html), entao o painel dinamico nunca existiu aqui -- so este bloco fixo. -->
+<div id="tab-avaliacoes" style="display:none">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+    <div style="font-size:15px;font-weight:700">Evolução física</div>
+    <span class="badge b-cardio" style="font-size:12px;padding:5px 14px">1 avaliação registrada</span>
+  </div>
+  <div class="stats" style="margin-bottom:1.1rem">
+    <div class="stat"><div class="stat-l">Peso</div><div class="stat-v">66 kg</div></div>
+    <div class="stat"><div class="stat-l">IMC</div><div class="stat-v">22,1</div></div>
+    <div class="stat"><div class="stat-l">RCQ</div><div class="stat-v">0,85</div></div>
+    <div class="stat"><div class="stat-l">% Gordura</div><div class="stat-v">23,7%</div></div>
+  </div>
+  <div class="c-card">
+    <div class="c-head"><span>02/09/2026 — dobras cutâneas (7 pontos)</span><span class="km-badge">peso 66 kg</span></div>
+    <div class="c-row"><span class="c-lbl">Cintura</span><span>83 cm</span></div>
+    <div class="c-row"><span class="c-lbl">Quadril</span><span>98 cm</span></div>
+    <div class="c-row"><span class="c-lbl">Ombro</span><span>102 cm</span></div>
+    <div class="c-row"><span class="c-lbl">Abdômen</span><span>73,5 cm</span></div>
+    <div class="c-row"><span class="c-lbl">Braço</span><span>30,75 cm</span></div>
+    <div class="c-row"><span class="c-lbl">Coxa</span><span>51,15 cm</span></div>
+    <div class="c-row"><span class="c-lbl">Panturrilha</span><span>33,75 cm</span></div>
+    <div class="c-note">IMC 22,1 (Normal) · RCQ 0,85 (Risco alto) · %Gordura 23,7% (Fitness, protocolo Jackson-Pollock 7 dobras)</div>
+  </div>
+</div>
+
 <div id="tab-treino">
 
 <div id="seg" class="session on">
