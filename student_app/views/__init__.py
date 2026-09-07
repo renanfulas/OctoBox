@@ -24,6 +24,7 @@ from .payment_views import (
     StudentPayInvoiceView,
     StudentPaySuccessView,
 )
+from .public_workout_assessment_views import PublicWorkoutAssessmentsView
 from .public_workout_views import (
     PublicWorkoutDetailView,
     PublicWorkoutManifestView,
@@ -51,6 +52,7 @@ from .shell_views import (
 )
 
 __all__ = [
+    'PublicWorkoutAssessmentsView',
     'PublicWorkoutDetailView',
     'PublicWorkoutManifestView',
     'PublicWorkoutOfflineView',

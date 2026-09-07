@@ -351,6 +351,12 @@ SHARED_APPS = [
     # idêntico para todo box → vive no public, indexado UMA vez (não por tenant).
     # Antes era TENANT_APP: duplicava ~13k chunks por box e quebrava a CLI no public.
     'knowledge.apps.KnowledgeConfig',
+
+    # Avaliacoes fisicas do corredor publico de treinos (/renan/<slug>/).
+    # SHARED_APP de proposito: essas views rodam sem tenant (ver
+    # student_app/views/public_workout_views.py) e os planos (Rafael,
+    # Franciele etc.) nao correspondem a nenhum Student/Box real do SaaS.
+    'public_workouts.apps.PublicWorkoutsConfig',
 ]
 
 TENANT_APPS = [

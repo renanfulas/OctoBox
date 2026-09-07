@@ -99,6 +99,12 @@ class PublicWorkoutPlan:
     tabs: tuple[tuple[str, str], ...]
     tracker_weeks: int = 0
     store_key: str | None = None
+    # Constantes do aluno usadas pela aba Avaliacoes (public_workouts app)
+    # para estimar %gordura (formula US Navy) e classificar RCQ — nao mudam
+    # entre avaliacoes, por isso vivem na config do plano, nao no banco.
+    # None desativa BF%/RCQ no relatorio (so IMC e circunferencias aparecem).
+    assessment_sex: str | None = None
+    height_cm: float | None = None
 
     @property
     def short_name(self) -> str:
@@ -113,6 +119,7 @@ class PublicWorkoutPlan:
 _TAB_TREINO = ('treino', 'Treinos')
 _TAB_CARDIO = ('cardio', 'Cardio')
 _TAB_PERIOD = ('period', 'Periodização')
+_TAB_AVALIACOES = ('avaliacoes', 'Avaliações')
 
 PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
     plan.slug: plan
@@ -124,7 +131,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#f5efe4',
             template_file='juliana.html',
             accent=PublicWorkoutAccent('#E11D48', '#FFF1F2', '#FECDD3', '#FBD7DF', '#BE123C'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD, _TAB_AVALIACOES),
             tracker_weeks=5,
             store_key='juliana_alves_v3',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
@@ -135,7 +142,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#f4efe6',
             template_file='bruno.html',
             accent=PublicWorkoutAccent('#EA580C', '#FFF7ED', '#FED7AA', '#FFEDD5', '#C2410C'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO, ('nutri', 'Nutrição'), _TAB_PERIOD),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, ('nutri', 'Nutrição'), _TAB_PERIOD, _TAB_AVALIACOES),
             tracker_weeks=5,
             store_key='bruno_cutting_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
@@ -146,7 +153,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#fafaf7',
             template_file='milene.html',
             accent=PublicWorkoutAccent('#D97706', '#FFFBEB', '#FDE68A', '#FEF3C7', '#92400E'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD),
+            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
             tracker_weeks=5,
             store_key='milene_geraldes_treino',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
@@ -159,7 +166,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             # A giovanna so declara 3 degraus (--blue/-bg/-border), e sao os
             # mesmos valores do henrique. Os dois faltantes vem dele.
             accent=PublicWorkoutAccent('#2563EB', '#EFF6FF', '#BFDBFE', '#DBEAFE', '#1D4ED8'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD),
+            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
             tracker_weeks=5,
             # store_key novo: esta pagina nunca teve tracker, entao nao ha
             # historico anterior para preservar.
@@ -172,7 +179,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#f6f5f2',
             template_file='thaislima.html',
             accent=PublicWorkoutAccent('#7C3AED', '#F5F3FF', '#DDD6FE', '#EDE9FE', '#5B21B6'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_AVALIACOES),
             tracker_weeks=5,
             store_key='thais_lima_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
@@ -183,7 +190,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#f6f5f2',
             template_file='john.html',
             accent=PublicWorkoutAccent('#0891B2', '#ECFEFF', '#A5F3FC', '#CFFAFE', '#0E7490'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD),
+            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
             tracker_weeks=6,  # unico plano com mesociclo de 6 semanas
             store_key='john_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
@@ -194,7 +201,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#f6f5f2',
             template_file='henrique.html',
             accent=PublicWorkoutAccent('#2563EB', '#EFF6FF', '#BFDBFE', '#DBEAFE', '#1D4ED8'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD, _TAB_AVALIACOES),
             tracker_weeks=5,
             store_key='henrique_santos_souza_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
@@ -205,7 +212,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#fdf2f8',
             template_file='johnespanha.html',
             accent=PublicWorkoutAccent('#DB2777', '#FDF2F8', '#FBCFE8', '#FCE7F3', '#BE185D'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_AVALIACOES),
             tracker_weeks=5,
             store_key='john_espanha_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
             # NAO convertido para o design system compartilhado: chegou em
@@ -222,11 +229,11 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#faf6f3',
             template_file='franciele.html',
             accent=PublicWorkoutAccent('#A21CAF', '#FDF4FF', '#F5D0FE', '#FAE8FF', '#86198F'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD),
-            # NAO convertido para o design system compartilhado (mesmo caso
-            # da johnespanha): pagina autocontida, CSS/JS proprios embutidos
-            # no arquivo. Os campos acima entram so para manter o
-            # manifest/service-worker corretos.
+            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
+            tracker_weeks=4,
+            store_key='franciele_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
+            assessment_sex='F',
+            height_cm=173,
         ),
         PublicWorkoutPlan(
             slug='rafael',
@@ -235,11 +242,11 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#f4fbfc',
             template_file='rafael.html',
             accent=PublicWorkoutAccent('#0891B2', '#ECFEFF', '#A5F3FC', '#CFFAFE', '#0E7490'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD),
-            # NAO convertido para o design system compartilhado (mesmo caso
-            # da franciele/johnespanha): pagina autocontida, CSS/JS proprios
-            # embutidos no arquivo. Os campos acima entram so para manter o
-            # manifest/service-worker corretos.
+            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
+            tracker_weeks=4,
+            store_key='rafael_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
+            assessment_sex='M',
+            height_cm=175,
         ),
     )
 }
@@ -256,11 +263,13 @@ PUBLIC_WORKOUT_STYLESHEETS: tuple[str, ...] = (
     '/static/css/public_workouts/tracker.css',
     '/static/css/public_workouts/period.css',
     '/static/css/public_workouts/install-prompt.css',
+    '/static/css/public_workouts/assessments.css',
     '/static/css/public_workouts/mobile.css',
 )
 
 PUBLIC_WORKOUT_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/app.js',
+    '/static/js/public_workouts/assessments.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}
@@ -428,14 +437,21 @@ _LEGACY_SW_REGISTRATION_SCRIPT = """
 """.strip()
 
 
-def _inject_legacy_pwa_head(html: str, plan: PublicWorkoutPlan) -> str:
+def _inject_legacy_pwa_head(html: str, plan: PublicWorkoutPlan, asset_version: str) -> str:
     """Injeta manifest/instalacao/service-worker em arquivo NAO convertido.
 
     E o mecanismo original (substituicao de string), mantido vivo so para
     templates que ainda nao viraram `{% extends '_base.html' %}` — hoje,
-    so `johnespanha.html`, que chegou num PR paralelo enquanto esta
-    refatoracao estava em andamento. Qualquer novo arquivo nesse formato
-    continua funcionando ate ser convertido.
+    rafael/franciele/johnespanha, que chegaram em PRs paralelos enquanto
+    aquela refatoracao estava em andamento. Qualquer novo arquivo nesse
+    formato continua funcionando ate ser convertido.
+
+    Tambem injeta CSS/JS da aba Avaliacoes (public_workouts app): arquivos
+    legados nao consomem `stylesheet_urls`/`app.js` do design system
+    compartilhado (nao tem `{% for %}` nenhum, sao HTML cru), entao esses
+    dois assets especificos precisam de link/script proprios aqui — e
+    `data-plan-slug` no <body>, que e como assessments.js descobre qual
+    plano buscar em /renan/<slug>/avaliacoes.json.
     """
     head_injection = (
         f'<meta name="theme-color" content="{plan.theme_color}">\n'
@@ -446,17 +462,28 @@ def _inject_legacy_pwa_head(html: str, plan: PublicWorkoutPlan) -> str:
         f'<link rel="manifest" href="{plan.manifest_url}">\n'
         f'<link rel="apple-touch-icon" href="{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}">\n'
         '<link rel="icon" href="/static/images/student-app-icon.svg" type="image/svg+xml">\n'
-        f'<link rel="icon" href="{PUBLIC_WORKOUT_ICON_192}" sizes="192x192" type="image/png">'
+        f'<link rel="icon" href="{PUBLIC_WORKOUT_ICON_192}" sizes="192x192" type="image/png">\n'
+        f'<link rel="stylesheet" href="/static/css/public_workouts/assessments.css?v={asset_version}">'
     )
     for marker in _LEGACY_VIEWPORT_MARKERS:
         if marker in html:
             html = html.replace(marker, f'{marker}\n{head_injection}', 1)
             break
 
+    if 'data-plan-slug=' not in html:
+        html = html.replace('<body>', f'<body data-plan-slug="{plan.slug}">', 1)
+
     if "navigator.serviceWorker.register('/renan/sw.js'" not in html:
         html = html.replace(
             '</body>',
             f'{_LEGACY_INSTALL_PROMPT_MARKUP}\n{_LEGACY_SW_REGISTRATION_SCRIPT}\n</body>',
+            1,
+        )
+
+    if 'assessments.js' not in html:
+        html = html.replace(
+            '</body>',
+            f'<script src="/static/js/public_workouts/assessments.js?v={asset_version}"></script>\n</body>',
             1,
         )
     return html
@@ -475,13 +502,14 @@ def _render_public_workout_html(plan_slug: str) -> str:
     banco com usuario anonimo no schema public. Ver pwa_views.py.
     """
     plan = _get_public_workout_entry(plan_slug)
+    asset_version = public_workout_asset_version()
     try:
         html = render_to_string(
             f'public_workouts/{plan.template_file}',
             {
                 'plan': plan,
                 'stylesheet_urls': PUBLIC_WORKOUT_STYLESHEETS,
-                'static_asset_version': public_workout_asset_version(),
+                'static_asset_version': asset_version,
                 'apple_touch_icon': PUBLIC_WORKOUT_APPLE_TOUCH_ICON,
                 'icon_192': PUBLIC_WORKOUT_ICON_192,
             },
@@ -490,7 +518,7 @@ def _render_public_workout_html(plan_slug: str) -> str:
         raise Http404('Arquivo de treino publico indisponivel.')
 
     if _SHARED_BASE_MARKER not in html:
-        html = _inject_legacy_pwa_head(html, plan)
+        html = _inject_legacy_pwa_head(html, plan, asset_version)
     return html
 
 
