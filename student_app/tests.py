@@ -2201,6 +2201,44 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'Escada / HIIT')
 
 
+class PublicWorkoutAssessmentsEndpointTests(TestCase):
+    """GET /renan/<slug>/avaliacoes.json — publico, sem auth, so leitura."""
+
+    def test_returns_empty_shape_for_plan_without_assessments(self):
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload, {'assessments': [], 'summary': None, 'indicators': None})
+
+    def test_returns_404_for_unknown_plan_slug(self):
+        response = self.client.get('/renan/nao-existe/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_indicators_once_an_assessment_exists(self):
+        from public_workouts.services import record_assessment
+
+        record_assessment(
+            plan_slug='rafael',
+            measured_at='2026-01-01',
+            weight_kg=70,
+            measurements={'cintura': 82, 'pescoco': 38},
+        )
+        response = self.client.get('/renan/rafael/avaliacoes.json')
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload['assessments']), 1)
+        self.assertIsNotNone(payload['indicators']['bmi'])
+        self.assertIsNotNone(payload['indicators']['body_fat_percent'])
+
+    def test_endpoint_present_on_converted_and_legacy_pages(self):
+        # giovanna usa o design system compartilhado; johnespanha continua
+        # autocontido — os dois precisam do mesmo endpoint de leitura.
+        for slug in ('giovanna', 'johnespanha', 'rafael'):
+            response = self.client.get(f'/renan/{slug}')
+            self.assertContains(response, 'assessments.js')
+            self.assertContains(response, "goTab('avaliacoes',this)")
+
+
 class PublicWorkoutContentSignatureTests(TestCase):
     """Trava o CONTEUDO das paginas publicas, nao o markup.
 
@@ -2231,7 +2269,7 @@ class PublicWorkoutContentSignatureTests(TestCase):
 
         updating = os.environ.get('UPDATE_PUBLIC_WORKOUT_GOLDEN') == '1'
         slugs = iter_slugs()
-        self.assertEqual(len(slugs), 9, 'esperado 9 planos publicos em PUBLIC_WORKOUT_LIBRARY')
+        self.assertEqual(len(slugs), 10, 'esperado 10 planos publicos em PUBLIC_WORKOUT_LIBRARY')
 
         for slug in slugs:
             with self.subTest(slug=slug):
