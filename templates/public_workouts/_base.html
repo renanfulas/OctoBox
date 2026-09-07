@@ -29,7 +29,7 @@
 </style>
 {% block extra_head %}{% endblock %}
 </head>
-<body{% if plan.store_key %} data-store-key="{{ plan.store_key }}"{% endif %}>
+<body data-plan-slug="{{ plan.slug }}"{% if plan.store_key %} data-store-key="{{ plan.store_key }}"{% endif %}>
 {% block body %}{% endblock %}
 <div class="public-workout-install" id="public-workout-install" aria-live="polite">
   <div class="public-workout-install__copy" id="public-workout-install-copy"></div>
@@ -96,6 +96,7 @@
 </script>
 {% block plan_data %}{% endblock %}
 <script src="/static/js/public_workouts/app.js?v={{ static_asset_version }}"></script>
+<script src="/static/js/public_workouts/assessments.js?v={{ static_asset_version }}"></script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>
