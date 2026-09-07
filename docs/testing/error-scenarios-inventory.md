@@ -39,7 +39,7 @@ Rota privada. Gera link de checkout Stripe para compartilhar manualmente.
 | Usuário anônimo | 302 → `/login/` | ✅ |
 | `payment_id` inexistente | 404 | ✅ |
 | Pagamento já quitado (`status=PAID`) | 400 | ✅ |
-| Falha no `create_checkout_session` (provider erro) | 500 | 🔲 |
+| Falha no `create_checkout_session` (provider erro, negócio) | 502 / 400 | ✅ |
 
 ### 3. `api-v1-finance-freeze` — `/api/v1/finance/freeze-student/`
 
@@ -73,6 +73,19 @@ Rota privada (LoginRequired + OWNER/RECEPTION). Confirma pagamento no balcão.
 | `payment_id` inexistente | 404 | ✅ |
 | Formulário inválido (campos obrigatórios vazios) | 302 + flash error | ✅ |
 
+### 6. `api-v1-finance-payments-bulk` e `api-v1-finance-freeze` — corpo malformado
+
+Rotas privadas que recebiam `json.loads(request.body)` sem guarda: um corpo que
+não é JSON válido (ou é JSON válido mas não é um objeto) crashava com
+`JSONDecodeError` não tratado → 500 cru em vez de 400 (achado C2 do relatório
+de simulação de 30 dias, `docs/reports/simulation_30_days_e2e_box.md`).
+
+| Cenário | Status | Testado? |
+|---|---|---|
+| `api-v1-finance-payments-bulk`: corpo não é JSON válido | 400 | ✅ |
+| `api-v1-finance-payments-bulk`: JSON válido mas não é objeto (ex.: lista) | 400 | ✅ |
+| `api-v1-finance-freeze`: corpo não é JSON válido | 400 | ✅ |
+
 ---
 
 ## Endpoints identificados — sem cobertura de erro ainda
@@ -82,7 +95,7 @@ Estes endpoints têm apenas happy-path testado. Candidatos para Fase 7+.
 | Endpoint | Erros críticos sem teste |
 |---|---|
 | `finance-center` | 401 anônimo (testa 200, não testa redirect) |
-| `api-v1-finance-payments-bulk` | 403 sem role, 400 quando todos os itens falham |
+| `api-v1-finance-payments-bulk` | 403 sem role, 400 quando todos os itens falham (corpo malformado já coberto — ver seção 6) |
 | `payment-enrollment-link` | 403 papel errado, 404 payment ou enrollment não existe |
 | `finance-communication-action` | 400 formulário inválido, 403 papel errado |
 | `manager-intake-contact` | 404 intake inexistente, 429 rate limit |
@@ -104,6 +117,12 @@ Estes endpoints têm apenas happy-path testado. Candidatos para Fase 7+.
 | **Total** | **15\*** | **32** |
 
 \* Inclui assertions em `test_dashboard.py`, `test_operations.py`, `test_security_guards.py`, `test_manager_workspace_toggle.py`, `test_wod_template_archive.py`, `student_app/tests.py`, `student_identity/tests.py`.
+
+**Pós-relatório de simulação de 30 dias (2026-08-30):** +5 assertions de erro
+fechando achados C2/C3 (`api-v1-payment-link` 502 sem vazar detalhe do
+provedor, `api-v1-finance-payments-bulk` e `api-v1-finance-freeze` 400 em vez
+de 500 cru para corpo malformado). Ver seções 2 e 6 acima e
+`docs/reports/simulation_30_days_e2e_box.md`.
 
 ---
 
