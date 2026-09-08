@@ -132,6 +132,16 @@ class WorkoutWeeklyGovernanceTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Manager')
         self.assertTrue(AuditEvent.objects.filter(action='session_workout_weekly_checkpoint_updated').exists())
 
+    def test_weekly_checkpoint_get_redirects_instead_of_crashing(self):
+        """Um F5, 'voltar' ou link salvo nesta rota (so-POST) nao pode derrubar
+        a tela com 500 (achado C1 do relatorio de simulacao de 30 dias)."""
+        self.login_as_manager()
+
+        response = self.client.get(reverse('workout-weekly-checkpoint-update'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('workout-approval-board'))
+
     def test_weekly_checkpoint_history_surfaces_rhythm_changes(self):
         today = timezone.localdate()
         monday = today - timedelta(days=today.weekday())

@@ -36,6 +36,8 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
+from shared_support.platform_cache import platform_cache
+
 
 logger = logging.getLogger(__name__)
 
@@ -315,6 +317,47 @@ def send_onboarding_email(pending_signup, *, activation_url: str) -> bool:
         logger.exception('send_onboarding_email: erro inesperado ao enviar email')
         return False
     return True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Reenvio self-service do email de ativacao (achado S4 do relatorio de
+# simulacao de 30 dias: cliente que pagou e cujo email de ativacao falhou
+# ficava sem NENHUM caminho na tela — so quem tinha acesso ao Django admin
+# do operador conseguia reenviar, e nem havia acao pronta pra isso).
+# ─────────────────────────────────────────────────────────────────────────────
+
+RESEND_ACTIVATION_PER_SIGNUP_COOLDOWN_SECONDS = 45
+RESEND_ACTIVATION_PER_SIGNUP_MAX = 3
+RESEND_ACTIVATION_PER_SIGNUP_WINDOW_SECONDS = 3600
+RESEND_ACTIVATION_PER_IP_MAX = 20
+RESEND_ACTIVATION_PER_IP_WINDOW_SECONDS = 3600
+
+
+def resend_activation_rate_limit_exceeded(request, *, pending_id) -> bool:
+    """Guard contra spam de reenvio (double-click, script) e enumeracao de
+    pending_id por IP. platform_cache de proposito: o checkout de Early
+    Adopter roda fora de qualquer schema de box (mesmo motivo documentado em
+    shared_support/platform_cache.py para o anti-card-testing de checkout).
+    """
+    cooldown_key = f'octo_signup_resend_cooldown_{pending_id}'
+    if platform_cache.get(cooldown_key):
+        return True
+
+    count_key = f'octo_signup_resend_count_{pending_id}'
+    attempts = platform_cache.get(count_key, 0)
+    if attempts >= RESEND_ACTIVATION_PER_SIGNUP_MAX:
+        return True
+
+    ip = request.META.get('REMOTE_ADDR')
+    ip_key = f'octo_signup_resend_ip_{ip}'
+    ip_attempts = platform_cache.get(ip_key, 0)
+    if ip_attempts >= RESEND_ACTIVATION_PER_IP_MAX:
+        return True
+
+    platform_cache.set(cooldown_key, True, timeout=RESEND_ACTIVATION_PER_SIGNUP_COOLDOWN_SECONDS)
+    platform_cache.set(count_key, attempts + 1, timeout=RESEND_ACTIVATION_PER_SIGNUP_WINDOW_SECONDS)
+    platform_cache.set(ip_key, ip_attempts + 1, timeout=RESEND_ACTIVATION_PER_IP_WINDOW_SECONDS)
+    return False
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -17,6 +17,8 @@ import csv
 from io import BytesIO, StringIO
 
 from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
@@ -31,6 +33,28 @@ def build_csv_response(*, filename, headers, rows):
     for row in rows:
         writer.writerow(row)
     response = HttpResponse(buffer.getvalue(), content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{box_scoped_filename(filename)}"'
+    return response
+
+
+_XLSX_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+
+def build_xlsx_response(*, filename, headers, rows):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(list(headers))
+    for cell in sheet[1]:
+        cell.font = Font(bold=True)
+    for row in rows:
+        sheet.append(list(row))
+    for column_cells in sheet.columns:
+        longest = max((len(str(cell.value)) for cell in column_cells if cell.value is not None), default=0)
+        sheet.column_dimensions[column_cells[0].column_letter].width = min(max(longest + 2, 10), 48)
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    response = HttpResponse(buffer.getvalue(), content_type=_XLSX_CONTENT_TYPE)
     response['Content-Disposition'] = f'attachment; filename="{box_scoped_filename(filename)}"'
     return response
 
@@ -83,6 +107,12 @@ def build_report_response(report_payload):
             headers=report_payload['headers'],
             rows=report_payload['rows'],
         )
+    if report_payload['format'] == 'xlsx':
+        return build_xlsx_response(
+            filename=report_payload['filename'],
+            headers=report_payload['headers'],
+            rows=report_payload['rows'],
+        )
     if report_payload['format'] == 'pdf':
         return build_pdf_response(
             filename=report_payload['filename'],
@@ -92,4 +122,4 @@ def build_report_response(report_payload):
     raise ValueError('Formato de relatorio nao suportado.')
 
 
-__all__ = ['build_csv_response', 'build_pdf_response', 'build_report_response']
+__all__ = ['build_csv_response', 'build_pdf_response', 'build_report_response', 'build_xlsx_response']

@@ -216,7 +216,7 @@ class GetStudentDashboard:
         if is_plan_blocked:
             return 'Renove seu plano para reservar'
         if has_other_active_reservation:
-            return 'Você já tem uma reserva ativa. Libere a próxima só depois que essa aula terminar.'
+            return 'Você já tem uma reserva ativa em outro horário. Cancele-a na grade para liberar esta aula.'
         if not is_within_booking_window:
             return 'Reserve apenas para hoje ou amanhã.'
         if runtime_state['label'] != 'Agendada':

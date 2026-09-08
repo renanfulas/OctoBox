@@ -259,6 +259,23 @@ POR QUE ELE EXISTE:
         dialog.close();
       }
     });
+
+    // O rail de rodizio comeca visivel (nao "hidden") quando o servidor
+    // devolveu a pagina com schedule_form.errors — ou seja, o POST do
+    // planejador falhou a validacao. Sem isto, o erro especifico do campo
+    // (ex.: "informe a data base para usar o ciclo do rodizio") ficava
+    // escondido dentro de um <dialog> fechado, e a pessoa so via o aviso
+    // generico "revise os campos destacados do planejador" no topo — sem
+    // saber onde procurar.
+    if (monthlyRotationPanel && !monthlyRotationPanel.hidden) {
+      dialog.showModal();
+      var firstFieldError = monthlyRotationPanel.querySelector('.form-error');
+      var fieldWrapper = firstFieldError ? firstFieldError.closest('label') : null;
+      var focusTarget = fieldWrapper ? fieldWrapper.querySelector('input, select, textarea') : null;
+      if (focusTarget) {
+        focusTarget.focus();
+      }
+    }
   }
 
   var weeklyDialog = document.getElementById('class-weekly-modal');
