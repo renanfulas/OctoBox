@@ -332,6 +332,41 @@ class CatalogViewTests(TestCase):
         )
         self.assertTrue(all(item.coach_id == self.coach.id for item in created_sessions))
 
+    def test_class_grid_weekend_rotation_error_stays_visible_in_the_rail(self):
+        """Achado do relatorio de simulacao de 30 dias: quando o rodizio de fim
+        de semana falha (ex.: data base sem ciclo escolhido), a resposta
+        precisa trazer o erro especifico dentro do rail (para o JS reabrir o
+        <dialog> do calendario mensal) — nao so o aviso generico do topo."""
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('class-grid'),
+            data={
+                'form_kind': 'planner',
+                'title': 'Rodizio Weekend',
+                'coach': self.coach.id,
+                'start_date': '2026-04-01',
+                'end_date': '2026-04-30',
+                'anchor_date': '2026-04-11',
+                'interval_days': '',
+                'weekdays': ['5', '6'],
+                'start_time': '09:00',
+                'sequence_count': 0,
+                'duration_minutes': 60,
+                'capacity': 18,
+                'status': 'scheduled',
+                'notes': '',
+                'skip_existing': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Revise os campos destacados do planejador')
+        self.assertContains(response, 'Escolha o ciclo do rodizio quando informar uma data base.')
+        # O rail so herda "hidden" quando NAO ha erro — com erro, ele precisa
+        # continuar sem o atributo para o JS conseguir reabrir o dialog.
+        self.assertNotContains(response, 'id="class-grid-weekend-rotation" hidden')
+
     def test_class_schedule_form_normalizes_single_digit_hour(self):
         start_date = timezone.localdate() + timezone.timedelta(days=1)
         form = ClassScheduleRecurringForm(
@@ -1494,6 +1529,28 @@ class CatalogViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_student_directory_can_export_xlsx(self):
+        """Achado B5 do relatorio de simulacao de 30 dias: a rota devolvia
+        404 cru para xlsx (so csv e pdf estavam implementados)."""
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('student-directory-export', args=['xlsx']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        from io import BytesIO
+
+        from openpyxl import load_workbook
+
+        workbook = load_workbook(BytesIO(response.content))
+        sheet = workbook.active
+        cell_values = [cell.value for row in sheet.iter_rows() for cell in row]
+        self.assertIn('Nome', cell_values)
+        self.assertIn('Bruna Costa', cell_values)
 
     def test_finance_communication_action_registers_whatsapp_log(self):
         self.client.force_login(self.user)

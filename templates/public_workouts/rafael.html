@@ -63,6 +63,7 @@
 
 <div class="tabs">
   <button class="tab on" onclick="goTab('treino',this)">Treinos</button>
+  <button class="tab" onclick="goTab('nutri',this)">Nutrição</button>
   <button class="tab" onclick="goTab('period',this)">Periodização</button>
   <button class="tab" onclick="goTab('avaliacoes',this)">Avaliações</button>
 </div>
@@ -385,6 +386,72 @@
   <div class="c-note" style="border-radius:var(--r-md);border:1px solid var(--border);background:var(--white);box-shadow:var(--shadow)">Sem Feeder/Max Set de propósito — é o dia bônus, não precisa da mesma estrutura de intensidade dos outros 3.</div>
 </div>
 
+</div>
+
+<!-- Plano alimentar Team Icaro (Xander, CRN 10-9750), Referencia 2, prescrito 29/05/2026. Substituicoes completas de cada item ficam no PDF/app original. -->
+<div id="tab-nutri" style="display:none">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+    <div style="font-size:15px;font-weight:700">Plano alimentar — Team Ícaro</div>
+    <span class="badge b-cardio" style="font-size:12px;padding:5px 14px">1.963 kcal · 5 refeições</span>
+  </div>
+  <table class="vol-tbl" style="margin-bottom:1.1rem">
+    <tr><th>Total diário</th><th>Valor</th></tr>
+    <tr><td>Calorias</td><td>1.963 kcal</td></tr>
+    <tr><td>Proteína</td><td>154,0 g</td></tr>
+    <tr><td>Carboidrato</td><td>259,3 g</td></tr>
+    <tr><td>Gordura</td><td>40,6 g</td></tr>
+  </table>
+  <div class="c-card">
+    <div class="c-head"><span>Refeição 1 — 06:30</span><span class="km-badge">397 kcal</span></div>
+    <div class="c-row"><span class="c-lbl">Pão de forma tradicional</span><span>2 fatias (50g)</span></div>
+    <div class="c-row"><span class="c-lbl">Requeijão</span><span>20g</span></div>
+    <div class="c-row"><span class="c-lbl">Ovo</span><span>2 unid. média (100g)</span></div>
+    <div class="c-row"><span class="c-lbl">Mamão</span><span>200g</span></div>
+    <div class="c-note">≈ 18,3g P · 49,1g C · 15,5g G</div>
+  </div>
+  <div class="c-card">
+    <div class="c-head"><span>Refeição 2 — livre (ou junto com R1)</span><span class="km-badge">379 kcal</span></div>
+    <div class="c-row"><span class="c-lbl">Iogurte natural</span><span>1 copo pequeno (165g)</span></div>
+    <div class="c-row"><span class="c-lbl">Morango</span><span>300g</span></div>
+    <div class="c-row"><span class="c-lbl">Whey protein concentrado</span><span>30g</span></div>
+    <div class="c-row"><span class="c-lbl">Aveia</span><span>25g</span></div>
+    <div class="c-note">≈ 36,3g P · 53,5g C · 4,0g G · pode consumir junto com a Refeição 1</div>
+  </div>
+  <div class="c-card">
+    <div class="c-head"><span>Refeição 3 — 12:00</span><span class="km-badge">471 kcal</span></div>
+    <div class="c-row"><span class="c-lbl">Arroz branco</span><span>150g</span></div>
+    <div class="c-row"><span class="c-lbl">Feijão</span><span>100g</span></div>
+    <div class="c-row"><span class="c-lbl">Carne bovina magra</span><span>80g</span></div>
+    <div class="c-row"><span class="c-lbl">Vegetais cozidos</span><span>150g</span></div>
+    <div class="c-row"><span class="c-lbl">Salada crua</span><span>à vontade</span></div>
+    <div class="c-note">≈ 40,0g P · 67,0g C · 7,2g G</div>
+  </div>
+  <div class="c-card">
+    <div class="c-head"><span>Refeição 4 — 17:00</span><span class="km-badge">307 kcal</span></div>
+    <div class="c-row"><span class="c-lbl">Goma de tapioca</span><span>50g</span></div>
+    <div class="c-row"><span class="c-lbl">Requeijão</span><span>20g</span></div>
+    <div class="c-row"><span class="c-lbl">Frango desfiado</span><span>70g</span></div>
+    <div class="c-note">≈ 23,9g P · 36,6g C · 7,3g G</div>
+  </div>
+  <div class="c-card">
+    <div class="c-head"><span>Refeição 4 — opção panqueca de banana</span><span class="km-badge">304 kcal</span></div>
+    <div class="c-row"><span class="c-lbl">Banana</span><span>50g</span></div>
+    <div class="c-row"><span class="c-lbl">Aveia</span><span>20g</span></div>
+    <div class="c-row"><span class="c-lbl">Ovo</span><span>2 unid. média (100g)</span></div>
+    <div class="c-row"><span class="c-lbl">Cacau em pó</span><span>10g</span></div>
+    <div class="c-row"><span class="c-lbl">Canela em pó</span><span>5g (opcional)</span></div>
+    <div class="c-note">≈ 16,3g P · 37,6g C · 12,0g G · alternativa à Refeição 4 tradicional, não some as duas</div>
+  </div>
+  <div class="c-card">
+    <div class="c-head"><span>Refeição 5 — 20:00</span><span class="km-badge">410 kcal</span></div>
+    <div class="c-row"><span class="c-lbl">Arroz branco</span><span>150g</span></div>
+    <div class="c-row"><span class="c-lbl">Carne bovina magra</span><span>80g</span></div>
+    <div class="c-row"><span class="c-lbl">Vegetais cozidos</span><span>150g</span></div>
+    <div class="c-row"><span class="c-lbl">Salada crua</span><span>à vontade</span></div>
+    <div class="c-note">≈ 35,5g P · 53,0g C · 6,6g G</div>
+  </div>
+  <div class="vnote">Pesar os alimentos <strong>depois</strong> do preparo, usar pouco óleo e moderar o sal (sem cortar). Substituições completas de cada item (ex.: arroz ↔ macarrão/aipim/batata doce/batata baroa/batata inglesa; carne bovina ↔ frango/peixe; pão ↔ tapioca/torrada/pão integral/rap10) seguem a tabela de equivalência do plano original — consulte o app da Team Ícaro pra trocar algo.</div>
+  <div class="vnote">Prescrito por Xander (Team Ícaro, CRN 10-9750) em 29/05/2026 · Referência 2.</div>
 </div>
 
 <div id="tab-period" style="display:none">

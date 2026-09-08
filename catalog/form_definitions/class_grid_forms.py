@@ -15,10 +15,11 @@ PONTOS CRITICOS:
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db import connection
 from django.db.models import Q
 from django.utils import timezone
 
-from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
+from control.models import Membership
 from operations.domain import build_class_grid_session_policy
 from operations.models import ClassSession, SessionStatus
 from shared_support.form_inputs import (
@@ -43,9 +44,25 @@ WEEKDAY_CHOICES = (
 
 
 def _get_class_coach_queryset():
+    """Usuarios elegiveis para o campo Coach da grade.
+
+    Achado B2/B3 do relatorio de simulacao de 30 dias: antes filtrava so por
+    Group (groups__name__in=...), mas Group/auth_user vivem no schema
+    `public` — sem filtro por box, qualquer usuario com o Group Coach em
+    QUALQUER box aparecia na lista de TODOS os boxes (vazamento entre
+    tenants). Alem disso o papel "de verdade" vem de Membership (e o que o
+    checkout/onboarding cria) — o Group podia nao existir ou estar
+    dessincronizado, escondendo coaches legitimos.
+    Filtra por Membership do box ATIVO (connection.schema_name) em vez de
+    Group. is_superuser continua elegivel em qualquer box de proposito
+    (suporte/DEV multi-box).
+    """
     user_model = get_user_model()
     return user_model.objects.filter(
-        Q(is_superuser=True) | Q(groups__name__in=(ROLE_COACH, ROLE_MANAGER, ROLE_OWNER)),
+        Q(is_superuser=True) | Q(
+            memberships__box__schema_name=connection.schema_name,
+            memberships__role__in=(Membership.Role.COACH, Membership.Role.MANAGER, Membership.Role.OWNER),
+        ),
         is_active=True,
     ).distinct().order_by('first_name', 'username')
 
@@ -57,7 +74,9 @@ class ClassGridFilterForm(forms.Form):
         widget=forms.TextInput(attrs={'type': 'month'}),
     )
     coach = forms.ModelChoiceField(
-        queryset=_get_class_coach_queryset(),
+        # Placeholder no import do modulo: a queryset real (escopada pelo box
+        # ativo) e montada em __init__, por instancia/request — nunca aqui.
+        queryset=get_user_model().objects.none(),
         required=False,
         label='Coach',
         empty_label='Todos os coaches',
@@ -70,6 +89,10 @@ class ClassGridFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # A queryset do campo `coach` e escopada por box ativo (connection.schema_name
+        # no momento da chamada) — precisa ser recalculada por instancia/request, nao
+        # herdada do valor congelado no import do modulo (que seria sempre 'public').
+        self.fields['coach'].queryset = _get_class_coach_queryset()
         self.fields['reference_month'].initial = timezone.localdate().strftime('%Y-%m')
         apply_text_input_attrs(self.fields['reference_month'], maxlength=7)
 
