@@ -199,7 +199,7 @@ class TechnicalBehaviorNoteCreateView(LoginRequiredMixin, RoleRequiredMixin, Vie
 
 
 class AttendanceActionView(LoginRequiredMixin, RoleRequiredMixin, View):
-    allowed_roles = (ROLE_COACH,)
+    allowed_roles = (ROLE_COACH, ROLE_RECEPTION, ROLE_OWNER)
     allowed_actions = {'check-in', 'check-out', 'absent'}
 
     def post(self, request, attendance_id, action, *args, **kwargs):
