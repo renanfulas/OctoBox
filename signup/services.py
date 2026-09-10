@@ -54,6 +54,34 @@ class InvalidMagicTokenError(RuntimeError):
     """Levantado quando o magic-token e invalido, expirado ou ja consumido."""
 
 
+def is_launch_promo_code(code: str) -> bool:
+    """True se `code` bate com a campanha "1o mes gratis" configurada.
+
+    Comparacao case-insensitive contra STRIPE_LAUNCH_PROMO_CODE. Vazio nas
+    settings (campanha desligada) sempre retorna False.
+    """
+    configured = (getattr(settings, 'STRIPE_LAUNCH_PROMO_CODE', '') or '').strip().upper()
+    if not configured:
+        return False
+    return (code or '').strip().upper() == configured
+
+
+def _resolve_launch_promotion_code_id(pending_signup) -> str:
+    """ID real da Stripe Promotion Code ("promo_...") a aplicar, ou ''.
+
+    Restrito ao plano MENSAL de proposito: o cupom da campanha e
+    "100% off, duration=once" — no plano ANUAL isso zeraria a fatura do ANO
+    inteiro em vez de so o primeiro mes.
+    """
+    from .models import PendingSignupPlan
+
+    if pending_signup.plan != PendingSignupPlan.MONTHLY.value:
+        return ''
+    if not is_launch_promo_code(pending_signup.promo_code):
+        return ''
+    return (getattr(settings, 'STRIPE_LAUNCH_PROMOTION_CODE_ID', '') or '').strip()
+
+
 def _resolve_price_id(plan: str) -> str:
     if plan == 'monthly':
         price_id = getattr(settings, 'STRIPE_PRICE_EARLY_MONTHLY', '') or ''
@@ -105,7 +133,7 @@ def create_checkout_session(pending_signup, request):
         reverse('signup-checkout-canceled') + '?' + urlencode({'pending': pending_signup.pk}),
     )
 
-    session = stripe.checkout.Session.create(
+    session_kwargs = dict(
         mode='subscription',
         payment_method_types=['card'],
         line_items=[{'price': price_id, 'quantity': 1}],
@@ -113,7 +141,6 @@ def create_checkout_session(pending_signup, request):
         client_reference_id=str(pending_signup.pk),
         success_url=success_url,
         cancel_url=cancel_url,
-        allow_promotion_codes=False,
         metadata={
             'pending_signup_id': str(pending_signup.pk),
             'plan': pending_signup.plan,
@@ -132,6 +159,17 @@ def create_checkout_session(pending_signup, request):
         # apontando pro price_id ANTIGO, silenciosamente, ate a chave expirar.
         idempotency_key=f'pending-signup-{pending_signup.pk}-{pending_signup.plan}-{price_id[-8:]}',
     )
+
+    # Cupom de campanha ("1o mes gratis") aplicado automaticamente via link
+    # (?promo=...), sem o cliente digitar nada. `discounts` e `allow_promotion_codes`
+    # sao mutuamente exclusivos na API da Stripe — so um dos dois vai no payload.
+    launch_promotion_code_id = _resolve_launch_promotion_code_id(pending_signup)
+    if launch_promotion_code_id:
+        session_kwargs['discounts'] = [{'promotion_code': launch_promotion_code_id}]
+    else:
+        session_kwargs['allow_promotion_codes'] = False
+
+    session = stripe.checkout.Session.create(**session_kwargs)
 
     pending_signup.stripe_session_id = session.id
     pending_signup.save(update_fields=['stripe_session_id', 'updated_at'])

@@ -37,6 +37,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core import signing
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
 
@@ -52,6 +53,7 @@ from signup.services import (
     activate_pending_signup,
     create_checkout_session,
     generate_magic_token,
+    is_launch_promo_code,
     mark_pending_signup_paid,
     query_stripe_session_status,
     verify_magic_token,
@@ -382,6 +384,113 @@ class CreateCheckoutSessionTest(TestCase):
         self.assertEqual(call_kwargs['client_reference_id'], str(self.pending.pk))
         # Idempotency key contém pk e plano para evitar sessions duplicadas
         self.assertIn(str(self.pending.pk), call_kwargs['idempotency_key'])
+        # Sem cupom de campanha ativo: mantém o campo manual desligado.
+        self.assertFalse(call_kwargs['allow_promotion_codes'])
+        self.assertNotIn('discounts', call_kwargs)
+
+    # Campanha "1o mes gratis" — aplicada automaticamente via link (?promo=...)
+    @override_settings(
+        STRIPE_PRICE_EARLY_MONTHLY='price_monthly_test',
+        STRIPE_SECRET_KEY='sk_test_xxx',
+        STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES',
+        STRIPE_LAUNCH_PROMOTION_CODE_ID='promo_test_123',
+    )
+    def test_applies_launch_discount_on_monthly_plan_with_matching_promo(self):
+        self.pending.plan = PendingSignupPlan.MONTHLY
+        self.pending.promo_code = 'PRIMEIROMES'
+        self.pending.save(update_fields=['plan', 'promo_code'])
+
+        fake_session = MagicMock(id='cs_test_promo', url='https://checkout.stripe.com/cs_test_promo')
+        with patch('stripe.checkout.Session.create', return_value=fake_session) as mock_create:
+            create_checkout_session(self.pending, self.request)
+
+        call_kwargs = mock_create.call_args.kwargs
+        self.assertEqual(call_kwargs['discounts'], [{'promotion_code': 'promo_test_123'}])
+        self.assertNotIn('allow_promotion_codes', call_kwargs)
+
+    @override_settings(
+        STRIPE_PRICE_EARLY_ANNUAL='price_annual_test',
+        STRIPE_SECRET_KEY='sk_test_xxx',
+        STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES',
+        STRIPE_LAUNCH_PROMOTION_CODE_ID='promo_test_123',
+    )
+    def test_does_not_apply_launch_discount_on_annual_plan_even_with_matching_promo(self):
+        """Campanha 'primeiro mes gratis' nunca vale no anual: zeraria a fatura do ano inteiro."""
+        self.pending.plan = PendingSignupPlan.ANNUAL
+        self.pending.promo_code = 'PRIMEIROMES'
+        self.pending.save(update_fields=['plan', 'promo_code'])
+
+        fake_session = MagicMock(id='cs_test_no_promo', url='https://checkout.stripe.com/cs_test_no_promo')
+        with patch('stripe.checkout.Session.create', return_value=fake_session) as mock_create:
+            create_checkout_session(self.pending, self.request)
+
+        call_kwargs = mock_create.call_args.kwargs
+        self.assertNotIn('discounts', call_kwargs)
+        self.assertFalse(call_kwargs['allow_promotion_codes'])
+
+    @override_settings(
+        STRIPE_PRICE_EARLY_MONTHLY='price_monthly_test',
+        STRIPE_SECRET_KEY='sk_test_xxx',
+        STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES',
+        STRIPE_LAUNCH_PROMOTION_CODE_ID='promo_test_123',
+    )
+    def test_does_not_apply_discount_when_promo_code_does_not_match(self):
+        self.pending.plan = PendingSignupPlan.MONTHLY
+        self.pending.promo_code = 'CODIGOERRADO'
+        self.pending.save(update_fields=['plan', 'promo_code'])
+
+        fake_session = MagicMock(id='cs_test_wrong_promo', url='https://checkout.stripe.com/cs_test_wrong_promo')
+        with patch('stripe.checkout.Session.create', return_value=fake_session) as mock_create:
+            create_checkout_session(self.pending, self.request)
+
+        call_kwargs = mock_create.call_args.kwargs
+        self.assertNotIn('discounts', call_kwargs)
+        self.assertFalse(call_kwargs['allow_promotion_codes'])
+
+    @override_settings(
+        STRIPE_PRICE_EARLY_MONTHLY='price_monthly_test',
+        STRIPE_SECRET_KEY='sk_test_xxx',
+        STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES',
+        STRIPE_LAUNCH_PROMOTION_CODE_ID='',
+    )
+    def test_does_not_apply_discount_when_promotion_code_id_not_configured(self):
+        """Codigo humano bate, mas o ID real da Stripe ainda nao foi colado no .env."""
+        self.pending.plan = PendingSignupPlan.MONTHLY
+        self.pending.promo_code = 'PRIMEIROMES'
+        self.pending.save(update_fields=['plan', 'promo_code'])
+
+        fake_session = MagicMock(id='cs_test_no_id', url='https://checkout.stripe.com/cs_test_no_id')
+        with patch('stripe.checkout.Session.create', return_value=fake_session) as mock_create:
+            create_checkout_session(self.pending, self.request)
+
+        call_kwargs = mock_create.call_args.kwargs
+        self.assertNotIn('discounts', call_kwargs)
+        self.assertFalse(call_kwargs['allow_promotion_codes'])
+
+
+# ===========================================================================
+# is_launch_promo_code — comparacao contra STRIPE_LAUNCH_PROMO_CODE
+# ===========================================================================
+
+class IsLaunchPromoCodeTest(SimpleTestCase):
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_matches_case_insensitively(self):
+        self.assertTrue(is_launch_promo_code('primeiromes'))
+        self.assertTrue(is_launch_promo_code('PRIMEIROMES'))
+        self.assertTrue(is_launch_promo_code('  PrimeiroMes  '))
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_does_not_match_different_code(self):
+        self.assertFalse(is_launch_promo_code('OUTROCODIGO'))
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='')
+    def test_always_false_when_campaign_not_configured(self):
+        self.assertFalse(is_launch_promo_code('PRIMEIROMES'))
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_false_for_empty_or_none_code(self):
+        self.assertFalse(is_launch_promo_code(''))
+        self.assertFalse(is_launch_promo_code(None))
 
 
 # ===========================================================================
@@ -651,3 +760,70 @@ class EarlyAdopterWebhookAsyncEmailTests(TestCase):
             mock_retrieve.return_value = {'payment_status': 'paid'}
             result = query_stripe_session_status('cs_test_strip')
             self.assertIsNotNone(result)
+
+
+# ===========================================================================
+# CheckoutFormView — leitura/persistencia do ?promo=... da campanha
+# ===========================================================================
+
+class CheckoutFormViewPromoTest(TestCase):
+    """View publica: banner de campanha (GET) e persistencia do promo_code (POST).
+
+    STRIPE_PRICE_EARLY_MONTHLY deliberadamente ausente nestes testes — o
+    caminho de erro (StripeNotConfiguredError) ja e coberto em outro lugar
+    e aqui so nos interessa que o PendingSignup guarde o promo_code correto
+    antes da chamada a Stripe, nao o resultado dela.
+    """
+
+    def _post_data(self, **overrides):
+        data = {
+            'email': 'dono@academia.test',
+            'full_name': 'Maria Silva',
+            'box_name': 'Academia Forte',
+            'phone': '(11) 99999-9999',
+            'plan': 'monthly',
+        }
+        data.update(overrides)
+        return data
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_promo_banner_context_true_for_matching_code_on_monthly_plan(self):
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'monthly', 'promo': 'primeiromes'})
+        self.assertTrue(response.context['promo_valid'])
+        self.assertEqual(response.context['promo'], 'PRIMEIROMES')
+        self.assertContains(response, 'Cupom')
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_promo_banner_context_false_on_annual_plan_even_with_matching_code(self):
+        """Confirma na camada de view a mesma restricao de signup/services.py: sem cupom no anual."""
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'annual', 'promo': 'primeiromes'})
+        self.assertFalse(response.context['promo_valid'])
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_promo_banner_context_false_for_mismatched_code(self):
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'monthly', 'promo': 'codigoerrado'})
+        self.assertFalse(response.context['promo_valid'])
+
+    def test_promo_banner_context_false_when_campaign_not_configured(self):
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'monthly', 'promo': 'qualquercoisa'})
+        self.assertFalse(response.context['promo_valid'])
+
+    def test_promo_query_param_is_sanitized_to_safe_charset(self):
+        """Caracteres fora de [A-Z0-9-] (incluindo tentativa de quebrar o atributo HTML) são removidos."""
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'monthly', 'promo': '"><script>x</script>'})
+        self.assertEqual(response.context['promo'], 'SCRIPTXSCRIPT')
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_post_persists_normalized_promo_code_on_pending_signup(self):
+        self.client.post(
+            reverse('signup-checkout') + '?plan=monthly&promo=primeiromes',
+            self._post_data(promo='primeiromes'),
+        )
+        pending = PendingSignup.objects.get(email='dono@academia.test')
+        self.assertEqual(pending.promo_code, 'PRIMEIROMES')
+        self.assertEqual(pending.plan, PendingSignupPlan.MONTHLY)
+
+    def test_post_persists_empty_promo_code_when_absent(self):
+        self.client.post(reverse('signup-checkout') + '?plan=monthly', self._post_data())
+        pending = PendingSignup.objects.get(email='dono@academia.test')
+        self.assertEqual(pending.promo_code, '')
