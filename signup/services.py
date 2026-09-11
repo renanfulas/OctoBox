@@ -211,6 +211,15 @@ def query_stripe_session_status(session_id: str):
     stripe.api_key = secret_key
     try:
         session = stripe.checkout.Session.retrieve(session_id)
+        # stripe-python >= ~13: StripeObject nao suporta mais .get() estilo
+        # dict (AttributeError: 'get' is a dict method, but a Session is not
+        # a dict). Convertido uma vez aqui pra manter os .get(...) abaixo
+        # funcionando sem reescrever cada acesso. Achado em produção
+        # (2026-09-10): CheckoutSuccessView 500 em toda sessão paga de
+        # verdade, porque os testes mockam retrieve() com um dict puro e
+        # nunca exercitam um StripeObject real.
+        if hasattr(session, 'to_dict'):
+            session = session.to_dict()
     except Exception as exc:
         logger.warning('query_stripe_session_status: falha ao consultar session=%s: %s', session_id, exc)
         return None
