@@ -268,6 +268,17 @@ STRIPE_WEBHOOK_SECRET = env_str('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_PRICE_EARLY_MONTHLY = env_str('STRIPE_PRICE_EARLY_MONTHLY', '')
 STRIPE_PRICE_EARLY_ANNUAL = env_str('STRIPE_PRICE_EARLY_ANNUAL', '')
 
+# Campanha de divulgacao — 1o mes gratis via link com ?promo=CODIGO.
+# STRIPE_LAUNCH_PROMO_CODE e o codigo humano comparado contra a querystring
+# (case-insensitive). STRIPE_LAUNCH_PROMOTION_CODE_ID e o ID real "promo_..."
+# de uma Stripe Promotion Code (criada com scripts/create_launch_promo_coupon.py
+# ou manualmente no Dashboard: Product catalog -> Coupons -> Promotion codes).
+# So aplicavel ao plano MENSAL de proposito — um cupom "100% off, duration=once"
+# no plano ANUAL zeraria a fatura do ANO inteiro, nao so o primeiro mes.
+# Vazio em qualquer um dos dois = campanha desligada, checkout cobra preco cheio.
+STRIPE_LAUNCH_PROMO_CODE = env_str('STRIPE_LAUNCH_PROMO_CODE', '')
+STRIPE_LAUNCH_PROMOTION_CODE_ID = env_str('STRIPE_LAUNCH_PROMOTION_CODE_ID', '')
+
 # Superdev — conta unica de suporte anexada a TODO box provisionado.
 # Vive em public (auth e SHARED_APP), entao um so usuario serve a todos os boxes.
 # Anexado como Membership OWNER (is_primary_box=False) em control.services.provision_box.

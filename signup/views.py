@@ -19,6 +19,7 @@ PONTOS CRITICOS:
 from __future__ import annotations
 
 import logging
+import re
 
 from django.contrib import messages
 from django.contrib.auth import login
@@ -38,6 +39,7 @@ from .services import (
     activate_pending_signup,
     create_checkout_session,
     generate_magic_token,
+    is_launch_promo_code,
     mark_pending_signup_paid,
     query_stripe_session_status,
     resend_activation_rate_limit_exceeded,
@@ -59,6 +61,14 @@ def _resolve_plan(raw_value):
     return PendingSignupPlan.ANNUAL.value
 
 
+_PROMO_CODE_PATTERN = re.compile(r'[^A-Z0-9-]')
+
+
+def _resolve_promo(request):
+    raw = request.POST.get('promo') or request.GET.get('promo') or ''
+    return _PROMO_CODE_PATTERN.sub('', raw.strip().upper())[:32]
+
+
 def _plan_display(plan_value):
     if plan_value == PendingSignupPlan.MONTHLY.value:
         return {'label': 'Mensal', 'amount': 'R$ 97', 'period': 'por mês', 'savings_label': ''}
@@ -76,13 +86,19 @@ class CheckoutFormView(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         plan = _resolve_plan(self.request.GET.get('plan'))
+        promo = _resolve_promo(self.request)
         context['plan'] = plan
         context['plan_display'] = _plan_display(plan)
         context['post_program_price'] = 'R$ 197/mês'
+        context['promo'] = promo
+        # Banner so aparece no plano mensal — a campanha nao se aplica ao anual
+        # (ver signup/services.py:_resolve_launch_promotion_code_id).
+        context['promo_valid'] = bool(promo) and is_launch_promo_code(promo) and plan == PendingSignupPlan.MONTHLY.value
         return context
 
     def form_valid(self, form):
         plan = _resolve_plan(self.request.POST.get('plan') or self.request.GET.get('plan'))
+        promo = _resolve_promo(self.request)
         referer = (self.request.META.get('HTTP_REFERER') or '')[:255]
 
         pending = PendingSignup.objects.create(
@@ -91,6 +107,7 @@ class CheckoutFormView(FormView):
             box_name=form.cleaned_data['box_name'],
             phone=form.cleaned_data['phone'],
             plan=plan,
+            promo_code=promo,
             landing_referer=referer,
         )
 
