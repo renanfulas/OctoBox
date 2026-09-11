@@ -67,6 +67,20 @@ User = get_user_model()
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _fake_stripe_session(data):
+    """Constroi um stripe.StripeObject real a partir de um dict.
+
+    Achado em produção (2026-09-10): mockar `stripe.checkout.Session.retrieve`
+    com um dict puro (como os testes abaixo faziam antes) mascara um bug real
+    — stripe-python >= ~13 nao suporta mais `.get()` estilo dict em
+    StripeObject (AttributeError: 'get' is a dict method...). Usar o objeto
+    real aqui garante que o teste falha se `query_stripe_session_status`
+    voltar a usar `.get()` direto na Session sem converter para dict antes.
+    """
+    from stripe._stripe_object import StripeObject
+
+    return StripeObject.construct_from(data, 'sk_test_xxx')
+
 def _make_pending(
     *,
     status: str = PendingSignupStatus.PAID,
@@ -722,13 +736,13 @@ class EarlyAdopterWebhookAsyncEmailTests(TestCase):
     # Success path
     @override_settings(STRIPE_SECRET_KEY='sk_test_xxx')
     def test_returns_dict_with_payment_details_on_success(self):
-        fake_session = {
+        fake_session = _fake_stripe_session({
             'payment_status': 'paid',
             'amount_total': 9700,
             'customer_email': 'owner@academia.test',
             'subscription': 'sub_test_xyz',
             'customer': 'cus_test_xyz',
-        }
+        })
         with patch('stripe.checkout.Session.retrieve', return_value=fake_session):
             result = query_stripe_session_status('cs_test_success')
 
@@ -742,10 +756,10 @@ class EarlyAdopterWebhookAsyncEmailTests(TestCase):
 
     @override_settings(STRIPE_SECRET_KEY='sk_test_xxx')
     def test_paid_is_false_when_payment_status_is_unpaid(self):
-        fake_session = {
+        fake_session = _fake_stripe_session({
             'payment_status': 'unpaid',
             'amount_total': 9700,
-        }
+        })
         with patch('stripe.checkout.Session.retrieve', return_value=fake_session):
             result = query_stripe_session_status('cs_test_unpaid')
 
@@ -757,9 +771,21 @@ class EarlyAdopterWebhookAsyncEmailTests(TestCase):
     def test_secret_key_is_stripped_before_comparison(self):
         """secret_key com espaços é considerado válido após strip()."""
         with patch('stripe.checkout.Session.retrieve') as mock_retrieve:
-            mock_retrieve.return_value = {'payment_status': 'paid'}
+            mock_retrieve.return_value = _fake_stripe_session({'payment_status': 'paid'})
             result = query_stripe_session_status('cs_test_strip')
             self.assertIsNotNone(result)
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_xxx')
+    def test_customer_email_falls_back_to_nested_customer_details(self):
+        """customer_email ausente no topo cai para customer_details.email (StripeObject aninhado)."""
+        fake_session = _fake_stripe_session({
+            'payment_status': 'paid',
+            'customer_details': {'email': 'nested@academia.test'},
+        })
+        with patch('stripe.checkout.Session.retrieve', return_value=fake_session):
+            result = query_stripe_session_status('cs_test_nested')
+
+        self.assertEqual(result['customer_email'], 'nested@academia.test')
 
 
 # ===========================================================================
