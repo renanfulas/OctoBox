@@ -603,6 +603,18 @@ STUDENT_RESEND_WEBHOOK_SECRET = env_str('STUDENT_RESEND_WEBHOOK_SECRET')
 # nao) para sempre. A confirmacao de pagamento e o onboarding do Early
 # Adopter passam por aqui (finance/payment_notifications.py, signup/services.py).
 EMAIL_TIMEOUT = env_int('EMAIL_TIMEOUT', 10)
+# EMAIL_HOST/PORT/USER/PASSWORD nunca eram lidos do .env — o backend SMTP do
+# Django caia sempre nos defaults hardcoded (localhost:25, sem credenciais),
+# que nao existem em nenhum ambiente real. So apareceu quando o primeiro
+# email de onboarding de verdade tentou sair em producao (2026-09-10):
+# "Connection refused". EMAIL_USE_SSL=True e o default porque o provedor
+# atual (Titan Email) so documenta porta 465/SSL, sem STARTTLS na 587.
+EMAIL_HOST = env_str('EMAIL_HOST', 'localhost')
+EMAIL_PORT = env_int('EMAIL_PORT', 25)
+EMAIL_HOST_USER = env_str('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env_str('EMAIL_HOST_PASSWORD')
+EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', False)
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', False)
 STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS = env_int('STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS', 300)
 STUDENT_INVITE_LANDING_RATE_LIMIT_MAX_REQUESTS = env_int('STUDENT_INVITE_LANDING_RATE_LIMIT_MAX_REQUESTS', 20)
 STUDENT_OAUTH_CALLBACK_RATE_LIMIT_WINDOW_SECONDS = env_int('STUDENT_OAUTH_CALLBACK_RATE_LIMIT_WINDOW_SECONDS', 300)
