@@ -36,8 +36,12 @@ else:
         percent_off=100,
         duration='once',
     )
+    # stripe-python >= ~13: PromotionCode.create espera o cupom aninhado em
+    # `promotion={'type': 'coupon', 'coupon': ...}`, nao mais `coupon=...` na
+    # raiz (a API rejeita com "Received unknown parameter: coupon"). Achado
+    # rodando este fluxo contra a Stripe live em 2026-09-09.
     promotion_code = stripe.PromotionCode.create(
-        coupon=coupon.id,
+        promotion={'type': 'coupon', 'coupon': coupon.id},
         code=promo_code,
         max_redemptions=200,
     )
