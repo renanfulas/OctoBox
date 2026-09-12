@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import MagicMock
 
+from django.contrib.sessions.backends.db import SessionStore
 from django.test import RequestFactory
 
 from student_identity.application.results import StudentIdentityAuthResult
@@ -47,6 +48,11 @@ class HandleStudentSpecialOauthJourneyBoxInviteLinkTest(TestCase):
 
     def _make_request(self):
         request = self.factory.get('/aluno/auth/google/callback/')
+        # store_pending_student_onboarding (chamado no branch 'invite-not-found')
+        # escreve em request.session — RequestFactory nao roda SessionMiddleware,
+        # entao o request nao tem .session por padrao. SessionStore() so toca o
+        # banco se .save() for chamado explicitamente; setar chaves nao chama isso.
+        request.session = SessionStore()
         return request
 
     def test_box_root_mismatch_does_not_fall_through_to_onboarding(self):
