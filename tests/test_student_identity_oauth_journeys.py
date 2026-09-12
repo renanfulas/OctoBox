@@ -9,7 +9,7 @@ POR QUE ELE EXISTE:
 from dataclasses import dataclass
 from types import SimpleNamespace
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from django.contrib.sessions.backends.db import SessionStore
 from django.test import RequestFactory
@@ -75,9 +75,12 @@ class HandleStudentSpecialOauthJourneyBoxInviteLinkTest(TestCase):
         self.assertIsNone(response)
         repository.record_box_invite_acceptance.assert_not_called()
 
-    def test_invite_not_found_proceeds_to_onboarding_wizard(self):
+    @patch('student_identity.oauth_journeys.record_student_onboarding_event')
+    def test_invite_not_found_proceeds_to_onboarding_wizard(self, mock_record_event):
         # Aluno genuinamente novo: failure_reason='invite-not-found' e o unico motivo
-        # que deve seguir pro wizard.
+        # que deve seguir pro wizard. record_student_onboarding_event grava evento real
+        # de funil (auditoria) — mockado aqui pra manter o teste L1 (sem banco), no
+        # mesmo espirito do resto da suite (ex.: tests/test_student_identity_membership_actions.py).
         box_invite_link = _make_box_invite_link()
         repository = _make_repository(box_invite_link=box_invite_link)
         result = StudentIdentityAuthResult(success=False, identity=None, failure_reason='invite-not-found')
@@ -95,6 +98,7 @@ class HandleStudentSpecialOauthJourneyBoxInviteLinkTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('/aluno/', response.url)
         repository.record_box_invite_acceptance.assert_called_once_with(box_invite_link)
+        mock_record_event.assert_called_once()
 
     def test_success_redirects_home_and_ignores_failure_reason(self):
         box_invite_link = _make_box_invite_link()
