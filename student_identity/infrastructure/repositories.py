@@ -300,7 +300,7 @@ class DjangoStudentIdentityRepository:
         # e-mail, ou re-save do mesmo registro) comparando pk.
         conflicting_identity = self.find_live_by_email_and_box(email=identity.email, box_root_slug=box_root_slug)
         if conflicting_identity is not None and conflicting_identity.id != identity.pk:
-            raise IdentitySaveConflictError('email-conflict')
+            raise IdentitySaveConflictError('email-conflict', provider=conflicting_identity.provider)
 
         identity.mark_authenticated()
         try:

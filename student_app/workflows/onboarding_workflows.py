@@ -19,7 +19,7 @@ from django.db import transaction
 from student_identity.application.results import IdentitySaveConflictError
 from student_identity.funnel_events import record_student_onboarding_event
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
-from student_identity.models import StudentIdentity, StudentOnboardingJourney
+from student_identity.models import StudentIdentity, StudentIdentityProvider, StudentOnboardingJourney
 from finance.models import Enrollment, EnrollmentStatus
 from students.models import Student, StudentStatus
 
@@ -44,6 +44,10 @@ def ensure_pending_enrollment(*, student, plan, source_note: str):
         status=EnrollmentStatus.PENDING,
         notes=source_note,
     )
+
+
+def _describe_provider(provider: str) -> str:
+    return dict(StudentIdentityProvider.choices).get(provider, provider or 'outro provedor')
 
 
 @dataclass(frozen=True)
@@ -123,11 +127,24 @@ class OnboardingWorkflow:
             # 'unique-constraint-conflict' so alcancaveis por corrida real, ja que a
             # checagem de provider_subject no topo deste metodo cobre o caso comum.
             if exc.reason == 'email-conflict':
+                # Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md): "acao
+                # inteligente" pra duplicata — em vez de so bloquear, usa um dado que
+                # ja temos (qual provider a conta existente usa) pra guiar a pessoa
+                # certa pro caminho certo. NAO funde as duas contas automaticamente
+                # (ver decisao registrada no CORDA) — so aponta o proximo passo manual.
+                provider_label = _describe_provider(exc.provider) if exc.provider else ''
+                if provider_label:
+                    error_message = (
+                        f'Esse e-mail já tem cadastro neste box, feito com {provider_label}. '
+                        f'Entre com {provider_label} em vez de criar um cadastro novo.'
+                    )
+                else:
+                    error_message = 'Esse e-mail já tem cadastro neste box. Tente entrar em vez de se cadastrar de novo.'
                 return OnboardingCompletionResult(
                     student=None,
                     identity=None,
                     status='duplicate_email',
-                    error_message='Esse e-mail já tem cadastro neste box. Tente entrar em vez de se cadastrar de novo.',
+                    error_message=error_message,
                 )
             return OnboardingCompletionResult(
                 student=None,

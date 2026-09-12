@@ -1829,6 +1829,52 @@ class StudentIdentityFlowTests(TestCase):
         messages = list(response.context['messages'])
         self.assertTrue(any('já está em uso' in str(message) for message in messages))
 
+    def test_complete_mass_onboarding_enriches_email_conflict_with_provider(self):
+        # Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md): a "acao
+        # inteligente" pra duplicata — mensagem diz qual provider usar, sem fundir
+        # as contas automaticamente. Confirma tambem que o Student criado antes do
+        # conflito e revertido (savepoint) e nao fica orfao no banco.
+        from student_app.workflows.onboarding_workflows import OnboardingWorkflow
+
+        box_root_slug = get_box_runtime_slug()
+        existing_student = Student.objects.create(
+            full_name='Aluno Existente', phone='5511944444444', email='conflito-mass@example.com',
+        )
+        StudentIdentity.objects.create(
+            student_id=existing_student.id,
+            student_name=existing_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-existing-mass-onboarding',
+            email='conflito-mass@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+
+        workflow = OnboardingWorkflow()
+        result = workflow.complete_mass_onboarding(
+            pending_onboarding={
+                'box_root_slug': box_root_slug,
+                'provider': StudentIdentityProvider.GOOGLE,
+                'provider_subject': 'google-new-mass-onboarding',
+                'email': 'conflito-mass@example.com',
+            },
+            cleaned_data={
+                'full_name': 'Aluno Novo Mass',
+                'phone': '5511955555555',
+                'birth_date': None,
+                'selected_plan': None,
+            },
+        )
+
+        self.assertFalse(result.is_success)
+        self.assertEqual(result.status, 'duplicate_email')
+        self.assertIn('Google', result.error_message)
+        self.assertFalse(Student.objects.filter(phone='5511955555555').exists())
+        self.assertFalse(
+            StudentIdentity.objects.filter(provider_subject='google-new-mass-onboarding').exists()
+        )
+
     def test_coach_cannot_clear_membership(self):
         coach = self._create_role_user(
             username='coach-clear-denied',

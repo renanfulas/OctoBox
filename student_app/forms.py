@@ -179,7 +179,12 @@ class BaseStudentOnboardingForm(forms.Form):
         if len(phone) < MIN_STUDENT_PHONE_DIGITS or len(phone) > MAX_STUDENT_PHONE_DIGITS:
             raise forms.ValidationError('Informe um WhatsApp valido com DDD. Ex.: 5511999999999.')
         if _student_phone_exists(normalized_phone=phone, exclude_student_id=getattr(self.student, 'id', None)):
-            raise forms.ValidationError('Ja existe um aluno cadastrado com este WhatsApp.')
+            # Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md): a validacao
+            # em si ja funcionava bem — so faltava um proximo passo na mensagem.
+            raise forms.ValidationError(
+                'Ja existe um aluno cadastrado com este WhatsApp. '
+                'Ja e aluno? Peca o link de acesso na recepcao do seu box.'
+            )
         return phone
 
     def clean_full_name(self):

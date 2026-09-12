@@ -190,6 +190,42 @@ class VerifyMagicTokenTest(TestCase):
 
 
 # ===========================================================================
+# OnboardingWizardView — Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md):
+# cobre as causas orfas de token_error que caiam todas no else generico, e o
+# guardrail de seguranca de nao ecoar pending.status cru pro usuario.
+# ===========================================================================
+
+class OnboardingWizardViewTokenErrorTest(TestCase):
+    def test_status_invalido_shows_generic_message_never_raw_status(self):
+        pending = _make_pending(status=PendingSignupStatus.CANCELED)
+        token = generate_magic_token(pending)
+
+        response = self.client.get(reverse('signup-onboarding', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Esse link ainda não está pronto para uso.')
+        # Guardrail: o valor bruto do enum interno nunca pode vazar pra tela.
+        self.assertNotContains(response, PendingSignupStatus.CANCELED)
+        self.assertNotContains(response, 'status-invalido')
+
+    def test_pending_nao_encontrado_shows_specific_message(self):
+        token = signing.dumps({'pk': 99999}, salt=_MAGIC_TOKEN_SALT)
+
+        response = self.client.get(reverse('signup-onboarding', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Não encontramos o seu cadastro para esse link.')
+
+    def test_token_invalido_shows_specific_message(self):
+        response = self.client.get(
+            reverse('signup-onboarding', kwargs={'token': 'nao-e-um-token-valido'}),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Não conseguimos validar esse link.')
+
+
+# ===========================================================================
 # activate_pending_signup — 3 branches de erro + sucesso
 # ===========================================================================
 

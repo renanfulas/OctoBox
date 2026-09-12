@@ -13,8 +13,13 @@ class IdentitySaveConflictError(Exception):
     desenho hexagonal (application define o vocabulario, infrastructure implementa).
     """
 
-    def __init__(self, reason: str):
+    def __init__(self, reason: str, *, provider: str = ''):
         self.reason = reason
+        # Onda 5: qual provider a identity conflitante ja usa — deixa o chamador dar
+        # uma dica especifica ("entre com Google") em vez de so "esse e-mail ja existe".
+        # So preenchido quando reason='email-conflict' e a identidade conflitante foi
+        # encontrada pela checagem antecipada (nao no caso raro pego so pelo IntegrityError).
+        self.provider = provider
         super().__init__(reason)
 
 

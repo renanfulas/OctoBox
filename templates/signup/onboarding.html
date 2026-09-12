@@ -117,6 +117,26 @@ PONTOS CRITICOS:
                         Sua conta já está ativa. Pode acessar pelo botão abaixo.
                     </p>
                     <a class="checkout-result-cta" href="/login/">Entrar no OctoBox</a>
+                {% elif token_error == 'token-vazio' %}
+                    <p class="checkout-result-copy">
+                        Esse link está incompleto — provavelmente foi cortado ao copiar.
+                        Vamos te chamar no WhatsApp em instantes para reenviar o link completo.
+                    </p>
+                {% elif token_error == 'token-invalido' %}
+                    <p class="checkout-result-copy">
+                        Não conseguimos validar esse link. O endereço parece ter sido alterado
+                        ou copiado incompleto. Vamos te chamar no WhatsApp em instantes para resolver.
+                    </p>
+                {% elif token_error == 'pending-nao-encontrado' %}
+                    <p class="checkout-result-copy">
+                        Não encontramos o seu cadastro para esse link.
+                        Vamos te chamar no WhatsApp em instantes para confirmar seus dados.
+                    </p>
+                {% elif token_error == 'status-invalido' %}
+                    <p class="checkout-result-copy">
+                        Esse link ainda não está pronto para uso.
+                        Vamos te chamar no WhatsApp assim que estiver tudo certo com o seu pagamento.
+                    </p>
                 {% else %}
                     <p class="checkout-result-copy">
                         Não conseguimos validar este link.
