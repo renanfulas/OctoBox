@@ -260,7 +260,7 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Informe um WhatsApp valido com DDD.')
+        self.assertContains(response, 'Informe um WhatsApp válido com DDD.')
         self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-invalid-phone').exists())
 
     def test_mass_onboarding_rejects_birth_date_after_max_year(self):
