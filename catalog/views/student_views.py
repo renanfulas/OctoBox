@@ -867,6 +867,7 @@ class StudentBulkActionView(LoginRequiredMixin, RoleRequiredMixin, View):
 
 class StudentSourceCaptureView(View):
     template_name = 'catalog/student-source-capture.html'
+    error_template_name = 'catalog/student-source-capture-error.html'
 
     def dispatch(self, request, *args, **kwargs):
         # Center Layer / Onda 6 (ver ADR-014): rota e PUBLIC
@@ -879,26 +880,29 @@ class StudentSourceCaptureView(View):
         # aqui antes — violava o anti-padrao da ADR-006 (resolver tenant
         # fora de uma facade) e so funcionava com exatamente 1 box ATIVO.
         token = (request.GET.get('token') or request.POST.get('token') or '').strip()
-        if token and not self._activate_tenant_for_token(token):
-            # Token presente mas tenant nao pode ser resolvido (token
-            # invalido, ou 2+ boxes ATIVOS sem box_root_slug embutido — ver
-            # ADR-014). Sem isto, a query de Student abaixo estoura
-            # ProgrammingError cru (500) em vez de 404 gracioso: a conexao
-            # fica em public, onde boxcore_student nao existe.
-            raise Http404('Link de qualificacao invalido.')
+        if token:
+            tenant_error = self._activate_tenant_for_token(token)
+            if tenant_error:
+                # Onda 4 (docs/plans/student-login-magic-link-bugs-corda.md): antes
+                # disto, token invalido e box ambiguo (2+ ATIVOS sem box_root_slug
+                # embutido — ver ADR-014) caiam no mesmo Http404 generico. Agora cada
+                # causa tem pagina propria, no mesmo espirito de invite_landing.html.
+                return self._render_capture_error(request, tenant_error)
         return super().dispatch(request, *args, **kwargs)
 
-    def _activate_tenant_for_token(self, token: str) -> bool:
-        """Retorna True se a connection terminou num schema de tenant
-        (resolvido agora ou ja resolvido antes), False se ficou em public."""
+    def _activate_tenant_for_token(self, token: str) -> str:
+        """Retorna '' se a connection terminou num schema de tenant (resolvido agora
+        ou ja resolvido antes); um codigo de causa especifico caso contrario."""
         from django.db import connection
         if getattr(connection, 'schema_name', 'public') != 'public':
-            return True  # ja resolvido (ex.: staff autenticado abrindo o proprio link)
+            return ''  # ja resolvido (ex.: staff autenticado abrindo o proprio link)
 
         try:
             payload = run_student_source_capture_token_read_payload(token=token)
-        except (BadSignature, SignatureExpired, ValueError):
-            return False  # token ilegivel — 404, nao ha schema pra tentar
+        except SignatureExpired:
+            return 'token-expirado'
+        except (BadSignature, ValueError):
+            return 'token-invalido'
 
         from control.models import Box
 
@@ -914,44 +918,49 @@ class StudentSourceCaptureView(View):
                 box = active_boxes[0]
 
         if box is None:
-            return False  # nao deu pra desambiguar — fica em public, 404
+            return 'tenant-ambiguo'  # nao deu pra desambiguar
 
         connection.set_tenant(box)
-        return True
+        return ''
 
-    def _resolve_student(self, token: str):
-        student_id = run_student_source_capture_token_read(token=token)
-        return get_object_or_404(Student, pk=student_id)
+    def _render_capture_error(self, request, reason: str):
+        return render(request, self.error_template_name, {'capture_error': reason}, status=404)
+
+    def _resolve_student_or_error(self, token: str):
+        """Retorna (student, None) em sucesso, ou (None, motivo) em falha."""
+        try:
+            student_id = run_student_source_capture_token_read(token=token)
+        except SignatureExpired:
+            return None, 'token-expirado'
+        except (BadSignature, ValueError):
+            return None, 'token-invalido'
+        student = Student.objects.filter(pk=student_id).first()
+        if student is None:
+            return None, 'aluno-nao-encontrado'
+        return student, None
 
     def get(self, request, *args, **kwargs):
         token = (request.GET.get('token') or '').strip()
         if not token:
-            raise Http404('Link de qualificacao invalido.')
-        try:
-            student = self._resolve_student(token)
-        except (BadSignature, SignatureExpired, ValueError):
-            raise Http404('Link de qualificacao invalido.')
+            return self._render_capture_error(request, 'token-vazio')
+        student, error = self._resolve_student_or_error(token)
+        if error:
+            return self._render_capture_error(request, error)
 
         form = StudentSourceDeclarationCaptureForm(initial={'token': token})
         return render(request, self.template_name, {'form': form, 'student': student, 'submitted': False})
 
     def post(self, request, *args, **kwargs):
+        token = (request.POST.get('token') or '').strip()
+        if not token:
+            return self._render_capture_error(request, 'token-vazio')
+        student, error = self._resolve_student_or_error(token)
+        if error:
+            return self._render_capture_error(request, error)
+
         form = StudentSourceDeclarationCaptureForm(request.POST)
         if not form.is_valid():
-            token = (request.POST.get('token') or '').strip()
-            if not token:
-                raise Http404('Link de qualificacao invalido.')
-            try:
-                student = self._resolve_student(token)
-            except (BadSignature, SignatureExpired, ValueError):
-                raise Http404('Link de qualificacao invalido.')
             return render(request, self.template_name, {'form': form, 'student': student, 'submitted': False}, status=400)
-
-        token = form.cleaned_data['token']
-        try:
-            student = self._resolve_student(token)
-        except (BadSignature, SignatureExpired, ValueError):
-            raise Http404('Link de qualificacao invalido.')
 
         run_student_source_declaration_record(
             student_id=student.id,
