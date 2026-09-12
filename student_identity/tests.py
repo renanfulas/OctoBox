@@ -1663,6 +1663,80 @@ class StudentIdentityFlowTests(TestCase):
         messages = list(response.context['messages'])
         self.assertTrue(any('não está em espera' in str(message) for message in messages))
 
+    def test_create_box_link_action_persists_link_via_real_repository(self):
+        # Onda 0 (docs/plans/student-login-magic-link-bugs-corda.md): antes desta
+        # onda, o unico teste de create-box-link mocava CreateStudentBoxInviteLink
+        # inteiro (tests/test_student_identity_invite_actions.py). Este teste bate
+        # de verdade no banco pra garantir que o handler continua persistindo.
+        owner = get_user_model().objects.create_superuser(
+            username='owner-create-box-link',
+            email='owner-create-box-link@example.com',
+            password='Senha@123456',
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse('student-invitation-operations'),
+            {'action': 'create-box-link'},
+            follow=True,
+        )
+
+        link = StudentBoxInviteLink.objects.filter(box_root_slug=get_box_runtime_slug()).first()
+        self.assertIsNotNone(link)
+        self.assertIsNone(link.revoked_at)
+        messages = list(response.context['messages'])
+        self.assertTrue(any('Link em massa' in str(message) for message in messages))
+
+    def test_create_box_link_action_revokes_previous_active_link(self):
+        owner = get_user_model().objects.create_superuser(
+            username='owner-create-box-link-twice',
+            email='owner-create-box-link-twice@example.com',
+            password='Senha@123456',
+        )
+        self.client.force_login(owner)
+
+        self.client.post(reverse('student-invitation-operations'), {'action': 'create-box-link'})
+        first_link = (
+            StudentBoxInviteLink.objects
+            .filter(box_root_slug=get_box_runtime_slug())
+            .order_by('created_at')
+            .first()
+        )
+        self.assertIsNotNone(first_link)
+
+        self.client.post(reverse('student-invitation-operations'), {'action': 'create-box-link'})
+        first_link.refresh_from_db()
+
+        self.assertIsNotNone(first_link.revoked_at)
+        active_links = StudentBoxInviteLink.objects.filter(
+            box_root_slug=get_box_runtime_slug(), revoked_at__isnull=True,
+        )
+        self.assertEqual(active_links.count(), 1)
+
+    def test_dispatcher_shows_friendly_error_instead_of_crashing(self):
+        # Onda 0: qualquer excecao dentro de uma action do dispatcher deve virar
+        # mensagem amigavel + redirect, nunca 500 cru.
+        owner = get_user_model().objects.create_superuser(
+            username='owner-dispatcher-error',
+            email='owner-dispatcher-error@example.com',
+            password='Senha@123456',
+        )
+        self.client.force_login(owner)
+
+        with patch(
+            'student_identity.staff_invite_actions.CreateStudentBoxInviteLink.execute',
+            side_effect=RuntimeError('boom'),
+        ):
+            response = self.client.post(
+                reverse('student-invitation-operations'),
+                {'action': 'create-box-link'},
+                follow=True,
+            )
+
+        self.assertEqual(response.status_code, 200)
+        messages = list(response.context['messages'])
+        self.assertTrue(any('Não conseguimos concluir essa ação' in str(message) for message in messages))
+
     def test_coach_cannot_clear_membership(self):
         coach = self._create_role_user(
             username='coach-clear-denied',
