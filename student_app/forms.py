@@ -182,8 +182,8 @@ class BaseStudentOnboardingForm(forms.Form):
             # Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md): a validacao
             # em si ja funcionava bem — so faltava um proximo passo na mensagem.
             raise forms.ValidationError(
-                'Ja existe um aluno cadastrado com este WhatsApp. '
-                'Ja e aluno? Peca o link de acesso na recepcao do seu box.'
+                'Já existe um aluno cadastrado com este WhatsApp. '
+                'Já é aluno? Peça o link de acesso na recepção do seu box.'
             )
         return phone
 
