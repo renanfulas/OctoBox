@@ -81,6 +81,24 @@ PONTOS CRITICOS:
                             <div class="checkout-field {% if field.errors %}checkout-field--error{% endif %}">
                                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                                 {{ field }}
+                                {% if field.name == 'password' %}
+                                    <!--
+                                    Onda 6 (docs/plans/student-login-magic-link-bugs-corda.md): indicador vivo
+                                    so mostra o que o backend de fato valida (tamanho minimo, nao ser so
+                                    numeros) — senha comum continua so no erro pos-submit (precisaria de uma
+                                    lista grande pra checar isso ao vivo, como e normal em qualquer form real).
+                                    -->
+                                    <div class="checkout-password-hints" data-password-hints data-min-length="10" aria-live="polite">
+                                        <p class="checkout-password-hint" data-hint="length">
+                                            <span class="checkout-password-hint-icon" aria-hidden="true">○</span>
+                                            <span>Pelo menos 10 caracteres (<span data-hint-count>0</span>/10)</span>
+                                        </p>
+                                        <p class="checkout-password-hint" data-hint="not-numeric">
+                                            <span class="checkout-password-hint-icon" aria-hidden="true">○</span>
+                                            <span>Não pode ser só números</span>
+                                        </p>
+                                    </div>
+                                {% endif %}
                                 {% if field.help_text %}
                                     <small class="checkout-field-help">{{ field.help_text }}</small>
                                 {% endif %}
@@ -147,5 +165,6 @@ PONTOS CRITICOS:
             </section>
         {% endif %}
     </main>
+    <script src="{% static 'js/pages/signup/password_hints.js' %}?v={{ static_asset_version }}"></script>
 </body>
 </html>

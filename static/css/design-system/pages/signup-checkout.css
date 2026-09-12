@@ -393,6 +393,35 @@ a { color: inherit; }
     line-height: 1.4;
 }
 
+/* Onda 6 (docs/plans/student-login-magic-link-bugs-corda.md): indicador vivo de senha. */
+.checkout-password-hints {
+    display: grid;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.checkout-password-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--checkout-text-muted);
+    line-height: 1.4;
+    transition: color 180ms ease;
+}
+
+.checkout-password-hint-icon {
+    display: inline-flex;
+    width: 14px;
+    justify-content: center;
+    font-size: 0.7rem;
+}
+
+.checkout-password-hint.is-met {
+    color: #29d398;
+}
+
 .checkout-submit {
     appearance: none;
     -webkit-appearance: none;
