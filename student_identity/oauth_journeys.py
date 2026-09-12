@@ -81,6 +81,17 @@ def handle_student_special_oauth_journey(
                 device_fingerprint=build_student_device_fingerprint(request),
             )
             return response
+        # Onda 1 (docs/plans/student-login-magic-link-bugs-corda.md): so um motivo de
+        # falha significa "aluno realmente novo" neste link em massa — 'invite-not-found'
+        # (o token do link nunca bate com uma StudentAppInvitation). Qualquer outro motivo
+        # (ex.: 'box-root-mismatch', quando o aluno ja tem StudentIdentity em outro box)
+        # NAO deve cair no wizard de onboarding — antes disso acontecia e o wizard tentava
+        # criar uma segunda StudentIdentity com o mesmo provider_subject, estourando
+        # IntegrityError. Devolver None aqui deixa o caminho generico de erro
+        # (oauth_actions.finalize_student_oauth_callback -> _map_failure_reason) mostrar a
+        # mensagem que ja existe pra esse motivo — igual ao branch de convite individual.
+        if result.failure_reason and result.failure_reason != 'invite-not-found':
+            return None
         repository.record_box_invite_acceptance(box_invite_link)
         payload = {
             'journey': StudentOnboardingJourney.MASS_BOX_INVITE,

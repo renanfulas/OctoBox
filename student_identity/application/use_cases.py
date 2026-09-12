@@ -12,7 +12,13 @@ from .commands import (
     TransferStudentToBoxCommand,
 )
 from .ports import StudentIdentityRepositoryPort
-from .results import StudentBoxInviteLinkRecord, StudentIdentityAuthResult, StudentInvitationResult, StudentTransferResult
+from .results import (
+    IdentitySaveConflictError,
+    StudentBoxInviteLinkRecord,
+    StudentIdentityAuthResult,
+    StudentInvitationResult,
+    StudentTransferResult,
+)
 
 
 class CreateStudentInvitation:
@@ -109,14 +115,20 @@ class AuthenticateStudentWithProvider:
         if existing_identity is not None and existing_identity.box_root_slug != command.box_root_slug:
             return StudentIdentityAuthResult(success=False, identity=None, failure_reason='student-box-mismatch')
 
-        saved = self.repository.save_identity(
-            student=student,
-            box_root_slug=command.box_root_slug,
-            provider=command.provider,
-            provider_subject=provider_subject,
-            email=command.email,
-            invitation=invitation,
-        )
+        try:
+            saved = self.repository.save_identity(
+                student=student,
+                box_root_slug=command.box_root_slug,
+                provider=command.provider,
+                provider_subject=provider_subject,
+                email=command.email,
+                invitation=invitation,
+            )
+        except IdentitySaveConflictError:
+            # Defesa adicional (Onda 1): find_by_provider_subject ja foi checado no topo
+            # deste metodo, entao isso so e alcancavel por uma corrida real entre essa
+            # checagem e o save() dentro do repository.
+            return StudentIdentityAuthResult(success=False, identity=None, failure_reason='provider-subject-conflict')
         return StudentIdentityAuthResult(success=True, identity=saved)
 
 

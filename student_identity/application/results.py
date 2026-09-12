@@ -3,6 +3,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+class IdentitySaveConflictError(Exception):
+    """Levantado pelo repository quando persistir a StudentIdentity violaria uma
+    constraint de unicidade (`provider_subject` ou, a partir da Onda 3, `email`).
+
+    Onda 1 (docs/plans/student-login-magic-link-bugs-corda.md): vive em `application`
+    (nao em `infrastructure`) pra que `use_cases.py` possa capturar sem importar a
+    implementacao concreta do repository — mantem a direcao de dependencia do
+    desenho hexagonal (application define o vocabulario, infrastructure implementa).
+    """
+
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(reason)
+
+
 @dataclass(frozen=True, slots=True)
 class StudentInvitationRecord:
     id: int

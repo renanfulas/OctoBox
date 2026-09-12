@@ -16,6 +16,7 @@ from dataclasses import dataclass
 
 from django.db import transaction
 
+from student_identity.application.results import IdentitySaveConflictError
 from student_identity.funnel_events import record_student_onboarding_event
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
 from student_identity.models import StudentIdentity, StudentOnboardingJourney
@@ -84,21 +85,45 @@ class OnboardingWorkflow:
     @transaction.atomic
     def complete_mass_onboarding(self, *, pending_onboarding, cleaned_data) -> OnboardingCompletionResult:
         email = self.get_pending_email(pending_onboarding=pending_onboarding)
-        student = Student.objects.create(
-            full_name=cleaned_data['full_name'],
-            phone=cleaned_data['phone'],
-            email=email,
-            birth_date=cleaned_data.get('birth_date'),
-            status=StudentStatus.ACTIVE,
-        )
-        identity = self.identity_repository.save_identity(
-            student=student,
-            box_root_slug=pending_onboarding['box_root_slug'],
-            provider=pending_onboarding['provider'],
-            provider_subject=pending_onboarding['provider_subject'],
-            email=email,
-            invitation=None,
-        )
+        provider_subject = pending_onboarding['provider_subject']
+        # Onda 1 (docs/plans/student-login-magic-link-bugs-corda.md): este wizard so deveria
+        # ser alcancado por aluno realmente novo (oauth_journeys.py ja filtra o caso de
+        # provider_subject de outro box antes de chegar aqui). Esta checagem e defesa
+        # adicional — se algum outro caminho futuro cair aqui com um provider_subject ja
+        # usado, falha limpo em vez de criar um Student orfao e estourar IntegrityError.
+        if self.identity_repository.find_by_provider_subject(provider_subject=provider_subject) is not None:
+            return OnboardingCompletionResult(
+                student=None,
+                identity=None,
+                status='duplicate_provider_subject',
+                error_message='Essa conta já tem acesso em outro box. Peça pro seu box atual gerar um convite novo.',
+            )
+        try:
+            with transaction.atomic():
+                student = Student.objects.create(
+                    full_name=cleaned_data['full_name'],
+                    phone=cleaned_data['phone'],
+                    email=email,
+                    birth_date=cleaned_data.get('birth_date'),
+                    status=StudentStatus.ACTIVE,
+                )
+                identity = self.identity_repository.save_identity(
+                    student=student,
+                    box_root_slug=pending_onboarding['box_root_slug'],
+                    provider=pending_onboarding['provider'],
+                    provider_subject=provider_subject,
+                    email=email,
+                    invitation=None,
+                )
+        except IdentitySaveConflictError:
+            # So alcancavel pela corrida real descrita em save_identity — a checagem
+            # acima ja cobre o caso comum e deterministico.
+            return OnboardingCompletionResult(
+                student=None,
+                identity=None,
+                status='duplicate_provider_subject',
+                error_message='Essa conta já tem acesso em outro box. Peça pro seu box atual gerar um convite novo.',
+            )
         ensure_pending_enrollment(
             student=student,
             plan=cleaned_data.get('selected_plan'),
