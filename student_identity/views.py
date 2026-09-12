@@ -115,6 +115,9 @@ class StudentSignInView(TemplateView):
             'box-root-mismatch': 'Esta conta de aluno pertence a outro box.',
             'student-box-mismatch': 'Este aluno já está vinculado a outro box.',
             'provider-subject-required': 'Não foi possível validar a identidade social informada.',
+            # Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md):
+            'email-conflict': 'Esse e-mail já tem cadastro neste box. Tente entrar em vez de se cadastrar de novo.',
+            'provider-subject-conflict': 'Essa conta já tem acesso em outro box. Peça pro seu box atual gerar um convite novo.',
         }
         return mapping.get(reason, 'Não foi possível autorizar este aluno no box atual.')
 

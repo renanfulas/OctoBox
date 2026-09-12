@@ -19,6 +19,7 @@ from auditing.models import AuditEvent
 from operations.models import Attendance, AttendanceStatus, ClassSession
 from shared_support.box_runtime import get_box_runtime_slug
 from student_identity.application.commands import CreateStudentInvitationCommand, TransferStudentToBoxCommand
+from student_identity.application.results import IdentitySaveConflictError
 from student_identity.application.use_cases import CreateStudentInvitation, TransferStudentToBox
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
 from student_identity.infrastructure.session import read_student_session_value
@@ -1736,6 +1737,97 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         messages = list(response.context['messages'])
         self.assertTrue(any('Não conseguimos concluir essa ação' in str(message) for message in messages))
+
+    def test_save_identity_raises_conflict_for_duplicate_email_same_box(self):
+        # Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md): antes desta
+        # checagem, isso estourava IntegrityError cru (constraint condicional do banco,
+        # invisivel pra validacao de formulario).
+        box_root_slug = get_box_runtime_slug()
+        existing_student = Student.objects.create(
+            full_name='Aluno Original', phone='5511911111111', email='duplicado@example.com',
+        )
+        StudentIdentity.objects.create(
+            student_id=existing_student.id,
+            student_name=existing_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-existing-email-owner',
+            email='duplicado@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        new_student = Student.objects.create(
+            full_name='Aluno Novo', phone='5511922222222', email='novo@example.com',
+        )
+        repository = DjangoStudentIdentityRepository()
+
+        with self.assertRaises(IdentitySaveConflictError) as ctx:
+            repository.save_identity(
+                student=new_student,
+                box_root_slug=box_root_slug,
+                provider=StudentIdentityProvider.GOOGLE,
+                provider_subject='google-new-subject-duplicate-email',
+                email='duplicado@example.com',
+                invitation=None,
+            )
+
+        self.assertEqual(ctx.exception.reason, 'email-conflict')
+        self.assertFalse(
+            StudentIdentity.objects.filter(provider_subject='google-new-subject-duplicate-email').exists()
+        )
+
+    def test_change_email_action_rejects_email_already_used_in_box(self):
+        box_root_slug = get_box_runtime_slug()
+        owner = get_user_model().objects.create_superuser(
+            username='owner-change-email-conflict',
+            email='owner-change-email-conflict@example.com',
+            password='Senha@123456',
+        )
+        other_student = Student.objects.create(
+            full_name='Outro Aluno', phone='5511933333333', email='ja-usado@example.com',
+        )
+        StudentIdentity.objects.create(
+            student_id=other_student.id,
+            student_name=other_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-other-student',
+            email='ja-usado@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=self.student.id,
+            student_name=self.student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-change-email-conflict',
+            email='atual@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        membership = StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=self.student.id,
+            box_root_slug=box_root_slug,
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse('student-invitation-operations'),
+            {
+                'action': 'change-email',
+                'membership_id': str(membership.id),
+                'new_email': 'ja-usado@example.com',
+            },
+            follow=True,
+        )
+
+        identity.refresh_from_db()
+        self.assertEqual(identity.email, 'atual@example.com')
+        messages = list(response.context['messages'])
+        self.assertTrue(any('já está em uso' in str(message) for message in messages))
 
     def test_coach_cannot_clear_membership(self):
         coach = self._create_role_user(

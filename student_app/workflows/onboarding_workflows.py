@@ -115,9 +115,20 @@ class OnboardingWorkflow:
                     email=email,
                     invitation=None,
                 )
-        except IdentitySaveConflictError:
-            # So alcancavel pela corrida real descrita em save_identity — a checagem
-            # acima ja cobre o caso comum e deterministico.
+        except IdentitySaveConflictError as exc:
+            # Onda 3: 'email-conflict' e deterministico e comum (o e-mail do Google/Apple
+            # ja tem cadastro ativo neste box) — save_identity checa e levanta ANTES de
+            # tentar o .save(), entao o Student criado acima e revertido pelo savepoint
+            # (inner atomic) sem deixar registro orfao. 'provider-subject-conflict' e
+            # 'unique-constraint-conflict' so alcancaveis por corrida real, ja que a
+            # checagem de provider_subject no topo deste metodo cobre o caso comum.
+            if exc.reason == 'email-conflict':
+                return OnboardingCompletionResult(
+                    student=None,
+                    identity=None,
+                    status='duplicate_email',
+                    error_message='Esse e-mail já tem cadastro neste box. Tente entrar em vez de se cadastrar de novo.',
+                )
             return OnboardingCompletionResult(
                 student=None,
                 identity=None,

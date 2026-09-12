@@ -292,6 +292,16 @@ class DjangoStudentIdentityRepository:
             if invitation is not None and identity.invited_at is None:
                 identity.invited_at = timezone.now()
 
+        # Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md): o commit bd01222e
+        # removeu a validacao de duplicidade de e-mail do onboarding sem substitui-la — so
+        # a UniqueConstraint condicional do banco (models.py, status in [PENDING, ACTIVE])
+        # pegava isso, como IntegrityError cru. find_live_by_email_and_box ja usa o mesmo
+        # criterio de "vivo" da constraint; exclui a propria identity (update sem mudar
+        # e-mail, ou re-save do mesmo registro) comparando pk.
+        conflicting_identity = self.find_live_by_email_and_box(email=identity.email, box_root_slug=box_root_slug)
+        if conflicting_identity is not None and conflicting_identity.id != identity.pk:
+            raise IdentitySaveConflictError('email-conflict')
+
         identity.mark_authenticated()
         try:
             # savepoint interno: save_identity ja e @transaction.atomic — sem este
@@ -302,9 +312,9 @@ class DjangoStudentIdentityRepository:
             with transaction.atomic():
                 identity.save()
         except IntegrityError as exc:
-            # So alcancavel por uma corrida real (duas requests simultaneas passando
-            # pela checagem acima antes de qualquer uma commitar) — a checagem acima ja
-            # cobre o caso comum e deterministico do Bug 2.
+            # So alcancavel por uma corrida real (duas requests simultaneas passando pelas
+            # checagens acima — provider_subject ou e-mail — antes de qualquer uma
+            # commitar). As checagens acima ja cobrem o caso comum e deterministico.
             raise IdentitySaveConflictError('unique-constraint-conflict') from exc
         membership_status = StudentBoxMembershipStatus.ACTIVE
         if invitation is not None and invitation.invite_type == StudentInvitationType.OPEN_BOX:

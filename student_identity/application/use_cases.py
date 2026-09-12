@@ -124,11 +124,14 @@ class AuthenticateStudentWithProvider:
                 email=command.email,
                 invitation=invitation,
             )
-        except IdentitySaveConflictError:
-            # Defesa adicional (Onda 1): find_by_provider_subject ja foi checado no topo
-            # deste metodo, entao isso so e alcancavel por uma corrida real entre essa
-            # checagem e o save() dentro do repository.
-            return StudentIdentityAuthResult(success=False, identity=None, failure_reason='provider-subject-conflict')
+        except IdentitySaveConflictError as exc:
+            # 'email-conflict' (Onda 3) e alcancavel de verdade aqui: o e-mail vindo do
+            # provider pode coincidir com o de outra identity ja ativa no mesmo box, mesmo
+            # quando o convite/candidato de e-mail aponta pra um student diferente.
+            # 'provider-subject-conflict'/'unique-constraint-conflict' so por corrida real,
+            # ja que find_by_provider_subject foi checado no topo deste metodo.
+            failure_reason = 'email-conflict' if exc.reason == 'email-conflict' else 'provider-subject-conflict'
+            return StudentIdentityAuthResult(success=False, identity=None, failure_reason=failure_reason)
         return StudentIdentityAuthResult(success=True, identity=saved)
 
 
