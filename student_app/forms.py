@@ -35,6 +35,36 @@ def _student_phone_exists(*, normalized_phone: str, exclude_student_id: int | No
     return queryset.filter(phone=normalized_phone).exists()
 
 
+def find_claimable_lead_by_phone(*, normalized_phone: str, box_root_slug: str):
+    """Acha um Student existente com esse telefone que AINDA NAO tem identidade de
+    app (StudentIdentity) neste box — candidato seguro pra reaproveitar em vez de
+    bloquear como duplicata.
+
+    Caso real: a recepcao ja cadastrou a pessoa como lead/aluno (nome + telefone),
+    mas ela nunca completou o login do app. Quando ela usa o link em massa depois,
+    o telefone "ja existe" — mas e ela mesma, so que sem login ainda.
+
+    Devolve None se nao achar nenhum Student com esse telefone, OU se o Student
+    encontrado ja tem uma StudentIdentity viva neste box (duplicata real, nao
+    reaproveitavel).
+    """
+    phone_lookup_index = generate_blind_index(normalized_phone)
+    queryset = Student.objects.all()
+    student = (
+        queryset.filter(phone_lookup_index=phone_lookup_index).first()
+        if phone_lookup_index
+        else queryset.filter(phone=normalized_phone).first()
+    )
+    if student is None:
+        return None
+    has_identity = StudentIdentity.objects.filter(
+        student_id=student.id,
+        box_root_slug=box_root_slug,
+        status__in=[StudentIdentityStatus.PENDING, StudentIdentityStatus.ACTIVE],
+    ).exists()
+    return None if has_identity else student
+
+
 def _student_identity_email_exists(*, email: str, box_root_slug: str, exclude_identity_id: int | None = None) -> bool:
     normalized_email = (email or '').strip().lower()
     if not normalized_email or not box_root_slug:
@@ -175,15 +205,25 @@ class BaseStudentOnboardingForm(forms.Form):
         raw_phone = (self.cleaned_data.get('phone') or '').strip()
         phone = normalize_phone_number(raw_phone)
         if not phone:
-            raise forms.ValidationError('Informe um WhatsApp valido com DDD.')
+            raise forms.ValidationError('Informe um WhatsApp válido com DDD.')
         if len(phone) < MIN_STUDENT_PHONE_DIGITS or len(phone) > MAX_STUDENT_PHONE_DIGITS:
-            raise forms.ValidationError('Informe um WhatsApp valido com DDD. Ex.: 5511999999999.')
-        if _student_phone_exists(normalized_phone=phone, exclude_student_id=getattr(self.student, 'id', None)):
-            # Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md): a validacao
-            # em si ja funcionava bem — so faltava um proximo passo na mensagem.
+            raise forms.ValidationError('Informe um WhatsApp válido com DDD. Ex.: 5511999999999.')
+
+        exclude_id = getattr(self.student, 'id', None)
+        if exclude_id is None:
+            # Link em massa (self.student ainda nao e conhecido nesta jornada): um
+            # telefone que ja existe pode ser dela mesma — um lead que a recepcao
+            # ja cadastrou, mas que nunca completou o login do app. Reaproveita
+            # esse Student (ver find_claimable_lead_by_phone) em vez de bloquear;
+            # so bloqueia se o Student encontrado ja tiver identidade de app.
+            claimable = find_claimable_lead_by_phone(normalized_phone=phone, box_root_slug=self.box_root_slug)
+            if claimable is not None:
+                exclude_id = claimable.id
+
+        if _student_phone_exists(normalized_phone=phone, exclude_student_id=exclude_id):
             raise forms.ValidationError(
-                'Ja existe um aluno cadastrado com este WhatsApp. '
-                'Ja e aluno? Peca o link de acesso na recepcao do seu box.'
+                'Já existe um aluno cadastrado com este WhatsApp. '
+                'Já é aluno? Peça o link de acesso na recepção do seu box.'
             )
         return phone
 

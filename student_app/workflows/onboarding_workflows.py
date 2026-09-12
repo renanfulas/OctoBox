@@ -21,6 +21,7 @@ from student_identity.funnel_events import record_student_onboarding_event
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
 from student_identity.models import StudentIdentity, StudentIdentityProvider, StudentOnboardingJourney
 from finance.models import Enrollment, EnrollmentStatus
+from student_app.forms import find_claimable_lead_by_phone
 from students.models import Student, StudentStatus
 
 
@@ -104,13 +105,34 @@ class OnboardingWorkflow:
             )
         try:
             with transaction.atomic():
-                student = Student.objects.create(
-                    full_name=cleaned_data['full_name'],
-                    phone=cleaned_data['phone'],
-                    email=email,
-                    birth_date=cleaned_data.get('birth_date'),
-                    status=StudentStatus.ACTIVE,
+                # Reaproveita a ficha (Student) se a recepcao ja cadastrou essa pessoa
+                # como lead com esse telefone, mas ela nunca completou o login do app —
+                # em vez de bloquear como "telefone duplicado" (o form ja fez a mesma
+                # checagem em clean_phone; refazer aqui e o ponto real de escrita, no
+                # mesmo espirito de "checagem antecipada + fonte da verdade" das Ondas
+                # 1 e 3). Sem isso, ela nunca conseguiria completar o cadastro.
+                claimable_student = find_claimable_lead_by_phone(
+                    normalized_phone=cleaned_data['phone'],
+                    box_root_slug=pending_onboarding['box_root_slug'],
                 )
+                if claimable_student is not None:
+                    student = claimable_student
+                    student.full_name = cleaned_data['full_name']
+                    student.phone = cleaned_data['phone']
+                    if cleaned_data.get('birth_date'):
+                        student.birth_date = cleaned_data['birth_date']
+                    if not student.email:
+                        student.email = email
+                    student.status = StudentStatus.ACTIVE
+                    student.save()
+                else:
+                    student = Student.objects.create(
+                        full_name=cleaned_data['full_name'],
+                        phone=cleaned_data['phone'],
+                        email=email,
+                        birth_date=cleaned_data.get('birth_date'),
+                        status=StudentStatus.ACTIVE,
+                    )
                 identity = self.identity_repository.save_identity(
                     student=student,
                     box_root_slug=pending_onboarding['box_root_slug'],
