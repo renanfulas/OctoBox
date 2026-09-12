@@ -19,6 +19,8 @@ from __future__ import annotations
 import re
 
 from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 
 
 _PHONE_DIGITS_RE = re.compile(r'\D+')
@@ -133,4 +135,17 @@ class OnboardingForm(forms.Form):
         password_confirm = cleaned.get('password_confirm')
         if password and password_confirm and password != password_confirm:
             self.add_error('password_confirm', 'As senhas não conferem.')
+        if password:
+            # Onda 6 (docs/plans/student-login-magic-link-bugs-corda.md): alinha a
+            # validacao da senha do Owner (a conta mais privilegiada do box) com a
+            # mesma suite (AUTH_PASSWORD_VALIDATORS) que StaffSetPasswordForm ja usa
+            # pra troca de senha de staff — antes disso, so o min_length=10 do
+            # CharField era checado. User transitorio (nunca salvo) so pra dar ao
+            # UserAttributeSimilarityValidator o username escolhido pra comparar.
+            transient_user = get_user_model()(username=cleaned.get('username') or '')
+            try:
+                validate_password(password, user=transient_user)
+            except forms.ValidationError as exc:
+                for message in exc.messages:
+                    self.add_error('password', message)
         return cleaned

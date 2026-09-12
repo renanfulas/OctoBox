@@ -43,6 +43,7 @@ from freezegun import freeze_time
 
 from integrations.stripe.models import PaymentWebhookEvent, PaymentWebhookStatus
 from integrations.stripe.router import route_payment_webhook_event
+from signup.forms import OnboardingForm
 from signup.models import PendingSignup, PendingSignupPlan, PendingSignupStatus
 from signup.services import (
     InvalidMagicTokenError,
@@ -187,6 +188,95 @@ class VerifyMagicTokenTest(TestCase):
 
         self.assertEqual(result.pk, pending.pk)
         self.assertEqual(result.status, PendingSignupStatus.PAID)
+
+
+# ===========================================================================
+# OnboardingWizardView — Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md):
+# cobre as causas orfas de token_error que caiam todas no else generico, e o
+# guardrail de seguranca de nao ecoar pending.status cru pro usuario.
+# ===========================================================================
+
+class OnboardingWizardViewTokenErrorTest(TestCase):
+    def test_status_invalido_shows_generic_message_never_raw_status(self):
+        pending = _make_pending(status=PendingSignupStatus.CANCELED)
+        token = generate_magic_token(pending)
+
+        response = self.client.get(reverse('signup-onboarding', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Esse link ainda não está pronto para uso.')
+        # Guardrail: o valor bruto do enum interno nunca pode vazar pra tela.
+        self.assertNotContains(response, PendingSignupStatus.CANCELED)
+        self.assertNotContains(response, 'status-invalido')
+
+    def test_pending_nao_encontrado_shows_specific_message(self):
+        token = signing.dumps({'pk': 99999}, salt=_MAGIC_TOKEN_SALT)
+
+        response = self.client.get(reverse('signup-onboarding', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Não encontramos o seu cadastro para esse link.')
+
+    def test_token_invalido_shows_specific_message(self):
+        response = self.client.get(
+            reverse('signup-onboarding', kwargs={'token': 'nao-e-um-token-valido'}),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Não conseguimos validar esse link.')
+
+
+# ===========================================================================
+# OnboardingForm — Onda 6 (docs/plans/student-login-magic-link-bugs-corda.md):
+# antes desta onda, a senha do Owner (a conta mais privilegiada do box) so
+# validava tamanho minimo — nenhuma das AUTH_PASSWORD_VALIDATORS (a mesma suite
+# que StaffSetPasswordForm ja usa pra troca de senha de staff) se aplicava.
+# ===========================================================================
+
+class OnboardingFormPasswordValidationTest(TestCase):
+    def _post_onboarding(self, *, token, username, password):
+        return self.client.post(
+            reverse('signup-onboarding', kwargs={'token': token}),
+            data={'username': username, 'password': password, 'password_confirm': password},
+        )
+
+    def test_all_numeric_password_is_rejected(self):
+        pending = _make_pending(email='numeric-pwd@example.test')
+        token = generate_magic_token(pending)
+
+        response = self._post_onboarding(token=token, username='numeric.owner', password='9876543210')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['form'].errors.get('password'))
+        self.assertFalse(get_user_model().objects.filter(username='numeric.owner').exists())
+
+    def test_common_password_is_rejected(self):
+        # 'qwertyuiop' esta na lista de senhas comuns do Django, tem 10+ caracteres
+        # (passa o min_length do CharField) e nao e so numeros — isola especificamente
+        # o CommonPasswordValidator, que antes desta onda nao rodava aqui.
+        pending = _make_pending(email='common-pwd@example.test')
+        token = generate_magic_token(pending)
+
+        response = self._post_onboarding(token=token, username='common.owner', password='qwertyuiop')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['form'].errors.get('password'))
+        self.assertFalse(get_user_model().objects.filter(username='common.owner').exists())
+
+    def test_strong_password_is_accepted(self):
+        # Teste de form isolado (nao via view completa): activate_and_provision cria
+        # schema novo via DDL (CREATE SCHEMA) — chamar isso dentro do atomic() implicito
+        # de um TestCase e exatamente o padrao que corrompeu workers do pytest-xdist em
+        # CI antes (ver docstring de tests/test_source_capture_multibox.py). Validar o
+        # form isoladamente prova a mesma coisa (validate_password aceita senha forte)
+        # sem esse risco.
+        form = OnboardingForm(data={
+            'username': 'forte.owner',
+            'password': 'Xk9$mQ2vLp7zebra',
+            'password_confirm': 'Xk9$mQ2vLp7zebra',
+        })
+
+        self.assertTrue(form.is_valid(), form.errors)
 
 
 # ===========================================================================

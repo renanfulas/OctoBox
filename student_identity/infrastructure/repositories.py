@@ -2,10 +2,15 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from student_identity.application.results import StudentBoxInviteLinkRecord, StudentIdentityRecord, StudentInvitationRecord
+from student_identity.application.results import (
+    IdentitySaveConflictError,
+    StudentBoxInviteLinkRecord,
+    StudentIdentityRecord,
+    StudentInvitationRecord,
+)
 from student_identity.models import (
     StudentAppInvitation,
     StudentBoxInviteLink,
@@ -257,6 +262,14 @@ class DjangoStudentIdentityRepository:
     ) -> StudentIdentityRecord:
         identity = self.find_live_by_student_id(student.id)
         if identity is None:
+            # Onda 1 (docs/plans/student-login-magic-link-bugs-corda.md): find_live_by_student_id
+            # so enxerga StudentIdentity do MESMO Student — uma chave LOCAL ao schema do tenant
+            # atual. Quando esse provider_subject ja pertence a uma identidade de OUTRO box
+            # (Student diferente, mas StudentIdentity e schema publico/compartilhado), essa busca
+            # nunca acha, e o create() abaixo estouraria IntegrityError (provider_subject e
+            # unique=True). Cinto de seguranca: procurar tambem pela chave global antes de criar.
+            if self.find_by_provider_subject(provider_subject=provider_subject) is not None:
+                raise IdentitySaveConflictError('provider-subject-conflict')
             identity = StudentIdentity(
                 student_id=student.id,          # Sprint 2: IntegerField (sem FK)
                 student_name=student.full_name,  # Sprint 2: denormalizado
@@ -279,8 +292,30 @@ class DjangoStudentIdentityRepository:
             if invitation is not None and identity.invited_at is None:
                 identity.invited_at = timezone.now()
 
+        # Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md): o commit bd01222e
+        # removeu a validacao de duplicidade de e-mail do onboarding sem substitui-la — so
+        # a UniqueConstraint condicional do banco (models.py, status in [PENDING, ACTIVE])
+        # pegava isso, como IntegrityError cru. find_live_by_email_and_box ja usa o mesmo
+        # criterio de "vivo" da constraint; exclui a propria identity (update sem mudar
+        # e-mail, ou re-save do mesmo registro) comparando pk.
+        conflicting_identity = self.find_live_by_email_and_box(email=identity.email, box_root_slug=box_root_slug)
+        if conflicting_identity is not None and conflicting_identity.id != identity.pk:
+            raise IdentitySaveConflictError('email-conflict', provider=conflicting_identity.provider)
+
         identity.mark_authenticated()
-        identity.save()
+        try:
+            # savepoint interno: save_identity ja e @transaction.atomic — sem este
+            # `with transaction.atomic()`, um IntegrityError aqui deixaria a transacao
+            # externa marcada "precisa de rollback" e qualquer query seguinte nesta
+            # mesma funcao (ex.: _ensure_membership_status, logo abaixo) estouraria
+            # TransactionManagementError em vez do conflito limpo que queremos devolver.
+            with transaction.atomic():
+                identity.save()
+        except IntegrityError as exc:
+            # So alcancavel por uma corrida real (duas requests simultaneas passando pelas
+            # checagens acima — provider_subject ou e-mail — antes de qualquer uma
+            # commitar). As checagens acima ja cobrem o caso comum e deterministico.
+            raise IdentitySaveConflictError('unique-constraint-conflict') from exc
         membership_status = StudentBoxMembershipStatus.ACTIVE
         if invitation is not None and invitation.invite_type == StudentInvitationType.OPEN_BOX:
             membership_status = StudentBoxMembershipStatus.PENDING_APPROVAL

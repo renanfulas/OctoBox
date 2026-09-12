@@ -311,7 +311,13 @@ class OnboardingWizardView(FormView):
             self.pending = verify_magic_token(token)
         except InvalidMagicTokenError as exc:
             self.pending = None
-            self.token_error = str(exc)
+            reason = str(exc)
+            # Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md): signup/services.py
+            # levanta 'status-invalido:{pending.status}' com o valor bruto do enum interno
+            # embutido. Normaliza pra um bucket unico e estavel AQUI, na fronteira — o
+            # template nunca deve ver (nem por engano vir a ecoar) o valor cru de
+            # pending.status (poderia vazar vocabulario interno tipo "cancelled"/"refunded").
+            self.token_error = 'status-invalido' if reason.startswith('status-invalido:') else reason
         else:
             self.token_error = None
         return super().dispatch(request, *args, **kwargs)

@@ -35,6 +35,7 @@ from .oauth_actions import (
     exchange_student_oauth_identity_payload,
     finalize_student_oauth_callback,
 )
+from .oauth_errors import map_student_oauth_failure_reason
 from .oauth_journeys import resolve_student_oauth_journey
 from .oauth_loader import enforce_student_oauth_callback_rate_limit
 from .oauth_policy import StudentOAuthCallbackPolicyError, read_student_oauth_callback_input
@@ -104,19 +105,6 @@ class StudentSignInView(TemplateView):
             invite_token=invite_token,
         )
         return use_case.execute(command)
-
-    def _map_failure_reason(self, reason: str) -> str:
-        mapping = {
-            'invite-not-found': 'O convite informado não foi encontrado ou expirou. Tente entrar sem convite.',
-            'invite-box-mismatch': 'Este convite não pertence ao box atual.',
-            'invite-expired': 'O convite informado não foi encontrado ou expirou. Tente entrar sem convite.',
-            'invite-email-mismatch': 'O e-mail informado não corresponde ao convite.',
-            'student-email-ambiguous': 'Não foi possível validar este aluno por e-mail neste box.',
-            'box-root-mismatch': 'Esta conta de aluno pertence a outro box.',
-            'student-box-mismatch': 'Este aluno já está vinculado a outro box.',
-            'provider-subject-required': 'Não foi possível validar a identidade social informada.',
-        }
-        return mapping.get(reason, 'Não foi possível autorizar este aluno no box atual.')
 
 
 class StudentOAuthStartView(View):
@@ -279,7 +267,7 @@ class StudentOAuthCallbackView(StudentSignInView):
             identity_payload=identity_payload,
             authentication_result=result,
             identity_repository_class=self.identity_repository_class,
-            map_failure_reason=self._map_failure_reason,
+            map_failure_reason=map_student_oauth_failure_reason,
         )
 
     def _map_provider_callback_error(self, reason: str) -> str:
