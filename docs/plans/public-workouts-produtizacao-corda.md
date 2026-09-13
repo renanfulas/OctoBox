@@ -1140,28 +1140,55 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ### O que fazer
 1. `student_identity_id` nullable em `PublicWorkoutAssessment` + migration.
-2. `MovementLibrary`: campos `modality` (`crossfit`/`strength`/`both`),
-   `movement_pattern`, `status` (`active`/`pending`) + migration.
+2. **`PublicWorkoutMovement`** (não `MovementLibrary` — corrigido para bater com
+   V1/D.00, escrito depois desta seção): campos `modality`
+   (`crossfit`/`strength`/`both`), `movement_pattern`, `status`
+   (`active`/`pending`) + migration. Pode ser *semeado a partir de*
+   `MovementLibrary` (cópia read-only), nunca escreve nela.
 3. `extract_movements_from_html` — varre os 10 HTMLs, extrai os pares
    `(nome, musclewiki_url)` dos `<a class="wiki-btn">`, normaliza slugs.
-4. Rodar o extrator e semear; o seed de CrossFit ganha `modality='crossfit'`.
-5. `reps_spec` e `rir_spec` (CharField) em `WorkoutTemplateMovement` + migration.
+   Parser escopado por bloco `<div class="ex">` — um regex "nome mais
+   próximo do wiki-btn mais próximo" cruza a fronteira de um bloco sem
+   wiki-btn (inserts de cardio) e associa o nome errado ao link do
+   exercício seguinte.
+4. Rodar o extrator e semear; o seed de CrossFit ganha `modality='crossfit'`
+   e `status='active'` (lista já curada); o extraído do HTML ganha
+   `modality='strength'` e `status='pending'`.
 
 ### O que entra
-- `public_workouts/models.py` + `migrations/`
-- `student_app/models.py` + `migrations/`
+- `public_workouts/models.py` + `migrations/` — `PublicWorkoutMovement`
 - `public_workouts/management/commands/extract_movements_from_html.py` *(novo)*
-- `student_app/management/commands/seed_movement_library.py`
-- `operations/model_definitions.py` + `migrations/`
 
 ### O que NÃO entra
 - `PublicWorkoutProgram` ainda não (Onda A1)
+- **`movement_pattern` não é preenchido pelo extrator.** O próprio CORDA
+  (R.N) cita essa classificação como decisão que exige "saber treinar" —
+  fica como campo livre esperando revisão humana, nunca advinhado por
+  script. O item "`reps_spec`/`rir_spec` em `WorkoutTemplateMovement`" que
+  esta seção listava foi removido: violava V2/D.00 (modificaria
+  `operations/`, app do box) e não tinha critério de pronto próprio — a
+  Onda A2 já é dona de extrair os `WorkoutTemplate` reais via parser de IA.
 - nenhuma view, nenhum template
 
 ### Pronto quando
-1. `MovementLibrary` tem o vocabulário dos 10 treinos com `reference_url`.
-2. `movement_pattern` preenchido para todo movimento com variação conhecida.
-3. Migrations aplicam e revertem limpo em banco de teste.
+1. `PublicWorkoutMovement` tem o vocabulário dos 10 treinos com `reference_url`.
+2. Migrations aplicam e revertem limpo em banco de teste.
+3. Nenhuma linha escrita em `student_app.MovementLibrary` (teste de isolamento).
+
+> **`movement_pattern` por movimento continua em aberto** — critério antigo
+> ("preenchido para todo movimento com variação conhecida") não é mais
+> "pronto quando" desta onda pelo motivo acima. Fica pendente de revisão do
+> Renan antes de a Onda A3 usar `movement_pattern` para substituição de
+> exercício.
+>
+> **Atualização:** `classify_public_workout_movements` (novo comando) preenche
+> uma *sugestão* de `movement_pattern` para os 82 movimentos extraídos do
+> HTML — classificação biomecânica feita exercício por exercício (taxonomia
+> de 20 padrões fechados), não um palpite de script. Continua sendo
+> sugestão, não decisão: `status` permanece `pending`, o comando nunca
+> sobrescreve um valor já preenchido (edição manual sempre vence), e a
+> confirmação (promover `pending` → `active`) segue sendo ação separada,
+> do Renan.
 
 ---
 
@@ -1323,6 +1350,23 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 ## ⇄ B3 — Template único, fase B e hard reset (5–7 dias) — **Frente B · 2º desenvolvedor**
 
 **Depende de A1 (S1/S2 reais) e de A2 (os 10 publicados).**
+
+> **Fundação visual já entregue, adiantada, fora da dependência.** Os itens 1
+> e 2 ("O que fazer") não precisam de dado publicado de verdade — só do
+> contrato de `schema.py` (Onda S0), já congelado. `templates/public_workouts/workout.html`
+> existe, renderiza qualquer payload válido pelo schema (testado contra
+> `build_example_payload`), compõe os primitives reais do `student_app`
+> (`.student-card`, `.student-status-badge`, `tables.css`,
+> `interactive-tabs.css`) e implementa o mapeamento `accent_variant` →
+> `--theme-accent-premium`/`-support` (nenhum precedente existia no repo —
+> o padrão espelha o toggle `body[data-theme]` já usado pro tema claro/escuro).
+> **Não está ligado a nenhuma URL/view** — os itens 3–9 (apagar os 8 CSS
+> legados, matar o bootstrap de PWA antigo, fase B de acesso, `sw.js` novo,
+> outbox, hard reset) continuam bloqueados em A1/A2 como o texto original já
+> dizia, porque envolvem corte de produção real, não fundação visual.
+> `card-decor-glow` ainda não está aplicado — o primitive não é
+> accent-aware por padrão (`--neon-default-rgb` fixo), decisão de detalhe
+> visual que fica pra quando a onda real começar.
 
 ### O que fazer
 1. `workout.html` composto dos primitives do `student_app` — chip, card,
