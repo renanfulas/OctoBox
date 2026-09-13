@@ -31,6 +31,7 @@ from .models import (
     PublicWorkoutPayment,
     PublicWorkoutPaymentNotice,
     PublicWorkoutPaymentStatus,
+    PublicWorkoutSubscription,
     PublicWorkoutSubscriptionEvent,
     PublicWorkoutSubscriptionStatus,
 )
@@ -199,6 +200,138 @@ def reactivate_subscription(subscription, *, reason: str) -> bool:
     subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
     subscription.suspended_at = None
     subscription.save(update_fields=['status', 'suspended_at', 'updated_at'])
+    PublicWorkoutSubscriptionEvent.objects.create(
+        subscription=subscription,
+        from_status=previous_status,
+        to_status=subscription.status,
+        reason=reason,
+    )
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Ciclo de vida da assinatura via Stripe (Onda B2, Fatia B do CORDA).
+# Sem Connect Express (decisao do Renan + C5): conta unica, application_fee
+# sempre 0, gross_amount == net_amount em todo PublicWorkoutPayment criado
+# a partir daqui.
+# ---------------------------------------------------------------------------
+
+
+def get_or_create_subscription(*, account, plan_slug: str) -> PublicWorkoutSubscription:
+    """Devolve a assinatura do corredor da conta, criando na primeira vez.
+
+    `account` e OneToOne com PublicWorkoutSubscription — chamar de novo pra
+    mesma conta sempre devolve a mesma linha, nunca cria duas (P6 do CORDA:
+    duplo clique em "assinar" nao pode duplicar assinatura).
+    """
+    subscription, _ = PublicWorkoutSubscription.objects.get_or_create(
+        account=account,
+        defaults={'plan_slug': plan_slug},
+    )
+    return subscription
+
+
+def link_stripe_ids(subscription, *, customer_id: str, stripe_subscription_id: str) -> None:
+    """Grava customer_id/subscription_id da Stripe (checkout.session.completed).
+
+    So update_fields — idempotente por natureza, reenviar o mesmo evento
+    grava os mesmos valores de novo, sem efeito colateral extra.
+    """
+    subscription.stripe_customer_id = customer_id
+    subscription.stripe_subscription_id = stripe_subscription_id
+    subscription.save(update_fields=['stripe_customer_id', 'stripe_subscription_id', 'updated_at'])
+
+
+def record_successful_invoice_payment(
+    subscription,
+    *,
+    stripe_invoice_id: str,
+    gross_amount: Decimal,
+    due_date: date,
+) -> PublicWorkoutPayment:
+    """Confirma um ciclo de cobranca bem-sucedido (invoice.payment_succeeded).
+
+    Idempotente por (subscription, stripe_invoice_id): a Stripe pode
+    reenviar o mesmo evento (retry de webhook) sem criar segunda linha nem
+    reenviar notificacao.
+
+    Reativa a assinatura se ela estava suspensa/em atraso — o pagamento
+    pode confirmar DEPOIS da trava de D+2 (P4 do CORDA); e o webhook,
+    nao so a reconciliacao periodica, que devolve o acesso.
+
+    Cobranca bem-sucedida NUNCA passa pela regua de avisos
+    (create_payment_with_notice_schedule): nao ha o que avisar sobre um
+    ciclo que ja funcionou sozinho. A regua so nasce em
+    handle_failed_invoice_payment, abaixo — o aluno so ouve falar disso se
+    algo precisou da atencao dele.
+    """
+    payment, _ = PublicWorkoutPayment.objects.get_or_create(
+        subscription=subscription,
+        stripe_invoice_id=stripe_invoice_id,
+        defaults={'due_date': due_date, 'gross_amount': gross_amount},
+    )
+    if payment.status != PublicWorkoutPaymentStatus.PAID:
+        payment.status = PublicWorkoutPaymentStatus.PAID
+        payment.paid_at = timezone.now()
+        # Sem Connect Express (C5): sem repasse, sem comissao. gross == net.
+        payment.net_amount = gross_amount
+        payment.application_fee_amount = Decimal('0')
+        payment.save(update_fields=['status', 'paid_at', 'net_amount', 'application_fee_amount', 'updated_at'])
+
+    reactivate_subscription(subscription, reason=f'invoice {stripe_invoice_id} paga')
+    return payment
+
+
+def handle_failed_invoice_payment(
+    subscription,
+    *,
+    stripe_invoice_id: str,
+    gross_amount: Decimal,
+    due_date: date,
+) -> PublicWorkoutPayment:
+    """Registra uma tentativa de cobranca automatica que falhou (invoice.payment_failed).
+
+    Idempotente por (subscription, stripe_invoice_id) — reenvio do mesmo
+    evento nao cria uma segunda regua pro mesmo ciclo.
+    """
+    existing = PublicWorkoutPayment.objects.filter(
+        subscription=subscription, stripe_invoice_id=stripe_invoice_id
+    ).first()
+    if existing is not None:
+        payment = existing
+    else:
+        payment = create_payment_with_notice_schedule(subscription=subscription, due_date=due_date, gross_amount=gross_amount)
+        payment.stripe_invoice_id = stripe_invoice_id
+        payment.save(update_fields=['stripe_invoice_id', 'updated_at'])
+
+    if subscription.status == PublicWorkoutSubscriptionStatus.ACTIVE:
+        previous_status = subscription.status
+        subscription.status = PublicWorkoutSubscriptionStatus.PAST_DUE
+        subscription.save(update_fields=['status', 'updated_at'])
+        PublicWorkoutSubscriptionEvent.objects.create(
+            subscription=subscription,
+            from_status=previous_status,
+            to_status=subscription.status,
+            reason=f'invoice {stripe_invoice_id} falhou',
+        )
+    return payment
+
+
+def mark_subscription_canceled(subscription, *, reason: str) -> bool:
+    """customer.subscription.deleted — cancelamento definitivo.
+
+    Nunca reativa sozinho depois disso (diferente de SUSPENDED/PAST_DUE,
+    que reactivate_subscription resolve): cancelamento e decisao do aluno
+    ou do Stripe Customer Portal, uma nova assinatura exige novo checkout.
+    Idempotente: so muda estado se ainda nao estava CANCELED.
+    """
+    if subscription.status == PublicWorkoutSubscriptionStatus.CANCELED:
+        return False
+
+    previous_status = subscription.status
+    subscription.status = PublicWorkoutSubscriptionStatus.CANCELED
+    subscription.canceled_at = timezone.now()
+    subscription.save(update_fields=['status', 'canceled_at', 'updated_at'])
     PublicWorkoutSubscriptionEvent.objects.create(
         subscription=subscription,
         from_status=previous_status,

@@ -56,3 +56,17 @@ def attach_public_workout_session_cookie(response, *, account_id: int):
 def clear_public_workout_session_cookie(response):
     response.delete_cookie(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, path=PUBLIC_WORKOUT_SESSION_PATH, samesite='Lax')
     return response
+
+
+def get_public_workout_account_id_from_request(request) -> int | None:
+    """Le o cookie da requisicao e devolve o account_id, ou None se ausente/invalido.
+
+    So decodifica a assinatura — nao consulta o banco (quem chama decide se
+    precisa carregar a PublicWorkoutAccount ou so precisa do id).
+    """
+    raw_value = request.COOKIES.get(PUBLIC_WORKOUT_SESSION_COOKIE_NAME)
+    data = read_public_workout_session_value(raw_value)
+    if not data:
+        return None
+    account_id = data.get('account_id')
+    return int(account_id) if account_id is not None else None

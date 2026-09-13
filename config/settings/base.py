@@ -595,6 +595,16 @@ PUBLIC_WORKOUT_SESSION_COOKIE_AGE = env_int('PUBLIC_WORKOUT_SESSION_COOKIE_AGE',
 # produto fora deste arquivo).
 PUBLIC_WORKOUT_PAYMENT_MIN_AMOUNT = env_str('PUBLIC_WORKOUT_PAYMENT_MIN_AMOUNT', '1.00')
 PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT = env_str('PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT', '2000.00')
+# Onda B2 do CORDA, Fatia B — checkout proprio do corredor (S3/D.000).
+# Reusa STRIPE_SECRET_KEY (mesma conta do box, decisao do Renan: sem
+# Connect Express enquanto for um personal so — C5). O price ID e o
+# webhook secret sao PROPRIOS: price porque e um produto Stripe diferente
+# (assinatura de consultoria, nao Early Adopter do box); secret porque e
+# um SEGUNDO endpoint no dashboard da Stripe (/treinos/stripe/webhook/),
+# e cada endpoint tem sua propria assinatura HMAC — nunca o mesmo valor
+# de STRIPE_WEBHOOK_SECRET (esse e do endpoint do box).
+PUBLIC_WORKOUT_STRIPE_PRICE_ID = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID', '')
+PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET = env_str('PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET', '')
 STUDENT_OAUTH_PUBLIC_BASE_URL = env_str('STUDENT_OAUTH_PUBLIC_BASE_URL')
 STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY')
 STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY')
