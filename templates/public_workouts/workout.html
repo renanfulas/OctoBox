@@ -1,0 +1,129 @@
+{% load static public_workouts_extras %}<!DOCTYPE html>
+<!--
+ARQUIVO: prototipo do "template unico" (Onda B3 do CORDA — fundacao visual).
+
+POR QUE ELE EXISTE:
+- renderiza QUALQUER payload valido pelo contrato de public_workouts/schema.py
+  usando os primitives compartilhados do design system (.student-card,
+  .student-status-badge, tables.css, interactive-tabs.css) em vez dos 8 CSS
+  por-plano que a Onda B3 real vai apagar. Nao depende de dado publicado de
+  verdade (Onda A2) pra existir: os testes renderizam contra o payload de
+  exemplo (public_workouts/schema.py::build_example_payload).
+
+PONTOS CRITICOS:
+- NAO esta ligado a nenhuma URL/view ainda — a Onda B3 real ainda precisa
+  decidir fase de acesso, hard reset e o sw.js novo antes de qualquer corte
+  de producao. Isto e so a base de renderizacao.
+- NAO estende templates/public_workouts/_base.html (a base legada, com o
+  sistema --accent por-plano e o bootstrap de PWA que a propria Onda B3
+  manda matar) nem templates/student_app/layout.html (acopla tenant via
+  {% load student_shell %} no sidebar/topbar — D.3 diz que
+  templates/student_app/** e so leitura pra este produto).
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{{ program.program_label }}</title>
+<link rel="stylesheet" href="{% static 'css/student_app/app.css' %}">
+<link rel="stylesheet" href="{% static 'css/design-system/components/tables.css' %}">
+<link rel="stylesheet" href="{% static 'css/design-system/components/interactive-tabs.css' %}">
+<link rel="stylesheet" href="{% static 'css/design-system/neon.css' %}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-shell.css' %}">
+</head>
+<body{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
+<main class="workout-shell">
+
+  <section class="student-hero-number" aria-label="Resumo do programa">
+    <span class="student-hero-number__meta">{{ program.weeks }} semana{{ program.weeks|pluralize }}</span>
+    <p class="student-hero-number__label">{{ program.program_label }}</p>
+    <div class="student-hero-number__value"><span>{{ program.started_on }}</span></div>
+  </section>
+
+  <nav class="workout-day-nav" role="tablist" aria-label="Dias do programa">
+    {% for day in program.days %}
+    <button
+      type="button"
+      class="student-status-badge workout-day-tab{% if forloop.first %} is-active{% endif %}"
+      data-workout-tab-target="workout-day-{{ day.day_id }}"
+      role="tab"
+      id="workout-tab-{{ day.day_id }}"
+      aria-controls="workout-day-{{ day.day_id }}"
+      aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+    >{{ day.label }}</button>
+    {% endfor %}
+  </nav>
+
+  <div class="interactive-tab-container" data-default-panel="workout-day-{{ program.days.0.day_id }}">
+    {% for day in program.days %}
+    <section
+      class="workout-day-panel{% if forloop.first %} is-tab-active{% endif %}"
+      id="workout-day-{{ day.day_id }}"
+      role="tabpanel"
+      aria-labelledby="workout-tab-{{ day.day_id }}"
+    >
+      {% for block in day.blocks %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Movimento</th>
+                <th scope="col">Reps</th>
+                <th scope="col">RIR</th>
+                <th scope="col">Carga</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for movement in block.movements %}
+              <tr>
+                <td>
+                  {% if movement.reference_url %}<a href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement.movement_slug|humanize_movement_slug }}</a>
+                  {% else %}{{ movement.movement_slug|humanize_movement_slug }}{% endif %}
+                  {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
+                </td>
+                <td>{{ movement.reps_spec }}</td>
+                <td>{{ movement.rir_spec }}</td>
+                <td>
+                  {% if movement.load_type == 'percentage_of_rm' %}{{ movement.load_value }}% RM
+                  {% elif movement.load_type == 'fixed_kg' %}{{ movement.load_value }} kg
+                  {% else %}Livre{% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="table-empty-cell">Nenhum movimento neste bloco.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+    {% endfor %}
+  </div>
+
+</main>
+<script>
+/* Inline de proposito (mesmo padrao do bootstrap de PWA em _base.html):
+   troca qual dia esta com .is-tab-active. interactive-tabs.css ja esconde
+   tudo que nao tem essa classe (>*:not(.is-tab-active){display:none}). */
+(function () {
+  var tabs = document.querySelectorAll('[data-workout-tab-target]');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var targetId = tab.getAttribute('data-workout-tab-target');
+      tabs.forEach(function (t) {
+        t.classList.remove('is-active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('is-active');
+      tab.setAttribute('aria-selected', 'true');
+      document.querySelectorAll('.workout-day-panel').forEach(function (panel) {
+        panel.classList.toggle('is-tab-active', panel.id === targetId);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
