@@ -43,6 +43,23 @@ from .base import (
 
 PUBLIC_WORKOUT_SCOPE = '/renan/'
 PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
+
+# B0 (CORDA docs/plans/public-workouts-produtizacao-corda.md) — cookie
+# assinado que prova posse do link, nao identidade de verdade (isso so
+# chega na Onda B1, com PublicWorkoutAccount). Setado por
+# PublicWorkoutDetailView na primeira visita a /renan/<slug>; conferido por
+# PublicWorkoutAssessmentsView antes de devolver dado de saude. Sem cookie,
+# ou cookie de outro slug: 404, nunca 403 (403 confirmaria que o slug existe).
+PUBLIC_WORKOUT_OWNER_COOKIE = 'renan_slug'
+PUBLIC_WORKOUT_OWNER_COOKIE_SALT = 'public_workouts.owner_slug'
+PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 ano
+
+# R1 do CORDA: corrigir o codigo do A4 nao apaga as copias ja gravadas nos
+# aparelhos com PWA instalado. So um VERSION novo expurga. Bump manual e
+# deliberado — nao depende do mtime dos assets estaticos, que nao mudam
+# nesta correcao. Bumpar de novo sempre que uma correcao de seguranca
+# precisar forcar a troca de cache em todos os aparelhos.
+PUBLIC_WORKOUT_CACHE_EPOCH = 2
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -428,9 +445,12 @@ _LEGACY_SW_REGISTRATION_SCRIPT = """
   });
 
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/renan/sw.js', { scope: '/renan/' }).catch(function () {
-      // O treino continua abrindo mesmo sem o service worker.
-    });
+    var ownSlug = (document.body.getAttribute('data-plan-slug') || '');
+    navigator.serviceWorker
+      .register('/renan/sw.js?slug=' + encodeURIComponent(ownSlug), { scope: '/renan/' })
+      .catch(function () {
+        // O treino continua abrindo mesmo sem o service worker.
+      });
   });
 })();
 </script>
@@ -524,7 +544,21 @@ def _render_public_workout_html(plan_slug: str) -> str:
 
 class PublicWorkoutDetailView(View):
     def get(self, request, plan_slug, *args, **kwargs):
-        return HttpResponse(_render_public_workout_html(plan_slug))
+        plan = _get_public_workout_entry(plan_slug)
+        response = HttpResponse(_render_public_workout_html(plan_slug))
+        # B0: quem abre a pagina prova posse do link — e o que autoriza a
+        # leitura de /avaliacoes.json a seguir. Cookie por instancia, nao
+        # global: cada slug so autoriza a si mesmo.
+        response.set_signed_cookie(
+            PUBLIC_WORKOUT_OWNER_COOKIE,
+            plan.slug,
+            salt=PUBLIC_WORKOUT_OWNER_COOKIE_SALT,
+            max_age=PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE,
+            httponly=True,
+            samesite='Lax',
+            secure=not settings.DEBUG,
+        )
+        return response
 
 
 class PublicWorkoutManifestView(View):
@@ -567,13 +601,22 @@ class PublicWorkoutManifestView(View):
 
 class PublicWorkoutServiceWorkerView(View):
     def get(self, request, *args, **kwargs):
+        # A4 do CORDA: o precache nao pode mais trazer TODOS os slugs (isso
+        # e o que faz o aparelho de um aluno guardar o dado de outro,
+        # offline). Resolve em runtime, a partir do slug que a propria
+        # pagina registrante informa via ?slug= (ver data-plan-slug em
+        # _base.html e no head legado). Slug ausente ou desconhecido: SW
+        # generico, sem nenhuma pagina de plano no precache.
+        requested_slug = (request.GET.get('slug') or '').strip().lower()
+        plan_slugs = (requested_slug,) if requested_slug in PUBLIC_WORKOUT_LIBRARY else ()
         js = render_to_string(
             'public_workouts/sw.js',
             {
                 'asset_version': public_workout_asset_version(),
+                'cache_epoch': PUBLIC_WORKOUT_CACHE_EPOCH,
                 'offline_url': PUBLIC_WORKOUT_OFFLINE_URL,
                 'app_scope': PUBLIC_WORKOUT_SCOPE,
-                'plan_slugs': tuple(PUBLIC_WORKOUT_LIBRARY),
+                'plan_slugs': plan_slugs,
                 # CSS e JS compartilhados entram no precache: sem eles a
                 # pagina abre offline sem estilo e sem tracker.
                 'static_asset_urls': (
