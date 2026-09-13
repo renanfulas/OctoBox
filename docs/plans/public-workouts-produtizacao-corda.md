@@ -218,10 +218,43 @@ Buracos de cobertura que o plano cria ou expõe:
 | Nenhum `.json` sob `/renan/` entra no `PAGE_CACHE` | B0 | A1+A4 vistos do lado do dispositivo |
 | `drain_payment_notices` rodado duas vezes no mesmo dia não duplica envio | B2 | a unique constraint é a garantia |
 
+### 📌 Baseline medido — 2026-09-13, antes de qualquer código deste plano
+
+```
+.venv/Scripts/python.exe -m pytest --create-db --migrations -n 4 -q
+```
+
+| Métrica | Valor |
+|---|---|
+| Passaram | **1.584** |
+| Pulados | 5 |
+| **Falhas** | **0** |
+| Subtests | 103 |
+| Tempo total | **241 s** (4 min 01 s) |
+
+**É contra este número que se compara.** Qualquer falha depois disso foi introduzida
+por este trabalho — não havia nada quebrado antes.
+
+Os 241 s também são a referência do **N6**: quando a Onda A1 adicionar os ~8 modelos
+SHARED, medir de novo. Se dobrar, revisar quais precisam mesmo ser SHARED.
+
+> ⚠️ **Os 5 skips estão todos em `tests/test_tenant_boundary.py`**, com a mensagem
+> *"Schema de teste não existe: relation `boxcore_student` does not exist"* — eles se
+> auto-pulam quando o schema tenant não está montado naquele worker do `-n 4`.
+>
+> **Isso importa diretamente para a Onda A1:** o teste de fronteira do `/renan/` (R2)
+> nasce nesse mesmo arquivo. Se ele herdar o skip, **passa sem testar nada** — e a rede
+> da DA-1 deixa de existir sem ninguém perceber. Ao escrever esse teste, conferir que
+> ele roda de fato (comparar `-n 4` com `-n 0`), não só que "passou".
+
+> Pré-requisito: Docker Desktop com engine Linux ativo. Na medição, `docker compose -f
+> docker-compose.postgres.yml up -d` **falhou na primeira tentativa** (pipe do engine
+> ainda não disponível) e funcionou na segunda. Se acontecer, é só repetir.
+
 ### Ordem de execução recomendada
 
-1. **Antes de tocar código:** rodar a suíte inteira e **guardar a saída**. Sem baseline,
-   não há como distinguir "eu quebrei" de "já estava quebrado".
+1. **Antes de tocar código:** comparar com o baseline acima. Sem ele, não há como
+   distinguir "eu quebrei" de "já estava quebrado".
    Ver [docs/testing/README.md](../testing/README.md) — Postgres obrigatório,
    `--create-db --migrations`.
 2. **B0:** inverter os 3 testes de Categoria 1 **no mesmo PR** da correção. Nunca
