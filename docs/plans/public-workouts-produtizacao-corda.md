@@ -880,6 +880,102 @@ cross-schema, sem segunda verdade.
 - `assessment_sex` em `PublicWorkoutPlan` — continua servindo às fórmulas;
   unificação com `Student.gender` fica para depois.
 
+## D.3b Estratégia de branch e divisão de responsabilidade
+
+### Quem faz o quê
+
+| | **Frente A — domínio de treino** | **Frente B — acesso, dinheiro e entrega** |
+|---|---|---|
+| **Responsável** | Renan (+ Claude) | segundo desenvolvedor |
+| **Natureza** | decisão de domínio: movimentos, variações, 1RM, periodização | volume de infraestrutura: login, cobrança, PWA, front |
+| **Volume** | **~13–18 dias** | **~25–35 dias** |
+| **Ondas** | A0, A1, A2, A3 | B1, B2, B3, B4, B5 |
+
+**A divisão não é só por tamanho — é por quem consegue decidir.** A Frente A carrega
+escolhas que exigem saber treinar: se hip thrust com barra e na máquina somam carga,
+quantas reps efetivas ainda permitem estimar 1RM, o que conta como programa novo, qual
+`movement_pattern` agrupa o quê. Essas decisões não se delegam a quem não prescreve.
+
+A Frente B é maior em dias e menor em ambiguidade: o que ela precisa saber está no
+código do OctoBox, não na cabeça de um treinador.
+
+### 🔴 Exceção: a Onda B0 sai antes de tudo, e não é do dono da Frente B
+
+B0 fecha dois vazamentos de dado pessoal **ativos em produção**. Ela **não pode esperar
+o projeto inteiro** numa branch de integração de 40 dias.
+
+| | B0 |
+|---|---|
+| Quem | **Renan (+ Claude)**, imediatamente |
+| Branch | `fix/renan-vazamento-dados`, direto de `main` |
+| Merge | em `main`, assim que a suíte passar |
+| Duração | 1–2 dias |
+| Depende de | **nada** |
+
+Ela toca diretório da Frente B (`sw.js`, views) — mas acontece **antes de a divisão de
+frentes começar**, como PR solo. Depois disso a propriedade de diretório (D.4) passa a
+valer sem exceção.
+
+Efeito prático: o segundo desenvolvedor começa a Frente B com a `main` **já corrigida**,
+e o dado sensível para de ficar exposto em dias, não em semanas.
+
+### Estratégia de branch
+
+```
+main
+ ├── fix/renan-vazamento-dados          ← B0, PR solo, merge IMEDIATO em main
+ │
+ └── feat/produtizacao-corredor          ← integração; só vai para main no fim
+      ├── feat/pc-a0-fundacao-dados      → PR → merge na integração   (A)
+      ├── feat/pc-b1-identidade          → PR → merge na integração   (B)
+      ├── feat/pc-a1-snapshot            → PR → merge na integração   (A)
+      ├── feat/pc-b2-cobranca            → PR → merge na integração   (B)
+      ├── feat/pc-a2-parser-migracao     → PR → merge na integração   (A)
+      ├── feat/pc-b3-template-fase-b     → PR → merge na integração   (B)
+      └── ...uma branch por onda
+```
+
+**Uma onda = uma branch = um PR.** O plano já entrega isso pronto: cada onda tem escopo
+fechado e um `pronto quando` explícito.
+
+**Por que não commitar os dois na mesma branch:** cada `pull` traria trabalho pela metade
+do outro, o CI ficaria vermelho por culpa de quem não sabe, e reverter uma onda levaria a
+outra junto. Com 40+ dias e dois devs, isso não se sustenta.
+
+### Quatro regras que evitam o inferno do merge final
+
+1. **`main` → integração toda semana.** O repo está ativo (PR #211 é recente). Branch
+   longa que não recebe `main` acumula divergência que explode no fim. Sempre
+   `git merge origin/main` **na** integração — nunca o contrário.
+2. **Cada onda é PR contra a integração, não commit direto.** Mesmo entre dois. É onde o
+   CI roda antes de contaminar a base comum, e onde o outro vê o que entrou.
+3. **A integração fica sempre verde.** Se uma onda quebrar, **o dono dela conserta antes
+   de qualquer merge novo**. Base comum vermelha por mais de um dia trava os dois.
+4. **Ninguém mergeia o PR do outro.** Cada um revisa e mergeia o que é seu. Duas
+   exceções que exigem aprovação dos dois: **B0** (segurança) e qualquer PR que toque os
+   **contratos S1/S2/S3** — congelados por acordo mútuo.
+
+### O risco clássico da branch longa não se aplica aqui
+
+Branch longa costuma morrer em **conflito de migration**: `main` cria a `0042` em
+`finance`, a branch cria outra `0042`, e o merge quebra.
+
+Com D.000 isso quase não pode acontecer: **o corredor só cria migration em
+`public_workouts`**, e nenhum outro trabalho do projeto mexe nesse app. As migrations do
+box seguem em `main` sem colidir.
+
+A regra de propriedade de diretório, que nasceu para separar os dois devs, protege
+também contra o risco maior da branch longa.
+
+### Sequência de partida
+
+1. **Renan + Claude:** `fix/renan-vazamento-dados` → PR → merge em `main`. *(1–2 dias)*
+2. **Os dois juntos:** ⇄ S0 — contratos S1/S2/S3 e o JSON Schema. *(meio dia)*
+3. **Criar** `feat/produtizacao-corredor` a partir da `main` já corrigida.
+4. **Em paralelo:** Renan começa A0; o segundo desenvolvedor começa B1.
+
+---
+
 ## D.4 Divisão em duas frentes — propriedade de diretório
 
 **A regra que impede colisão:** cada caminho tem **um dono**. Ninguém edita fora do
@@ -970,7 +1066,11 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ---
 
-## B0 — 🔴 Vazamentos (1–2 dias) — **prioridade máxima, começa já**
+## B0 — 🔴 Vazamentos (1–2 dias) — **Renan + Claude, direto em `main`**
+
+> **Fora da branch de integração** (ver D.3b). Branch `fix/renan-vazamento-dados`,
+> PR solo, merge em `main` assim que a suíte passar. É a única onda que não segue a
+> propriedade de diretório — acontece **antes** de a divisão de frentes começar.
 
 ### O que fazer
 1. `PublicWorkoutAssessmentsView`: exigir cookie de aluno; sem cookie **404**
@@ -1001,7 +1101,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ---
 
-## ‖ A0 — Fundação de dados (2–3 dias)
+## ‖ A0 — Fundação de dados (2–3 dias) — **Frente A · Renan + Claude**
 
 ### O que fazer
 1. `student_identity_id` nullable em `PublicWorkoutAssessment` + migration.
@@ -1030,7 +1130,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ---
 
-## ‖ B1 — Config, seam e identidade (3–4 dias)
+## ‖ B1 — Config e identidade (3–4 dias) — **Frente B · 2º desenvolvedor**
 
 ### O que fazer
 1. Google OAuth ligado (`.env`), Apple Pay (domínio no dashboard Stripe).
@@ -1066,7 +1166,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ---
 
-## ‖ A1 — Snapshot e publicação (3–4 dias)
+## ‖ A1 — Snapshot e publicação (3–4 dias) — **Frente A · Renan + Claude**
 
 ### O que fazer
 1. `PublicWorkoutProgram` com `program_id`, `program_label`, `started_on`, `weeks`,
@@ -1099,7 +1199,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ---
 
-## ‖ A2 — Parser de IA + migração dos 10 (4–6 dias)
+## ‖ A2 — Parser de IA + migração dos 10 (4–6 dias) — **Frente A · Renan + Claude**
 
 ### O que fazer
 1. `public_workouts/parser.py` — HTML → payload, molde de
@@ -1130,7 +1230,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ---
 
-## ‖ B2 — Cobrança (4–6 dias)
+## ‖ B2 — Cobrança (4–6 dias) — **Frente B · 2º desenvolvedor**
 
 ### O que fazer
 1. `PublicWorkoutPayment` (V3) + `PublicWorkoutPaymentNotice` (`payment`, `offset_days`, `scheduled_for`, `sent_at`) com
@@ -1179,7 +1279,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ---
 
-## ⇄ B3 — Template único, fase B e hard reset (5–7 dias)
+## ⇄ B3 — Template único, fase B e hard reset (5–7 dias) — **Frente B · 2º desenvolvedor**
 
 **Depende de A1 (S1/S2 reais) e de A2 (os 10 publicados).**
 
@@ -1221,7 +1321,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ---
 
-## ‖ A3 / B4 — Produto (paralelo, 7–10 dias)
+## ‖ A3 / B4 — Produto (paralelo, 7–10 dias) — **A: serviços · B: telas**
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
@@ -1243,19 +1343,30 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 ## Linha do tempo
 
 ```
-dia  0   ⇄ S0 contratos
-     1   B0 vazamentos 🔴      ‖  A0 fundação de dados
-     4   B1 identidade         ‖  A1 snapshot
-     8   B2 cobrança           ‖  A2 parser + migração
-    14   ⇄ B3 template, fase B, hard reset   ‖  A3 serviços de produto
-    21   B4 telas de produto   ‖  A3 continua
+                  Renan + Claude (A)          2o desenvolvedor (B)
+                  ~13-18 dias                 ~25-35 dias
+
+dia -2   🔴 B0 vazamentos -> main             (aguarda main limpa)
+dia  0   ⇄ S0 contratos + schema  ......................  (os dois juntos)
+         │
+         └── cria feat/produtizacao-corredor da main corrigida
+dia  1   A0 fundação de dados         ‖      B1 identidade e login
+dia  4   A1 snapshot e publicação     ‖      B2 cobrança
+dia  8   A2 parser + migração dos 10  ‖      B3 template, fase B, hard reset  ⇄
+dia 16   A3 serviços de produto       ‖      B4 telas de produto
+dia 24   (A concluída)                ‖      B5 escala
 ```
 
-**Caminho crítico:** A1 → A2 → B3. A Frente B nunca fica ociosa porque B0, B1 e B2
-não dependem da A.
+**Caminho crítico:** A1 → A2 → **B3**. É o único ponto em que B espera A — e a Frente A
+foi dimensionada menor justamente para chegar em A2 antes de B precisar.
+
+**A Frente B nunca fica ociosa:** B1 e B2 não dependem de nada da A, e somam 9 a 13 dias
+antes do primeiro encontro.
 
 ## Regras de convivência
 
+0. **Uma onda = uma branch = um PR contra a integração.** Nomes: `feat/pc-<onda>-<slug>`.
+   Ver D.3b para a estratégia completa e a exceção da B0.
 1. **Ninguém edita fora do seu diretório** (D.4). Precisou? Abre pedido, não edita.
 2. **Migration só no app do dono.** `public_workouts`, `student_app`, `operations`
    são da A; `finance`, `student_identity` da B.
