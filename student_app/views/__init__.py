@@ -27,6 +27,7 @@ from .payment_views import (
 from .public_workout_assessment_views import PublicWorkoutAssessmentsView
 from .public_workout_views import (
     PublicWorkoutDetailView,
+    PublicWorkoutLocalStorageBackupView,
     PublicWorkoutManifestView,
     PublicWorkoutOfflineView,
     PublicWorkoutServiceWorkerView,
@@ -54,6 +55,7 @@ from .shell_views import (
 __all__ = [
     'PublicWorkoutAssessmentsView',
     'PublicWorkoutDetailView',
+    'PublicWorkoutLocalStorageBackupView',
     'PublicWorkoutManifestView',
     'PublicWorkoutOfflineView',
     'PublicWorkoutServiceWorkerView',

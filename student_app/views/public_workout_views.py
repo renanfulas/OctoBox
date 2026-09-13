@@ -28,7 +28,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from django.conf import settings
-from django.http import Http404, HttpResponse
+from django.core import signing
+from django.http import Http404, HttpResponse, JsonResponse
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 from django.views.generic import View
@@ -331,6 +332,21 @@ def _get_public_workout_entry(plan_slug: str) -> PublicWorkoutPlan:
     if plan is None:
         raise Http404('Treino publico nao encontrado.')
     return plan
+
+
+def get_public_workout_owner_slug(request) -> str | None:
+    """Le o cookie de posse do B0 (ver PUBLIC_WORKOUT_OWNER_COOKIE acima).
+
+    None se ausente ou com assinatura adulterada — nunca levanta. Usado
+    por toda view que precisa confirmar "este navegador visitou este
+    slug antes" (avaliacoes.json, upload de backup do localStorage).
+    """
+    try:
+        return request.get_signed_cookie(
+            PUBLIC_WORKOUT_OWNER_COOKIE, salt=PUBLIC_WORKOUT_OWNER_COOKIE_SALT, default=None
+        )
+    except signing.BadSignature:
+        return None
 
 
 # Presente em qualquer pagina que estenda public_workouts/_base.html —
@@ -641,3 +657,39 @@ class PublicWorkoutOfflineView(View):
             {'plans': tuple(PUBLIC_WORKOUT_LIBRARY.values())},
         )
         return HttpResponse(html)
+
+
+class PublicWorkoutLocalStorageBackupView(View):
+    """POST /renan/<slug>/backup-carga — sobe o blob bruto do localStorage.
+
+    Item 1.7 / F-B do plano de produto (Onda B1 do CORDA): salva o blob
+    ANTES do hard reset da Onda B3, sem normalizar — isso fica para depois
+    (Onda 3.5). O localStorage e a UNICA copia que existe hoje; perder o
+    navegador sem backup e perda permanente.
+
+    Mesmo cookie de posse do B0: sem ele, 404 — nao revela se o slug
+    existe, e evita que qualquer terceiro grave lixo associado a um slug
+    alheio.
+    """
+
+    def post(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        if get_public_workout_owner_slug(request) != plan.slug:
+            raise Http404('Treino publico nao encontrado.')
+
+        try:
+            raw_blob = json.loads(request.body.decode('utf-8') or '{}')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return HttpResponse(status=400)
+        if not isinstance(raw_blob, dict):
+            return HttpResponse(status=400)
+
+        from public_workouts.models import PublicWorkoutLocalStorageBackup
+
+        PublicWorkoutLocalStorageBackup.objects.create(
+            plan_slug=plan.slug,
+            store_key=plan.store_key or '',
+            raw_blob=raw_blob,
+        )
+        return JsonResponse({'status': 'ok'})

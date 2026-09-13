@@ -32,7 +32,12 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import uuid
+
 from django.db import models
+from django.utils import timezone
+
+from model_support.base import TimeStampedModel
 
 
 class PublicWorkoutAssessment(models.Model):
@@ -115,3 +120,96 @@ class PublicWorkoutMovement(models.Model):
 
     def __str__(self) -> str:
         return f'{self.slug} — {self.label_pt}'
+
+
+# ---------------------------------------------------------------------------
+# Corredor de treinos — conta, login e backup (Onda B1 do CORDA).
+#
+# Moram AQUI, e nao em student_identity/, porque D.000 e D.00 do CORDA
+# (docs/plans/public-workouts-produtizacao-corda.md) proibem o corredor de
+# adicionar modelo ou migration ao app principal: o produto consome servicos
+# do OctoBox, nunca estende modelos dele.
+#
+# A tensao com D.4 (que da public_workouts/ a Frente A) se resolve por
+# sequenciamento, nao por endereco: a onda que precisa do modelo cria a
+# migration e avisa a outra frente. Colisao de migration e inconveniencia de
+# processo; modelo de um produto na tabela do outro e dano permanente.
+# ---------------------------------------------------------------------------
+
+
+class PublicWorkoutAccount(TimeStampedModel):
+    """Conta do corredor de treinos — so e-mail, sem senha (S1 do CORDA).
+
+    Vinculo com StudentIdentity e por referencia FRACA
+    (student_identity_id, sem FK) e so quando a pessoa TAMBEM for aluno de
+    box, resolvido por e-mail no momento da criacao da conta — nunca
+    ressincronizado depois. E informativo, nunca autoritativo (N5): trocar
+    o e-mail de um lado nao altera o outro, e nenhum dos dois quebra.
+    """
+
+    email = models.EmailField(unique=True, db_index=True)
+    student_identity_id = models.IntegerField(null=True, blank=True, db_index=True)
+    last_login_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return self.email
+
+
+class PublicWorkoutLoginToken(TimeStampedModel):
+    """Token de login por e-mail do corredor de treinos.
+
+    Molde de StudentAppInvitation (D.00 — copia o padrao de token de uso
+    unico, nunca a tabela: convite de box e login de treino sao coisas
+    diferentes dividindo o mesmo campo, exatamente o que V5 do CORDA
+    proibe).
+    """
+
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='login_tokens')
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    expires_at = models.DateTimeField(db_index=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @property
+    def is_expired(self) -> bool:
+        return self.expires_at <= timezone.now()
+
+    @property
+    def is_valid(self) -> bool:
+        return self.used_at is None and not self.is_expired
+
+    def mark_used(self) -> None:
+        self.used_at = timezone.now()
+
+    def __str__(self) -> str:
+        state = 'usado' if self.used_at else ('expirado' if self.is_expired else 'pendente')
+        return f'Login token {self.account.email} [{state}]'
+
+
+class PublicWorkoutLocalStorageBackup(TimeStampedModel):
+    """Copia bruta do `localStorage` do aluno, subida ANTES do hard reset (Onda B3).
+
+    F-B do plano de produto (docs/plans/public-workouts-produtizacao-plan.md):
+    o upload subiu de 3.5 para 1.7 porque, entre o hard reset e a
+    normalizacao (mais tarde), qualquer aluno que limpasse o navegador
+    perderia o historico sem backup — e o `localStorage` e a UNICA copia
+    que existe, nunca esteve no servidor. Salva primeiro, entende depois:
+    sem parsing nem validacao de estrutura interna, so o blob como o
+    navegador mandou.
+    """
+
+    plan_slug = models.CharField(max_length=50, db_index=True)
+    store_key = models.CharField(max_length=100, blank=True)
+    raw_blob = models.JSONField(default=dict)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['plan_slug', '-created_at'])]
+
+    def __str__(self) -> str:
+        return f'{self.plan_slug} backup @ {self.created_at:%Y-%m-%d %H:%M}'
