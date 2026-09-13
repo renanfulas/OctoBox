@@ -219,6 +219,107 @@ Buracos de cobertura que o plano cria ou expõe:
 
 ---
 
+## R.P — Pagamentos: bugs silenciosos e como travá-los
+
+Bug silencioso é o que **não levanta erro, não aparece em log e não tem quem
+reclame** — porque quem sofre não sabe que deveria estar diferente. Em cobrança, os
+três piores são: aluno travado tendo pago, aluno livre sem ter pago, e mensagem
+disparada duas vezes.
+
+### O que o projeto já faz — seguir estes padrões, não inventar outros
+
+| Padrão existente | Onde | O que garante |
+|---|---|---|
+| `PaymentWebhookEvent.event_id` **unique** | `integrations/stripe/models.py:38` | o mesmo evento Stripe nunca processa duas vezes |
+| `StripePaymentRef.payment_intent_id` **unique** | `:118` | uma intenção de pagamento = uma referência |
+| Claim/release com bloqueio | `tests/test_payment_create_idempotency.py:41` | duplo POST cria **uma** cobrança |
+| Rate limit por usuário | `tests/test_payment_p0_guardrails.py:45` | `allows_until_max_then_blocks`, contador **por usuário** |
+| Reconciliação independente do webhook | `tests/test_stripe_reconciliation.py` | estado converge mesmo se o webhook falhar |
+| PIX assíncrono | `tests/test_stripe_pix_async_confirmation.py` | `checkout.session.completed` ≠ pagamento confirmado |
+
+**13 arquivos de teste de pagamento já existem.** A Entrega 2 não estreia um domínio —
+entra num domínio com disciplina estabelecida.
+
+### Matriz de bug silencioso — o que pode dar errado nesta entrega
+
+| # | Bug silencioso | Como acontece | Custo | Teste que trava |
+|---|---|---|---|---|
+| **P1** | **Aviso disparado duas vezes** | job roda 2× (timer + retry manual); `sent_at` marcado **depois** do envio e o processo morre no meio | aluno recebe 2 WhatsApps; confiança | `drain` rodado 2× no mesmo dia → **1** envio por `(payment, offset_days)` |
+| **P2** | **Aviso nunca enviado** | `sent_at` marcado **antes** do envio e o canal falha → fica marcado como enviado para sempre | aluno não é avisado e trava sem entender | envio que falha **não** deixa `sent_at` preenchido; estado `failed` permite retry |
+| **P3** | **Aluno travado tendo pago** | job `D+2` olha só `due_date`; webhook de confirmação ainda em trânsito | cliente pagante sem acesso — **o pior dos três** | pagamento confirmado há 1 min → job **não** suspende; janela de graça explícita |
+| **P4** | **Aluno pago que não destrava** | `invoice.payment_succeeded` falha ou não chega; só o webhook destrava | cliente paga e continua travado, e **ninguém fica sabendo** | reconciliação (não o webhook) destrava; teste com webhook **suprimido** |
+| **P5** | **Webhook de aluno suspende o BOX** | roteador novo (`StudentBoxMembership`) coexiste com o de `Box` (`router.py:306-419`); discriminador erra | **catastrófico** — suspende todos os alunos do box | evento de assinatura de aluno **nunca** altera `Box.status`, e vice-versa |
+| **P6** | **Assinatura duplicada** | duplo clique em "assinar" → duas subscriptions no Stripe | cobrado 2× | duplo POST → **uma** subscription (molde: `test_payment_create_idempotency`) |
+| **P7** | **Notificação para o aluno errado** | resolução de aluno sem tenant correto no job | dado de cobrança de A vai para B | job em 2 boxes: cada aviso cita o `payment.id` do próprio box |
+| **P8** | **Valor absurdo no presencial** | `Payment.amount` é livre por orçamento; form sem validação | cobra R$ 0 ou R$ 8.990 | `amount` fora de faixa configurada é recusado **no serviço**, não só no form |
+| **P9** | **Canal cai e ninguém percebe** | `notify_*` engole exceção por canal (é o desenho correto) e ninguém lê o retorno | régua "funcionando" sem entregar nada | retorno por canal é **persistido**, e `failed` em todos os canais gera log de erro |
+| **P10** | **Feriado ignorado** | `scheduled_for` calculado sem `brazilian_holidays` | aviso de vencimento em dia que não vence | vencimento em feriado/domingo → data ajustada |
+
+### Regras de teste para esta entrega
+
+1. **Todo efeito colateral externo tem teste de idempotência.** Stripe, WhatsApp,
+   push e e-mail. A pergunta é sempre *"e se rodar duas vezes?"*.
+2. **Todo job agendado tem teste de dupla execução.** `drain_payment_notices` rodado
+   2× no mesmo dia produz 1 efeito. Sem isso, um retry manual vira spam.
+3. **Todo estado que trava tem teste bidirecional.** Não basta testar que trava —
+   **tem que testar que destrava**, com o webhook suprimido (P4).
+4. **Nada de `except: pass`.** Falha de canal é capturada, mas **registrada em estado
+   persistido**, não só em log. O desenho de `notify_payment_confirmed` (retorno por
+   canal) já é isso — a régua persiste esse retorno.
+5. **Marcação de envio é transacional.** `select_for_update` na linha do
+   `PaymentNotice`, `sent_at` gravado no mesmo commit do resultado do envio. Nem antes
+   (P2) nem solto depois (P1).
+6. **Dinheiro nunca é asserido por efeito colateral.** Teste de cobrança assere o
+   registro no banco, não "o mock foi chamado".
+7. **Toda suspensão automática é auditada.** `log_audit_event` com motivo — sem isso,
+   "por que esse aluno travou?" não tem resposta.
+
+### Testes obrigatórios da Onda B2
+
+```
+tests/test_payment_notice_schedule.py
+  ✓ as 5 linhas nascem com o Payment, datas corretas (D-7,-3,-1,0,+2)
+  ✓ vencimento em domingo/feriado ajusta scheduled_for
+  ✓ mudar due_date recalcula as nao enviadas e preserva as enviadas
+  ✓ unique (payment, offset_days) recusa duplicata no banco
+
+tests/test_payment_notice_drain.py
+  ✓ drain 2x no mesmo dia = 1 envio            (P1)
+  ✓ canal falhando nao marca sent_at           (P2)
+  ✓ falha em todos os canais gera log de erro  (P9)
+  ✓ resultado por canal fica persistido        (P9)
+
+tests/test_student_subscription_lifecycle.py
+  ✓ duplo POST cria UMA subscription           (P6)
+  ✓ D+2 sem pagamento suspende
+  ✓ pagamento confirmado ha 1 min NAO suspende (P3)
+  ✓ invoice.payment_succeeded reativa
+  ✓ reconciliacao reativa com webhook suprimido (P4)
+  ✓ cartao recusado gera copy diferente de inadimplencia
+
+tests/test_student_vs_box_webhook_routing.py
+  ✓ evento de assinatura de ALUNO nao altera Box.status   (P5)
+  ✓ evento de assinatura de BOX nao altera membership     (P5)
+  ✓ evento sem discriminador e recusado, nao adivinhado
+
+tests/test_payment_amount_guardrails.py
+  ✓ amount fora de faixa e recusado no servico (P8)
+  ✓ amount zero e recusado
+```
+
+> **P5 é o único com potencial catastrófico** — errar o roteamento suspende o box
+> inteiro. Ele ganha teste nos dois sentidos e uma asserção negativa explícita
+> (`Box.status` **inalterado**), porque o modo de falha é justamente *não acontecer
+> nada visível do lado certo e acontecer tudo do lado errado*.
+
+### Regra de ouro da Onda B2
+
+**Nenhum PR de pagamento entra sem o teste de dupla execução do seu efeito.** Se o
+código manda mensagem, cobra, trava ou destrava, existe um teste que roda aquilo duas
+vezes e assere que o mundo mudou uma vez só.
+
+---
+
 # D — Direção
 
 ## D.1 Tese central
@@ -247,6 +348,10 @@ cross-schema, sem segunda verdade.
 10. `Movimento desconhecido não bloqueia publicação — entra como pending e vai para fila.`
 11. `A Frente A entrega serviços sem HTTP. A Frente B entrega rotas, templates e views.`
 12. `Cada diretório tem um dono. Migration só nasce no diretório do dono.`
+13. `Todo efeito colateral externo tem teste de dupla execução: rodar duas vezes muda o mundo uma vez só.`
+14. `Falha de canal é capturada em estado persistido, nunca em except: pass.`
+15. `Trava e destrava se testam juntos — e o destrava se testa com o webhook suprimido.`
+16. `Teste de dinheiro assere o registro no banco, nunca que o mock foi chamado.`
 
 ## D.3 Onde mexe / onde NÃO mexe (visão geral)
 
@@ -569,8 +674,19 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 ### Pronto quando
 1. Aluno de teste assina, recebe os 4 avisos nas datas certas, trava em D+2, paga e
    destrava sozinho — sem intervenção.
-2. Rodar o drain duas vezes no mesmo dia não duplica envio.
-3. Cartão recusado gera copy diferente de inadimplência.
+2. Rodar o drain duas vezes no mesmo dia não duplica envio (P1).
+3. Canal que falha **não** deixa `sent_at` preenchido (P2).
+4. Pagamento confirmado há 1 minuto **não** é suspenso pelo job de D+2 (P3).
+5. Reconciliação reativa o aluno **com o webhook suprimido** (P4).
+6. Evento de assinatura de aluno **não altera `Box.status`** — e vice-versa (P5).
+7. Duplo POST em "assinar" cria **uma** subscription (P6).
+8. `amount` fora de faixa é recusado **no serviço**, não só no form (P8).
+9. Cartão recusado gera copy diferente de inadimplência.
+10. Toda suspensão automática tem `log_audit_event` com motivo.
+
+> Os cinco arquivos de teste de R.P são **critério de entrada** da onda, não de saída:
+> escrever o teste que falha antes do código que o faz passar. Em cobrança, teste
+> escrito depois tende a assertar o que o código faz, não o que deveria fazer.
 
 ---
 
