@@ -20,13 +20,13 @@ from django.utils import timezone
 
 from public_workouts.billing import create_payment_with_notice_schedule, drain_due_notices
 from public_workouts.models import (
+    PublicWorkoutAccount,
     PublicWorkoutPaymentStatus,
     PublicWorkoutSubscription,
     PublicWorkoutSubscriptionEvent,
     PublicWorkoutSubscriptionStatus,
 )
 from student_identity.delivery_gateways import StudentEmailDeliveryError
-from student_identity.models import PublicWorkoutAccount
 
 
 def _make_subscription(email='aluno@example.com', plan_slug='giovanna'):

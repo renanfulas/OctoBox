@@ -19,8 +19,8 @@ from django.test import TestCase
 
 from finance.model_definitions import Payment as BoxPayment
 from public_workouts.billing import create_payment_with_notice_schedule
-from public_workouts.models import PublicWorkoutSubscription
-from student_identity.models import PublicWorkoutAccount, StudentAppInvitation
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+from student_identity.models import StudentAppInvitation
 from student_identity.public_workout_login import request_login_token
 
 

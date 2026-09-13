@@ -8,8 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("public_workouts", "0001_initial"),
-        ("student_identity", "0005_publicworkoutlocalstoragebackup"),
+        ("public_workouts", "0002_publicworkoutaccount_publicworkoutlocalstoragebackup_and_more"),
     ]
 
     operations = [
@@ -62,7 +61,7 @@ class Migration(migrations.Migration):
                     models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="subscription",
-                        to="student_identity.publicworkoutaccount",
+                        to="public_workouts.publicworkoutaccount",
                     ),
                 ),
             ],

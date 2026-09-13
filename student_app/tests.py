@@ -2297,7 +2297,7 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_saves_raw_blob_as_is_for_owner(self):
-        from student_identity.models import PublicWorkoutLocalStorageBackup
+        from public_workouts.models import PublicWorkoutLocalStorageBackup
 
         self.client.get('/renan/giovanna')  # seta o cookie do dono
         blob = {'sessions': [{'date': '2026-01-05', 'weight': 42}], 'anything': 'nao normalizado'}

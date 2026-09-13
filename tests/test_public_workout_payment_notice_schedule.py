@@ -18,8 +18,7 @@ from public_workouts.billing import (
     PublicWorkoutPaymentAmountError,
     create_payment_with_notice_schedule,
 )
-from public_workouts.models import PublicWorkoutPaymentNotice, PublicWorkoutSubscription
-from student_identity.models import PublicWorkoutAccount
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutPaymentNotice, PublicWorkoutSubscription
 
 
 def _make_subscription(email='aluno@example.com', plan_slug='giovanna'):
