@@ -115,6 +115,110 @@ Aluno perde acesso ao treino porque o profissional atrasou o programa novo.
 
 ---
 
+## R.T — Mapa de impacto em testes
+
+Levantado antes de começar. **Nove testes existentes quebram**, e dois deles são o
+caso mais perigoso: **codificam o defeito como especificação**.
+
+### 🔴 Categoria 1 — testes que hoje garantem o vazamento
+
+Estes não são "quebra a consertar". São **testes que precisam ser invertidos**, porque
+afirmam como correto o comportamento que estamos removendo. Se alguém os "consertar"
+sem ler, restaura o vazamento.
+
+| Teste | Onde | Por que quebra |
+|---|---|---|
+| `PublicWorkoutAssessmentsEndpointTests` | `student_app/tests.py:2208` | A docstring da classe é literalmente **"GET /renan/<slug>/avaliacoes.json — publico, sem auth, so leitura."** |
+| ↳ `test_returns_empty_shape_for_plan_without_assessments` | `:2211` | GET sem cookie espera **200**; passa a ser **404** |
+| ↳ `test_returns_indicators_once_an_assessment_exists` | `:2221` | idem — GET sem cookie espera 200 com payload de saúde |
+| `test_public_workout_service_worker_and_offline_route_are_available` | `:2082` | assere `assertIn('/renan/<slug>', sw_content)` **para os 8 slugs** + `?source=pwa` para 7. **É o teste que garante o A4.** |
+
+**Mitigação (obrigatória na B0, no mesmo PR da correção):**
+
+1. `avaliacoes.json` — reescrever como **trio**: sem cookie → 404; cookie do dono →
+   200; **cookie de outro aluno → 404**. A docstring da classe muda junto, senão fica
+   mentindo no repo.
+2. Service worker — **inverter a asserção**: o SW **não** contém slug de outro aluno;
+   contém o slug resolvido em runtime. Um teste que prova ausência, não presença.
+
+> O terceiro teste da classe (`:2218`, slug inexistente → 404) **continua passando** —
+> e é por isso que 404 é a resposta certa para slug de outro aluno: o formato de
+> resposta fica indistinguível de "não existe".
+
+### 🟡 Categoria 2 — quebram porque a fonte de verdade muda
+
+| Teste | Onde | Por que quebra | Mitigação |
+|---|---|---|---|
+| `test_public_workout_pages_are_open_without_login` | `:2026` | 8 GETs esperando 200 **sem login**; a fase B exige login em plano pago | **dividir em dois**: `..._open_without_login` (legado/cortesia) e `..._require_login_for_paid_plan` (novo) |
+| `test_public_workout_content_signature_is_stable` | `:2265` | compara assinatura do HTML com o golden — o template único muda o HTML; e assere `len(slugs) == 10` em `PUBLIC_WORKOUT_LIBRARY`, que deixa de existir | trocar a fonte dos slugs de dict para query em `PublishedWorkout`; **diff aprovado à mão antes de regravar** (R4) |
+| `test_public_workout_manifest_is_dynamic_per_slug` | `:2069` | `theme_color` / `background_color` / `short_name` saem do dataclass `PublicWorkoutPlan` e passam a vir do banco | fixture de `PublishedWorkout` no `setUp` |
+| `test_public_workout_page_renders_install_cta` | `:2118` | o install prompt sai do `_base.html` e da injeção legada para o template único | asserção pelo `id="public-workout-install"`, que é contrato, não pela classe CSS |
+| `public_workouts/tests.py` — validação de slug | `:125` | `_validate_plan_slug` importa `PUBLIC_WORKOUT_LIBRARY` **de dentro da função** (para evitar import circular); a fonte passa a ser `PublishedWorkout` | testes de serviço criam fixture no banco em vez de depender do dict |
+
+### 🟢 Categoria 3 — devem quebrar, e isso é o objetivo
+
+| Teste | Onde | Papel |
+|---|---|---|
+| `test_juliana_week_order_reflects_quad_frequency_program` | `:2126` | **detector de erro de transcrição da A2** |
+| `test_henrique_week_order_reflects_split_and_required_back_exercises` | `:2157` | idem |
+| `test_johnespanha_week_order_reflects_glute_priority_and_low_back_volume` | `:2179` | idem — e `johnespanha` é um dos 3 legados por substituição de string |
+
+Estes asseram ordem de dias e presença de exercícios obrigatórios no HTML. Quando o
+HTML passar a vir do payload, **eles são a rede que pega parser errando**.
+
+> 🔴 **Não relaxar, não regravar, não marcar `xfail`.** Se um deles quebrar durante a
+> A2, o parser errou — não o teste. Essa é a única leitura permitida.
+
+### ⚪ Categoria 4 — risco indireto, rodar a suíte antes de seguir
+
+| Frente | Suíte | Por que |
+|---|---|---|
+| B1 | `tests/test_integrations_stripe_*.py`, `tests/test_payment_*.py` (8 arquivos) | `stripe.api_key` sai do escopo de módulo (`auth.py:16`, `services.py:18`). Testes que fazem `patch(...stripe)` seguem valendo; quem depende do **side effect do import** pode quebrar silenciosamente |
+| A0 | `seed_movement_library` | é idempotente por slug (`update_or_create`). Campos novos (`modality`, `movement_pattern`, `status`) **sem default** quebram o seed existente → nascer com default (`modality='crossfit'` nos atuais, `status='active'`) |
+| A1 | `tests/test_tenant_boundary.py` (39 testes) | não deve quebrar — é o **guarda**. A A1 deve **adicionar** um irmão específico para `/renan/` |
+
+### Testes que NÃO existem e precisam nascer
+
+Buracos de cobertura que o plano cria ou expõe:
+
+| Teste novo | Onda | Por que é obrigatório |
+|---|---|---|
+| Nenhuma view de `/renan/` toca TENANT_APPS | A1 | **R2** — o `conftest` força `schema_context`, então hoje o erro passa em CI e só quebra em produção. Sem esse teste, DA-1 não tem rede. |
+| Aluno A logado abrindo slug de B → **404** | B3 | ownership (DA-2) — hoje não existe conceito de dono de slug |
+| `record_load` reenviado com a mesma `idempotency_key` não duplica | A1 | outbox offline reenvia por construção |
+| Duas versões ativas para o mesmo slug são recusadas **pelo banco** | A1 | a constraint parcial é a garantia, não o código |
+| Rollback: publicar v2, voltar v1, aluno vê v1 | A1 | `is_active` |
+| `movement_slug` sobrevive a republicação | A1 | **D1** — se não sobreviver, substituição e histórico se perdem a cada programa |
+| `estimate_one_rep_max` devolve `None` acima de 15 reps efetivas | A3 | honestidade estatística |
+| Prompt do parser acima de **4.096 tokens** | A2 | abaixo disso o cache do Haiku **para de funcionar sem erro** |
+| Nenhum `.json` sob `/renan/` entra no `PAGE_CACHE` | B0 | A1+A4 vistos do lado do dispositivo |
+| `drain_payment_notices` rodado duas vezes no mesmo dia não duplica envio | B2 | a unique constraint é a garantia |
+
+### Ordem de execução recomendada
+
+1. **Antes de tocar código:** rodar a suíte inteira e **guardar a saída**. Sem baseline,
+   não há como distinguir "eu quebrei" de "já estava quebrado".
+   Ver [docs/testing/README.md](../testing/README.md) — Postgres obrigatório,
+   `--create-db --migrations`.
+2. **B0:** inverter os 3 testes de Categoria 1 **no mesmo PR** da correção. Nunca
+   commitar a correção com o teste antigo verde.
+3. **A0:** aplicar e reverter migration em banco limpo antes de seguir.
+4. **B1:** suíte de Stripe completa depois do seam.
+5. **A2:** os 3 testes de Categoria 3 são o critério de aceite da migração.
+6. **B3:** golden só regravado em **commit separado**, com diff aprovado por humano.
+
+### Contagem
+
+| | Quantidade |
+|---|---|
+| Testes que quebram e precisam ser **invertidos** (Cat. 1) | 3 |
+| Testes que quebram por troca de fonte (Cat. 2) | 5 |
+| Testes que **devem** quebrar se algo der errado (Cat. 3) | 3 |
+| Suítes a rodar por precaução (Cat. 4) | 3 |
+| Testes novos obrigatórios | 10 |
+
+---
+
 # D — Direção
 
 ## D.1 Tese central
