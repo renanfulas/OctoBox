@@ -339,6 +339,128 @@ Se dobrar, vale revisar quais modelos precisam mesmo ser SHARED.
 
 ---
 
+## R.C — Connect Express: o que não pode atravessar entre os dois produtos
+
+O corredor vai usar **Connect Express com repasse** (personal recebe, plataforma retém
+~10%). O box SaaS usa **conta única**. Dois modelos de dinheiro no mesmo processo Python
+— e é aí que mora o risco.
+
+### 🔴 C1 — `stripe.api_key` é global do processo. Isso é race condition.
+
+```python
+integrations/stripe/auth.py:16      stripe.api_key = settings.STRIPE_SECRET_KEY   # import
+integrations/stripe/services.py:18  stripe.api_key = settings.STRIPE_SECRET_KEY   # import
+signup/services.py:119              stripe.api_key = secret_key   # ← DENTRO de função
+signup/services.py:211              stripe.api_key = secret_key   # ← DENTRO de função
+```
+
+`stripe.api_key` é atributo de **módulo** — compartilhado por todo o processo. Mutá-lo
+em runtime, num servidor com threads, cria a seguinte janela:
+
+```
+thread A (box)      : stripe.api_key = chave_plataforma
+thread B (corredor) : stripe.api_key = chave_do_personal      ← sobrescreve
+thread A            : stripe.checkout.Session.create(...)     ← usa a chave do PERSONAL
+```
+
+**Com conta única isso é invisível** — todas as chaves são a mesma. **Com Connect, o
+pagamento sai pela conta errada**, sem erro e sem log. É o pior tipo de bug silencioso:
+o checkout funciona, o cliente paga, e o dinheiro entra no lugar errado.
+
+**Regra para o corredor — nunca mutar o módulo:**
+
+```python
+# public_workouts/stripe_checkout.py
+client = stripe.StripeClient(api_key=<chave>)          # cliente por instância
+client.checkout.sessions.create(..., stripe_account=<acct_do_personal>)
+```
+
+Cliente por instância (ou `api_key=` explícito em cada chamada) mantém a chave **no
+escopo da requisição**. `stripe==15.5.1` suporta — confirmar a forma exata na doc da
+versão antes de escrever.
+
+> **Dívida do box, não nossa:** `signup/services.py` já faz mutação em runtime hoje.
+> Enquanto houver uma conta só, é inofensivo. No dia que o box também usar Connect, vira
+> o mesmo bug. Fica registrado como ponteiro, não como trabalho desta entrega (D.000).
+
+### 🔴 C2 — Idempotency key com Connect é escopada por conta
+
+A chave de idempotência da Stripe é única **por conta**. Uma chave como
+`assinatura-aluno-42` colide entre contas conectadas diferentes se o mesmo padrão for
+reusado.
+
+**Regra:** a chave do corredor inclui o `acct_` do personal e o `PublicWorkoutPayment.id`
+— nunca só o id do aluno.
+
+O molde correto já existe no repo: `signup/services.py:160` monta a chave com o
+`price_id` justamente para evitar colisão silenciosa. Mesmo raciocínio, outro eixo.
+
+### 🟡 C3 — O valor cobrado ≠ o valor que o personal recebe
+
+Com `application_fee`, o aluno paga R$ 89,90, a plataforma retém ~10% e o personal
+recebe o resto **menos a taxa da Stripe**. Um único campo `amount` não representa isso —
+e a conferência ("quanto eu recebi mesmo?") fica impossível.
+
+`PublicWorkoutPayment` precisa de **três valores**, não um:
+
+| Campo | O que é |
+|---|---|
+| `gross_amount` | o que o aluno pagou |
+| `application_fee_amount` | o que a plataforma reteve |
+| `net_amount` | o que caiu na conta do personal (vem do `balance_transaction`) |
+
+Sem `net_amount` vindo do Stripe, a tela financeira (5.6) mostra número que não bate com
+o extrato — e aí ninguém confia nela.
+
+### 🟡 C4 — Evento de conta conectada tem um campo a mais
+
+Eventos de Connect chegam com `account` no envelope (a conta conectada que originou).
+`PaymentWebhookEvent` não tem esse campo — mas **o envelope bruto tem**, e a decisão N1
+foi não adicionar campo ao modelo.
+
+**Consequência:** o handler do corredor lê `account` **do payload**, não de coluna. Vale
+anotar no código, porque é exatamente o tipo de coisa que alguém tenta "melhorar"
+adicionando a coluna — e aí sobrecarrega o principal.
+
+### 🟡 C5 — Onboarding do personal é fluxo novo, não é login
+
+Connect Express exige KYC: o personal cria conta, envia documento, informa dados
+bancários. Isso é `AccountLink` da Stripe, com estados (`pending`, `restricted`,
+`enabled`) que precisam ser refletidos no produto — **um personal sem KYC completo não
+pode receber**, e o aluno não deveria conseguir assinar antes disso.
+
+Não está em nenhuma onda. Entra na **Entrega 5**, junto com o multi-personal — não antes,
+porque enquanto for um personal só (você), o repasse não existe.
+
+### 🟡 C6 — Estorno precisa decidir o que fazer com a comissão
+
+Estornar R$ 89,90 reverte os 10% retidos? A Stripe permite reverter ou não
+(`refund_application_fee` / `reverse_transfer`). São políticas comerciais diferentes:
+
+- **Reverter:** o personal devolve o serviço, a plataforma devolve a comissão. Mais justo.
+- **Não reverter:** a plataforma fica com a taxa. Mais agressivo.
+
+**Decisão do produto, não do código** — mas precisa estar tomada antes do primeiro
+estorno, senão vira caso a caso.
+
+### Testes adicionais de Connect
+
+```
+tests/test_public_workout_connect_isolation.py
+  ✓ checkout do corredor nao altera stripe.api_key global        (C1)
+  ✓ duas chamadas concorrentes usam contas diferentes            (C1)
+  ✓ idempotency key inclui o acct_ do personal                   (C2)
+  ✓ gross/fee/net sao persistidos e gross = fee + net + taxa      (C3)
+  ✓ handler le 'account' do payload, nao de coluna               (C4)
+  ✓ assinar com personal sem KYC completo e recusado             (C5)
+```
+
+> **C1 é o único com potencial de mandar dinheiro para a conta errada.** O teste de
+> concorrência (duas threads, duas contas, asserção de que cada uma usou a sua) é
+> obrigatório antes do primeiro real com Connect.
+
+---
+
 ## R.P — Pagamentos: bugs silenciosos e como travá-los
 
 Bug silencioso é o que **não levanta erro, não aparece em log e não tem quem
@@ -562,6 +684,7 @@ comentário. Sem import, sem código, sem `if`. Só o endereço:
 | `finance/payment_notifications.py` | `# Cobrança do corredor de treinos: public_workouts/notifications.py. Esta aqui é do box.` |
 | `finance/model_definitions.py`, acima de `Payment` | `# Cobrança do corredor: PublicWorkoutPayment. Não entra em overdue_metrics do box.` |
 | `integrations/stripe/router.py` | `# Webhooks do corredor de treinos têm endpoint próprio (/treinos/stripe/webhook/) e handler em public_workouts/stripe_handlers.py. Nada dele passa por aqui.` |
+| `signup/services.py`, acima da mutação de `api_key` | `# stripe.api_key é global do processo: mutar em runtime é race condition quando há mais de uma conta Stripe. Inofensivo hoje (conta única); ver R.C/C1 do CORDA do corredor antes de adotar Connect aqui.` |
 | `student_identity/models.py`, acima de `StudentIdentityProvider` | `# O corredor de treinos autentica por PublicWorkoutAccount (token de e-mail próprio). Não adicionar provider por causa dele.` |
 | `config/settings/base.py`, acima de `STUDENT_APP_SESSION_COOKIE_AGE` | `# Sessão do corredor de treinos: PUBLIC_WORKOUT_SESSION_COOKIE_AGE. Esta governa só o app do aluno de box.` |
 | `control/middleware.py`, na entrada `/renan/` | atualizar o comentário existente para citar o app dono |
