@@ -2227,6 +2227,14 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         response = self.client.get('/renan/rafael/avaliacoes.json')
         self.assertEqual(response.status_code, 404)
 
+    def test_returns_404_for_tampered_cookie(self):
+        # Cookie com valor solto, sem passar pela assinatura de
+        # set_signed_cookie — simula adulteracao. signing.BadSignature tem
+        # que virar 404, nunca 500.
+        self.client.cookies['renan_slug'] = 'giovanna'
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
+
     def test_returns_empty_shape_for_plan_without_assessments(self):
         self.client.get('/renan/giovanna')  # seta o cookie do dono
         response = self.client.get('/renan/giovanna/avaliacoes.json')
