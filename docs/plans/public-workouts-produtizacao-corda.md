@@ -1283,6 +1283,23 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 **Depende de A1 (S1/S2 reais) e de A2 (os 10 publicados).**
 
+> **Fundação visual já entregue, adiantada, fora da dependência.** Os itens 1
+> e 2 ("O que fazer") não precisam de dado publicado de verdade — só do
+> contrato de `schema.py` (Onda S0), já congelado. `templates/public_workouts/workout.html`
+> existe, renderiza qualquer payload válido pelo schema (testado contra
+> `build_example_payload`), compõe os primitives reais do `student_app`
+> (`.student-card`, `.student-status-badge`, `tables.css`,
+> `interactive-tabs.css`) e implementa o mapeamento `accent_variant` →
+> `--theme-accent-premium`/`-support` (nenhum precedente existia no repo —
+> o padrão espelha o toggle `body[data-theme]` já usado pro tema claro/escuro).
+> **Não está ligado a nenhuma URL/view** — os itens 3–9 (apagar os 8 CSS
+> legados, matar o bootstrap de PWA antigo, fase B de acesso, `sw.js` novo,
+> outbox, hard reset) continuam bloqueados em A1/A2 como o texto original já
+> dizia, porque envolvem corte de produção real, não fundação visual.
+> `card-decor-glow` ainda não está aplicado — o primitive não é
+> accent-aware por padrão (`--neon-default-rgb` fixo), decisão de detalhe
+> visual que fica pra quando a onda real começar.
+
 ### O que fazer
 1. `workout.html` composto dos primitives do `student_app` — chip, card,
    progress-strip, compact-state, hero-number, tables, interactive-tabs.
