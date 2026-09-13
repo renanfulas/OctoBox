@@ -1875,6 +1875,105 @@ class StudentIdentityFlowTests(TestCase):
             StudentIdentity.objects.filter(provider_subject='google-new-mass-onboarding').exists()
         )
 
+    def test_complete_mass_onboarding_claims_existing_lead_by_phone(self):
+        # Bug reportado: recepcao ja cadastra o aluno como lead (nome+telefone), mas
+        # ele nunca completa o login do app. Quando usa o link em massa depois, o
+        # telefone "ja existe" — mas e ele mesmo. Em vez de bloquear, reaproveita a
+        # ficha existente (sem StudentIdentity ainda) e so cria o login em cima dela.
+        from student_app.workflows.onboarding_workflows import OnboardingWorkflow
+
+        box_root_slug = get_box_runtime_slug()
+        lead = Student.objects.create(full_name='Lead Sem Login', phone='5511977777777')
+
+        workflow = OnboardingWorkflow()
+        result = workflow.complete_mass_onboarding(
+            pending_onboarding={
+                'box_root_slug': box_root_slug,
+                'provider': StudentIdentityProvider.GOOGLE,
+                'provider_subject': 'google-claim-lead',
+                'email': 'novo-login-claim@example.com',
+            },
+            cleaned_data={
+                'full_name': 'Lead Atualizado Nome',
+                'phone': '5511977777777',
+                'birth_date': None,
+                'selected_plan': None,
+            },
+        )
+
+        self.assertTrue(result.is_success, result.error_message)
+        self.assertEqual(result.student.id, lead.id)
+        self.assertEqual(Student.objects.filter(phone_lookup_index=lead.phone_lookup_index).count(), 1)
+        lead.refresh_from_db()
+        self.assertEqual(lead.full_name, 'Lead Atualizado Nome')
+        self.assertTrue(
+            StudentIdentity.objects.filter(student_id=lead.id, provider_subject='google-claim-lead').exists()
+        )
+
+    def test_mass_invite_form_allows_claimable_lead_phone(self):
+        from student_app.forms import MassInviteOnboardingForm
+
+        box_root_slug = get_box_runtime_slug()
+        Student.objects.create(full_name='Lead Sem Login Form', phone='5511966666666')
+
+        form = MassInviteOnboardingForm(
+            data={'full_name': 'Nome Completo Novo', 'phone': '5511966666666', 'birth_date': ''},
+            box_root_slug=box_root_slug,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_mass_invite_form_blocks_phone_with_existing_identity(self):
+        from student_app.forms import MassInviteOnboardingForm
+
+        box_root_slug = get_box_runtime_slug()
+        existing_student = Student.objects.create(full_name='Ja Tem Login Form', phone='5511900000000')
+        StudentIdentity.objects.create(
+            student_id=existing_student.id,
+            student_name=existing_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-form-block-test',
+            email='form-block@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+
+        form = MassInviteOnboardingForm(
+            data={'full_name': 'Outra Pessoa Form', 'phone': '5511900000000', 'birth_date': ''},
+            box_root_slug=box_root_slug,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('cadastrado com este WhatsApp', str(form.errors))
+
+    def test_find_claimable_lead_by_phone_returns_none_when_already_has_identity(self):
+        # Contraprova: se o Student encontrado JA tem identidade de app neste box,
+        # nao e mais "lead esperando login" — e duplicata real, entao nao e
+        # reaproveitavel. Quem bloqueia esse caso de verdade na UI e o form
+        # (clean_phone, via _student_phone_exists) — este teste garante que o
+        # detector de "lead reivindicavel" nao aponta esse Student como candidato,
+        # o que faria complete_mass_onboarding tentar reaproveitar indevidamente
+        # um cadastro que ja pertence a outra pessoa.
+        from student_app.forms import find_claimable_lead_by_phone
+
+        box_root_slug = get_box_runtime_slug()
+        existing_student = Student.objects.create(full_name='Ja Tem Login', phone='5511988888888')
+        StudentIdentity.objects.create(
+            student_id=existing_student.id,
+            student_name=existing_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-already-has-login',
+            email='ja-tem-login@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+
+        claimable = find_claimable_lead_by_phone(normalized_phone='5511988888888', box_root_slug=box_root_slug)
+
+        self.assertIsNone(claimable)
+
     def test_coach_cannot_clear_membership(self):
         coach = self._create_role_user(
             username='coach-clear-denied',
