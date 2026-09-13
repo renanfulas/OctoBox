@@ -321,9 +321,9 @@ tests/test_student_subscription_lifecycle.py
   ✓ cartao recusado gera copy diferente de inadimplencia
 
 tests/test_student_vs_box_webhook_routing.py
-  ✓ evento de assinatura de ALUNO nao altera Box.status   (P5)
-  ✓ evento de assinatura de BOX nao altera membership     (P5)
-  ✓ evento sem discriminador e recusado, nao adivinhado
+  ✓ evento do corredor nao chega ao router do box         (P5, por endpoint)
+  ✓ evento do box nao chega ao handler do corredor        (P5)
+  ✓ assinatura HMAC do endpoint do corredor e verificada
 
 tests/test_payment_amount_guardrails.py
   ✓ amount fora de faixa e recusado no servico (P8)
@@ -414,6 +414,64 @@ public_workouts/
 
 **A linha:** compartilha-se o que **transporta** e o que **identifica**. Nunca o que
 **decide**.
+
+---
+
+## D.000 Sobrecarga zero — o corredor não pesa no app principal
+
+> **Regra:** o corredor de treinos **não adiciona peso** ao OctoBox. Nem modelo, nem
+> campo, nem valor de enum, nem branch de `if`, nem setting compartilhada.
+> **O máximo que ele deixa no app principal é um comentário dizendo onde ele mora.**
+
+### As três sobrecargas que ainda restavam
+
+| # | Sobrecarga | Custo real | Solução |
+|---|---|---|---|
+| **S1** | `StudentIdentityProvider` ganharia `EMAIL` | muda o enum que governa o login do app de box; toda query que assume `google\|apple` passa a ter um terceiro caso | **`PublicWorkoutAccount`** próprio, com token de e-mail. Vincula a `StudentIdentity` por referência fraca **quando a pessoa também for aluno de box** — e a reconhece sem alterar nada dela |
+| **S2** | `STUDENT_APP_SESSION_COOKIE_AGE` de 7 → 30 dias | 🔴 **essa variável governa o app do aluno de box.** Mudá-la altera o comportamento do outro produto | **`PUBLIC_WORKOUT_SESSION_COOKIE_AGE`** próprio. O cookie do corredor tem nome, path e validade próprios |
+| **S3** | Despacho por `metadata.product` em `integrations/stripe/router.py` | um `if` que existe **só** por causa do corredor, dentro do roteador do box | **endpoint de webhook próprio.** A Stripe permite N endpoints configurados; cada produto tem o seu. `router.py` **não muda uma linha** |
+
+**S3 é a mais bonita das três:** eu tinha desenhado um discriminador compartilhado e
+depois uma bateria de testes (P5) para garantir que ele não erraria. Com endpoints
+separados no painel da Stripe, **o evento do corredor nunca chega ao roteador do box**.
+Não há o que discriminar, nem o que testar.
+
+### O custo total no app principal: uma linha
+
+`/renan/` **já está** em `PUBLIC_SCHEMA_PATHS` (`control/middleware.py:93`). As rotas
+novas que não cabem sob esse prefixo — login e webhook, que não pertencem ao namespace
+de um personal específico — ficam sob **`/treinos/`**:
+
+```
+/treinos/login            ← tela própria do produto
+/treinos/stripe/webhook/  ← endpoint próprio (S3)
+```
+
+Uma única entrada `'/treinos/'` em `PUBLIC_SCHEMA_PATHS` cobre as duas. **É a única
+modificação que o corredor faz no OctoBox** — e é config de roteamento, não lógica.
+
+### Ponteiros de fronteira — o adendo, não o acoplamento
+
+Onde um desenvolvedor do OctoBox **procuraria** algo do corredor e não acharia, fica um
+comentário. Sem import, sem código, sem `if`. Só o endereço:
+
+| Arquivo do OctoBox | Ponteiro a deixar |
+|---|---|
+| `student_app/views/__init__.py` | `# Views de /renan/ vivem em public_workouts/views/ (produto separado).` |
+| `student_app/models.py`, acima de `MovementLibrary` | `# Catálogo do corredor de treinos: PublicWorkoutMovement, em public_workouts/models.py. Este aqui é do box — não receber movimento de lá.` |
+| `operations/model_definitions.py`, acima de `WorkoutTemplate` | `# Templates do corredor de treinos: PublicWorkoutTemplate, em public_workouts/models.py.` |
+| `finance/payment_notifications.py` | `# Cobrança do corredor de treinos: public_workouts/notifications.py. Esta aqui é do box.` |
+| `finance/model_definitions.py`, acima de `Payment` | `# Cobrança do corredor: PublicWorkoutPayment. Não entra em overdue_metrics do box.` |
+| `integrations/stripe/router.py` | `# Webhooks do corredor de treinos têm endpoint próprio (/treinos/stripe/webhook/) e handler em public_workouts/stripe_handlers.py. Nada dele passa por aqui.` |
+| `student_identity/models.py`, acima de `StudentIdentityProvider` | `# O corredor de treinos autentica por PublicWorkoutAccount (token de e-mail próprio). Não adicionar provider por causa dele.` |
+| `config/settings/base.py`, acima de `STUDENT_APP_SESSION_COOKIE_AGE` | `# Sessão do corredor de treinos: PUBLIC_WORKOUT_SESSION_COOKIE_AGE. Esta governa só o app do aluno de box.` |
+| `control/middleware.py`, na entrada `/renan/` | atualizar o comentário existente para citar o app dono |
+
+**Por que isso vale mais que documentação avulsa:** o ponteiro fica exatamente no ponto
+onde a fronteira seria violada. Quem for adicionar `modality` em `MovementLibrary` lê o
+comentário **antes** de escrever a migration — não depois, no code review.
+
+E o custo é literalmente zero em runtime.
 
 ---
 
@@ -541,9 +599,9 @@ cross-schema, sem segunda verdade.
 - `public_workouts/models.py` — `PublicWorkoutLoginToken` (V5); `public_workouts/views/auth.py` — tela `/treinos/login`
 - `public_workouts/notifications.py` *(novo)* — `notify_payment_due` (V4)
 - `public_workouts/` — `PublicWorkoutSubscription`, `PublicWorkoutPaymentNotice`
-- `integrations/stripe/auth.py`, `services.py` — seam de conta; `router.py` — só o despacho por `metadata.product` (V7)
-- `public_workouts/stripe_handlers.py` *(novo)* — o handler do corredor
-- `config/settings/base.py`, `.env.example` — Google OAuth, cookie 30 d
+- `integrations/stripe/auth.py`, `services.py` — **só** o seam `resolve_stripe_account`
+- `public_workouts/stripe_handlers.py` *(novo)* — handler próprio, em endpoint próprio (S3)
+- `config/settings/base.py`, `.env.example` — Google OAuth, `PUBLIC_WORKOUT_SESSION_COOKIE_AGE`, e **uma** entrada `'/treinos/'` em `PUBLIC_SCHEMA_PATHS`
 - `static/js/public_workouts/` — outbox, sync do pacote, draft
 
 ### NÃO mexe
@@ -584,7 +642,7 @@ seu. Migration só nasce no diretório do dono.
 | `static/css/public_workouts/**` | **B** | a deletar na Onda B3 |
 | `student_identity/**` | **B** | |
 | ~~`finance/**`~~ | — | **não é mais tocado** (V3, V4) |
-| `integrations/stripe/router.py` | **B** | **só** o despacho por `metadata.product` (V7) |
+| ~~`integrations/stripe/router.py`~~ | — | **não é mais tocado** (S3: endpoint próprio) |
 | `config/settings/**`, `.env.example` | **B** | |
 | `tests/golden/public_workouts/**` | **B** | quem renderiza, valida |
 
@@ -722,11 +780,13 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 1. Google OAuth ligado (`.env`), Apple Pay (domínio no dashboard Stripe).
 2. `resolve_stripe_account(box)` substituindo `stripe.api_key` em escopo de módulo
    (`auth.py:16`, `services.py:18`) — chamada **por requisição**.
-3. `STUDENT_APP_SESSION_COOKIE_AGE=2592000`.
+3. `PUBLIC_WORKOUT_SESSION_COOKIE_AGE=2592000` — **variável própria** (S2).
+   `STUDENT_APP_SESSION_COOKIE_AGE` **não é tocada**: governa o app do aluno de box.
 4. `StudentConsentDocumentKind.HEALTH_DATA` cobrindo IA, transferência
    internacional e retenção de 12 meses.
-5. Provider de login por e-mail estendendo `StudentAppInvitation` (token 15 min,
-   uso único, rate limit por e-mail).
+5. `PublicWorkoutAccount` + `PublicWorkoutLoginToken` (15 min, uso único, rate limit
+   por e-mail). **`StudentIdentityProvider` não ganha valor novo** (S1); a vinculação
+   a `StudentIdentity` é por referência fraca, quando a pessoa já for aluno de box.
 6. Tela `/treinos/login` — **própria**, reusando o cofre, não a porta do `/aluno/`.
 7. `1.7` upload do `localStorage` **bruto** — endpoint que aceita o blob como está.
 
@@ -822,9 +882,10 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
    **copia a forma** de `notify_payment_confirmed` e chama os mesmos senders. Não
    edita `finance/` (V4).
 3. Management command `drain_public_workout_notices` + **systemd timer**.
-4. Assinatura recorrente do aluno com `metadata.product='coaching'`; roteador
-   **próprio** resolvendo `PublicWorkoutSubscription` (molde: `router.py:306-419`,
-   **sem tocar** o caminho de `Box`). Ver D.0.
+4. Assinatura recorrente do aluno em **endpoint de webhook próprio**
+   (`/treinos/stripe/webhook/`), handler em `public_workouts/stripe_handlers.py`
+   resolvendo `PublicWorkoutSubscription`. `integrations/stripe/router.py` **não muda
+   uma linha** (S3).
 5. Job `D+2 → PublicWorkoutSubscription.suspended` e volta por
    `invoice.payment_succeeded`. **`StudentBoxMembership` não é tocado.**
 6. Stripe Customer Portal.
