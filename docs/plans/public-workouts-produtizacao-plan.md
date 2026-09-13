@@ -36,7 +36,7 @@ Além disso, **dois vazamentos de dado pessoal estão ativos agora** (A1 e A4).
 |---|---|
 | Escreve HTML e faz deploy | Dita o treino, a IA estrutura, você revisa e publica |
 | Cada programa novo começa do zero | Biblioteca de templates: adapta um que já funciona em segundos |
-| IA não sabe nada do aluno | Anamnese alimenta o prompt — treino daquela pessoa, não de revista |
+| IA não sabe nada do aluno | Anamnese de 7 campos no prompt — incluindo motivação e maior dificuldade, que é o que faz o treino ser seguido |
 | Cobra no WhatsApp, um por um | Consultoria cobra sozinha (R$ 89,90/mês); presencial por orçamento |
 | Quem não pagou continua treinando | Acesso trava sozinho depois de 2 dias de carência |
 | Não vê se o aluno treinou | Check-in, carga, RIR e evolução |
@@ -48,7 +48,7 @@ Além disso, **dois vazamentos de dado pessoal estão ativos agora** (A1 e A4).
 | # | Entrega | O que ganha | Prazo |
 |---|---|---|---|
 | 0 | **Fundação + correção dos vazamentos** | Fecha dado pessoal exposto hoje. Destrava o resto. | 5–6 d |
-| 1 | **Identidade e anamnese** | Aluno entra com a própria conta; você sabe lesão, equipamento e objetivo | 5–7 d |
+| 1 | **Identidade e anamnese** | Aluno entra com a própria conta; você sabe objetivo, restrição, equipamento — e o que faz ele desistir | 5–7 d |
 | 2 | **Cobrança automática + hard reset** | Assinatura, lembrete, trava e destrava sem você tocar | 4–6 d |
 | 3 | **Treino vira dado + front reusado** | Monta programa sem escrever código; carga e check-in no banco; front composto dos primitives do app do aluno | 11–15 d |
 | 4 | **Produto** | Editor com IA, avaliação, gráficos, substituição, review | 7–10 d |
@@ -780,7 +780,7 @@ device contém **um** slug; aluno entra com Google; Apple Pay aparece no iPhone;
 | 1.6 | **Tela de login própria** do produto de treinos (`/treinos/login`) + `?next=` | View e template novos, reusando `StudentAppInvitation` e o cookie — ver DA-2 |
 | **1.7** | 🔴 **Upload da carga do `localStorage` — antes do hard reset** | Endpoint que aceita o blob bruto e grava como está. Normalizar fica para 3.5. Ver F-B. |
 | 1.4 | PAR-Q obrigatório antes de publicar para aluno remoto | `parq_questions.py` (pronto) |
-| 1.5 | **Anamnese** — lesões, equipamento, dias/semana, objetivo, histórico | Novo. Formato pensado para virar prompt (4.1). **Revalidação a cada programa novo** — uma pergunta, não o formulário inteiro (E12). |
+| 1.5 | **Anamnese** — 7 campos (ver 1.5) | Novo. Formato pensado para virar prompt (4.1). **Revalidação a cada programa novo** — uma pergunta, não o formulário inteiro (E12). |
 
 ### 1.2 — por que estender e não construir
 
@@ -808,7 +808,44 @@ A página fica em `/renan/`, e **os dados do aluno vêm de endpoints sob `/aluno
 Uma página em `/renan/juliana` fazendo `fetch('/aluno/api/cargas')` envia o cookie
 normalmente: ele é escolhido pelo path da **requisição**, não pelo da página.
 
-### 1.5 — a anamnese não duplica o PAR-Q
+### 1.5 — os sete campos, e por que dois deles não são técnicos
+
+São exatamente as perguntas que o profissional já faz hoje a um aluno novo:
+
+| # | Campo | Alimenta | Natureza |
+|---|---|---|---|
+| 1 | **Objetivo** | seleção de exercício, volume, faixa de reps | técnico |
+| 2 | **Restrições** | exclusão de movimento, escolha de variação | técnico |
+| 3 | **Há quanto tempo treina** (ou nunca treinou) | complexidade, volume inicial, velocidade de progressão | técnico |
+| 4 | **Quantos dias tem para treinar** | split, frequência por grupo | técnico |
+| 5 | **Onde vai treinar** | equipamento disponível → alimenta a substituição (4.3) | técnico |
+| 6 | **Motivação para começar** | tom da comunicação; o que o review reforça | **comportamental** |
+| 7 | **Maior dificuldade no treino ou em manter a rotina** | duração da sessão, densidade; o que o review monitora | **comportamental** |
+
+**Os campos 6 e 7 são a diferença entre um treino correto e um treino que a pessoa
+faz.** Não entram em nenhum cálculo — entram na *forma* do programa e no que o sistema
+observa depois. Concretamente:
+
+- *"Não consigo passar de 50 minutos"* → o programa nasce com menos acessórios e mais
+  séries compostas. Não porque é melhor em teoria: porque é o que cabe.
+- *"Quero voltar a subir escada sem cansar"* → o review semanal fala disso, não de
+  percentual de gordura.
+- *"Perco a rotina quando viajo"* → a substituição (4.3) precisa cobrir variação sem
+  equipamento, e o check-in (3.6) vira o sinal mais importante do review.
+
+**Consequência para 4.1:** o prompt recebe os **sete** campos, não quatro. Com objetivo,
+nível, dias e equipamento apenas, o Haiku gera treino **tecnicamente correto que a
+pessoa abandona**.
+
+**Consequência para 4.5:** o review cruza aderência (3.6) com o **campo 7**. A pergunta
+que ele responde não é *"como foi a semana"* — é *"a dificuldade que ela declarou está
+acontecendo?"*.
+
+**Formato:** campos 1–5 estruturados (enum/inteiro), para validar e alimentar regra;
+6 e 7 **texto livre curto** — a resposta literal da pessoa vale mais que uma categoria,
+e é ela que vai para o prompt.
+
+### 1.5b — a anamnese não duplica o PAR-Q
 
 | | PAR-Q | Anamnese |
 |---|---|---|
@@ -1236,7 +1273,9 @@ Você dita/cola + anamnese do aluno → Haiku + expert-ef → revisão → Publi
 - `output_config.format` com o schema — a API **garante** o JSON
 - Validar movimentos contra `MovementLibrary` antes de aceitar
 - Prompt cache TTL 1h no system prompt
-- **A anamnese (1.5) entra no prompt.** Sem ela o Haiku gera treino de revista.
+- **Os 7 campos da anamnese (1.5) entram no prompt** — inclusive motivação e maior
+  dificuldade. Sem os dois comportamentais, o Haiku gera treino tecnicamente correto
+  que a pessoa abandona.
 
 **Pegadinha do cache:** Haiku 4.5 só cacheia prompts acima de **4.096 tokens**.
 A skill inteira dá ~6.700 — passa. Se um dia enxugarem abaixo disso, **o cache

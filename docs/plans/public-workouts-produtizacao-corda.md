@@ -852,7 +852,8 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
    como dica, nunca filtro).
 3. Rodar nos 10 HTMLs; revisar payload por payload.
 4. Extrair **~15 `WorkoutTemplate`** dos programas migrados.
-5. Geração de programa novo (texto + anamnese) como **job assíncrono**, nunca
+5. Geração de programa novo (texto + **os 7 campos da anamnese**, incluindo
+   motivação e maior dificuldade) como **job assíncrono**, nunca
    request — timeout de 10 s não serve para mesociclo.
 
 ### O que entra
