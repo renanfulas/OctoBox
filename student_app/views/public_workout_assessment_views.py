@@ -18,17 +18,12 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
-from django.core import signing
 from django.http import Http404, JsonResponse
 from django.views.generic import View
 
 from public_workouts.services import build_report
 
-from .public_workout_views import (
-    PUBLIC_WORKOUT_OWNER_COOKIE,
-    PUBLIC_WORKOUT_OWNER_COOKIE_SALT,
-    _get_public_workout_entry,
-)
+from .public_workout_views import _get_public_workout_entry, get_public_workout_owner_slug
 
 
 class PublicWorkoutAssessmentsView(View):
@@ -42,14 +37,7 @@ class PublicWorkoutAssessmentsView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
 
-        try:
-            owner_slug = request.get_signed_cookie(
-                PUBLIC_WORKOUT_OWNER_COOKIE, salt=PUBLIC_WORKOUT_OWNER_COOKIE_SALT, default=None
-            )
-        except signing.BadSignature:
-            owner_slug = None
-
-        if owner_slug != plan.slug:
+        if get_public_workout_owner_slug(request) != plan.slug:
             raise Http404('Treino publico nao encontrado.')
 
         report = build_report(plan_slug=plan.slug, sex=plan.assessment_sex, height_cm=plan.height_cm)

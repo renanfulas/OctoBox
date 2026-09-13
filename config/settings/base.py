@@ -582,8 +582,14 @@ SECURITY_TRUSTED_PROXY_IPS = env_list('SECURITY_TRUSTED_PROXY_IPS')
 SECURITY_BLOCKED_IPS = env_list('SECURITY_BLOCKED_IPS')
 SECURITY_BLOCKED_IP_RANGES = env_list('SECURITY_BLOCKED_IP_RANGES')
 SECURITY_LOG_LEVEL = env_str('SECURITY_LOG_LEVEL', 'WARNING')
+# Sessao do corredor de treinos: PUBLIC_WORKOUT_SESSION_COOKIE_AGE, abaixo.
+# Esta (STUDENT_APP_SESSION_COOKIE_AGE) governa so o app do aluno de box.
 STUDENT_APP_SESSION_COOKIE_NAME = env_str('STUDENT_APP_SESSION_COOKIE_NAME', 'octobox_student_session')
 STUDENT_APP_SESSION_COOKIE_AGE = env_int('STUDENT_APP_SESSION_COOKIE_AGE', 604800)
+# Onda B1 do CORDA (docs/plans/public-workouts-produtizacao-corda.md, S2):
+# cookie proprio do corredor de treinos (/treinos/), nome/path/validade
+# independentes do app do aluno de box — mudar um nao afeta o outro.
+PUBLIC_WORKOUT_SESSION_COOKIE_AGE = env_int('PUBLIC_WORKOUT_SESSION_COOKIE_AGE', 2592000)
 STUDENT_OAUTH_PUBLIC_BASE_URL = env_str('STUDENT_OAUTH_PUBLIC_BASE_URL')
 STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY')
 STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY')
