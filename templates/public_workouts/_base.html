@@ -88,9 +88,12 @@
   });
 
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/renan/sw.js', { scope: '/renan/' }).catch(function () {
-      // O treino continua abrindo mesmo sem o service worker.
-    });
+    var ownSlug = (document.body.getAttribute('data-plan-slug') || '');
+    navigator.serviceWorker
+      .register('/renan/sw.js?slug=' + encodeURIComponent(ownSlug), { scope: '/renan/' })
+      .catch(function () {
+        // O treino continua abrindo mesmo sem o service worker.
+      });
   });
 })();
 </script>

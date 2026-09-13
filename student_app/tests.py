@@ -2079,8 +2079,14 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(payload['scope'], '/renan/')
         self.assertEqual(len(payload['icons']), 3)
 
-    def test_public_workout_service_worker_and_offline_route_are_available(self):
-        sw_response = self.client.get(reverse('public-workout-sw'))
+    def test_public_workout_service_worker_precaches_only_the_requesting_slug(self):
+        # A4 do CORDA: antes, o SW precacheava TODOS os slugs em qualquer
+        # aparelho — o celular da Giovanna guardava o %gordura do Bruno,
+        # offline. O ALLOWLIST so pode conter o slug que a propria pagina
+        # informou ao registrar (?slug=), nunca os outros.
+        other_slugs = ('bruno', 'milene', 'giovanna', 'thaislima', 'john', 'henrique', 'johnespanha')
+
+        sw_response = self.client.get(reverse('public-workout-sw'), {'slug': 'juliana'})
         offline_response = self.client.get(reverse('public-workout-offline'))
         sw_content = sw_response.content.decode('utf-8')
 
@@ -2088,32 +2094,28 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(sw_response['Service-Worker-Allowed'], '/renan/')
         self.assertIn('/renan/juliana', sw_content)
         self.assertIn('/renan/juliana/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/bruno', sw_content)
-        self.assertIn('/renan/bruno/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/milene', sw_content)
-        self.assertIn('/renan/milene/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/giovanna', sw_content)
-        self.assertIn('/renan/giovanna/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/thaislima', sw_content)
-        self.assertIn('/renan/thaislima/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/john', sw_content)
-        self.assertIn('/renan/john/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/henrique', sw_content)
-        self.assertIn('/renan/henrique/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/johnespanha', sw_content)
-        self.assertIn('/renan/johnespanha/manifest.webmanifest', sw_content)
+        self.assertIn("'/renan/juliana?source=pwa'", sw_content)
+        for other_slug in other_slugs:
+            self.assertNotIn(f'/renan/{other_slug}', sw_content, f'{other_slug} nao deveria estar no precache da juliana')
         self.assertIn('/renan/offline/', sw_content)
         self.assertIn('const PAGE_CACHE', sw_content)
         self.assertIn('normalizedWorkoutPath', sw_content)
-        self.assertIn("'/renan/juliana?source=pwa'", sw_content)
-        self.assertIn("'/renan/milene?source=pwa'", sw_content)
-        self.assertIn("'/renan/giovanna?source=pwa'", sw_content)
-        self.assertIn("'/renan/thaislima?source=pwa'", sw_content)
-        self.assertIn("'/renan/john?source=pwa'", sw_content)
-        self.assertIn("'/renan/henrique?source=pwa'", sw_content)
-        self.assertIn("'/renan/johnespanha?source=pwa'", sw_content)
         self.assertEqual(offline_response.status_code, 200)
         self.assertContains(offline_response, 'Sem conexão agora.')
+
+    def test_public_workout_service_worker_without_slug_precaches_no_plan_pages(self):
+        # Registro sem ?slug= (ou slug desconhecido): SW generico, sem
+        # nenhuma pagina de plano no precache — nunca "todas por seguranca".
+        all_slugs = (
+            'juliana', 'bruno', 'milene', 'giovanna', 'thaislima', 'john', 'henrique', 'johnespanha',
+        )
+
+        sw_response = self.client.get(reverse('public-workout-sw'))
+        sw_content = sw_response.content.decode('utf-8')
+
+        self.assertEqual(sw_response.status_code, 200)
+        for slug in all_slugs:
+            self.assertNotIn(f'/renan/{slug}', sw_content)
 
     def test_public_workout_page_renders_install_cta(self):
         response = self.client.get('/renan/juliana')
@@ -2206,9 +2208,35 @@ class PublicWorkoutPwaTests(TestCase):
 
 
 class PublicWorkoutAssessmentsEndpointTests(TestCase):
-    """GET /renan/<slug>/avaliacoes.json — publico, sem auth, so leitura."""
+    """GET /renan/<slug>/avaliacoes.json — exige cookie assinado do dono do slug.
+
+    B0 do CORDA (docs/plans/public-workouts-produtizacao-corda.md): antes,
+    endpoint publico sem nenhuma verificacao — dado de saude (peso,
+    %gordura, circunferencias) em URL cujo slug e o primeiro nome do aluno.
+    Visitar /renan/<slug> seta o cookie que autoriza a leitura a seguir.
+    """
+
+    def test_returns_404_without_owner_cookie(self):
+        # A vulnerabilidade original: bater direto no endpoint, sem nunca
+        # ter aberto a pagina do plano. Precisa continuar 404.
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_for_cookie_of_another_slug(self):
+        self.client.get('/renan/giovanna')  # seta o cookie de giovanna
+        response = self.client.get('/renan/rafael/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_for_tampered_cookie(self):
+        # Cookie com valor solto, sem passar pela assinatura de
+        # set_signed_cookie — simula adulteracao. signing.BadSignature tem
+        # que virar 404, nunca 500.
+        self.client.cookies['renan_slug'] = 'giovanna'
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
 
     def test_returns_empty_shape_for_plan_without_assessments(self):
+        self.client.get('/renan/giovanna')  # seta o cookie do dono
         response = self.client.get('/renan/giovanna/avaliacoes.json')
         self.assertEqual(response.status_code, 200)
         payload = response.json()
@@ -2227,6 +2255,7 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
             weight_kg=70,
             measurements={'cintura': 82, 'pescoco': 38},
         )
+        self.client.get('/renan/rafael')  # seta o cookie do dono
         response = self.client.get('/renan/rafael/avaliacoes.json')
         self.assertEqual(response.status_code, 200)
         payload = response.json()

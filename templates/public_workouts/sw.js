@@ -1,4 +1,4 @@
-const VERSION = 'public-workouts-{{ asset_version }}';
+const VERSION = 'public-workouts-{{ asset_version }}-e{{ cache_epoch }}';
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGE_CACHE = `${VERSION}-pages`;
 const OFFLINE_URL = '{{ offline_url }}';
@@ -42,9 +42,14 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  // R1 do CORDA: a versao anterior apagava tudo que nao fosse STATIC_CACHE
+  // a cada ativacao — inclusive o PAGE_CACHE vigente, que tem um nome
+  // diferente por construcao (`${VERSION}-pages`). Whitelist dos dois
+  // caches validos desta versao em vez de blacklist de um so.
+  const validCaches = [STATIC_CACHE, PAGE_CACHE];
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== STATIC_CACHE).map((key) => caches.delete(key)))
+      Promise.all(keys.filter((key) => !validCaches.includes(key)).map((key) => caches.delete(key)))
     )
   );
   self.clients.claim();
@@ -55,6 +60,15 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(request.url);
 
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // B0 do CORDA: nenhum .json sob /renan/ entra em cache — e onde vive
+  // dado de saude (avaliacoes.json). Rede direta, sem tocar Cache Storage,
+  // mesmo depois que o cookie de posse autorizar a leitura. Checado antes
+  // do branch de 'navigate' de proposito: cobre tambem o caso raro de
+  // navegacao direta para a URL do JSON, nao so o fetch() da pagina.
+  if (requestUrl.pathname.startsWith(APP_SCOPE) && requestUrl.pathname.endsWith('.json')) {
     return;
   }
 
