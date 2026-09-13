@@ -87,10 +87,15 @@ PUBLIC_SCHEMA_PATHS = (
     # Sem isso, TenantBySessionMiddleware redirecionaria alunos anonimos
     # para /login/ (staff) antes do StudentAuthMiddleware rodar.
     '/aluno/',
-    # PWA publica de workouts: rotas /renan/<slug> e /renan/<slug>/sw.js
+    # PWA publica de workouts (dono: public_workouts/ + student_app/views/
+    # public_workout_views.py): rotas /renan/<slug> e /renan/<slug>/sw.js
     # sao paginas estaticas-ish acessadas SEM login (PWA pessoal por aluno).
     # Sem isso, TenantBySessionMiddleware redireciona anonimo para /login/.
     '/renan/',
+    # Login e webhook do corredor de treinos (dono: student_identity/
+    # public_workout_login.py, Onda B1 do CORDA) — nao pertencem ao
+    # namespace de um personal especifico, por isso ficam fora de /renan/.
+    '/treinos/',
     '/static/',
     '/favicon.ico',
     '/__debug__/',            # django-debug-toolbar
