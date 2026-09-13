@@ -177,6 +177,28 @@ HTML passar a vir do payload, **eles são a rede que pega parser errando**.
 | A0 | `seed_movement_library` | é idempotente por slug (`update_or_create`). Campos novos (`modality`, `movement_pattern`, `status`) **sem default** quebram o seed existente → nascer com default (`modality='crossfit'` nos atuais, `status='active'`) |
 | A1 | `tests/test_tenant_boundary.py` (39 testes) | não deve quebrar — é o **guarda**. A A1 deve **adicionar** um irmão específico para `/renan/` |
 
+### 🔵 Categoria 5 — testes de isolamento entre produtos *(novos, obrigatórios)*
+
+Provam que a regra D.00 continua valendo. São **regressão de arquitetura**: quebram
+quando alguém religa o acoplamento, não quando algo "para de funcionar".
+
+```
+tests/test_public_workouts_isolation.py
+  ✓ nenhum modelo de public_workouts tem FK para finance.Payment      (V3)
+  ✓ nenhum modelo de public_workouts tem FK para StudentBoxMembership (D.0)
+  ✓ publicar programa nao cria linha em MovementLibrary               (V1)
+  ✓ publicar programa nao cria linha em WorkoutTemplate               (V2)
+  ✓ cobrar consultoria nao cria linha em finance.Payment              (V3)
+  ✓ cobrar consultoria nao aparece em overdue_metrics do box          (V3)
+  ✓ login de treino nao cria StudentAppInvitation                     (V5)
+  ✓ movimento pending do corredor nao aparece no picker do coach      (V1)
+```
+
+> O penúltimo é o mais concreto de explicar para quem revisar: **se o coach do box
+> abrir o seletor de movimentos e enxergar "abdução de quadril na máquina (pendente)"
+> do aluno de consultoria, os dois produtos se atravessaram.** O teste falha antes de
+> alguém descobrir isso na tela.
+
 ### Testes que NÃO existem e precisam nascer
 
 Buracos de cobertura que o plano cria ou expõe:
@@ -285,6 +307,7 @@ tests/test_payment_notice_schedule.py
 
 tests/test_payment_notice_drain.py
   ✓ drain 2x no mesmo dia = 1 envio            (P1)
+  ✓ nenhum registro entra em finance.Payment   (V3)
   ✓ canal falhando nao marca sent_at           (P2)
   ✓ falha em todos os canais gera log de erro  (P9)
   ✓ resultado por canal fica persistido        (P9)
@@ -321,6 +344,78 @@ vezes e assere que o mundo mudou uma vez só.
 ---
 
 # D — Direção
+
+## D.00 O core: reutilizar a base, não SER a mesma base
+
+> **Princípio que governa todo o resto deste documento.** O corredor de treinos
+> **consome serviços** do OctoBox. Ele **não estende modelos** dele.
+
+### As três formas de reuso
+
+| Forma | Acoplamento | Veredito | Exemplos |
+|---|---|---|---|
+| **Copiar padrão** | zero | ✅ livre | primitives de CSS, molde de `wod_session_llm_parser`, estrutura de `notify_payment_confirmed` |
+| **Chamar serviço** | de interface | ✅ ok | `send_html_email`, push VAPID, gateway do WhatsApp, `log_audit_event` |
+| **Estender modelo do principal** | de schema | ❌ **proibido** | adicionar campo em `MovementLibrary`, gravar linha em `finance.Payment` |
+
+**Quando o corredor precisa de algo que já existe no principal e precisaria
+modificá-lo: ramifica.** Cria o seu, no app `public_workouts`, copiando a estrutura
+que funciona. Duplicar 40 linhas de modelo é barato; acoplar dois produtos não é.
+
+### Varredura — onde o plano ainda violava isso
+
+| # | Violação | Por que machuca | Correção |
+|---|---|---|---|
+| **V1** | `MovementLibrary` ganharia `modality`, `movement_pattern`, `status` | o corredor gravaria movimentos de musculação e `pending` na tabela do box — **movimento pendente do seu aluno apareceria no picker do coach** | **`PublicWorkoutMovement`** próprio. Pode ser *semeado a partir* de `MovementLibrary`, nunca escrever nela |
+| **V2** | `WorkoutTemplateMovement` ganharia `reps_spec`/`rir_spec` | modifica `operations/` para servir outro produto | **`PublicWorkoutTemplate`** + `...Block` + `...Movement` próprios, já nascendo com faixa e RIR |
+| **V3** | `finance.Payment` cobraria consultoria | alimenta `overdue_metrics`, relatório e dashboard **do box** — receita de consultoria entraria no financeiro da academia | **`PublicWorkoutPayment`** próprio |
+| **V4** | `notify_payment_due` dentro de `finance/payment_notifications.py` | função do corredor morando no app do box | **`public_workouts/notifications.py`** — copia a forma, chama os mesmos senders |
+| **V5** | `StudentAppInvitation` como token de login | tem `box`, `student_id`, `onboarding_journey`; convite de box e login de treino dividiriam tabela com o mesmo campo significando coisas diferentes | **`PublicWorkoutLoginToken`** próprio, reusando `delivery_gateways.py` |
+| **V6** | Views do corredor em `student_app/views/` | **atravessamento que já existe hoje**, antes deste plano | mover para **`public_workouts/views/`** |
+| **V7** | Roteamento de negócio em `integrations/stripe/router.py` | o receiver e a verificação HMAC são infra; *o que fazer com o evento* é regra de negócio | router do principal **despacha por `metadata.product`**; o handler vive em `public_workouts/stripe_handlers.py` |
+
+> **V5 revoga uma decisão anterior deste documento.** A DA-2 defendia reusar
+> `StudentAppInvitation` com o argumento de "não criar dois sistemas de token". O
+> argumento estava errado: **reusar o mecanismo não exige reusar a tabela.** O que se
+> reusa é a entrega auditada (`StudentInvitationDelivery` → gateways) e o padrão de
+> token de uso único — não o registro que carrega semântica de box.
+
+### O que o corredor passa a ter de seu
+
+```
+public_workouts/
+├── models.py
+│   ├── PublicWorkoutProgram          ← snapshot publicado (era PublishedWorkout)
+│   ├── PublicWorkoutLoadLog          ← carga por pessoa+movimento
+│   ├── PublicWorkoutSubscription     ← assinatura e trava   (NÃO StudentBoxMembership)
+│   ├── PublicWorkoutPayment          ← cobrança             (NÃO finance.Payment)
+│   ├── PublicWorkoutPaymentNotice    ← régua de avisos
+│   ├── PublicWorkoutMovement         ← catálogo             (NÃO MovementLibrary)
+│   ├── PublicWorkoutTemplate/Block/Movement  ← biblioteca de programas
+│   ├── PublicWorkoutLoginToken       ← token de e-mail      (NÃO StudentAppInvitation)
+│   ├── PublicWorkoutSubstitution
+│   └── PublicWorkoutAssessment       ← já existe
+├── views/                            ← movidas de student_app/views/
+├── services.py · notifications.py · stripe_handlers.py
+├── parser.py · schema.py · formulas.py
+└── management/commands/
+```
+
+### O que continua compartilhado — e por quê
+
+| Compartilhado | Natureza | Justificativa |
+|---|---|---|
+| `StudentIdentity` | **credencial** | é o cofre; decisão de produto já tomada. O corredor a usa só para saber *quem é a pessoa* — o vínculo com o produto é `PublicWorkoutSubscription` |
+| `delivery_gateways.py`, `send_html_email`, push VAPID, Evolution | **transporte** | enviar mensagem não é regra de negócio |
+| `auditing`, `PIIScrubber` | **transversal** | auditoria é infraestrutura de conformidade |
+| `brazilian_holidays.py` | **utilitário puro** | função sem estado |
+| Design system e primitives | **apresentação** | somente leitura |
+| `integrations/stripe` — receiver, HMAC, `PaymentWebhookEvent` | **transporte** | verificar assinatura e deduplicar evento não é negócio |
+
+**A linha:** compartilha-se o que **transporta** e o que **identifica**. Nunca o que
+**decide**.
+
+---
 
 ## D.0 Fronteira entre os dois produtos — nome e estado
 
@@ -416,6 +511,10 @@ cross-schema, sem segunda verdade.
 14. `Falha de canal é capturada em estado persistido, nunca em except: pass.`
 15. `Trava e destrava se testam juntos — e o destrava se testa com o webhook suprimido.`
 16. `Teste de dinheiro assere o registro no banco, nunca que o mock foi chamado.`
+17. `O corredor consome serviços do OctoBox. Nunca estende modelos dele.`
+18. `Precisou modificar modelo do app principal? Ramifica: cria o seu, copiando a estrutura.`
+19. `Compartilha-se o que transporta e o que identifica. Nunca o que decide.`
+20. `Nenhuma migration do corredor nasce fora de public_workouts/.`
 
 ## D.3 Onde mexe / onde NÃO mexe (visão geral)
 
@@ -428,21 +527,22 @@ cross-schema, sem segunda verdade.
 - `public_workouts/migrations/` — **dono exclusivo**
 - `public_workouts/schema.py` *(novo)* — JSON Schema do payload
 - `public_workouts/parser.py` *(novo)* — HTML/texto → payload via Haiku
-- `student_app/models.py` — `MovementLibrary`: `modality`, `movement_pattern`, `status`
-- `student_app/management/commands/seed_movement_library.py` — vocabulário de musculação
-- `student_app/management/commands/extract_movements_from_html.py` *(novo)*
-- `operations/model_definitions.py` — `reps_spec`/`rir_spec` em `WorkoutTemplateMovement`
+- `public_workouts/models.py` — `PublicWorkoutMovement` (**não** `MovementLibrary`; V1)
+- `public_workouts/management/commands/seed_public_workout_movements.py` *(novo)*
+- `public_workouts/management/commands/extract_movements_from_html.py` *(novo)*
+- `public_workouts/models.py` — `PublicWorkoutTemplate/Block/Movement` já com faixa e RIR (V2)
 
 **Acesso, dinheiro e entrega (Frente B)**
-- `student_app/views/public_workout_assessment_views.py` — fechar (A1)
-- `student_app/views/public_workout_views.py` — ownership, render do snapshot, matar legado
+- `public_workouts/views/assessments.py` — fechar (A1), movida de `student_app/views/` (V6)
+- `public_workouts/views/pages.py` — ownership, render do snapshot, matar legado (V6)
 - `templates/public_workouts/sw.js` — allowlist, estratégias, ETag
 - `templates/public_workouts/workout.html` *(novo)* — template único sobre o DS
 - `student_app/public_urls.py` — rotas novas
-- `student_identity/` — provider de e-mail, tela `/treinos/login`, ownership
-- `finance/payment_notifications.py` — `notify_payment_due`
+- `public_workouts/models.py` — `PublicWorkoutLoginToken` (V5); `public_workouts/views/auth.py` — tela `/treinos/login`
+- `public_workouts/notifications.py` *(novo)* — `notify_payment_due` (V4)
 - `public_workouts/` — `PublicWorkoutSubscription`, `PublicWorkoutPaymentNotice`
-- `integrations/stripe/auth.py`, `services.py`, `router.py` — seam de conta + roteador de aluno
+- `integrations/stripe/auth.py`, `services.py` — seam de conta; `router.py` — só o despacho por `metadata.product` (V7)
+- `public_workouts/stripe_handlers.py` *(novo)* — o handler do corredor
 - `config/settings/base.py`, `.env.example` — Google OAuth, cookie 30 d
 - `static/js/public_workouts/` — outbox, sync do pacote, draft
 
@@ -474,17 +574,17 @@ seu. Migration só nasce no diretório do dono.
 | Caminho | Dono | Observação |
 |---|---|---|
 | `public_workouts/**` | **A** | inclui `migrations/` |
-| `student_app/models.py` | **A** | só `MovementLibrary` |
+| ~~`student_app/models.py`~~ | — | **não é mais tocado** (V1) |
 | `student_app/management/commands/**` | **A** | seeds e extratores |
-| `operations/model_definitions.py` | **A** | só `WorkoutTemplateMovement` |
-| `student_app/views/**` | **B** | todas as views |
+| ~~`operations/model_definitions.py`~~ | — | **não é mais tocado** (V2) |
+| `public_workouts/views/**` | **B** | movidas de `student_app/views/` (V6) |
 | `student_app/public_urls.py` | **B** | |
 | `templates/public_workouts/**` | **B** | inclui `sw.js` |
 | `static/js/public_workouts/**` | **B** | |
 | `static/css/public_workouts/**` | **B** | a deletar na Onda B3 |
 | `student_identity/**` | **B** | |
-| `finance/**` | **B** | inclui `migrations/`; **só `payment_notifications.py` nesta entrega** |
-| `integrations/stripe/**` | **B** | |
+| ~~`finance/**`~~ | — | **não é mais tocado** (V3, V4) |
+| `integrations/stripe/router.py` | **B** | **só** o despacho por `metadata.product` (V7) |
 | `config/settings/**`, `.env.example` | **B** | |
 | `tests/golden/public_workouts/**` | **B** | quem renderiza, valida |
 
@@ -601,7 +701,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 ### O que entra
 - `public_workouts/models.py` + `migrations/`
 - `student_app/models.py` + `migrations/`
-- `student_app/management/commands/extract_movements_from_html.py` *(novo)*
+- `public_workouts/management/commands/extract_movements_from_html.py` *(novo)*
 - `student_app/management/commands/seed_movement_library.py`
 - `operations/model_definitions.py` + `migrations/`
 
@@ -715,12 +815,13 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 ## ‖ B2 — Cobrança (4–6 dias)
 
 ### O que fazer
-1. `PublicWorkoutPaymentNotice` (`payment`, `offset_days`, `scheduled_for`, `sent_at`) com
+1. `PublicWorkoutPayment` (V3) + `PublicWorkoutPaymentNotice` (`payment`, `offset_days`, `scheduled_for`, `sent_at`) com
    unique `(payment, offset_days)`; as 5 linhas nascem com o `Payment`, data já
    resolvida por `brazilian_holidays`.
-2. `notify_payment_due(payment, offset_days)` — irmã de `notify_payment_confirmed`,
-   mesma estrutura de 3 canais isolados.
-3. Management command `drain_payment_notices` + **systemd timer**.
+2. `public_workouts/notifications.py::notify_payment_due(payment, offset_days)` —
+   **copia a forma** de `notify_payment_confirmed` e chama os mesmos senders. Não
+   edita `finance/` (V4).
+3. Management command `drain_public_workout_notices` + **systemd timer**.
 4. Assinatura recorrente do aluno com `metadata.product='coaching'`; roteador
    **próprio** resolvendo `PublicWorkoutSubscription` (molde: `router.py:306-419`,
    **sem tocar** o caminho de `Box`). Ver D.0.
@@ -730,8 +831,8 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ### O que entra
 - `public_workouts/models.py` — `PublicWorkoutSubscription`, `PublicWorkoutPaymentNotice` (**criados pela Frente A** a pedido da B; ver D.4)
-- `finance/payment_notifications.py` — só o irmão `notify_payment_due`
-- `finance/management/commands/drain_payment_notices.py` *(novo)*
+- `public_workouts/notifications.py` *(novo)* — `notify_payment_due` (V4)
+- `public_workouts/management/commands/drain_public_workout_notices.py` *(novo)*
 - `integrations/stripe/router.py`, `services.py`
 - `deploy/` — unit do systemd timer
 
