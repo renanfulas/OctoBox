@@ -1480,6 +1480,16 @@ self-service (5.1) começa a trazer gente. Os dados já existem depois da Entreg
 (carga, check-in, 1RM, tendência), então **é tela, não fundação** — pode esperar sem
 custo de retrabalho.
 
+### 5.6 Financeiro do corredor *(escopo revelado pelo isolamento)*
+
+Ao separar `PublicWorkoutPayment` de `finance.Payment` (V3), a receita de consultoria
+**deixou de aparecer** em `overdue_metrics`, no dashboard e nos relatórios do box. Isso
+é o comportamento correto — e cria a necessidade de uma tela própria: quem pagou, quem
+está atrasado, quanto entrou no mês.
+
+Provavelmente é a **mesma tela** do painel do personal (5.4). O custo é real e estava
+escondido atrás de uma decisão de arquitetura.
+
 ### 5.5 Portabilidade e retenção *(obrigação legal)*
 
 - **Exportar tudo do titular** — programas, cargas, avaliações — em formato legível

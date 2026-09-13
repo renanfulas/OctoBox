@@ -191,6 +191,8 @@ tests/test_public_workouts_isolation.py
   ✓ cobrar consultoria nao cria linha em finance.Payment              (V3)
   ✓ cobrar consultoria nao aparece em overdue_metrics do box          (V3)
   ✓ login de treino nao cria StudentAppInvitation                     (V5)
+  ✓ corredor nao importa integrations.stripe.router nem .services      (N2)
+  ✓ trocar e-mail em um produto nao altera o outro                     (N5)
   ✓ movimento pending do corredor nao aparece no picker do coach      (V1)
 ```
 
@@ -238,6 +240,102 @@ Buracos de cobertura que o plano cria ou expõe:
 | Testes que **devem** quebrar se algo der errado (Cat. 3) | 3 |
 | Suítes a rodar por precaução (Cat. 4) | 3 |
 | Testes novos obrigatórios | 10 |
+
+---
+
+## R.N — Engenharia reversa com o isolamento em vigor
+
+Simulação do sistema completo **depois** de D.000, D.00 e D.0. Cinco cenários novos
+— três quebram, e um deles é consequência direta do próprio isolamento.
+
+### N1 — 🔴 `PaymentWebhookEvent`: escrever nele viola a regra que acabei de escrever?
+
+O corredor tem endpoint próprio (S3), mas o envelope do evento precisa ser persistido e
+deduplicado. `PaymentWebhookEvent` vive em `integrations/` (**SHARED**), e o docstring
+do modelo diz: *"SHARED (public): app_label='integrations'. **Nunca expor fora de
+integrations/**."*
+
+**Decisão, com o trade-off à mostra:** o corredor **grava** em `PaymentWebhookEvent`, e
+isso é consistente com D.00 — `integrations/` é a fronteira com o mundo externo,
+compartilhada por todos os produtos, como os gateways de entrega e o `auditing`.
+Persistir envelope bruto é **transporte**, não decisão de negócio.
+
+Três condições para isso não virar brecha:
+
+1. O corredor **não adiciona campo** ao modelo. `event_id` já é único e o envelope bruto
+   já carrega `metadata.product` — nada a acrescentar. É *append de linha*, não mudança
+   de schema.
+2. O corredor **não importa** nada de `integrations/stripe/router.py`. Só
+   `verify_stripe_webhook` (`auth.py`), que é função pura.
+3. **A dedup fica global — e isso é uma vantagem, não concessão.** Se a Stripe reenviar
+   o mesmo `evt_` para o endpoint errado, uma tabela única pega; duas tabelas deixariam
+   passar.
+
+### N2 — 🔴 O seam `resolve_stripe_account` não deveria estar nesta entrega
+
+A Onda B1 previa refatorar `integrations/stripe/auth.py:16` e `services.py:18` para
+tirar `stripe.api_key` do escopo de módulo. **Isso é modificar o app principal motivado
+pelo corredor** — exatamente o que D.000 proíbe.
+
+E é desnecessário: se o corredor tem **checkout próprio**
+(`public_workouts/stripe_checkout.py`), ele resolve a própria conta e nunca chama
+`create_checkout_session` do box.
+
+**Correção:** o seam **sai da Onda B1** e vira nota de dívida do OctoBox — legítima
+(chave global no import é dívida do próprio box), mas em PR separado, do box, no tempo
+dele. O corredor já nasce com a conta resolvida por ele, que aliás é o desenho correto
+para multi-personal.
+
+Uma modificação a menos no principal.
+
+### N3 — 🟡 O isolamento tirou o financeiro do corredor dos relatórios
+
+**Consequência direta de V3 que eu não contabilizei.** Ao separar `PublicWorkoutPayment`
+de `finance.Payment`, a receita de consultoria **deixou de aparecer** em
+`overdue_metrics`, no dashboard financeiro e em qualquer relatório do box.
+
+Isso é o comportamento correto — mas **o profissional vai querer ver o dinheiro dele**.
+
+**Não é bug, é escopo faltando:** uma tela própria de financeiro do corredor (quem
+pagou, quem está atrasado, quanto entrou no mês). Entra como **5.6**, na Entrega 5,
+junto com o painel do personal (5.4) — mesma tela, provavelmente.
+
+O custo é real e estava escondido atrás de uma decisão de arquitetura.
+
+### N4 — 🟡 Campo 7 da anamnese é texto livre indo para a API da Anthropic
+
+*"Maior dificuldade no treino ou em manter a rotina"* é campo aberto. A pessoa pode
+escrever *"tenho ansiedade e travo antes de treinar"* ou *"estou em tratamento e canso
+fácil"* — **dado sensível de saúde que ninguém previu**, saindo do país (D2).
+
+O consentimento (0.5) cobre "dado de saúde", mas quem preenche não relaciona uma coisa
+com a outra na hora de escrever.
+
+**Correção barata e honesta:** aviso **no próprio campo**, não só no termo —
+*"Isso é usado para montar e ajustar seu treino."* Quem escrever algo sensível escreve
+sabendo. Custa uma linha de UI e resolve o problema no momento certo.
+
+### N5 — 🟡 Pessoa que é aluna de box **e** de consultoria
+
+Ela terá `StudentIdentity` (Google, no `/aluno/`) e `PublicWorkoutAccount` (e-mail, no
+`/treinos/`), vinculados por referência fraca. Dois cookies, paths diferentes — isso
+funciona.
+
+O que quebra: **ela troca de e-mail.** Atualiza de um lado e o outro fica velho.
+
+**Decisão:** a vinculação é **informativa, nunca autoritativa**. Cada produto mantém seu
+contato. O corredor não lê e-mail de `StudentIdentity` para mandar cobrança — usa o
+dele. Sincronizar os dois seria acoplamento disfarçado de conveniência.
+
+Teste: mudar o e-mail em um lado **não altera** o outro, e nenhum dos dois quebra.
+
+### N6 — ⚪ Custo de migration no schema public
+
+`public_workouts` ganha ~8 modelos, todos SHARED. Toda criação de schema `public` em
+teste paga isso — inclusive suítes que não têm nada a ver com o corredor.
+
+Não é bloqueio, mas vale **medir o tempo de `--create-db` antes e depois da Onda A1**.
+Se dobrar, vale revisar quais modelos precisam mesmo ser SHARED.
 
 ---
 
@@ -324,6 +422,7 @@ tests/test_student_vs_box_webhook_routing.py
   ✓ evento do corredor nao chega ao router do box         (P5, por endpoint)
   ✓ evento do box nao chega ao handler do corredor        (P5)
   ✓ assinatura HMAC do endpoint do corredor e verificada
+  ✓ o mesmo evt_ reenviado ao endpoint errado e deduplicado (N1)
 
 tests/test_payment_amount_guardrails.py
   ✓ amount fora de faixa e recusado no servico (P8)
@@ -599,9 +698,10 @@ cross-schema, sem segunda verdade.
 - `public_workouts/models.py` — `PublicWorkoutLoginToken` (V5); `public_workouts/views/auth.py` — tela `/treinos/login`
 - `public_workouts/notifications.py` *(novo)* — `notify_payment_due` (V4)
 - `public_workouts/` — `PublicWorkoutSubscription`, `PublicWorkoutPaymentNotice`
-- `integrations/stripe/auth.py`, `services.py` — **só** o seam `resolve_stripe_account`
-- `public_workouts/stripe_handlers.py` *(novo)* — handler próprio, em endpoint próprio (S3)
-- `config/settings/base.py`, `.env.example` — Google OAuth, `PUBLIC_WORKOUT_SESSION_COOKIE_AGE`, e **uma** entrada `'/treinos/'` em `PUBLIC_SCHEMA_PATHS`
+- `public_workouts/stripe_checkout.py` *(novo)* — checkout próprio, conta própria (N2)
+- `public_workouts/stripe_handlers.py` *(novo)* — handler próprio, endpoint próprio (S3)
+- `integrations/stripe/auth.py` — **somente leitura**: importa `verify_stripe_webhook` (função pura)
+- `config/settings/base.py`, `.env.example` — Google OAuth, `PUBLIC_WORKOUT_SESSION_COOKIE_AGE`, `PUBLIC_WORKOUT_STRIPE_*` e **uma** entrada `'/treinos/'` em `PUBLIC_SCHEMA_PATHS`
 - `static/js/public_workouts/` — outbox, sync do pacote, draft
 
 ### NÃO mexe
@@ -642,7 +742,7 @@ seu. Migration só nasce no diretório do dono.
 | `static/css/public_workouts/**` | **B** | a deletar na Onda B3 |
 | `student_identity/**` | **B** | |
 | ~~`finance/**`~~ | — | **não é mais tocado** (V3, V4) |
-| ~~`integrations/stripe/router.py`~~ | — | **não é mais tocado** (S3: endpoint próprio) |
+| ~~`integrations/stripe/**`~~ | — | **não é mais tocado** (S3 + N2); só leitura de `verify_stripe_webhook` |
 | `config/settings/**`, `.env.example` | **B** | |
 | `tests/golden/public_workouts/**` | **B** | quem renderiza, valida |
 
@@ -778,8 +878,9 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ### O que fazer
 1. Google OAuth ligado (`.env`), Apple Pay (domínio no dashboard Stripe).
-2. `resolve_stripe_account(box)` substituindo `stripe.api_key` em escopo de módulo
-   (`auth.py:16`, `services.py:18`) — chamada **por requisição**.
+2. ~~Seam `resolve_stripe_account`~~ — **removido desta entrega** (N2). O corredor tem
+   checkout próprio (`public_workouts/stripe_checkout.py`) e resolve a própria conta.
+   O seam vira dívida do OctoBox, em PR separado do box.
 3. `PUBLIC_WORKOUT_SESSION_COOKIE_AGE=2592000` — **variável própria** (S2).
    `STUDENT_APP_SESSION_COOKIE_AGE` **não é tocada**: governa o app do aluno de box.
 4. `StudentConsentDocumentKind.HEALTH_DATA` cobrindo IA, transferência
@@ -804,7 +905,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 ### Pronto quando
 1. Aluno entra com Google e continua logado 30 dias depois.
 2. Aluno entra por link de e-mail e cai no treino dele.
-3. `grep` não acha `stripe.api_key` em escopo de módulo.
+3. O corredor não importa nada de `integrations/stripe/router.py` nem de `services.py`.
 4. O blob de `localStorage` de um aluno real está no banco.
 
 ---
