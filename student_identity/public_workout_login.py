@@ -28,7 +28,9 @@ from django.utils import timezone
 from shared_support.platform_cache import platform_cache
 
 from .delivery_gateways import StudentEmailDeliveryError, get_student_email_gateway
-from .models import PublicWorkoutAccount, PublicWorkoutLoginToken, StudentIdentity
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoginToken
+
+from .models import StudentIdentity
 
 logger = logging.getLogger(__name__)
 

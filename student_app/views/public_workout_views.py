@@ -685,7 +685,7 @@ class PublicWorkoutLocalStorageBackupView(View):
         if not isinstance(raw_blob, dict):
             return HttpResponse(status=400)
 
-        from student_identity.models import PublicWorkoutLocalStorageBackup
+        from public_workouts.models import PublicWorkoutLocalStorageBackup
 
         PublicWorkoutLocalStorageBackup.objects.create(
             plan_slug=plan.slug,

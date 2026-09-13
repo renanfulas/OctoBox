@@ -14,13 +14,14 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .delivery_gateways import StudentEmailDeliveryError
-from .models import (
+from public_workouts.models import (
     PublicWorkoutAccount,
-    PublicWorkoutLoginToken,
     PublicWorkoutLocalStorageBackup,
-    StudentIdentity,
+    PublicWorkoutLoginToken,
 )
+
+from .delivery_gateways import StudentEmailDeliveryError
+from .models import StudentIdentity
 from .public_workout_login import (
     PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX,
     PublicWorkoutLoginRateLimitExceeded,
