@@ -1140,28 +1140,55 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ### O que fazer
 1. `student_identity_id` nullable em `PublicWorkoutAssessment` + migration.
-2. `MovementLibrary`: campos `modality` (`crossfit`/`strength`/`both`),
-   `movement_pattern`, `status` (`active`/`pending`) + migration.
+2. **`PublicWorkoutMovement`** (não `MovementLibrary` — corrigido para bater com
+   V1/D.00, escrito depois desta seção): campos `modality`
+   (`crossfit`/`strength`/`both`), `movement_pattern`, `status`
+   (`active`/`pending`) + migration. Pode ser *semeado a partir de*
+   `MovementLibrary` (cópia read-only), nunca escreve nela.
 3. `extract_movements_from_html` — varre os 10 HTMLs, extrai os pares
    `(nome, musclewiki_url)` dos `<a class="wiki-btn">`, normaliza slugs.
-4. Rodar o extrator e semear; o seed de CrossFit ganha `modality='crossfit'`.
-5. `reps_spec` e `rir_spec` (CharField) em `WorkoutTemplateMovement` + migration.
+   Parser escopado por bloco `<div class="ex">` — um regex "nome mais
+   próximo do wiki-btn mais próximo" cruza a fronteira de um bloco sem
+   wiki-btn (inserts de cardio) e associa o nome errado ao link do
+   exercício seguinte.
+4. Rodar o extrator e semear; o seed de CrossFit ganha `modality='crossfit'`
+   e `status='active'` (lista já curada); o extraído do HTML ganha
+   `modality='strength'` e `status='pending'`.
 
 ### O que entra
-- `public_workouts/models.py` + `migrations/`
-- `student_app/models.py` + `migrations/`
+- `public_workouts/models.py` + `migrations/` — `PublicWorkoutMovement`
 - `public_workouts/management/commands/extract_movements_from_html.py` *(novo)*
-- `student_app/management/commands/seed_movement_library.py`
-- `operations/model_definitions.py` + `migrations/`
 
 ### O que NÃO entra
 - `PublicWorkoutProgram` ainda não (Onda A1)
+- **`movement_pattern` não é preenchido pelo extrator.** O próprio CORDA
+  (R.N) cita essa classificação como decisão que exige "saber treinar" —
+  fica como campo livre esperando revisão humana, nunca advinhado por
+  script. O item "`reps_spec`/`rir_spec` em `WorkoutTemplateMovement`" que
+  esta seção listava foi removido: violava V2/D.00 (modificaria
+  `operations/`, app do box) e não tinha critério de pronto próprio — a
+  Onda A2 já é dona de extrair os `WorkoutTemplate` reais via parser de IA.
 - nenhuma view, nenhum template
 
 ### Pronto quando
-1. `MovementLibrary` tem o vocabulário dos 10 treinos com `reference_url`.
-2. `movement_pattern` preenchido para todo movimento com variação conhecida.
-3. Migrations aplicam e revertem limpo em banco de teste.
+1. `PublicWorkoutMovement` tem o vocabulário dos 10 treinos com `reference_url`.
+2. Migrations aplicam e revertem limpo em banco de teste.
+3. Nenhuma linha escrita em `student_app.MovementLibrary` (teste de isolamento).
+
+> **`movement_pattern` por movimento continua em aberto** — critério antigo
+> ("preenchido para todo movimento com variação conhecida") não é mais
+> "pronto quando" desta onda pelo motivo acima. Fica pendente de revisão do
+> Renan antes de a Onda A3 usar `movement_pattern` para substituição de
+> exercício.
+>
+> **Atualização:** `classify_public_workout_movements` (novo comando) preenche
+> uma *sugestão* de `movement_pattern` para os 82 movimentos extraídos do
+> HTML — classificação biomecânica feita exercício por exercício (taxonomia
+> de 20 padrões fechados), não um palpite de script. Continua sendo
+> sugestão, não decisão: `status` permanece `pending`, o comando nunca
+> sobrescreve um valor já preenchido (edição manual sempre vence), e a
+> confirmação (promover `pending` → `active`) segue sendo ação separada,
+> do Renan.
 
 ---
 
@@ -1209,34 +1236,82 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ## ‖ A1 — Snapshot e publicação (3–4 dias) — **Frente A · Renan + Claude**
 
-### O que fazer
+### ⚠️ Esta onda saiu dividida em duas fatias — ver nota antes de continuar
+
+Ao implementar, apareceram **duas questões reais e não resolvidas** no que
+esta seção já dava como certo. Nenhuma das duas é ambiguidade de redação
+(como as de B1/B2/A0, corrigidas nesta mesma sessão) — são decisões de
+produto que ninguém tomou ainda:
+
+1. **`student_identity_id` vs `PublicWorkoutAccount`.** S2/S3 (D.5) foram
+   congelados na Onda S0 com `student_identity_id: int` **obrigatório** como
+   identificador da pessoa. Isso antecede a Onda B1, que criou
+   `PublicWorkoutAccount` (conta só-email) exatamente **porque** a maioria
+   dos clientes de consultoria não é aluna de box e não tem
+   `StudentIdentity`. Implementar S2/S3 como estão congelados deixaria
+   registro de carga inutilizável pra quem não é aluno de box — a maioria
+   do público real do corredor. Mudar a assinatura exige "acordo escrito
+   das duas frentes antes do código" (Regras de convivência #3) — não é
+   uma correção unilateral como as anteriores.
+2. **`WeeklyWodPlan`/`WorkoutTemplate` não têm relação com os programas do
+   corredor.** Os dois são o planejador de WOD **em grupo** do box
+   (`student_app.models`/`operations.model_definitions`, por tenant). Os
+   programas do corredor (Bruno, Juliana...) são consultoria individual —
+   mesociclo, RIR, sem nenhuma ligação com aula em grupo. O payload real só
+   vai existir depois do parser de IA (Onda A2) ler os 10 HTMLs — não tem
+   como `publish_program` "ler WeeklyWodPlan/WorkoutTemplate" porque não é
+   de lá que o conteúdo vem.
+
+**Fatia A (entregue nesta onda):** tudo que não depende de resolver as duas
+questões acima — `PublicWorkoutProgram`, S1 (`get_active_program`) de
+verdade, `publish_program`/`activate_program_version` recebendo um payload
+já pronto (de onde quer que venha — a Onda A2 decide), e o item 6
+(movimento desconhecido vira `pending`, nunca bloqueia).
+
+**Fatia B (aguardando decisão):** `PublicWorkoutLoadLog`, S2
+(`build_student_package`) e S3 (`record_load`) de verdade — dependem da
+questão 1. `publish_program` ganhando uma fonte de dado real de tenant
+(dependeria da Onda A2 de qualquer forma — questão 2 é mais um
+esclarecimento do que um bloqueio).
+
+### O que fazer (Fatia A)
 1. `PublicWorkoutProgram` com `program_id`, `program_label`, `started_on`, `weeks`,
    `version`, `is_active`, `payload` + as duas constraints (única por
    `(program_id, version)`; **parcial** única por `slug` onde `is_active=True`).
-2. `PublicWorkoutLoadLog` indexado por `(student_identity_id, movement_slug, performed_on)`,
-   com `reps`, `rir`, `program_id` e `week_in_program` como contexto.
-3. `publish_program(...)` no tenant: lê `WeeklyWodPlan`/`WorkoutTemplate`, resolve
-   `reference_url` por slug, valida contra o schema, grava no `public`, ativa.
-4. Implementar S1, S2 e S3 de verdade; deletar o stub.
-5. `record_load` idempotente por `idempotency_key`; validação de outlier contra a
-   última carga do mesmo movimento.
-6. Movimento desconhecido entra `pending` e **não bloqueia** a publicação.
+2. `get_active_program` (S1) de verdade — deleta o uso do stub p/ essa função.
+3. `publish_program(*, slug, payload)` — recebe payload já validado contra o
+   schema (de onde vier), resolve `reference_url` por slug, grava no
+   `public`, ativa. Movimento desconhecido entra `pending` e **não bloqueia**
+   a publicação (item 6 original).
+4. `activate_program_version(*, slug, program_id, version)` — reverter é só
+   trocar qual linha tem `is_active=True`, nunca `UPDATE` do payload.
+
+### O que fazer (Fatia B — pendente da decisão sobre identidade)
+- `PublicWorkoutLoadLog` indexado por `(student_identity_id ou account_id?,
+  movement_slug, performed_on)`.
+- S2/S3 de verdade; deletar o resto do stub.
+- `record_load` idempotente por `idempotency_key`; validação de outlier.
 
 ### O que entra
 - `public_workouts/models.py` + `migrations/`
 - `public_workouts/services.py`
-- `student_app/application/publish_workout.py` *(novo)*
-- testes de fronteira tenant↔public
+- teste de fronteira tenant↔public (checagem estática: `services.py` nunca
+  importa ORM de `student_app`/`operations`)
 
 ### O que NÃO entra
 - parser de IA (Onda A2)
 - qualquer template ou view
+- `student_app/application/publish_workout.py` que esta seção listava —
+  não existe fonte real pra alimentar isso antes da Onda A2 (questão 2)
 
-### Pronto quando
+### Pronto quando (Fatia A)
 1. Publicar v2 e voltar para v1 é `UPDATE` de uma coluna.
 2. O banco recusa duas versões ativas para o mesmo slug.
-3. Teste de fronteira falha se alguma função tocar TENANT_APPS.
-4. `record_load` reenviado com a mesma chave não duplica linha.
+3. Teste de fronteira falha se alguma função tocar ORM de TENANT_APPS.
+4. Movimento desconhecido não impede `publish_program` de ativar a versão.
+
+> Pronto quando #4 original ("`record_load` reenviado com a mesma chave não
+> duplica linha") fica pendente da Fatia B.
 
 ---
 
@@ -1323,6 +1398,23 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 ## ⇄ B3 — Template único, fase B e hard reset (5–7 dias) — **Frente B · 2º desenvolvedor**
 
 **Depende de A1 (S1/S2 reais) e de A2 (os 10 publicados).**
+
+> **Fundação visual já entregue, adiantada, fora da dependência.** Os itens 1
+> e 2 ("O que fazer") não precisam de dado publicado de verdade — só do
+> contrato de `schema.py` (Onda S0), já congelado. `templates/public_workouts/workout.html`
+> existe, renderiza qualquer payload válido pelo schema (testado contra
+> `build_example_payload`), compõe os primitives reais do `student_app`
+> (`.student-card`, `.student-status-badge`, `tables.css`,
+> `interactive-tabs.css`) e implementa o mapeamento `accent_variant` →
+> `--theme-accent-premium`/`-support` (nenhum precedente existia no repo —
+> o padrão espelha o toggle `body[data-theme]` já usado pro tema claro/escuro).
+> **Não está ligado a nenhuma URL/view** — os itens 3–9 (apagar os 8 CSS
+> legados, matar o bootstrap de PWA antigo, fase B de acesso, `sw.js` novo,
+> outbox, hard reset) continuam bloqueados em A1/A2 como o texto original já
+> dizia, porque envolvem corte de produção real, não fundação visual.
+> `card-decor-glow` ainda não está aplicado — o primitive não é
+> accent-aware por padrão (`--neon-default-rgb` fixo), decisão de detalhe
+> visual que fica pra quando a onda real começar.
 
 ### O que fazer
 1. `workout.html` composto dos primitives do `student_app` — chip, card,

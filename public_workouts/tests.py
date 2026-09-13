@@ -190,3 +190,16 @@ class ModelTests(TestCase):
     def test_str_representation(self):
         assessment = PublicWorkoutAssessment.objects.create(plan_slug='rafael', measured_at=date(2026, 1, 1))
         self.assertEqual(str(assessment), 'rafael @ 2026-01-01')
+
+    def test_student_identity_id_defaults_to_none(self):
+        # Onda A0 do CORDA: referencia fraca (N5), preenchida so quando a
+        # pessoa tambem e aluna de box — nunca obrigatoria.
+        assessment = PublicWorkoutAssessment.objects.create(plan_slug='rafael', measured_at=date(2026, 1, 1))
+        self.assertIsNone(assessment.student_identity_id)
+
+    def test_student_identity_id_can_be_set(self):
+        assessment = PublicWorkoutAssessment.objects.create(
+            plan_slug='rafael', measured_at=date(2026, 1, 1), student_identity_id=42
+        )
+        assessment.refresh_from_db()
+        self.assertEqual(assessment.student_identity_id, 42)
