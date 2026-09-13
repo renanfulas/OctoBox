@@ -28,7 +28,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from django.conf import settings
-from django.core import signing
 from django.http import Http404, HttpResponse, JsonResponse
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
@@ -340,13 +339,14 @@ def get_public_workout_owner_slug(request) -> str | None:
     None se ausente ou com assinatura adulterada — nunca levanta. Usado
     por toda view que precisa confirmar "este navegador visitou este
     slug antes" (avaliacoes.json, upload de backup do localStorage).
+
+    `get_signed_cookie` com `default=` ja absorve BadSignature/KeyError
+    internamente (ver django.http.request.HttpRequest.get_signed_cookie) —
+    nao precisa de try/except aqui, ele nunca levanta com default setado.
     """
-    try:
-        return request.get_signed_cookie(
-            PUBLIC_WORKOUT_OWNER_COOKIE, salt=PUBLIC_WORKOUT_OWNER_COOKIE_SALT, default=None
-        )
-    except signing.BadSignature:
-        return None
+    return request.get_signed_cookie(
+        PUBLIC_WORKOUT_OWNER_COOKIE, salt=PUBLIC_WORKOUT_OWNER_COOKIE_SALT, default=None
+    )
 
 
 # Presente em qualquer pagina que estenda public_workouts/_base.html —
