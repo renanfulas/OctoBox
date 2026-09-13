@@ -122,6 +122,46 @@ class PublicWorkoutMovement(models.Model):
         return f'{self.slug} — {self.label_pt}'
 
 
+class PublicWorkoutProgram(models.Model):
+    """Snapshot publicado e imutavel de um programa (Onda A1 do CORDA).
+
+    `payload` e o contrato de public_workouts/schema.py, ja validado
+    (D.2, frase 2: e a PRESCRICAO publicada, nunca o que o aluno produz
+    depois — carga fica em PublicWorkoutLoadLog, fora deste payload).
+    `program_label`/`started_on`/`weeks` sao denormalizados do payload
+    pra dar pra consultar sem parsear JSON.
+
+    "Publicar v2" e so mais uma linha (version=2), nunca UPDATE em v1 —
+    reverter e trocar qual linha tem is_active=True (Pronto quando #1 da
+    Onda A1). O banco garante no maximo uma linha ativa por slug (Pronto
+    quando #2) via UniqueConstraint parcial.
+    """
+
+    slug = models.CharField(max_length=50, db_index=True)
+    program_id = models.CharField(max_length=80, db_index=True)
+    program_label = models.CharField(max_length=160)
+    started_on = models.DateField()
+    weeks = models.PositiveSmallIntegerField()
+    version = models.PositiveIntegerField()
+    is_active = models.BooleanField(default=False, db_index=True)
+    payload = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-version']
+        constraints = [
+            models.UniqueConstraint(fields=['program_id', 'version'], name='unique_public_workout_program_version'),
+            models.UniqueConstraint(
+                fields=['slug'],
+                condition=models.Q(is_active=True),
+                name='unique_active_public_workout_program_per_slug',
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.slug} v{self.version} [{"ativo" if self.is_active else "inativo"}]'
+
+
 # ---------------------------------------------------------------------------
 # Corredor de treinos — conta, login e backup (Onda B1 do CORDA).
 #

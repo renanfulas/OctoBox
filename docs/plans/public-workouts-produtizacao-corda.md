@@ -1236,34 +1236,82 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ## ‖ A1 — Snapshot e publicação (3–4 dias) — **Frente A · Renan + Claude**
 
-### O que fazer
+### ⚠️ Esta onda saiu dividida em duas fatias — ver nota antes de continuar
+
+Ao implementar, apareceram **duas questões reais e não resolvidas** no que
+esta seção já dava como certo. Nenhuma das duas é ambiguidade de redação
+(como as de B1/B2/A0, corrigidas nesta mesma sessão) — são decisões de
+produto que ninguém tomou ainda:
+
+1. **`student_identity_id` vs `PublicWorkoutAccount`.** S2/S3 (D.5) foram
+   congelados na Onda S0 com `student_identity_id: int` **obrigatório** como
+   identificador da pessoa. Isso antecede a Onda B1, que criou
+   `PublicWorkoutAccount` (conta só-email) exatamente **porque** a maioria
+   dos clientes de consultoria não é aluna de box e não tem
+   `StudentIdentity`. Implementar S2/S3 como estão congelados deixaria
+   registro de carga inutilizável pra quem não é aluno de box — a maioria
+   do público real do corredor. Mudar a assinatura exige "acordo escrito
+   das duas frentes antes do código" (Regras de convivência #3) — não é
+   uma correção unilateral como as anteriores.
+2. **`WeeklyWodPlan`/`WorkoutTemplate` não têm relação com os programas do
+   corredor.** Os dois são o planejador de WOD **em grupo** do box
+   (`student_app.models`/`operations.model_definitions`, por tenant). Os
+   programas do corredor (Bruno, Juliana...) são consultoria individual —
+   mesociclo, RIR, sem nenhuma ligação com aula em grupo. O payload real só
+   vai existir depois do parser de IA (Onda A2) ler os 10 HTMLs — não tem
+   como `publish_program` "ler WeeklyWodPlan/WorkoutTemplate" porque não é
+   de lá que o conteúdo vem.
+
+**Fatia A (entregue nesta onda):** tudo que não depende de resolver as duas
+questões acima — `PublicWorkoutProgram`, S1 (`get_active_program`) de
+verdade, `publish_program`/`activate_program_version` recebendo um payload
+já pronto (de onde quer que venha — a Onda A2 decide), e o item 6
+(movimento desconhecido vira `pending`, nunca bloqueia).
+
+**Fatia B (aguardando decisão):** `PublicWorkoutLoadLog`, S2
+(`build_student_package`) e S3 (`record_load`) de verdade — dependem da
+questão 1. `publish_program` ganhando uma fonte de dado real de tenant
+(dependeria da Onda A2 de qualquer forma — questão 2 é mais um
+esclarecimento do que um bloqueio).
+
+### O que fazer (Fatia A)
 1. `PublicWorkoutProgram` com `program_id`, `program_label`, `started_on`, `weeks`,
    `version`, `is_active`, `payload` + as duas constraints (única por
    `(program_id, version)`; **parcial** única por `slug` onde `is_active=True`).
-2. `PublicWorkoutLoadLog` indexado por `(student_identity_id, movement_slug, performed_on)`,
-   com `reps`, `rir`, `program_id` e `week_in_program` como contexto.
-3. `publish_program(...)` no tenant: lê `WeeklyWodPlan`/`WorkoutTemplate`, resolve
-   `reference_url` por slug, valida contra o schema, grava no `public`, ativa.
-4. Implementar S1, S2 e S3 de verdade; deletar o stub.
-5. `record_load` idempotente por `idempotency_key`; validação de outlier contra a
-   última carga do mesmo movimento.
-6. Movimento desconhecido entra `pending` e **não bloqueia** a publicação.
+2. `get_active_program` (S1) de verdade — deleta o uso do stub p/ essa função.
+3. `publish_program(*, slug, payload)` — recebe payload já validado contra o
+   schema (de onde vier), resolve `reference_url` por slug, grava no
+   `public`, ativa. Movimento desconhecido entra `pending` e **não bloqueia**
+   a publicação (item 6 original).
+4. `activate_program_version(*, slug, program_id, version)` — reverter é só
+   trocar qual linha tem `is_active=True`, nunca `UPDATE` do payload.
+
+### O que fazer (Fatia B — pendente da decisão sobre identidade)
+- `PublicWorkoutLoadLog` indexado por `(student_identity_id ou account_id?,
+  movement_slug, performed_on)`.
+- S2/S3 de verdade; deletar o resto do stub.
+- `record_load` idempotente por `idempotency_key`; validação de outlier.
 
 ### O que entra
 - `public_workouts/models.py` + `migrations/`
 - `public_workouts/services.py`
-- `student_app/application/publish_workout.py` *(novo)*
-- testes de fronteira tenant↔public
+- teste de fronteira tenant↔public (checagem estática: `services.py` nunca
+  importa ORM de `student_app`/`operations`)
 
 ### O que NÃO entra
 - parser de IA (Onda A2)
 - qualquer template ou view
+- `student_app/application/publish_workout.py` que esta seção listava —
+  não existe fonte real pra alimentar isso antes da Onda A2 (questão 2)
 
-### Pronto quando
+### Pronto quando (Fatia A)
 1. Publicar v2 e voltar para v1 é `UPDATE` de uma coluna.
 2. O banco recusa duas versões ativas para o mesmo slug.
-3. Teste de fronteira falha se alguma função tocar TENANT_APPS.
-4. `record_load` reenviado com a mesma chave não duplica linha.
+3. Teste de fronteira falha se alguma função tocar ORM de TENANT_APPS.
+4. Movimento desconhecido não impede `publish_program` de ativar a versão.
+
+> Pronto quando #4 original ("`record_load` reenviado com a mesma chave não
+> duplica linha") fica pendente da Fatia B.
 
 ---
 
