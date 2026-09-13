@@ -1145,6 +1145,15 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 > "pronto quando" desta onda pelo motivo acima. Fica pendente de revisão do
 > Renan antes de a Onda A3 usar `movement_pattern` para substituição de
 > exercício.
+>
+> **Atualização:** `classify_public_workout_movements` (novo comando) preenche
+> uma *sugestão* de `movement_pattern` para os 82 movimentos extraídos do
+> HTML — classificação biomecânica feita exercício por exercício (taxonomia
+> de 20 padrões fechados), não um palpite de script. Continua sendo
+> sugestão, não decisão: `status` permanece `pending`, o comando nunca
+> sobrescreve um valor já preenchido (edição manual sempre vence), e a
+> confirmação (promover `pending` → `active`) segue sendo ação separada,
+> do Renan.
 
 ---
 
