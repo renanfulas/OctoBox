@@ -827,7 +827,8 @@ cross-schema, sem segunda verdade.
 17. `O corredor consome serviços do OctoBox. Nunca estende modelos dele.`
 18. `Precisou modificar modelo do app principal? Ramifica: cria o seu, copiando a estrutura.`
 19. `Compartilha-se o que transporta e o que identifica. Nunca o que decide.`
-20. `Nenhuma migration do corredor nasce fora de public_workouts/.`
+20. `Nenhuma migration do corredor nasce fora de public_workouts/ — vale para as duas frentes.`
+21. `D.000 e principio, D.4 e mecanismo. Quando colidem, o mecanismo cede.`
 
 ## D.3 Onde mexe / onde NÃO mexe (visão geral)
 
@@ -998,8 +999,42 @@ seu. Migration só nasce no diretório do dono.
 | `config/settings/**`, `.env.example` | **B** | |
 | `tests/golden/public_workouts/**` | **B** | quem renderiza, valida |
 
-**Migrations por app:** `public_workouts`, `student_app`, `operations` → **A**.
-`finance`, `student_identity` → **B**. Nenhum app recebe migration de duas frentes.
+**Migrations por app:** **toda migration do corredor nasce em `public_workouts/`** —
+pelas duas frentes, sem exceção. `finance`, `student_identity`, `student_app` e
+`operations` **não recebem migration deste projeto** (D.000).
+
+### ⚠️ Quando D.4 colide com D.000, quem vence é D.000
+
+Uma onda da **Frente B** pode precisar criar modelo (a B1 precisou:
+`PublicWorkoutAccount`, `PublicWorkoutLoginToken`,
+`PublicWorkoutLocalStorageBackup`). Lendo D.4 isoladamente — *"`public_workouts/**` é
+da Frente A"* — a saída parece ser criar o modelo no diretório da própria frente.
+**Não é.** Isso coloca tabela de um produto dentro do app do outro, que é exatamente o
+que D.000 proíbe.
+
+| | |
+|---|---|
+| **D.000** (sobrecarga zero) | **princípio** — dano permanente ao produto se violado |
+| **D.4** (propriedade de diretório) | **mecanismo** — evita colisão de merge entre devs |
+
+**Princípio vence mecanismo.** Colisão de migration é inconveniência de processo e se
+resolve por sequenciamento; modelo de um produto na tabela do outro é dívida que só sai
+com migration de dados entre apps.
+
+**Procedimento quando a Frente B precisa de modelo:**
+
+1. Cria em `public_workouts/models.py` e a migration em `public_workouts/migrations/`.
+2. **Avisa a Frente A antes de gerar** — uma mensagem, não um processo.
+3. A Frente A rebaseia antes de gerar a próxima.
+
+Na prática o conflito quase não acontece: as ondas que criam modelo estão separadas no
+tempo (B1 antes de A1), e o Django resolve numeração sequencial sem drama quando só uma
+pessoa gera por vez.
+
+> **Precedente:** a B1 criou os três modelos em `student_identity/` seguindo D.4 ao pé
+> da letra, com o raciocínio documentado no código. A leitura foi defensável — a
+> ambiguidade estava neste documento, não na implementação. Corrigido em
+> `38a971bc`.
 
 **Testes:** cada frente escreve teste no seu diretório. Testes de fronteira
 (tenant↔public) são da **Frente A**, porque ela define o contrato.
