@@ -150,10 +150,10 @@ sem ler, restaura o vazamento.
 | Teste | Onde | Por que quebra | Mitigação |
 |---|---|---|---|
 | `test_public_workout_pages_are_open_without_login` | `:2026` | 8 GETs esperando 200 **sem login**; a fase B exige login em plano pago | **dividir em dois**: `..._open_without_login` (legado/cortesia) e `..._require_login_for_paid_plan` (novo) |
-| `test_public_workout_content_signature_is_stable` | `:2265` | compara assinatura do HTML com o golden — o template único muda o HTML; e assere `len(slugs) == 10` em `PUBLIC_WORKOUT_LIBRARY`, que deixa de existir | trocar a fonte dos slugs de dict para query em `PublishedWorkout`; **diff aprovado à mão antes de regravar** (R4) |
-| `test_public_workout_manifest_is_dynamic_per_slug` | `:2069` | `theme_color` / `background_color` / `short_name` saem do dataclass `PublicWorkoutPlan` e passam a vir do banco | fixture de `PublishedWorkout` no `setUp` |
+| `test_public_workout_content_signature_is_stable` | `:2265` | compara assinatura do HTML com o golden — o template único muda o HTML; e assere `len(slugs) == 10` em `PUBLIC_WORKOUT_LIBRARY`, que deixa de existir | trocar a fonte dos slugs de dict para query em `PublicWorkoutProgram`; **diff aprovado à mão antes de regravar** (R4) |
+| `test_public_workout_manifest_is_dynamic_per_slug` | `:2069` | `theme_color` / `background_color` / `short_name` saem do dataclass `PublicWorkoutPlan` e passam a vir do banco | fixture de `PublicWorkoutProgram` no `setUp` |
 | `test_public_workout_page_renders_install_cta` | `:2118` | o install prompt sai do `_base.html` e da injeção legada para o template único | asserção pelo `id="public-workout-install"`, que é contrato, não pela classe CSS |
-| `public_workouts/tests.py` — validação de slug | `:125` | `_validate_plan_slug` importa `PUBLIC_WORKOUT_LIBRARY` **de dentro da função** (para evitar import circular); a fonte passa a ser `PublishedWorkout` | testes de serviço criam fixture no banco em vez de depender do dict |
+| `public_workouts/tests.py` — validação de slug | `:125` | `_validate_plan_slug` importa `PUBLIC_WORKOUT_LIBRARY` **de dentro da função** (para evitar import circular); a fonte passa a ser `PublicWorkoutProgram` | testes de serviço criam fixture no banco em vez de depender do dict |
 
 ### 🟢 Categoria 3 — devem quebrar, e isso é o objetivo
 
@@ -267,7 +267,7 @@ entra num domínio com disciplina estabelecida.
    persistido**, não só em log. O desenho de `notify_payment_confirmed` (retorno por
    canal) já é isso — a régua persiste esse retorno.
 5. **Marcação de envio é transacional.** `select_for_update` na linha do
-   `PaymentNotice`, `sent_at` gravado no mesmo commit do resultado do envio. Nem antes
+   `PublicWorkoutPaymentNotice`, `sent_at` gravado no mesmo commit do resultado do envio. Nem antes
    (P2) nem solto depois (P1).
 6. **Dinheiro nunca é asserido por efeito colateral.** Teste de cobrança assere o
    registro no banco, não "o mock foi chamado".
@@ -322,6 +322,70 @@ vezes e assere que o mundo mudou uma vez só.
 
 # D — Direção
 
+## D.0 Fronteira entre os dois produtos — nome e estado
+
+> **Correção de rota (revisão desta seção).** Versões anteriores deste CORDA
+> reusavam `StudentBoxMembership` para a trava do corredor de treinos e chamavam o
+> registro de carga de `StudentLoadLog`. **As duas coisas estavam erradas** e pela
+> mesma razão: misturavam estado de negócio de dois produtos diferentes.
+
+O corredor de treinos e o SaaS de box **dividem infraestrutura, nunca regra de
+negócio**:
+
+| Camada | Compartilha? | Exemplos |
+|---|---|---|
+| Identidade / autenticação | ✅ | `StudentIdentity`, `StudentAppInvitation`, cookie assinado |
+| Infra de transporte | ✅ | push VAPID, Resend, Evolution, systemd timer |
+| Design system | ✅ | tokens, primitives (somente leitura) |
+| **Estado de negócio** | ❌ **nunca** | assinatura, programa, carga, avaliação, trava |
+
+### Por que `StudentBoxMembership` não serve
+
+É o vínculo **aluno↔box do SaaS de academia**. O aluno de consultoria online não
+frequenta aula, não tem `Attendance`, não aparece em `ClassSession`. Colocá-lo ali
+significa que ele passa a existir em toda query de "alunos do box", em relatório de
+frequência e em dashboard de aula — **atravessamento por construção**, não por bug.
+
+**Substituído por `PublicWorkoutSubscription`**, no app `public_workouts`, com estado
+próprio (`active`, `past_due`, `suspended`, `canceled`). O gate do `/renan/` consulta
+ele. `StudentBoxMembership` e `SUSPENDED_FINANCIAL` continuam existindo e **não são
+tocados** — governam o outro produto.
+
+### Regra de nomenclatura
+
+**Todo modelo do corredor de treinos vive em `public_workouts/` e tem prefixo
+`PublicWorkout`.** O app já estabelece o padrão (`PublicWorkoutAssessment`).
+
+| Antes (ambíguo) | Agora | Colidia com |
+|---|---|---|
+| `PublishedWorkout` | **`PublicWorkoutProgram`** | `SessionWorkout`, `WorkoutTemplate` |
+| `StudentLoadLog` | **`PublicWorkoutLoadLog`** | `StudentExerciseMax`, `StudentExerciseMaxHistory` |
+| `StudentBoxMembership` (reuso) | **`PublicWorkoutSubscription`** | o vínculo de box do SaaS |
+| `PaymentNotice` | **`PublicWorkoutPaymentNotice`** | `payment_notifications.py` do box |
+| `StudentExerciseSubstitution` | **`PublicWorkoutSubstitution`** | — |
+
+**Nenhum modelo novo do corredor começa com `Student`.** Esse prefixo pertence ao
+SaaS de box; usá-lo nos dois lados é convidar o desenvolvedor a abrir o arquivo
+errado — e com duas frentes em paralelo, isso vira bug de produção.
+
+### O que isso faz com o P5
+
+**P5 deixa de ser um bug a testar e passa a ser impossível por construção.**
+
+O roteador de webhook não precisa "acertar o discriminador": são **dois roteadores que
+leem coisas diferentes**. A assinatura carrega `metadata.product` (`coaching` ou
+`box_saas`) gravado no checkout, e:
+
+- `product='coaching'` → resolve `PublicWorkoutSubscription`. **Não conhece `Box`.**
+- `product='box_saas'` → resolve `Box`. **Não conhece `PublicWorkoutSubscription`.**
+- sem `metadata.product` → **recusa e loga**, nunca adivinha.
+
+Um evento de aluno não tem como suspender um box porque o caminho de código que
+suspende box **não é alcançável** a partir dele.
+
+Os testes de P5 continuam no plano — mas agora como **teste de regressão de
+arquitetura** ("ninguém religou o acoplamento"), não como rede sob um risco vivo.
+
 ## D.1 Tese central
 
 O `/renan/` não precisa de um sistema novo — precisa **parar de ser um sistema
@@ -358,7 +422,7 @@ cross-schema, sem segunda verdade.
 ### Mexe
 
 **Domínio de treino (Frente A)**
-- `public_workouts/models.py` — `PublishedWorkout`, `StudentLoadLog`, `student_identity_id` em `PublicWorkoutAssessment`
+- `public_workouts/models.py` — `PublicWorkoutProgram`, `PublicWorkoutLoadLog`, `PublicWorkoutSubscription`, `student_identity_id` em `PublicWorkoutAssessment`
 - `public_workouts/services.py` — `get_active_program`, `publish_program`, `build_student_package`
 - `public_workouts/formulas.py` — `estimate_one_rep_max` + `OneRepMaxEstimate`
 - `public_workouts/migrations/` — **dono exclusivo**
@@ -376,7 +440,8 @@ cross-schema, sem segunda verdade.
 - `templates/public_workouts/workout.html` *(novo)* — template único sobre o DS
 - `student_app/public_urls.py` — rotas novas
 - `student_identity/` — provider de e-mail, tela `/treinos/login`, ownership
-- `finance/` — `PaymentNotice`, `notify_payment_due`
+- `finance/payment_notifications.py` — `notify_payment_due`
+- `public_workouts/` — `PublicWorkoutSubscription`, `PublicWorkoutPaymentNotice`
 - `integrations/stripe/auth.py`, `services.py`, `router.py` — seam de conta + roteador de aluno
 - `config/settings/base.py`, `.env.example` — Google OAuth, cookie 30 d
 - `static/js/public_workouts/` — outbox, sync do pacote, draft
@@ -418,7 +483,7 @@ seu. Migration só nasce no diretório do dono.
 | `static/js/public_workouts/**` | **B** | |
 | `static/css/public_workouts/**` | **B** | a deletar na Onda B3 |
 | `student_identity/**` | **B** | |
-| `finance/**` | **B** | inclui `migrations/` |
+| `finance/**` | **B** | inclui `migrations/`; **só `payment_notifications.py` nesta entrega** |
 | `integrations/stripe/**` | **B** | |
 | `config/settings/**`, `.env.example` | **B** | |
 | `tests/golden/public_workouts/**` | **B** | quem renderiza, valida |
@@ -541,7 +606,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 - `operations/model_definitions.py` + `migrations/`
 
 ### O que NÃO entra
-- `PublishedWorkout` ainda não (Onda A1)
+- `PublicWorkoutProgram` ainda não (Onda A1)
 - nenhuma view, nenhum template
 
 ### Pronto quando
@@ -587,10 +652,10 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 ## ‖ A1 — Snapshot e publicação (3–4 dias)
 
 ### O que fazer
-1. `PublishedWorkout` com `program_id`, `program_label`, `started_on`, `weeks`,
+1. `PublicWorkoutProgram` com `program_id`, `program_label`, `started_on`, `weeks`,
    `version`, `is_active`, `payload` + as duas constraints (única por
    `(program_id, version)`; **parcial** única por `slug` onde `is_active=True`).
-2. `StudentLoadLog` indexado por `(student_identity_id, movement_slug, performed_on)`,
+2. `PublicWorkoutLoadLog` indexado por `(student_identity_id, movement_slug, performed_on)`,
    com `reps`, `rir`, `program_id` e `week_in_program` como contexto.
 3. `publish_program(...)` no tenant: lê `WeeklyWodPlan`/`WorkoutTemplate`, resolve
    `reference_url` por slug, valida contra o schema, grava no `public`, ativa.
@@ -640,7 +705,7 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 - nenhuma alteração de template ou view
 
 ### Pronto quando
-1. Os 10 programas existem como `PublishedWorkout` ativo.
+1. Os 10 programas existem como `PublicWorkoutProgram` ativo.
 2. Comparação contra o golden **versionado** não acusa perda de conteúdo.
 3. ~15 templates reutilizáveis existem.
 4. Teste trava o piso de 4.096 tokens do prompt cache.
@@ -650,19 +715,22 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 ## ‖ B2 — Cobrança (4–6 dias)
 
 ### O que fazer
-1. `PaymentNotice` (`payment`, `offset_days`, `scheduled_for`, `sent_at`) com
+1. `PublicWorkoutPaymentNotice` (`payment`, `offset_days`, `scheduled_for`, `sent_at`) com
    unique `(payment, offset_days)`; as 5 linhas nascem com o `Payment`, data já
    resolvida por `brazilian_holidays`.
 2. `notify_payment_due(payment, offset_days)` — irmã de `notify_payment_confirmed`,
    mesma estrutura de 3 canais isolados.
 3. Management command `drain_payment_notices` + **systemd timer**.
-4. Assinatura recorrente aluno→box; roteador de webhook resolvendo
-   `StudentBoxMembership` (molde: `router.py:306-419`).
-5. Job `D+2 → SUSPENDED_FINANCIAL` e volta por `invoice.payment_succeeded`.
+4. Assinatura recorrente do aluno com `metadata.product='coaching'`; roteador
+   **próprio** resolvendo `PublicWorkoutSubscription` (molde: `router.py:306-419`,
+   **sem tocar** o caminho de `Box`). Ver D.0.
+5. Job `D+2 → PublicWorkoutSubscription.suspended` e volta por
+   `invoice.payment_succeeded`. **`StudentBoxMembership` não é tocado.**
 6. Stripe Customer Portal.
 
 ### O que entra
-- `finance/models.py` + `migrations/`, `payment_notifications.py`
+- `public_workouts/models.py` — `PublicWorkoutSubscription`, `PublicWorkoutPaymentNotice` (**criados pela Frente A** a pedido da B; ver D.4)
+- `finance/payment_notifications.py` — só o irmão `notify_payment_due`
 - `finance/management/commands/drain_payment_notices.py` *(novo)*
 - `integrations/stripe/router.py`, `services.py`
 - `deploy/` — unit do systemd timer
@@ -678,7 +746,8 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 3. Canal que falha **não** deixa `sent_at` preenchido (P2).
 4. Pagamento confirmado há 1 minuto **não** é suspenso pelo job de D+2 (P3).
 5. Reconciliação reativa o aluno **com o webhook suprimido** (P4).
-6. Evento de assinatura de aluno **não altera `Box.status`** — e vice-versa (P5).
+6. Evento com `metadata.product='coaching'` **não alcança** o caminho que altera
+   `Box.status` — e vice-versa (P5, agora regressão de arquitetura).
 7. Duplo POST em "assinar" cria **uma** subscription (P6).
 8. `amount` fora de faixa é recusado **no serviço**, não só no form (P8).
 9. Cartão recusado gera copy diferente de inadimplência.
