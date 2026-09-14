@@ -1686,6 +1686,33 @@ bloqueio).
 >   elimina qualquer superfície de redirecionamento aberto por
 >   construção. `assessments.js` já manda `/treinos/login?next=/renan/<slug>`
 >   no 401 da autoavaliação.
+>
+> **Atualização (dobras cutâneas online, terceira entrega desta mesma
+> sessão):** a autoavaliação online ganhou um segundo método além do US
+> Navy — Jackson-Pollock 7 pontos — mas **gated**, não livre. Decisão do
+> Renan (perguntada explicitamente porque contradizia a decisão anterior
+> "treinador só presencial coloca as medidas de dobra"): o aluno só vê a
+> seção de dobras depois que `has_presencial_skinfold_assessment` confirma
+> que o **treinador** já lançou pelo menos 1 avaliação por dobra deste
+> plano presencialmente (via `add_public_workout_assessment`) — só confia
+> na técnica do aluno pinçando a dobra sozinho depois de ele já ter sido
+> calibrado ao vivo. `build_report` expõe isso como
+> `skinfold_self_report_unlocked` (bool), revalidado no servidor a cada
+> POST — o flag do JSON é só pra tela decidir se MOSTRA a seção, nunca
+> autorização de verdade. `body_fat_percent`/`body_fat_source` continuam
+> nunca vindo direto do aluno: ele manda `age` + as 7 dobras em mm
+> (mesmos nomes do `--dobra-*` do management command), o servidor calcula
+> via `estimate_body_fat_jackson_pollock_7site` na hora da escrita (não em
+> tempo de leitura como o Navy, porque idade não é persistida em lugar
+> nenhum — mesmo padrão do `--age` do comando). Raw folds também não são
+> persistidos como dado estruturado, só endereçados numa nota de texto
+> (`"Dobras (mm): ..."`) — mesmo padrão que o comando já usava, zero
+> mudança de schema. Verificado de ponta a ponta num Chromium real:
+> seção escondida enquanto bloqueado, aparece sozinha depois do comando
+> presencial rodar (sem reload manual — só na próxima vez que
+> avaliacoes.json é buscado), calcula e salva corretamente, idade fica
+> lembrada em localStorage entre visitas (evita perguntar de novo, sem
+> precisar de coluna nova no banco).
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
