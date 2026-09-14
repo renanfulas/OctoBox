@@ -31,7 +31,7 @@ PONTOS CRITICOS:
 <link rel="stylesheet" href="{% static 'css/design-system/neon.css' %}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-shell.css' %}">
 </head>
-<body{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
+<body data-plan-slug="{{ plan_slug }}"{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
 <main class="workout-shell">
 
   <section class="student-hero-number" aria-label="Resumo do programa">
@@ -88,7 +88,7 @@ PONTOS CRITICOS:
               {% for movement in block.movements %}
               <tr>
                 <td>
-                  {% if movement.reference_url %}<a href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement.movement_slug|humanize_movement_slug }}</a>
+                  {% if movement.reference_url %}<a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement.movement_slug|humanize_movement_slug }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a>
                   {% else %}{{ movement.movement_slug|humanize_movement_slug }}{% endif %}
                   {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
                 </td>
@@ -100,6 +100,29 @@ PONTOS CRITICOS:
                   {% else %}Livre{% endif %}
                 </td>
               </tr>
+              {% if movement.is_tracked %}
+              <tr class="workout-load-input-row" data-workout-load-row>
+                <td colspan="4">
+                  <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}">
+                    <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+                    <div class="workout-load-input__row">
+                      <input
+                        type="number"
+                        inputmode="decimal"
+                        step="2.5"
+                        min="0"
+                        placeholder="kg"
+                        class="workout-load-input__field"
+                        data-workout-load-field
+                        aria-label="Carga de hoje em {{ movement.movement_slug|humanize_movement_slug }}, em quilos"
+                      >
+                      <button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
+                    </div>
+                    <span class="workout-load-input__status" data-workout-load-status aria-live="polite"></span>
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
               {% empty %}
               <tr><td colspan="4" class="table-empty-cell">Nenhum movimento neste bloco.</td></tr>
               {% endfor %}
@@ -261,5 +284,6 @@ PONTOS CRITICOS:
   });
 })();
 </script>
+<script src="{% static 'js/public_workouts/load_tracker.js' %}" defer></script>
 </body>
 </html>

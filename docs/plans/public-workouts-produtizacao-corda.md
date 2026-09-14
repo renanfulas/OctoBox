@@ -1551,9 +1551,31 @@ bloqueio).
 >   `build_student_package`, já com 1RM real da Onda A3) e
 >   `GET /renan/<slug>/meus-dados.json` (export de dados do titular, Onda
 >   A3/LGPD) — todos exigem sessão de login, 401 sem sessão, 404 sem posse.
->   O outbox de IndexedDB em si (rascunho em `visibilitychange`, dreno
->   oportunista, limpeza no logout) **continua sem existir** — esses
->   endpoints são só o que ele vai chamar quando existir.
+>
+> **Item 8, atualizado nesta sessão — outbox de IndexedDB entregue, UI de
+> registro ligada a `workout.html`:** `static/js/public_workouts/load_tracker.js`
+> (novo) — cada movimento com `is_tracked=True` ganha uma caixinha própria
+> "Registrar carga de hoje" (input de kg + Salvar) logo abaixo da linha do
+> exercício. Salvar grava primeiro no IndexedDB (`public-workout-outbox`,
+> `idempotency_key` gerada uma vez por registro, reenviada sem trocar em
+> toda tentativa) e só depois tenta `POST /renan/<slug>/carga` — offline ou
+> erro de rede deixa o registro na fila pra próxima tentativa (`online`,
+> próximo carregamento da página), nunca perde o dado. Rascunho em
+> `visibilitychange` (campo digitado mas não salvo, tela apagada/app trocado)
+> entra na mesma fila. Verificado via Playwright contra o payload real do
+> Bruno: sem erro de console, entrada aparece no outbox após "Salvar",
+> some depois de uma entrega bem-sucedida.
+> Limpeza no logout **continua pendente**: não existe hoje nenhuma rota de
+> logout no corredor (só o cookie de posse do B0 e a sessão de login do
+> B1) — `window.PublicWorkoutLoadTracker.clearOutbox` já está exportada,
+> esperando esse botão nascer.
+> **Fora desta entrega, de propósito** (achado ao comparar `workout.html`
+> renderizado com dado real da `bruno.json` golden contra a página legada):
+> nome de exercício em PT-BR (hoje só `movement_slug` humanizado
+> mecanicamente, ex. "Barbell bench press" em vez de "Supino reto com
+> barra") e legenda de tipo de série (Feeder/Top Set) — os dois exigiriam
+> campo novo em `schema.py`, contrato da Onda S0 que muda só com acordo
+> escrito das duas frentes (D.5). Não decidido unilateralmente aqui.
 
 ### O que fazer
 1. `workout.html` composto dos primitives do `student_app` — chip, card,

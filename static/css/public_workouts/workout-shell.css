@@ -268,3 +268,86 @@
         stroke-dashoffset: 0;
     }
 }
+
+/* Link do MuscleWiki (Onda B3, item 1) — nas paginas legadas era um botao
+   proprio (.wiki-btn/.gym-wiki, cada CSS por-plano com sua copia); aqui
+   e so o link de sempre com uma pilula em volta, na paleta compartilhada. */
+.workout-wiki-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--brand);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.workout-wiki-link:hover,
+.workout-wiki-link:focus-visible {
+    text-decoration: underline;
+}
+
+.workout-wiki-link__icon {
+    font-size: 0.85em;
+}
+
+/* Registro de carga de hoje (item 8) — linha propria logo abaixo do
+   movimento rastreado, span nas 4 colunas (D.00: reusa .operation-table-wrap
+   em vez de inventar um segundo layout de card). */
+.workout-load-input-row td {
+    padding-top: 0;
+    padding-bottom: 10px;
+    border-top: none;
+}
+
+.workout-load-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--brand) 6%, var(--theme-surface-secondary) 94%);
+    border: 1px solid var(--theme-border-soft);
+}
+
+.workout-load-input__label {
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+    white-space: nowrap;
+}
+
+.workout-load-input__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.workout-load-input__field {
+    width: 84px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary, inherit);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-input__save {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.workout-load-input__status {
+    flex-basis: 100%;
+    font-size: 0.74rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-load-input__status--error {
+    color: var(--theme-accent-danger);
+}
