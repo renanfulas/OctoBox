@@ -25,8 +25,10 @@ from .payment_views import (
     StudentPaySuccessView,
 )
 from .public_workout_assessment_views import PublicWorkoutAssessmentsView
+from .public_workout_link_views import StudentPublicWorkoutLinkView
 from .public_workout_views import (
     PublicWorkoutDetailView,
+    PublicWorkoutExportDataView,
     PublicWorkoutLocalStorageBackupView,
     PublicWorkoutManifestView,
     PublicWorkoutOfflineView,
@@ -58,6 +60,7 @@ from .shell_views import (
 __all__ = [
     'PublicWorkoutAssessmentsView',
     'PublicWorkoutDetailView',
+    'PublicWorkoutExportDataView',
     'PublicWorkoutLocalStorageBackupView',
     'PublicWorkoutManifestView',
     'PublicWorkoutOfflineView',
@@ -90,6 +93,7 @@ __all__ = [
     'StudentSettingsView',
     'StudentSuspendedFinancialView',
     'StudentSwitchBoxView',
+    'StudentPublicWorkoutLinkView',
     'StudentUpdateRmView',
     'StudentWodView',
 ]

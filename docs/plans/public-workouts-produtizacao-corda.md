@@ -1458,19 +1458,31 @@ bloqueio).
 > ainda não está aplicado — decisão de detalhe visual que fica pra quando
 > a onda real começar.
 >
-> **Item 5 (gate de posse) e item 8 base (endpoints HTTP) já entregues,
-> fora de dependência de A2 — atualizado nesta sessão:**
+> **Item 5 (gate de posse, completo) e item 8 base (endpoints HTTP) já
+> entregues, fora de dependência de A2 — atualizado nesta sessão:**
 > - Gate de posse: sessão de login (Onda B1) dona de outro slug recebe
 >   404 em `/renan/<slug>` (`_confirm_login_session_owns_slug_or_404`,
->   `student_app/views/public_workout_views.py`). Falta só o redirect
->   `/aluno/treino` pelo login — não existe rota nenhuma ainda.
+>   `student_app/views/public_workout_views.py`).
+> - Redirect pelo login: **não é `/aluno/treino`** (rota já ocupada por
+>   `StudentWodView`, o RM prescrito do box) — é `/aluno/consultoria/`
+>   (`StudentPublicWorkoutLinkView`, `student_app/views/public_workout_link_views.py`).
+>   Resolve/cria `PublicWorkoutAccount` por e-mail do `StudentIdentity`
+>   logado (get_or_create simples — `unique=True` em `.email` é a garantia
+>   contra duplicata, sem reconciliação elaborada; conta já existente
+>   nunca tem `student_identity_id` sobrescrito). Com assinatura ativa,
+>   concede a sessão do corredor direto (sem o roundtrip de magic-link —
+>   a auth do box já prova a identidade) e redireciona pro `/renan/<slug>`.
+>   Sem assinatura, devolve página mínima informativa: não há hoje
+>   nenhuma tela de "escolha seu plano" pra redirecionar (`/treinos/subscribe`
+>   é uma chamada de API que já exige `plan_slug` conhecido).
 > - Item 8 (base, não o item inteiro): `POST /renan/<slug>/carga`
->   (S3/`record_load`) e `GET /renan/<slug>/pacote.json` (S2/
->   `build_student_package`, já com 1RM real da Onda A3) — os dois exigem
->   sessão de login, 401 sem sessão, 404 sem posse. O outbox de IndexedDB
->   em si (rascunho em `visibilitychange`, dreno oportunista, limpeza no
->   logout) **continua sem existir** — esses dois endpoints são só o que
->   ele vai chamar quando existir.
+>   (S3/`record_load`), `GET /renan/<slug>/pacote.json` (S2/
+>   `build_student_package`, já com 1RM real da Onda A3) e
+>   `GET /renan/<slug>/meus-dados.json` (export de dados do titular, Onda
+>   A3/LGPD) — todos exigem sessão de login, 401 sem sessão, 404 sem posse.
+>   O outbox de IndexedDB em si (rascunho em `visibilitychange`, dreno
+>   oportunista, limpeza no logout) **continua sem existir** — esses
+>   endpoints são só o que ele vai chamar quando existir.
 
 ### O que fazer
 1. `workout.html` composto dos primitives do `student_app` — chip, card,
@@ -1565,7 +1577,7 @@ bloqueio).
 | ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor |
 | serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício |
 | ✅ serviço de avaliação (US Navy / JP7) — já existia | ✅ endpoint de escrita (`POST .../avaliacoes`) — falta o formulário HTML em si |
-| export de dados do titular | PDF via `reportlab` |
+| ✅ export de dados do titular — `export_account_data`, `GET /renan/<slug>/meus-dados.json` (JSON) | PDF via `reportlab` |
 
 ### Pronto quando
 1. ✅ 1RM devolve `None` acima de 15 reps efetivas.

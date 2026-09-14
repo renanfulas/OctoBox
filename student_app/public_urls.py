@@ -18,6 +18,7 @@ from django.urls import path, re_path
 from .views import (
     PublicWorkoutAssessmentsView,
     PublicWorkoutDetailView,
+    PublicWorkoutExportDataView,
     PublicWorkoutLocalStorageBackupView,
     PublicWorkoutManifestView,
     PublicWorkoutOfflineView,
@@ -45,5 +46,6 @@ urlpatterns = [
         PublicWorkoutRecordAssessmentView.as_view(),
         name='public-workout-record-assessment',
     ),
+    path('<slug:plan_slug>/meus-dados.json', PublicWorkoutExportDataView.as_view(), name='public-workout-export-data'),
     re_path(r'^(?P<plan_slug>[-a-z0-9]+)/?$', PublicWorkoutDetailView.as_view(), name='public-workout-detail'),
 ]

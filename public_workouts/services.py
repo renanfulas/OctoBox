@@ -48,10 +48,12 @@ from .formulas import (
     estimate_body_fat_navy,
 )
 from .models import (
+    PublicWorkoutAccount,
     PublicWorkoutAssessment,
     PublicWorkoutLoadLog,
     PublicWorkoutMovement,
     PublicWorkoutMovementModality,
+    PublicWorkoutPayment,
     PublicWorkoutProgram,
 )
 from .one_rep_max import detect_one_rep_max_trend, estimate_one_rep_max
@@ -539,3 +541,66 @@ def list_load_history(*, account_id: int, movement_slug: str | None = None) -> l
     if movement_slug is not None:
         queryset = queryset.filter(movement_slug=movement_slug)
     return [_serialize_load_log(log) for log in queryset.order_by('movement_slug', 'performed_on', 'created_at')]
+
+
+def _serialize_subscription_for_export(subscription) -> dict:
+    return {
+        'plan_slug': subscription.plan_slug,
+        'status': subscription.status,
+        'current_period_end': subscription.current_period_end.isoformat() if subscription.current_period_end else None,
+        'created_at': subscription.created_at.isoformat(),
+        'suspended_at': subscription.suspended_at.isoformat() if subscription.suspended_at else None,
+        'canceled_at': subscription.canceled_at.isoformat() if subscription.canceled_at else None,
+    }
+
+
+def _serialize_payment_for_export(payment: PublicWorkoutPayment) -> dict:
+    return {
+        'due_date': payment.due_date.isoformat(),
+        'paid_at': payment.paid_at.isoformat() if payment.paid_at else None,
+        'amount': float(payment.gross_amount),
+        'currency': payment.currency,
+        'status': payment.status,
+    }
+
+
+def export_account_data(*, account_id: int) -> dict:
+    """Export de dados do titular (Onda A3, LGPD/GDPR) — tudo que o
+    corredor guarda SOBRE esta pessoa, num payload so.
+
+    Escopo deliberado: inclui conta, assinatura, cobrancas (so' o que o
+    titular pagou/deve — sem `stripe_invoice_id`/`payment_intent`/`charge`
+    nem `application_fee_amount`/`net_amount`, que sao operacionais do
+    servico e do split de receita plataforma<->personal, nao dado do
+    titular), avaliacoes fisicas e historico de carga. NAO inclui
+    `program_versions`/payload do programa: e' conteudo autoral do
+    personal (o QUE foi prescrito), nao dado pessoal do titular (o QUE
+    ele fez ou e').
+
+    Roda no schema public, mesma regra do resto do modulo. Levanta
+    PublicWorkoutAccount.DoesNotExist se `account_id` nao existir (erro de
+    programacao do chamador — view resolve isso antes, mesmo padrao de
+    `activate_program_version`)."""
+    account = PublicWorkoutAccount.objects.get(pk=account_id)
+    subscription = getattr(account, 'subscription', None)
+
+    payments: list[dict] = []
+    assessments: list[dict] = []
+    if subscription is not None:
+        payments = [
+            _serialize_payment_for_export(payment)
+            for payment in subscription.payments.order_by('due_date')
+        ]
+        assessments = [_serialize(a) for a in list_assessments(plan_slug=subscription.plan_slug)]
+
+    return {
+        'account': {
+            'email': account.email,
+            'created_at': account.created_at.isoformat(),
+            'last_login_at': account.last_login_at.isoformat() if account.last_login_at else None,
+        },
+        'subscription': _serialize_subscription_for_export(subscription) if subscription else None,
+        'payments': payments,
+        'assessments': assessments,
+        'load_history': list_load_history(account_id=account_id),
+    }
