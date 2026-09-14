@@ -33,6 +33,7 @@
     <p>Digite seu e-mail e enviamos um link de acesso — sem senha.</p>
     <form method="post">
       {% csrf_token %}
+      {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
       <input type="email" name="email" placeholder="seu@email.com" required>
       <button type="submit">Enviar link</button>
     </form>

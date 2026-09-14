@@ -14,10 +14,12 @@
  * - ESCRITA (Onda A3/B4): a autoavaliacao ONLINE (metodo US Navy, so fita
  *   metrica) e o proprio aluno quem mede e lanca, via o formulario deste
  *   arquivo -> POST /renan/<slug>/avaliacoes (PublicWorkoutRecordAssessmentView,
- *   exige sessao de LOGIN — 401 sem ela; o formulario mostra o link de
- *   /treinos/login nesse caso, sem checar de antemao porque nao ha sinal
- *   client-side de sessao ativa). A avaliacao PRESENCIAL (Jackson-Pollock,
- *   com o treinador e o adipometro) continua so via management command —
+ *   exige sessao de LOGIN — 401 sem ela; o formulario manda pra
+ *   /treinos/login?next=/renan/<slug> nesse caso, sem checar de antemao
+ *   porque nao ha sinal client-side de sessao ativa — o `next` fecha o
+ *   ciclo, depois de logar o aluno volta direto pra ca em vez de cair
+ *   numa tela generica). A avaliacao PRESENCIAL (Jackson-Pollock, com o
+ *   treinador e o adipometro) continua so via management command —
  *   `body_fat_percent`/`body_fat_source` nunca vem deste formulario.
  * - o painel tem DOIS slots independentes (ver mountPanel): o formulario
  *   (#assess-form-slot) so' e' montado uma vez e sobrevive aos refreshes;
@@ -543,7 +545,7 @@
           if (result.status === 401) {
             setFeedback(feedback, 'error', 'Sua sessão expirou — ');
             var link = document.createElement('a');
-            link.href = '/treinos/login';
+            link.href = '/treinos/login?next=' + encodeURIComponent('/renan/' + slug);
             link.textContent = 'faça login novamente';
             feedback.appendChild(link);
             feedback.appendChild(document.createTextNode(' e tente de novo.'));

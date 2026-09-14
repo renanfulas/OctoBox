@@ -207,6 +207,55 @@ class PublicWorkoutLoginViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
+    def test_get_without_token_carries_next_into_hidden_field(self):
+        response = self.client.get(reverse('public-workout-login'), {'next': '/renan/giovanna'})
+        self.assertContains(response, 'name="next" value="/renan/giovanna"')
+
+    def test_post_carries_next_through_to_the_emailed_link(self):
+        self.client.post(
+            reverse('public-workout-login'), {'email': 'comnext@example.com', 'next': '/renan/giovanna'}
+        )
+        self.assertIn('next=%2Frenan%2Fgiovanna', mail.outbox[0].body)
+
+    def test_get_with_valid_token_and_next_redirects_there_and_sets_cookie(self):
+        token = request_login_token(
+            email='volta@example.com', base_url='https://octoboxfit.com.br', next_url='/renan/rafael'
+        )
+
+        client = Client()
+        response = client.get(reverse('public-workout-login'), {'token': str(token.token), 'next': '/renan/rafael'})
+
+        self.assertRedirects(response, '/renan/rafael', fetch_redirect_response=False)
+        self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+
+    def test_get_with_valid_token_and_no_next_keeps_old_confirmation_page(self):
+        token = request_login_token(email='seminext@example.com', base_url='https://octoboxfit.com.br')
+
+        client = Client()
+        response = client.get(reverse('public-workout-login'), {'token': str(token.token)})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'seminext@example.com')
+
+    def test_next_pointing_outside_renan_is_ignored_not_open_redirect(self):
+        # _safe_public_workout_next: so aceita path exato de /renan/<slug>.
+        # Qualquer outra coisa (outro host, outra rota do proprio site,
+        # esquema javascript:) some silenciosamente em vez de virar destino.
+        for unsafe_next in (
+            'https://evil.example.com/phish',
+            '//evil.example.com',
+            '/painel-interno-privado',
+            'javascript:alert(1)',
+            '/renan/',
+        ):
+            token = request_login_token(email=f'unsafe-{hash(unsafe_next)}@example.com', base_url='https://octoboxfit.com.br')
+
+            client = Client()
+            response = client.get(reverse('public-workout-login'), {'token': str(token.token), 'next': unsafe_next})
+
+            self.assertEqual(response.status_code, 200, msg=f'next={unsafe_next!r} deveria cair na pagina normal')
+            self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+
     def test_email_gateway_failure_does_not_raise_and_still_returns_token(self):
         # A falha de canal nunca vira 500 pro aluno — o token ja foi criado
         # e continua valido, ele so nao recebeu o e-mail ainda.

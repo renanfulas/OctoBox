@@ -1620,12 +1620,20 @@ bloqueio).
 >   (silhueta/timeline/gráfico), sem recarregar a página. Verificado de
 >   ponta a ponta num Chromium real via Playwright (preenchimento, POST,
 >   refresh do relatório, download do PDF) — não só pela suíte pytest.
-> - Gap conhecido, fora de escopo aqui: `/treinos/login` não aceita
->   `?next=`, então um aluno sem sessão ativa que tenta salvar recebe o
->   401 com link de login, mas depois de logar cai numa página genérica,
->   não de volta no `/renan/<slug>` de onde saiu — precisa navegar de
->   volta na mão. Mesma limitação documentada na Onda B1, não introduzida
->   aqui.
+> - ~~Gap conhecido: `/treinos/login` não aceita `?next=`~~ — **fechado
+>   na sessão seguinte.** `PublicWorkoutLoginView` e `request_login_token`
+>   agora carregam `next_url` pelos 3 saltos do fluxo (querystring do GET
+>   inicial → campo hidden do formulário de e-mail → dentro do link do
+>   e-mail, porque o clique pode acontecer num dispositivo diferente de
+>   onde o login foi pedido → querystring do GET com `?token=`) e
+>   redirecionam pra lá depois do login, em vez de cair na página
+>   genérica de confirmação. `_safe_public_workout_next` só aceita path
+>   exato de `/renan/<slug>` — não usa `url_has_allowed_host_and_scheme`
+>   do Django (que aceitaria qualquer path do mesmo host) de propósito:
+>   único destino legítimo é o próprio treino, então restringir ao padrão
+>   elimina qualquer superfície de redirecionamento aberto por
+>   construção. `assessments.js` já manda `/treinos/login?next=/renan/<slug>`
+>   no 401 da autoavaliação.
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|

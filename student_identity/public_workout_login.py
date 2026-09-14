@@ -21,6 +21,7 @@ PONTOS CRITICOS:
 from __future__ import annotations
 
 import logging
+from urllib.parse import quote
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -51,12 +52,18 @@ def _resolve_student_identity_id(*, email: str) -> int | None:
     return StudentIdentity.objects.filter(email__iexact=email).values_list('id', flat=True).first()
 
 
-def request_login_token(*, email: str, base_url: str) -> PublicWorkoutLoginToken:
+def request_login_token(*, email: str, base_url: str, next_url: str = '') -> PublicWorkoutLoginToken:
     """Cria (ou reusa) a conta pelo e-mail, emite token e envia o link de login.
 
     Levanta PublicWorkoutLoginRateLimitExceeded se o e-mail pediu tokens
     demais na janela. Nunca revela se a conta ja existia: a mesma resposta
     (um token novo) sai nos dois casos.
+
+    `next_url` (opcional, ja validado pelo chamador — ver
+    _safe_public_workout_next em public_workout_views.py) viaja dentro do
+    proprio link do e-mail. Precisa disso porque o e-mail pode ser aberto
+    num dispositivo diferente de onde o login foi pedido — nada de sessao/
+    cookie sobrevive esse salto, so o que estiver escrito na URL.
     """
     normalized_email = email.strip().lower()
     rate_limit_key = _rate_limit_key(normalized_email)
@@ -75,6 +82,8 @@ def request_login_token(*, email: str, base_url: str) -> PublicWorkoutLoginToken
     )
 
     login_url = f'{base_url.rstrip("/")}/treinos/login?token={token.token}'
+    if next_url:
+        login_url += f'&next={quote(next_url, safe="")}'
     try:
         get_student_email_gateway().send(
             subject='Seu link de acesso — Treinos',
