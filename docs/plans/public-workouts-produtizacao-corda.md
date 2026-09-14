@@ -1535,6 +1535,28 @@ bloqueio).
 > depende da sua revisão da sugestão da Onda A0 (`classify_public_workout_movements`).
 > Serviço de avaliação (US Navy/JP7) já existe desde antes desta Onda —
 > `public_workouts/formulas.py`.
+>
+> **Atualização — escrita da avaliação online:** confirmado com o Renan
+> que a linha "formulários sobre `forms.css`" NÃO estava obsoleta — a
+> leitura anterior do docstring de `PublicWorkoutAssessmentsView`
+> ("só o treinador registra, via management command") vale só pra
+> avaliação **presencial** (Jackson-Pollock, precisa do treinador com o
+> adipômetro). Na consultoria **online** é o próprio aluno que mede
+> (método US Navy — só fita métrica: pescoço/cintura/quadril) e lança.
+> `PublicWorkoutRecordAssessmentView` (`POST /renan/<slug>/avaliacoes`)
+> entrega esse caminho de escrita — mesma regra de auth de
+> `record_load`/`carga` (login + gate de posse, 401/404). Rejeita
+> explicitamente `body_fat_percent`/`body_fat_source` no payload: o
+> aluno nunca declara BF%, só manda as medidas brutas — o `build_report`
+> já existente estima BF% pelo método Navy a partir delas, na leitura.
+> `record_assessment` (serviço) também ganhou validação de
+> `weight_kg <= 0` (`AssessmentValueError`) e passou a devolver o dict
+> serializado em vez da instância do model — a mesma normalização
+> string→date de `record_load::performed_on` foi replicada pra
+> `measured_at` (bug real, achado ao conectar os dois: `.objects.create()`
+> não converte string pra `date` no atributo em memória). Falta ainda o
+> **formulário HTML** de fato (B4, `templates/public_workouts/**`) que
+> consome este endpoint — o que existe agora é só a base de escrita.
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
@@ -1542,7 +1564,7 @@ bloqueio).
 | ✅ detecção de platô e queda de 1RM (v1, limiares ajustáveis) | aba de histórico de programas (online) |
 | ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor |
 | serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício |
-| ✅ serviço de avaliação (US Navy / JP7) — já existia | formulários sobre `forms.css` |
+| ✅ serviço de avaliação (US Navy / JP7) — já existia | ✅ endpoint de escrita (`POST .../avaliacoes`) — falta o formulário HTML em si |
 | export de dados do titular | PDF via `reportlab` |
 
 ### Pronto quando

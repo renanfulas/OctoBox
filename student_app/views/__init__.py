@@ -31,6 +31,7 @@ from .public_workout_views import (
     PublicWorkoutManifestView,
     PublicWorkoutOfflineView,
     PublicWorkoutPackageView,
+    PublicWorkoutRecordAssessmentView,
     PublicWorkoutRecordLoadView,
     PublicWorkoutServiceWorkerView,
 )
@@ -61,6 +62,7 @@ __all__ = [
     'PublicWorkoutManifestView',
     'PublicWorkoutOfflineView',
     'PublicWorkoutPackageView',
+    'PublicWorkoutRecordAssessmentView',
     'PublicWorkoutRecordLoadView',
     'PublicWorkoutServiceWorkerView',
     'StudentAddRmView',

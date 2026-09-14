@@ -69,6 +69,14 @@ def _validate_plan_slug(plan_slug: str) -> None:
         raise UnknownPlanSlugError(f'Plano publico desconhecido: {plan_slug!r}')
 
 
+class AssessmentValueError(ValueError):
+    """Levantada quando weight_kg da avaliacao esta fora da faixa aceita —
+    mesmo espirito de LoadValueError (erro de digitacao, nao julgamento de
+    treino). Vale pros dois caminhos que chamam record_assessment (management
+    command do treinador e o endpoint de autoavaliacao online, Onda A3/B4) —
+    peso corporal <= 0 nao e um numero valido em nenhum dos dois."""
+
+
 def record_assessment(
     *,
     plan_slug: str,
@@ -78,9 +86,17 @@ def record_assessment(
     body_fat_source: str = '',
     measurements: dict | None = None,
     notes: str = '',
-) -> PublicWorkoutAssessment:
+) -> dict:
     _validate_plan_slug(plan_slug)
-    return PublicWorkoutAssessment.objects.create(
+    if weight_kg is not None and weight_kg <= 0:
+        raise AssessmentValueError(f'weight_kg deve ser positivo: {weight_kg!r}')
+    # Mesma normalizacao de record_load (performed_on) — .objects.create()
+    # NAO converte string pra date no atributo em memoria (so' na escrita
+    # SQL); sem isso, _serialize() abaixo quebra em .isoformat() quando o
+    # chamador manda measured_at como string (o caso comum vindo de JSON).
+    if isinstance(measured_at, str):
+        measured_at = date.fromisoformat(measured_at)
+    assessment = PublicWorkoutAssessment.objects.create(
         plan_slug=plan_slug,
         measured_at=measured_at,
         weight_kg=weight_kg,
@@ -89,6 +105,7 @@ def record_assessment(
         measurements=measurements or {},
         notes=notes,
     )
+    return _serialize(assessment)
 
 
 def list_assessments(*, plan_slug: str):
