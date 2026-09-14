@@ -242,6 +242,17 @@ class PublicWorkoutSessionTests(TestCase):
         cleared = clear_public_workout_session_cookie(HttpResponse())
         self.assertEqual(cleared.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME]['max-age'], 0)
 
+    def test_cookie_path_is_broad_enough_for_the_renan_ownership_gate(self):
+        # Onda B3, item 5: a view de /renan/<slug> precisa ler esta
+        # sessao. path=/treinos/ nunca chegaria la (RFC 6265) — um
+        # navegador de verdade so envia o cookie pra requisicoes dentro do
+        # path declarado. Ver PONTOS CRITICOS em public_workout_session.py.
+        from django.http import HttpResponse
+
+        response = attach_public_workout_session_cookie(HttpResponse(), account_id=7)
+
+        self.assertEqual(response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME]['path'], '/')
+
 
 class PublicWorkoutModelStrTests(TestCase):
     def test_account_str_is_email(self):

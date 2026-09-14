@@ -333,6 +333,33 @@ def _get_public_workout_entry(plan_slug: str) -> PublicWorkoutPlan:
     return plan
 
 
+def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
+    """B3 (CORDA) item 5 — "identidade da sessao dona do slug, senao 404".
+
+    So entra em jogo quando ha sessao de LOGIN ativa (PublicWorkoutAccount,
+    Onda B1) — visitante anonimo continua no fluxo B0 de posse por cookie,
+    sem mudanca (fase B de login obrigatorio ainda nao esta ligada, Onda
+    B3 fases B/C). Com sessao ativa: aluno A logado abrindo o slug do
+    aluno B tem que receber 404, nunca o treino nem 403 (403 confirmaria
+    que o slug existe — mesma regra do cookie de posse do B0).
+
+    Import tardio (nao no topo do arquivo): mesmo motivo de
+    _validate_plan_slug em public_workouts/services.py — este modulo e
+    importado por public_workouts (PUBLIC_WORKOUT_LIBRARY), um import de
+    public_workouts aqui no topo criaria ciclo.
+    """
+    from public_workouts.models import PublicWorkoutSubscription
+    from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+    account_id = get_public_workout_account_id_from_request(request)
+    if account_id is None:
+        return
+
+    owns_slug = PublicWorkoutSubscription.objects.filter(account_id=account_id, plan_slug=plan_slug).exists()
+    if not owns_slug:
+        raise Http404('Treino publico nao encontrado.')
+
+
 def get_public_workout_owner_slug(request) -> str | None:
     """Le o cookie de posse do B0 (ver PUBLIC_WORKOUT_OWNER_COOKIE acima).
 
@@ -561,6 +588,7 @@ def _render_public_workout_html(plan_slug: str) -> str:
 class PublicWorkoutDetailView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
         response = HttpResponse(_render_public_workout_html(plan_slug))
         # B0: quem abre a pagina prova posse do link — e o que autoriza a
         # leitura de /avaliacoes.json a seguir. Cookie por instancia, nao

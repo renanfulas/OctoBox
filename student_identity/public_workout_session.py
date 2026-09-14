@@ -1,5 +1,5 @@
 """
-ARQUIVO: cookie de sessao do corredor de treinos (/treinos/).
+ARQUIVO: cookie de sessao do corredor de treinos (/treinos/ + /renan/).
 
 POR QUE ELE EXISTE:
 - S2 do CORDA (docs/plans/public-workouts-produtizacao-corda.md, Onda B1):
@@ -7,6 +7,17 @@ POR QUE ELE EXISTE:
   box (student_identity/infrastructure/session.py). Molde copiado de la
   (D.00) — stateless, assinado, 1 variavel — mas sem nocao de box: o
   corredor nao tem tenant.
+
+PONTOS CRITICOS:
+- `PUBLIC_WORKOUT_SESSION_PATH = '/'` (nao `/treinos/`) de proposito:
+  achado ao implementar o gate de posse da Onda B3 (item 5, "identidade
+  da sessao dona do slug") — a view que precisa ler essa sessao vive em
+  `/renan/<slug>`, um prefixo DIFERENTE de `/treinos/` onde o login
+  acontece. Um cookie com `path=/treinos/` nunca seria enviado pelo
+  navegador numa requisicao a `/renan/*` (RFC 6265 — o test client do
+  Django NAO reproduz essa restricao, so mescla cookies sem checar path,
+  entao os testes de B1/B2 nunca pegaram isso). `/` e o unico path que
+  cobre os dois prefixos sem duplicar o mecanismo de sessao.
 """
 
 from __future__ import annotations
@@ -16,7 +27,7 @@ from django.core import signing
 
 PUBLIC_WORKOUT_SESSION_SALT = 'student_identity.public_workout_session'
 PUBLIC_WORKOUT_SESSION_COOKIE_NAME = 'octobox_treinos_session'
-PUBLIC_WORKOUT_SESSION_PATH = '/treinos/'
+PUBLIC_WORKOUT_SESSION_PATH = '/'
 
 
 def get_public_workout_session_max_age() -> int:
