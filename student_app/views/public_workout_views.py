@@ -852,3 +852,74 @@ class PublicWorkoutRecordLoadView(View):
             return JsonResponse({'error': str(exc)}, status=400)
 
         return JsonResponse(result, status=200)
+
+
+class PublicWorkoutRecordAssessmentView(View):
+    """POST /renan/<slug>/avaliacoes — autoavaliacao fisica ONLINE (US Navy),
+    Onda A3/B4 do CORDA. Contrapartida de ESCRITA de
+    PublicWorkoutAssessmentsView (GET .../avaliacoes.json, so leitura).
+
+    PONTOS CRITICOS:
+    - Mesma regra de auth de PublicWorkoutRecordLoadView: exige sessao de
+      LOGIN ativa (401 sem sessao) e gate de posse do slug (404, nunca 403).
+      O antigo docstring de PublicWorkoutAssessmentsView dizia "so o
+      treinador registra, via management command" — isso vale pra
+      avaliacao PRESENCIAL (Jackson-Pollock, precisa do treinador com o
+      adipometro). Na consultoria ONLINE, e o proprio aluno que mede e
+      lanca (metodo US Navy, so fita metrica) — decisao confirmada com o
+      Renan; este endpoint e o caminho de escrita que faltava pra isso.
+    - `body_fat_percent`/`body_fat_source` NUNCA vem do aluno: sao
+      exclusivos do fluxo presencial do treinador (skinfold/dispositivo).
+      Pedido que traga qualquer um dos dois e' 400 — o BF% desta avaliacao
+      sempre sai da estimativa US Navy calculada em build_report a partir
+      de `measurements`, nunca de um numero que o proprio aluno declarou.
+    """
+
+    def post(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return HttpResponse(status=400)
+        if not isinstance(payload, dict):
+            return HttpResponse(status=400)
+
+        if 'body_fat_percent' in payload or 'body_fat_source' in payload:
+            return JsonResponse(
+                {'error': 'body_fat_percent/body_fat_source so podem ser lancados pelo treinador, presencialmente'},
+                status=400,
+            )
+
+        measured_at = payload.get('measured_at')
+        weight_kg = payload.get('weight_kg')
+        measurements = payload.get('measurements')
+        if not measured_at:
+            return JsonResponse({'error': 'measured_at e obrigatorio'}, status=400)
+        if measurements is not None and not isinstance(measurements, dict):
+            return JsonResponse({'error': 'measurements deve ser um objeto'}, status=400)
+        if not weight_kg and not measurements:
+            return JsonResponse({'error': 'informe weight_kg ou measurements'}, status=400)
+
+        from public_workouts.services import AssessmentValueError, record_assessment
+
+        try:
+            result = record_assessment(
+                plan_slug=plan.slug,
+                measured_at=measured_at,
+                weight_kg=_decimal_or_none(weight_kg),
+                measurements=measurements,
+                notes=payload.get('notes', ''),
+            )
+        except (AssessmentValueError, ValueError) as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
+
+        return JsonResponse(result, status=200)
