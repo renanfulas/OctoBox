@@ -54,6 +54,7 @@ from .models import (
     PublicWorkoutMovementModality,
     PublicWorkoutProgram,
 )
+from .one_rep_max import detect_one_rep_max_trend, estimate_one_rep_max
 from .schema import assert_valid_payload
 
 
@@ -342,31 +343,87 @@ def _serialize_load_log(log: PublicWorkoutLoadLog) -> dict:
     }
 
 
+def _serialize_one_rep_max_estimate(estimate) -> dict:
+    return {
+        'value_kg': estimate.value_kg,
+        'formula': estimate.formula,
+        'confidence': estimate.confidence,
+        'effective_reps': estimate.effective_reps,
+    }
+
+
 def build_student_package(*, account_id: int, slug: str) -> dict:
     """S2 — ultima carga por movimento + 1RM + substituicoes + access_until.
     Sem HTTP, sem request.
 
-    `one_rep_max_by_movement`/`substitutions` ficam vazios de proposito: sao
-    trabalho da Onda A3 (1RM real com faixa de confianca, substituicao por
-    `movement_pattern`) — uma versao "provisoria" aqui arriscaria sugerir
-    troca de exercicio errada, o mesmo cuidado que a Onda A0 ja teve com
-    `movement_pattern` em branco. `access_until` fica `None` ate a Onda B3
-    (fase B) ligar a trava de acesso de verdade.
+    `one_rep_max_by_movement`: estimativa (Onda A3, `one_rep_max.py`) a
+    partir do ULTIMO set valido de cada movimento — mesmo recorte de
+    "mais recente" que `last_load_by_movement` ja usa. Movimento cujo
+    ultimo set passou de 15 reps efetivas fica sem entrada (a formula
+    recusa estimar, nao inventa numero — ver one_rep_max.py).
+
+    `substitutions` continua vazio de proposito: e trabalho de
+    `movement_pattern` (Onda A0) revisado por quem treina, nao uma
+    versao "provisoria" que arriscaria sugerir troca de exercicio errada.
+    `access_until` fica `None` ate a Onda B3 (fase B) ligar a trava de
+    acesso de verdade.
     """
-    last_load_by_movement = {
-        log.movement_slug: _serialize_load_log(log)
-        for log in (
-            PublicWorkoutLoadLog.objects.filter(account_id=account_id)
-            .order_by('movement_slug', '-performed_on', '-created_at')
-            .distinct('movement_slug')
-        )
-    }
+    logs = list(
+        PublicWorkoutLoadLog.objects.filter(account_id=account_id)
+        .order_by('movement_slug', '-performed_on', '-created_at')
+        .distinct('movement_slug')
+    )
+
+    last_load_by_movement = {log.movement_slug: _serialize_load_log(log) for log in logs}
+
+    one_rep_max_by_movement = {}
+    for log in logs:
+        estimate = estimate_one_rep_max(weight_kg=log.weight_kg, reps=log.reps, rir=log.rir)
+        if estimate is not None:
+            one_rep_max_by_movement[log.movement_slug] = _serialize_one_rep_max_estimate(estimate)
 
     return {
         'last_load_by_movement': last_load_by_movement,
-        'one_rep_max_by_movement': {},
+        'one_rep_max_by_movement': one_rep_max_by_movement,
         'substitutions': {},
         'access_until': None,
+    }
+
+
+def build_weekly_review(*, account_id: int) -> dict:
+    """Onda A3 — agrega os SINAIS calculados (tendencia de 1RM por
+    movimento) pra alimentar o review semanal (Onda 4.5 do plano de
+    produto). So a parte deterministica: NAO chama IA, NAO gera texto,
+    NAO le check-in/anamnese (nenhum dos dois tem coleta ainda — D4 do
+    plano: "tudo que alimenta a IA comeca a coletar antes da IA existir").
+    O job assincrono que junta isso com Haiku pra virar frase e prescricao
+    sugerida fica pra quando esses dados existirem — aqui so preparamos o
+    sinal, no formato "platô de 3 semanas", nao a tabela crua de sets.
+    """
+    movement_slugs = (
+        PublicWorkoutLoadLog.objects.filter(account_id=account_id)
+        .order_by('movement_slug')
+        .values_list('movement_slug', flat=True)
+        .distinct()
+    )
+
+    trends = {}
+    for movement_slug in movement_slugs:
+        trend = detect_one_rep_max_trend(account_id=account_id, movement_slug=movement_slug)
+        if trend.label == 'insufficient_data':
+            continue
+        trends[movement_slug] = {
+            'label': trend.label,
+            'weekly_estimates_kg': list(trend.weekly_estimates_kg),
+        }
+
+    declining = sorted(slug for slug, t in trends.items() if t['label'] == 'declining')
+    plateaued = sorted(slug for slug, t in trends.items() if t['label'] == 'plateau')
+
+    return {
+        'trends_by_movement': trends,
+        'declining_movements': declining,
+        'plateaued_movements': plateaued,
     }
 
 
