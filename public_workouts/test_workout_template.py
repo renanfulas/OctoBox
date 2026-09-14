@@ -17,11 +17,16 @@ from django.template.loader import render_to_string
 from django.test import TestCase
 
 from public_workouts.schema import build_example_payload
-from public_workouts.templatetags.public_workouts_extras import humanize_movement_slug
+from public_workouts.templatetags.public_workouts_extras import humanize_movement_slug, load_chart_points
 
 
-def _render(payload: dict, accent_variant=None) -> str:
-    return render_to_string('public_workouts/workout.html', {'program': payload, 'accent_variant': accent_variant})
+def _render(payload: dict, accent_variant=None, program_versions=None, load_history=None) -> str:
+    return render_to_string('public_workouts/workout.html', {
+        'program': payload,
+        'accent_variant': accent_variant,
+        'program_versions': program_versions or [],
+        'load_history': load_history or [],
+    })
 
 
 class WorkoutTemplateRenderTests(TestCase):
@@ -129,6 +134,44 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('workout-day-seg', html)
         self.assertIn('workout-day-qua', html)
 
+    def test_history_tab_renders_without_data(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('Histórico', html)
+        self.assertIn('Nenhuma versão publicada ainda.', html)
+        self.assertIn('Nenhuma carga registrada ainda.', html)
+        # nao pode inflar a contagem que test_multi_day_multi_block_payload_renders_each_once faz
+        self.assertNotIn('class="workout-day-panel workout-history-panel', html)
+
+    def test_history_tab_renders_program_version_list_with_active_badge(self):
+        html = _render(build_example_payload(), program_versions=[
+            {'version': 2, 'program_id': 'bruno-2026-q1', 'program_label': 'Bruno Q1', 'started_on': '2026-04-01', 'weeks': 6, 'is_active': True, 'created_at': '2026-04-01T00:00:00'},
+            {'version': 1, 'program_id': 'bruno-2026-q1', 'program_label': 'Bruno Q1', 'started_on': '2026-01-01', 'weeks': 4, 'is_active': False, 'created_at': '2026-01-01T00:00:00'},
+        ])
+
+        self.assertIn('v2', html)
+        self.assertIn('v1', html)
+        self.assertIn('ativa', html)
+        self.assertIn('inativa', html)
+
+    def test_history_tab_renders_load_chart_with_two_or_more_points(self):
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+        ])
+
+        self.assertIn('Agachamento livre', html)
+        self.assertIn('workout-load-chart-line', html)
+        self.assertNotIn('Ainda não há carga suficiente', html)
+
+    def test_history_tab_shows_fallback_with_fewer_than_two_points(self):
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+        ])
+
+        self.assertIn('Ainda não há carga suficiente registrada para montar o gráfico.', html)
+        self.assertNotIn('workout-load-chart-line', html)
+
 
 class HumanizeMovementSlugFilterTests(TestCase):
     def test_replaces_hyphens_and_capitalizes(self):
@@ -139,3 +182,73 @@ class HumanizeMovementSlugFilterTests(TestCase):
 
     def test_none_stays_empty(self):
         self.assertEqual(humanize_movement_slug(None), '')
+
+
+class LoadChartPointsFilterTests(TestCase):
+    def test_no_entries_has_no_data(self):
+        result = load_chart_points([])
+
+        self.assertFalse(result['has_data'])
+        self.assertEqual(result['points'], [])
+        self.assertEqual(result['points_attr'], '')
+
+    def test_single_point_has_no_data(self):
+        # Mesma supressao de assessments.js::buildWeightChart — 1 ponto so
+        # nao mostra tendencia nenhuma.
+        entries = [{'weight_kg': 100.0, 'performed_on': '2026-01-05'}]
+
+        result = load_chart_points(entries)
+
+        self.assertFalse(result['has_data'])
+
+    def test_entries_with_weight_kg_none_are_ignored(self):
+        # Movimento so de peso corporal (weight_kg=None) nunca deveria
+        # contar como ponto de grafico de carga.
+        entries = [
+            {'weight_kg': None, 'performed_on': '2026-01-01'},
+            {'weight_kg': None, 'performed_on': '2026-01-02'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertFalse(result['has_data'])
+
+    def test_two_points_normalizes_between_pad_and_width_minus_pad(self):
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertTrue(result['has_data'])
+        self.assertEqual(len(result['points']), 2)
+        # menor carga fica embaixo (y maior), maior carga fica em cima (y menor)
+        self.assertGreater(result['points'][0]['y'], result['points'][1]['y'])
+        self.assertEqual(result['points'][0]['x'], 10)
+        self.assertEqual(result['points'][1]['x'], 590)
+        self.assertEqual(result['points_attr'], '10.0,90.0 590.0,10.0')
+
+    def test_flat_series_does_not_divide_by_zero(self):
+        # min == max -> span seria 0; a funcao usa `span or 1` pra nao
+        # levantar ZeroDivisionError.
+        entries = [
+            {'weight_kg': 100.0, 'performed_on': '2026-01-05'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertTrue(result['has_data'])
+        self.assertEqual(result['points'][0]['y'], result['points'][1]['y'])
+
+    def test_labels_are_short_dates(self):
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertEqual(result['points'][0]['label'], '05/01')
+        self.assertEqual(result['points'][1]['label'], '12/01')

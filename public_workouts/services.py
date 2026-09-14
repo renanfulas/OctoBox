@@ -299,6 +299,32 @@ def activate_program_version(*, slug: str, program_id: str, version: int) -> Pub
     return target
 
 
+def _serialize_program_version(program: PublicWorkoutProgram) -> dict:
+    return {
+        'version': program.version,
+        'program_id': program.program_id,
+        'program_label': program.program_label,
+        'started_on': program.started_on.isoformat(),
+        'weeks': program.weeks,
+        'is_active': program.is_active,
+        'created_at': program.created_at.isoformat(),
+    }
+
+
+def list_program_versions(*, slug: str) -> list[dict]:
+    """Todas as versoes publicadas de `slug`, mais recente primeiro (Onda
+    B4, fatia adiantada — as linhas ja existem no banco desde a Onda A1,
+    isto e' so a leitura que faltava).
+
+    So os campos denormalizados de PublicWorkoutProgram, nunca `payload`:
+    isto e' pra LISTAR versoes, nao pra renderizar o programa inteiro (quem
+    quer o programa de verdade usa get_active_program). Lista vazia (nunca
+    None) quando `slug` nunca foi publicado. Roda no schema public, mesma
+    regra do resto do modulo."""
+    programs = PublicWorkoutProgram.objects.filter(slug=slug).order_by('-version')
+    return [_serialize_program_version(program) for program in programs]
+
+
 # ---------------------------------------------------------------------------
 # S2/S3 — Pacote do aluno e escrita de carga (Onda A1, Fatia B). Assinaturas
 # re-congeladas em D.5 nesta mesma onda: `account_id` no lugar de
@@ -417,3 +443,25 @@ def record_load(
         log = PublicWorkoutLoadLog.objects.get(idempotency_key=idempotency_key)
 
     return _serialize_load_log(log)
+
+
+def list_load_history(*, account_id: int, movement_slug: str | None = None) -> list[dict]:
+    """Historico completo de carga da conta (Onda B4, fatia adiantada) —
+    build_student_package (S2) so devolve a ULTIMA carga por movimento;
+    isto e' a serie inteira, pra grafico de evolucao.
+
+    Ordena por (movement_slug, performed_on, created_at) ASCENDENTE —
+    INVERSO do Meta.ordering do model (pensado pro caso de uso 'ultimo
+    valor'). Cronologico ascendente e' o que um grafico de evolucao
+    precisa, e agrupar por movement_slug primeiro deixa a lista pronta pro
+    `{% regroup %}` do Django sem passo de agrupamento em Python.
+
+    Deliberadamente NAO filtra por `slug`/`program_id`: progressao de carga
+    e' continuidade do ATLETA, nao do programa ativo — republicar uma nova
+    versao nao deveria "zerar" o historico de agachamento do aluno. Lista
+    vazia (nunca None) quando a conta nao tem nenhum registro. Roda no
+    schema public, mesma regra do resto do modulo."""
+    queryset = PublicWorkoutLoadLog.objects.filter(account_id=account_id)
+    if movement_slug is not None:
+        queryset = queryset.filter(movement_slug=movement_slug)
+    return [_serialize_load_log(log) for log in queryset.order_by('movement_slug', 'performed_on', 'created_at')]

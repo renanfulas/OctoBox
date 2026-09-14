@@ -16,7 +16,12 @@ from django.test import TestCase
 
 from public_workouts.models import PublicWorkoutMovement, PublicWorkoutProgram
 from public_workouts.schema import PayloadValidationError, build_example_payload
-from public_workouts.services import activate_program_version, get_active_program, publish_program
+from public_workouts.services import (
+    activate_program_version,
+    get_active_program,
+    list_program_versions,
+    publish_program,
+)
 
 
 def _payload(**overrides) -> dict:
@@ -201,3 +206,41 @@ class ActivateProgramVersionTests(TestCase):
 
         v2.refresh_from_db()
         self.assertFalse(v2.is_active)
+
+
+class ListProgramVersionsTests(TestCase):
+    def test_returns_empty_list_when_never_published(self):
+        self.assertEqual(list_program_versions(slug='bruno'), [])
+
+    def test_returns_all_versions_most_recent_first(self):
+        publish_program(slug='bruno', payload=_payload(program_id='bruno-2026-q1', weeks=4))
+        publish_program(slug='bruno', payload=_payload(program_id='bruno-2026-q1', weeks=6))
+
+        versions = list_program_versions(slug='bruno')
+
+        self.assertEqual([v['version'] for v in versions], [2, 1])
+        self.assertEqual(versions[0]['weeks'], 6)
+        self.assertEqual(versions[1]['weeks'], 4)
+
+    def test_reflects_which_version_is_active_after_reverting(self):
+        publish_program(slug='bruno', payload=_payload(program_id='bruno-2026-q1'))
+        publish_program(slug='bruno', payload=_payload(program_id='bruno-2026-q1', weeks=6))
+        activate_program_version(slug='bruno', program_id='bruno-2026-q1', version=1)
+
+        versions = list_program_versions(slug='bruno')
+
+        by_version = {v['version']: v for v in versions}
+        self.assertTrue(by_version[1]['is_active'])
+        self.assertFalse(by_version[2]['is_active'])
+
+    def test_does_not_leak_between_slugs(self):
+        publish_program(slug='bruno', payload=_payload(program_id='bruno-2026-q1'))
+
+        self.assertEqual(list_program_versions(slug='juliana'), [])
+
+    def test_never_includes_the_raw_payload(self):
+        publish_program(slug='bruno', payload=_payload(program_id='bruno-2026-q1'))
+
+        versions = list_program_versions(slug='bruno')
+
+        self.assertNotIn('payload', versions[0])

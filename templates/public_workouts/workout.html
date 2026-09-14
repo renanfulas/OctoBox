@@ -40,7 +40,7 @@ PONTOS CRITICOS:
     <div class="student-hero-number__value"><span>{{ program.started_on }}</span></div>
   </section>
 
-  <nav class="workout-day-nav" role="tablist" aria-label="Dias do programa">
+  <nav class="workout-day-nav" role="tablist" aria-label="Dias do programa e historico">
     {% for day in program.days %}
     <button
       type="button"
@@ -52,6 +52,15 @@ PONTOS CRITICOS:
       aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
     >{{ day.label }}</button>
     {% endfor %}
+    <button
+      type="button"
+      class="student-status-badge workout-day-tab"
+      data-workout-tab-target="workout-history"
+      role="tab"
+      id="workout-tab-history"
+      aria-controls="workout-history"
+      aria-selected="false"
+    >Histórico</button>
   </nav>
 
   <div class="interactive-tab-container" data-default-panel="workout-day-{{ program.days.0.day_id }}">
@@ -61,6 +70,7 @@ PONTOS CRITICOS:
       id="workout-day-{{ day.day_id }}"
       role="tabpanel"
       aria-labelledby="workout-tab-{{ day.day_id }}"
+      data-workout-tab-panel
     >
       {% for block in day.blocks %}
       <article class="student-card card-decor-topstripe workout-block-card">
@@ -100,13 +110,85 @@ PONTOS CRITICOS:
       {% endfor %}
     </section>
     {% endfor %}
+
+    <section
+      class="workout-history-panel"
+      id="workout-history"
+      role="tabpanel"
+      aria-labelledby="workout-tab-history"
+      data-workout-tab-panel
+    >
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Versões do programa</h2>
+        {% if program_versions %}
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Versão</th>
+                <th scope="col">Programa</th>
+                <th scope="col">Início</th>
+                <th scope="col">Semanas</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for version in program_versions %}
+              <tr class="workout-version-row">
+                <td>v{{ version.version }}</td>
+                <td>{{ version.program_label }}</td>
+                <td>{{ version.started_on }}</td>
+                <td>{{ version.weeks }}</td>
+                <td>
+                  {% if version.is_active %}<span class="student-status-badge">ativa</span>
+                  {% else %}<span class="student-status-badge">inativa</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p>Nenhuma versão publicada ainda.</p>
+        {% endif %}
+      </article>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Evolução de carga</h2>
+        {% regroup load_history by movement_slug as load_history_by_movement %}
+        {% for group in load_history_by_movement %}
+          {% with chart=group.list|load_chart_points %}
+          <div class="workout-load-chart">
+            <h3>{{ group.grouper|humanize_movement_slug }}</h3>
+            {% if chart.has_data %}
+            <svg viewBox="{{ chart.viewbox }}" preserveAspectRatio="none" role="img" aria-label="Evolução de carga em {{ group.grouper|humanize_movement_slug }}">
+              <polyline class="workout-load-chart-line" points="{{ chart.points_attr }}"></polyline>
+              {% for point in chart.points %}
+              <circle class="workout-load-chart-dot" cx="{{ point.x }}" cy="{{ point.y }}" r="3"></circle>
+              <text class="workout-load-chart-label" x="{{ point.x }}" y="{{ chart.label_y }}">{{ point.label }}</text>
+              {% endfor %}
+            </svg>
+            {% else %}
+            <p>Ainda não há carga suficiente registrada para montar o gráfico.</p>
+            {% endif %}
+          </div>
+          {% endwith %}
+        {% empty %}
+        <p>Nenhuma carga registrada ainda.</p>
+        {% endfor %}
+      </article>
+    </section>
   </div>
 
 </main>
 <script>
 /* Inline de proposito (mesmo padrao do bootstrap de PWA em _base.html):
-   troca qual dia esta com .is-tab-active. interactive-tabs.css ja esconde
-   tudo que nao tem essa classe (>*:not(.is-tab-active){display:none}). */
+   troca qual painel esta com .is-tab-active. interactive-tabs.css ja
+   esconde tudo que nao tem essa classe (>*:not(.is-tab-active){display:none}).
+   Selecao por [data-workout-tab-panel] (nao por classe) porque o painel de
+   Historico (Onda B4, fatia adiantada) tem classe propria
+   (.workout-history-panel), diferente de .workout-day-panel — um teste
+   existente conta ocorrencias de "workout-day-panel" e nao pode inflar. */
 (function () {
   var tabs = document.querySelectorAll('[data-workout-tab-target]');
   tabs.forEach(function (tab) {
@@ -118,7 +200,7 @@ PONTOS CRITICOS:
       });
       tab.classList.add('is-active');
       tab.setAttribute('aria-selected', 'true');
-      document.querySelectorAll('.workout-day-panel').forEach(function (panel) {
+      document.querySelectorAll('[data-workout-tab-panel]').forEach(function (panel) {
         panel.classList.toggle('is-tab-active', panel.id === targetId);
       });
     });

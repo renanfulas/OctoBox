@@ -18,7 +18,7 @@ from decimal import Decimal
 from django.test import TestCase
 
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog
-from public_workouts.services import LoadValueError, build_student_package, record_load
+from public_workouts.services import LoadValueError, build_student_package, list_load_history, record_load
 
 
 def _make_account(email='atleta@example.com') -> PublicWorkoutAccount:
@@ -227,3 +227,87 @@ class BuildStudentPackageTests(TestCase):
         package_b = build_student_package(account_id=account_b.pk, slug='bruno')
 
         self.assertEqual(package_b['last_load_by_movement'], {})
+
+
+class ListLoadHistoryTests(TestCase):
+    def test_returns_empty_list_when_no_load_logged(self):
+        account = _make_account()
+
+        self.assertEqual(list_load_history(account_id=account.pk), [])
+
+    def test_returns_entries_in_chronological_ascending_order(self):
+        # Inverso do Meta.ordering do model (mais recente primeiro, pensado
+        # pro caso de uso "ultimo valor") — grafico de evolucao precisa do
+        # sentido contrario.
+        account = _make_account()
+        record_load(
+            account_id=account.pk, movement_slug='agachamento-livre', weight_kg=Decimal('100'),
+            performed_on=date(2026, 1, 12), idempotency_key='key-recente',
+        )
+        record_load(
+            account_id=account.pk, movement_slug='agachamento-livre', weight_kg=Decimal('90'),
+            performed_on=date(2026, 1, 5), idempotency_key='key-antiga',
+        )
+
+        history = list_load_history(account_id=account.pk)
+
+        self.assertEqual([entry['weight_kg'] for entry in history], [90.0, 100.0])
+
+    def test_groups_by_movement_slug_ready_for_regroup(self):
+        # Ordem (movement_slug, performed_on, created_at) — pre-requisito do
+        # {% regroup %} do Django, que exige a lista ja agrupada.
+        account = _make_account()
+        record_load(
+            account_id=account.pk, movement_slug='supino-reto', weight_kg=Decimal('60'),
+            performed_on=date(2026, 1, 5), idempotency_key='key-supino',
+        )
+        record_load(
+            account_id=account.pk, movement_slug='agachamento-livre', weight_kg=Decimal('100'),
+            performed_on=date(2026, 1, 5), idempotency_key='key-agachamento',
+        )
+
+        history = list_load_history(account_id=account.pk)
+
+        self.assertEqual([entry['movement_slug'] for entry in history], ['agachamento-livre', 'supino-reto'])
+
+    def test_filters_by_movement_slug_when_given(self):
+        account = _make_account()
+        record_load(
+            account_id=account.pk, movement_slug='agachamento-livre', weight_kg=Decimal('100'),
+            performed_on=date(2026, 1, 5), idempotency_key='key-agachamento',
+        )
+        record_load(
+            account_id=account.pk, movement_slug='supino-reto', weight_kg=Decimal('60'),
+            performed_on=date(2026, 1, 5), idempotency_key='key-supino',
+        )
+
+        history = list_load_history(account_id=account.pk, movement_slug='supino-reto')
+
+        self.assertEqual([entry['movement_slug'] for entry in history], ['supino-reto'])
+
+    def test_does_not_leak_between_accounts(self):
+        account_a = _make_account(email='a@example.com')
+        account_b = _make_account(email='b@example.com')
+        record_load(
+            account_id=account_a.pk, movement_slug='agachamento-livre', weight_kg=Decimal('100'),
+            performed_on=date(2026, 1, 5), idempotency_key='key-a',
+        )
+
+        self.assertEqual(list_load_history(account_id=account_b.pk), [])
+
+    def test_does_not_reset_across_program_republish(self):
+        # Decisao de produto: progressao de carga e' continuidade do atleta,
+        # nao do programa ativo.
+        account = _make_account()
+        record_load(
+            account_id=account.pk, movement_slug='agachamento-livre', weight_kg=Decimal('90'),
+            performed_on=date(2026, 1, 5), program_id='bruno-2026-q1', idempotency_key='key-v1',
+        )
+        record_load(
+            account_id=account.pk, movement_slug='agachamento-livre', weight_kg=Decimal('100'),
+            performed_on=date(2026, 1, 12), program_id='bruno-2026-q2', idempotency_key='key-v2',
+        )
+
+        history = list_load_history(account_id=account.pk)
+
+        self.assertEqual(len(history), 2)
