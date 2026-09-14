@@ -734,6 +734,39 @@ def _decimal_or_none(value):
         raise ValueError(f'valor numerico invalido: {value!r}') from exc
 
 
+class PublicWorkoutPackageView(View):
+    """GET /renan/<slug>/pacote.json — contrapartida de LEITURA do S3
+    (Onda B3, item 8 — base, mesmo espirito da PublicWorkoutRecordLoadView
+    que ja e' a contrapartida de escrita). Expoe S2 (`build_student_package`)
+    pra conta logada dona do slug: ultima carga por movimento (com 1RM
+    estimado de verdade desde a Onda A3), substituicoes e `access_until`.
+
+    PONTOS CRITICOS:
+    - Mesma regra de auth do record_load: exige sessao de LOGIN ativa
+      (Onda B1) — sem sessao, 401 (nao ha slug pra esconder, o problema e'
+      "voce nao esta logado"). Sessao de conta que NAO e dona deste slug:
+      404, nunca 403 (mesma regra do gate de posse, Onda B3 item 5).
+    - So' leitura: nao aceita corpo, nao muda banco. Idempotente por
+      natureza (GET), sem necessidade de idempotency_key.
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        from public_workouts.services import build_student_package
+
+        package = build_student_package(account_id=account_id, slug=plan.slug)
+        return JsonResponse(package, status=200)
+
+
 class PublicWorkoutRecordLoadView(View):
     """POST /renan/<slug>/carga — registra uma carga (S3, record_load,
     Onda A1 Fatia B). Consumido pelo outbox de IndexedDB da Onda B3

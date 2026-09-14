@@ -1451,13 +1451,26 @@ bloqueio).
 > `interactive-tabs.css`) e implementa o mapeamento `accent_variant` →
 > `--theme-accent-premium`/`-support` (nenhum precedente existia no repo —
 > o padrão espelha o toggle `body[data-theme]` já usado pro tema claro/escuro).
-> **Não está ligado a nenhuma URL/view** — os itens 3–9 (apagar os 8 CSS
-> legados, matar o bootstrap de PWA antigo, fase B de acesso, `sw.js` novo,
-> outbox, hard reset) continuam bloqueados em A1/A2 como o texto original já
-> dizia, porque envolvem corte de produção real, não fundação visual.
-> `card-decor-glow` ainda não está aplicado — o primitive não é
-> accent-aware por padrão (`--neon-default-rgb` fixo), decisão de detalhe
-> visual que fica pra quando a onda real começar.
+> **Não está ligado a nenhuma URL/view** (a fundação visual, acima). Os
+> itens 3, 4, 6, 7, 9 (apagar os 8 CSS legados, matar o bootstrap de PWA
+> antigo, fase B de acesso, `sw.js` novo, outbox, hard reset) continuam
+> bloqueados em A1/A2, porque envolvem corte de produção real. `card-decor-glow`
+> ainda não está aplicado — decisão de detalhe visual que fica pra quando
+> a onda real começar.
+>
+> **Item 5 (gate de posse) e item 8 base (endpoints HTTP) já entregues,
+> fora de dependência de A2 — atualizado nesta sessão:**
+> - Gate de posse: sessão de login (Onda B1) dona de outro slug recebe
+>   404 em `/renan/<slug>` (`_confirm_login_session_owns_slug_or_404`,
+>   `student_app/views/public_workout_views.py`). Falta só o redirect
+>   `/aluno/treino` pelo login — não existe rota nenhuma ainda.
+> - Item 8 (base, não o item inteiro): `POST /renan/<slug>/carga`
+>   (S3/`record_load`) e `GET /renan/<slug>/pacote.json` (S2/
+>   `build_student_package`, já com 1RM real da Onda A3) — os dois exigem
+>   sessão de login, 401 sem sessão, 404 sem posse. O outbox de IndexedDB
+>   em si (rascunho em `visibilitychange`, dreno oportunista, limpeza no
+>   logout) **continua sem existir** — esses dois endpoints são só o que
+>   ele vai chamar quando existir.
 
 ### O que fazer
 1. `workout.html` composto dos primitives do `student_app` — chip, card,
