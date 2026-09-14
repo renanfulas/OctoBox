@@ -114,6 +114,23 @@ def list_assessments(*, plan_slug: str):
     return list(PublicWorkoutAssessment.objects.filter(plan_slug=plan_slug).order_by('measured_at'))
 
 
+_PRESENCIAL_SKINFOLD_SOURCES = ('skinfold_jp7', 'skinfold_jp3')
+
+
+def has_presencial_skinfold_assessment(*, plan_slug: str) -> bool:
+    """True quando o plano tem pelo menos 1 avaliacao com dobra cutanea
+    lancada pelo treinador (via add_public_workout_assessment) — o sinal
+    que libera o proprio aluno a lancar dobras sozinho pela pagina daqui
+    pra frente (decisao do Renan: so confia na tecnica de pinca do aluno
+    depois de ele ja ter sido calibrado presencialmente pelo menos uma
+    vez). Usado tanto por build_report (pro front saber se mostra a
+    secao) quanto por PublicWorkoutRecordAssessmentView (pra revalidar no
+    servidor — nunca confia num flag que o cliente mandou)."""
+    return PublicWorkoutAssessment.objects.filter(
+        plan_slug=plan_slug, body_fat_source__in=_PRESENCIAL_SKINFOLD_SOURCES
+    ).exists()
+
+
 def _num(value) -> float | None:
     if value is None:
         return None
@@ -144,9 +161,15 @@ def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) ->
     """
     assessments = list_assessments(plan_slug=plan_slug)
     serialized = [_serialize(a) for a in assessments]
+    skinfold_self_report_unlocked = any(a.body_fat_source in _PRESENCIAL_SKINFOLD_SOURCES for a in assessments)
 
     if not assessments:
-        return {'assessments': [], 'summary': None, 'indicators': None}
+        return {
+            'assessments': [],
+            'summary': None,
+            'indicators': None,
+            'skinfold_self_report_unlocked': False,
+        }
 
     first, last = assessments[0], assessments[-1]
 
@@ -177,7 +200,12 @@ def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) ->
 
     indicators = _build_indicators(last=last, sex=sex, height_cm=height_cm)
 
-    return {'assessments': serialized, 'summary': summary, 'indicators': indicators}
+    return {
+        'assessments': serialized,
+        'summary': summary,
+        'indicators': indicators,
+        'skinfold_self_report_unlocked': skinfold_self_report_unlocked,
+    }
 
 
 def _classification_dict(classification) -> dict:

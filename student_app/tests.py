@@ -2251,7 +2251,10 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         response = self.client.get('/renan/giovanna/avaliacoes.json')
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload, {'assessments': [], 'summary': None, 'indicators': None})
+        self.assertEqual(
+            payload,
+            {'assessments': [], 'summary': None, 'indicators': None, 'skinfold_self_report_unlocked': False},
+        )
 
     def test_returns_404_for_unknown_plan_slug(self):
         response = self.client.get('/renan/nao-existe/avaliacoes.json')
