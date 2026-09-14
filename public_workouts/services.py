@@ -1,30 +1,39 @@
 """
-ARQUIVO: regra de negocio do corredor sem HTTP/CLI — avaliacao fisica e,
-a partir da Onda A1 do CORDA, leitura/publicacao de programa (S1).
+ARQUIVO: regra de negocio do corredor sem HTTP/CLI — avaliacao fisica,
+leitura/publicacao de programa (S1, Onda A1 Fatia A) e, a partir da Onda A1
+Fatia B, pacote do aluno (S2) e registro de carga (S3).
 
 POR QUE ELE EXISTE:
 - tanto a view JSON (student_app/views) quanto o management command
   precisam do mesmo calculo de relatorio — fica num so lugar, testavel
   sem subir servidor nem Django admin.
-- S1 (get_active_program) e a assinatura CONGELADA na Onda S0 (D.5) —
-  Frente B ja programa contra ela desde o dia 1, primeiro via o stub em
-  services_stub.py, agora contra esta implementacao de verdade.
+- S1/S2/S3 sao as assinaturas CONGELADAS na Onda S0 (D.5) — Frente B ja
+  programava contra elas desde o dia 1, primeiro via o stub em
+  services_stub.py (removido nesta onda: as tres ja sao reais), agora
+  contra esta implementacao de verdade.
 
 PONTOS CRITICOS:
 - `_validate_plan_slug` importa PUBLIC_WORKOUT_LIBRARY de dentro da funcao
   (nao no topo do arquivo) de proposito: student_app/views/public_workout_views.py
   vai importar `public_workouts.services` para servir o JSON, e um import
   de modulo no topo aqui criaria import circular.
-- get_active_program/publish_program rodam no schema `public`, SEM tenant
-  (mesmo motivo do resto do app — ver models.py). Nunca importam nada de
-  TENANT_APPS: quem monta o payload a partir de dado de tenant (a Onda A2,
-  via parser de IA) resolve isso ANTES de chamar publish_program.
+- get_active_program/publish_program/build_student_package/record_load
+  rodam no schema `public`, SEM tenant (mesmo motivo do resto do app — ver
+  models.py). Nunca importam nada de TENANT_APPS: quem monta o payload a
+  partir de dado de tenant (a Onda A2, via parser de IA) resolve isso ANTES
+  de chamar publish_program.
+- S2/S3 identificam a pessoa por `account_id` (PublicWorkoutAccount.pk),
+  NUNCA `student_identity_id` — decisao escrita entre as duas frentes na
+  Onda A1 Fatia B (D.5): a maioria dos clientes do corredor nao e aluna de
+  box. Quem tambem for aluno de box ja carrega essa referencia fraca em
+  `account.student_identity_id` (Onda B1) — nao duplicada aqui.
 """
 
 from __future__ import annotations
 
 from datetime import date
 
+from django.db import IntegrityError
 from django.db import models as django_models
 from django.db import transaction
 
@@ -36,7 +45,13 @@ from .formulas import (
     compute_whr,
     estimate_body_fat_navy,
 )
-from .models import PublicWorkoutAssessment, PublicWorkoutMovement, PublicWorkoutMovementModality, PublicWorkoutProgram
+from .models import (
+    PublicWorkoutAssessment,
+    PublicWorkoutLoadLog,
+    PublicWorkoutMovement,
+    PublicWorkoutMovementModality,
+    PublicWorkoutProgram,
+)
 from .schema import assert_valid_payload
 
 
@@ -280,3 +295,116 @@ def activate_program_version(*, slug: str, program_id: str, version: int) -> Pub
         target.is_active = True
         target.save(update_fields=['is_active'])
     return target
+
+
+# ---------------------------------------------------------------------------
+# S2/S3 — Pacote do aluno e escrita de carga (Onda A1, Fatia B). Assinaturas
+# re-congeladas em D.5 nesta mesma onda: `account_id` no lugar de
+# `student_identity_id` (ver docstring do modulo e nota de decisao na
+# secao A1 do CORDA).
+# ---------------------------------------------------------------------------
+
+
+class LoadValueError(ValueError):
+    """Levantada quando weight_kg/rir e negativo — erro de digitacao, nao
+    julgamento de treino. Deteccao estatistica de outlier de verdade
+    (comparar com o historico do proprio atleta) e trabalho da Onda A3
+    (mesmo escopo de estimate_one_rep_max/deteccao de plato), nao um limite
+    numerico pra inventar aqui."""
+
+
+def _validate_load_values(*, weight_kg, rir) -> None:
+    if weight_kg is not None and weight_kg < 0:
+        raise LoadValueError(f'weight_kg nao pode ser negativo: {weight_kg!r}')
+    if rir is not None and rir < 0:
+        raise LoadValueError(f'rir nao pode ser negativo: {rir!r}')
+
+
+def _serialize_load_log(log: PublicWorkoutLoadLog) -> dict:
+    return {
+        'movement_slug': log.movement_slug,
+        'weight_kg': float(log.weight_kg) if log.weight_kg is not None else None,
+        'reps': log.reps,
+        'rir': float(log.rir) if log.rir is not None else None,
+        'performed_on': log.performed_on.isoformat(),
+        'program_id': log.program_id or None,
+        'week_in_program': log.week_in_program,
+        'idempotency_key': log.idempotency_key,
+    }
+
+
+def build_student_package(*, account_id: int, slug: str) -> dict:
+    """S2 — ultima carga por movimento + 1RM + substituicoes + access_until.
+    Sem HTTP, sem request.
+
+    `one_rep_max_by_movement`/`substitutions` ficam vazios de proposito: sao
+    trabalho da Onda A3 (1RM real com faixa de confianca, substituicao por
+    `movement_pattern`) — uma versao "provisoria" aqui arriscaria sugerir
+    troca de exercicio errada, o mesmo cuidado que a Onda A0 ja teve com
+    `movement_pattern` em branco. `access_until` fica `None` ate a Onda B3
+    (fase B) ligar a trava de acesso de verdade.
+    """
+    last_load_by_movement = {
+        log.movement_slug: _serialize_load_log(log)
+        for log in (
+            PublicWorkoutLoadLog.objects.filter(account_id=account_id)
+            .order_by('movement_slug', '-performed_on', '-created_at')
+            .distinct('movement_slug')
+        )
+    }
+
+    return {
+        'last_load_by_movement': last_load_by_movement,
+        'one_rep_max_by_movement': {},
+        'substitutions': {},
+        'access_until': None,
+    }
+
+
+def record_load(
+    *,
+    account_id: int,
+    movement_slug: str,
+    weight_kg,
+    reps=None,
+    rir=None,
+    performed_on,
+    program_id=None,
+    week_in_program=None,
+    idempotency_key: str,
+) -> dict:
+    """S3 — registra uma carga. Idempotente por `idempotency_key`: reenvio
+    (outbox offline da Onda B3) resolve pro registro ja existente, nunca
+    duplica linha — o banco (`unique=True`) e a trava, mesmo padrao do
+    dedup de `PaymentWebhookEvent` na Onda B2, nao um SELECT antes do
+    INSERT (janela de corrida entre checar e criar).
+
+    O `create()` roda dentro do proprio `transaction.atomic()` (savepoint):
+    um IntegrityError "envenena" a transacao corrente ate o rollback —
+    sem o savepoint, o SELECT de recuperacao logo abaixo levantaria
+    TransactionManagementError em vez de achar a linha (mesma pegadinha
+    que o dedup do webhook em stripe_handlers.py evita nunca re-consultando
+    na mesma transacao; aqui precisamos do valor de volta, entao isolamos
+    o INSERT em vez disso)."""
+    _validate_load_values(weight_kg=weight_kg, rir=rir)
+
+    if isinstance(performed_on, str):
+        performed_on = date.fromisoformat(performed_on)
+
+    try:
+        with transaction.atomic():
+            log = PublicWorkoutLoadLog.objects.create(
+                account_id=account_id,
+                movement_slug=movement_slug,
+                weight_kg=weight_kg,
+                reps=reps,
+                rir=rir,
+                performed_on=performed_on,
+                program_id=program_id or '',
+                week_in_program=week_in_program,
+                idempotency_key=idempotency_key,
+            )
+    except IntegrityError:
+        log = PublicWorkoutLoadLog.objects.get(idempotency_key=idempotency_key)
+
+    return _serialize_load_log(log)
