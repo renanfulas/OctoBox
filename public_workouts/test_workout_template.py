@@ -27,6 +27,7 @@ def _render(
     load_history=None,
     one_rep_max_by_movement=None,
     trends_by_movement=None,
+    plan_slug='bruno',
 ) -> str:
     return render_to_string('public_workouts/workout.html', {
         'program': payload,
@@ -35,6 +36,7 @@ def _render(
         'load_history': load_history or [],
         'one_rep_max_by_movement': one_rep_max_by_movement or {},
         'trends_by_movement': trends_by_movement or {},
+        'plan_slug': plan_slug,
     })
 
 
@@ -106,6 +108,42 @@ class WorkoutTemplateRenderTests(TestCase):
 
         self.assertIn('workout-tracked-chip', html)
         self.assertIn('rastreado', html)
+
+    def test_is_tracked_shows_load_input_row(self):
+        # Item 8 da Onda B3: movimento rastreado ganha a caixinha de
+        # "registrar carga de hoje" (queue pro outbox em load_tracker.js).
+        html = _render(build_example_payload())  # is_tracked=True no exemplo
+
+        self.assertIn('data-workout-load-input', html)
+        self.assertIn('data-workout-load-field', html)
+        self.assertIn('data-workout-load-save', html)
+        self.assertIn(f"data-movement-slug=\"{build_example_payload()['days'][0]['blocks'][0]['movements'][0]['movement_slug']}\"", html)
+
+    def test_movement_not_tracked_has_no_load_input_row(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['is_tracked'] = False
+
+        html = _render(payload)
+
+        self.assertNotIn('data-workout-load-input', html)
+
+    def test_body_carries_plan_slug_for_load_tracker_js(self):
+        html = _render(build_example_payload(), plan_slug='giovanna')
+
+        self.assertIn('data-plan-slug="giovanna"', html)
+
+    def test_loads_load_tracker_script(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('js/public_workouts/load_tracker.js', html)
+
+    def test_movement_with_reference_url_gets_wiki_link_class(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reference_url'] = 'https://musclewiki.com/exercise/agachamento-livre'
+
+        html = _render(payload)
+
+        self.assertIn('class="workout-wiki-link"', html)
 
     def test_block_with_no_movements_shows_empty_state_not_crash(self):
         payload = build_example_payload()
