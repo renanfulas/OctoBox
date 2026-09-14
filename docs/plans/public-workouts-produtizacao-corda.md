@@ -1569,6 +1569,25 @@ bloqueio).
 > não converte string pra `date` no atributo em memória). Falta ainda o
 > **formulário HTML** de fato (B4, `templates/public_workouts/**`) que
 > consome este endpoint — o que existe agora é só a base de escrita.
+>
+> **Atualização — "PDF via `reportlab`" (item 4.6 do plano de produto):**
+> `public_workouts/pdf_export.py::render_program_pdf(payload) -> bytes`
+> exporta o **programa prescrito** (dias/blocos/movimentos/reps/RIR/carga,
+> o mesmo payload S1 que `workout.html` renderiza) em PDF — a peça de
+> "o treino é seu" que reduz atrito no cancelamento. Isso é **diferente**
+> de `export_account_data`/`meus-dados.json` (LGPD, dado PESSOAL do
+> titular — conta, cobrança, avaliações, histórico de carga): aquele é
+> compliance, este é produto/retenção; um não substitui o outro.
+> Copia o padrão de paginação/quebra de linha de
+> `reporting.infrastructure.http_exports.build_pdf_response`, mas não
+> chama a função direto: ela usa `box_scoped_filename`, que lê o slug do
+> **box ativo (tenant)** — o corredor roda no schema `public`, sem
+> tenant (D.00), e não pode arrastar essa dependência (mesma regra de
+> `services.py` nunca importar `TENANT_APPS`). Testado contra
+> `schema.build_example_payload()`, sem view/rota ainda — pelo mesmo
+> motivo de `workout.html`: `get_active_program()` só tem dado real
+> depois da Onda A2, uma rota hoje devolveria "sem programa" para os 10
+> slugs reais.
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
@@ -1577,7 +1596,7 @@ bloqueio).
 | ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor |
 | serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício |
 | ✅ serviço de avaliação (US Navy / JP7) — já existia | ✅ endpoint de escrita (`POST .../avaliacoes`) — falta o formulário HTML em si |
-| ✅ export de dados do titular — `export_account_data`, `GET /renan/<slug>/meus-dados.json` (JSON) | PDF via `reportlab` |
+| ✅ export de dados do titular — `export_account_data`, `GET /renan/<slug>/meus-dados.json` (JSON) | ✅ `render_program_pdf` — falta só a rota, adiada pra quando A2 tiver dado real |
 
 ### Pronto quando
 1. ✅ 1RM devolve `None` acima de 15 reps efetivas.
