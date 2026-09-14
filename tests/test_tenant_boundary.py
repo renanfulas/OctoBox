@@ -995,3 +995,57 @@ class B13TenantSweepTest(TestCase):
                 self.assertIsNotNone(match, f'sem sumario de varredura em: {output!r}')
                 self.assertGreaterEqual(int(match.group(1)), 1, output)
                 self.assertNotIn('com falha', output)
+
+
+# ---------------------------------------------------------------------------
+# B14 — /renan/ (corredor publico de treinos) nunca toca TENANT_APPS
+# ---------------------------------------------------------------------------
+
+@tag('tenant', 'public-workouts')
+@pytest.mark.public_schema
+class B14PublicWorkoutViewsNeverTouchTenantAppsTest(TestCase):
+    """R2 do CORDA (docs/plans/public-workouts-produtizacao-corda.md,
+    secao R.T): 'uma view de /renan/ que toque modelo de TENANT_APPS passa
+    em CI (o schema_context autouse forca box_test, onde as tabelas de
+    tenant existem por definicao) e so falha em producao (schema public de
+    verdade, sem essas tabelas)'. O proprio plano ja pedia este teste desde
+    antes da Onda A1 ("A1 deve adicionar um irmao especifico para /renan/"
+    em R.T, Categoria 4) — nunca tinha nascido.
+
+    @pytest.mark.public_schema tira o schema_context autouse: a connection
+    fica de fato no schema public, sem nenhum tenant provisionado — a UNICA
+    forma de reproduzir a topologia real (SHARED_APPS existem, TENANT_APPS
+    nao). Se uma destas views importar/consultar um modelo tenant (facil de
+    acontecer por engano: o ARQUIVO destas views mora dentro do pacote
+    student_app, que E' TENANT_APP — Student, SessionWorkout etc. estao a
+    um `from .models import` de distancia), o teste falha com
+    ProgrammingError ("relation ... does not exist"), nao silenciosamente.
+
+    Cobre os caminhos de leitura mais expostos (B0, sem sessao de login):
+    a propria pagina e avaliacoes.json — o endpoint que originou o vazamento
+    A1 que a Onda B0 fechou. Nao cobre todo endpoint do corredor; e o
+    detector de regressao pedido pelo plano, nao uma suite de contrato.
+    """
+
+    def test_detail_page_renders_without_touching_tenant_apps(self):
+        response = self.client.get('/renan/giovanna')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_assessments_json_renders_without_touching_tenant_apps(self):
+        self.client.get('/renan/giovanna')  # seta o cookie de posse do B0
+
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_pdf_download_reads_active_program_without_touching_tenant_apps(self):
+        from public_workouts.schema import build_example_payload
+        from public_workouts.services import publish_program
+
+        publish_program(slug='giovanna', payload=build_example_payload())
+        self.client.get('/renan/giovanna')  # seta o cookie de posse do B0
+
+        response = self.client.get('/renan/giovanna/treino.pdf')
+
+        self.assertEqual(response.status_code, 200)
