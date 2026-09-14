@@ -1443,6 +1443,25 @@ bloqueio).
 
 ## ‖ B2 — Cobrança (4–6 dias) — **Frente B · 2º desenvolvedor**
 
+> **Atualização (auditoria de status desta sessão):** itens 1–5 confirmados
+> no código (não só na doc): modelos, `notify_payment_due`,
+> `drain_public_workout_notices` + `octobox-public-workout-notices.timer`
+> (systemd já existe), webhook próprio (`/treinos/stripe/webhook/`,
+> `stripe_handlers.py`), suspensão D+2 dentro do mesmo `drain_due_notices()`.
+> **Item 6 (Customer Portal) fechado nesta sessão** —
+> `start_customer_portal_session` (`stripe_checkout.py`) +
+> `PublicWorkoutBillingPortalView` (`POST /treinos/billing-portal`,
+> `student_identity/public_workout_views.py`). Mesmo padrão de
+> `PublicWorkoutSubscribeView`: sessão do corredor exigida, sem template
+> próprio (JSON com `portal_url`, a tela fica pra B3/B4). Só funciona pra
+> conta com `stripe_customer_id` já preenchido (passou por 1 checkout de
+> verdade) — sem isso, 404, não 503 (não é erro de configuração, é que
+> ainda não há o que gerenciar). O cancelamento feito pelo aluno dentro do
+> portal chega pelo MESMO webhook que já existia
+> (`customer.subscription.deleted` → `mark_subscription_canceled`) —
+> nenhuma lógica nova de mudança de estado, só a porta de entrada que
+> faltava. **Onda B2 completa.**
+
 ### O que fazer
 1. `PublicWorkoutPayment` (V3) + `PublicWorkoutPaymentNotice` (`payment`, `offset_days`, `scheduled_for`, `sent_at`) com
    unique `(payment, offset_days)`; as 5 linhas nascem com o `Payment`, data já
@@ -1457,7 +1476,7 @@ bloqueio).
    uma linha** (S3).
 5. Job `D+2 → PublicWorkoutSubscription.suspended` e volta por
    `invoice.payment_succeeded`. **`StudentBoxMembership` não é tocado.**
-6. Stripe Customer Portal.
+6. ✅ Stripe Customer Portal.
 
 ### O que entra
 - `public_workouts/models.py` + `migrations/` — `PublicWorkoutSubscription`, `PublicWorkoutPayment`, `PublicWorkoutPaymentNotice` (**criados pela Frente B** neste app, por instrução explícita desta seção; ver D.4 § "Quando D.4 colide com D.000")

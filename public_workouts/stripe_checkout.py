@@ -94,4 +94,35 @@ def start_subscription_checkout(*, subscription, success_url: str, cancel_url: s
     return session.url
 
 
-__all__ = ['PublicWorkoutStripeNotConfiguredError', 'start_subscription_checkout']
+def start_customer_portal_session(*, customer_id: str, return_url: str) -> str:
+    """Cria stripe.billing_portal.Session pra o aluno gerenciar/cancelar a
+    propria assinatura direto com a Stripe (Onda B2, item 6 — Customer
+    Portal).
+
+    So fala com a Stripe, mesmo padrao de start_subscription_checkout:
+    quem decide SE o aluno pode acessar (precisa ja ter `stripe_customer_id`
+    preenchido, ou seja, ja ter passado por 1 checkout completo) e quem
+    chama esta funcao, nao ela. O cancelamento feito pelo aluno dentro do
+    portal chega de volta como o MESMO webhook que ja existe
+    (`customer.subscription.deleted` -> mark_subscription_canceled em
+    billing.py) — nenhuma logica nova de estado nasce aqui.
+    """
+    import stripe
+
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key:
+        raise PublicWorkoutStripeNotConfiguredError('STRIPE_SECRET_KEY nao definida.')
+    stripe.api_key = secret_key
+
+    session = stripe.billing_portal.Session.create(
+        customer=customer_id,
+        return_url=return_url,
+    )
+    return session.url
+
+
+__all__ = [
+    'PublicWorkoutStripeNotConfiguredError',
+    'start_customer_portal_session',
+    'start_subscription_checkout',
+]

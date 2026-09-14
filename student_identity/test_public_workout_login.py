@@ -389,6 +389,88 @@ class PublicWorkoutSubscribeViewTests(TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()['error'], 'stripe_nao_configurado')
 
+
+class PublicWorkoutBillingPortalViewTests(TestCase):
+    # Onda B2, item 6 (Customer Portal) — ultimo item pendente da onda.
+    # Mesmo mecanismo de sessao/erros de PublicWorkoutSubscribeViewTests.
+
+    def _login(self, account):
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.id
+        )
+
+    def test_without_session_cookie_returns_401(self):
+        response = self.client.post(reverse('public-workout-billing-portal'))
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['error'], 'nao_autenticado')
+
+    def test_cookie_for_deleted_account_returns_401(self):
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=999999)
+
+        response = self.client.post(reverse('public-workout-billing-portal'))
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['error'], 'nao_autenticado')
+
+    def test_account_without_subscription_returns_404(self):
+        account = PublicWorkoutAccount.objects.create(email='semassinatura@example.com')
+        self._login(account)
+
+        response = self.client.post(reverse('public-workout-billing-portal'))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['error'], 'sem_assinatura_com_checkout_concluido')
+
+    def test_subscription_without_stripe_customer_id_returns_404(self):
+        # Assinatura existe (get_or_create_subscription ja rodou) mas o
+        # checkout nunca completou — link_stripe_ids nunca gravou o
+        # customer_id. Nao ha o que gerenciar no portal ainda.
+        from public_workouts.billing import get_or_create_subscription
+
+        account = PublicWorkoutAccount.objects.create(email='checkoutincompleto@example.com')
+        get_or_create_subscription(account=account, plan_slug='bruno')
+        self._login(account)
+
+        response = self.client.post(reverse('public-workout-billing-portal'))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['error'], 'sem_assinatura_com_checkout_concluido')
+
+    def test_stripe_not_configured_returns_503(self):
+        from public_workouts.billing import get_or_create_subscription, link_stripe_ids
+
+        account = PublicWorkoutAccount.objects.create(email='semstripeportal@example.com')
+        subscription = get_or_create_subscription(account=account, plan_slug='bruno')
+        link_stripe_ids(subscription, customer_id='cus_123', stripe_subscription_id='sub_123')
+        self._login(account)
+
+        with patch('student_identity.public_workout_views.start_customer_portal_session') as start_portal:
+            from public_workouts.stripe_checkout import PublicWorkoutStripeNotConfiguredError
+
+            start_portal.side_effect = PublicWorkoutStripeNotConfiguredError('sem secret key')
+            response = self.client.post(reverse('public-workout-billing-portal'))
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()['error'], 'stripe_nao_configurado')
+
+    def test_returns_portal_url_when_customer_id_is_set(self):
+        from public_workouts.billing import get_or_create_subscription, link_stripe_ids
+
+        account = PublicWorkoutAccount.objects.create(email='comportal@example.com')
+        subscription = get_or_create_subscription(account=account, plan_slug='bruno')
+        link_stripe_ids(subscription, customer_id='cus_456', stripe_subscription_id='sub_456')
+        self._login(account)
+
+        with patch('student_identity.public_workout_views.start_customer_portal_session') as start_portal:
+            start_portal.return_value = 'https://billing.stripe.com/session/bps_test_456'
+            response = self.client.post(reverse('public-workout-billing-portal'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['portal_url'], 'https://billing.stripe.com/session/bps_test_456')
+        _, kwargs = start_portal.call_args
+        self.assertEqual(kwargs['customer_id'], 'cus_456')
+
     def test_successful_checkout_returns_url_and_reuses_existing_subscription(self):
         from public_workouts.models import PublicWorkoutSubscription
 
