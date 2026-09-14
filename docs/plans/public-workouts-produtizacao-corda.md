@@ -1569,13 +1569,40 @@ bloqueio).
 > logout no corredor (só o cookie de posse do B0 e a sessão de login do
 > B1) — `window.PublicWorkoutLoadTracker.clearOutbox` já está exportada,
 > esperando esse botão nascer.
-> **Fora desta entrega, de propósito** (achado ao comparar `workout.html`
-> renderizado com dado real da `bruno.json` golden contra a página legada):
-> nome de exercício em PT-BR (hoje só `movement_slug` humanizado
-> mecanicamente, ex. "Barbell bench press" em vez de "Supino reto com
-> barra") e legenda de tipo de série (Feeder/Top Set) — os dois exigiriam
-> campo novo em `schema.py`, contrato da Onda S0 que muda só com acordo
-> escrito das duas frentes (D.5). Não decidido unilateralmente aqui.
+> **Correção da nota acima**: nome de exercício em PT-BR NÃO precisava de
+> campo novo em `schema.py` — achado incorreto, corrigido nesta sessão.
+> `PublicWorkoutMovement` (Onda A0, `extract_movements_from_html`) já é um
+> catálogo à parte, chaveado por `movement_slug`, com `label_pt` de
+> verdade extraído das 10 páginas legadas (85 movimentos) + 44 essenciais
+> de CrossFit curados — `publish_program` já garante (via
+> `_ensure_movements_exist`) que todo `movement_slug` publicado tem pelo
+> menos uma entrada aqui. **Entregue nesta sessão**:
+> `services.build_movement_label_lookup(payload)` (1 query em lote) +
+> `resolve_movement_display_name` (templatetag) — `workout.html` agora
+> mostra o nome PT-BR revisado quando existe, senão o mesmo palpite
+> mecânico de sempre. Zero mudança em `schema.py`, zero acordo entre
+> frentes necessário.
+> **Legenda de tipo de série (Preparatória/Feeder/Top Set/Max Set),
+> também entregue**: como v1 pragmático — `reps_spec` já carrega o
+> estágio como texto livre (ex. "2-3× Prep → 1× Feeder → 3× Top (6-8)",
+> um segmento por estágio); o filtro `highlight_set_stages` reconhece o
+> vocabulário fechado (extraído das 10 páginas legadas, `.st-p/.st-f/.st-t/.st-m`)
+> e pinta cada palavra-chave, sem inventar dado novo nem mexer no
+> contrato. Cores oficiais do design system (`--theme-text-muted`/
+> `--theme-accent-warning`/`--brand`/`--theme-accent-danger`), uma legenda
+> só pra página inteira. Formalizar como campo estruturado em `schema.py`
+> fica pra quando a Frente A mexer no parser de qualquer forma — não
+> bloqueia esta entrega.
+> **Aba "Suas Cargas" (nova, pedido do Renan)**: recorde (maior peso já
+> registrado) por movimento, via filtro `personal_record` sobre o mesmo
+> `load_history` que a aba Histórico já usa — sem nova consulta ao banco.
+> **Widget de carga redesenhado**: stepper ±2,5kg, dica clicável de
+> "última vez: X kg" (busca `GET /renan/<slug>/pacote.json` — já existe —
+> e usa `last_load_by_movement`; sem sessão de login, a dica só fica
+> vazia, nunca bloqueia o registro), pulso visual de confirmação ao
+> salvar. Tudo verificado via Playwright contra o payload real do Bruno
+> (nome PT-BR, badges de estágio, stepper, aba nova) — screenshots
+> comparados lado a lado com a página legada antes de push.
 
 ### O que fazer
 1. `workout.html` composto dos primitives do `student_app` — chip, card,

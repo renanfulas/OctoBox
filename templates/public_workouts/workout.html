@@ -55,6 +55,15 @@ PONTOS CRITICOS:
     <button
       type="button"
       class="student-status-badge workout-day-tab"
+      data-workout-tab-target="workout-records"
+      role="tab"
+      id="workout-tab-records"
+      aria-controls="workout-records"
+      aria-selected="false"
+    >Suas Cargas</button>
+    <button
+      type="button"
+      class="student-status-badge workout-day-tab"
       data-workout-tab-target="workout-history"
       role="tab"
       id="workout-tab-history"
@@ -62,6 +71,14 @@ PONTOS CRITICOS:
       aria-selected="false"
     >Histórico</button>
   </nav>
+
+  <div class="workout-set-stage-legend">
+    <span class="workout-set-stage-legend__label">Legenda:</span>
+    <span class="workout-set-stage workout-set-stage--prep">Preparatória</span>
+    <span class="workout-set-stage workout-set-stage--feeder">Feeder</span>
+    <span class="workout-set-stage workout-set-stage--top">Top Set</span>
+    <span class="workout-set-stage workout-set-stage--max">Max Set</span>
+  </div>
 
   <div class="interactive-tab-container" data-default-panel="workout-day-{{ program.days.0.day_id }}">
     {% for day in program.days %}
@@ -88,11 +105,11 @@ PONTOS CRITICOS:
               {% for movement in block.movements %}
               <tr>
                 <td>
-                  {% if movement.reference_url %}<a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement.movement_slug|humanize_movement_slug }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a>
-                  {% else %}{{ movement.movement_slug|humanize_movement_slug }}{% endif %}
+                  {% if movement.reference_url %}<a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement.movement_slug|resolve_movement_display_name:movement_labels }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a>
+                  {% else %}{{ movement.movement_slug|resolve_movement_display_name:movement_labels }}{% endif %}
                   {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
                 </td>
-                <td>{{ movement.reps_spec }}</td>
+                <td>{{ movement.reps_spec|highlight_set_stages }}</td>
                 <td>{{ movement.rir_spec }}</td>
                 <td>
                   {% if movement.load_type == 'percentage_of_rm' %}{{ movement.load_value }}% RM
@@ -104,8 +121,12 @@ PONTOS CRITICOS:
               <tr class="workout-load-input-row" data-workout-load-row>
                 <td colspan="4">
                   <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}">
-                    <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+                    <div class="workout-load-input__head">
+                      <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+                      <span class="workout-load-input__hint" data-workout-load-hint></span>
+                    </div>
                     <div class="workout-load-input__row">
+                      <button type="button" class="workout-load-input__step" data-workout-load-step="-2.5" aria-label="Diminuir 2,5 kg">−</button>
                       <input
                         type="number"
                         inputmode="decimal"
@@ -114,8 +135,9 @@ PONTOS CRITICOS:
                         placeholder="kg"
                         class="workout-load-input__field"
                         data-workout-load-field
-                        aria-label="Carga de hoje em {{ movement.movement_slug|humanize_movement_slug }}, em quilos"
+                        aria-label="Carga de hoje em {{ movement.movement_slug|resolve_movement_display_name:movement_labels }}, em quilos"
                       >
+                      <button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>
                       <button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
                     </div>
                     <span class="workout-load-input__status" data-workout-load-status aria-live="polite"></span>
@@ -133,6 +155,36 @@ PONTOS CRITICOS:
       {% endfor %}
     </section>
     {% endfor %}
+
+    <section
+      class="workout-records-panel"
+      id="workout-records"
+      role="tabpanel"
+      aria-labelledby="workout-tab-records"
+      data-workout-tab-panel
+    >
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Seus recordes</h2>
+        {% regroup load_history by movement_slug as load_history_by_movement_for_records %}
+        {% if load_history_by_movement_for_records %}
+        <div class="workout-records-grid">
+          {% for group in load_history_by_movement_for_records %}
+          {% with record=group.list|personal_record %}
+          {% if record.has_data %}
+          <div class="workout-record-card" data-workout-record-card>
+            <span class="workout-record-card__label">{{ group.grouper|resolve_movement_display_name:movement_labels }}</span>
+            <strong class="workout-record-card__value">{{ record.weight_kg }} <span class="workout-record-card__unit">kg</span></strong>
+            <span class="workout-record-card__date">{{ record.performed_on }}</span>
+          </div>
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
+        </div>
+        {% else %}
+        <p>Nenhuma carga registrada ainda.</p>
+        {% endif %}
+      </article>
+    </section>
 
     <section
       class="workout-history-panel"

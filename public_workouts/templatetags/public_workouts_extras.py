@@ -24,8 +24,11 @@ POR QUE ELE EXISTE:
 
 from __future__ import annotations
 
-from django import template
+import re
 
+from django import template
+from django.utils.html import escape, format_html
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -38,6 +41,23 @@ def humanize_movement_slug(movement_slug: str) -> str:
     if not movement_slug:
         return ''
     return movement_slug.replace('-', ' ').capitalize()
+
+
+@register.filter
+def resolve_movement_display_name(movement_slug: str, movement_labels: dict | None) -> str:
+    """Onda B3 — nome de exercicio pra exibir: PT-BR de verdade quando
+    `movement_labels` (services.build_movement_label_lookup, uma query em
+    lote contra PublicWorkoutMovement) tem entrada pro slug, senao o
+    mesmo palpite mecanico de humanize_movement_slug. Filtro proprio (nao
+    `default` encadeado com humanize_movement_slug) de proposito: um rotulo
+    de verdade tipo "Wall Ball" ou "GHD Sit-up" passado por
+    humanize_movement_slug sairia errado (`.capitalize()` derruba as
+    maiusculas internas)."""
+    if movement_labels:
+        label = movement_labels.get(movement_slug)
+        if label:
+            return label
+    return humanize_movement_slug(movement_slug)
 
 
 @register.filter
@@ -156,3 +176,84 @@ def load_chart_points(entries: list[dict]) -> dict:
         'delta_weight_kg': delta,
         'trend': _trend(delta),
     }
+
+
+@register.filter
+def personal_record(entries: list[dict]) -> dict:
+    """Onda B3 — aba "Suas Cargas": maior peso ja registrado de UM
+    movimento (mesmo shape de services.list_load_history, ja filtrado
+    pro movimento — mesmo uso de `{% regroup %}` que load_chart_points ja
+    faz na aba Historico). Diferente de load_chart_points (que mostra
+    EVOLUCAO), aqui so o recorde importa — 1 registro so ja e suficiente,
+    sem o corte de "2 pontos minimo" daquele filtro."""
+    weighted = [entry for entry in entries if entry.get('weight_kg') is not None]
+    if not weighted:
+        return {'has_data': False, 'weight_kg': None, 'performed_on': None, 'reps': None}
+
+    best = max(weighted, key=lambda entry: entry['weight_kg'])
+    return {
+        'has_data': True,
+        'weight_kg': best['weight_kg'],
+        'performed_on': best.get('performed_on'),
+        'reps': best.get('reps'),
+    }
+
+
+# Vocabulario fechado, extraido das 10 paginas legadas (.st-p/.st-f/.st-t/.st-m
+# — ver docs/plans/public-workouts-produtizacao-corda.md, nota da Onda B3):
+# cada autor de plano escrevia um rotulo um pouco diferente pro mesmo estagio
+# ("Top Set" vs "Top 1/2/3", "Max Set" vs "AMRAP") — normaliza pra 4
+# categorias fixas em vez de uma cor por plano, como era antes.
+_SET_STAGE_PATTERN = re.compile(
+    r'(?P<prefix>\d+(?:-\d+)?×\s*)'
+    r'(?P<stage>Prepara(?:t[oó]ria|t\.)?|Prep|Feeder|Top(?:\s*\d+)?(?:\s*Set)?|Max(?:\s*Set)?|AMRAP)',
+    re.IGNORECASE,
+)
+
+
+def _set_stage_category(stage_text: str) -> str:
+    lowered = stage_text.strip().lower()
+    if lowered.startswith('prep'):
+        return 'prep'
+    if lowered.startswith('feeder'):
+        return 'feeder'
+    if lowered.startswith('top'):
+        return 'top'
+    return 'max'  # max/amrap
+
+
+@register.filter
+def highlight_set_stages(reps_spec: str) -> str:
+    """Onda B3 — legenda de tipo de serie (Preparatória/Feeder/Top Set/Max
+    Set), sem campo novo em schema.py (contrato da Onda S0, D.5 — muda so
+    com acordo das duas frentes). `reps_spec` ja carrega o estagio como
+    TEXTO livre (ex. "2-3× Prep → 1× Feeder → 3× Top (6-8)", um segmento
+    por estagio dentro do mesmo movimento) — este filtro so pinta a
+    palavra-chave que ja esta la, nao inventa dado novo. Segmento que nao
+    bate o padrao (cardio, HIIT — sem conceito de estagio) sai sem marcacao,
+    so o texto original escapado.
+
+    Alvo de `highlight_set_stages` e' HTML de proposito (`mark_safe` via
+    format_html) — quem escreve `reps_spec` e o parser do repo (migrate_legacy_workouts),
+    nunca input de aluno, mas escapa a mesma forma pra nao depender disso."""
+    if not reps_spec:
+        return ''
+
+    parts = []
+    for segment in reps_spec.split(' → '):
+        match = _SET_STAGE_PATTERN.search(segment)
+        if not match:
+            parts.append(escape(segment))
+            continue
+
+        category = _set_stage_category(match.group('stage'))
+        before = escape(segment[: match.start()])
+        after = escape(segment[match.end() :])
+        badge = format_html(
+            '<span class="workout-set-stage workout-set-stage--{}">{}</span>',
+            category,
+            match.group('stage'),
+        )
+        parts.append(format_html('{}{}{}{}', before, escape(match.group('prefix')), badge, after))
+
+    return mark_safe(' → '.join(str(part) for part in parts))
