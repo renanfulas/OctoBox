@@ -1595,9 +1595,23 @@ bloqueio).
 > tem coleta ainda (D4 do plano de produto: "tudo que alimenta a IA
 > começa a coletar antes da IA existir"). O job assíncrono que junta isso
 > com Haiku pra virar texto (item 4.5 do plano) continua de fora.
-> **Serviço de substituição por `movement_pattern` continua bloqueado** —
-> depende da sua revisão da sugestão da Onda A0 (`classify_public_workout_movements`).
-> Serviço de avaliação (US Navy/JP7) já existe desde antes desta Onda —
+> **Atualização: revisão da A0 concluída, serviço de substituição entregue
+> (versão de curto prazo).** Os 82 movimentos extraídos do HTML foram
+> revisados um a um contra a sugestão de `classify_public_workout_movements`
+> (nenhum erro real — 2 casos de fronteira aceitos e documentados: o
+> catálogo não tem categoria própria para eles) e promovidos
+> `pending → active`, em dev e produção; mais 2 dos 6 movimentos criados
+> pela migração da Onda A2 (`abducao-com-caneleira-3-angulos`,
+> `prancha-com-toque-no-ombro`) também foram classificados. Os outros 4
+> (protocolos de cardio + a vaga livre do rafael) ficam `pending` de
+> propósito — não são exercícios de padrão único. Catálogo final: 128
+> `active` / 4 `pending` de 132. `public_workouts/substitutions.py::suggest_substitutes`
+> sugere só entre `active` do mesmo `movement_pattern`, sem diferenciar
+> equipamento (curto prazo, decisão abaixo) — `S2`/`build_student_package`
+> **não foi tocado** nesta entrega: é contrato congelado (D.5), então a
+> forma como "UI de troca de exercício" vai consumir isto (endpoint novo
+> vs. popular `substitutions` de S2) fica pra quem construir essa tela.
+> Serviço de avaliação (US Navy/JP7) já existia desde antes desta Onda —
 > `public_workouts/formulas.py`.
 >
 > **Decisão do Renan sobre a substituição (registrada antes do serviço existir,
@@ -1692,7 +1706,7 @@ bloqueio).
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
 | ✅ detecção de platô e queda de 1RM (v1, limiares ajustáveis) | ✅ aba de histórico de programas (online) |
 | ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor *(depende do editor com IA, Onda A2 — Entrega 4.1 do plano)* |
-| serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício — depende da linha ao lado |
+| ✅ `suggest_substitutes` (`public_workouts/substitutions.py`) — sugestão por `movement_pattern`, só entre `active` | UI de troca de exercício — depende da linha ao lado |
 | ✅ serviço de avaliação (US Navy / JP7) — já existia | ✅ endpoint de escrita (`POST .../avaliacoes`, PR #231) **+ formulário HTML** (`assessments.js`, esta sessão) |
 | ✅ export de dados do titular — `export_account_data`, `GET /renan/<slug>/meus-dados.json` (JSON) | ✅ `render_program_pdf` (PR #232) **+ rota** `GET /renan/<slug>/treino.pdf` (`PublicWorkoutDownloadPdfView`, esta sessão) |
 
@@ -1701,10 +1715,10 @@ bloqueio).
 2. ✅ O gráfico mostra marcador de troca de programa no lugar certo.
 3. Variação irmã aparece como referência, rotulada, sem entrar no cálculo
    — a parte de **cálculo** está pronta (`detect_one_rep_max_trend` nunca
-   mistura `movement_slug` diferentes, testado); a parte de **exibição**
-   (mostrar a variação irmã na tela) segue bloqueada — precisa de
-   agrupamento por `movement_pattern`, mesma dependência da linha de
-   substituição de exercício acima.
+   mistura `movement_slug` diferentes, testado); o `movement_pattern`
+   revisado (agrupamento) e `suggest_substitutes` já existem. Falta só a
+   **exibição** (mostrar a variação irmã na tela) — tela da Frente B,
+   não bloqueada em dado da Frente A.
 4. ✅ Review semanal recebe **sinais**, não tabela crua.
 
 ---
