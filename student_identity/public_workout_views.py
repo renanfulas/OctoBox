@@ -25,9 +25,10 @@ PONTOS CRITICOS:
   campo hidden do formulario de e-mail -> dentro do link do e-mail
   (request_login_token) -> querystring do GET com ?token=.
 
-PublicWorkoutSubscribeView (Onda B2, Fatia B) mora neste mesmo arquivo:
-precisa da mesma sessao (cookie) que o login estabelece, e e so um POST
-de API (sem template proprio ainda — a tela de assinatura e Onda B3/B4).
+PublicWorkoutSubscribeView e PublicWorkoutBillingPortalView (Onda B2,
+Fatia B/item 6) moram neste mesmo arquivo: precisam da mesma sessao
+(cookie) que o login estabelece, e sao so POST de API (sem template
+proprio ainda — a tela de assinatura e Onda B3/B4).
 """
 
 from __future__ import annotations
@@ -41,7 +42,11 @@ from django.views.generic import View
 
 from public_workouts.billing import get_or_create_subscription
 from public_workouts.models import PublicWorkoutAccount
-from public_workouts.stripe_checkout import PublicWorkoutStripeNotConfiguredError, start_subscription_checkout
+from public_workouts.stripe_checkout import (
+    PublicWorkoutStripeNotConfiguredError,
+    start_customer_portal_session,
+    start_subscription_checkout,
+)
 
 from .public_workout_login import (
     PublicWorkoutLoginRateLimitExceeded,
@@ -131,3 +136,47 @@ class PublicWorkoutSubscribeView(View):
             return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
 
         return JsonResponse({'checkout_url': checkout_url})
+
+
+class PublicWorkoutBillingPortalView(View):
+    """POST /treinos/billing-portal — abre o Portal do Cliente Stripe pra
+    o aluno gerenciar/cancelar a propria assinatura sozinho (Onda B2,
+    item 6 — ultimo item da onda, o Customer Portal nunca tinha sido
+    implementado; so existia uma mencao a ele como possibilidade futura
+    no docstring de mark_subscription_canceled).
+
+    Mesmo mecanismo de sessao de PublicWorkoutSubscribeView. So funciona
+    pra conta que ja tem `stripe_customer_id` preenchido — ou seja, ja
+    concluiu 1 checkout de verdade (link_stripe_ids, via o webhook de
+    checkout.session.completed). Sem isso, 404 — nao ha o que gerenciar
+    ainda, nao e erro de configuracao.
+
+    O cancelamento que o aluno faz dentro do portal da Stripe chega de
+    volta pelo MESMO webhook que ja existe (`customer.subscription.deleted`
+    -> mark_subscription_canceled) — esta view nunca muda o status da
+    PublicWorkoutSubscription diretamente.
+    """
+
+    def post(self, request, *args, **kwargs):
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'nao_autenticado'}, status=401)
+
+        try:
+            account = PublicWorkoutAccount.objects.get(pk=account_id)
+        except PublicWorkoutAccount.DoesNotExist:
+            return JsonResponse({'error': 'nao_autenticado'}, status=401)
+
+        subscription = getattr(account, 'subscription', None)
+        if subscription is None or not subscription.stripe_customer_id:
+            return JsonResponse({'error': 'sem_assinatura_com_checkout_concluido'}, status=404)
+
+        return_url = request.build_absolute_uri(reverse('public-workout-login'))
+        try:
+            portal_url = start_customer_portal_session(
+                customer_id=subscription.stripe_customer_id, return_url=return_url
+            )
+        except PublicWorkoutStripeNotConfiguredError as exc:
+            return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
+
+        return JsonResponse({'portal_url': portal_url})
