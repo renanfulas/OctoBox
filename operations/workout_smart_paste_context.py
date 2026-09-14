@@ -16,6 +16,7 @@ from operations.forms import (
     WorkoutCreateStoredTemplateForm,
 )
 from operations.models import ClassType, ClassSession, SessionStatus
+from operations.services.wod_generation_credits import get_or_create_current_ledger
 from operations.services.wod_paste_parser import load_wod_movement_dictionary
 from operations.services.wod_replication_batches import batch_can_be_undone
 from shared_support.page_payloads import attach_page_payload, build_page_assets, build_page_hero, build_page_payload
@@ -65,6 +66,7 @@ def _smart_paste_display_label(movement):
 
 def _decorate_preview_payload(parsed_payload):
     unresolved_items = []
+    auto_fixed_items = []
     total_blocks = 0
     total_movements = 0
     first_unresolved_target_id = ''
@@ -81,6 +83,15 @@ def _decorate_preview_payload(parsed_payload):
                 movement['display_label'] = _smart_paste_display_label(movement)
                 movement['review_target_id'] = f'review-item-{day_index}-{block_index}-{movement_index}'
                 total_movements += 1
+                if movement.get('llm_resolved'):
+                    auto_fixed_items.append(
+                        {
+                            'day_label': day.get('weekday_label', ''),
+                            'block_title': block.get('title') or block.get('kind', ''),
+                            'display_label': movement.get('display_label') or movement.get('movement_label_raw', ''),
+                            'note': movement.get('llm_fix_note') or '',
+                        }
+                    )
                 if not movement.get('movement_slug'):
                     day_has_unresolved = True
                     day_unresolved_count += 1
@@ -116,8 +127,25 @@ def _decorate_preview_payload(parsed_payload):
         'unresolved_items': unresolved_items[:8],
         'first_unresolved_target_id': first_unresolved_target_id,
         'current_unresolved_item': unresolved_items[0] if unresolved_items else None,
+        'auto_fixed_count': len(auto_fixed_items),
+        'auto_fixed_items': auto_fixed_items[:8],
     }
     return parsed_payload
+
+
+def _load_wod_generation_credit_summary(today):
+    """Le a cota de geracao automatica (Fase 1). Nunca quebra a pagina se a
+    migration de WodGenerationCreditLedger ainda nao rodou nesse box."""
+    try:
+        ledger = get_or_create_current_ledger(today)
+    except Exception:
+        return None
+    return {
+        'free_credits_total': ledger.free_credits_total,
+        'free_credits_remaining': ledger.free_credits_remaining,
+        'purchased_credits_available': ledger.purchased_credits_available,
+        'credits_remaining': ledger.credits_remaining,
+    }
 
 
 def load_surface_weekly_wod_plan_for_user(*, user, today):
@@ -266,6 +294,7 @@ def build_weekly_wod_smart_paste_context(
         'smart_paste_picker_value': (
             getattr(weekly_plan, 'week_start', None) or week_start
         ).strftime('%Y-%m-%d'),
+        'wod_generation_credit_summary': _load_wod_generation_credit_summary(today),
     }
     attach_page_payload(
         context,
