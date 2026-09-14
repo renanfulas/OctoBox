@@ -164,7 +164,10 @@ class ServicesTests(TestCase):
 
     def test_build_report_with_no_assessments_returns_empty_shape(self):
         report = build_report(plan_slug='rafael', sex='M', height_cm=175)
-        self.assertEqual(report, {'assessments': [], 'summary': None, 'indicators': None})
+        self.assertEqual(
+            report,
+            {'assessments': [], 'summary': None, 'indicators': None, 'skinfold_self_report_unlocked': False},
+        )
 
     def test_build_report_computes_deltas_and_indicators(self):
         record_assessment(
@@ -212,6 +215,48 @@ class ServicesTests(TestCase):
         self.assertIsNone(report['indicators']['whr'])
         self.assertIsNone(report['indicators']['body_fat_percent'])
         self.assertIsNone(report['indicators']['bmi'])
+
+    def test_skinfold_self_report_unlocked_false_without_presencial_history(self):
+        # Decisao do Renan: US Navy (fita) sempre disponivel; dobras
+        # cutaneas so depois que o TREINADOR ja tiver lancado pelo menos
+        # uma avaliacao por dobra deste plano presencialmente.
+        record_assessment(plan_slug='rafael', measured_at=date(2026, 1, 1), weight_kg=75)
+        report = build_report(plan_slug='rafael', sex='M', height_cm=175)
+        self.assertFalse(report['skinfold_self_report_unlocked'])
+
+    def test_skinfold_self_report_unlocked_true_after_presencial_jp7(self):
+        record_assessment(
+            plan_slug='rafael',
+            measured_at=date(2026, 1, 1),
+            weight_kg=75,
+            body_fat_percent=18.0,
+            body_fat_source='skinfold_jp7',
+        )
+        report = build_report(plan_slug='rafael', sex='M', height_cm=175)
+        self.assertTrue(report['skinfold_self_report_unlocked'])
+
+    def test_skinfold_self_report_unlocked_true_after_presencial_jp3(self):
+        record_assessment(
+            plan_slug='rafael',
+            measured_at=date(2026, 1, 1),
+            weight_kg=75,
+            body_fat_percent=18.0,
+            body_fat_source='skinfold_jp3',
+        )
+        report = build_report(plan_slug='rafael', sex='M', height_cm=175)
+        self.assertTrue(report['skinfold_self_report_unlocked'])
+
+    def test_has_presencial_skinfold_assessment_ignores_device_and_navy_sources(self):
+        from .services import has_presencial_skinfold_assessment
+
+        record_assessment(
+            plan_slug='rafael',
+            measured_at=date(2026, 1, 1),
+            weight_kg=75,
+            body_fat_percent=18.0,
+            body_fat_source='device',
+        )
+        self.assertFalse(has_presencial_skinfold_assessment(plan_slug='rafael'))
 
 
 class ModelTests(TestCase):

@@ -863,25 +863,36 @@ class PublicWorkoutRecordLoadView(View):
 
 
 class PublicWorkoutRecordAssessmentView(View):
-    """POST /renan/<slug>/avaliacoes — autoavaliacao fisica ONLINE (US Navy),
-    Onda A3/B4 do CORDA. Contrapartida de ESCRITA de
-    PublicWorkoutAssessmentsView (GET .../avaliacoes.json, so leitura).
+    """POST /renan/<slug>/avaliacoes — autoavaliacao fisica ONLINE. US Navy
+    (so fita metrica) sempre disponivel; dobras cutaneas Jackson-Pollock
+    7 pontos quando liberado (ver `skinfolds` abaixo). Onda A3/B4 do
+    CORDA. Contrapartida de ESCRITA de PublicWorkoutAssessmentsView
+    (GET .../avaliacoes.json, so leitura).
 
     PONTOS CRITICOS:
     - Mesma regra de auth de PublicWorkoutRecordLoadView: exige sessao de
       LOGIN ativa (401 sem sessao) e gate de posse do slug (404, nunca 403).
-      O antigo docstring de PublicWorkoutAssessmentsView dizia "so o
-      treinador registra, via management command" — isso vale pra
-      avaliacao PRESENCIAL (Jackson-Pollock, precisa do treinador com o
-      adipometro). Na consultoria ONLINE, e o proprio aluno que mede e
-      lanca (metodo US Navy, so fita metrica) — decisao confirmada com o
-      Renan; este endpoint e o caminho de escrita que faltava pra isso.
-    - `body_fat_percent`/`body_fat_source` NUNCA vem do aluno: sao
-      exclusivos do fluxo presencial do treinador (skinfold/dispositivo).
-      Pedido que traga qualquer um dos dois e' 400 — o BF% desta avaliacao
-      sempre sai da estimativa US Navy calculada em build_report a partir
-      de `measurements`, nunca de um numero que o proprio aluno declarou.
+      Na consultoria ONLINE, e o proprio aluno que mede e lanca — decisao
+      confirmada com o Renan.
+    - `body_fat_percent`/`body_fat_source` NUNCA vem direto do aluno, nem
+      quando manda dobras: sao SEMPRE calculados aqui a partir de dado
+      cru (`measurements` pra US Navy — na verdade em build_report, em
+      tempo de leitura; `age`+`skinfolds` pra Jackson-Pollock, aqui, em
+      tempo de escrita, porque a idade nao e persistida em lugar nenhum
+      pra poder recalcular depois — mesmo padrao do --age do management
+      command). Pedido que traga qualquer um dos dois direto e' 400.
+    - `skinfolds` (7 dobras em mm: peitoral/axilar/triceps/subescapular/
+      abdomen/iliaca/coxa — mesmos nomes do management command) so e'
+      aceito quando `has_presencial_skinfold_assessment` confirma que o
+      treinador ja lancou pelo menos 1 avaliacao por dobra deste plano
+      presencialmente (decisao do Renan: so confia na tecnica do aluno
+      pinçando a dobra sozinho depois de ele ja ter sido calibrado ao
+      vivo). Revalidado aqui a cada request — o `skinfold_self_report_unlocked`
+      que avaliacoes.json devolve e' so pra tela decidir se MOSTRA a
+      secao, nunca autorizacao de verdade.
     """
+
+    _SKINFOLD_KEYS = ('peitoral', 'axilar', 'triceps', 'subescapular', 'abdomen', 'iliaca', 'coxa')
 
     def post(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
@@ -903,21 +914,73 @@ class PublicWorkoutRecordAssessmentView(View):
 
         if 'body_fat_percent' in payload or 'body_fat_source' in payload:
             return JsonResponse(
-                {'error': 'body_fat_percent/body_fat_source so podem ser lancados pelo treinador, presencialmente'},
+                {'error': 'body_fat_percent/body_fat_source nunca vem direto do aluno — sao sempre calculados aqui'},
                 status=400,
             )
 
         measured_at = payload.get('measured_at')
         weight_kg = payload.get('weight_kg')
         measurements = payload.get('measurements')
+        skinfolds = payload.get('skinfolds')
         if not measured_at:
             return JsonResponse({'error': 'measured_at e obrigatorio'}, status=400)
         if measurements is not None and not isinstance(measurements, dict):
             return JsonResponse({'error': 'measurements deve ser um objeto'}, status=400)
-        if not weight_kg and not measurements:
-            return JsonResponse({'error': 'informe weight_kg ou measurements'}, status=400)
+        if skinfolds is not None and not isinstance(skinfolds, dict):
+            return JsonResponse({'error': 'skinfolds deve ser um objeto'}, status=400)
+        if not weight_kg and not measurements and not skinfolds:
+            return JsonResponse({'error': 'informe weight_kg, measurements ou skinfolds'}, status=400)
 
-        from public_workouts.services import AssessmentValueError, record_assessment
+        from public_workouts.services import AssessmentValueError, has_presencial_skinfold_assessment, record_assessment
+
+        body_fat_kwargs = {}
+        notes = payload.get('notes', '')
+        if skinfolds is not None:
+            if not has_presencial_skinfold_assessment(plan_slug=plan.slug):
+                return JsonResponse(
+                    {
+                        'error': (
+                            'dobras cutaneas ainda nao liberadas — '
+                            'precisa de uma avaliacao presencial com o treinador primeiro'
+                        )
+                    },
+                    status=403,
+                )
+            missing = [key for key in self._SKINFOLD_KEYS if key not in skinfolds]
+            if missing:
+                return JsonResponse({'error': f'faltam dobras: {", ".join(missing)}'}, status=400)
+            if 'age' not in payload:
+                return JsonResponse({'error': 'age e obrigatorio para lancar dobras cutaneas'}, status=400)
+
+            try:
+                fold_values = {key: float(skinfolds[key]) for key in self._SKINFOLD_KEYS}
+                age_value = float(payload.get('age'))
+            except (TypeError, ValueError):
+                return JsonResponse({'error': 'age e as dobras precisam ser numeros'}, status=400)
+            if age_value <= 0 or any(v <= 0 for v in fold_values.values()):
+                return JsonResponse({'error': 'age e as dobras devem ser numeros positivos'}, status=400)
+
+            from public_workouts.formulas import Sex, estimate_body_fat_jackson_pollock_7site
+
+            computed_bf = estimate_body_fat_jackson_pollock_7site(
+                sex=plan.assessment_sex or Sex.MALE,
+                age=age_value,
+                chest_mm=fold_values['peitoral'],
+                midaxillary_mm=fold_values['axilar'],
+                triceps_mm=fold_values['triceps'],
+                subscapular_mm=fold_values['subescapular'],
+                abdomen_mm=fold_values['abdomen'],
+                suprailiac_mm=fold_values['iliaca'],
+                thigh_mm=fold_values['coxa'],
+            )
+            if computed_bf is None:
+                return JsonResponse(
+                    {'error': 'nao foi possivel calcular o %gordura com essas medidas — confira os valores'},
+                    status=400,
+                )
+            body_fat_kwargs = {'body_fat_percent': computed_bf, 'body_fat_source': 'skinfold_jp7'}
+            skinfold_note = 'Dobras (mm): ' + ', '.join(f'{key}={fold_values[key]:g}' for key in self._SKINFOLD_KEYS)
+            notes = f'{notes} {skinfold_note}'.strip()
 
         try:
             result = record_assessment(
@@ -925,7 +988,8 @@ class PublicWorkoutRecordAssessmentView(View):
                 measured_at=measured_at,
                 weight_kg=_decimal_or_none(weight_kg),
                 measurements=measurements,
-                notes=payload.get('notes', ''),
+                notes=notes,
+                **body_fat_kwargs,
             )
         except (AssessmentValueError, ValueError) as exc:
             return JsonResponse({'error': str(exc)}, status=400)
