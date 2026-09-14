@@ -1,4 +1,4 @@
-{% load static public_workouts_extras %}<!DOCTYPE html>
+{% load static l10n public_workouts_extras %}<!DOCTYPE html>
 <!--
 ARQUIVO: prototipo do "template unico" (Onda B3 do CORDA — fundacao visual).
 
@@ -158,15 +158,46 @@ PONTOS CRITICOS:
         {% regroup load_history by movement_slug as load_history_by_movement %}
         {% for group in load_history_by_movement %}
           {% with chart=group.list|load_chart_points %}
-          <div class="workout-load-chart">
-            <h3>{{ group.grouper|humanize_movement_slug }}</h3>
+          <div class="workout-load-chart{% if chart.has_data %} has-data{% endif %}">
+            <div class="workout-load-chart-head">
+              <h3>{{ group.grouper|humanize_movement_slug }}</h3>
+              {% if chart.has_data %}
+              <span class="workout-load-chart-current">
+                <strong>{{ chart.latest_weight_kg }} kg</strong>
+                <span class="workout-load-chart-trend workout-load-chart-trend--{{ chart.trend }}">
+                  {% if chart.trend == 'up' %}▲{% elif chart.trend == 'down' %}▼{% else %}—{% endif %}
+                  {{ chart.delta_weight_kg }} kg
+                </span>
+              </span>
+              {% endif %}
+            </div>
             {% if chart.has_data %}
-            <svg viewBox="{{ chart.viewbox }}" preserveAspectRatio="none" role="img" aria-label="Evolução de carga em {{ group.grouper|humanize_movement_slug }}">
-              <polyline class="workout-load-chart-line" points="{{ chart.points_attr }}"></polyline>
+            <svg
+              class="workout-load-chart-svg"
+              viewBox="{{ chart.viewbox }}"
+              preserveAspectRatio="none"
+              role="img"
+              aria-label="Evolução de carga em {{ group.grouper|humanize_movement_slug }}: {{ chart.latest_weight_kg }} kg, {{ chart.trend }}"
+            >
+              <defs>
+                <linearGradient id="workout-load-fill-{{ forloop.counter }}" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.32" />
+                  <stop offset="100%" style="stop-color:var(--brand);stop-opacity:0" />
+                </linearGradient>
+                <linearGradient id="workout-load-stroke-{{ forloop.counter }}" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.55" />
+                  <stop offset="100%" style="stop-color:var(--brand);stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              {% localize off %}
+              <polygon class="workout-load-chart-area" points="{{ chart.area_points_attr }}" fill="url(#workout-load-fill-{{ forloop.counter }})"></polygon>
+              <polyline class="workout-load-chart-line" points="{{ chart.points_attr }}" pathLength="1" stroke="url(#workout-load-stroke-{{ forloop.counter }})"></polyline>
               {% for point in chart.points %}
+              <circle class="workout-load-chart-halo" cx="{{ point.x }}" cy="{{ point.y }}" r="7"></circle>
               <circle class="workout-load-chart-dot" cx="{{ point.x }}" cy="{{ point.y }}" r="3"></circle>
               <text class="workout-load-chart-label" x="{{ point.x }}" y="{{ chart.label_y }}">{{ point.label }}</text>
               {% endfor %}
+              {% endlocalize %}
             </svg>
             {% else %}
             <p>Ainda não há carga suficiente registrada para montar o gráfico.</p>

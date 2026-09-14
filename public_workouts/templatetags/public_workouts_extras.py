@@ -48,6 +48,14 @@ def _format_short_date(iso_date: str) -> str:
     return f'{day}/{month}'
 
 
+def _trend(delta: float) -> str:
+    if delta > 0:
+        return 'up'
+    if delta < 0:
+        return 'down'
+    return 'flat'
+
+
 @register.filter
 def load_chart_points(entries: list[dict]) -> dict:
     """Converte uma serie de registros de carga (mesmo shape de
@@ -57,15 +65,27 @@ def load_chart_points(entries: list[dict]) -> dict:
     `has_data=False` (com listas vazias) quando ha menos de 2 pontos com
     `weight_kg` preenchido — mesma supressao de buildWeightChart (um unico
     ponto nao mostra tendencia nenhuma; movimentos so de peso corporal, sem
-    weight_kg, tambem caem aqui)."""
+    weight_kg, tambem caem aqui).
+
+    Alem dos pontos da linha, devolve `area_points_attr` (a mesma linha
+    fechada na base do grafico — `baseline_y` — pra preencher um degrade
+    embaixo da curva) e `latest_weight_kg`/`delta_weight_kg`/`trend`
+    (primeiro vs. ultimo ponto), pra exibir o valor atual e a tendencia sem
+    o template precisar indexar a lista (Django template nao tem `[-1]`)."""
+    baseline_y = _CHART_HEIGHT - _CHART_PAD
     weighted = [entry for entry in entries if entry.get('weight_kg') is not None]
     if len(weighted) < 2:
         return {
             'has_data': False,
             'viewbox': f'0 0 {_CHART_WIDTH} {_CHART_HEIGHT + 20}',
             'label_y': _CHART_HEIGHT + 15,
+            'baseline_y': baseline_y,
             'points_attr': '',
+            'area_points_attr': '',
             'points': [],
+            'latest_weight_kg': None,
+            'delta_weight_kg': None,
+            'trend': 'flat',
         }
 
     weights = [entry['weight_kg'] for entry in weighted]
@@ -88,10 +108,19 @@ def load_chart_points(entries: list[dict]) -> dict:
             'label': _format_short_date(entry['performed_on']),
         })
 
+    points_attr = ' '.join(f"{point['x']},{point['y']}" for point in points)
+    area_points_attr = f"{points_attr} {points[-1]['x']},{baseline_y} {points[0]['x']},{baseline_y}"
+    delta = round(points[-1]['weight_kg'] - points[0]['weight_kg'], 2)
+
     return {
         'has_data': True,
         'viewbox': f'0 0 {_CHART_WIDTH} {_CHART_HEIGHT + 20}',
         'label_y': _CHART_HEIGHT + 15,
-        'points_attr': ' '.join(f"{point['x']},{point['y']}" for point in points),
+        'baseline_y': baseline_y,
+        'points_attr': points_attr,
+        'area_points_attr': area_points_attr,
         'points': points,
+        'latest_weight_kg': points[-1]['weight_kg'],
+        'delta_weight_kg': delta,
+        'trend': _trend(delta),
     }

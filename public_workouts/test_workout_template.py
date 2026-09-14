@@ -162,6 +162,12 @@ class WorkoutTemplateRenderTests(TestCase):
 
         self.assertIn('Agachamento livre', html)
         self.assertIn('workout-load-chart-line', html)
+        self.assertIn('workout-load-chart-trend--up', html)
+        # Texto visivel usa separador decimal pt-BR (USE_L10N, mesma
+        # convencao de "75,0% RM" ja testada acima); coordenadas do SVG
+        # abaixo tem que ficar de FORA disso (SVG so aceita ponto).
+        self.assertIn('100,0 kg', html)
+        self.assertIn('cx="10.0" cy="90.0"', html)
         self.assertNotIn('Ainda não há carga suficiente', html)
 
     def test_history_tab_shows_fallback_with_fewer_than_two_points(self):
@@ -252,3 +258,61 @@ class LoadChartPointsFilterTests(TestCase):
 
         self.assertEqual(result['points'][0]['label'], '05/01')
         self.assertEqual(result['points'][1]['label'], '12/01')
+
+    def test_upward_trend_reports_positive_delta(self):
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertEqual(result['trend'], 'up')
+        self.assertEqual(result['delta_weight_kg'], 10.0)
+        self.assertEqual(result['latest_weight_kg'], 100.0)
+
+    def test_downward_trend_reports_negative_delta(self):
+        entries = [
+            {'weight_kg': 100.0, 'performed_on': '2026-01-05'},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-12'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertEqual(result['trend'], 'down')
+        self.assertEqual(result['delta_weight_kg'], -10.0)
+
+    def test_flat_trend_reports_zero_delta(self):
+        entries = [
+            {'weight_kg': 100.0, 'performed_on': '2026-01-05'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertEqual(result['trend'], 'flat')
+        self.assertEqual(result['delta_weight_kg'], 0.0)
+
+    def test_area_points_closes_polygon_at_baseline(self):
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertEqual(
+            result['area_points_attr'],
+            f"{result['points_attr']} 590.0,{result['baseline_y']} 10.0,{result['baseline_y']}",
+        )
+
+    def test_no_data_still_has_zeroed_trend_fields(self):
+        # O template usa chart.trend/latest_weight_kg so dentro de
+        # {% if chart.has_data %}, mas as chaves precisam existir mesmo
+        # assim pra nao quebrar caso alguem itere fora desse guard.
+        result = load_chart_points([])
+
+        self.assertIsNone(result['latest_weight_kg'])
+        self.assertIsNone(result['delta_weight_kg'])
+        self.assertEqual(result['trend'], 'flat')
+        self.assertEqual(result['area_points_attr'], '')
