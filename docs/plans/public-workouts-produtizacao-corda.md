@@ -1548,63 +1548,40 @@ bloqueio).
 > Serviço de avaliação (US Navy/JP7) já existe desde antes desta Onda —
 > `public_workouts/formulas.py`.
 >
-> **Atualização — escrita da avaliação online:** confirmado com o Renan
-> que a linha "formulários sobre `forms.css`" NÃO estava obsoleta — a
-> leitura anterior do docstring de `PublicWorkoutAssessmentsView`
-> ("só o treinador registra, via management command") vale só pra
-> avaliação **presencial** (Jackson-Pollock, precisa do treinador com o
-> adipômetro). Na consultoria **online** é o próprio aluno que mede
-> (método US Navy — só fita métrica: pescoço/cintura/quadril) e lança.
-> `PublicWorkoutRecordAssessmentView` (`POST /renan/<slug>/avaliacoes`)
-> entrega esse caminho de escrita — mesma regra de auth de
-> `record_load`/`carga` (login + gate de posse, 401/404). Rejeita
-> explicitamente `body_fat_percent`/`body_fat_source` no payload: o
-> aluno nunca declara BF%, só manda as medidas brutas — o `build_report`
-> já existente estima BF% pelo método Navy a partir delas, na leitura.
-> `record_assessment` (serviço) também ganhou validação de
-> `weight_kg <= 0` (`AssessmentValueError`) e passou a devolver o dict
-> serializado em vez da instância do model — a mesma normalização
-> string→date de `record_load::performed_on` foi replicada pra
-> `measured_at` (bug real, achado ao conectar os dois: `.objects.create()`
-> não converte string pra `date` no atributo em memória). Falta ainda o
-> **formulário HTML** de fato (B4, `templates/public_workouts/**`) que
-> consome este endpoint — o que existe agora é só a base de escrita.
->
-> **Atualização — "PDF via `reportlab`" (item 4.6 do plano de produto):**
-> `public_workouts/pdf_export.py::render_program_pdf(payload) -> bytes`
-> exporta o **programa prescrito** (dias/blocos/movimentos/reps/RIR/carga,
-> o mesmo payload S1 que `workout.html` renderiza) em PDF — a peça de
-> "o treino é seu" que reduz atrito no cancelamento. Isso é **diferente**
-> de `export_account_data`/`meus-dados.json` (LGPD, dado PESSOAL do
-> titular — conta, cobrança, avaliações, histórico de carga): aquele é
-> compliance, este é produto/retenção; um não substitui o outro.
-> Copia o padrão de paginação/quebra de linha de
-> `reporting.infrastructure.http_exports.build_pdf_response`, mas não
-> chama a função direto: ela usa `box_scoped_filename`, que lê o slug do
-> **box ativo (tenant)** — o corredor roda no schema `public`, sem
-> tenant (D.00), e não pode arrastar essa dependência (mesma regra de
-> `services.py` nunca importar `TENANT_APPS`). Testado contra
-> `schema.build_example_payload()`, sem view/rota ainda — pelo mesmo
-> motivo de `workout.html`: `get_active_program()` só tem dado real
-> depois da Onda A2, uma rota hoje devolveria "sem programa" para os 10
-> slugs reais.
+> **Atualização (coluna "Frente B (telas)"):** o gráfico SVG (padrão de
+> `assessments.js`) e a aba de histórico de programas já existiam, sem
+> rota ainda, em `templates/public_workouts/workout.html` (fundação
+> adiantada da Onda B3). Esta sessão conectou os dois pontos que faltavam
+> entre o que a Frente A já tinha entregue e o que a tela mostrava:
+> `one_rep_max_by_movement` (S2) e `trends_by_movement`
+> (`build_weekly_review`) agora aparecem como badge de 1RM estimado +
+> sinal de platô/queda/evolução ao lado de cada mini-gráfico
+> (`public_workouts/templatetags/public_workouts_extras.py::dict_get`,
+> necessário porque o template não indexa dict por chave variável). O
+> gráfico também ganhou o marcador de troca de versão de programa (linha
+> tracejada + ponto diferenciado onde `program_id` muda entre duas cargas
+> consecutivas) — fecha o item 2 do "Pronto quando" abaixo. Continua tudo
+> **sem rota real** — mesma fundação adiantada, mesma regra: nenhum dos
+> 10 templates legados nem os golden tests mudam uma linha.
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
-| ✅ `estimate_one_rep_max` + faixas de confiança | gráfico SVG reusando o padrão de `assessments.js` |
-| ✅ detecção de platô e queda de 1RM (v1, limiares ajustáveis) | aba de histórico de programas (online) |
-| ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor |
-| serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício |
-| ✅ serviço de avaliação (US Navy / JP7) — já existia | ✅ endpoint de escrita (`POST .../avaliacoes`) — falta o formulário HTML em si |
-| ✅ export de dados do titular — `export_account_data`, `GET /renan/<slug>/meus-dados.json` (JSON) | ✅ `render_program_pdf` — falta só a rota, adiada pra quando A2 tiver dado real |
+| ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
+| ✅ detecção de platô e queda de 1RM (v1, limiares ajustáveis) | ✅ aba de histórico de programas (online) |
+| ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor *(depende do editor com IA, Onda A2 — Entrega 4.1 do plano)* |
+| serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício — depende da linha ao lado |
+| ✅ serviço de avaliação (US Navy / JP7) — já existia | ✅ endpoint de escrita (`POST .../avaliacoes`, PR #231) — falta o formulário HTML em si |
+| ✅ export de dados do titular — `export_account_data`, `GET /renan/<slug>/meus-dados.json` (JSON) | ✅ `render_program_pdf` (PR #232) — falta só a rota, adiada pra quando A2 tiver dado real |
 
 ### Pronto quando
 1. ✅ 1RM devolve `None` acima de 15 reps efetivas.
-2. O gráfico mostra marcador de troca de programa no lugar certo.
+2. ✅ O gráfico mostra marcador de troca de programa no lugar certo.
 3. Variação irmã aparece como referência, rotulada, sem entrar no cálculo
    — a parte de **cálculo** está pronta (`detect_one_rep_max_trend` nunca
    mistura `movement_slug` diferentes, testado); a parte de **exibição**
-   (mostrar a variação irmã na tela) é B4, ainda não construída.
+   (mostrar a variação irmã na tela) segue bloqueada — precisa de
+   agrupamento por `movement_pattern`, mesma dependência da linha de
+   substituição de exercício acima.
 4. ✅ Review semanal recebe **sinais**, não tabela crua.
 
 ---

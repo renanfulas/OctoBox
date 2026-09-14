@@ -17,15 +17,24 @@ from django.template.loader import render_to_string
 from django.test import TestCase
 
 from public_workouts.schema import build_example_payload
-from public_workouts.templatetags.public_workouts_extras import humanize_movement_slug, load_chart_points
+from public_workouts.templatetags.public_workouts_extras import dict_get, humanize_movement_slug, load_chart_points
 
 
-def _render(payload: dict, accent_variant=None, program_versions=None, load_history=None) -> str:
+def _render(
+    payload: dict,
+    accent_variant=None,
+    program_versions=None,
+    load_history=None,
+    one_rep_max_by_movement=None,
+    trends_by_movement=None,
+) -> str:
     return render_to_string('public_workouts/workout.html', {
         'program': payload,
         'accent_variant': accent_variant,
         'program_versions': program_versions or [],
         'load_history': load_history or [],
+        'one_rep_max_by_movement': one_rep_max_by_movement or {},
+        'trends_by_movement': trends_by_movement or {},
     })
 
 
@@ -178,6 +187,99 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('Ainda não há carga suficiente registrada para montar o gráfico.', html)
         self.assertNotIn('workout-load-chart-line', html)
 
+    def test_history_tab_shows_one_rep_max_estimate_when_provided(self):
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+            ],
+            one_rep_max_by_movement={
+                'agachamento-livre': {'value_kg': 128.6, 'formula': 'brzycki', 'confidence': 'high', 'effective_reps': 10},
+            },
+        )
+
+        self.assertIn('workout-load-chart-1rm', html)
+        self.assertIn('128,6 kg', html)
+        self.assertIn('confiança high', html)
+
+    def test_history_tab_hides_one_rep_max_badge_when_movement_has_no_estimate(self):
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+            ],
+            one_rep_max_by_movement={'outro-movimento': {'value_kg': 50.0, 'formula': 'epley', 'confidence': 'low', 'effective_reps': 14}},
+        )
+
+        self.assertNotIn('workout-load-chart-1rm', html)
+
+    def test_history_tab_shows_declining_signal_badge(self):
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+            ],
+            trends_by_movement={'agachamento-livre': {'label': 'declining', 'weekly_estimates_kg': [130.0, 125.0, 118.0]}},
+        )
+
+        self.assertIn('workout-load-chart-signal--declining', html)
+        self.assertIn('Em queda', html)
+
+    def test_history_tab_shows_plateau_signal_badge(self):
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+            ],
+            trends_by_movement={'agachamento-livre': {'label': 'plateau', 'weekly_estimates_kg': [128.0, 129.0, 127.5]}},
+        )
+
+        self.assertIn('workout-load-chart-signal--plateau', html)
+        self.assertIn('Platô', html)
+
+    def test_history_tab_shows_improving_signal_badge(self):
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+            ],
+            trends_by_movement={'agachamento-livre': {'label': 'improving', 'weekly_estimates_kg': [118.0, 124.0, 130.0]}},
+        )
+
+        self.assertIn('workout-load-chart-signal--improving', html)
+        self.assertIn('Em evolução', html)
+
+    def test_history_tab_marks_program_version_change_on_chart(self):
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'week_in_program': 4, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-04-01', 'program_id': 'bruno-2026-q2', 'week_in_program': 1, 'idempotency_key': 'k2'},
+            ],
+        )
+
+        self.assertIn('workout-load-chart-version-line', html)
+        self.assertIn('workout-load-chart-dot--version', html)
+        self.assertIn('Novo programa a partir daqui: bruno-2026-q2', html)
+        self.assertIn('semana 1', html)
+
+    def test_history_tab_does_not_mark_change_when_program_id_is_the_same(self):
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'week_in_program': 1, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': 'bruno-2026-q1', 'week_in_program': 2, 'idempotency_key': 'k2'},
+            ],
+        )
+
+        self.assertNotIn('workout-load-chart-version-line', html)
+        self.assertNotIn('workout-load-chart-dot--version', html)
+
 
 class HumanizeMovementSlugFilterTests(TestCase):
     def test_replaces_hyphens_and_capitalizes(self):
@@ -188,6 +290,20 @@ class HumanizeMovementSlugFilterTests(TestCase):
 
     def test_none_stays_empty(self):
         self.assertEqual(humanize_movement_slug(None), '')
+
+
+class DictGetFilterTests(TestCase):
+    def test_returns_value_for_existing_key(self):
+        self.assertEqual(dict_get({'a': 1, 'b': 2}, 'b'), 2)
+
+    def test_returns_none_for_missing_key(self):
+        self.assertIsNone(dict_get({'a': 1}, 'z'))
+
+    def test_returns_none_for_empty_dict(self):
+        self.assertIsNone(dict_get({}, 'a'))
+
+    def test_returns_none_for_none_dict(self):
+        self.assertIsNone(dict_get(None, 'a'))
 
 
 class LoadChartPointsFilterTests(TestCase):
@@ -258,6 +374,73 @@ class LoadChartPointsFilterTests(TestCase):
 
         self.assertEqual(result['points'][0]['label'], '05/01')
         self.assertEqual(result['points'][1]['label'], '12/01')
+
+    def test_first_point_never_marks_program_change(self):
+        # Nao ha "antes" pra contrastar no primeiro ponto da serie, mesmo
+        # com program_id preenchido.
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'program_id': 'bruno-2026-q1'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertFalse(result['points'][0]['is_program_change'])
+        self.assertFalse(result['points'][1]['is_program_change'])
+
+    def test_marks_program_change_when_program_id_differs_from_previous_point(self):
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'week_in_program': 4},
+            {'weight_kg': 100.0, 'performed_on': '2026-04-01', 'program_id': 'bruno-2026-q2', 'week_in_program': 1},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertFalse(result['points'][0]['is_program_change'])
+        self.assertTrue(result['points'][1]['is_program_change'])
+        self.assertEqual(result['points'][1]['program_id'], 'bruno-2026-q2')
+        self.assertEqual(result['points'][1]['week_in_program'], 1)
+
+    def test_empty_program_id_never_marks_change(self):
+        # Carga sem programa associado (registrada fora de qualquer versao
+        # publicada) nunca conta como "troca" — so ruido, nao sinal.
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1'},
+            {'weight_kg': 95.0, 'performed_on': '2026-01-08', 'program_id': ''},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'program_id': ''},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertFalse(any(point['is_program_change'] for point in result['points']))
+
+    def test_program_id_reappears_after_gap_still_compares_to_last_known(self):
+        # Um ponto no meio sem program_id nao apaga o contexto: a troca
+        # ainda e' detectada contra o ultimo program_id conhecido.
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1'},
+            {'weight_kg': 95.0, 'performed_on': '2026-01-08', 'program_id': ''},
+            {'weight_kg': 100.0, 'performed_on': '2026-04-01', 'program_id': 'bruno-2026-q2'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertFalse(result['points'][0]['is_program_change'])
+        self.assertFalse(result['points'][1]['is_program_change'])
+        self.assertTrue(result['points'][2]['is_program_change'])
+
+    def test_missing_program_id_key_defaults_to_empty_and_never_marks(self):
+        # list_load_history sempre inclui program_id, mas o filtro nao deve
+        # quebrar se um chamador futuro omitir a chave.
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertFalse(result['points'][1]['is_program_change'])
+        self.assertEqual(result['points'][0]['program_id'], '')
 
     def test_upward_trend_reports_positive_delta(self):
         entries = [

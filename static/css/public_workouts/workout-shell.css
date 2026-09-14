@@ -174,6 +174,34 @@
     background: color-mix(in srgb, var(--theme-text-muted) 14%, transparent);
 }
 
+/* 1RM estimado (Onda A3, one_rep_max.py) e sinal de tendencia
+   (build_weekly_review) — mesmos tokens de --success/--danger do trend
+   de peso acima, pra nao inventar paleta nova so pra este badge. */
+.workout-load-chart-1rm {
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-chart-1rm strong {
+    color: var(--theme-text-primary, inherit);
+}
+
+.workout-load-chart-signal--plateau {
+    color: var(--theme-text-muted);
+    background: color-mix(in srgb, var(--theme-text-muted) 14%, transparent);
+}
+
+.workout-load-chart-signal--declining {
+    color: var(--theme-accent-danger);
+    background: var(--theme-accent-danger-alpha);
+}
+
+.workout-load-chart-signal--improving {
+    color: var(--theme-accent-success);
+    background: var(--theme-accent-success-alpha);
+}
+
 .workout-load-chart-svg {
     display: block;
     width: 100%;
@@ -212,6 +240,21 @@
     fill: var(--brand);
     stroke: var(--theme-surface-secondary);
     stroke-width: 1.5;
+}
+
+/* Marcador de troca de versao de programa (Pronto-quando #2, secao A3/B4
+   do CORDA) — linha tracejada vertical + ponto diferenciado no lugar
+   exato onde `program_id` muda entre duas cargas consecutivas. */
+.workout-load-chart-version-line {
+    stroke: var(--theme-text-muted);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    opacity: 0.55;
+}
+
+.workout-load-chart-dot--version {
+    fill: var(--theme-accent-warning, var(--brand));
+    r: 4;
 }
 
 .workout-load-chart-label {
