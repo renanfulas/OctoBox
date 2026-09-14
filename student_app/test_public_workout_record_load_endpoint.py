@@ -142,6 +142,19 @@ class PublicWorkoutRecordLoadEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_valid_json_that_is_not_an_object_returns_400(self):
+        # JSON valido (nao levanta JSONDecodeError) mas nao e um dict --
+        # branch separada de test_malformed_json_returns_400.
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'), data=json.dumps(['nao', 'e', 'um', 'objeto']), content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 0)
+
     def test_unknown_slug_returns_404(self):
         account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
         _login(self.client, account.pk)
