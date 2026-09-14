@@ -185,6 +185,15 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('Top Set', html)
         self.assertIn('Max Set', html)
 
+    def test_set_stage_legend_is_a_collapsed_popover_by_default(self):
+        # UX: legenda em balao (clique pra abrir), nao fixa na tela —
+        # economiza espaço vertical numa pagina ja densa de tabelas.
+        html = _render(build_example_payload())
+
+        self.assertIn('data-workout-legend-trigger', html)
+        self.assertIn('aria-expanded="false"', html)
+        self.assertIn('data-workout-legend-panel hidden>', html)
+
     def test_load_input_widget_has_stepper_and_hint(self):
         html = _render(build_example_payload())  # is_tracked=True no exemplo
 

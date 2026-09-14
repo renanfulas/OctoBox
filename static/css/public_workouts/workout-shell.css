@@ -412,16 +412,53 @@
    --theme-accent-danger (esforco maximo — mesma leitura de "vermelho =
    limite" que o resto do app usa). */
 .workout-set-stage-legend {
+    position: relative;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 10px;
-    font-size: 0.76rem;
 }
 
-.workout-set-stage-legend__label {
+.workout-set-stage-legend__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-secondary);
     color: var(--theme-text-muted);
+    font-size: 0.76rem;
     font-weight: 600;
+    cursor: pointer;
+}
+
+.workout-set-stage-legend__trigger[aria-expanded="true"] {
+    color: var(--brand);
+    border-color: var(--brand);
+}
+
+/* Balao: ancorado no botao, nao no viewport — em telas de ~390px o
+   max-width evita que o balao estoure a lateral da pagina. */
+.workout-set-stage-legend__panel {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 6px);
+    left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    max-width: min(280px, calc(100vw - 32px));
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-panel);
+    box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+}
+
+/* [hidden] tem so baixa especificidade na folha de estilo do navegador —
+   sem isto, o display:flex acima venceria e o balao ficaria sempre
+   visivel, mesmo com o atributo hidden ligado pelo JS (achado ao
+   screenshot: panel.hidden lia true, mas continuava desenhado na tela). */
+.workout-set-stage-legend__panel[hidden] {
+    display: none;
 }
 
 .workout-set-stage {

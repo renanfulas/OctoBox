@@ -73,11 +73,19 @@ PONTOS CRITICOS:
   </nav>
 
   <div class="workout-set-stage-legend">
-    <span class="workout-set-stage-legend__label">Legenda:</span>
-    <span class="workout-set-stage workout-set-stage--prep">Preparatória</span>
-    <span class="workout-set-stage workout-set-stage--feeder">Feeder</span>
-    <span class="workout-set-stage workout-set-stage--top">Top Set</span>
-    <span class="workout-set-stage workout-set-stage--max">Max Set</span>
+    <button
+      type="button"
+      class="workout-set-stage-legend__trigger"
+      data-workout-legend-trigger
+      aria-expanded="false"
+      aria-controls="workout-set-stage-legend-panel"
+    ><span aria-hidden="true">ⓘ</span> Legenda</button>
+    <div class="workout-set-stage-legend__panel" id="workout-set-stage-legend-panel" data-workout-legend-panel hidden>
+      <span class="workout-set-stage workout-set-stage--prep">Preparatória</span>
+      <span class="workout-set-stage workout-set-stage--feeder">Feeder</span>
+      <span class="workout-set-stage workout-set-stage--top">Top Set</span>
+      <span class="workout-set-stage workout-set-stage--max">Max Set</span>
+    </div>
   </div>
 
   <div class="interactive-tab-container" data-default-panel="workout-day-{{ program.days.0.day_id }}">
@@ -333,6 +341,35 @@ PONTOS CRITICOS:
         panel.classList.toggle('is-tab-active', panel.id === targetId);
       });
     });
+  });
+})();
+
+// Legenda de tipo de serie como balao (em vez de fixa na tela) — pedido
+// do Renan, economiza espaço vertical numa pagina ja densa de tabelas.
+// hidden nativo (nao style.display) pra CSS [hidden] cuidar sozinho.
+(function () {
+  var trigger = document.querySelector('[data-workout-legend-trigger]');
+  var panel = document.querySelector('[data-workout-legend-panel]');
+  if (!trigger || !panel) { return; }
+
+  function closeLegend() {
+    panel.hidden = true;
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  trigger.addEventListener('click', function (event) {
+    event.stopPropagation();
+    var willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  });
+
+  document.addEventListener('click', function (event) {
+    if (!panel.hidden && event.target !== trigger && !panel.contains(event.target)) { closeLegend(); }
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') { closeLegend(); }
   });
 })();
 </script>
