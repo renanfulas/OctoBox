@@ -11,16 +11,21 @@
  *   tem o markup estatico) e injetado logo apos `.tabs` — o showTab()
  *   generico de app.js (ou o das paginas legadas, ja generalizado) descobre
  *   `[id^="tab-"]` sozinho, entao nao precisa de nenhuma mudanca la.
- * - ESCRITA (Onda A3/B4): a autoavaliacao ONLINE (metodo US Navy, so fita
- *   metrica) e o proprio aluno quem mede e lanca, via o formulario deste
- *   arquivo -> POST /renan/<slug>/avaliacoes (PublicWorkoutRecordAssessmentView,
- *   exige sessao de LOGIN — 401 sem ela; o formulario manda pra
+ * - ESCRITA (Onda A3/B4): a autoavaliacao ONLINE e o proprio aluno quem
+ *   mede e lanca, via o formulario deste arquivo -> POST
+ *   /renan/<slug>/avaliacoes (PublicWorkoutRecordAssessmentView, exige
+ *   sessao de LOGIN — 401 sem ela; o formulario manda pra
  *   /treinos/login?next=/renan/<slug> nesse caso, sem checar de antemao
  *   porque nao ha sinal client-side de sessao ativa — o `next` fecha o
  *   ciclo, depois de logar o aluno volta direto pra ca em vez de cair
- *   numa tela generica). A avaliacao PRESENCIAL (Jackson-Pollock, com o
- *   treinador e o adipometro) continua so via management command —
- *   `body_fat_percent`/`body_fat_source` nunca vem deste formulario.
+ *   numa tela generica). US Navy (so fita metrica) sempre disponivel;
+ *   dobras cutaneas Jackson-Pollock 7 pontos TAMBEM, mas so depois que
+ *   `report.skinfold_self_report_unlocked` vier true — o backend so
+ *   libera isso depois que o TREINADOR ja tiver lancado 1a avaliacao por
+ *   dobra presencial deste plano (decisao do Renan: confia na tecnica do
+ *   aluno pinçando a dobra sozinho so apos ele ja ter sido calibrado ao
+ *   vivo). `body_fat_percent`/`body_fat_source` nunca vem deste
+ *   formulario direto — mesmo mandando dobras, o servidor que calcula.
  * - o painel tem DOIS slots independentes (ver mountPanel): o formulario
  *   (#assess-form-slot) so' e' montado uma vez e sobrevive aos refreshes;
  *   so o relatorio de leitura (#assess-report-slot) e recriado a cada
@@ -49,6 +54,22 @@
   // pra nao intimidar quem so quer lancar peso + essas 3 medidas.
   var PRIMARY_MEASUREMENT_KEYS = ['pescoco', 'cintura', 'quadril'];
   var SECONDARY_MEASUREMENT_KEYS = ['ombro', 'peito', 'abdomen', 'braco', 'coxa', 'panturrilha'];
+
+  // Dobras cutaneas (mm) do protocolo Jackson-Pollock de 7 pontos — mesmos
+  // nomes de public_workouts/management/commands/add_public_workout_assessment.py
+  // (--dobra-<key>). So aparecem no formulario quando o backend confirma
+  // que o treinador ja calibrou o aluno presencialmente (ver docstring do
+  // topo do arquivo) — nunca por decisao do proprio JS.
+  var SKINFOLD_KEYS = ['peitoral', 'axilar', 'triceps', 'subescapular', 'abdomen', 'iliaca', 'coxa'];
+  var SKINFOLD_LABELS = {
+    peitoral: 'Peitoral',
+    axilar: 'Axilar média',
+    triceps: 'Tríceps',
+    subescapular: 'Subescapular',
+    abdomen: 'Abdominal',
+    iliaca: 'Supra-ilíaca',
+    coxa: 'Coxa',
+  };
 
   /* ══ SILHUETA ══════════════════════════════════════════════
    * Corpo desenhado no viewBox 440x380, centrado em x=220. O corpo ocupa
@@ -176,6 +197,22 @@
         return { ok: response.ok, status: response.status, data: data };
       });
     });
+  }
+
+  // Idade so entra na formula de dobras cutaneas (Jackson-Pollock) — nao e
+  // persistida no backend (mesmo padrao do --age do management command:
+  // entra so na hora do calculo). Guardar no localStorage evita perguntar
+  // de novo a cada avaliacao, sem precisar de coluna nova no banco.
+  function skinfoldAgeStorageKey() {
+    return 'pw-assess-age-' + (planSlug() || '');
+  }
+
+  function storedAge() {
+    try { return localStorage.getItem(skinfoldAgeStorageKey()) || ''; } catch (e) { return ''; }
+  }
+
+  function rememberAge(value) {
+    try { localStorage.setItem(skinfoldAgeStorageKey(), value); } catch (e) { /* modo anonimo */ }
   }
 
   function badgeHtml(classification) {
@@ -451,6 +488,49 @@
     );
   }
 
+  function skinfoldFieldHtml(key) {
+    return (
+      '<label class="assess-field">' +
+        '<span class="assess-field-label">' + escapeHtml(SKINFOLD_LABELS[key]) + '</span>' +
+        '<span class="assess-field-input-wrap">' +
+          '<input type="number" inputmode="decimal" step="0.1" min="0" data-skinfold="' + key + '">' +
+          '<span class="assess-field-suffix">mm</span>' +
+        '</span>' +
+      '</label>'
+    );
+  }
+
+  // So injetada no formulario quando o backend confirma
+  // skinfold_self_report_unlocked (ver ensureSkinfoldSection) — nunca
+  // presente por padrao.
+  function skinfoldSectionHtml() {
+    var fields = SKINFOLD_KEYS.map(skinfoldFieldHtml).join('');
+    return (
+      '<details class="assess-form-more" id="assess-skinfold-details">' +
+        '<summary>+ dobras cutâneas (Pollock 7 pontos, com adipômetro)</summary>' +
+        '<div class="assess-form-sub">Liberado porque o treinador já fez uma avaliação presencial com adipômetro em você. ' +
+          'Preencha as 7 dobras (mm) e a idade — os dois juntos calculam o %gordura.</div>' +
+        '<div class="assess-form-grid assess-form-grid--secondary">' +
+          '<label class="assess-field">' +
+            '<span class="assess-field-label">Idade</span>' +
+            '<input type="number" inputmode="numeric" step="1" min="1" id="assess-f-age" value="' +
+              escapeHtml(storedAge()) + '">' +
+          '</label>' +
+          fields +
+        '</div>' +
+      '</details>'
+    );
+  }
+
+  function ensureSkinfoldSection(form) {
+    if (form.querySelector('#assess-skinfold-details')) return;
+    var notesField = form.querySelector('.assess-field--notes');
+    if (!notesField) return;
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = skinfoldSectionHtml();
+    notesField.parentNode.insertBefore(wrapper.firstChild, notesField);
+  }
+
   function buildFormHtml() {
     var primaryFields = PRIMARY_MEASUREMENT_KEYS.map(measurementFieldHtml).join('');
     var secondaryFields = SECONDARY_MEASUREMENT_KEYS.map(measurementFieldHtml).join('');
@@ -511,6 +591,24 @@
     return payload;
   }
 
+  // null = secao de dobras nem existe ou o aluno nao tocou nela.
+  // 'partial' = comecou a preencher mas faltam dobras (bloqueia o envio).
+  // objeto = as 7 preenchidas.
+  function collectSkinfoldValues(form) {
+    var inputs = form.querySelectorAll('[data-skinfold]');
+    if (!inputs.length) return null;
+    var values = {};
+    var filled = 0;
+    Array.prototype.forEach.call(inputs, function (input) {
+      if (input.value) {
+        values[input.getAttribute('data-skinfold')] = parseFloat(input.value);
+        filled += 1;
+      }
+    });
+    if (filled === 0) return null;
+    return filled < SKINFOLD_KEYS.length ? 'partial' : values;
+  }
+
   function setFeedback(el, kind, message) {
     if (!el) return;
     el.textContent = message;
@@ -519,6 +617,7 @@
 
   function clearEnteredValues(form) {
     Array.prototype.forEach.call(form.querySelectorAll('input[type="number"], textarea'), function (el) {
+      if (el.id === 'assess-f-age') return; // idade fica — lembrada pra proxima avaliacao.
       el.value = '';
     });
   }
@@ -530,8 +629,24 @@
       var feedback = form.querySelector('#assess-f-feedback');
       var payload = readFormPayload(form);
 
-      if (payload.weight_kg === undefined && payload.measurements === undefined) {
-        setFeedback(feedback, 'error', 'Informe ao menos o peso ou uma medida.');
+      var skinfolds = collectSkinfoldValues(form);
+      if (skinfolds === 'partial') {
+        setFeedback(feedback, 'error', 'Preencha as 7 dobras cutâneas, ou deixe todas em branco.');
+        return;
+      }
+      if (skinfolds) {
+        var ageEl = form.querySelector('#assess-f-age');
+        var age = ageEl && ageEl.value ? parseFloat(ageEl.value) : null;
+        if (!age) {
+          setFeedback(feedback, 'error', 'Informe a idade para calcular pelas dobras cutâneas.');
+          return;
+        }
+        payload.skinfolds = skinfolds;
+        payload.age = age;
+      }
+
+      if (payload.weight_kg === undefined && payload.measurements === undefined && payload.skinfolds === undefined) {
+        setFeedback(feedback, 'error', 'Informe ao menos o peso, uma medida ou as dobras cutâneas.');
         return;
       }
 
@@ -556,6 +671,7 @@
             return;
           }
           setFeedback(feedback, 'success', 'Avaliação salva ✓');
+          if (payload.age) rememberAge(String(payload.age));
           clearEnteredValues(form);
           if (onSaved) onSaved();
         })
@@ -624,7 +740,7 @@
     return panel;
   }
 
-  function loadReport(reportSlot) {
+  function loadReport(form, reportSlot) {
     var slug = planSlug();
     return fetch('/renan/' + slug + '/avaliacoes.json')
       .then(function (response) {
@@ -633,6 +749,7 @@
       })
       .then(function (report) {
         reportSlot.innerHTML = buildPanel(report);
+        if (report.skinfold_self_report_unlocked) ensureSkinfoldSection(form);
       })
       .catch(function () {
         reportSlot.innerHTML = renderError();
@@ -651,9 +768,9 @@
     var form = formSlot.querySelector('#assess-form');
     var dateEl = form.querySelector('#assess-f-date');
     if (dateEl) dateEl.value = todayIso();
-    bindForm(form, function () { loadReport(reportSlot); });
+    bindForm(form, function () { loadReport(form, reportSlot); });
 
-    loadReport(reportSlot);
+    loadReport(form, reportSlot);
   }
 
   if (document.readyState === 'loading') {

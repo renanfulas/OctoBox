@@ -16,7 +16,11 @@ from django.test import TestCase, override_settings
 
 from public_workouts.billing import get_or_create_subscription
 from public_workouts.models import PublicWorkoutAccount
-from public_workouts.stripe_checkout import PublicWorkoutStripeNotConfiguredError, start_subscription_checkout
+from public_workouts.stripe_checkout import (
+    PublicWorkoutStripeNotConfiguredError,
+    start_customer_portal_session,
+    start_subscription_checkout,
+)
 
 
 class StartSubscriptionCheckoutTests(TestCase):
@@ -70,3 +74,27 @@ class StartSubscriptionCheckoutTests(TestCase):
 
         _, kwargs = mock_create.call_args
         self.assertIn(str(self.subscription.pk), kwargs['idempotency_key'])
+
+
+class StartCustomerPortalSessionTests(TestCase):
+    # Onda B2, item 6 (Customer Portal) — ultimo item pendente da onda.
+
+    @override_settings(STRIPE_SECRET_KEY='')
+    def test_raises_when_secret_key_not_configured(self):
+        with self.assertRaises(PublicWorkoutStripeNotConfiguredError):
+            start_customer_portal_session(customer_id='cus_123', return_url='https://x/voltar')
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.billing_portal.Session.create')
+    def test_creates_portal_session_for_the_given_customer(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://billing.stripe.com/session/bps_test_123')
+
+        url = start_customer_portal_session(customer_id='cus_123', return_url='https://x/voltar')
+
+        self.assertEqual(url, 'https://billing.stripe.com/session/bps_test_123')
+        _, kwargs = mock_create.call_args
+        self.assertEqual(kwargs['customer'], 'cus_123')
+        self.assertEqual(kwargs['return_url'], 'https://x/voltar')
+        # Sem Connect Express (C5, mesma decisao do checkout): nenhuma chave
+        # de conta conectada no payload.
+        self.assertNotIn('stripe_account', kwargs)
