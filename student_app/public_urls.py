@@ -21,6 +21,7 @@ from .views import (
     PublicWorkoutLocalStorageBackupView,
     PublicWorkoutManifestView,
     PublicWorkoutOfflineView,
+    PublicWorkoutRecordLoadView,
     PublicWorkoutServiceWorkerView,
 )
 
@@ -35,5 +36,6 @@ urlpatterns = [
         PublicWorkoutLocalStorageBackupView.as_view(),
         name='public-workout-backup-carga',
     ),
+    path('<slug:plan_slug>/carga', PublicWorkoutRecordLoadView.as_view(), name='public-workout-record-load'),
     re_path(r'^(?P<plan_slug>[-a-z0-9]+)/?$', PublicWorkoutDetailView.as_view(), name='public-workout-detail'),
 ]

@@ -228,6 +228,58 @@ class BuildStudentPackageTests(TestCase):
 
         self.assertEqual(package_b['last_load_by_movement'], {})
 
+    def test_one_rep_max_is_estimated_from_the_most_recent_valid_set(self):
+        # Onda A3: build_student_package agora estima 1RM de verdade a
+        # partir do ultimo set de cada movimento (mesmo recorte de
+        # last_load_by_movement).
+        account = _make_account()
+        record_load(
+            account_id=account.pk,
+            movement_slug='agachamento-livre',
+            weight_kg=Decimal('100'),
+            reps=5,
+            performed_on=date(2026, 1, 5),
+            idempotency_key='key-1rm',
+        )
+
+        package = build_student_package(account_id=account.pk, slug='bruno')
+
+        estimate = package['one_rep_max_by_movement']['agachamento-livre']
+        self.assertEqual(estimate['formula'], 'brzycki')
+        self.assertEqual(estimate['confidence'], 'high')
+        self.assertAlmostEqual(estimate['value_kg'], 100 * 36 / 32, places=1)
+
+    def test_movement_without_reps_gets_no_one_rep_max_entry(self):
+        # record_load aceita reps=None (ex.: so peso corporal registrado) --
+        # sem reps, estimate_one_rep_max nao tem o que calcular.
+        account = _make_account()
+        record_load(
+            account_id=account.pk,
+            movement_slug='prancha',
+            weight_kg=None,
+            performed_on=date(2026, 1, 5),
+            idempotency_key='key-sem-reps',
+        )
+
+        package = build_student_package(account_id=account.pk, slug='bruno')
+
+        self.assertNotIn('prancha', package['one_rep_max_by_movement'])
+
+    def test_set_above_fifteen_effective_reps_gets_no_one_rep_max_entry(self):
+        account = _make_account()
+        record_load(
+            account_id=account.pk,
+            movement_slug='agachamento-livre',
+            weight_kg=Decimal('40'),
+            reps=20,
+            performed_on=date(2026, 1, 5),
+            idempotency_key='key-20-reps',
+        )
+
+        package = build_student_package(account_id=account.pk, slug='bruno')
+
+        self.assertNotIn('agachamento-livre', package['one_rep_max_by_movement'])
+
 
 class ListLoadHistoryTests(TestCase):
     def test_returns_empty_list_when_no_load_logged(self):
