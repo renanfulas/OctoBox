@@ -1499,20 +1499,47 @@ bloqueio).
 
 ## ‖ A3 / B4 — Produto (paralelo, 7–10 dias) — **A: serviços · B: telas**
 
+> **Atualização:** as três primeiras linhas da coluna "Frente A (serviços)"
+> foram adiantadas nesta sessão — são engenharia pura (fórmula já
+> especificada em `docs/plans/public-workouts-produtizacao-plan.md`
+> §4.4, estatística sobre `PublicWorkoutLoadLog` que já existe), sem
+> depender dos 10 programas reais nem de julgamento de treino novo.
+> `estimate_one_rep_max`/`OneRepMaxEstimate` e
+> `detect_one_rep_max_trend`/`OneRepMaxTrend` vivem em
+> `public_workouts/one_rep_max.py` (novo); `build_weekly_review` em
+> `services.py`. `build_student_package` (S2) já usa
+> `estimate_one_rep_max` para popular `one_rep_max_by_movement` de
+> verdade (antes vazio de propósito). A janela de detecção de platô/queda
+> (3 semanas, banda de 2,5%, queda de 5%) é uma v1 deterministica
+> documentada como ajustável — não é uma decisão de treino fechada, é
+> limiar de código; ajustar é mudar constante, não arquitetura.
+> `build_weekly_review` entrega **só o sinal calculado** (rótulo por
+> movimento), nunca chama IA nem lê check-in/anamnese — nenhum dos dois
+> tem coleta ainda (D4 do plano de produto: "tudo que alimenta a IA
+> começa a coletar antes da IA existir"). O job assíncrono que junta isso
+> com Haiku pra virar texto (item 4.5 do plano) continua de fora.
+> **Serviço de substituição por `movement_pattern` continua bloqueado** —
+> depende da sua revisão da sugestão da Onda A0 (`classify_public_workout_movements`).
+> Serviço de avaliação (US Navy/JP7) já existe desde antes desta Onda —
+> `public_workouts/formulas.py`.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
-| `estimate_one_rep_max` + faixas de confiança | gráfico SVG reusando o padrão de `assessments.js` |
-| detecção de platô e queda de 1RM | aba de histórico de programas (online) |
-| `build_weekly_review(...)` — sinais calculados | tela de revisão do editor |
-| serviço de substituição por `movement_pattern` | UI de troca de exercício |
-| serviço de avaliação (US Navy / JP7) | formulários sobre `forms.css` |
+| ✅ `estimate_one_rep_max` + faixas de confiança | gráfico SVG reusando o padrão de `assessments.js` |
+| ✅ detecção de platô e queda de 1RM (v1, limiares ajustáveis) | aba de histórico de programas (online) |
+| ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor |
+| serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício |
+| ✅ serviço de avaliação (US Navy / JP7) — já existia | formulários sobre `forms.css` |
 | export de dados do titular | PDF via `reportlab` |
 
 ### Pronto quando
-1. 1RM devolve `None` acima de 15 reps efetivas.
+1. ✅ 1RM devolve `None` acima de 15 reps efetivas.
 2. O gráfico mostra marcador de troca de programa no lugar certo.
-3. Variação irmã aparece como referência, rotulada, sem entrar no cálculo.
-4. Review semanal recebe **sinais**, não tabela crua.
+3. Variação irmã aparece como referência, rotulada, sem entrar no cálculo
+   — a parte de **cálculo** está pronta (`detect_one_rep_max_trend` nunca
+   mistura `movement_slug` diferentes, testado); a parte de **exibição**
+   (mostrar a variação irmã na tela) é B4, ainda não construída.
+4. ✅ Review semanal recebe **sinais**, não tabela crua.
 
 ---
 
