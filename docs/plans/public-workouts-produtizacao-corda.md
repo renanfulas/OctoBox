@@ -1641,6 +1641,51 @@ bloqueio).
 > consecutivas) — fecha o item 2 do "Pronto quando" abaixo. Continua tudo
 > **sem rota real** — mesma fundação adiantada, mesma regra: nenhum dos
 > 10 templates legados nem os golden tests mudam uma linha.
+>
+> **Atualização (formulário de autoavaliação + rota de PDF, esta sessão):**
+> os dois itens que faltavam na tabela acima — o formulário HTML da
+> autoavaliação online e a rota de download do PDF — foram fechados, **ao
+> contrário do gráfico SVG acima**, direto no caminho que já serve tráfego
+> real: os templates legados (`bruno.html` etc.), não o `workout.html`
+> fundação. Isso funcionou porque a aba "Avaliações" desses templates já
+> era 100% injetada em runtime por `assessments.js` (só o botão `<button>`
+> da aba é golden-tested; o conteúdo do painel nunca foi) — dá pra estender
+> sem tocar em nenhum golden.
+> - `PublicWorkoutDownloadPdfView` (`GET /renan/<slug>/treino.pdf`) usa o
+>   mesmo tier de auth B0 (cookie de posse) da própria página/`avaliacoes.json`
+>   — baixar em PDF o que a tela já mostra não é operação de conta. 404
+>   quando `get_active_program` devolve `None`, que é o caso dos 10 slugs
+>   reais **hoje** (Onda A2 não migrou os programas ainda) — o botão
+>   "Baixar PDF" já está visível no `.top-bar` de produção mesmo assim,
+>   consistente com o resto da Onda B4 (a Onda A2 preenche o dado depois,
+>   o mecanismo já existe antes).
+> - Achado colateral corrigido nesta sessão: **nenhum template deste
+>   corredor chamava `{% csrf_token %}`**, e nenhuma view chamava
+>   `get_token()` — o cookie CSRF nunca nascia numa visita normal a
+>   `/renan/<slug>`, o que quebraria em 403 qualquer POST feito por JS
+>   (a autoavaliação nova incluída) num navegador de verdade. Corrigido
+>   com uma chamada a `django.middleware.csrf.get_token()` em
+>   `PublicWorkoutDetailView.get()`, com teste de regressão.
+> - O formulário (`assessments.js`) manda `POST /renan/<slug>/avaliacoes`
+>   (exige sessão B1 — 401 sem login) e, no sucesso, refaz o fetch de
+>   `avaliacoes.json` pra o aluno ver a própria avaliação nova na hora
+>   (silhueta/timeline/gráfico), sem recarregar a página. Verificado de
+>   ponta a ponta num Chromium real via Playwright (preenchimento, POST,
+>   refresh do relatório, download do PDF) — não só pela suíte pytest.
+> - ~~Gap conhecido: `/treinos/login` não aceita `?next=`~~ — **fechado
+>   na sessão seguinte.** `PublicWorkoutLoginView` e `request_login_token`
+>   agora carregam `next_url` pelos 3 saltos do fluxo (querystring do GET
+>   inicial → campo hidden do formulário de e-mail → dentro do link do
+>   e-mail, porque o clique pode acontecer num dispositivo diferente de
+>   onde o login foi pedido → querystring do GET com `?token=`) e
+>   redirecionam pra lá depois do login, em vez de cair na página
+>   genérica de confirmação. `_safe_public_workout_next` só aceita path
+>   exato de `/renan/<slug>` — não usa `url_has_allowed_host_and_scheme`
+>   do Django (que aceitaria qualquer path do mesmo host) de propósito:
+>   único destino legítimo é o próprio treino, então restringir ao padrão
+>   elimina qualquer superfície de redirecionamento aberto por
+>   construção. `assessments.js` já manda `/treinos/login?next=/renan/<slug>`
+>   no 401 da autoavaliação.
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
@@ -1648,8 +1693,8 @@ bloqueio).
 | ✅ detecção de platô e queda de 1RM (v1, limiares ajustáveis) | ✅ aba de histórico de programas (online) |
 | ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor *(depende do editor com IA, Onda A2 — Entrega 4.1 do plano)* |
 | serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício — depende da linha ao lado |
-| ✅ serviço de avaliação (US Navy / JP7) — já existia | ✅ endpoint de escrita (`POST .../avaliacoes`, PR #231) — falta o formulário HTML em si |
-| ✅ export de dados do titular — `export_account_data`, `GET /renan/<slug>/meus-dados.json` (JSON) | ✅ `render_program_pdf` (PR #232) — falta só a rota, adiada pra quando A2 tiver dado real |
+| ✅ serviço de avaliação (US Navy / JP7) — já existia | ✅ endpoint de escrita (`POST .../avaliacoes`, PR #231) **+ formulário HTML** (`assessments.js`, esta sessão) |
+| ✅ export de dados do titular — `export_account_data`, `GET /renan/<slug>/meus-dados.json` (JSON) | ✅ `render_program_pdf` (PR #232) **+ rota** `GET /renan/<slug>/treino.pdf` (`PublicWorkoutDownloadPdfView`, esta sessão) |
 
 ### Pronto quando
 1. ✅ 1RM devolve `None` acima de 15 reps efetivas.

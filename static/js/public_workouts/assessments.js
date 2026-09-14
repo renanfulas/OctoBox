@@ -11,9 +11,21 @@
  *   tem o markup estatico) e injetado logo apos `.tabs` — o showTab()
  *   generico de app.js (ou o das paginas legadas, ja generalizado) descobre
  *   `[id^="tab-"]` sozinho, entao nao precisa de nenhuma mudanca la.
- * - sem escrita publica de proposito: quem registra avaliacao e o
- *   treinador, via management command (ver public_workouts/management/).
- *   Esta pagina so LE.
+ * - ESCRITA (Onda A3/B4): a autoavaliacao ONLINE (metodo US Navy, so fita
+ *   metrica) e o proprio aluno quem mede e lanca, via o formulario deste
+ *   arquivo -> POST /renan/<slug>/avaliacoes (PublicWorkoutRecordAssessmentView,
+ *   exige sessao de LOGIN — 401 sem ela; o formulario manda pra
+ *   /treinos/login?next=/renan/<slug> nesse caso, sem checar de antemao
+ *   porque nao ha sinal client-side de sessao ativa — o `next` fecha o
+ *   ciclo, depois de logar o aluno volta direto pra ca em vez de cair
+ *   numa tela generica). A avaliacao PRESENCIAL (Jackson-Pollock, com o
+ *   treinador e o adipometro) continua so via management command —
+ *   `body_fat_percent`/`body_fat_source` nunca vem deste formulario.
+ * - o painel tem DOIS slots independentes (ver mountPanel): o formulario
+ *   (#assess-form-slot) so' e' montado uma vez e sobrevive aos refreshes;
+ *   so o relatorio de leitura (#assess-report-slot) e recriado a cada
+ *   fetch de avaliacoes.json — inclusive logo apos um POST bem-sucedido,
+ *   pra' o aluno ver a propria avaliacao nova na hora.
  */
 
 (function () {
@@ -30,6 +42,13 @@
     coxa: 'Coxa',
     panturrilha: 'Panturrilha',
   };
+
+  // Pescoço + cintura (+ quadril nas mulheres) sao as 3 medidas que entram
+  // na formula US Navy (public_workouts/formulas.py::estimate_body_fat_navy)
+  // — ficam sempre visiveis no formulario. O resto entra atras do <details>
+  // pra nao intimidar quem so quer lancar peso + essas 3 medidas.
+  var PRIMARY_MEASUREMENT_KEYS = ['pescoco', 'cintura', 'quadril'];
+  var SECONDARY_MEASUREMENT_KEYS = ['ombro', 'peito', 'abdomen', 'braco', 'coxa', 'panturrilha'];
 
   /* ══ SILHUETA ══════════════════════════════════════════════
    * Corpo desenhado no viewBox 440x380, centrado em x=220. O corpo ocupa
@@ -112,6 +131,51 @@
   function fmtDate(iso) {
     var parts = iso.split('-');
     return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+
+  function pad2(n) {
+    return n < 10 ? '0' + n : String(n);
+  }
+
+  function todayIso() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  // Mesmo padrao de static/js/student_app/pwa.js (getCookie/postJson), sem
+  // reusar aquele arquivo direto: e de outro corredor (aluno autenticado
+  // do box, com seu proprio bundle) e este aqui roda em paginas publicas
+  // sem o resto do app do aluno carregado.
+  function getCookie(name) {
+    var parts = (document.cookie || '').split(';');
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (part.indexOf(name + '=') === 0) {
+        return decodeURIComponent(part.slice(name.length + 1));
+      }
+    }
+    return '';
+  }
+
+  function postJson(url, payload) {
+    return window.fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify(payload || {}),
+    }).then(function (response) {
+      return response.text().then(function (text) {
+        var data = {};
+        if (text) {
+          try { data = JSON.parse(text); } catch (e) { /* corpo nao-JSON */ }
+        }
+        return { ok: response.ok, status: response.status, data: data };
+      });
+    });
   }
 
   function badgeHtml(classification) {
@@ -371,9 +435,140 @@
     );
   }
 
+  /* ══ FORMULARIO DE AUTOAVALIACAO (escrita) ═══════════════════
+   * POST /renan/<slug>/avaliacoes — ver docstring do topo do arquivo.
+   */
+
+  function measurementFieldHtml(key) {
+    return (
+      '<label class="assess-field">' +
+        '<span class="assess-field-label">' + escapeHtml(MEASUREMENT_LABELS[key]) + '</span>' +
+        '<span class="assess-field-input-wrap">' +
+          '<input type="number" inputmode="decimal" step="0.1" min="0" data-measure="' + key + '">' +
+          '<span class="assess-field-suffix">cm</span>' +
+        '</span>' +
+      '</label>'
+    );
+  }
+
+  function buildFormHtml() {
+    var primaryFields = PRIMARY_MEASUREMENT_KEYS.map(measurementFieldHtml).join('');
+    var secondaryFields = SECONDARY_MEASUREMENT_KEYS.map(measurementFieldHtml).join('');
+
+    return (
+      '<form class="assess-form-card" id="assess-form">' +
+        '<div class="assess-form-head">' +
+          '<div class="assess-form-title">Registrar nova avaliação</div>' +
+          '<div class="assess-form-sub">Meça em jejum, sempre no mesmo horário — fita métrica em volta do corpo, sem apertar.</div>' +
+        '</div>' +
+        '<div class="assess-form-grid">' +
+          '<label class="assess-field">' +
+            '<span class="assess-field-label">Data</span>' +
+            '<input type="date" id="assess-f-date" required>' +
+          '</label>' +
+          '<label class="assess-field">' +
+            '<span class="assess-field-label">Peso</span>' +
+            '<span class="assess-field-input-wrap">' +
+              '<input type="number" inputmode="decimal" step="0.1" min="0" id="assess-f-weight">' +
+              '<span class="assess-field-suffix">kg</span>' +
+            '</span>' +
+          '</label>' +
+          primaryFields +
+        '</div>' +
+        '<details class="assess-form-more">' +
+          '<summary>+ outras medidas (ombro, peito, abdômen, braço, coxa, panturrilha)</summary>' +
+          '<div class="assess-form-grid assess-form-grid--secondary">' + secondaryFields + '</div>' +
+        '</details>' +
+        '<label class="assess-field assess-field--notes">' +
+          '<span class="assess-field-label">Observações (opcional)</span>' +
+          '<textarea id="assess-f-notes" rows="2" placeholder="Sono, adesão à dieta, como você está se sentindo…"></textarea>' +
+        '</label>' +
+        '<div class="assess-form-foot">' +
+          '<button type="submit" class="assess-form-submit">Salvar avaliação</button>' +
+          '<span class="assess-form-feedback" id="assess-f-feedback" role="status" aria-live="polite"></span>' +
+        '</div>' +
+      '</form>'
+    );
+  }
+
+  function readFormPayload(form) {
+    var payload = {};
+    var dateEl = form.querySelector('#assess-f-date');
+    payload.measured_at = dateEl ? dateEl.value : '';
+
+    var weightEl = form.querySelector('#assess-f-weight');
+    if (weightEl && weightEl.value) payload.weight_kg = parseFloat(weightEl.value);
+
+    var measurements = {};
+    Array.prototype.forEach.call(form.querySelectorAll('[data-measure]'), function (input) {
+      if (input.value) measurements[input.getAttribute('data-measure')] = parseFloat(input.value);
+    });
+    if (Object.keys(measurements).length) payload.measurements = measurements;
+
+    var notesEl = form.querySelector('#assess-f-notes');
+    if (notesEl && notesEl.value.trim()) payload.notes = notesEl.value.trim();
+
+    return payload;
+  }
+
+  function setFeedback(el, kind, message) {
+    if (!el) return;
+    el.textContent = message;
+    el.className = 'assess-form-feedback' + (kind ? ' assess-form-feedback--' + kind : '');
+  }
+
+  function clearEnteredValues(form) {
+    Array.prototype.forEach.call(form.querySelectorAll('input[type="number"], textarea'), function (el) {
+      el.value = '';
+    });
+  }
+
+  function bindForm(form, onSaved) {
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var slug = planSlug();
+      var feedback = form.querySelector('#assess-f-feedback');
+      var payload = readFormPayload(form);
+
+      if (payload.weight_kg === undefined && payload.measurements === undefined) {
+        setFeedback(feedback, 'error', 'Informe ao menos o peso ou uma medida.');
+        return;
+      }
+
+      var submitBtn = form.querySelector('.assess-form-submit');
+      if (submitBtn) submitBtn.disabled = true;
+      setFeedback(feedback, null, 'Salvando…');
+
+      postJson('/renan/' + slug + '/avaliacoes', payload)
+        .then(function (result) {
+          if (submitBtn) submitBtn.disabled = false;
+          if (result.status === 401) {
+            setFeedback(feedback, 'error', 'Sua sessão expirou — ');
+            var link = document.createElement('a');
+            link.href = '/treinos/login?next=' + encodeURIComponent('/renan/' + slug);
+            link.textContent = 'faça login novamente';
+            feedback.appendChild(link);
+            feedback.appendChild(document.createTextNode(' e tente de novo.'));
+            return;
+          }
+          if (!result.ok) {
+            setFeedback(feedback, 'error', (result.data && result.data.error) || 'Não foi possível salvar. Tente de novo.');
+            return;
+          }
+          setFeedback(feedback, 'success', 'Avaliação salva ✓');
+          clearEnteredValues(form);
+          if (onSaved) onSaved();
+        })
+        .catch(function () {
+          if (submitBtn) submitBtn.disabled = false;
+          setFeedback(feedback, 'error', 'Falha de conexão. Tente de novo.');
+        });
+    });
+  }
+
   function buildPanel(report) {
     if (!report.assessments.length) {
-      return '<div class="assess-wrap"><div class="assess-empty">Nenhuma avaliação registrada ainda.</div></div>';
+      return '<div class="assess-empty">Nenhuma avaliação registrada ainda.</div>';
     }
 
     var summary = report.summary;
@@ -405,22 +600,43 @@
       sections.push('<div class="assess-source-note">% gordura calculado pelo método de 3 dobras cutâneas (Jackson-Pollock) — margem típica de ±3 pontos. Informe também a dobra axilar média pra usar o protocolo de 7 dobras, mais preciso.</div>');
     }
 
-    return '<div class="assess-wrap">' + sections.join('') + '</div>';
+    return sections.join('');
   }
 
   function renderError() {
-    return '<div class="assess-wrap"><div class="assess-empty">Não foi possível carregar as avaliações agora.</div></div>';
+    return '<div class="assess-empty">Não foi possível carregar as avaliações agora.</div>';
   }
 
+  // Dois slots: o formulario (montado uma vez, sobrevive aos refreshes) e o
+  // relatorio de leitura (recriado a cada fetch — ver loadReport).
   function mountPanel() {
     var tabsRow = document.querySelector('.tabs');
     if (!tabsRow || document.getElementById('tab-avaliacoes')) return null;
     var panel = document.createElement('div');
     panel.id = 'tab-avaliacoes';
     panel.style.display = 'none';
-    panel.innerHTML = '<div class="assess-wrap"><div class="assess-empty">Carregando avaliações…</div></div>';
+    panel.innerHTML =
+      '<div class="assess-wrap">' +
+        '<div id="assess-form-slot"></div>' +
+        '<div id="assess-report-slot"><div class="assess-empty">Carregando avaliações…</div></div>' +
+      '</div>';
     tabsRow.insertAdjacentElement('afterend', panel);
     return panel;
+  }
+
+  function loadReport(reportSlot) {
+    var slug = planSlug();
+    return fetch('/renan/' + slug + '/avaliacoes.json')
+      .then(function (response) {
+        if (!response.ok) throw new Error('bad status');
+        return response.json();
+      })
+      .then(function (report) {
+        reportSlot.innerHTML = buildPanel(report);
+      })
+      .catch(function () {
+        reportSlot.innerHTML = renderError();
+      });
   }
 
   function init() {
@@ -428,17 +644,16 @@
     var panel = mountPanel();
     if (!slug || !panel) return;
 
-    fetch('/renan/' + slug + '/avaliacoes.json')
-      .then(function (response) {
-        if (!response.ok) throw new Error('bad status');
-        return response.json();
-      })
-      .then(function (report) {
-        panel.innerHTML = buildPanel(report);
-      })
-      .catch(function () {
-        panel.innerHTML = renderError();
-      });
+    var formSlot = panel.querySelector('#assess-form-slot');
+    var reportSlot = panel.querySelector('#assess-report-slot');
+
+    formSlot.innerHTML = buildFormHtml();
+    var form = formSlot.querySelector('#assess-form');
+    var dateEl = form.querySelector('#assess-f-date');
+    if (dateEl) dateEl.value = todayIso();
+    bindForm(form, function () { loadReport(reportSlot); });
+
+    loadReport(reportSlot);
   }
 
   if (document.readyState === 'loading') {

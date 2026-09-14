@@ -589,6 +589,14 @@ class PublicWorkoutDetailView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        # get_token() marca o cookie CSRF pra ser enviado na resposta —
+        # sem isso, o cookie nunca nasce aqui (nenhum template desta pagina
+        # usa {% csrf_token %}) e o JS de escrita (autoavaliacao online,
+        # assessments.js) nunca teria um X-CSRFToken valido pra mandar no
+        # POST de /avaliacoes: 403 sempre, em qualquer navegador de verdade.
+        from django.middleware.csrf import get_token
+
+        get_token(request)
         response = HttpResponse(_render_public_workout_html(plan_slug))
         # B0: quem abre a pagina prova posse do link — e o que autoriza a
         # leitura de /avaliacoes.json a seguir. Cookie por instancia, nao
@@ -923,3 +931,40 @@ class PublicWorkoutRecordAssessmentView(View):
             return JsonResponse({'error': str(exc)}, status=400)
 
         return JsonResponse(result, status=200)
+
+
+class PublicWorkoutDownloadPdfView(View):
+    """GET /renan/<slug>/treino.pdf — baixa o programa ativo em PDF
+    (`public_workouts.pdf_export.render_program_pdf`, Entrega 4.6).
+
+    PONTOS CRITICOS:
+    - Mesma regra de auth da propria pagina/`avaliacoes.json`: cookie de
+      posse do B0 (`get_public_workout_owner_slug`), 404 sem cookie ou com
+      cookie de outro slug, nunca 403 (403 confirmaria que o slug existe).
+      Nao exige login (B1) — baixar em PDF o MESMO conteudo que
+      `/renan/<slug>` ja mostra na tela nao e' operacao de conta, e' so
+      outro formato de saida pro que quem abriu o link ja pode ver.
+    - 404 tambem quando ainda nao ha programa publicado
+      (`get_active_program` devolve None) — vale pra todos os 10 slugs
+      reais hoje, ate a Onda A2 migrar os programas de verdade. Mesmo
+      raciocinio dos outros 404 desta view: nunca inventa pagina especial,
+      so nao tem o que servir ainda.
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+        if get_public_workout_owner_slug(request) != plan.slug:
+            raise Http404('Treino publico nao encontrado.')
+
+        from public_workouts.services import get_active_program
+
+        payload = get_active_program(slug=plan.slug)
+        if payload is None:
+            raise Http404('PDF ainda nao disponivel para este treino.')
+
+        from public_workouts.pdf_export import render_program_pdf
+
+        pdf_bytes = render_program_pdf(payload)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="treino-{plan.slug}.pdf"'
+        return response

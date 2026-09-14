@@ -14,8 +14,16 @@ PONTOS CRITICOS:
 - GET sem ?token=: mostra o formulario de pedido de link.
 - GET com ?token=: consome o token e loga (seta o cookie proprio).
 - POST: emite e envia o token pro e-mail informado.
-- B1 nao inclui roteamento pro treino certo da conta (isso e Onda B3,
-  ownership do slug) — so a sessao fica pronta aqui.
+- ?next=/renan/<slug> (achado real: sem isso, o aluno tinha que voltar na
+  mao pro treino depois de logar): so aceita path exato de
+  /renan/<slug> — ver _safe_public_workout_next. Nao usa
+  url_has_allowed_host_and_scheme do Django (que aceitaria qualquer path
+  do mesmo host) de proposito: o unico destino legitimo e o proprio
+  treino, entao restringir ao padrao evita qualquer superficie de
+  redirecionamento aberto por construcao, nao por checagem de host.
+  Viaja em 3 saltos ate o redirect final: querystring do GET inicial ->
+  campo hidden do formulario de e-mail -> dentro do link do e-mail
+  (request_login_token) -> querystring do GET com ?token=.
 
 PublicWorkoutSubscribeView (Onda B2, Fatia B) mora neste mesmo arquivo:
 precisa da mesma sessao (cookie) que o login estabelece, e e so um POST
@@ -24,8 +32,10 @@ de API (sem template proprio ainda — a tela de assinatura e Onda B3/B4).
 
 from __future__ import annotations
 
+import re
+
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.generic import View
 
@@ -41,31 +51,47 @@ from .public_workout_login import (
 from .public_workout_session import attach_public_workout_session_cookie, get_public_workout_account_id_from_request
 
 
+_PUBLIC_WORKOUT_NEXT_RE = re.compile(r'^/renan/[-a-z0-9]+/?$')
+
+
+def _safe_public_workout_next(raw: str | None) -> str:
+    """So aceita path exato de /renan/<slug> — string vazia pra qualquer
+    outra coisa (ausente, absoluto com host, esquema `javascript:`, rota
+    fora do corredor). Ver PONTOS CRITICOS no topo do arquivo."""
+    candidate = (raw or '').strip()
+    return candidate if _PUBLIC_WORKOUT_NEXT_RE.match(candidate) else ''
+
+
 class PublicWorkoutLoginView(View):
     template_name = 'treinos/login.html'
 
     def get(self, request, *args, **kwargs):
         token = (request.GET.get('token') or '').strip()
+        next_url = _safe_public_workout_next(request.GET.get('next'))
         if not token:
-            return render(request, self.template_name, {})
+            return render(request, self.template_name, {'next_url': next_url})
 
         account = verify_login_token(token=token)
         if account is None:
-            return render(request, self.template_name, {'error': 'link_invalido'})
+            return render(request, self.template_name, {'error': 'link_invalido', 'next_url': next_url})
 
-        response = render(request, self.template_name, {'logged_in_as': account.email})
+        if next_url:
+            response = redirect(next_url)
+        else:
+            response = render(request, self.template_name, {'logged_in_as': account.email})
         attach_public_workout_session_cookie(response, account_id=account.id)
         return response
 
     def post(self, request, *args, **kwargs):
         email = (request.POST.get('email') or '').strip().lower()
+        next_url = _safe_public_workout_next(request.POST.get('next'))
         if not email or '@' not in email:
-            return render(request, self.template_name, {'error': 'email_invalido'})
+            return render(request, self.template_name, {'error': 'email_invalido', 'next_url': next_url})
 
         try:
-            request_login_token(email=email, base_url=request.build_absolute_uri('/'))
+            request_login_token(email=email, base_url=request.build_absolute_uri('/'), next_url=next_url)
         except PublicWorkoutLoginRateLimitExceeded:
-            return render(request, self.template_name, {'error': 'muitos_pedidos'})
+            return render(request, self.template_name, {'error': 'muitos_pedidos', 'next_url': next_url})
 
         return render(request, self.template_name, {'sent_to': email})
 
