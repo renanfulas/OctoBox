@@ -721,3 +721,74 @@ class PublicWorkoutLocalStorageBackupView(View):
             raw_blob=raw_blob,
         )
         return JsonResponse({'status': 'ok'})
+
+
+def _decimal_or_none(value):
+    if value is None:
+        return None
+    from decimal import Decimal, InvalidOperation
+
+    try:
+        return Decimal(str(value))
+    except InvalidOperation as exc:
+        raise ValueError(f'valor numerico invalido: {value!r}') from exc
+
+
+class PublicWorkoutRecordLoadView(View):
+    """POST /renan/<slug>/carga — registra uma carga (S3, record_load,
+    Onda A1 Fatia B). Consumido pelo outbox de IndexedDB da Onda B3
+    (item 8) — reenvio com a mesma `idempotency_key` nunca duplica.
+
+    PONTOS CRITICOS:
+    - Exige sessao de LOGIN ativa (Onda B1) — nao o cookie de posse do B0.
+      Carga precisa saber QUEM registrou (`account_id`, decisao de D.5 da
+      Fatia B); o cookie de posse so prova "abriu este link", nunca
+      identifica a pessoa. Sem sessao: 401 (nao 404 — aqui nao ha slug pra
+      esconder, o problema e "voce nao esta logado").
+    - Sessao ativa de conta que NAO e dona deste slug: 404, mesma regra
+      do gate de posse (Onda B3, item 5) — nunca 403, nunca deixa
+      registrar carga associada ao treino de outra pessoa.
+    """
+
+    def post(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return HttpResponse(status=400)
+        if not isinstance(payload, dict):
+            return HttpResponse(status=400)
+
+        movement_slug = payload.get('movement_slug')
+        idempotency_key = payload.get('idempotency_key')
+        performed_on = payload.get('performed_on')
+        if not movement_slug or not idempotency_key or not performed_on:
+            return JsonResponse({'error': 'movement_slug, performed_on e idempotency_key sao obrigatorios'}, status=400)
+
+        from public_workouts.services import LoadValueError, record_load
+
+        try:
+            result = record_load(
+                account_id=account_id,
+                movement_slug=movement_slug,
+                weight_kg=_decimal_or_none(payload.get('weight_kg')),
+                reps=payload.get('reps'),
+                rir=_decimal_or_none(payload.get('rir')),
+                performed_on=performed_on,
+                program_id=payload.get('program_id'),
+                week_in_program=payload.get('week_in_program'),
+                idempotency_key=idempotency_key,
+            )
+        except (LoadValueError, ValueError) as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
+
+        return JsonResponse(result, status=200)
