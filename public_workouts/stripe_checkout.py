@@ -1,0 +1,97 @@
+"""
+ARQUIVO: checkout Stripe do corredor de treinos (Onda B2, Fatia B do CORDA).
+
+POR QUE ELE EXISTE:
+- S3/D.000 do CORDA (docs/plans/public-workouts-produtizacao-corda.md): o
+  corredor tem checkout PROPRIO — nunca chama create_checkout_session do
+  box (signup/services.py) nem importa integrations/stripe/services.py
+  (N2). Resolve a propria conta e nunca aciona o roteador do box.
+
+DECISAO DO RENAN: reusar a MESMA conta Stripe do box, sem Connect Express.
+C5 do CORDA e explicito — Connect so entra na Entrega 5, junto com o
+multi-personal ("enquanto for um personal so, o repasse nao existe").
+Consequencia direta: `application_fee_amount` fica sempre 0 e
+`gross_amount == net_amount` em todo PublicWorkoutPayment criado por este
+fluxo — os tres campos do modelo (C3) ja suportam isso sem migration nova.
+
+PONTOS CRITICOS:
+- `stripe.api_key` e global do processo (C1 do CORDA) — mutar em runtime e
+  race condition SE houver mais de uma conta Stripe no processo. Hoje so
+  existe uma (a do box, reusada aqui de proposito), entao e inofensivo.
+  No dia em que o corredor ganhar Connect Express (multi-personal), este
+  MESMO padrao vira o bug que C1 descreve — ai sim migrar pra
+  `stripe.StripeClient(api_key=...)` por instancia. Ponteiro, nao trabalho
+  desta onda.
+- idempotency_key inclui o id da PublicWorkoutSubscription e o price_id
+  (mesmo raciocinio de signup/services.py: trocar o price no .env sem
+  mudar a chave faria a Stripe devolver a Session cacheada com o preco
+  ANTIGO).
+"""
+
+from __future__ import annotations
+
+from django.conf import settings
+
+
+class PublicWorkoutStripeNotConfiguredError(RuntimeError):
+    """Levantada quando PUBLIC_WORKOUT_STRIPE_PRICE_ID nao esta configurado."""
+
+
+def _resolve_price_id() -> str:
+    price_id = (getattr(settings, 'PUBLIC_WORKOUT_STRIPE_PRICE_ID', '') or '').strip()
+    if not price_id:
+        raise PublicWorkoutStripeNotConfiguredError(
+            'PUBLIC_WORKOUT_STRIPE_PRICE_ID nao configurado. Defina no .env e reinicie o servidor.'
+        )
+    return price_id
+
+
+def start_subscription_checkout(*, subscription, success_url: str, cancel_url: str) -> str:
+    """Cria stripe.checkout.Session(mode='subscription') pra assinatura do corredor.
+
+    Devolve a URL hospedada da Stripe para redirect. `subscription` e a
+    PublicWorkoutSubscription ja resolvida/criada por quem chama (ver
+    billing.get_or_create_subscription) — este modulo nao decide identidade,
+    so fala com a Stripe.
+    """
+    # Import tardio (mesmo padrao de signup/services.py): nao torna o app
+    # dependente da lib stripe em ambiente de teste que nao precisa dela.
+    import stripe
+
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key:
+        raise PublicWorkoutStripeNotConfiguredError('STRIPE_SECRET_KEY nao definida.')
+    stripe.api_key = secret_key
+
+    price_id = _resolve_price_id()
+    account = subscription.account
+
+    session = stripe.checkout.Session.create(
+        mode='subscription',
+        payment_method_types=['card'],
+        line_items=[{'price': price_id, 'quantity': 1}],
+        customer_email=account.email,
+        client_reference_id=str(subscription.pk),
+        success_url=success_url,
+        cancel_url=cancel_url,
+        # metadata.product='coaching' e o discriminador (D.0 do CORDA): o
+        # webhook do corredor so processa eventos com esse valor — nunca
+        # resolve Box, nunca alcanca o roteador do box (S3).
+        metadata={
+            'product': 'coaching',
+            'public_workout_subscription_id': str(subscription.pk),
+            'plan_slug': subscription.plan_slug,
+        },
+        subscription_data={
+            'metadata': {
+                'product': 'coaching',
+                'public_workout_subscription_id': str(subscription.pk),
+                'plan_slug': subscription.plan_slug,
+            },
+        },
+        idempotency_key=f'public-workout-subscription-{subscription.pk}-{price_id[-8:]}',
+    )
+    return session.url
+
+
+__all__ = ['PublicWorkoutStripeNotConfiguredError', 'start_subscription_checkout']

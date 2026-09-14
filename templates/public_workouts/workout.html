@@ -1,0 +1,265 @@
+{% load static l10n public_workouts_extras %}<!DOCTYPE html>
+<!--
+ARQUIVO: prototipo do "template unico" (Onda B3 do CORDA — fundacao visual).
+
+POR QUE ELE EXISTE:
+- renderiza QUALQUER payload valido pelo contrato de public_workouts/schema.py
+  usando os primitives compartilhados do design system (.student-card,
+  .student-status-badge, tables.css, interactive-tabs.css) em vez dos 8 CSS
+  por-plano que a Onda B3 real vai apagar. Nao depende de dado publicado de
+  verdade (Onda A2) pra existir: os testes renderizam contra o payload de
+  exemplo (public_workouts/schema.py::build_example_payload).
+
+PONTOS CRITICOS:
+- NAO esta ligado a nenhuma URL/view ainda — a Onda B3 real ainda precisa
+  decidir fase de acesso, hard reset e o sw.js novo antes de qualquer corte
+  de producao. Isto e so a base de renderizacao.
+- NAO estende templates/public_workouts/_base.html (a base legada, com o
+  sistema --accent por-plano e o bootstrap de PWA que a propria Onda B3
+  manda matar) nem templates/student_app/layout.html (acopla tenant via
+  {% load student_shell %} no sidebar/topbar — D.3 diz que
+  templates/student_app/** e so leitura pra este produto).
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{{ program.program_label }}</title>
+<link rel="stylesheet" href="{% static 'css/student_app/app.css' %}">
+<link rel="stylesheet" href="{% static 'css/design-system/components/tables.css' %}">
+<link rel="stylesheet" href="{% static 'css/design-system/components/interactive-tabs.css' %}">
+<link rel="stylesheet" href="{% static 'css/design-system/neon.css' %}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-shell.css' %}">
+</head>
+<body{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
+<main class="workout-shell">
+
+  <section class="student-hero-number" aria-label="Resumo do programa">
+    <span class="student-hero-number__meta">{{ program.weeks }} semana{{ program.weeks|pluralize }}</span>
+    <p class="student-hero-number__label">{{ program.program_label }}</p>
+    <div class="student-hero-number__value"><span>{{ program.started_on }}</span></div>
+  </section>
+
+  <nav class="workout-day-nav" role="tablist" aria-label="Dias do programa e historico">
+    {% for day in program.days %}
+    <button
+      type="button"
+      class="student-status-badge workout-day-tab{% if forloop.first %} is-active{% endif %}"
+      data-workout-tab-target="workout-day-{{ day.day_id }}"
+      role="tab"
+      id="workout-tab-{{ day.day_id }}"
+      aria-controls="workout-day-{{ day.day_id }}"
+      aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+    >{{ day.label }}</button>
+    {% endfor %}
+    <button
+      type="button"
+      class="student-status-badge workout-day-tab"
+      data-workout-tab-target="workout-history"
+      role="tab"
+      id="workout-tab-history"
+      aria-controls="workout-history"
+      aria-selected="false"
+    >Histórico</button>
+  </nav>
+
+  <div class="interactive-tab-container" data-default-panel="workout-day-{{ program.days.0.day_id }}">
+    {% for day in program.days %}
+    <section
+      class="workout-day-panel{% if forloop.first %} is-tab-active{% endif %}"
+      id="workout-day-{{ day.day_id }}"
+      role="tabpanel"
+      aria-labelledby="workout-tab-{{ day.day_id }}"
+      data-workout-tab-panel
+    >
+      {% for block in day.blocks %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Movimento</th>
+                <th scope="col">Reps</th>
+                <th scope="col">RIR</th>
+                <th scope="col">Carga</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for movement in block.movements %}
+              <tr>
+                <td>
+                  {% if movement.reference_url %}<a href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement.movement_slug|humanize_movement_slug }}</a>
+                  {% else %}{{ movement.movement_slug|humanize_movement_slug }}{% endif %}
+                  {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
+                </td>
+                <td>{{ movement.reps_spec }}</td>
+                <td>{{ movement.rir_spec }}</td>
+                <td>
+                  {% if movement.load_type == 'percentage_of_rm' %}{{ movement.load_value }}% RM
+                  {% elif movement.load_type == 'fixed_kg' %}{{ movement.load_value }} kg
+                  {% else %}Livre{% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="table-empty-cell">Nenhum movimento neste bloco.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+    {% endfor %}
+
+    <section
+      class="workout-history-panel"
+      id="workout-history"
+      role="tabpanel"
+      aria-labelledby="workout-tab-history"
+      data-workout-tab-panel
+    >
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Versões do programa</h2>
+        {% if program_versions %}
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Versão</th>
+                <th scope="col">Programa</th>
+                <th scope="col">Início</th>
+                <th scope="col">Semanas</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for version in program_versions %}
+              <tr class="workout-version-row">
+                <td>v{{ version.version }}</td>
+                <td>{{ version.program_label }}</td>
+                <td>{{ version.started_on }}</td>
+                <td>{{ version.weeks }}</td>
+                <td>
+                  {% if version.is_active %}<span class="student-status-badge">ativa</span>
+                  {% else %}<span class="student-status-badge">inativa</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p>Nenhuma versão publicada ainda.</p>
+        {% endif %}
+      </article>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Evolução de carga</h2>
+        {% regroup load_history by movement_slug as load_history_by_movement %}
+        {% for group in load_history_by_movement %}
+          {% with chart=group.list|load_chart_points %}
+          <div class="workout-load-chart{% if chart.has_data %} has-data{% endif %}">
+            <div class="workout-load-chart-head">
+              <h3>{{ group.grouper|humanize_movement_slug }}</h3>
+              {% if chart.has_data %}
+              <span class="workout-load-chart-current">
+                <strong>{{ chart.latest_weight_kg }} kg</strong>
+                <span class="workout-load-chart-trend workout-load-chart-trend--{{ chart.trend }}">
+                  {% if chart.trend == 'up' %}▲{% elif chart.trend == 'down' %}▼{% else %}—{% endif %}
+                  {{ chart.delta_weight_kg }} kg
+                </span>
+              </span>
+              {% endif %}
+              {% with estimate=one_rep_max_by_movement|dict_get:group.grouper %}
+              {% if estimate %}
+              <span class="workout-load-chart-1rm" title="1RM estimado — confiança {{ estimate.confidence }} ({{ estimate.effective_reps }} reps efetivas, {{ estimate.formula }})">
+                1RM est. <strong>{{ estimate.value_kg }} kg</strong>
+              </span>
+              {% endif %}
+              {% endwith %}
+              {% with movement_trend=trends_by_movement|dict_get:group.grouper %}
+              {% if movement_trend %}
+              <span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--{{ movement_trend.label }}">
+                {% if movement_trend.label == 'plateau' %}Platô{% elif movement_trend.label == 'declining' %}Em queda{% else %}Em evolução{% endif %}
+              </span>
+              {% endif %}
+              {% endwith %}
+            </div>
+            {% if chart.has_data %}
+            <svg
+              class="workout-load-chart-svg"
+              viewBox="{{ chart.viewbox }}"
+              preserveAspectRatio="none"
+              role="img"
+              aria-label="Evolução de carga em {{ group.grouper|humanize_movement_slug }}: {{ chart.latest_weight_kg }} kg, {{ chart.trend }}"
+            >
+              <defs>
+                <linearGradient id="workout-load-fill-{{ forloop.counter }}" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.32" />
+                  <stop offset="100%" style="stop-color:var(--brand);stop-opacity:0" />
+                </linearGradient>
+                <linearGradient id="workout-load-stroke-{{ forloop.counter }}" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.55" />
+                  <stop offset="100%" style="stop-color:var(--brand);stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              {% localize off %}
+              <polygon class="workout-load-chart-area" points="{{ chart.area_points_attr }}" fill="url(#workout-load-fill-{{ forloop.counter }})"></polygon>
+              <polyline class="workout-load-chart-line" points="{{ chart.points_attr }}" pathLength="1" stroke="url(#workout-load-stroke-{{ forloop.counter }})"></polyline>
+              {% for point in chart.points %}
+              {% if point.is_program_change %}
+              <line
+                class="workout-load-chart-version-line"
+                x1="{{ point.x }}" y1="0"
+                x2="{{ point.x }}" y2="{{ chart.baseline_y }}"
+              ></line>
+              {% endif %}
+              <circle class="workout-load-chart-halo" cx="{{ point.x }}" cy="{{ point.y }}" r="7"></circle>
+              <circle class="workout-load-chart-dot{% if point.is_program_change %} workout-load-chart-dot--version{% endif %}" cx="{{ point.x }}" cy="{{ point.y }}" r="3">
+                {% if point.is_program_change %}<title>Novo programa a partir daqui: {{ point.program_id }}{% if point.week_in_program %} (semana {{ point.week_in_program }}){% endif %}</title>{% endif %}
+              </circle>
+              <text class="workout-load-chart-label" x="{{ point.x }}" y="{{ chart.label_y }}">{{ point.label }}</text>
+              {% endfor %}
+              {% endlocalize %}
+            </svg>
+            {% else %}
+            <p>Ainda não há carga suficiente registrada para montar o gráfico.</p>
+            {% endif %}
+          </div>
+          {% endwith %}
+        {% empty %}
+        <p>Nenhuma carga registrada ainda.</p>
+        {% endfor %}
+      </article>
+    </section>
+  </div>
+
+</main>
+<script>
+/* Inline de proposito (mesmo padrao do bootstrap de PWA em _base.html):
+   troca qual painel esta com .is-tab-active. interactive-tabs.css ja
+   esconde tudo que nao tem essa classe (>*:not(.is-tab-active){display:none}).
+   Selecao por [data-workout-tab-panel] (nao por classe) porque o painel de
+   Historico (Onda B4, fatia adiantada) tem classe propria
+   (.workout-history-panel), diferente de .workout-day-panel — um teste
+   existente conta ocorrencias de "workout-day-panel" e nao pode inflar. */
+(function () {
+  var tabs = document.querySelectorAll('[data-workout-tab-target]');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var targetId = tab.getAttribute('data-workout-tab-target');
+      tabs.forEach(function (t) {
+        t.classList.remove('is-active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('is-active');
+      tab.setAttribute('aria-selected', 'true');
+      document.querySelectorAll('[data-workout-tab-panel]').forEach(function (panel) {
+        panel.classList.toggle('is-tab-active', panel.id === targetId);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

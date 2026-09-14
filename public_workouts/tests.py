@@ -134,6 +134,34 @@ class ServicesTests(TestCase):
         ordered = list_assessments(plan_slug='rafael')
         self.assertEqual([a.measured_at for a in ordered], [date(2026, 1, 1), date(2026, 2, 1)])
 
+    def test_returns_serialized_dict_not_model_instance(self):
+        result = record_assessment(plan_slug='rafael', measured_at=date(2026, 1, 5), weight_kg=80)
+
+        self.assertEqual(result, {
+            'measured_at': '2026-01-05',
+            'weight_kg': 80.0,
+            'body_fat_percent': None,
+            'measurements': {},
+            'notes': '',
+        })
+
+    def test_accepts_measured_at_as_iso_string_same_as_record_load(self):
+        # Regressao: .objects.create() nao converte string pra date no
+        # atributo em memoria (so' na escrita SQL) — sem a normalizacao
+        # explicita (mesmo padrao de record_load::performed_on), o
+        # _serialize() interno quebrava em measured_at.isoformat().
+        result = record_assessment(plan_slug='rafael', measured_at='2026-01-05', weight_kg=80)
+
+        self.assertEqual(result['measured_at'], '2026-01-05')
+
+    def test_rejects_zero_or_negative_weight_kg(self):
+        from .services import AssessmentValueError
+
+        with self.assertRaises(AssessmentValueError):
+            record_assessment(plan_slug='rafael', measured_at=date(2026, 1, 5), weight_kg=0)
+        with self.assertRaises(AssessmentValueError):
+            record_assessment(plan_slug='rafael', measured_at=date(2026, 1, 5), weight_kg=-10)
+
     def test_build_report_with_no_assessments_returns_empty_shape(self):
         report = build_report(plan_slug='rafael', sex='M', height_cm=175)
         self.assertEqual(report, {'assessments': [], 'summary': None, 'indicators': None})
@@ -190,3 +218,16 @@ class ModelTests(TestCase):
     def test_str_representation(self):
         assessment = PublicWorkoutAssessment.objects.create(plan_slug='rafael', measured_at=date(2026, 1, 1))
         self.assertEqual(str(assessment), 'rafael @ 2026-01-01')
+
+    def test_student_identity_id_defaults_to_none(self):
+        # Onda A0 do CORDA: referencia fraca (N5), preenchida so quando a
+        # pessoa tambem e aluna de box — nunca obrigatoria.
+        assessment = PublicWorkoutAssessment.objects.create(plan_slug='rafael', measured_at=date(2026, 1, 1))
+        self.assertIsNone(assessment.student_identity_id)
+
+    def test_student_identity_id_can_be_set(self):
+        assessment = PublicWorkoutAssessment.objects.create(
+            plan_slug='rafael', measured_at=date(2026, 1, 1), student_identity_id=42
+        )
+        assessment.refresh_from_db()
+        self.assertEqual(assessment.student_identity_id, 42)

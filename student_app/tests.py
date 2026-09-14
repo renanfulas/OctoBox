@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from freezegun import freeze_time
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.test import Client, TestCase, override_settings
@@ -2206,6 +2207,16 @@ class PublicWorkoutPwaTests(TestCase):
         # 1x escada/HIIT por semana, pedido explicitamente pela cliente.
         self.assertContains(response, 'Escada / HIIT')
 
+    def test_visiting_the_page_sets_the_csrf_cookie(self):
+        # Regressao: nenhum template deste corredor usa {% csrf_token %},
+        # entao sem a chamada explicita a get_token() (PublicWorkoutDetailView)
+        # o cookie CSRF nunca nascia — qualquer POST feito por JS depois
+        # (autoavaliacao online, assessments.js) levava 403 em producao,
+        # mesmo com sessao de login valida.
+        response = self.client.get('/renan/giovanna')
+
+        self.assertIn(settings.CSRF_COOKIE_NAME, response.cookies)
+
 
 class PublicWorkoutAssessmentsEndpointTests(TestCase):
     """GET /renan/<slug>/avaliacoes.json — exige cookie assinado do dono do slug.
@@ -2270,6 +2281,65 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
             response = self.client.get(f'/renan/{slug}')
             self.assertContains(response, 'assessments.js')
             self.assertContains(response, "goTab('avaliacoes',this)")
+
+
+class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
+    """POST /renan/<slug>/backup-carga — item 1.7 / F-B, Onda B1 do CORDA.
+
+    Mesma trava de posse do B0: sem o cookie do dono, 404. O blob e salvo
+    bruto, sem parsing de estrutura interna (so precisa ser um objeto JSON).
+    """
+
+    def test_returns_404_without_owner_cookie(self):
+        response = self.client.post(
+            '/renan/giovanna/backup-carga',
+            data='{"reps": []}',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_for_cookie_of_another_slug(self):
+        self.client.get('/renan/giovanna')  # seta o cookie de giovanna
+        response = self.client.post(
+            '/renan/rafael/backup-carga',
+            data='{"reps": []}',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_saves_raw_blob_as_is_for_owner(self):
+        from public_workouts.models import PublicWorkoutLocalStorageBackup
+
+        self.client.get('/renan/giovanna')  # seta o cookie do dono
+        blob = {'sessions': [{'date': '2026-01-05', 'weight': 42}], 'anything': 'nao normalizado'}
+        response = self.client.post(
+            '/renan/giovanna/backup-carga',
+            data=json.dumps(blob),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        backup = PublicWorkoutLocalStorageBackup.objects.get(plan_slug='giovanna')
+        self.assertEqual(backup.raw_blob, blob)
+        self.assertEqual(backup.store_key, 'giovanna_fontes_v1')
+
+    def test_rejects_malformed_json(self):
+        self.client.get('/renan/giovanna')
+        response = self.client.post(
+            '/renan/giovanna/backup-carga',
+            data='isso nao e json',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_rejects_non_object_json(self):
+        self.client.get('/renan/giovanna')
+        response = self.client.post(
+            '/renan/giovanna/backup-carga',
+            data='[1, 2, 3]',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
 
 
 class PublicWorkoutContentSignatureTests(TestCase):

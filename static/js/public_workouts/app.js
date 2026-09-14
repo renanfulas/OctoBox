@@ -293,12 +293,38 @@
     }
   }
 
+  /* ══ EXPORTAR PDF ═══════════════════════════════════════════
+   * Link nativo (sem fetch) pro GET /renan/<slug>/treino.pdf
+   * (PublicWorkoutDownloadPdfView) — mesmo cookie de posse do B0 que ja
+   * abre a propria pagina cobre o download, o navegador so segue o link.
+   * Agrupa com .mode-btn num wrapper novo pra nao quebrar o
+   * justify-content:space-between de .top-bar (2 blocos, nao 3).
+   */
+  function injectPdfButton() {
+    var modeBtn = document.querySelector('.top-bar .mode-btn');
+    var slug = body.getAttribute('data-plan-slug');
+    if (!modeBtn || !slug || document.querySelector('.pdf-btn')) { return; }
+
+    var link = document.createElement('a');
+    link.className = 'pdf-btn';
+    link.href = '/renan/' + slug + '/treino.pdf';
+    link.setAttribute('aria-label', 'Baixar treino em PDF');
+    link.innerHTML = '<span class="pdf-icon">📄</span><span class="pdf-label">Baixar PDF</span>';
+
+    var actions = document.createElement('div');
+    actions.className = 'top-bar-actions';
+    modeBtn.parentNode.insertBefore(actions, modeBtn);
+    actions.appendChild(link);
+    actions.appendChild(modeBtn);
+  }
+
   /* ══ BOOT ═══════════════════════════════════════════════════ */
 
   function init() {
     restoreMode();
     initTrackers();
     renderBanner();
+    injectPdfButton();
     // Se a pagina abre ja na aba de periodizacao, o grafico precisa existir.
     var active = document.querySelector('.tab.on');
     if (active && /period/.test(active.getAttribute('onclick') || '')) { buildChart(); }

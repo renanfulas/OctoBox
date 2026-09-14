@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from django.conf import settings
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 from django.views.generic import View
@@ -333,6 +333,49 @@ def _get_public_workout_entry(plan_slug: str) -> PublicWorkoutPlan:
     return plan
 
 
+def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
+    """B3 (CORDA) item 5 — "identidade da sessao dona do slug, senao 404".
+
+    So entra em jogo quando ha sessao de LOGIN ativa (PublicWorkoutAccount,
+    Onda B1) — visitante anonimo continua no fluxo B0 de posse por cookie,
+    sem mudanca (fase B de login obrigatorio ainda nao esta ligada, Onda
+    B3 fases B/C). Com sessao ativa: aluno A logado abrindo o slug do
+    aluno B tem que receber 404, nunca o treino nem 403 (403 confirmaria
+    que o slug existe — mesma regra do cookie de posse do B0).
+
+    Import tardio (nao no topo do arquivo): mesmo motivo de
+    _validate_plan_slug em public_workouts/services.py — este modulo e
+    importado por public_workouts (PUBLIC_WORKOUT_LIBRARY), um import de
+    public_workouts aqui no topo criaria ciclo.
+    """
+    from public_workouts.models import PublicWorkoutSubscription
+    from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+    account_id = get_public_workout_account_id_from_request(request)
+    if account_id is None:
+        return
+
+    owns_slug = PublicWorkoutSubscription.objects.filter(account_id=account_id, plan_slug=plan_slug).exists()
+    if not owns_slug:
+        raise Http404('Treino publico nao encontrado.')
+
+
+def get_public_workout_owner_slug(request) -> str | None:
+    """Le o cookie de posse do B0 (ver PUBLIC_WORKOUT_OWNER_COOKIE acima).
+
+    None se ausente ou com assinatura adulterada — nunca levanta. Usado
+    por toda view que precisa confirmar "este navegador visitou este
+    slug antes" (avaliacoes.json, upload de backup do localStorage).
+
+    `get_signed_cookie` com `default=` ja absorve BadSignature/KeyError
+    internamente (ver django.http.request.HttpRequest.get_signed_cookie) —
+    nao precisa de try/except aqui, ele nunca levanta com default setado.
+    """
+    return request.get_signed_cookie(
+        PUBLIC_WORKOUT_OWNER_COOKIE, salt=PUBLIC_WORKOUT_OWNER_COOKIE_SALT, default=None
+    )
+
+
 # Presente em qualquer pagina que estenda public_workouts/_base.html —
 # usado para distinguir template convertido de arquivo legado (ver baixo).
 _SHARED_BASE_MARKER = 'id="public-workout-install"'
@@ -545,6 +588,15 @@ def _render_public_workout_html(plan_slug: str) -> str:
 class PublicWorkoutDetailView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        # get_token() marca o cookie CSRF pra ser enviado na resposta —
+        # sem isso, o cookie nunca nasce aqui (nenhum template desta pagina
+        # usa {% csrf_token %}) e o JS de escrita (autoavaliacao online,
+        # assessments.js) nunca teria um X-CSRFToken valido pra mandar no
+        # POST de /avaliacoes: 403 sempre, em qualquer navegador de verdade.
+        from django.middleware.csrf import get_token
+
+        get_token(request)
         response = HttpResponse(_render_public_workout_html(plan_slug))
         # B0: quem abre a pagina prova posse do link — e o que autoriza a
         # leitura de /avaliacoes.json a seguir. Cookie por instancia, nao
@@ -641,3 +693,278 @@ class PublicWorkoutOfflineView(View):
             {'plans': tuple(PUBLIC_WORKOUT_LIBRARY.values())},
         )
         return HttpResponse(html)
+
+
+class PublicWorkoutLocalStorageBackupView(View):
+    """POST /renan/<slug>/backup-carga — sobe o blob bruto do localStorage.
+
+    Item 1.7 / F-B do plano de produto (Onda B1 do CORDA): salva o blob
+    ANTES do hard reset da Onda B3, sem normalizar — isso fica para depois
+    (Onda 3.5). O localStorage e a UNICA copia que existe hoje; perder o
+    navegador sem backup e perda permanente.
+
+    Mesmo cookie de posse do B0: sem ele, 404 — nao revela se o slug
+    existe, e evita que qualquer terceiro grave lixo associado a um slug
+    alheio.
+    """
+
+    def post(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        if get_public_workout_owner_slug(request) != plan.slug:
+            raise Http404('Treino publico nao encontrado.')
+
+        try:
+            raw_blob = json.loads(request.body.decode('utf-8') or '{}')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return HttpResponse(status=400)
+        if not isinstance(raw_blob, dict):
+            return HttpResponse(status=400)
+
+        from public_workouts.models import PublicWorkoutLocalStorageBackup
+
+        PublicWorkoutLocalStorageBackup.objects.create(
+            plan_slug=plan.slug,
+            store_key=plan.store_key or '',
+            raw_blob=raw_blob,
+        )
+        return JsonResponse({'status': 'ok'})
+
+
+def _decimal_or_none(value):
+    if value is None:
+        return None
+    from decimal import Decimal, InvalidOperation
+
+    try:
+        return Decimal(str(value))
+    except InvalidOperation as exc:
+        raise ValueError(f'valor numerico invalido: {value!r}') from exc
+
+
+class PublicWorkoutPackageView(View):
+    """GET /renan/<slug>/pacote.json — contrapartida de LEITURA do S3
+    (Onda B3, item 8 — base, mesmo espirito da PublicWorkoutRecordLoadView
+    que ja e' a contrapartida de escrita). Expoe S2 (`build_student_package`)
+    pra conta logada dona do slug: ultima carga por movimento (com 1RM
+    estimado de verdade desde a Onda A3), substituicoes e `access_until`.
+
+    PONTOS CRITICOS:
+    - Mesma regra de auth do record_load: exige sessao de LOGIN ativa
+      (Onda B1) — sem sessao, 401 (nao ha slug pra esconder, o problema e'
+      "voce nao esta logado"). Sessao de conta que NAO e dona deste slug:
+      404, nunca 403 (mesma regra do gate de posse, Onda B3 item 5).
+    - So' leitura: nao aceita corpo, nao muda banco. Idempotente por
+      natureza (GET), sem necessidade de idempotency_key.
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        from public_workouts.services import build_student_package
+
+        package = build_student_package(account_id=account_id, slug=plan.slug)
+        return JsonResponse(package, status=200)
+
+
+class PublicWorkoutExportDataView(View):
+    """GET /renan/<slug>/meus-dados.json — export de dados do titular
+    (Onda A3, LGPD/GDPR). Mesma regra de auth dos demais endpoints de
+    conta (pacote.json, carga): sessao de LOGIN ativa, 401 sem sessao,
+    404 se a sessao nao e' dona deste slug.
+
+    Devolve `public_workouts.services.export_account_data` — conta,
+    assinatura, cobrancas, avaliacoes e historico de carga. So' leitura,
+    nao aceita corpo, nao muda banco.
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        from public_workouts.services import export_account_data
+
+        return JsonResponse(export_account_data(account_id=account_id), status=200)
+
+
+class PublicWorkoutRecordLoadView(View):
+    """POST /renan/<slug>/carga — registra uma carga (S3, record_load,
+    Onda A1 Fatia B). Consumido pelo outbox de IndexedDB da Onda B3
+    (item 8) — reenvio com a mesma `idempotency_key` nunca duplica.
+
+    PONTOS CRITICOS:
+    - Exige sessao de LOGIN ativa (Onda B1) — nao o cookie de posse do B0.
+      Carga precisa saber QUEM registrou (`account_id`, decisao de D.5 da
+      Fatia B); o cookie de posse so prova "abriu este link", nunca
+      identifica a pessoa. Sem sessao: 401 (nao 404 — aqui nao ha slug pra
+      esconder, o problema e "voce nao esta logado").
+    - Sessao ativa de conta que NAO e dona deste slug: 404, mesma regra
+      do gate de posse (Onda B3, item 5) — nunca 403, nunca deixa
+      registrar carga associada ao treino de outra pessoa.
+    """
+
+    def post(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return HttpResponse(status=400)
+        if not isinstance(payload, dict):
+            return HttpResponse(status=400)
+
+        movement_slug = payload.get('movement_slug')
+        idempotency_key = payload.get('idempotency_key')
+        performed_on = payload.get('performed_on')
+        if not movement_slug or not idempotency_key or not performed_on:
+            return JsonResponse({'error': 'movement_slug, performed_on e idempotency_key sao obrigatorios'}, status=400)
+
+        from public_workouts.services import LoadValueError, record_load
+
+        try:
+            result = record_load(
+                account_id=account_id,
+                movement_slug=movement_slug,
+                weight_kg=_decimal_or_none(payload.get('weight_kg')),
+                reps=payload.get('reps'),
+                rir=_decimal_or_none(payload.get('rir')),
+                performed_on=performed_on,
+                program_id=payload.get('program_id'),
+                week_in_program=payload.get('week_in_program'),
+                idempotency_key=idempotency_key,
+            )
+        except (LoadValueError, ValueError) as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
+
+        return JsonResponse(result, status=200)
+
+
+class PublicWorkoutRecordAssessmentView(View):
+    """POST /renan/<slug>/avaliacoes — autoavaliacao fisica ONLINE (US Navy),
+    Onda A3/B4 do CORDA. Contrapartida de ESCRITA de
+    PublicWorkoutAssessmentsView (GET .../avaliacoes.json, so leitura).
+
+    PONTOS CRITICOS:
+    - Mesma regra de auth de PublicWorkoutRecordLoadView: exige sessao de
+      LOGIN ativa (401 sem sessao) e gate de posse do slug (404, nunca 403).
+      O antigo docstring de PublicWorkoutAssessmentsView dizia "so o
+      treinador registra, via management command" — isso vale pra
+      avaliacao PRESENCIAL (Jackson-Pollock, precisa do treinador com o
+      adipometro). Na consultoria ONLINE, e o proprio aluno que mede e
+      lanca (metodo US Navy, so fita metrica) — decisao confirmada com o
+      Renan; este endpoint e o caminho de escrita que faltava pra isso.
+    - `body_fat_percent`/`body_fat_source` NUNCA vem do aluno: sao
+      exclusivos do fluxo presencial do treinador (skinfold/dispositivo).
+      Pedido que traga qualquer um dos dois e' 400 — o BF% desta avaliacao
+      sempre sai da estimativa US Navy calculada em build_report a partir
+      de `measurements`, nunca de um numero que o proprio aluno declarou.
+    """
+
+    def post(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return HttpResponse(status=400)
+        if not isinstance(payload, dict):
+            return HttpResponse(status=400)
+
+        if 'body_fat_percent' in payload or 'body_fat_source' in payload:
+            return JsonResponse(
+                {'error': 'body_fat_percent/body_fat_source so podem ser lancados pelo treinador, presencialmente'},
+                status=400,
+            )
+
+        measured_at = payload.get('measured_at')
+        weight_kg = payload.get('weight_kg')
+        measurements = payload.get('measurements')
+        if not measured_at:
+            return JsonResponse({'error': 'measured_at e obrigatorio'}, status=400)
+        if measurements is not None and not isinstance(measurements, dict):
+            return JsonResponse({'error': 'measurements deve ser um objeto'}, status=400)
+        if not weight_kg and not measurements:
+            return JsonResponse({'error': 'informe weight_kg ou measurements'}, status=400)
+
+        from public_workouts.services import AssessmentValueError, record_assessment
+
+        try:
+            result = record_assessment(
+                plan_slug=plan.slug,
+                measured_at=measured_at,
+                weight_kg=_decimal_or_none(weight_kg),
+                measurements=measurements,
+                notes=payload.get('notes', ''),
+            )
+        except (AssessmentValueError, ValueError) as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
+
+        return JsonResponse(result, status=200)
+
+
+class PublicWorkoutDownloadPdfView(View):
+    """GET /renan/<slug>/treino.pdf — baixa o programa ativo em PDF
+    (`public_workouts.pdf_export.render_program_pdf`, Entrega 4.6).
+
+    PONTOS CRITICOS:
+    - Mesma regra de auth da propria pagina/`avaliacoes.json`: cookie de
+      posse do B0 (`get_public_workout_owner_slug`), 404 sem cookie ou com
+      cookie de outro slug, nunca 403 (403 confirmaria que o slug existe).
+      Nao exige login (B1) — baixar em PDF o MESMO conteudo que
+      `/renan/<slug>` ja mostra na tela nao e' operacao de conta, e' so
+      outro formato de saida pro que quem abriu o link ja pode ver.
+    - 404 tambem quando ainda nao ha programa publicado
+      (`get_active_program` devolve None) — vale pra todos os 10 slugs
+      reais hoje, ate a Onda A2 migrar os programas de verdade. Mesmo
+      raciocinio dos outros 404 desta view: nunca inventa pagina especial,
+      so nao tem o que servir ainda.
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+        if get_public_workout_owner_slug(request) != plan.slug:
+            raise Http404('Treino publico nao encontrado.')
+
+        from public_workouts.services import get_active_program
+
+        payload = get_active_program(slug=plan.slug)
+        if payload is None:
+            raise Http404('PDF ainda nao disponivel para este treino.')
+
+        from public_workouts.pdf_export import render_program_pdf
+
+        pdf_bytes = render_program_pdf(payload)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="treino-{plan.slug}.pdf"'
+        return response

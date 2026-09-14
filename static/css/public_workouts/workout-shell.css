@@ -1,0 +1,270 @@
+/*
+ * ARQUIVO: fundacao visual do "template unico" (Onda B3 do CORDA, prototipo).
+ *
+ * POR QUE ELE EXISTE:
+ * - B3 substitui os 8 CSS por-plano deste diretorio (tokens.css,
+ *   components.css etc. — cada um com sua propria copia divergente de
+ *   --accent) por UM template composto dos primitives do design system
+ *   do student_app (.student-card, .student-status-badge, tables.css,
+ *   interactive-tabs.css). Este arquivo e so o pouco que falta em cima
+ *   deles: o mapeamento accent_variant (F/M/neutro) e o layout proprio
+ *   das abas de dia — nao redefine nenhum token que ja existe em
+ *   design-system/tokens.css.
+ * - B3 real (troca de fase de acesso, hard reset, sw.js novo) ainda
+ *   NAO esta implementado — isto e so a base de renderizacao, testada
+ *   contra o payload de exemplo (services_stub.py), sem view nem URL
+ *   ainda. Ver docs/plans/public-workouts-produtizacao-corda.md, Onda B3.
+ *
+ * PONTOS CRITICOS:
+ * - Nao existia precedente de accent_variant F/M/neutro no repo (a unica
+ *   variacao de --theme-accent-* encontrada era o toggle claro/escuro em
+ *   body[data-theme]). O padrao aqui espelha esse MESMO mecanismo —
+ *   troca as custom properties num seletor de atributo — em vez de
+ *   inventar um sistema novo.
+ */
+
+[data-accent-variant="premium"] {
+    --brand: var(--theme-accent-premium);
+    --theme-accent-primary: var(--theme-accent-premium);
+}
+
+[data-accent-variant="support"] {
+    --brand: var(--theme-accent-support);
+    --theme-accent-primary: var(--theme-accent-support);
+}
+
+/* accent_variant=None (neutro) nao precisa de override — os tokens base
+   (--brand: var(--theme-accent-support) por padrao) ja servem. */
+
+.workout-shell {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 16px;
+    display: grid;
+    gap: 20px;
+}
+
+.workout-day-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.workout-day-tab {
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent);
+}
+
+.workout-day-tab.is-active {
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 18%, var(--theme-surface-secondary) 82%);
+}
+
+.workout-block-card {
+    padding: 0;
+}
+
+.workout-block-card .operation-table-wrap {
+    padding: 16px;
+    overflow-x: auto;
+}
+
+.workout-tracked-chip {
+    min-height: auto;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    margin-inline-start: 8px;
+}
+
+/* Telas pequenas (~400px): a tabela de movimentos nunca deve forcar
+   scroll horizontal da PAGINA — so o wrapper .operation-table-wrap rola,
+   a coluna de movimento quebra linha em vez de empurrar largura. */
+@media (max-width: 480px) {
+    .workout-block-card table {
+        min-width: 480px;
+    }
+}
+
+/* Aba Historico (Onda B4, fatia adiantada): versoes do programa + evolucao
+   de carga por movimento. Painel proprio (nao .workout-day-panel) — ver
+   comentario no <script> inline de workout.html sobre por que. */
+.workout-history-panel {
+    display: grid;
+    gap: 20px;
+}
+
+.workout-history-panel .student-card {
+    padding: 16px;
+}
+
+.workout-version-row td {
+    white-space: nowrap;
+}
+
+/* Painel de vidro por movimento — mesma familia visual de .card-decor-glow
+   (brilho sutil, nao animado, ja usado no dashboard), com um filete de
+   brand na borda em vez do preenchimento solido de um .student-card
+   aninhado (evita "caixa dentro de caixa"). */
+.workout-load-chart {
+    margin-top: 14px;
+    padding: 14px 16px 6px;
+    border-radius: 14px;
+    border: 1px solid var(--theme-border-soft);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 5%, var(--theme-surface-secondary) 95%), var(--theme-surface-secondary));
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workout-load-chart.has-data:hover {
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
+    box-shadow: 0 0 22px color-mix(in srgb, var(--brand) 16%, transparent);
+}
+
+.workout-load-chart-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.workout-load-chart h3 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--theme-text-muted);
+    margin: 0 0 0.4rem;
+}
+
+.workout-load-chart-current {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-chart-current strong {
+    font-size: 1.05rem;
+    color: var(--brand);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
+}
+
+.workout-load-chart-trend {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 999px;
+}
+
+.workout-load-chart-trend--up {
+    color: var(--theme-accent-success);
+    background: var(--theme-accent-success-alpha);
+}
+
+.workout-load-chart-trend--down {
+    color: var(--theme-accent-danger);
+    background: var(--theme-accent-danger-alpha);
+}
+
+.workout-load-chart-trend--flat {
+    color: var(--theme-text-muted);
+    background: color-mix(in srgb, var(--theme-text-muted) 14%, transparent);
+}
+
+/* 1RM estimado (Onda A3, one_rep_max.py) e sinal de tendencia
+   (build_weekly_review) — mesmos tokens de --success/--danger do trend
+   de peso acima, pra nao inventar paleta nova so pra este badge. */
+.workout-load-chart-1rm {
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-chart-1rm strong {
+    color: var(--theme-text-primary, inherit);
+}
+
+.workout-load-chart-signal--plateau {
+    color: var(--theme-text-muted);
+    background: color-mix(in srgb, var(--theme-text-muted) 14%, transparent);
+}
+
+.workout-load-chart-signal--declining {
+    color: var(--theme-accent-danger);
+    background: var(--theme-accent-danger-alpha);
+}
+
+.workout-load-chart-signal--improving {
+    color: var(--theme-accent-success);
+    background: var(--theme-accent-success-alpha);
+}
+
+.workout-load-chart-svg {
+    display: block;
+    width: 100%;
+    height: 120px;
+    overflow: visible;
+}
+
+.workout-load-chart-area {
+    stroke: none;
+}
+
+.workout-load-chart-line {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--brand) 55%, transparent));
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: workout-load-line-draw 1.1s ease forwards;
+}
+
+@keyframes workout-load-line-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.workout-load-chart-halo {
+    fill: var(--brand);
+    opacity: 0.18;
+    filter: blur(1.5px);
+}
+
+.workout-load-chart-dot {
+    fill: var(--brand);
+    stroke: var(--theme-surface-secondary);
+    stroke-width: 1.5;
+}
+
+/* Marcador de troca de versao de programa (Pronto-quando #2, secao A3/B4
+   do CORDA) — linha tracejada vertical + ponto diferenciado no lugar
+   exato onde `program_id` muda entre duas cargas consecutivas. */
+.workout-load-chart-version-line {
+    stroke: var(--theme-text-muted);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    opacity: 0.55;
+}
+
+.workout-load-chart-dot--version {
+    fill: var(--theme-accent-warning, var(--brand));
+    r: 4;
+}
+
+.workout-load-chart-label {
+    font-size: 8.5px;
+    fill: var(--theme-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workout-load-chart-line {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
+}

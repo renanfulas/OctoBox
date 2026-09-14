@@ -582,8 +582,29 @@ SECURITY_TRUSTED_PROXY_IPS = env_list('SECURITY_TRUSTED_PROXY_IPS')
 SECURITY_BLOCKED_IPS = env_list('SECURITY_BLOCKED_IPS')
 SECURITY_BLOCKED_IP_RANGES = env_list('SECURITY_BLOCKED_IP_RANGES')
 SECURITY_LOG_LEVEL = env_str('SECURITY_LOG_LEVEL', 'WARNING')
+# Sessao do corredor de treinos: PUBLIC_WORKOUT_SESSION_COOKIE_AGE, abaixo.
+# Esta (STUDENT_APP_SESSION_COOKIE_AGE) governa so o app do aluno de box.
 STUDENT_APP_SESSION_COOKIE_NAME = env_str('STUDENT_APP_SESSION_COOKIE_NAME', 'octobox_student_session')
 STUDENT_APP_SESSION_COOKIE_AGE = env_int('STUDENT_APP_SESSION_COOKIE_AGE', 604800)
+# Onda B1 do CORDA (docs/plans/public-workouts-produtizacao-corda.md, S2):
+# cookie proprio do corredor de treinos (/treinos/), nome/path/validade
+# independentes do app do aluno de box — mudar um nao afeta o outro.
+PUBLIC_WORKOUT_SESSION_COOKIE_AGE = env_int('PUBLIC_WORKOUT_SESSION_COOKIE_AGE', 2592000)
+# Onda B2 do CORDA (P8): guardrail de valor de cobranca no SERVICO, nao so
+# no form. Rede de seguranca ampla, nao o preco real (isso e decisao de
+# produto fora deste arquivo).
+PUBLIC_WORKOUT_PAYMENT_MIN_AMOUNT = env_str('PUBLIC_WORKOUT_PAYMENT_MIN_AMOUNT', '1.00')
+PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT = env_str('PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT', '2000.00')
+# Onda B2 do CORDA, Fatia B — checkout proprio do corredor (S3/D.000).
+# Reusa STRIPE_SECRET_KEY (mesma conta do box, decisao do Renan: sem
+# Connect Express enquanto for um personal so — C5). O price ID e o
+# webhook secret sao PROPRIOS: price porque e um produto Stripe diferente
+# (assinatura de consultoria, nao Early Adopter do box); secret porque e
+# um SEGUNDO endpoint no dashboard da Stripe (/treinos/stripe/webhook/),
+# e cada endpoint tem sua propria assinatura HMAC — nunca o mesmo valor
+# de STRIPE_WEBHOOK_SECRET (esse e do endpoint do box).
+PUBLIC_WORKOUT_STRIPE_PRICE_ID = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID', '')
+PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET = env_str('PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET', '')
 STUDENT_OAUTH_PUBLIC_BASE_URL = env_str('STUDENT_OAUTH_PUBLIC_BASE_URL')
 STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY')
 STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY')

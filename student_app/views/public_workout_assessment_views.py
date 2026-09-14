@@ -3,8 +3,12 @@ ARQUIVO: endpoint de leitura da aba Avaliacoes do corredor publico de treinos.
 
 POR QUE ELE EXISTE:
 - a aba busca o historico de avaliacoes via fetch() sem recarregar a pagina.
-  So GET: nao existe escrita publica (decisao de produto — quem mede e
-  registra e o treinador, via management command, nao o aluno pela pagina).
+  So GET: a escrita ONLINE (autoavaliacao US Navy do proprio aluno) mora
+  em PublicWorkoutRecordAssessmentView (POST /renan/<slug>/avaliacoes,
+  exige sessao de login + gate de posse), nao aqui — este endpoint segue
+  publico via cookie de posse do B0, e so leitura. A avaliacao PRESENCIAL
+  (Jackson-Pollock, com o treinador e o adipometro) continua so via
+  management command, nunca pela pagina.
 
 PONTOS CRITICOS:
 - roda no mesmo regime das outras views deste corredor (schema public, sem
@@ -18,17 +22,12 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
-from django.core import signing
 from django.http import Http404, JsonResponse
 from django.views.generic import View
 
 from public_workouts.services import build_report
 
-from .public_workout_views import (
-    PUBLIC_WORKOUT_OWNER_COOKIE,
-    PUBLIC_WORKOUT_OWNER_COOKIE_SALT,
-    _get_public_workout_entry,
-)
+from .public_workout_views import _get_public_workout_entry, get_public_workout_owner_slug
 
 
 class PublicWorkoutAssessmentsView(View):
@@ -36,20 +35,13 @@ class PublicWorkoutAssessmentsView(View):
 
     Sem cookie, cookie de outro slug ou assinatura invalida: 404 — o mesmo
     404 de slug inexistente, de proposito (ver B0 do CORDA: 403 vazaria que
-    o slug existe). So leitura; escrita continua sendo so do treinador.
+    o slug existe). So leitura; a escrita online e' PublicWorkoutRecordAssessmentView.
     """
 
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
 
-        try:
-            owner_slug = request.get_signed_cookie(
-                PUBLIC_WORKOUT_OWNER_COOKIE, salt=PUBLIC_WORKOUT_OWNER_COOKIE_SALT, default=None
-            )
-        except signing.BadSignature:
-            owner_slug = None
-
-        if owner_slug != plan.slug:
+        if get_public_workout_owner_slug(request) != plan.slug:
             raise Http404('Treino publico nao encontrado.')
 
         report = build_report(plan_slug=plan.slug, sex=plan.assessment_sex, height_cm=plan.height_cm)
