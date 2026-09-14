@@ -33,6 +33,7 @@ from .public_workout_session import (
     attach_public_workout_session_cookie,
     build_public_workout_session_value,
     clear_public_workout_session_cookie,
+    get_public_workout_account_id_from_request,
     read_public_workout_session_value,
 )
 
@@ -246,6 +247,119 @@ class PublicWorkoutModelStrTests(TestCase):
     def test_account_str_is_email(self):
         account = PublicWorkoutAccount.objects.create(email='strtest@example.com')
         self.assertEqual(str(account), 'strtest@example.com')
+
+
+class GetPublicWorkoutAccountIdFromRequestTests(TestCase):
+    # Onda B2 Fatia B: PublicWorkoutSubscribeView usa isto pra saber quem
+    # esta pedindo o checkout — sem cobertura ate este teste (achado ao
+    # revisar o PR #216 apos o push da Fatia B).
+
+    def _request_with_cookie(self, cookie_value):
+        from django.test import RequestFactory
+
+        request = RequestFactory().post('/treinos/subscribe')
+        if cookie_value is not None:
+            request.COOKIES[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = cookie_value
+        return request
+
+    def test_returns_account_id_from_valid_cookie(self):
+        cookie_value = build_public_workout_session_value(account_id=99)
+        request = self._request_with_cookie(cookie_value)
+
+        self.assertEqual(get_public_workout_account_id_from_request(request), 99)
+
+    def test_returns_none_without_cookie(self):
+        request = self._request_with_cookie(None)
+
+        self.assertIsNone(get_public_workout_account_id_from_request(request))
+
+    def test_returns_none_for_tampered_cookie(self):
+        request = self._request_with_cookie('lixo-nao-assinado')
+
+        self.assertIsNone(get_public_workout_account_id_from_request(request))
+
+
+class PublicWorkoutSubscribeViewTests(TestCase):
+    # Onda B2 Fatia B (PR #216, commit 103c3ea8): a view em si (autenticacao,
+    # plan_slug obrigatorio, idempotencia de get_or_create_subscription,
+    # 503 quando a Stripe nao esta configurada) nao tinha teste proprio —
+    # os 27 testes daquele commit cobrem stripe_checkout.py/stripe_handlers.py
+    # e o ciclo de vida via billing.py, mas nao o endpoint HTTP que os liga.
+
+    def _login(self, account):
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.id
+        )
+
+    def test_without_session_cookie_returns_401(self):
+        response = self.client.post(reverse('public-workout-subscribe'), {'plan_slug': 'bruno'})
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['error'], 'nao_autenticado')
+
+    def test_cookie_for_deleted_account_returns_401(self):
+        # Conta apagada depois do cookie assinado ainda ser valido (ex.: GDPR/LGPD,
+        # ou limpeza manual) — nao pode virar 500 nem autenticar como ninguem.
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=999999)
+
+        response = self.client.post(reverse('public-workout-subscribe'), {'plan_slug': 'bruno'})
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['error'], 'nao_autenticado')
+
+    def test_missing_plan_slug_returns_400(self):
+        account = PublicWorkoutAccount.objects.create(email='semplano@example.com')
+        self._login(account)
+
+        response = self.client.post(reverse('public-workout-subscribe'), {})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'plan_slug_obrigatorio')
+
+    def test_stripe_not_configured_returns_503(self):
+        account = PublicWorkoutAccount.objects.create(email='semstripe@example.com')
+        self._login(account)
+
+        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+            from public_workouts.stripe_checkout import PublicWorkoutStripeNotConfiguredError
+
+            start_checkout.side_effect = PublicWorkoutStripeNotConfiguredError('sem price id')
+            response = self.client.post(reverse('public-workout-subscribe'), {'plan_slug': 'bruno'})
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()['error'], 'stripe_nao_configurado')
+
+    def test_successful_checkout_returns_url_and_reuses_existing_subscription(self):
+        from public_workouts.models import PublicWorkoutSubscription
+
+        account = PublicWorkoutAccount.objects.create(email='assina@example.com')
+        self._login(account)
+
+        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+            start_checkout.return_value = 'https://checkout.stripe.com/session/abc123'
+
+            first = self.client.post(reverse('public-workout-subscribe'), {'plan_slug': 'bruno'})
+            second = self.client.post(reverse('public-workout-subscribe'), {'plan_slug': 'bruno'})
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(first.json()['checkout_url'], 'https://checkout.stripe.com/session/abc123')
+        self.assertEqual(second.status_code, 200)
+        # P6 do CORDA: duplo POST em "assinar" nao duplica PublicWorkoutSubscription.
+        self.assertEqual(PublicWorkoutSubscription.objects.filter(account=account).count(), 1)
+
+    def test_start_subscription_checkout_receives_correct_success_and_cancel_urls(self):
+        account = PublicWorkoutAccount.objects.create(email='urls@example.com')
+        self._login(account)
+
+        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+            start_checkout.return_value = 'https://checkout.stripe.com/session/xyz'
+            self.client.post(reverse('public-workout-subscribe'), {'plan_slug': 'bruno'})
+
+        _, kwargs = start_checkout.call_args
+        login_path = reverse('public-workout-login')
+        self.assertIn(login_path, kwargs['success_url'])
+        self.assertIn('assinatura=sucesso', kwargs['success_url'])
+        self.assertIn('assinatura=cancelada', kwargs['cancel_url'])
 
     def test_login_token_str_reflects_state(self):
         account = PublicWorkoutAccount.objects.create(email='tokenstr@example.com')
