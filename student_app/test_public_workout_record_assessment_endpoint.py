@@ -320,6 +320,23 @@ class PublicWorkoutRecordAssessmentSkinfoldTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_skinfolds_that_degenerate_the_formula_return_400(self):
+        # Todos positivos e completos, mas fisiologicamente absurdos (1mm
+        # em todo ponto) — a formula devolve None (bf fora de [0,70] ou
+        # densidade invalida) em vez de um numero sem sentido.
+        self._unlock('bruno')
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        degenerate = {key: 1 for key in _SEVEN_FOLDS}
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps({'measured_at': '2026-02-01', 'age': 30, 'skinfolds': degenerate}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+
     def test_body_fat_percent_still_rejected_even_with_skinfolds_unlocked(self):
         self._unlock('bruno')
         account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
