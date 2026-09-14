@@ -1548,6 +1548,32 @@ bloqueio).
 > Serviço de avaliação (US Navy/JP7) já existe desde antes desta Onda —
 > `public_workouts/formulas.py`.
 >
+> **Decisão do Renan sobre a substituição (registrada antes do serviço existir,
+> pra não se perder):** o critério de "mesmo `movement_pattern`" sozinho não
+> é suficiente a médio/longo prazo. Quando falta o equipamento específico
+> de uma sugestão (ex.: sugeriu uma máquina que a academia do aluno não
+> tem), trocar por OUTRA máquina do mesmo padrão tem a mesma chance de não
+> existir na academia dele. Um exercício **livre** (peso livre/peso
+> corporal) do mesmo padrão resolve ~90% desses casos, porque equipamento
+> livre é quase universal — academia que não tem hack squat quase sempre
+> tem barra e anilha pro agachamento livre.
+> - **Curto prazo (quando o serviço for construído):** pode sugerir por
+>   `movement_pattern` sem diferenciar por equipamento, incluindo
+>   máquina→máquina. Não é a versão final, é a versão que desbloqueia o
+>   recurso.
+> - **Médio/longo prazo:** a sugestão PRINCIPAL de substituição deveria
+>   priorizar uma alternativa livre do mesmo padrão (quando existir uma
+>   classificada), não só "qualquer outra do padrão" — resolve o caso mais
+>   comum de "não tenho esse equipamento" sem o aluno precisar tentar
+>   várias sugestões. Isso implica, quando o serviço for desenhado,
+>   alguma forma de marcar/consultar "é exercício livre" por movimento
+>   (hoje `PublicWorkoutMovement` não distingue isso — é decisão de schema
+>   pra quando essa onda começar, não antes).
+> - Ferramenta de apoio à revisão: `PublicWorkoutMovementAdmin` (Django
+>   admin) — lista os 82 pendentes com `movement_pattern` sugerido editável
+>   inline, link direto pro MuscleWiki pra conferir, e ação em lote pra
+>   promover `pending` → `active` depois de revisado.
+>
 > **Atualização (coluna "Frente B (telas)"):** o gráfico SVG (padrão de
 > `assessments.js`) e a aba de histórico de programas já existiam, sem
 > rota ainda, em `templates/public_workouts/workout.html` (fundação
