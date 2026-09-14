@@ -3,8 +3,13 @@ ARQUIVO: testes do contrato de payload da Onda S0 do CORDA.
 
 POR QUE ELE EXISTE:
 - e o "pronto quando" da Onda S0 (docs/plans/public-workouts-produtizacao-corda.md):
-  um payload de exemplo precisa validar contra o schema, e o stub de S1/S2/S3
-  precisa devolver algo utilizavel sem tocar banco nem a Frente A.
+  um payload de exemplo precisa validar contra o schema.
+
+NOTA (Onda A1, Fatia B): este arquivo tinha uma `ServicesStubTests` que
+testava `public_workouts/services_stub.py` (S1/S2/S3 fake, sem tocar
+banco). Removida junto com o stub — S1 (Fatia A) e S2/S3 (Fatia B) agora
+sao reais em `services.py`; testa-los la (`test_program.py`) e o lugar
+certo, nao aqui.
 """
 
 from django.test import TestCase
@@ -17,7 +22,6 @@ from .schema import (
     build_example_payload,
     validate_payload,
 )
-from .services_stub import build_student_package, get_active_program, record_load
 
 
 class SchemaValidationTests(TestCase):
@@ -56,34 +60,3 @@ class SchemaValidationTests(TestCase):
 
     def test_load_types_match_documented_vocabulary(self):
         self.assertEqual(LOAD_TYPES, ('free', 'fixed_kg', 'percentage_of_rm'))
-
-
-class ServicesStubTests(TestCase):
-    """A Frente B programa contra isto ate A1 entregar as funcoes de verdade."""
-
-    def test_get_active_program_returns_payload_valid_by_schema(self):
-        payload = get_active_program(slug='juliana')
-        self.assertIsNotNone(payload)
-        self.assertEqual(validate_payload(payload), [])
-        self.assertIn('juliana', payload['program_id'])
-
-    def test_build_student_package_has_the_s2_shape(self):
-        package = build_student_package(student_identity_id=1, slug='juliana')
-        self.assertEqual(
-            set(package),
-            {'last_load_by_movement', 'one_rep_max_by_movement', 'substitutions', 'access_until'},
-        )
-
-    def test_record_load_echoes_input_without_persisting(self):
-        result = record_load(
-            student_identity_id=1,
-            movement_slug='agachamento-livre',
-            weight_kg=100,
-            reps=8,
-            rir=2,
-            performed_on='2026-01-05',
-            idempotency_key='abc123',
-        )
-        self.assertEqual(result['movement_slug'], 'agachamento-livre')
-        self.assertEqual(result['weight_kg'], 100)
-        self.assertEqual(result['idempotency_key'], 'abc123')

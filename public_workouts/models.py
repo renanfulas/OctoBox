@@ -406,3 +406,45 @@ class PublicWorkoutPaymentNotice(models.Model):
 
     def __str__(self) -> str:
         return f'{self.payment_id} D{self.offset_days:+d} [{"enviado" if self.sent_at else "pendente"}]'
+
+
+class PublicWorkoutLoadLog(models.Model):
+    """Registro de carga por (conta, movimento, data) — S3 do CORDA (Onda A1, Fatia B).
+
+    Chave de identidade e `account` (PublicWorkoutAccount), NUNCA
+    StudentIdentity: decisao escrita entre as duas frentes (D.5) trocando
+    a assinatura originalmente congelada na Onda S0 (`student_identity_id:
+    int` obrigatorio) — a maioria dos clientes de consultoria nunca pisou
+    num box e nao tem StudentIdentity nenhuma. Quem TAMBEM for aluno de
+    box ja carrega essa referencia fraca em `account.student_identity_id`
+    (Onda B1) — nao duplicada aqui.
+    """
+
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='load_logs')
+    movement_slug = models.SlugField(max_length=80, db_index=True)
+    # None e valido: movimento de peso corporal / carga livre (load_type
+    # 'free' no schema do programa) as vezes so registra reps.
+    weight_kg = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)]
+    )
+    reps = models.PositiveIntegerField(null=True, blank=True)
+    # RIR aceita meio-ponto (ex.: "RIR 1.5") — mesmo vocabulario livre do
+    # rir_spec no schema do programa (public_workouts/schema.py).
+    rir = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True, validators=[MinValueValidator(0)])
+    performed_on = models.DateField(db_index=True)
+    # Referencia solta (D.2 — carga nunca entra no snapshot imutavel do
+    # programa, R7): so denormaliza de onde veio, sem FK pra
+    # PublicWorkoutProgram (o registro sobrevive a uma nova versao publicada).
+    program_id = models.CharField(max_length=80, blank=True)
+    week_in_program = models.PositiveIntegerField(null=True, blank=True)
+    # Garantia de idempotencia do S3 (D.5): reenvio da outbox (Onda B3) com a
+    # mesma chave nunca duplica linha — o banco e a trava, nao o codigo.
+    idempotency_key = models.CharField(max_length=128, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-performed_on', '-created_at']
+        indexes = [models.Index(fields=['account', 'movement_slug', 'performed_on'])]
+
+    def __str__(self) -> str:
+        return f'{self.account_id} · {self.movement_slug} @ {self.performed_on}'

@@ -5,8 +5,8 @@ ARQUIVO: teste de renderizacao do prototipo do template unico
 POR QUE ELE EXISTE:
 - prova que templates/public_workouts/workout.html renderiza QUALQUER
   payload valido pelo contrato de schema.py sem view nem dado publicado de
-  verdade — usa o mesmo payload de exemplo que services_stub.py devolve
-  (build_example_payload), disponivel desde a Onda S0.
+  verdade — usa `schema.build_example_payload()`, disponivel desde a
+  Onda S0.
 - NAO e teste de view/URL: este template ainda nao esta ligado a nenhuma
   rota (a Onda B3 real decide fase de acesso e corte de producao depois).
 """

@@ -1054,23 +1054,34 @@ def get_active_program(*, slug: str) -> dict | None:
 
 ### S2 — Pacote do aluno
 ```python
-def build_student_package(*, student_identity_id: int, slug: str) -> dict:
+def build_student_package(*, account_id: int, slug: str) -> dict:
     """Última carga por movimento + 1RM + substituições + access_until.
     Sem HTTP, sem request."""
 ```
 
 ### S3 — Escrita de carga
 ```python
-def record_load(*, student_identity_id: int, movement_slug: str,
+def record_load(*, account_id: int, movement_slug: str,
                 weight_kg, reps=None, rir=None, performed_on,
                 program_id=None, week_in_program=None,
                 idempotency_key: str) -> dict:
     """Idempotente por idempotency_key. Reenvio nunca duplica."""
 ```
 
+> **Atualização (Onda A1, Fatia B — acordo escrito entre as duas frentes,
+> per "Regras de convivência" #3):** S2/S3 foram **re-congelados** trocando
+> `student_identity_id: int` por `account_id: int` (`PublicWorkoutAccount.pk`,
+> Onda B1). Motivo: a maioria dos clientes do corredor nunca foi aluna de
+> box — exigir `student_identity_id` obrigatório deixaria o registro de
+> carga inutilizável pra maioria do público real (ver nota de decisão na
+> Onda A1). Quem também for aluno de box já carrega essa referência fraca
+> em `account.student_identity_id` (Onda B1) — não duplicada em
+> `PublicWorkoutLoadLog`.
+
 **Enquanto A não entrega**, a Frente B programa contra um **stub** dessas três
 funções, devolvendo payload de exemplo válido pelo schema. Isso desacopla as
-frentes desde o dia 1.
+frentes desde o dia 1. *(`public_workouts/services_stub.py` — removido na
+Onda A1, Fatia B: as três funções já são reais, um onda antes do previsto.)*
 
 ---
 
@@ -1093,7 +1104,8 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
 
 ### O que entra
 - `public_workouts/schema.py`
-- `public_workouts/services_stub.py` (temporário, deletado na Onda A2)
+- `public_workouts/services_stub.py` (temporário — removido de verdade na
+  Onda A1, Fatia B, um onda antes do previsto aqui: S1/S2/S3 já são reais)
 
 ### Pronto quando
 1. Um payload de exemplo valida contra o schema.
@@ -1268,11 +1280,13 @@ verdade, `publish_program`/`activate_program_version` recebendo um payload
 já pronto (de onde quer que venha — a Onda A2 decide), e o item 6
 (movimento desconhecido vira `pending`, nunca bloqueia).
 
-**Fatia B (aguardando decisão):** `PublicWorkoutLoadLog`, S2
-(`build_student_package`) e S3 (`record_load`) de verdade — dependem da
-questão 1. `publish_program` ganhando uma fonte de dado real de tenant
-(dependeria da Onda A2 de qualquer forma — questão 2 é mais um
-esclarecimento do que um bloqueio).
+**Fatia B (decidida e entregue nesta sessão):** o Renan decidiu a questão 1
+— S2/S3 trocam `student_identity_id: int` por `account_id: int`
+(`PublicWorkoutAccount.pk`, ver D.5 atualizado). `PublicWorkoutLoadLog`, S2
+(`build_student_package`) e S3 (`record_load`) de verdade. `publish_program`
+ganhando uma fonte de dado real de tenant continua fora do escopo (dependeria
+da Onda A2 de qualquer forma — questão 2 é mais um esclarecimento do que um
+bloqueio).
 
 ### O que fazer (Fatia A)
 1. `PublicWorkoutProgram` com `program_id`, `program_label`, `started_on`, `weeks`,
@@ -1286,11 +1300,32 @@ esclarecimento do que um bloqueio).
 4. `activate_program_version(*, slug, program_id, version)` — reverter é só
    trocar qual linha tem `is_active=True`, nunca `UPDATE` do payload.
 
-### O que fazer (Fatia B — pendente da decisão sobre identidade)
-- `PublicWorkoutLoadLog` indexado por `(student_identity_id ou account_id?,
-  movement_slug, performed_on)`.
-- S2/S3 de verdade; deletar o resto do stub.
-- `record_load` idempotente por `idempotency_key`; validação de outlier.
+### O que fazer (Fatia B)
+1. `PublicWorkoutLoadLog` indexado por `(account, movement_slug, performed_on)`
+   — FK pra `PublicWorkoutAccount` (Onda B1), nunca `student_identity_id`
+   duplicado (quem também é aluno de box já carrega essa referência fraca
+   em `account.student_identity_id`).
+2. S2 (`build_student_package`)/S3 (`record_load`) de verdade, com a
+   assinatura re-congelada (`account_id`, ver D.5); `services_stub.py`
+   removido — as três funções (S1 incluído) já são reais.
+3. `record_load` idempotente por `idempotency_key`: reenvio da outbox (Onda
+   B3) resolve pro registro já existente, nunca duplica linha (banco é a
+   trava — `IntegrityError` em cima de `unique=True`, mesmo padrão do
+   `PaymentWebhookEvent` da Onda B2).
+4. Validação **estrutural** de `weight_kg`/`rir` no serviço, não só no
+   model field: não-negativo, mais um **teto de 1000 kg (1 tonelada) em
+   `weight_kg`** — decisão do Renan (número de produto, não um palpite de
+   script), configurável via `PUBLIC_WORKOUT_MAX_WEIGHT_KG` no `settings`
+   (mesmo padrão do guardrail de valor da Onda B2 — faixa ajustável sem
+   deploy de código). **Detecção estatística de outlier de verdade**
+   (comparar com o histórico do próprio atleta) continua fora daqui — fica
+   pra Onda A3, mesmo trabalho de `estimate_one_rep_max`/detecção de platô
+   já listado lá.
+5. `build_student_package` devolve `one_rep_max_by_movement`/
+   `substitutions` **vazios** de propósito — Onda A3 (1RM real e
+   substituição por `movement_pattern`), não uma versão "provisória" que
+   arrisca virar sugestão errada. `access_until` fica `None` até a Onda B3
+   (fase B) ligar a trava de acesso de verdade.
 
 ### O que entra
 - `public_workouts/models.py` + `migrations/`
@@ -1310,8 +1345,16 @@ esclarecimento do que um bloqueio).
 3. Teste de fronteira falha se alguma função tocar ORM de TENANT_APPS.
 4. Movimento desconhecido não impede `publish_program` de ativar a versão.
 
-> Pronto quando #4 original ("`record_load` reenviado com a mesma chave não
-> duplica linha") fica pendente da Fatia B.
+### Pronto quando (Fatia B)
+1. `record_load` reenviado com a mesma `idempotency_key` não duplica linha
+   (Pronto quando #4 original — era o único item que ficava pendente da
+   Fatia B).
+2. `weight_kg`/`rir` negativos são recusados no serviço, não só no
+   form/model; `weight_kg` acima de 1000 kg também.
+3. `build_student_package` devolve as quatro chaves do contrato S2 mesmo
+   sem nenhuma carga registrada ainda (`{}`/`None`, nunca erro).
+4. Teste de fronteira (services.py nunca importa ORM de TENANT_APPS)
+   continua verde com o novo modelo.
 
 ---
 
