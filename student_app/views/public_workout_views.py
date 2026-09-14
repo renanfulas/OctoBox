@@ -767,6 +767,33 @@ class PublicWorkoutPackageView(View):
         return JsonResponse(package, status=200)
 
 
+class PublicWorkoutExportDataView(View):
+    """GET /renan/<slug>/meus-dados.json — export de dados do titular
+    (Onda A3, LGPD/GDPR). Mesma regra de auth dos demais endpoints de
+    conta (pacote.json, carga): sessao de LOGIN ativa, 401 sem sessao,
+    404 se a sessao nao e' dona deste slug.
+
+    Devolve `public_workouts.services.export_account_data` — conta,
+    assinatura, cobrancas, avaliacoes e historico de carga. So' leitura,
+    nao aceita corpo, nao muda banco.
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        from public_workouts.services import export_account_data
+
+        return JsonResponse(export_account_data(account_id=account_id), status=200)
+
+
 class PublicWorkoutRecordLoadView(View):
     """POST /renan/<slug>/carga — registra uma carga (S3, record_load,
     Onda A1 Fatia B). Consumido pelo outbox de IndexedDB da Onda B3
