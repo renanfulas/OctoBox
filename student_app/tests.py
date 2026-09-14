@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from freezegun import freeze_time
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.test import Client, TestCase, override_settings
@@ -2205,6 +2206,16 @@ class PublicWorkoutPwaTests(TestCase):
 
         # 1x escada/HIIT por semana, pedido explicitamente pela cliente.
         self.assertContains(response, 'Escada / HIIT')
+
+    def test_visiting_the_page_sets_the_csrf_cookie(self):
+        # Regressao: nenhum template deste corredor usa {% csrf_token %},
+        # entao sem a chamada explicita a get_token() (PublicWorkoutDetailView)
+        # o cookie CSRF nunca nascia — qualquer POST feito por JS depois
+        # (autoavaliacao online, assessments.js) levava 403 em producao,
+        # mesmo com sessao de login valida.
+        response = self.client.get('/renan/giovanna')
+
+        self.assertIn(settings.CSRF_COOKIE_NAME, response.cookies)
 
 
 class PublicWorkoutAssessmentsEndpointTests(TestCase):
