@@ -1179,7 +1179,8 @@ Ondas prefixadas por frente. `‖` marca ondas que rodam em paralelo.
   script. O item "`reps_spec`/`rir_spec` em `WorkoutTemplateMovement`" que
   esta seção listava foi removido: violava V2/D.00 (modificaria
   `operations/`, app do box) e não tinha critério de pronto próprio — a
-  Onda A2 já é dona de extrair os `WorkoutTemplate` reais via parser de IA.
+  Onda A2 fica dona de extrair os `WorkoutTemplate` reais como follow-up,
+  depois do parser determinístico migrar os 10 programas (ver seção A2).
 - nenhuma view, nenhum template
 
 ### Pronto quando
@@ -1270,7 +1271,7 @@ produto que ninguém tomou ainda:
    (`student_app.models`/`operations.model_definitions`, por tenant). Os
    programas do corredor (Bruno, Juliana...) são consultoria individual —
    mesociclo, RIR, sem nenhuma ligação com aula em grupo. O payload real só
-   vai existir depois do parser de IA (Onda A2) ler os 10 HTMLs — não tem
+   vai existir depois do parser determinístico (Onda A2) ler os 10 HTMLs — não tem
    como `publish_program` "ler WeeklyWodPlan/WorkoutTemplate" porque não é
    de lá que o conteúdo vem.
 
@@ -1358,34 +1359,85 @@ bloqueio).
 
 ---
 
-## ‖ A2 — Parser de IA + migração dos 10 (4–6 dias) — **Frente A · Renan + Claude**
+## ‖ A2 — Parser determinístico + migração dos 10 (4–6 dias) — **Frente A · Renan + Claude**
+
+> **Decisão de arquitetura (atualização pós-pesquisa): não usa IA.** O plano
+> original chamava isso de "parser de IA"; a extração acabou não precisando
+> de LLM nenhum. `movement_slug` já era resolvido deterministicamente desde
+> a Onda A0 (regex no `href` do `wiki-btn`, agora em `musclewiki.py`,
+> compartilhado entre A0 e A2); `reps_spec`/`rir_spec` do schema são texto
+> livre sem validação de formato, e o HTML já tem — por exercício — um
+> resumo escrito pelo próprio treinador (`gym-reps`) que serve quase
+> verbatim. Usar LLM aqui trocaria uma extração 100% determinística e
+> testável por risco de "chute plausível" de reps/RIR para 10 clientes
+> pagantes reais. Ver docstring de `public_workouts/parser.py` para o
+> raciocínio completo.
 
 ### O que fazer
-1. `public_workouts/parser.py` — HTML → payload, molde de
-   `wod_session_llm_parser.py` (timeout, fallback silencioso, validação de slug),
-   com `output_config.format` no schema de S0.
-2. Biblioteca inteira no system prompt **cacheado** (~2.250 tokens; `modality`
-   como dica, nunca filtro).
-3. Rodar nos 10 HTMLs; revisar payload por payload.
-4. Extrair **~15 `WorkoutTemplate`** dos programas migrados.
-5. Geração de programa novo (texto + **os 7 campos da anamnese**, incluindo
-   motivação e maior dificuldade) como **job assíncrono**, nunca
-   request — timeout de 10 s não serve para mesociclo.
+1. `public_workouts/parser.py` — HTML → payload determinístico
+   (`html.parser` da stdlib, sem LLM). Reaproveita a resolução de slug da
+   A0. `reps_spec` vem do `gym-reps` verbatim quando existe, senão
+   sintetiza da `sets-tbl`; `rir_spec` vem da última linha "Top" (o
+   estímulo-alvo do ramp).
+2. `public_workouts/management/commands/migrate_legacy_workouts.py` —
+   `--dry-run`/`--slug`, mesmo padrão não-interativo de
+   `classify_public_workout_movements.py`. Fluxo: rodar 1 slug com
+   `--dry-run`, comparar contra o HTML, ajustar o parser se achar erro,
+   repetir; só publicar (`publish_program`, já pronto desde a A1) quando
+   bater.
+3. Rodar nos 10 HTMLs; revisar payload por payload antes de publicar de
+   verdade.
+4. ~~Extrair ~15 `WorkoutTemplate` dos programas migrados~~ — **adiado**,
+   segue como follow-up separado (depende de comparar `movement_slug`s
+   entre os 10 já migrados para achar padrão repetido; materializar usa
+   `operations/workout_templates.py::create_persisted_template_from_weekly_plan`
+   como precedente).
+5. ~~Geração de programa novo via IA (job assíncrono)~~ — **adiado**,
+   bloqueado em dado que não existe ainda (coleta de anamnese, D4 do plano
+   de produto) — onda futura própria.
 
 ### O que entra
+- `public_workouts/musclewiki.py` *(novo)* — `movement_slug_from_url`
+  promovido pra módulo compartilhado com a Onda A0 (evita duplicar a mesma
+  regra dentro do mesmo app)
 - `public_workouts/parser.py` *(novo)*
 - `public_workouts/management/commands/migrate_legacy_workouts.py` *(novo)*
-- `operations/` — criação de `WorkoutTemplate` a partir do payload
+- `public_workouts/test_parser.py` *(novo)* — fixtures sintéticas dos casos
+  estruturais reais (normal, biset inline, biset wrapped, alternativa "OU"
+  no nível de sessão e dentro de `biset-wrap`, sem `wiki-btn`, RIR nu,
+  tabela sem coluna "Tipo" — só `franciele.html` usa esse formato)
+- `public_workouts/test_migrate_legacy_workouts.py` *(novo)* — critério de
+  aceite contra os 10 HTMLs reais: schema válido, fixture de contagem de
+  movimentos por dia, e conteúdo migrado como subconjunto do golden
+  versionado
+- `scripts/public_workout_signature.py` — `build_payload_signature`/
+  `payload_fidelity_report`, função irmã de `build_signature()` que projeta
+  o *payload* (não uma página renderizada) e compara como subconjunto
 
 ### O que NÃO entra
 - 🔴 **regravar golden** — proibido nesta onda (R4)
 - nenhuma alteração de template ou view
+- os 3 testes de Categoria 3 (`test_*_week_order_reflects_*`,
+  `student_app/tests.py`) **não são tocados** — continuam lendo a rota
+  `/renan/<slug>` ao vivo (R.T já avisa: "se um deles quebrar durante a
+  A2, o parser errou — não o teste"). `test_migrate_legacy_workouts.py`
+  cobre o mesmo tipo de requisito de negócio (ordem de dia, exercício
+  obrigatório) direto contra o *payload*, como preparação adiantada para
+  quando a B3 cortar a rota pra servir do payload — sem relaxar/reescrever
+  os originais.
+- extração de `WorkoutTemplate` e geração de programa via IA (itens 4/5
+  originais) — ver "O que fazer" acima
 
 ### Pronto quando
-1. Os 10 programas existem como `PublicWorkoutProgram` ativo.
-2. Comparação contra o golden **versionado** não acusa perda de conteúdo.
-3. ~15 templates reutilizáveis existem.
-4. Teste trava o piso de 4.096 tokens do prompt cache.
+1. Os 10 programas existem como `PublicWorkoutProgram` ativo, payload
+   válido pelo `schema.py`.
+2. Fixture de contagem de movimentos por dia por programa (conferida à mão
+   contra os 10 HTMLs) bate — pega desaparecimento silencioso de exercício.
+3. Conteúdo migrado (reps/RIR/`reference_url`) é subconjunto do golden
+   **versionado** — nunca inventa nada que não estivesse na página original.
+4. `test_parser.py` cobre os casos estruturais reais encontrados nos 10
+   HTMLs (biset nos dois "idiomas", alternativa "OU" nos dois lugares onde
+   aparece, RIR nu, tabela sem coluna "Tipo").
 
 ---
 

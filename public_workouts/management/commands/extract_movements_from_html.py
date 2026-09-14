@@ -33,13 +33,13 @@ from __future__ import annotations
 
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementModality, PublicWorkoutMovementStatus
+from public_workouts.musclewiki import movement_slug_from_url
 
 
 # Os 10 programas migrados na Onda A2 (docs/plans/public-workouts-produtizacao-corda.md).
@@ -172,14 +172,6 @@ def _extract_pairs_from_html(html: str) -> list[tuple[str, str]]:
     return parser.pairs
 
 
-def _movement_slug_from_url(url: str) -> str:
-    # MuscleWiki usa `?model=f` para o video com modelo feminino — mesmo
-    # exercicio, so a apresentacao do video muda. Normaliza fora do slug do
-    # catalogo (a URL de referencia escolhida preserva o que o coach usou).
-    path = urlsplit(url).path
-    return path.rstrip('/').rsplit('/', 1)[-1]
-
-
 class Command(BaseCommand):
     help = (
         'Extrai (nome, url MuscleWiki) dos 10 programas legados de /renan/ e semeia '
@@ -251,7 +243,7 @@ class Command(BaseCommand):
                 continue
             html = path.read_text(encoding='utf-8')
             for name, url in _extract_pairs_from_html(html):
-                movement_slug = _movement_slug_from_url(url)
+                movement_slug = movement_slug_from_url(url)
                 if not movement_slug:
                     continue
                 entry = by_slug.setdefault(movement_slug, {'names': {}, 'urls': {}})
