@@ -1634,11 +1634,29 @@ bloqueio).
 - alteração de `templates/student_app/**` ou `static/css/student_app/**` (só leitura)
 
 ### Pronto quando
-1. Os 10 renderizam do banco com golden idêntico.
-2. Aluno A logado abrindo slug de B recebe **404**.
+1. ✅ Os 10 renderizam do banco com golden idêntico. Verificado nesta
+   sessão: `PublicWorkoutPreviewView` (`GET /renan/<slug>/preview`, novo)
+   renderiza `workout.html` contra `PublicWorkoutProgram` de verdade —
+   mesmo gate de posse da rota real, mas rota SEPARADA, não linkada em
+   lugar nenhum, zero risco à rota que o aluno usa hoje. Os 10 programas
+   reais (dado publicado via `migrate_legacy_workouts`, não exemplo)
+   renderizaram sem erro, 208/208 exercícios com nome PT-BR, 0 erro de
+   console — comparação lado a lado (`/renan/<slug>` vs `/renan/<slug>/preview`)
+   feita via Playwright e compartilhada com o Renan.
+2. Aluno A logado abrindo slug de B recebe **404** — já valia pra rota
+   real (item 5, sessão anterior) e agora também pra `/preview`
+   (`test_public_workout_preview_endpoint.py`).
 3. Publicar v2 aparece no celular na próxima abertura com rede (device real).
 4. Registro feito offline sobe sozinho e não duplica.
 5. Nenhum aluno perdeu carga.
+
+> **O que o item 1 acima NÃO prova**: que a rota real (`/renan/<slug>`)
+> já está cortada pra servir `workout.html` — ela continua servindo o
+> template legado, de propósito (itens 3/4/6/7/9 abaixo continuam sem
+> tocar). Também não prova que os 10 programas estão publicados na VPS
+> de produção — só que a migração é determinística e reproduz
+> identicamente no sandbox local. Confirmação de produção fica por
+> conta de quem tem acesso à VPS.
 
 ---
 
