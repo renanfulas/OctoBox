@@ -95,6 +95,35 @@ class RecordLoadTests(TestCase):
             )
         self.assertEqual(PublicWorkoutLoadLog.objects.count(), 0)
 
+    def test_weight_kg_above_the_ceiling_is_rejected(self):
+        # Decisao do Renan: teto de 1000kg (1 tonelada) — R.N do CORDA,
+        # numero de produto, nao um palpite de script.
+        account = _make_account()
+
+        with self.assertRaises(LoadValueError):
+            record_load(
+                account_id=account.pk,
+                movement_slug='agachamento-livre',
+                weight_kg=Decimal('1000.01'),
+                performed_on=date(2026, 1, 5),
+                idempotency_key='key-acima-do-teto',
+            )
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 0)
+
+    def test_weight_kg_exactly_at_the_ceiling_is_accepted(self):
+        account = _make_account()
+
+        result = record_load(
+            account_id=account.pk,
+            movement_slug='agachamento-livre',
+            weight_kg=Decimal('1000'),
+            performed_on=date(2026, 1, 5),
+            idempotency_key='key-no-teto',
+        )
+
+        self.assertEqual(result['weight_kg'], 1000.0)
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 1)
+
     def test_negative_rir_is_rejected(self):
         account = _make_account()
 

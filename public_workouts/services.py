@@ -32,7 +32,9 @@ PONTOS CRITICOS:
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
+from django.conf import settings
 from django.db import IntegrityError
 from django.db import models as django_models
 from django.db import transaction
@@ -305,17 +307,24 @@ def activate_program_version(*, slug: str, program_id: str, version: int) -> Pub
 # ---------------------------------------------------------------------------
 
 
+_DEFAULT_MAX_WEIGHT_KG = Decimal('1000')  # decisao do Renan — teto de 1 tonelada.
+
+
 class LoadValueError(ValueError):
-    """Levantada quando weight_kg/rir e negativo — erro de digitacao, nao
-    julgamento de treino. Deteccao estatistica de outlier de verdade
-    (comparar com o historico do proprio atleta) e trabalho da Onda A3
-    (mesmo escopo de estimate_one_rep_max/deteccao de plato), nao um limite
-    numerico pra inventar aqui."""
+    """Levantada quando weight_kg/rir esta fora da faixa aceita — erro de
+    digitacao ou dado absurdo, nao julgamento de treino. Deteccao
+    estatistica de outlier de verdade (comparar com o historico do proprio
+    atleta) e trabalho da Onda A3 (mesmo escopo de
+    estimate_one_rep_max/deteccao de plato), nao esta faixa ampla aqui."""
 
 
 def _validate_load_values(*, weight_kg, rir) -> None:
-    if weight_kg is not None and weight_kg < 0:
-        raise LoadValueError(f'weight_kg nao pode ser negativo: {weight_kg!r}')
+    if weight_kg is not None:
+        if weight_kg < 0:
+            raise LoadValueError(f'weight_kg nao pode ser negativo: {weight_kg!r}')
+        max_weight_kg = Decimal(str(getattr(settings, 'PUBLIC_WORKOUT_MAX_WEIGHT_KG', _DEFAULT_MAX_WEIGHT_KG)))
+        if weight_kg > max_weight_kg:
+            raise LoadValueError(f'weight_kg {weight_kg!r} acima do teto aceito ({max_weight_kg} kg)')
     if rir is not None and rir < 0:
         raise LoadValueError(f'rir nao pode ser negativo: {rir!r}')
 

@@ -1312,11 +1312,15 @@ bloqueio).
    B3) resolve pro registro já existente, nunca duplica linha (banco é a
    trava — `IntegrityError` em cima de `unique=True`, mesmo padrão do
    `PaymentWebhookEvent` da Onda B2).
-4. Validação **estrutural** de `weight_kg`/`rir` (não-negativo) no serviço,
-   não só no model field. **Detecção estatística de outlier de verdade**
-   (comparar com o histórico do próprio atleta) fica pra Onda A3 — é o
-   mesmo trabalho de `estimate_one_rep_max`/detecção de platô já listado
-   lá, não uma decisão nova pra inventar aqui.
+4. Validação **estrutural** de `weight_kg`/`rir` no serviço, não só no
+   model field: não-negativo, mais um **teto de 1000 kg (1 tonelada) em
+   `weight_kg`** — decisão do Renan (número de produto, não um palpite de
+   script), configurável via `PUBLIC_WORKOUT_MAX_WEIGHT_KG` no `settings`
+   (mesmo padrão do guardrail de valor da Onda B2 — faixa ajustável sem
+   deploy de código). **Detecção estatística de outlier de verdade**
+   (comparar com o histórico do próprio atleta) continua fora daqui — fica
+   pra Onda A3, mesmo trabalho de `estimate_one_rep_max`/detecção de platô
+   já listado lá.
 5. `build_student_package` devolve `one_rep_max_by_movement`/
    `substitutions` **vazios** de propósito — Onda A3 (1RM real e
    substituição por `movement_pattern`), não uma versão "provisória" que
@@ -1345,7 +1349,8 @@ bloqueio).
 1. `record_load` reenviado com a mesma `idempotency_key` não duplica linha
    (Pronto quando #4 original — era o único item que ficava pendente da
    Fatia B).
-2. `weight_kg`/`rir` negativos são recusados no serviço, não só no form/model.
+2. `weight_kg`/`rir` negativos são recusados no serviço, não só no
+   form/model; `weight_kg` acima de 1000 kg também.
 3. `build_student_package` devolve as quatro chaves do contrato S2 mesmo
    sem nenhuma carga registrada ainda (`{}`/`None`, nunca erro).
 4. Teste de fronteira (services.py nunca importa ORM de TENANT_APPS)
