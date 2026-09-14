@@ -7,9 +7,11 @@ POR QUE ELE EXISTE:
   quebram quando alguem religa o acoplamento que as Ondas B0/B1/B2
   deliberadamente evitaram — nao quando "algo para de funcionar".
 
-Este arquivo cresce a cada onda que o CORDA entrega. As checagens abaixo
-cobrem o que ja existe (B0/B1/B2 slice A); os itens de V1/V2 (movimento e
-template) entram quando a Frente A publicar A0/A1.
+Este arquivo cresce a cada onda que o CORDA entrega. V1 (movimento pending
+nao aparece no picker do coach) ja tinha teste proprio desde a Onda A0
+(`public_workouts/test_extract_movements.py::test_extraction_never_touches_student_app_movement_library`)
+— nao duplicado aqui. V2 (template) entra abaixo, agora que A1/A2 publicaram
+de verdade.
 """
 
 from datetime import date
@@ -20,6 +22,8 @@ from django.test import TestCase
 from finance.model_definitions import Payment as BoxPayment
 from public_workouts.billing import create_payment_with_notice_schedule
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+from public_workouts.schema import build_example_payload
+from public_workouts.services import publish_program
 from student_identity.models import StudentAppInvitation
 from student_identity.public_workout_login import request_login_token
 
@@ -44,6 +48,18 @@ class PublicWorkoutsIsolationTests(TestCase):
         request_login_token(email='semconvite@example.com', base_url='https://octoboxfit.com.br')
 
         self.assertEqual(StudentAppInvitation.objects.count(), before)
+
+    def test_publishing_a_program_does_not_create_an_operations_workout_template(self):
+        # V2 do CORDA: publicar PublicWorkoutProgram nunca escreve em
+        # WorkoutTemplate (operations, TENANT_APP) — o corredor de
+        # consultoria nao "e" o WOD do box, mesmo os dois falando de treino.
+        from operations.model_definitions import WorkoutTemplate
+
+        before = WorkoutTemplate.objects.count()
+
+        publish_program(slug='giovanna', payload=build_example_payload())
+
+        self.assertEqual(WorkoutTemplate.objects.count(), before)
 
     def test_corridor_billing_module_does_not_import_stripe_router_or_services(self):
         # N2/S3 do CORDA: o corredor nunca importa o roteador nem os

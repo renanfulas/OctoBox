@@ -207,7 +207,7 @@ Buracos de cobertura que o plano cria ou expõe:
 
 | Teste novo | Onda | Por que é obrigatório |
 |---|---|---|
-| Nenhuma view de `/renan/` toca TENANT_APPS | A1 | **R2** — o `conftest` força `schema_context`, então hoje o erro passa em CI e só quebra em produção. Sem esse teste, DA-1 não tem rede. |
+| ✅ Nenhuma view de `/renan/` toca TENANT_APPS | A1 | **R2** — o `conftest` força `schema_context`, então hoje o erro passa em CI e só quebra em produção. Sem esse teste, DA-1 não tem rede. **Fechado nesta sessão** (auditoria pós-merge de #236): `tests/test_tenant_boundary.py::B14PublicWorkoutViewsNeverTouchTenantAppsTest`, `@pytest.mark.public_schema` de verdade (não só ausência de `schema_context` — reset explícito pro schema `public`, sem nenhum tenant provisionado), 3 views cobertas (detail, `avaliacoes.json`, `treino.pdf`). Passou de primeira — a proteção do B0 (`control/middleware.py::PUBLIC_SCHEMA_PATHS`) já existia, só faltava o teste que provasse. Categoria 5 (`tests/test_public_workouts_isolation.py`) também ganhou o item V2 que faltava (publicar programa não cria `operations.WorkoutTemplate`) — V1 já tinha teste próprio desde a Onda A0, não duplicado. |
 | Aluno A logado abrindo slug de B → **404** | B3 | ownership (DA-2) — hoje não existe conceito de dono de slug |
 | `record_load` reenviado com a mesma `idempotency_key` não duplica | A1 | outbox offline reenvia por construção |
 | Duas versões ativas para o mesmo slug são recusadas **pelo banco** | A1 | a constraint parcial é a garantia, não o código |
