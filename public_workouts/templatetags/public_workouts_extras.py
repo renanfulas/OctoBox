@@ -12,6 +12,14 @@ POR QUE ELE EXISTE:
   dado puro (pontos normalizados), nunca HTML pronto, pra manter o
   autoescape do Django e deixar o teste assertar em numeros, nao em
   substring de SVG. O <svg>/<polyline> fica no template que chama o filtro.
+  Tambem marca `is_program_change` por ponto (Pronto-quando #2 da secao
+  A3/B4 do CORDA) — onde `program_id` muda entre dois registros
+  consecutivos, o template desenha o marcador de troca de versao.
+- dict_get existe porque o Django template nao tem subscript por variavel
+  (`dicionario[chave]` so aceita chave literal) — `one_rep_max_by_movement`
+  e `trends_by_movement` (Onda A3, ja calculados em services.py) sao dicts
+  chaveados por `movement_slug`, e o template precisa deles dentro do
+  `{% regroup %}` por movimento.
 """
 
 from __future__ import annotations
@@ -30,6 +38,17 @@ def humanize_movement_slug(movement_slug: str) -> str:
     if not movement_slug:
         return ''
     return movement_slug.replace('-', ' ').capitalize()
+
+
+@register.filter
+def dict_get(dictionary: dict | None, key: str):
+    """Lookup generico por chave variavel — Django template so faz
+    `dicionario.chave` (subscript literal). Devolve None se o dict for
+    None/vazio ou a chave nao existir (template so precisa de `{% if %}`,
+    nao de tratamento de excecao)."""
+    if not dictionary:
+        return None
+    return dictionary.get(key)
 
 
 _CHART_WIDTH = 600
@@ -94,11 +113,20 @@ def load_chart_points(entries: list[dict]) -> dict:
     step_x = (_CHART_WIDTH - _CHART_PAD * 2) / (len(weighted) - 1)
 
     points = []
+    previous_program_id = None
     for index, entry in enumerate(weighted):
         x = round(_CHART_PAD + index * step_x, 2)
         y = round(
             _CHART_HEIGHT - _CHART_PAD - ((entry['weight_kg'] - min_weight) / span) * (_CHART_HEIGHT - _CHART_PAD * 2),
             2,
+        )
+        program_id = entry.get('program_id') or ''
+        # So marca troca quando os DOIS lados sao um programa de verdade —
+        # o primeiro ponto da serie nunca marca (nao ha "antes" pra
+        # contrastar) e `program_id=''` (carga sem programa associado)
+        # nunca conta como troca, so ruido.
+        is_program_change = bool(
+            index > 0 and program_id and previous_program_id and program_id != previous_program_id
         )
         points.append({
             'x': x,
@@ -106,7 +134,11 @@ def load_chart_points(entries: list[dict]) -> dict:
             'weight_kg': entry['weight_kg'],
             'performed_on': entry['performed_on'],
             'label': _format_short_date(entry['performed_on']),
+            'program_id': program_id,
+            'week_in_program': entry.get('week_in_program'),
+            'is_program_change': is_program_change,
         })
+        previous_program_id = program_id or previous_program_id
 
     points_attr = ' '.join(f"{point['x']},{point['y']}" for point in points)
     area_points_attr = f"{points_attr} {points[-1]['x']},{baseline_y} {points[0]['x']},{baseline_y}"

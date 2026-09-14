@@ -1535,23 +1535,41 @@ bloqueio).
 > depende da sua revisão da sugestão da Onda A0 (`classify_public_workout_movements`).
 > Serviço de avaliação (US Navy/JP7) já existe desde antes desta Onda —
 > `public_workouts/formulas.py`.
+>
+> **Atualização (coluna "Frente B (telas)"):** o gráfico SVG (padrão de
+> `assessments.js`) e a aba de histórico de programas já existiam, sem
+> rota ainda, em `templates/public_workouts/workout.html` (fundação
+> adiantada da Onda B3). Esta sessão conectou os dois pontos que faltavam
+> entre o que a Frente A já tinha entregue e o que a tela mostrava:
+> `one_rep_max_by_movement` (S2) e `trends_by_movement`
+> (`build_weekly_review`) agora aparecem como badge de 1RM estimado +
+> sinal de platô/queda/evolução ao lado de cada mini-gráfico
+> (`public_workouts/templatetags/public_workouts_extras.py::dict_get`,
+> necessário porque o template não indexa dict por chave variável). O
+> gráfico também ganhou o marcador de troca de versão de programa (linha
+> tracejada + ponto diferenciado onde `program_id` muda entre duas cargas
+> consecutivas) — fecha o item 2 do "Pronto quando" abaixo. Continua tudo
+> **sem rota real** — mesma fundação adiantada, mesma regra: nenhum dos
+> 10 templates legados nem os golden tests mudam uma linha.
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
-| ✅ `estimate_one_rep_max` + faixas de confiança | gráfico SVG reusando o padrão de `assessments.js` |
-| ✅ detecção de platô e queda de 1RM (v1, limiares ajustáveis) | aba de histórico de programas (online) |
-| ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor |
-| serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício |
-| ✅ serviço de avaliação (US Navy / JP7) — já existia | formulários sobre `forms.css` |
+| ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
+| ✅ detecção de platô e queda de 1RM (v1, limiares ajustáveis) | ✅ aba de histórico de programas (online) |
+| ✅ `build_weekly_review(...)` — sinais calculados, sem IA ainda | tela de revisão do editor *(depende do editor com IA, Onda A2 — Entrega 4.1 do plano)* |
+| serviço de substituição por `movement_pattern` — aguarda sua revisão da A0 | UI de troca de exercício — depende da linha ao lado |
+| ✅ serviço de avaliação (US Navy / JP7) — já existia | formulários sobre `forms.css` — **decisão de produto já tomada em código**: `PublicWorkoutAssessmentsView` só lê; quem mede e registra é o treinador via management command, não o aluno pela página (ver docstring de `public_workout_assessment_views.py`) — item pode estar obsoleto, confirmar com você antes de construir UI de escrita |
 | export de dados do titular | PDF via `reportlab` |
 
 ### Pronto quando
 1. ✅ 1RM devolve `None` acima de 15 reps efetivas.
-2. O gráfico mostra marcador de troca de programa no lugar certo.
+2. ✅ O gráfico mostra marcador de troca de programa no lugar certo.
 3. Variação irmã aparece como referência, rotulada, sem entrar no cálculo
    — a parte de **cálculo** está pronta (`detect_one_rep_max_trend` nunca
    mistura `movement_slug` diferentes, testado); a parte de **exibição**
-   (mostrar a variação irmã na tela) é B4, ainda não construída.
+   (mostrar a variação irmã na tela) segue bloqueada — precisa de
+   agrupamento por `movement_pattern`, mesma dependência da linha de
+   substituição de exercício acima.
 4. ✅ Review semanal recebe **sinais**, não tabela crua.
 
 ---

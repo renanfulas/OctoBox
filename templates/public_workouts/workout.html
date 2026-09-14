@@ -170,6 +170,20 @@ PONTOS CRITICOS:
                 </span>
               </span>
               {% endif %}
+              {% with estimate=one_rep_max_by_movement|dict_get:group.grouper %}
+              {% if estimate %}
+              <span class="workout-load-chart-1rm" title="1RM estimado — confiança {{ estimate.confidence }} ({{ estimate.effective_reps }} reps efetivas, {{ estimate.formula }})">
+                1RM est. <strong>{{ estimate.value_kg }} kg</strong>
+              </span>
+              {% endif %}
+              {% endwith %}
+              {% with movement_trend=trends_by_movement|dict_get:group.grouper %}
+              {% if movement_trend %}
+              <span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--{{ movement_trend.label }}">
+                {% if movement_trend.label == 'plateau' %}Platô{% elif movement_trend.label == 'declining' %}Em queda{% else %}Em evolução{% endif %}
+              </span>
+              {% endif %}
+              {% endwith %}
             </div>
             {% if chart.has_data %}
             <svg
@@ -193,8 +207,17 @@ PONTOS CRITICOS:
               <polygon class="workout-load-chart-area" points="{{ chart.area_points_attr }}" fill="url(#workout-load-fill-{{ forloop.counter }})"></polygon>
               <polyline class="workout-load-chart-line" points="{{ chart.points_attr }}" pathLength="1" stroke="url(#workout-load-stroke-{{ forloop.counter }})"></polyline>
               {% for point in chart.points %}
+              {% if point.is_program_change %}
+              <line
+                class="workout-load-chart-version-line"
+                x1="{{ point.x }}" y1="0"
+                x2="{{ point.x }}" y2="{{ chart.baseline_y }}"
+              ></line>
+              {% endif %}
               <circle class="workout-load-chart-halo" cx="{{ point.x }}" cy="{{ point.y }}" r="7"></circle>
-              <circle class="workout-load-chart-dot" cx="{{ point.x }}" cy="{{ point.y }}" r="3"></circle>
+              <circle class="workout-load-chart-dot{% if point.is_program_change %} workout-load-chart-dot--version{% endif %}" cx="{{ point.x }}" cy="{{ point.y }}" r="3">
+                {% if point.is_program_change %}<title>Novo programa a partir daqui: {{ point.program_id }}{% if point.week_in_program %} (semana {{ point.week_in_program }}){% endif %}</title>{% endif %}
+              </circle>
               <text class="workout-load-chart-label" x="{{ point.x }}" y="{{ chart.label_y }}">{{ point.label }}</text>
               {% endfor %}
               {% endlocalize %}
