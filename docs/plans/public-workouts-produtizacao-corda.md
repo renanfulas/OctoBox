@@ -1965,6 +1965,57 @@ bloqueio).
 >   verificado num Chromium real nos dois temas, incluindo o clique em
 >   exercício não-rastreado abrindo o widget de carga.
 
+> **Atualização (Cardio + Periodização, pedido explícito do Renan com
+> referência em `juliana.html`) — extensão aditiva do contrato congelado
+> (schema.py), acordo direto com o Renan nesta sessão:**
+> - **Schema**: duas chaves opcionais de nível superior, `cardio` e
+>   `periodization` — ausentes = cliente sem essas abas no HTML legado
+>   (a maioria dos programas já publicados antes desta fatia). Nenhum campo
+>   existente muda de forma; `validate_payload` só valida o conteúdo
+>   quando a chave está presente.
+> - **Parser** (`parse_cardio_tab`/`parse_periodization_tab`,
+>   `public_workouts/parser.py`): dois extratores NOVOS e ISOLADOS do
+>   parser de dia/exercício já congelado (`_ProgramHTMLParser` não foi
+>   tocado — zero risco de regressão no que já está em produção). Cobrem
+>   só o formato de **aba dedicada** (`<div id="tab-cardio">`/`<div
+>   id="tab-period">`, presente em bruno/juliana/henrique/johnespanha/
+>   thaislima para cardio, e em 8 dos 10 clientes para periodização) —
+>   **decisão explícita do Renan**: não tenta unificar com o cardio
+>   embutido por dia da franciele (`.c-card`/`.stage-title` "Etapa N") nem
+>   com o protocolo HIIT da milene (`.hiit-card`), formatos grandes demais
+>   pra unificar nesta fatia. O gráfico de periodização vem de um
+>   `<script type="application/json" id="period-chart-data">` já pronto no
+>   HTML legado (mesmo dado que `app.js::buildChart` já usava no cliente) —
+>   extraído por regex direto, sem precisar de parsing de árvore.
+> - **Achado importante que reduziu risco**: `.c-card` (cardio embutido) é
+>   o MESMO componente usado pro plano alimentar da rafael — confirmado que
+>   os cards de refeição ficam estruturalmente FORA de qualquer `.session`,
+>   então não haveria colisão mesmo se a fatia futura de cardio embutido
+>   fosse implementada.
+> - **UI**: pedido explícito do Renan — o botão "Treino" do bottom nav virou
+>   um **ciclo de 1 slot só** (Treino → Cardio → Periodização → Treino a
+>   cada toque), em vez de 3 botões fixos (a nav não tem espaço pros 5 de
+>   sempre + 2 novos). Cardio/Periodização saem do ciclo quando o payload
+>   não tem esse dado (`data-cycle-targets` filtrado pelo template). Ícone e
+>   rótulo do botão trocam junto (`bonequinho correndo` pra Cardio, barras
+>   ascendentes pra Periodização) — chegar de OUTRO botão da nav sempre
+>   reseta pro estado Treino; só avança no ciclo quando o próprio botão já
+>   está ativo. O atalho de "dia da semana" do Início (que pulava direto
+>   pra Treino) foi ajustado pra resetar o ciclo em vez de simular clique
+>   (que só avançaria se o ciclo já estivesse em Cardio/Periodização).
+> - Gráfico do mesociclo renderizado no SERVIDOR (Django template, cores/
+>   altura já vêm prontas do payload) em vez do `buildChart()` client-side
+>   do `app.js` legado — mesmo dado, sem duplicar lógica de montagem de DOM
+>   em JS.
+> - Suíte completa (434 testes) verde; verificado num Chromium real nos
+>   dois temas com dado real re-parseado da juliana (não publicado ainda —
+>   ver "Pendente" abaixo), incluindo o ciclo completo Treino→Cardio→
+>   Periodização→Treino e o reset via atalho de dia da semana.
+> - **Pendente, fora deste lote**: republicar de verdade (`migrate_legacy_workouts`
+>   sem `--dry-run`) os clientes reais afetados — decisão de tocar dado
+>   publicado de cliente pagante fica pra confirmação explícita separada,
+>   mesmo processo da migração original da Onda A2.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |

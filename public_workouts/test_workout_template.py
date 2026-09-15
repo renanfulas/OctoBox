@@ -428,11 +428,22 @@ class WorkoutTopbarAndNavTests(TestCase):
         self.assertIn('<img src="https://example.com/foto.jpg"', html)
 
     def test_bottom_nav_has_five_destinations_in_order(self):
+        # Treino nao tem mais [data-workout-tab-target] fixo -- virou o
+        # botao de ciclo (Treino/Cardio/Periodizacao, ver
+        # data-workout-cycle-nav) pedido pelo Renan, ainda assim ocupa o
+        # 3o slot visualmente entre Avaliacao e Cargas.
         html = _render(build_example_payload())
 
-        expected_order = ['workout-panel-inicio', 'workout-panel-avaliacao', 'workout-panel-treino', 'workout-panel-cargas', 'workout-panel-perfil']
-        positions = [html.index(f'data-workout-tab-target="{target}"', html.index('workout-mobile-nav')) for target in expected_order]
-        self.assertEqual(positions, sorted(positions))
+        nav_start = html.index('workout-mobile-nav')
+        fixed_order = ['workout-panel-inicio', 'workout-panel-avaliacao']
+        positions = [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in fixed_order]
+        cycle_nav_position = html.index('data-workout-cycle-nav', nav_start)
+        trailing_order = ['workout-panel-cargas', 'workout-panel-perfil']
+        positions += [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in trailing_order]
+
+        self.assertEqual(positions[:2], sorted(positions[:2]))
+        self.assertTrue(positions[1] < cycle_nav_position < positions[2])
+        self.assertEqual(positions[2:], sorted(positions[2:]))
 
     def test_inicio_panel_is_active_by_default(self):
         html = _render(build_example_payload())
@@ -500,6 +511,104 @@ class WorkoutTopbarAndNavTests(TestCase):
 
         self.assertNotIn('dia com treino', html)
         self.assertNotIn('dias com treino', html)
+
+
+class CardioPeriodizacaoCycleNavTests(TestCase):
+    """Botao de ciclo "Treino" do bottom nav (pedido do Renan): um SO' slot
+    alterna Treino/Cardio/Periodizacao a cada toque, em vez de 3 botoes
+    fixos. Cardio/Periodizacao saem da lista de alvos quando o payload nao
+    tem esse dado (aditivo ao schema, ver schema.py)."""
+
+    def test_cycle_targets_only_treino_without_cardio_or_periodization(self):
+        html = _render(build_example_payload())
+
+        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.group(1), 'workout-panel-treino')
+
+    def test_cycle_targets_include_cardio_when_present(self):
+        payload = build_example_payload()
+        payload['cardio'] = {'sessions': [{'title': 'LISS', 'badge': '', 'details': [], 'note': ''}]}
+
+        html = _render(payload)
+
+        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        self.assertEqual(match.group(1), 'workout-panel-treino|workout-panel-cardio')
+
+    def test_cycle_targets_include_both_when_present(self):
+        payload = build_example_payload()
+        payload['cardio'] = {'sessions': [{'title': 'LISS', 'badge': '', 'details': [], 'note': ''}]}
+        payload['periodization'] = {
+            'weeks_table': [{'week': 'S1', 'focus': 'x', 'reps': 'x', 'guidance': 'x'}],
+            'volume_table': [], 'note': '', 'chart': [],
+        }
+
+        html = _render(payload)
+
+        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        self.assertEqual(match.group(1), 'workout-panel-treino|workout-panel-cardio|workout-panel-periodizacao')
+
+    def test_cardio_panel_empty_without_cardio_data(self):
+        html = _render(build_example_payload())
+
+        self.assertNotIn('workout-cardio-card', html)
+
+    def test_periodization_panel_empty_without_periodization_data(self):
+        html = _render(build_example_payload())
+
+        self.assertNotIn('workout-period-chart', html)
+        self.assertNotIn('Semana a semana', html)
+
+
+class CardioPeriodizacaoPanelContentTests(TestCase):
+    def test_cardio_session_renders_title_badge_details_and_note(self):
+        payload = build_example_payload()
+        payload['cardio'] = {
+            'sessions': [{
+                'title': 'LISS leve',
+                'badge': 'Quarta · pós-treino',
+                'details': [{'label': 'Duração', 'value': '20 min contínuos'}],
+                'note': 'Feito depois do treino de superior.',
+            }],
+        }
+
+        html = _render(payload)
+
+        self.assertIn('LISS leve', html)
+        self.assertIn('Quarta · pós-treino', html)
+        self.assertIn('Duração', html)
+        self.assertIn('20 min contínuos', html)
+        self.assertIn('Feito depois do treino de superior.', html)
+
+    def test_periodization_renders_chart_weeks_table_and_volume_table(self):
+        payload = build_example_payload()
+        payload['periodization'] = {
+            'weeks_table': [{'week': 'Semana 1', 'focus': 'Adaptação', 'reps': 'Teto', 'guidance': 'Carga base'}],
+            'volume_table': [{'muscle_group': 'Quadríceps', 'sets_per_week': '~22', 'frequency': '2×/sem', 'where': 'Terça'}],
+            'note': 'Respeite o deload.',
+            'chart': [{'label': 'S1', 'focus': 'Adaptação', 'reps': 'Teto', 'color': '#FB7185', 'bg': '#FFF1F2', 'fg': '#BE123C', 'h': 65}],
+        }
+
+        html = _render(payload)
+
+        self.assertIn('workout-period-chart', html)
+        self.assertIn('background:#FB7185', html)
+        self.assertIn('Semana 1', html)
+        self.assertIn('Carga base', html)
+        self.assertIn('Quadríceps', html)
+        self.assertIn('Respeite o deload.', html)
+
+    def test_periodization_without_chart_omits_chart_section(self):
+        payload = build_example_payload()
+        payload['periodization'] = {
+            'weeks_table': [{'week': 'Semana 1', 'focus': 'x', 'reps': 'x', 'guidance': 'x'}],
+            'volume_table': [], 'note': '', 'chart': [],
+        }
+
+        html = _render(payload)
+
+        self.assertNotIn('workout-period-chart', html)
+        self.assertIn('Semana a semana', html)
 
 
 class WorkoutAssessmentPanelTests(TestCase):
