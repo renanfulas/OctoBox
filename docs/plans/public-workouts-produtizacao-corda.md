@@ -2041,6 +2041,34 @@ bloqueio).
 >   variação exibidos corretamente. Mesmo estágio de "aditivo, não
 >   republicado ainda" do restante desta seção.
 
+> **Atualização (variação oculta por padrão, pedido explícito do Renan):**
+> A linha "Variação: `<link>`" virou um toggle — colapsada por padrão
+> (`data-workout-variation`, `hidden`), um gatilho "Ver variação" revela ao
+> clicar (`data-workout-variation-toggle`), mesmo padrão de clique-expande
+> já usado no registro de carga (item anterior desta mesma onda B3).
+> Disponível em todo exercício com variação, sem depender de nenhuma outra
+> flag — mesmo espírito do registro de carga não depender de `is_tracked`.
+> Handler do card (`data-workout-load-toggle`) ganhou mais uma exclusão de
+> clique/teclado pro toggle de variação não abrir o widget de carga junto.
+> Suíte (341 testes) verde; verificado num Chromium real.
+
+> **Atualização (rota de preview do template único, achado do Renan —
+> "não to conseguindo ver no preview"):**
+> Toda a verificação visual desta onda B3 dependia de eu gerar HTML na mão
+> via `manage.py shell` + salvar num arquivo `static/tmp_workout_previewN.html`
+> que eu mesmo apagava no fim de cada sessão — se o Renan tentasse abrir
+> depois, dava 404 (parecia bug, mas era o arquivo temporário já limpo).
+> Criada `GET /renan/<slug>/preview-b3` (`PublicWorkoutTemplatePreviewView`)
+> — renderiza `workout.html` contra o payload JÁ PUBLICADO do slug (mesmo
+> `get_active_program`/`list_program_versions` de sempre), **só responde
+> com `settings.DEBUG=True`** (404 em produção, nunca serve tráfego de
+> aluno de verdade, nunca precisa do cookie de posse B0). URL permanente —
+> não depende mais de nenhum passo manual meu pra conferir o trabalho.
+> 5 testes novos (404 fora de DEBUG mesmo publicado, 200 com conteúdo
+> esperado, 404 sem publicação, 404 slug desconhecido, dispensa cookie).
+> Suíte completa (457 testes, `public_workouts` + `student_app`) verde;
+> `manage.py check` sem problemas.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |

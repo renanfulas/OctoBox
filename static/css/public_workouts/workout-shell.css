@@ -335,6 +335,27 @@ button.workout-week-day:focus-visible {
     text-decoration: underline;
 }
 
+/* "Ver variação" — mesmo espirito do card de movimento clicavel (colapsado
+   por padrao, clique revela): fica pequeno e discreto, nunca com o mesmo
+   peso visual do nome do movimento ou dos chips de fase. */
+.workout-movement-variation-toggle {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--theme-text-muted);
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.workout-movement-variation-toggle:hover,
+.workout-movement-variation-toggle:focus-visible {
+    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
+}
+
 /* Quebra de fase (Prep/Feeder/Top/AMRAP) de reps_spec — pedido do Renan pra
    "voltar" o padrao rico dos templates legados (colunas de sets-tbl com
    pilula colorida por tipo de serie: .st-p/.st-f/.st-t/.st-m em
