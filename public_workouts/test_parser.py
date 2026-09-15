@@ -16,7 +16,12 @@ POR QUE ELE EXISTE:
 from django.test import SimpleTestCase
 
 from public_workouts import schema
-from public_workouts.parser import build_program_payload_from_html, parse_legacy_html
+from public_workouts.parser import (
+    build_program_payload_from_html,
+    parse_cardio_tab,
+    parse_legacy_html,
+    parse_periodization_tab,
+)
 
 
 def _one_day(day_id: str, label: str, body: str) -> str:
@@ -379,3 +384,214 @@ class BuildProgramPayloadFromHtmlTests(SimpleTestCase):
         )
 
         self.assertEqual(payload['weeks'], 4)
+
+
+class ParseCardioTabTests(SimpleTestCase):
+    """Recortes fieis de juliana.html (formato de aba dedicada de cardio
+    semanal — ver docstring de _CardioTabParser sobre por que so' esse
+    formato, nao o cardio embutido por dia de franciele/milene)."""
+
+    def test_extracts_title_badge_details_and_note(self):
+        html = '''
+        <div id="tab-cardio" style="display:none">
+          <div class="cardio-week">
+            <div class="cw-item"><div class="cw-day">Quarta</div><div class="cw-type">🟢 LISS</div></div>
+          </div>
+          <div class="c-card">
+            <div class="c-head">LISS leve <span class="km-badge">Quarta · pós-treino</span></div>
+            <div class="c-row"><span class="c-lbl">Duração</span><span>20 min contínuos</span></div>
+            <div class="c-row"><span class="c-lbl">Modalidade</span><span>Esteira inclinada, bike ou elíptico</span></div>
+            <div class="c-note">Feito depois do Superior A — pernas ficam de fora.</div>
+          </div>
+        </div>
+        '''
+
+        result = parse_cardio_tab(html)
+
+        self.assertEqual(len(result['sessions']), 1)
+        session = result['sessions'][0]
+        self.assertEqual(session['title'], 'LISS leve')
+        self.assertEqual(session['badge'], 'Quarta · pós-treino')
+        self.assertEqual(session['details'], [
+            {'label': 'Duração', 'value': '20 min contínuos'},
+            {'label': 'Modalidade', 'value': 'Esteira inclinada, bike ou elíptico'},
+        ])
+        self.assertEqual(session['note'], 'Feito depois do Superior A — pernas ficam de fora.')
+
+    def test_multiple_sessions_are_all_captured_in_order(self):
+        html = '''
+        <div id="tab-cardio">
+          <div class="c-card">
+            <div class="c-head">LISS leve <span class="km-badge">Quarta</span></div>
+          </div>
+          <div class="c-card">
+            <div class="c-head">Moderado <span class="km-badge">Sexta</span></div>
+          </div>
+        </div>
+        '''
+
+        result = parse_cardio_tab(html)
+
+        self.assertEqual([s['title'] for s in result['sessions']], ['LISS leve', 'Moderado'])
+
+    def test_no_cardio_tab_returns_none(self):
+        html = '<div id="tab-treino"><div class="ex"></div></div>'
+
+        self.assertIsNone(parse_cardio_tab(html))
+
+    def test_cardio_tab_without_any_card_returns_none(self):
+        html = '<div id="tab-cardio"><p>Sem sessoes ainda.</p></div>'
+
+        self.assertIsNone(parse_cardio_tab(html))
+
+    def test_session_without_badge_still_captures_title(self):
+        html = '''
+        <div id="tab-cardio">
+          <div class="c-card">
+            <div class="c-head">Corrida livre</div>
+            <div class="c-note">Qualquer dia da semana.</div>
+          </div>
+        </div>
+        '''
+
+        result = parse_cardio_tab(html)
+
+        self.assertEqual(result['sessions'][0]['title'], 'Corrida livre')
+        self.assertEqual(result['sessions'][0]['badge'], '')
+
+
+class ParsePeriodizationTabTests(SimpleTestCase):
+    """Recortes fieis de juliana.html (grafico + tabela semanal + tabela de
+    volume por grupo muscular)."""
+
+    def test_extracts_weeks_table_ignoring_header_row(self):
+        html = '''
+        <div id="tab-period">
+          <div class="period-tbl">
+            <table>
+              <tr><th>Semana</th><th>Foco</th><th>Reps (top sets)</th><th>Diretriz de carga</th></tr>
+              <tr><td>Semana 1</td><td>Adaptação</td><td>Teto da faixa</td><td>Carga base</td></tr>
+              <tr><td>Semana 2</td><td>Volume</td><td>Meio da faixa</td><td>+2,5 kg vs. Semana 1</td></tr>
+            </table>
+          </div>
+        </div>
+        '''
+
+        result = parse_periodization_tab(html)
+
+        self.assertEqual(result['weeks_table'], [
+            {'week': 'Semana 1', 'focus': 'Adaptação', 'reps': 'Teto da faixa', 'guidance': 'Carga base'},
+            {'week': 'Semana 2', 'focus': 'Volume', 'reps': 'Meio da faixa', 'guidance': '+2,5 kg vs. Semana 1'},
+        ])
+
+    def test_extracts_volume_table_and_note(self):
+        html = '''
+        <div id="tab-period">
+          <div class="period-tbl">
+            <table>
+              <tr><th>Semana</th><th>Foco</th><th>Reps</th><th>Diretriz</th></tr>
+              <tr><td>Semana 1</td><td>Adaptação</td><td>Teto</td><td>Base</td></tr>
+            </table>
+          </div>
+          <div class="vnote">Respeite o deload da última semana.</div>
+          <table class="vol-tbl">
+            <tr><th>Grupo muscular</th><th>Séries/sem</th><th>Frequência</th><th>Onde</th></tr>
+            <tr><td>Quadríceps</td><td>~22</td><td>2×/sem</td><td>Terça + Quinta</td></tr>
+          </table>
+        </div>
+        '''
+
+        result = parse_periodization_tab(html)
+
+        self.assertEqual(result['note'], 'Respeite o deload da última semana.')
+        self.assertEqual(result['volume_table'], [
+            {'muscle_group': 'Quadríceps', 'sets_per_week': '~22', 'frequency': '2×/sem', 'where': 'Terça + Quinta'},
+        ])
+
+    def test_extracts_chart_json_from_embedded_script(self):
+        html = '''
+        <div id="tab-period">
+          <div class="period-tbl">
+            <table><tr><th>H</th></tr><tr><td>Semana 1</td><td>x</td><td>x</td><td>x</td></tr></table>
+          </div>
+        </div>
+        <script type="application/json" id="period-chart-data">
+        [{"label": "S1", "focus": "Adaptação", "reps": "Teto", "color": "#FB7185", "bg": "#FFF1F2", "fg": "#BE123C", "h": 65}]
+        </script>
+        '''
+
+        result = parse_periodization_tab(html)
+
+        self.assertEqual(result['chart'], [
+            {'label': 'S1', 'focus': 'Adaptação', 'reps': 'Teto', 'color': '#FB7185', 'bg': '#FFF1F2', 'fg': '#BE123C', 'h': 65},
+        ])
+
+    def test_missing_chart_script_yields_empty_chart_list(self):
+        html = '''
+        <div id="tab-period">
+          <div class="period-tbl">
+            <table><tr><th>H</th></tr><tr><td>Semana 1</td><td>x</td><td>x</td><td>x</td></tr></table>
+          </div>
+        </div>
+        '''
+
+        result = parse_periodization_tab(html)
+
+        self.assertEqual(result['chart'], [])
+
+    def test_no_period_tab_returns_none(self):
+        html = '<div id="tab-treino"><div class="ex"></div></div>'
+
+        self.assertIsNone(parse_periodization_tab(html))
+
+    def test_period_tab_without_weeks_table_returns_none(self):
+        html = '<div id="tab-period"><p>Sem periodizacao ainda.</p></div>'
+
+        self.assertIsNone(parse_periodization_tab(html))
+
+
+class BuildProgramPayloadFromHtmlCardioPeriodizationTests(SimpleTestCase):
+    """`build_program_payload_from_html` inclui cardio/periodization no
+    payload final so' quando o HTML tem as abas -- aditivo, nunca quebra o
+    contrato existente pros clientes sem elas."""
+
+    def test_payload_includes_cardio_and_periodization_when_present(self):
+        html = _one_day('seg', 'Segunda', '''
+          <div class="ex">
+            <div class="ex-top"><div class="ex-left"><div class="ex-name">Agachamento livre</div></div></div>
+            <div class="ex-note">n</div>
+          </div>
+        ''') + '''
+        <div id="tab-cardio">
+          <div class="c-card"><div class="c-head">LISS leve <span class="km-badge">Quarta</span></div></div>
+        </div>
+        <div id="tab-period">
+          <div class="period-tbl">
+            <table><tr><th>H</th></tr><tr><td>Semana 1</td><td>Adaptação</td><td>Teto</td><td>Base</td></tr></table>
+          </div>
+        </div>
+        '''
+
+        payload, _ = build_program_payload_from_html(
+            html=html, program_id='x', program_label='X', started_on='2026-01-05', weeks=4, accent_variant=None,
+        )
+
+        self.assertEqual(schema.validate_payload(payload), [])
+        self.assertEqual(len(payload['cardio']['sessions']), 1)
+        self.assertEqual(len(payload['periodization']['weeks_table']), 1)
+
+    def test_payload_omits_cardio_and_periodization_when_absent(self):
+        html = _one_day('seg', 'Segunda', '''
+          <div class="ex">
+            <div class="ex-top"><div class="ex-left"><div class="ex-name">Agachamento livre</div></div></div>
+            <div class="ex-note">n</div>
+          </div>
+        ''')
+
+        payload, _ = build_program_payload_from_html(
+            html=html, program_id='x', program_label='X', started_on='2026-01-05', weeks=4, accent_variant=None,
+        )
+
+        self.assertEqual(schema.validate_payload(payload), [])
+        self.assertNotIn('cardio', payload)
+        self.assertNotIn('periodization', payload)

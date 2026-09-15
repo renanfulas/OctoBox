@@ -206,6 +206,93 @@ PONTOS CRITICOS:
       </div>
     </section>
 
+    <!-- Cardio/Periodizacao (Onda A2, fatia cardio/periodizacao) -- so'
+         existem se o HTML legado original tinha essas abas (parser.py::
+         parse_cardio_tab/parse_periodization_tab, formato de aba dedicada,
+         nao o cardio embutido por dia). Alcancadas so' pelo ciclo do botao
+         "Treino" do bottom nav (item pedido pelo Renan), nunca tem icone
+         proprio fixo -- por isso NAO tem <button> correspondente na nav
+         logo abaixo, so' esta section. -->
+    <section id="workout-panel-cardio" data-workout-tab-panel>
+      {% if program.cardio %}
+      <div class="workout-movement-list">
+        {% for session in program.cardio.sessions %}
+        <article class="student-card card-decor-topstripe workout-cardio-card">
+          <div class="workout-cardio-card__head">
+            <strong>{{ session.title }}</strong>
+            {% if session.badge %}<span class="student-status-badge workout-cardio-badge">{{ session.badge }}</span>{% endif %}
+          </div>
+          {% if session.details %}
+          <dl class="workout-cardio-details">
+            {% for detail in session.details %}
+            <div class="workout-cardio-detail"><dt>{{ detail.label }}</dt><dd>{{ detail.value }}</dd></div>
+            {% endfor %}
+          </dl>
+          {% endif %}
+          {% if session.note %}<p class="workout-cardio-note">{{ session.note }}</p>{% endif %}
+        </article>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    <section id="workout-panel-periodizacao" data-workout-tab-panel>
+      {% if program.periodization %}
+      {% if program.periodization.chart %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Progressão do mesociclo</h2>
+        <div class="workout-period-chart">
+          {% for point in program.periodization.chart %}
+          <div class="workout-period-chart__col">
+            <div class="workout-period-chart__bar-wrap">
+              <span class="workout-period-chart__reps" style="color:{{ point.fg }}">{{ point.reps }}</span>
+              <div class="workout-period-chart__bar" style="height:{{ point.h }}%;background:{{ point.color }}"></div>
+            </div>
+            <span class="workout-period-chart__focus" style="background:{{ point.bg }};color:{{ point.fg }}">{{ point.focus }}</span>
+            <span class="workout-period-chart__label">{{ point.label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </article>
+      {% endif %}
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Semana a semana</h2>
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Semana</th><th scope="col">Foco</th><th scope="col">Reps</th><th scope="col">Diretriz de carga</th></tr>
+            </thead>
+            <tbody>
+              {% for row in program.periodization.weeks_table %}
+              <tr><td>{{ row.week }}</td><td>{{ row.focus }}</td><td>{{ row.reps }}</td><td>{{ row.guidance }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if program.periodization.note %}<p class="workout-period-note">{{ program.periodization.note }}</p>{% endif %}
+      </article>
+
+      {% if program.periodization.volume_table %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Volume por grupo muscular</h2>
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Grupo muscular</th><th scope="col">Séries/sem</th><th scope="col">Frequência</th><th scope="col">Onde</th></tr>
+            </thead>
+            <tbody>
+              {% for row in program.periodization.volume_table %}
+              <tr><td>{{ row.muscle_group }}</td><td>{{ row.sets_per_week }}</td><td>{{ row.frequency }}</td><td>{{ row.where }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      {% endif %}
+      {% endif %}
+    </section>
+
     <section id="workout-panel-cargas" data-workout-tab-panel>
       <article class="student-card card-decor-topstripe workout-block-card">
         <h2>Evolução de carga</h2>
@@ -370,9 +457,14 @@ PONTOS CRITICOS:
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c4-3 7-6.5 7-10a7 7 0 0 0-14 0c0 3.5 3 7 7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>
     Avaliação
   </button>
-  <button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-treino">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg>
-    Treino
+  <button
+    type="button"
+    class="workout-mobile-nav-link"
+    data-workout-cycle-nav
+    data-cycle-targets="workout-panel-treino{% if program.cardio %}|workout-panel-cardio{% endif %}{% if program.periodization %}|workout-panel-periodizacao{% endif %}"
+  >
+    <span data-cycle-icon aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg></span>
+    <span data-cycle-label>Treino</span>
   </button>
   <button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-cargas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11 13 15 21 7"/><path d="M15 7h6v6"/></svg>
@@ -396,27 +488,90 @@ PONTOS CRITICOS:
      que ja e por filho direto — dois .interactive-tab-container aninhados
      nao brigam entre si. */
 (function () {
+  // Escopo de "quem fica destacado" cobre TANTO os botoes de alvo fixo
+  // ([data-workout-tab-target]) QUANTO o botao de ciclo do Treino
+  // ([data-workout-cycle-nav], ver mais abaixo) -- os dois vivem no MESMO
+  // nav ([data-workout-tab-nav]), clicar um precisa apagar o destaque do
+  // outro.
+  function clearNavActive(navGroup) {
+    navGroup.querySelectorAll('[data-workout-tab-target], [data-workout-cycle-nav]').forEach(function (t) {
+      t.classList.remove('is-active');
+      t.setAttribute('aria-selected', 'false');
+    });
+  }
+
+  function showPanel(targetId) {
+    var targetPanel = document.getElementById(targetId);
+    if (!targetPanel || !targetPanel.parentElement) return;
+    Array.prototype.forEach.call(targetPanel.parentElement.children, function (panel) {
+      if (panel.hasAttribute && panel.hasAttribute('data-workout-tab-panel')) {
+        panel.classList.toggle('is-tab-active', panel.id === targetId);
+      }
+    });
+  }
+
   var tabs = document.querySelectorAll('[data-workout-tab-target]');
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
       var targetId = tab.getAttribute('data-workout-tab-target');
       var navGroup = tab.closest('[data-workout-tab-nav]') || document;
-      navGroup.querySelectorAll('[data-workout-tab-target]').forEach(function (t) {
-        t.classList.remove('is-active');
-        t.setAttribute('aria-selected', 'false');
-      });
+      clearNavActive(navGroup);
       tab.classList.add('is-active');
       tab.setAttribute('aria-selected', 'true');
-
-      var targetPanel = document.getElementById(targetId);
-      if (!targetPanel || !targetPanel.parentElement) return;
-      Array.prototype.forEach.call(targetPanel.parentElement.children, function (panel) {
-        if (panel.hasAttribute && panel.hasAttribute('data-workout-tab-panel')) {
-          panel.classList.toggle('is-tab-active', panel.id === targetId);
-        }
-      });
+      showPanel(targetId);
     });
   });
+
+  // Botao de ciclo "Treino" do bottom nav (item pedido pelo Renan): um SO'
+  // slot da nav alterna Treino -> Cardio -> Periodizacao -> Treino a cada
+  // toque, em vez de 3 botoes fixos (nav so' tem espaco pros 5 de sempre).
+  // Cardio/Periodizacao saem da lista de alvos quando o programa nao tem
+  // esse dado (data-cycle-targets vem filtrado pelo template, ver acima).
+  // Chegar de OUTRO botao sempre reseta pro primeiro estado (Treino) --
+  // so' avanca no ciclo quando o proprio botao JA esta ativo.
+  var cycleNav = document.querySelector('[data-workout-cycle-nav]');
+  var resetCycleToTreino = function () {}; // no-op se nao houver cycleNav (nunca deveria faltar)
+  if (cycleNav) {
+    var CYCLE_ICONS = {
+      treino: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg>',
+      cardio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="14.5" cy="4.5" r="1.7"/><path d="M10 9.5 12.5 8l2 3 3.5 1.5"/><path d="M12.5 8 9 10l-1.5 4"/><path d="M14.5 11 17 12.5l1 4.5"/><path d="M9 17.5l3-3"/></svg>',
+      periodizacao: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20v-7"/><path d="M9.5 20V8"/><path d="M15 20v-9"/><path d="M20 20V5"/></svg>',
+    };
+    var CYCLE_LABELS = { treino: 'Treino', cardio: 'Cardio', periodizacao: 'Periodização' };
+    var cycleTargets = cycleNav.getAttribute('data-cycle-targets').split('|');
+    var cycleIndex = 0;
+
+    function cycleKeyOf(targetId) {
+      return targetId.replace('workout-panel-', '');
+    }
+
+    function showCycleState(index) {
+      cycleIndex = index;
+      var targetId = cycleTargets[cycleIndex];
+      var key = cycleKeyOf(targetId);
+      cycleNav.querySelector('[data-cycle-icon]').innerHTML = CYCLE_ICONS[key];
+      cycleNav.querySelector('[data-cycle-label]').textContent = CYCLE_LABELS[key];
+
+      var navGroup = cycleNav.closest('[data-workout-tab-nav]') || document;
+      clearNavActive(navGroup);
+      cycleNav.classList.add('is-active');
+      cycleNav.setAttribute('aria-selected', 'true');
+      showPanel(targetId);
+    }
+
+    cycleNav.addEventListener('click', function () {
+      var isActive = cycleNav.classList.contains('is-active');
+      showCycleState(isActive ? (cycleIndex + 1) % cycleTargets.length : 0);
+    });
+
+    // Treino e' sempre cycleTargets[0] (garantido pelo template) -- usado
+    // pelo atalho de "dia da semana" do Início abaixo, que precisa
+    // ATERRISSAR em Treino especificamente, nunca so' "avancar o ciclo"
+    // (diferente de um clique de verdade no botao).
+    resetCycleToTreino = function () {
+      showCycleState(0);
+    };
+  }
 
   // Atalhos que pulam telas (ex.: dia da semana em Início -> Treino + o
   // sub-dia certo). Deliberadamente FORA do NodeList `tabs` acima: um
@@ -428,8 +583,16 @@ PONTOS CRITICOS:
     jumpButton.addEventListener('click', function () {
       var panelTarget = jumpButton.getAttribute('data-workout-jump-panel');
       var dayTarget = jumpButton.getAttribute('data-workout-jump-day');
-      var navButton = document.querySelector('.workout-mobile-nav [data-workout-tab-target="' + panelTarget + '"]');
-      if (navButton) navButton.click();
+      if (panelTarget === 'workout-panel-treino') {
+        // Treino nao tem mais [data-workout-tab-target] fixo (virou o
+        // botao de ciclo acima) -- reseta pro primeiro estado do ciclo em
+        // vez de simular clique (que AVANÇARIA o ciclo se ja estivesse em
+        // Cardio/Periodizacao).
+        resetCycleToTreino();
+      } else {
+        var navButton = document.querySelector('.workout-mobile-nav [data-workout-tab-target="' + panelTarget + '"]');
+        if (navButton) navButton.click();
+      }
       if (dayTarget) {
         var dayButton = document.getElementById(dayTarget);
         if (dayButton) dayButton.click();
