@@ -257,6 +257,7 @@ class StudentIdentityFlowTests(TestCase):
             provider='google',
             email='novo.aluno@example.com',
             provider_subject='google-mass-box-subject',
+            photo_url='',
         )
         build_provider_mock.return_value = provider
 
@@ -300,6 +301,7 @@ class StudentIdentityFlowTests(TestCase):
             provider='google',
             email='aluno@example.com',
             provider_subject='google-imported-lead-subject',
+            photo_url='',
         )
         build_provider_mock.return_value = provider
 
