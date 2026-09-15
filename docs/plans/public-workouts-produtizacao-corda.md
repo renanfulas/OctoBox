@@ -1878,6 +1878,52 @@ bloqueio).
 >   real nos dois temas, incluindo o popover de jargão e os deltas de
 >   indicador com dados reais da franciele.
 
+> **Atualização (terceira rodada — Treino "simples demais" + Perfil igual
+> ao app dos alunos, pedido explícito do Renan com screenshot de
+> referência):**
+> - **Achado real, não ambiguidade**: o parser da Onda A2 nunca perdeu a
+>   quebra Prep/Feeder/Top/AMRAP — `reps_spec` já guarda o texto verbatim do
+>   `gym-reps` legado (ex. `"2-3× Prep → 1× Feeder → 3× Top (6-8)"`,
+>   conferido no payload publicado de verdade do bruno). O que sumiu foi
+>   só a APRESENTAÇÃO: a fundação B3 original espremia tudo numa linha só
+>   de 0.8rem. `reps_phases` (`public_workouts_extras.py`) quebra o texto
+>   em "→" e o template desenha um chip colorido por fase (reutiliza as
+>   bolinhas de `glossary_highlight` já validadas) — sem tocar
+>   parser/schema/dado publicado. `rir_spec` (nota do Top) vira uma linha
+>   logo abaixo. `reps_spec` sem "→" continua na linha simples de sempre.
+> - **Perfil**: reestruturado pra bater com o Perfil do app do aluno
+>   (screenshot de referência do Renan) — cabeçalho avatar grande + nome
+>   completo + e-mail, card "Conta" (Dados pessoais/Pagamentos/Tema), card
+>   "Versões do programa" no lugar de "Trocar de box"/"Solicitar
+>   congelamento"/"Entrar com convite" (conceitos de aluno-de-box sem
+>   equivalente no corredor solo — confirmado com o Renan via pergunta
+>   direta antes de implementar). "Sair da conta" ganhou view nova
+>   (`PublicWorkoutSignOutView`, `POST /renan/<slug>/sair`) que apaga o
+>   cookie de posse B0 — o corredor não tem login de sessão ainda (fases
+>   B/C), então isto é fundação visual/funcional pronta pra quando essa
+>   fase ligar, não uma barreira de acesso de verdade hoje (quem reabrir
+>   `/renan/<slug>` recebe o cookie de volta automaticamente).
+> - Mais 1 ponto do MESMO bug de alias `--ink` congelado (ver rodada
+>   anterior): `.workout-profile-row` usava `color: inherit`, puxando o
+>   `body` stale no tema escuro — o valor à direita da linha (e-mail em
+>   "Dados pessoais") ficava ilegível. Trocado por `--theme-text-primary`
+>   direto, mesmo padrão já aplicado no resto do arquivo.
+> - **Investigado, NÃO implementado ainda (fatia separada, dado real em
+>   produção)**: "o treino de cardio sumiu" é real pra 8 dos 10 clientes —
+>   o parser só extrai blocos `.ex`; blocos de aquecimento/cardio no
+>   formato `.c-card`/`.stage-title` ("Etapa 1 - Mobilidade", "Etapa 3 -
+>   Cardio") nunca foram capturados. Achado importante: `.c-card` é o MESMO
+>   componente usado pra plano alimentar (só no rafael) — confirmado que os
+>   cards de refeição ficam estruturalmente FORA de qualquer `.session`,
+>   então escopar a extração a "`.c-card` dentro de `.session`" evita
+>   ingerir dieta como se fosse exercício, sem precisar inspecionar texto
+>   de `.stage-title`. Fica pra uma fatia própria (parser + testes +
+>   dry-run comparado contra os 10 HTMLs antes de publicar de verdade,
+>   mesmo processo da migração original da Onda A2) — extensão de contrato
+>   já "congelado" com republicação de dado real de cliente pagante merece
+>   revisão isolada, não misturada com o resto deste lote (puramente
+>   visual, sem tocar payload).
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
