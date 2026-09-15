@@ -193,11 +193,14 @@ body[data-theme="dark"] .smart-paste-card .coach-wod-editor-head .eyebrow {
 
 /*
  * Campo de data (week_start): o global input tem min-height: 48px e 1fr de largura.
- * Aqui o campo deve mostrar só "dd/mm" — tamanho fixo, compacto ao lado do botão.
- * width em ch: "dd/mm" = 5 chars + padding interno ≈ 9ch totais.
+ * Aqui o campo deve mostrar "dd/mm/aaaa" — tamanho fixo, compacto ao lado do botão.
+ * width em ch: "dd/mm/aaaa" = 10 chars + padding interno ≈ 13ch totais.
+ * (Antes de incluir o ano, o campo mostrava só "dd/mm" e cabia em 9ch — o valor
+ * cresceu quando o fix de "calendario descartava o ano" passou a gravar/exibir
+ * o ano sempre, mas o campo ficou pequeno demais e cortava o ultimo digito.)
  */
 .smart-paste-date-input-wrap input[data-smart-date-input] {
-    width: 9ch;
+    width: 13ch;
     min-width: 0;
     min-height: 40px;
     height: 40px;
@@ -1340,7 +1343,7 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
 
 @media (max-width: 720px) {
     .smart-paste-date-input-wrap {
-        grid-template-columns: minmax(5.25rem, 5.75rem) minmax(0, 1fr);
+        grid-template-columns: minmax(7rem, 7.5rem) minmax(0, 1fr);
         justify-content: stretch;
         width: 100%;
     }
@@ -1458,7 +1461,7 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
     }
 
     .smart-paste-date-input-wrap {
-        grid-template-columns: minmax(4.9rem, 5.35rem) minmax(0, 1fr);
+        grid-template-columns: minmax(6.5rem, 7rem) minmax(0, 1fr);
         gap: 0.5rem;
     }
 
