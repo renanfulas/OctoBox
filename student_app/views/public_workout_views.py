@@ -29,6 +29,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 from django.views.generic import View
@@ -635,6 +636,11 @@ class PublicWorkoutPreviewView(View):
       visitante anonimo ve o programa prescrito, sem historico. Mesma
       limitacao que a pagina de hoje ja tem (o tracker legado tambem e
       so local ao aparelho, nunca sincroniza entre dispositivos).
+    - Seta o MESMO cookie de posse do B0 que PublicWorkoutDetailView —
+      a aba Avaliacao do template novo e 100% client-side (assessments.js
+      -> GET /renan/<slug>/avaliacoes.json, PublicWorkoutAssessmentsView),
+      que exige esse cookie. Sem ele, a aba sempre 404 mesmo com o resto
+      da pagina funcionando (achado ao verificar visualmente).
     """
 
     def get(self, request, plan_slug, *args, **kwargs):
@@ -653,16 +659,30 @@ class PublicWorkoutPreviewView(View):
 
         _confirm_login_session_owns_slug_or_404(request, plan_slug)
 
+        # Mesmo cookie de posse do B0 que PublicWorkoutDetailView ja seta —
+        # sem ele, a aba Avaliacao (100% client-side via assessments.js,
+        # GET /renan/<slug>/avaliacoes.json) sempre 404 aqui, mesmo com o
+        # resto da pagina funcionando. get_token() pelo mesmo motivo de la:
+        # marca o cookie CSRF pro POST de autoavaliacao online funcionar.
+        from django.middleware.csrf import get_token
+
+        get_token(request)
+
         from student_identity.public_workout_session import get_public_workout_account_id_from_request
 
         account_id = get_public_workout_account_id_from_request(request)
         load_history: list = []
         one_rep_max_by_movement: dict = {}
         trends_by_movement: dict = {}
+        account_email = None
         if account_id is not None:
             load_history = list_load_history(account_id=account_id)
             one_rep_max_by_movement = build_student_package(account_id=account_id, slug=plan_slug)['one_rep_max_by_movement']
             trends_by_movement = build_weekly_review(account_id=account_id)['trends_by_movement']
+
+            from public_workouts.models import PublicWorkoutAccount
+
+            account_email = PublicWorkoutAccount.objects.filter(pk=account_id).values_list('email', flat=True).first()
 
         html = render_to_string('public_workouts/workout.html', {
             'program': program,
@@ -673,8 +693,19 @@ class PublicWorkoutPreviewView(View):
             'trends_by_movement': trends_by_movement,
             'plan_slug': plan_slug,
             'movement_labels': build_movement_label_lookup(program),
+            'account_email': account_email,
         })
-        return HttpResponse(html)
+        response = HttpResponse(html)
+        response.set_signed_cookie(
+            PUBLIC_WORKOUT_OWNER_COOKIE,
+            plan_slug,
+            salt=PUBLIC_WORKOUT_OWNER_COOKIE_SALT,
+            max_age=PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE,
+            httponly=True,
+            samesite='Lax',
+            secure=not settings.DEBUG,
+        )
+        return response
 
 
 class PublicWorkoutManifestView(View):
@@ -757,6 +788,25 @@ class PublicWorkoutOfflineView(View):
             {'plans': tuple(PUBLIC_WORKOUT_LIBRARY.values())},
         )
         return HttpResponse(html)
+
+
+class PublicWorkoutSignOutView(View):
+    """POST /renan/<slug>/sair — "Sair da conta" da tela Perfil (fundacao B3,
+    pedido do Renan pra fechar o paralelo com o app do aluno).
+
+    So apaga o cookie de posse (PUBLIC_WORKOUT_OWNER_COOKIE, B0) — o
+    corredor ainda nao tem login de sessao (fases B/C da Onda B3), entao
+    hoje isto e' groundwork visual/funcional pra quando essa fase ligar, nao
+    uma barreira de acesso de verdade: quem voltar a abrir /renan/<slug>
+    ganha o cookie de volta automaticamente (PublicWorkoutDetailView.get
+    sempre re-seta), so os endpoints de leitura/escrita que dependem dele
+    ficam temporariamente sem posse ate a proxima visita.
+    """
+
+    def post(self, request, plan_slug, *args, **kwargs):
+        response = redirect('public-workout-offline')
+        response.delete_cookie(PUBLIC_WORKOUT_OWNER_COOKIE, samesite='Lax')
+        return response
 
 
 class PublicWorkoutLocalStorageBackupView(View):

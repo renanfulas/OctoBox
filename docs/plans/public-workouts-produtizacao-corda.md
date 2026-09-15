@@ -1866,6 +1866,109 @@ bloqueio).
 >   resto do arquivo; `student_name`/`assessment_report`/`customer_portal_url`
 >   são contexto opcional até uma view de verdade alimentá-los.
 
+> **Atualização (segunda rodada de refinamento visual, pedido explícito do
+> Renan após ver a fundação acima — mesma exceção a D.4 já concedida):**
+> - **Início**: ícone de chama SVG + trilho de dias gamificado — dia
+>   prescrito é `<button>` clicável que pula direto pra Treino no dia certo
+>   (`data-workout-jump-panel`/`-jump-day`, mecanismo próprio que só simula
+>   `.click()` nos botões reais, nunca duplica o estado `is-active`).
+> - **Avaliação**: painel deixou de ser reimplementação própria — passou a
+>   **reaproveitar `assessments.js`/`assessments.css` inalterados** (mesmo
+>   script/CSS já validado nos 10 templates legados: silhueta SVG, gauges de
+>   RCQ/%gordura com bola+gradiente, gráfico de peso, timeline, formulário).
+>   `mountPanel()` ganhou suporte a montar em `#workout-panel-avaliacao`
+>   (elemento novo) sem tocar o caminho legado (`.tabs`/`#tab-avaliacoes`).
+>   IMC/RCQ/%gordura ganharam **delta desde a 1ª avaliação** (seta ▲/▼),
+>   estendendo `_build_indicators` (não é um dos 3 contratos congelados
+>   S1/S2/S3 — `build_report` pode crescer aditivamente).
+> - **Treino**: card de movimento rastreado agora é clicável (`role="button"`,
+>   Enter/Espaço) e alterna o widget "registrar carga hoje" (some por padrão,
+>   `hidden`). Termos de jargão de treino (RIR, AMRAP, Feeder, Top, Prep —
+>   conferidos contra os 10 payloads reais publicados, não adivinhados) viram
+>   uma "bolinha" clicável com definição (`glossary_highlight`,
+>   `public_workouts_extras.py`), popover `position:fixed` posicionado por
+>   `getBoundingClientRect()` (os cards têm `overflow:hidden` pro
+>   decor-topstripe — `position:absolute` cortaria o popover).
+> - **2 bugs reais achados e corrigidos nesta verificação** (não eram
+>   ambíguos — reproduzidos e resolvidos):
+>   1. **Alinhamento "comendo o topo" em Cargas/Perfil**: `.workout-block-card`
+>      tinha `padding: 0` (pensado só pra tabela de versões, que compensava
+>      com padding próprio) + a regra que restaurava padding pros outros
+>      cards do antigo painel único "Histórico" (`.workout-history-panel
+>      .student-card`) ficou órfã quando esse painel virou Cargas + Perfil
+>      separados — nunca foi migrada. Início nunca teve o bug porque usa
+>      `.workout-summary-card`, não `.workout-block-card`.
+>   2. **Contraste ilegível no tema escuro** (tabela "Versões do programa" +
+>      linhas "Pagamentos"/"Tema" em Perfil): `body { color: var(--ink) }`
+>      (`tokens.css`) e `td { color: var(--ink) }`/`th { color:
+>      var(--legacy-copy-strong) }` (`components/tables.css`) usam aliases
+>      "legacy compatibility" resolvidos **uma única vez em `:root`** — CSS
+>      custom property herda o VALOR JÁ RESOLVIDO, não a referência, então
+>      `--ink` fica travado no tom claro mesmo com `body[data-theme="dark"]`
+>      ativo (que só redeclara `--theme-text-primary`, nunca `--ink`) — mesmo
+>      bug já documentado em `static/css/access/overview.css` pra outro
+>      componente. Resto do template escapa do bug porque usa
+>      `--theme-text-*`/`--brand` **direto** (`.student-card h2`, `--brand`
+>      via `[data-accent-variant]`, `.workout-movement-copy span`), nunca via
+>      alias. Corrigido local (`workout-shell.css`), sem tocar `tokens.css`
+>      nem `components/tables.css` (compartilhados, usados por outras telas
+>      que não têm esse problema por outro motivo).
+> - **Achado, não corrigido (fora de escopo desta rodada)**: o formulário de
+>   avaliação (`assessments.js`/`.assess-*`) mantém fundo **branco fixo** no
+>   tema escuro — texto continua legível (contraste OK), é só inconsistência
+>   visual, não o bug de legibilidade acima. Esse CSS é compartilhado com os
+>   10 templates legados em produção — precisa de decisão explícita antes de
+>   mexer (blast radius maior que os dois bugs acima).
+> - Suíte completa (275 testes) verde após o lote; verificado num Chromium
+>   real nos dois temas, incluindo o popover de jargão e os deltas de
+>   indicador com dados reais da franciele.
+
+> **Atualização (terceira rodada — Treino "simples demais" + Perfil igual
+> ao app dos alunos, pedido explícito do Renan com screenshot de
+> referência):**
+> - **Achado real, não ambiguidade**: o parser da Onda A2 nunca perdeu a
+>   quebra Prep/Feeder/Top/AMRAP — `reps_spec` já guarda o texto verbatim do
+>   `gym-reps` legado (ex. `"2-3× Prep → 1× Feeder → 3× Top (6-8)"`,
+>   conferido no payload publicado de verdade do bruno). O que sumiu foi
+>   só a APRESENTAÇÃO: a fundação B3 original espremia tudo numa linha só
+>   de 0.8rem. `reps_phases` (`public_workouts_extras.py`) quebra o texto
+>   em "→" e o template desenha um chip colorido por fase (reutiliza as
+>   bolinhas de `glossary_highlight` já validadas) — sem tocar
+>   parser/schema/dado publicado. `rir_spec` (nota do Top) vira uma linha
+>   logo abaixo. `reps_spec` sem "→" continua na linha simples de sempre.
+> - **Perfil**: reestruturado pra bater com o Perfil do app do aluno
+>   (screenshot de referência do Renan) — cabeçalho avatar grande + nome
+>   completo + e-mail, card "Conta" (Dados pessoais/Pagamentos/Tema), card
+>   "Versões do programa" no lugar de "Trocar de box"/"Solicitar
+>   congelamento"/"Entrar com convite" (conceitos de aluno-de-box sem
+>   equivalente no corredor solo — confirmado com o Renan via pergunta
+>   direta antes de implementar). "Sair da conta" ganhou view nova
+>   (`PublicWorkoutSignOutView`, `POST /renan/<slug>/sair`) que apaga o
+>   cookie de posse B0 — o corredor não tem login de sessão ainda (fases
+>   B/C), então isto é fundação visual/funcional pronta pra quando essa
+>   fase ligar, não uma barreira de acesso de verdade hoje (quem reabrir
+>   `/renan/<slug>` recebe o cookie de volta automaticamente).
+> - Mais 1 ponto do MESMO bug de alias `--ink` congelado (ver rodada
+>   anterior): `.workout-profile-row` usava `color: inherit`, puxando o
+>   `body` stale no tema escuro — o valor à direita da linha (e-mail em
+>   "Dados pessoais") ficava ilegível. Trocado por `--theme-text-primary`
+>   direto, mesmo padrão já aplicado no resto do arquivo.
+> - **Investigado, NÃO implementado ainda (fatia separada, dado real em
+>   produção)**: "o treino de cardio sumiu" é real pra 8 dos 10 clientes —
+>   o parser só extrai blocos `.ex`; blocos de aquecimento/cardio no
+>   formato `.c-card`/`.stage-title` ("Etapa 1 - Mobilidade", "Etapa 3 -
+>   Cardio") nunca foram capturados. Achado importante: `.c-card` é o MESMO
+>   componente usado pra plano alimentar (só no rafael) — confirmado que os
+>   cards de refeição ficam estruturalmente FORA de qualquer `.session`,
+>   então escopar a extração a "`.c-card` dentro de `.session`" evita
+>   ingerir dieta como se fosse exercício, sem precisar inspecionar texto
+>   de `.stage-title`. Fica pra uma fatia própria (parser + testes +
+>   dry-run comparado contra os 10 HTMLs antes de publicar de verdade,
+>   mesmo processo da migração original da Onda A2) — extensão de contrato
+>   já "congelado" com republicação de dado real de cliente pagante merece
+>   revisão isolada, não misturada com o resto deste lote (puramente
+>   visual, sem tocar payload).
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |

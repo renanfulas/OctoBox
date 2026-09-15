@@ -38,6 +38,7 @@ from .public_workout_views import (
     PublicWorkoutRecordAssessmentView,
     PublicWorkoutRecordLoadView,
     PublicWorkoutServiceWorkerView,
+    PublicWorkoutSignOutView,
 )
 from .pwa_views import (
     StudentManifestView,
@@ -72,6 +73,7 @@ __all__ = [
     'PublicWorkoutRecordAssessmentView',
     'PublicWorkoutRecordLoadView',
     'PublicWorkoutServiceWorkerView',
+    'PublicWorkoutSignOutView',
     'StudentAddRmView',
     'StudentCancelAttendanceView',
     'StudentClearanceView',

@@ -35,7 +35,7 @@ from datetime import date as _date
 
 from django import template
 from django.utils import timezone
-from django.utils.html import escape, format_html
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from public_workouts.dashboard import build_program_summary, build_week_overview
@@ -48,6 +48,19 @@ def program_summary(payload: dict) -> dict:
     """Wrapper de template pra dashboard.build_program_summary — o template
     so tem `program` (o payload) no contexto, nao precisa de var nova."""
     return build_program_summary(payload)
+
+
+@register.simple_tag
+def week_streak_label(week_days) -> str:
+    """'2 de 4 dias com treino' — mesma logica de complete_count do app do
+    aluno (student_shell.py), so que o denominador aqui e' os dias
+    PRESCRITOS (has_program), nao os 7 dias corridos — programa do
+    corredor tem dia de descanso fixo por semana, "0 de 7" seria enganoso."""
+    prescribed = [day for day in week_days if day.has_program]
+    if not prescribed:
+        return ''
+    completed = sum(1 for day in prescribed if day.is_complete)
+    return f'{completed} de {len(prescribed)} dia{"s" if len(prescribed) != 1 else ""} com treino'
 
 
 @register.simple_tag
@@ -98,6 +111,97 @@ def humanize_movement_slug(movement_slug: str) -> str:
     if not movement_slug:
         return ''
     return movement_slug.replace('-', ' ').capitalize()
+
+
+_GLOSSARY_TERMS = {
+    'rir': ('RIR (Reps in Reserve)', 'Repetições que ainda sobrariam na reserva se a série continuasse até a falha. Ex.: RIR 2 = parou a 2 repetições da falha.'),
+    'amrap': ('AMRAP (As Many Reps As Possible)', 'Fazer o máximo de repetições possível na série, dentro da técnica segura.'),
+    'feeder': ('Série Feeder', 'Série leve de ativação antes da série principal (Top) — prepara a articulação e o padrão de movimento sem gerar fadiga.'),
+    'top': ('Série Top (Top Set)', 'A série mais pesada do exercício no dia — o estímulo-alvo do treino, feita depois do aquecimento/feeder.'),
+    'prep': ('Série Prep (preparatória)', 'Série de aquecimento específico com carga leve/moderada, antes das séries de trabalho.'),
+}
+
+_GLOSSARY_PATTERN = re.compile(
+    r'\b(' + '|'.join(re.escape(term) for term in _GLOSSARY_TERMS) + r')\b',
+    re.IGNORECASE,
+)
+
+
+@register.filter
+def glossary_highlight(text: str):
+    """Marca termos de jargao de treino (RIR, AMRAP, Feeder, Top, Prep) dentro
+    de reps_spec/rir_spec (texto livre do treinador, schema.py) com uma
+    'bolinha' clicavel que revela a definicao — pedido do Renan pra quem
+    nao conhece o dicionario de treino.
+
+    So estes 5 termos: sao os que realmente aparecem nos 10 programas reais
+    publicados (conferido via payload, nao adivinhado) — nao generaliza pra
+    qualquer palavra tecnica, que arriscaria falso-positivo (ex. 'top' dentro
+    de 'topo' e' evitado com \\b, mas uma lista maior sem curadoria arriscaria
+    marcar termo errado como se fosse dicionario de treino).
+
+    Retorna SafeString: escapa o texto ao redor, so o termo casado vira HTML.
+    """
+    if not text:
+        return ''
+
+    pieces = []
+    last_end = 0
+    for match in _GLOSSARY_PATTERN.finditer(text):
+        pieces.append(escape(text[last_end:match.start()]))
+        term = match.group(0)
+        label, description = _GLOSSARY_TERMS[term.lower()]
+        pieces.append(
+            '<span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é {label}?">'
+            '{term}<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup>'
+            '<span class="workout-glossary-tip" role="tooltip"><strong>{label}</strong>{description}</span>'
+            '</span>'.format(
+                label=escape(label),
+                term=escape(term),
+                description=escape(description),
+            )
+        )
+        last_end = match.end()
+    pieces.append(escape(text[last_end:]))
+    return mark_safe(''.join(pieces))
+
+
+_PHASE_DETECTORS = (
+    ('prep', re.compile(r'\bprep', re.IGNORECASE)),
+    ('feeder', re.compile(r'\bfeeder', re.IGNORECASE)),
+    ('top', re.compile(r'\btop\b', re.IGNORECASE)),
+    ('max', re.compile(r'\bamrap\b|\bmax\b', re.IGNORECASE)),
+)
+
+
+def _detect_phase(segment: str) -> str:
+    for phase, pattern in _PHASE_DETECTORS:
+        if pattern.search(segment):
+            return phase
+    return 'plain'
+
+
+@register.filter
+def reps_phases(reps_spec: str):
+    """Quebra `reps_spec` em fases (Prep/Feeder/Top/AMRAP) quando o texto do
+    treinador junta varias com ' → ' (ex.: '2-3× Prep → 1× Feeder → 3× Top
+    (6-8)', formato de `gym-reps` nos 8 dos 10 templates legados que tem
+    esse padrao — ver parser.py). Devolve lista de dicts {text, phase} pro
+    template desenhar um "chip" colorido por fase (pedido do Renan: "voltar
+    o padrao de feeder/topset/amrap"), ou lista VAZIA quando so' ha 1 fase —
+    nesse caso o template mantem a linha simples de sempre (nao vale a pena
+    um chip grande pra 'reps_spec': '3x12', a maioria dos movimentos sem
+    quebra de fase).
+
+    Cada `text` ja passa por glossary_highlight (SafeString) — o template
+    nao precisa aplicar o filtro de novo.
+    """
+    if not reps_spec:
+        return []
+    segments = [segment.strip() for segment in reps_spec.split('→') if segment.strip()]
+    if len(segments) < 2:
+        return []
+    return [{'text': glossary_highlight(segment), 'phase': _detect_phase(segment)} for segment in segments]
 
 
 @register.filter
@@ -254,63 +358,3 @@ def personal_record(entries: list[dict]) -> dict:
         'performed_on': best.get('performed_on'),
         'reps': best.get('reps'),
     }
-
-
-# Vocabulario fechado, extraido das 10 paginas legadas (.st-p/.st-f/.st-t/.st-m
-# — ver docs/plans/public-workouts-produtizacao-corda.md, nota da Onda B3):
-# cada autor de plano escrevia um rotulo um pouco diferente pro mesmo estagio
-# ("Top Set" vs "Top 1/2/3", "Max Set" vs "AMRAP") — normaliza pra 4
-# categorias fixas em vez de uma cor por plano, como era antes.
-_SET_STAGE_PATTERN = re.compile(
-    r'(?P<prefix>\d+(?:-\d+)?×\s*)'
-    r'(?P<stage>Prepara(?:t[oó]ria|t\.)?|Prep|Feeder|Top(?:\s*\d+)?(?:\s*Set)?|Max(?:\s*Set)?|AMRAP)',
-    re.IGNORECASE,
-)
-
-
-def _set_stage_category(stage_text: str) -> str:
-    lowered = stage_text.strip().lower()
-    if lowered.startswith('prep'):
-        return 'prep'
-    if lowered.startswith('feeder'):
-        return 'feeder'
-    if lowered.startswith('top'):
-        return 'top'
-    return 'max'  # max/amrap
-
-
-@register.filter
-def highlight_set_stages(reps_spec: str) -> str:
-    """Onda B3 — legenda de tipo de serie (Preparatória/Feeder/Top Set/Max
-    Set), sem campo novo em schema.py (contrato da Onda S0, D.5 — muda so
-    com acordo das duas frentes). `reps_spec` ja carrega o estagio como
-    TEXTO livre (ex. "2-3× Prep → 1× Feeder → 3× Top (6-8)", um segmento
-    por estagio dentro do mesmo movimento) — este filtro so pinta a
-    palavra-chave que ja esta la, nao inventa dado novo. Segmento que nao
-    bate o padrao (cardio, HIIT — sem conceito de estagio) sai sem marcacao,
-    so o texto original escapado.
-
-    Alvo de `highlight_set_stages` e' HTML de proposito (`mark_safe` via
-    format_html) — quem escreve `reps_spec` e o parser do repo (migrate_legacy_workouts),
-    nunca input de aluno, mas escapa a mesma forma pra nao depender disso."""
-    if not reps_spec:
-        return ''
-
-    parts = []
-    for segment in reps_spec.split(' → '):
-        match = _SET_STAGE_PATTERN.search(segment)
-        if not match:
-            parts.append(escape(segment))
-            continue
-
-        category = _set_stage_category(match.group('stage'))
-        before = escape(segment[: match.start()])
-        after = escape(segment[match.end() :])
-        badge = format_html(
-            '<span class="workout-set-stage workout-set-stage--{}">{}</span>',
-            category,
-            match.group('stage'),
-        )
-        parts.append(format_html('{}{}{}{}', before, escape(match.group('prefix')), badge, after))
-
-    return mark_safe(' → '.join(str(part) for part in parts))

@@ -192,6 +192,42 @@ class ServicesTests(TestCase):
         self.assertIsNotNone(report['indicators']['whr'])
         self.assertEqual(report['indicators']['body_fat_percent']['source'], 'navy_estimate')
 
+    def test_indicators_include_delta_since_first_assessment(self):
+        # Renan pediu "comparacao desde a 1a avaliacao em tudo", nao so no
+        # peso -- IMC/RCQ/%gordura tambem precisam do delta.
+        record_assessment(
+            plan_slug='rafael',
+            measured_at=date(2026, 1, 1),
+            weight_kg=75,
+            measurements={'cintura': 88, 'pescoco': 39, 'quadril': 98},
+        )
+        record_assessment(
+            plan_slug='rafael',
+            measured_at=date(2026, 2, 1),
+            weight_kg=72,
+            measurements={'cintura': 84, 'pescoco': 39, 'quadril': 98},
+        )
+
+        report = build_report(plan_slug='rafael', sex='M', height_cm=175)
+
+        self.assertLess(report['indicators']['bmi']['delta'], 0)
+        self.assertLess(report['indicators']['whr']['delta'], 0)
+        self.assertLess(report['indicators']['body_fat_percent']['delta'], 0)
+
+    def test_indicator_delta_is_zero_with_a_single_assessment(self):
+        # first e last sao a MESMA avaliacao (so existe uma) -- mesmo
+        # comportamento que summary.weight_kg.delta ja tem hoje: 0.0
+        # ("sem mudanca"), nao None.
+        record_assessment(
+            plan_slug='rafael', measured_at=date(2026, 1, 1), weight_kg=75,
+            measurements={'cintura': 88, 'pescoco': 39, 'quadril': 98},
+        )
+
+        report = build_report(plan_slug='rafael', sex='M', height_cm=175)
+
+        self.assertEqual(report['indicators']['bmi']['delta'], 0.0)
+        self.assertEqual(report['indicators']['whr']['delta'], 0.0)
+
     def test_manual_body_fat_override_wins_over_navy_estimate(self):
         record_assessment(
             plan_slug='rafael',

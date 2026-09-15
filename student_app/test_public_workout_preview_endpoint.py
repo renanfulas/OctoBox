@@ -19,6 +19,7 @@ from django.urls import reverse
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
 from public_workouts.schema import build_example_payload
 from public_workouts.services import publish_program, record_load
+from student_app.views.public_workout_views import PUBLIC_WORKOUT_OWNER_COOKIE
 from student_identity.public_workout_session import (
     PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
     build_public_workout_session_value,
@@ -97,6 +98,19 @@ class PublicWorkoutPreviewEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '100,0')
+
+    def test_sets_the_same_ownership_cookie_as_the_legacy_detail_view(self):
+        # A aba Avaliacao do template novo e 100% client-side
+        # (assessments.js -> GET /renan/<slug>/avaliacoes.json), que exige
+        # este MESMO cookie de posse do B0 — sem ele a aba sempre 404,
+        # mesmo com o resto da pagina funcionando (achado ao verificar
+        # visualmente com Playwright).
+        publish_program(slug='bruno', payload=build_example_payload())
+
+        response = self.client.get(self._url('bruno'))
+
+        self.assertIn(PUBLIC_WORKOUT_OWNER_COOKIE, response.cookies)
+        self.assertEqual(response.cookies[PUBLIC_WORKOUT_OWNER_COOKIE]['httponly'], True)
 
     def test_shows_pt_br_movement_name_from_catalog(self):
         from public_workouts.models import PublicWorkoutMovement

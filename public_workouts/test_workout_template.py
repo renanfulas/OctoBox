@@ -12,6 +12,7 @@ POR QUE ELE EXISTE:
 """
 
 import copy
+import re
 
 from django.template.loader import render_to_string
 from django.test import TestCase
@@ -19,10 +20,11 @@ from django.test import TestCase
 from public_workouts.schema import build_example_payload
 from public_workouts.templatetags.public_workouts_extras import (
     dict_get,
-    highlight_set_stages,
+    glossary_highlight,
     humanize_movement_slug,
     load_chart_points,
     personal_record,
+    reps_phases,
     resolve_movement_display_name,
 )
 
@@ -38,8 +40,8 @@ def _render(
     movement_labels=None,
     student_name='',
     student_photo_url=None,
-    assessment_report=None,
     customer_portal_url=None,
+    account_email=None,
 ) -> str:
     return render_to_string('public_workouts/workout.html', {
         'program': payload,
@@ -52,8 +54,8 @@ def _render(
         'movement_labels': movement_labels or {},
         'student_name': student_name,
         'student_photo_url': student_photo_url,
-        'assessment_report': assessment_report,
         'customer_portal_url': customer_portal_url,
+        'account_email': account_email,
     })
 
 
@@ -129,6 +131,8 @@ class WorkoutTemplateRenderTests(TestCase):
     def test_is_tracked_shows_load_input_row(self):
         # Item 8 da Onda B3: movimento rastreado ganha a caixinha de
         # "registrar carga de hoje" (queue pro outbox em load_tracker.js).
+        # Colapsada por padrao (item 4 do pedido do Renan) -- so' abre no
+        # clique do card, ver test_load_input_widget_starts_hidden.
         html = _render(build_example_payload())  # is_tracked=True no exemplo
 
         self.assertIn('data-workout-load-input', html)
@@ -136,13 +140,28 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-save', html)
         self.assertIn(f"data-movement-slug=\"{build_example_payload()['days'][0]['blocks'][0]['movements'][0]['movement_slug']}\"", html)
 
+    def test_load_input_widget_starts_hidden_and_card_is_clickable(self):
+        html = _render(build_example_payload())  # is_tracked=True no exemplo
+
+        self.assertIn('<div class="workout-load-input" data-workout-load-input', html)
+        self.assertIn('data-workout-load-input data-movement-slug="agachamento-livre" data-program-id="exemplo-2026-q1" hidden', html)
+        self.assertIn('data-workout-load-toggle', html)
+
     def test_movement_not_tracked_has_no_load_input_row(self):
         payload = build_example_payload()
         payload['days'][0]['blocks'][0]['movements'][0]['is_tracked'] = False
 
         html = _render(payload)
 
-        self.assertNotIn('data-workout-load-input', html)
+        # Substrings precisam ser especificas o suficiente pra nao confundir
+        # com o texto do <script> inline (que referencia os MESMOS nomes de
+        # atributo via querySelectorAll/hasAttribute pro toggle de clique) nem
+        # com a bolinha de glossario (glossary_highlight tambem usa
+        # role="button" aria-expanded, sempre presente independente de
+        # is_tracked) -- checa o cluster de atributos inteiro da tag de
+        # verdade, nunca so' um nome de atributo isolado.
+        self.assertNotIn('<div class="workout-load-input"', html)
+        self.assertNotIn('data-workout-load-toggle tabindex="0" role="button" aria-expanded', html)
 
     def test_body_carries_plan_slug_for_load_tracker_js(self):
         html = _render(build_example_payload(), plan_slug='giovanna')
@@ -174,33 +193,6 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(build_example_payload(), movement_labels={})
 
         self.assertIn('Agachamento livre', html)  # mesmo palpite de sempre
-
-    def test_reps_spec_highlights_set_stage_badge(self):
-        payload = build_example_payload()
-        payload['days'][0]['blocks'][0]['movements'][0]['reps_spec'] = '2× Prep → 3× Top (8-10)'
-
-        html = _render(payload)
-
-        self.assertIn('workout-set-stage--prep', html)
-        self.assertIn('workout-set-stage--top', html)
-
-    def test_shows_set_stage_legend_once(self):
-        html = _render(build_example_payload())
-
-        self.assertIn('workout-set-stage-legend', html)
-        self.assertIn('Preparatória', html)
-        self.assertIn('Feeder', html)
-        self.assertIn('Top Set', html)
-        self.assertIn('Max Set', html)
-
-    def test_set_stage_legend_is_a_collapsed_popover_by_default(self):
-        # UX: legenda em balao (clique pra abrir), nao fixa na tela —
-        # economiza espaço vertical numa pagina ja densa de tabelas.
-        html = _render(build_example_payload())
-
-        self.assertIn('data-workout-legend-trigger', html)
-        self.assertIn('aria-expanded="false"', html)
-        self.assertIn('data-workout-legend-panel hidden>', html)
 
     def test_load_input_widget_has_stepper_and_hint(self):
         html = _render(build_example_payload())  # is_tracked=True no exemplo
@@ -424,8 +416,15 @@ class WorkoutTopbarAndNavTests(TestCase):
     def test_greeting_includes_first_name(self):
         html = _render(build_example_payload(), student_name='Juliana Silva')
 
-        self.assertIn('Juliana', html)
-        self.assertNotIn('Silva', html)  # so o primeiro nome, mesmo corte de student_shell.student_greeting
+        # so o primeiro nome, mesmo corte de student_shell.student_greeting --
+        # escopado a tag da saudacao, nao a pagina inteira: o cabecalho do
+        # Perfil (workout-profile-header__name) mostra o NOME COMPLETO de
+        # proposito (mesma estrutura do app do aluno, que tambem mostra nome
+        # completo no Perfil), entao 'Silva' aparece em outro lugar da pagina.
+        greeting_match = re.search(r'<strong class="workout-topbar-greeting">([^<]*)</strong>', html)
+        self.assertIsNotNone(greeting_match)
+        self.assertIn('Juliana', greeting_match.group(1))
+        self.assertNotIn('Silva', greeting_match.group(1))
 
     def test_greeting_without_name_still_renders(self):
         html = _render(build_example_payload(), student_name='')
@@ -462,14 +461,16 @@ class WorkoutTopbarAndNavTests(TestCase):
             self.assertIn(f'>{label}<', html)
 
     def test_week_strip_marks_prescribed_day_not_rest(self):
-        # build_example_payload tem um unico dia, day_id='seg' — os outros
-        # 6 dias da semana ficam "Descanso" (is-rest). "hoje" varia por
-        # execucao do teste, entao nao travamos qual dia especifico esta
-        # marcado is-today aqui.
+        # build_example_payload tem um unico dia, day_id='seg' — vira
+        # <button> clicavel (pula pra Treino); os outros 6 dias da semana
+        # ficam <span class="... is-rest"> (Descanso, sem clique — nao ha
+        # treino nenhum pra abrir). "hoje" varia por execucao do teste,
+        # entao nao travamos qual dia especifico esta marcado is-today.
         html = _render(build_example_payload())
 
-        self.assertIn('Treino previsto', html)
-        self.assertIn('Descanso', html)
+        self.assertIn('data-workout-jump-panel="workout-panel-treino"', html)
+        self.assertIn('data-workout-jump-day="workout-tab-seg"', html)
+        self.assertIn('is-rest" title="Descanso"', html)
 
     def test_week_strip_marks_complete_day_from_load_history(self):
         import datetime
@@ -493,36 +494,45 @@ class WorkoutTopbarAndNavTests(TestCase):
         self.assertIn('Programa de exemplo', html)
         self.assertIn('Montado pra rodar', html)
 
+    def test_week_strip_shows_flame_icon(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('workout-week-strip__flame', html)
+
+    def test_week_strip_shows_streak_label(self):
+        # build_example_payload tem 1 dia prescrito ('seg') -- "0 de 1" ou
+        # "1 de 1" dependendo se caiu carga essa semana no teste; so' checa
+        # que o rotulo aparece, sem travar o numero exato.
+        html = _render(build_example_payload())
+
+        self.assertIn('dia com treino', html)
+
+    def test_week_strip_no_streak_label_when_no_days_prescribed(self):
+        payload = build_example_payload()
+        payload['days'] = []
+
+        html = _render(payload)
+
+        self.assertNotIn('dia com treino', html)
+        self.assertNotIn('dias com treino', html)
+
 
 class WorkoutAssessmentPanelTests(TestCase):
-    def test_empty_state_without_report(self):
-        html = _render(build_example_payload(), assessment_report=None)
+    """Avaliacao nao usa contexto Django nenhum -- o painel e' montado
+    inteiro por assessments.js (fetch client-side de avaliacoes.json),
+    igual aos 10 templates legados. O template so precisa expor o
+    container certo pro mountPanel() encontrar e os assets certos."""
 
-        self.assertIn('Nenhuma avaliação registrada ainda.', html)
+    def test_panel_container_exists_and_starts_empty(self):
+        html = _render(build_example_payload())
 
-    def test_shows_weight_and_indicators_when_report_provided(self):
-        html = _render(build_example_payload(), assessment_report={
-            'summary': {
-                'weight_kg': {'current': 68.5, 'first': 72.0, 'delta': -3.5},
-                'measurements': {},
-                'first_date': '2026-01-05',
-                'last_date': '2026-03-01',
-                'count': 3,
-            },
-            'indicators': {
-                'bmi': {'value': 22.1, 'classification': {'label': 'Peso normal', 'level': 'ok'}},
-                'whr': None,
-                'body_fat_percent': {'value': 24.5, 'source': 'navy_estimate', 'classification': {'label': 'Aceitável', 'level': 'ok'}},
-            },
-        })
+        self.assertIn('<section id="workout-panel-avaliacao"', html)
 
-        # Django formata numero com separador decimal pt-BR (USE_L10N) — "," nao "."
-        # (mesma convencao ja testada acima pra 75,0% RM / 100,0 kg).
-        self.assertIn('68,5 kg', html)
-        self.assertIn('IMC 22,1', html)
-        self.assertIn('Peso normal', html)
-        self.assertIn('%Gordura 24,5% · Aceitável', html)
-        self.assertIn('3 avaliações registradas', html)
+    def test_loads_assessments_script_and_stylesheet(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('js/public_workouts/assessments.js', html)
+        self.assertIn('css/public_workouts/assessments.css', html)
 
 
 class WorkoutProfilePanelTests(TestCase):
@@ -541,6 +551,29 @@ class WorkoutProfilePanelTests(TestCase):
         html = _render(build_example_payload())
 
         self.assertIn('data-ui="theme-toggle"', html)
+
+    def test_profile_header_shows_full_name_and_email(self):
+        html = _render(build_example_payload(), student_name='Juliana Silva', account_email='juliana@example.com')
+
+        self.assertIn('<strong class="workout-profile-header__name">Juliana Silva</strong>', html)
+        self.assertIn('juliana@example.com', html)
+
+    def test_profile_header_omits_email_when_absent(self):
+        html = _render(build_example_payload(), student_name='Juliana Silva', account_email=None)
+
+        self.assertNotIn('workout-profile-header__email', html)
+
+    def test_dados_pessoais_row_shows_email(self):
+        html = _render(build_example_payload(), account_email='juliana@example.com')
+
+        self.assertIn('Dados pessoais', html)
+        self.assertIn('juliana@example.com', html)
+
+    def test_signout_button_present_with_slug_scoped_url(self):
+        html = _render(build_example_payload(), plan_slug='juliana')
+
+        self.assertIn('Sair da conta', html)
+        self.assertIn('data-signout-url="/renan/juliana/sair"', html)
 
 
 class HumanizeMovementSlugFilterTests(TestCase):
@@ -760,6 +793,7 @@ class LoadChartPointsFilterTests(TestCase):
         self.assertIsNone(result['latest_weight_kg'])
         self.assertIsNone(result['delta_weight_kg'])
         self.assertEqual(result['trend'], 'flat')
+        self.assertEqual(result['area_points_attr'], '')
 
 
 class PersonalRecordFilterTests(TestCase):
@@ -794,34 +828,6 @@ class PersonalRecordFilterTests(TestCase):
         self.assertEqual(result['weight_kg'], 60.0)
 
 
-class HighlightSetStagesFilterTests(TestCase):
-    def test_empty_string_stays_empty(self):
-        self.assertEqual(highlight_set_stages(''), '')
-
-    def test_highlights_prep_feeder_and_top_in_one_segment_chain(self):
-        html = highlight_set_stages('2-3× Prep → 1× Feeder → 3× Top (6-8)')
-
-        self.assertIn('workout-set-stage--prep">Prep</span>', html)
-        self.assertIn('workout-set-stage--feeder">Feeder</span>', html)
-        self.assertIn('workout-set-stage--top">Top</span>', html)
-
-    def test_max_and_amrap_both_map_to_max_category(self):
-        self.assertIn('workout-set-stage--max">Max Set</span>', highlight_set_stages('2× Max Set (max reps)'))
-        self.assertIn('workout-set-stage--max">AMRAP</span>', highlight_set_stages('1× AMRAP (12 min)'))
-
-    def test_segment_without_known_stage_is_left_plain(self):
-        html = highlight_set_stages('10 min a 10-12 km/h na esteira antes de levantar.')
-
-        self.assertNotIn('workout-set-stage', html)
-        self.assertIn('10 min a 10-12 km/h na esteira antes de levantar.', html)
-
-    def test_escapes_html_in_unmatched_text(self):
-        html = highlight_set_stages('3× Top <script>alert(1)</script>')
-
-        self.assertNotIn('<script>', html)
-        self.assertIn('&lt;script&gt;', html)
-
-
 class ResolveMovementDisplayNameFilterTests(TestCase):
     def test_uses_label_when_present_in_lookup(self):
         result = resolve_movement_display_name('barbell-bench-press', {'barbell-bench-press': 'Supino reto com barra'})
@@ -845,3 +851,125 @@ class ResolveMovementDisplayNameFilterTests(TestCase):
         result = resolve_movement_display_name('wall-ball', {'wall-ball': 'Wall Ball'})
 
         self.assertEqual(result, 'Wall Ball')
+
+
+class GlossaryHighlightFilterTests(TestCase):
+    def test_wraps_known_term_with_glossary_bubble(self):
+        html = glossary_highlight('3x8-10 · RIR 2')
+
+        self.assertIn('data-workout-glossary', html)
+        self.assertIn('>RIR<', html)
+        self.assertIn('Reps in Reserve', html)
+        self.assertIn('3x8-10', html)
+
+    def test_matches_are_case_insensitive_but_word_bounded(self):
+        # 'top' precisa casar isolado (Top Set), mas NUNCA dentro de outra
+        # palavra que so' contem as mesmas letras (ex.: 'topo').
+        html = glossary_highlight('3x Top (6-8) no topo da tabela')
+
+        self.assertEqual(html.count('data-workout-glossary'), 1)
+        self.assertIn('topo da tabela', html)
+
+    def test_text_without_jargon_is_unchanged_but_escaped(self):
+        html = glossary_highlight('3x10-12')
+
+        self.assertEqual(html, '3x10-12')
+
+    def test_empty_text_returns_empty(self):
+        self.assertEqual(glossary_highlight(''), '')
+
+    def test_surrounding_text_is_html_escaped(self):
+        html = glossary_highlight('<script>alert(1)</script> RIR 3')
+
+        self.assertNotIn('<script>alert', html)
+        self.assertIn('&lt;script&gt;', html)
+
+    def test_multiple_known_terms_each_get_their_own_bubble(self):
+        html = glossary_highlight('2x Prep -> 1x Feeder -> 3x Top (6-8)')
+
+        self.assertEqual(html.count('data-workout-glossary'), 3)
+
+
+class MovementCardGlossaryRenderTests(TestCase):
+    def test_reps_spec_with_rir_renders_glossary_bubble(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reps_spec'] = '3x8-10'
+        payload['days'][0]['blocks'][0]['movements'][0]['rir_spec'] = 'RIR 2'
+
+        html = _render(payload)
+
+        self.assertIn('data-workout-glossary', html)
+        self.assertIn('Reps in Reserve', html)
+
+    def test_reps_spec_without_jargon_has_no_glossary_bubble(self):
+        # 'data-workout-glossary' sozinho aparece SEMPRE na pagina, mesmo sem
+        # nenhum termo casado — e' o nome do atributo dentro do <script>
+        # inline (delegacao de clique). O que precisa estar ausente e' a
+        # tag de verdade que glossary_highlight gera.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reps_spec'] = '3x8-10'
+        payload['days'][0]['blocks'][0]['movements'][0]['rir_spec'] = ''
+
+        html = _render(payload)
+
+        self.assertNotIn('<span class="workout-glossary-term"', html)
+
+
+class RepsPhasesFilterTests(TestCase):
+    def test_single_phase_returns_empty_list(self):
+        # reps_spec simples ("3x12", sem "→") nao vale a pena virar chip
+        # grande -- o template mantem a linha unica de sempre.
+        self.assertEqual(reps_phases('3x12'), [])
+
+    def test_empty_reps_spec_returns_empty_list(self):
+        self.assertEqual(reps_phases(''), [])
+        self.assertEqual(reps_phases(None), [])
+
+    def test_splits_multi_phase_reps_spec(self):
+        phases = reps_phases('2-3× Prep → 1× Feeder → 3× Top (6-8)')
+
+        self.assertEqual(len(phases), 3)
+        self.assertEqual(phases[0]['phase'], 'prep')
+        self.assertEqual(phases[1]['phase'], 'feeder')
+        self.assertEqual(phases[2]['phase'], 'top')
+
+    def test_amrap_detected_as_max_phase(self):
+        phases = reps_phases('2× Prep → 1× AMRAP')
+
+        self.assertEqual(phases[1]['phase'], 'max')
+
+    def test_unrecognized_phase_falls_back_to_plain(self):
+        phases = reps_phases('2× Algo → 1× Outro')
+
+        self.assertEqual(phases[0]['phase'], 'plain')
+        self.assertEqual(phases[1]['phase'], 'plain')
+
+    def test_phase_text_is_glossary_highlighted(self):
+        phases = reps_phases('2× Prep → 1× Feeder')
+
+        self.assertIn('data-workout-glossary', phases[0]['text'])
+        self.assertIn('data-workout-glossary', phases[1]['text'])
+
+
+class MovementCardPhaseChipRenderTests(TestCase):
+    def test_multi_phase_reps_spec_renders_chip_row(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reps_spec'] = '2× Prep → 3× Top (6-8)'
+        payload['days'][0]['blocks'][0]['movements'][0]['rir_spec'] = 'RIR 1-2'
+
+        html = _render(payload)
+
+        self.assertIn('workout-phase-row', html)
+        self.assertIn('workout-phase-chip--prep', html)
+        self.assertIn('workout-phase-chip--top', html)
+        self.assertIn('workout-phase-note', html)
+
+    def test_single_phase_reps_spec_keeps_plain_line(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reps_spec'] = '3x12'
+        payload['days'][0]['blocks'][0]['movements'][0]['rir_spec'] = 'RIR 2'
+
+        html = _render(payload)
+
+        self.assertNotIn('workout-phase-row', html)
+        self.assertIn('3x12', html)
