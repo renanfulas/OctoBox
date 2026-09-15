@@ -2016,6 +2016,31 @@ bloqueio).
 >   publicado de cliente pagante fica pra confirmação explícita separada,
 >   mesmo processo da migração original da Onda A2.
 
+> **Atualização (nome em português + exercício alternativo, achado real do
+> Renan revisando o Treino):**
+> - **Nomes em inglês**: `ex.name` (nome em português escrito pelo
+>   treinador, ex. "Cadeira extensora") **sempre foi capturado** pelo
+>   parser — só nunca foi guardado no payload pra exibição, apenas usado
+>   como fallback de slug quando não há `wiki-btn`. O template sempre
+>   mostrou `movement_slug` humanizado (ex. `machine-leg-extension` →
+>   "Machine leg extension", em inglês) em vez do nome real. Corrigido
+>   aditivamente: `movement.name` no payload (`parser.py`), consumido via
+>   novo filtro `movement_display_name` (`public_workouts_extras.py`) que
+>   prefere `name` e cai pro slug humanizado só quando ausente — movimento
+>   publicado antes desta fatia continua funcionando sem quebrar.
+> - **Exercício alternativo**: `.ex-var`/`.var-link` (sugestão de variação
+>   do treinador, ex. "Supino com halteres" pro Supino com barra) nunca
+>   tinha sido capturado. Achado real ao migrar: bruno.html tem um caso
+>   com **2** variações no mesmo `.ex-var` (agachamento livre sugerindo
+>   hack squat E leg press) — schema modela `variations` como lista, nunca
+>   um campo único. Exibido como linha discreta "Variação: `<link>`" logo
+>   abaixo do nome do movimento (`.workout-movement-variation`), sem
+>   competir visualmente com o nome principal.
+> - Suíte completa (339 testes) verde; verificado num Chromium real (dois
+>   temas) com dado real re-parseado da juliana — nomes em português e
+>   variação exibidos corretamente. Mesmo estágio de "aditivo, não
+>   republicado ainda" do restante desta seção.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |

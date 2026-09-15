@@ -320,6 +320,21 @@ button.workout-week-day:focus-visible {
     font-size: 0.8rem;
 }
 
+/* "Variação: <link>" (.ex-var do HTML legado — sugestao de exercicio
+   alternativo do treinador, ex.: "Supino com halteres" pro Supino com
+   barra). Reusa a cor de --brand do .workout-wiki-link nos links, mas fica
+   fora do <strong> — e' um dado secundario, nao o nome do movimento. */
+.workout-movement-variation a {
+    color: var(--brand);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.workout-movement-variation a:hover,
+.workout-movement-variation a:focus-visible {
+    text-decoration: underline;
+}
+
 /* Quebra de fase (Prep/Feeder/Top/AMRAP) de reps_spec — pedido do Renan pra
    "voltar" o padrao rico dos templates legados (colunas de sets-tbl com
    pilula colorida por tipo de serie: .st-p/.st-f/.st-t/.st-m em

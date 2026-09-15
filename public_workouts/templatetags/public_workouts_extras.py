@@ -129,6 +129,19 @@ def humanize_movement_slug(movement_slug: str) -> str:
     return movement_slug.replace('-', ' ').capitalize()
 
 
+@register.filter
+def movement_display_name(movement: dict) -> str:
+    """Nome pra exibir na tela: `name` (portugues, escrito pelo treinador —
+    aditivo, ver schema.py) quando presente; senao humaniza `movement_slug`
+    (movimento publicado ANTES desta fatia, sem `name` no payload ainda —
+    tambem cobre o fallback ja existente de slug sem wiki-btn, que usa
+    slugify(nome) e perderia acento/maiuscula mesmo tendo nome capturado)."""
+    name = (movement or {}).get('name')
+    if name:
+        return name
+    return humanize_movement_slug((movement or {}).get('movement_slug', ''))
+
+
 _GLOSSARY_TERMS = {
     'rir': ('RIR (Reps in Reserve)', 'Repetições que ainda sobrariam na reserva se a série continuasse até a falha. Ex.: RIR 2 = parou a 2 repetições da falha.'),
     'amrap': ('AMRAP (As Many Reps As Possible)', 'Fazer o máximo de repetições possível na série, dentro da técnica segura.'),

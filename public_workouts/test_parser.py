@@ -340,6 +340,105 @@ class ParseLegacyHtmlTests(SimpleTestCase):
         self.assertEqual([d['day_id'] for d in days], ['ter', 'seg'])
 
 
+class ParseNameAndVariationTests(SimpleTestCase):
+    """`ex.name` (nome em portugues escrito pelo treinador) sempre foi
+    capturado — so' era usado como fallback de slug, nunca guardado pra
+    exibicao (aluno via o slug do MuscleWiki em ingles humanizado). `.ex-var`
+    (variacao sugerida) nunca foi capturado. Os dois sao aditivos ao
+    schema (name/variations), achados reais pedidos pelo Renan."""
+
+    def test_captures_portuguese_name_alongside_english_slug(self):
+        html = _one_day('seg', 'Peito', '''
+          <div class="ex">
+            <div class="ex-top">
+              <div class="ex-left"><div class="ex-name">Supino reto com barra</div></div>
+              <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-bench-press">Ver</a>
+            </div>
+            <div class="ex-note">n</div>
+          </div>
+        ''')
+
+        days, _ = parse_legacy_html(html)
+
+        movement = days[0]['blocks'][0]['movements'][0]
+        self.assertEqual(movement['movement_slug'], 'barbell-bench-press')
+        self.assertEqual(movement['name'], 'Supino reto com barra')
+
+    def test_captures_single_variation_label_and_url(self):
+        html = _one_day('seg', 'Peito', '''
+          <div class="ex">
+            <div class="ex-top">
+              <div class="ex-left">
+                <div class="ex-name">Supino reto com barra</div>
+                <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/dumbbell-bench-press" target="_blank" rel="noopener">Supino com halteres</a></div>
+              </div>
+              <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-bench-press">Ver</a>
+            </div>
+            <div class="ex-note">n</div>
+          </div>
+        ''')
+
+        days, _ = parse_legacy_html(html)
+
+        movement = days[0]['blocks'][0]['movements'][0]
+        self.assertEqual(movement['variations'], [
+            {'label': 'Supino com halteres', 'reference_url': 'https://musclewiki.com/exercise/dumbbell-bench-press'},
+        ])
+
+    def test_captures_multiple_variations_on_same_exercise(self):
+        # Recorte fiel de bruno.html (agachamento livre — 2 variacoes
+        # sugeridas no mesmo .ex-var, unico caso real dos 10 clientes).
+        html = _one_day('ter', 'Pernas', '''
+          <div class="ex">
+            <div class="ex-top">
+              <div class="ex-left">
+                <div class="ex-name">Agachamento livre</div>
+                <div class="ex-var"><span class="var-lbl">Variação:</span><a class="var-link" href="https://musclewiki.com/exercise/machine-hack-squat" target="_blank" rel="noopener">Hack squat</a><a class="var-link" href="https://musclewiki.com/exercise/machine-leg-press" target="_blank" rel="noopener">Leg press 45°</a></div>
+              </div>
+              <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-squat">Ver</a>
+            </div>
+            <div class="ex-note">n</div>
+          </div>
+        ''')
+
+        days, _ = parse_legacy_html(html)
+
+        movement = days[0]['blocks'][0]['movements'][0]
+        self.assertEqual(len(movement['variations']), 2)
+        self.assertEqual(movement['variations'][0]['label'], 'Hack squat')
+        self.assertEqual(movement['variations'][1]['label'], 'Leg press 45°')
+
+    def test_exercise_without_variation_has_no_variations_key(self):
+        html = _one_day('seg', 'Peito', '''
+          <div class="ex">
+            <div class="ex-top"><div class="ex-left"><div class="ex-name">Supino reto com barra</div></div>
+              <a class="wiki-btn" href="https://musclewiki.com/exercise/barbell-bench-press">Ver</a></div>
+            <div class="ex-note">n</div>
+          </div>
+        ''')
+
+        days, _ = parse_legacy_html(html)
+
+        movement = days[0]['blocks'][0]['movements'][0]
+        self.assertNotIn('variations', movement)
+
+    def test_exercise_without_wiki_btn_still_captures_name(self):
+        # Cardio solto (sem link) tambem tem nome em portugues, ex.:
+        # "🏃 Corrida — 10 min" (bruno.html) — so' nao tem reference_url.
+        html = _one_day('seg', 'Peito', '''
+          <div class="ex">
+            <div class="ex-top"><div class="ex-left"><div class="ex-name">🏃 Corrida — 10 min</div></div></div>
+            <div class="ex-note">10 min a 10-12 km/h.</div>
+          </div>
+        ''')
+
+        days, _ = parse_legacy_html(html)
+
+        movement = days[0]['blocks'][0]['movements'][0]
+        self.assertEqual(movement['name'], '🏃 Corrida — 10 min')
+        self.assertIsNone(movement['reference_url'])
+
+
 class BuildProgramPayloadFromHtmlTests(SimpleTestCase):
     def test_returns_schema_valid_payload_with_business_metadata_injected(self):
         html = _one_day('seg', 'Segunda', '''
