@@ -154,10 +154,21 @@ PONTOS CRITICOS:
                 {% else %}
                 <strong>{{ movement.movement_slug|humanize_movement_slug }}</strong>
                 {% endif %}
+                {% with phases=movement.reps_spec|reps_phases %}
+                {% if phases %}
+                <div class="workout-phase-row">
+                  {% for phase in phases %}
+                  <span class="workout-phase-chip workout-phase-chip--{{ phase.phase }}">{{ phase.text }}</span>
+                  {% endfor %}
+                </div>
+                {% if movement.rir_spec %}<span class="workout-phase-note">{{ movement.rir_spec|glossary_highlight }}</span>{% endif %}
+                {% else %}
                 <span>
                   {{ movement.reps_spec|glossary_highlight }}{% if movement.rir_spec %} · {{ movement.rir_spec|glossary_highlight }}{% endif %}
-                  {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
                 </span>
+                {% endif %}
+                {% endwith %}
+                {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
               </div>
               <div class="workout-movement-load">
                 {% if movement.load_type == 'percentage_of_rm' %}{{ movement.load_value }}% RM
@@ -276,6 +287,37 @@ PONTOS CRITICOS:
     </section>
 
     <section id="workout-panel-perfil" data-workout-tab-panel>
+      <div class="workout-profile-header">
+        <span class="workout-avatar workout-avatar--lg" aria-hidden="true">{% if student_photo_url %}<img src="{{ student_photo_url }}" alt="" width="72" height="72" loading="lazy">{% else %}{{ student_name|initial }}{% endif %}</span>
+        {% if student_name %}<strong class="workout-profile-header__name">{{ student_name }}</strong>{% endif %}
+        {% if account_email %}<span class="workout-profile-header__email">{{ account_email }}</span>{% endif %}
+      </div>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Conta</h2>
+        <div class="workout-profile-list">
+          <span class="workout-profile-row">
+            <span class="workout-profile-row__label">Dados pessoais</span>
+            <span>{{ account_email|default:"—" }}</span>
+          </span>
+          {% if customer_portal_url %}
+          <a class="workout-profile-row" href="{{ customer_portal_url }}">
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span aria-hidden="true">→</span>
+          </a>
+          {% else %}
+          <span class="workout-profile-row">
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span class="student-status-badge">indisponível</span>
+          </span>
+          {% endif %}
+          <button type="button" class="workout-profile-row" data-ui="theme-toggle">
+            <span class="workout-profile-row__label theme-toggle-label">Tema</span>
+            <span class="theme-toggle-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </article>
+
       <article class="student-card card-decor-topstripe workout-block-card">
         <h2>Versões do programa</h2>
         {% if program_versions %}
@@ -311,26 +353,7 @@ PONTOS CRITICOS:
         {% endif %}
       </article>
 
-      <article class="student-card card-decor-topstripe workout-block-card">
-        <h2>Conta</h2>
-        <div class="workout-profile-list">
-          {% if customer_portal_url %}
-          <a class="workout-profile-row" href="{{ customer_portal_url }}">
-            <span class="workout-profile-row__label">Pagamentos</span>
-            <span aria-hidden="true">→</span>
-          </a>
-          {% else %}
-          <span class="workout-profile-row">
-            <span class="workout-profile-row__label">Pagamentos</span>
-            <span class="student-status-badge">indisponível</span>
-          </span>
-          {% endif %}
-          <button type="button" class="workout-profile-row" data-ui="theme-toggle">
-            <span class="workout-profile-row__label theme-toggle-label">Tema</span>
-            <span class="theme-toggle-icon" aria-hidden="true"></span>
-          </button>
-        </div>
-      </article>
+      <button type="button" class="workout-signout-button" data-workout-signout data-signout-url="{% url 'public-workout-signout' plan_slug=plan_slug %}">Sair da conta</button>
     </section>
 
   </div>
@@ -503,6 +526,31 @@ PONTOS CRITICOS:
   window.addEventListener('scroll', function () {
     document.querySelectorAll('[data-workout-glossary].is-open').forEach(closeGlossaryTerm);
   }, true);
+
+  // "Sair da conta" (Perfil) -- mesmo padrao de getCookie de
+  // load_tracker.js/assessments.js, nao importado direto (abas
+  // independentes, ver comentario la).
+  function getCookie(name) {
+    var parts = (document.cookie || '').split(';');
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (part.indexOf(name + '=') === 0) return decodeURIComponent(part.slice(name.length + 1));
+    }
+    return '';
+  }
+  var signOutButton = document.querySelector('[data-workout-signout]');
+  if (signOutButton) {
+    signOutButton.addEventListener('click', function () {
+      if (!window.confirm('Sair da conta?')) return;
+      window.fetch(signOutButton.getAttribute('data-signout-url'), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      }).then(function () {
+        window.location.href = '/renan/offline/';
+      });
+    });
+  }
 })();
 </script>
 <script src="{% static 'js/core/shell.js' %}" defer></script>

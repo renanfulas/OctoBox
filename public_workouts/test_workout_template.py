@@ -12,6 +12,7 @@ POR QUE ELE EXISTE:
 """
 
 import copy
+import re
 
 from django.template.loader import render_to_string
 from django.test import TestCase
@@ -22,6 +23,7 @@ from public_workouts.templatetags.public_workouts_extras import (
     glossary_highlight,
     humanize_movement_slug,
     load_chart_points,
+    reps_phases,
 )
 
 
@@ -36,6 +38,7 @@ def _render(
     student_name='',
     student_photo_url=None,
     customer_portal_url=None,
+    account_email=None,
 ) -> str:
     return render_to_string('public_workouts/workout.html', {
         'program': payload,
@@ -48,6 +51,7 @@ def _render(
         'student_name': student_name,
         'student_photo_url': student_photo_url,
         'customer_portal_url': customer_portal_url,
+        'account_email': account_email,
     })
 
 
@@ -359,8 +363,15 @@ class WorkoutTopbarAndNavTests(TestCase):
     def test_greeting_includes_first_name(self):
         html = _render(build_example_payload(), student_name='Juliana Silva')
 
-        self.assertIn('Juliana', html)
-        self.assertNotIn('Silva', html)  # so o primeiro nome, mesmo corte de student_shell.student_greeting
+        # so o primeiro nome, mesmo corte de student_shell.student_greeting --
+        # escopado a tag da saudacao, nao a pagina inteira: o cabecalho do
+        # Perfil (workout-profile-header__name) mostra o NOME COMPLETO de
+        # proposito (mesma estrutura do app do aluno, que tambem mostra nome
+        # completo no Perfil), entao 'Silva' aparece em outro lugar da pagina.
+        greeting_match = re.search(r'<strong class="workout-topbar-greeting">([^<]*)</strong>', html)
+        self.assertIsNotNone(greeting_match)
+        self.assertIn('Juliana', greeting_match.group(1))
+        self.assertNotIn('Silva', greeting_match.group(1))
 
     def test_greeting_without_name_still_renders(self):
         html = _render(build_example_payload(), student_name='')
@@ -487,6 +498,29 @@ class WorkoutProfilePanelTests(TestCase):
         html = _render(build_example_payload())
 
         self.assertIn('data-ui="theme-toggle"', html)
+
+    def test_profile_header_shows_full_name_and_email(self):
+        html = _render(build_example_payload(), student_name='Juliana Silva', account_email='juliana@example.com')
+
+        self.assertIn('<strong class="workout-profile-header__name">Juliana Silva</strong>', html)
+        self.assertIn('juliana@example.com', html)
+
+    def test_profile_header_omits_email_when_absent(self):
+        html = _render(build_example_payload(), student_name='Juliana Silva', account_email=None)
+
+        self.assertNotIn('workout-profile-header__email', html)
+
+    def test_dados_pessoais_row_shows_email(self):
+        html = _render(build_example_payload(), account_email='juliana@example.com')
+
+        self.assertIn('Dados pessoais', html)
+        self.assertIn('juliana@example.com', html)
+
+    def test_signout_button_present_with_slug_scoped_url(self):
+        html = _render(build_example_payload(), plan_slug='juliana')
+
+        self.assertIn('Sair da conta', html)
+        self.assertIn('data-signout-url="/renan/juliana/sair"', html)
 
 
 class HumanizeMovementSlugFilterTests(TestCase):
@@ -769,3 +803,63 @@ class MovementCardGlossaryRenderTests(TestCase):
         html = _render(payload)
 
         self.assertNotIn('<span class="workout-glossary-term"', html)
+
+
+class RepsPhasesFilterTests(TestCase):
+    def test_single_phase_returns_empty_list(self):
+        # reps_spec simples ("3x12", sem "→") nao vale a pena virar chip
+        # grande -- o template mantem a linha unica de sempre.
+        self.assertEqual(reps_phases('3x12'), [])
+
+    def test_empty_reps_spec_returns_empty_list(self):
+        self.assertEqual(reps_phases(''), [])
+        self.assertEqual(reps_phases(None), [])
+
+    def test_splits_multi_phase_reps_spec(self):
+        phases = reps_phases('2-3× Prep → 1× Feeder → 3× Top (6-8)')
+
+        self.assertEqual(len(phases), 3)
+        self.assertEqual(phases[0]['phase'], 'prep')
+        self.assertEqual(phases[1]['phase'], 'feeder')
+        self.assertEqual(phases[2]['phase'], 'top')
+
+    def test_amrap_detected_as_max_phase(self):
+        phases = reps_phases('2× Prep → 1× AMRAP')
+
+        self.assertEqual(phases[1]['phase'], 'max')
+
+    def test_unrecognized_phase_falls_back_to_plain(self):
+        phases = reps_phases('2× Algo → 1× Outro')
+
+        self.assertEqual(phases[0]['phase'], 'plain')
+        self.assertEqual(phases[1]['phase'], 'plain')
+
+    def test_phase_text_is_glossary_highlighted(self):
+        phases = reps_phases('2× Prep → 1× Feeder')
+
+        self.assertIn('data-workout-glossary', phases[0]['text'])
+        self.assertIn('data-workout-glossary', phases[1]['text'])
+
+
+class MovementCardPhaseChipRenderTests(TestCase):
+    def test_multi_phase_reps_spec_renders_chip_row(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reps_spec'] = '2× Prep → 3× Top (6-8)'
+        payload['days'][0]['blocks'][0]['movements'][0]['rir_spec'] = 'RIR 1-2'
+
+        html = _render(payload)
+
+        self.assertIn('workout-phase-row', html)
+        self.assertIn('workout-phase-chip--prep', html)
+        self.assertIn('workout-phase-chip--top', html)
+        self.assertIn('workout-phase-note', html)
+
+    def test_single_phase_reps_spec_keeps_plain_line(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reps_spec'] = '3x12'
+        payload['days'][0]['blocks'][0]['movements'][0]['rir_spec'] = 'RIR 2'
+
+        html = _render(payload)
+
+        self.assertNotIn('workout-phase-row', html)
+        self.assertIn('3x12', html)

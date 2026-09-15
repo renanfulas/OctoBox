@@ -89,6 +89,15 @@
     display: block;
 }
 
+/* Avatar grande do cabecalho do Perfil (item pedido: "estrutura igual do
+   app dos alunos" -- mesmo componente .workout-avatar do topbar, so maior;
+   nao cria um segundo componente de avatar do zero). */
+.workout-avatar--lg {
+    width: 72px;
+    height: 72px;
+    font-size: 1.6rem;
+}
+
 .workout-topbar-greeting {
     font-size: 1rem;
     font-weight: 800;
@@ -305,6 +314,69 @@ button.workout-week-day:focus-visible {
     font-size: 0.8rem;
 }
 
+/* Quebra de fase (Prep/Feeder/Top/AMRAP) de reps_spec — pedido do Renan pra
+   "voltar" o padrao rico dos templates legados (colunas de sets-tbl com
+   pilula colorida por tipo de serie: .st-p/.st-f/.st-t/.st-m em
+   static/css/public_workouts/components.css). So aparece quando
+   reps_phases() acha mais de 1 fase (texto com "→") — reps_spec simples
+   ("3x12") continua na linha unica de sempre, sem pilula grande a toa. */
+.workout-phase-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 2px;
+}
+
+.workout-phase-row .workout-phase-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.workout-phase-row .workout-phase-chip--prep {
+    background: color-mix(in srgb, var(--theme-text-muted) 18%, transparent);
+    color: var(--theme-text-secondary);
+}
+
+.workout-phase-row .workout-phase-chip--feeder {
+    background: var(--theme-accent-warning-alpha);
+    color: color-mix(in srgb, var(--theme-accent-warning) 75%, var(--theme-text-primary) 25%);
+}
+
+.workout-phase-row .workout-phase-chip--top {
+    background: color-mix(in srgb, var(--brand) 16%, transparent);
+    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
+}
+
+.workout-phase-row .workout-phase-chip--max {
+    background: var(--theme-accent-danger-alpha);
+    color: color-mix(in srgb, var(--theme-accent-danger) 75%, var(--theme-text-primary) 25%);
+}
+
+.workout-phase-row .workout-phase-chip--plain {
+    background: color-mix(in srgb, var(--theme-text-muted) 12%, transparent);
+    color: var(--theme-text-secondary);
+}
+
+.workout-phase-note {
+    display: block;
+    margin-top: 2px;
+}
+
+/* glossary_highlight() marca Prep/Feeder/Top/AMRAP com <span
+   class="workout-glossary-term"> mesmo dentro de um chip — sem isto, a
+   palavra destacada ficaria cinza-mudo (.workout-movement-copy span pega
+   qualquer span descendente, especificidade maior que so' .workout-phase-chip)
+   em vez de herdar a cor propria do chip. */
+.workout-phase-chip .workout-glossary-term {
+    color: inherit;
+}
+
 .workout-movement-load {
     flex: 0 0 auto;
     text-align: right;
@@ -314,6 +386,38 @@ button.workout-week-day:focus-visible {
 }
 
 /* Perfil (versoes + conta) */
+.workout-profile-header {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 8px 0 4px;
+    text-align: center;
+}
+
+.workout-profile-header__name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--theme-text-primary);
+}
+
+.workout-profile-header__email {
+    font-size: 0.82rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-signout-button {
+    width: 100%;
+    padding: 13px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-danger) 32%, transparent);
+    background: var(--theme-accent-danger-alpha);
+    color: color-mix(in srgb, var(--theme-accent-danger) 78%, var(--theme-text-primary) 22%);
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+}
+
 .workout-profile-list {
     display: grid;
 }
@@ -327,7 +431,12 @@ button.workout-week-day:focus-visible {
     border: none;
     border-bottom: 1px solid var(--theme-border-soft);
     text-decoration: none;
-    color: inherit;
+    /* Fresh --theme-text-primary, nao "inherit" puro -- mesmo motivo do
+       .workout-profile-row__label logo abaixo: "inherit" pega o `body {
+       color: var(--ink) }` de tokens.css, alias congelado no tom claro no
+       tema escuro. Cobre o valor a direita da linha (ex.: e-mail em "Dados
+       pessoais"), que nao tem classe propria pra um color: fresco so dele. */
+    color: var(--theme-text-primary);
     background: none;
     width: 100%;
     text-align: left;
@@ -393,6 +502,11 @@ button.workout-week-day:focus-visible {
     padding: 2px 8px;
     font-size: 0.72rem;
     margin-inline-start: 8px;
+    /* justify-self:start — `.workout-movement-copy` e' grid, e desde que a
+       quebra de fase (.workout-phase-row) virou irmao direto (nao mais
+       aninhado dentro do <span> de texto), esta pilula tambem virou item de
+       grid direto e teria "stretch" (padrao) esticando a largura toda. */
+    justify-self: start;
 }
 
 /* Telas pequenas (~400px): a tabela de movimentos nunca deve forcar

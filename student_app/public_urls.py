@@ -27,6 +27,7 @@ from .views import (
     PublicWorkoutRecordAssessmentView,
     PublicWorkoutRecordLoadView,
     PublicWorkoutServiceWorkerView,
+    PublicWorkoutSignOutView,
 )
 
 
@@ -49,5 +50,6 @@ urlpatterns = [
     ),
     path('<slug:plan_slug>/meus-dados.json', PublicWorkoutExportDataView.as_view(), name='public-workout-export-data'),
     path('<slug:plan_slug>/treino.pdf', PublicWorkoutDownloadPdfView.as_view(), name='public-workout-download-pdf'),
+    path('<slug:plan_slug>/sair', PublicWorkoutSignOutView.as_view(), name='public-workout-signout'),
     re_path(r'^(?P<plan_slug>[-a-z0-9]+)/?$', PublicWorkoutDetailView.as_view(), name='public-workout-detail'),
 ]

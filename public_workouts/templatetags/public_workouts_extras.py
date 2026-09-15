@@ -166,6 +166,44 @@ def glossary_highlight(text: str):
     return mark_safe(''.join(pieces))
 
 
+_PHASE_DETECTORS = (
+    ('prep', re.compile(r'\bprep', re.IGNORECASE)),
+    ('feeder', re.compile(r'\bfeeder', re.IGNORECASE)),
+    ('top', re.compile(r'\btop\b', re.IGNORECASE)),
+    ('max', re.compile(r'\bamrap\b|\bmax\b', re.IGNORECASE)),
+)
+
+
+def _detect_phase(segment: str) -> str:
+    for phase, pattern in _PHASE_DETECTORS:
+        if pattern.search(segment):
+            return phase
+    return 'plain'
+
+
+@register.filter
+def reps_phases(reps_spec: str):
+    """Quebra `reps_spec` em fases (Prep/Feeder/Top/AMRAP) quando o texto do
+    treinador junta varias com ' → ' (ex.: '2-3× Prep → 1× Feeder → 3× Top
+    (6-8)', formato de `gym-reps` nos 8 dos 10 templates legados que tem
+    esse padrao — ver parser.py). Devolve lista de dicts {text, phase} pro
+    template desenhar um "chip" colorido por fase (pedido do Renan: "voltar
+    o padrao de feeder/topset/amrap"), ou lista VAZIA quando so' ha 1 fase —
+    nesse caso o template mantem a linha simples de sempre (nao vale a pena
+    um chip grande pra 'reps_spec': '3x12', a maioria dos movimentos sem
+    quebra de fase).
+
+    Cada `text` ja passa por glossary_highlight (SafeString) — o template
+    nao precisa aplicar o filtro de novo.
+    """
+    if not reps_spec:
+        return []
+    segments = [segment.strip() for segment in reps_spec.split('→') if segment.strip()]
+    if len(segments) < 2:
+        return []
+    return [{'text': glossary_highlight(segment), 'phase': _detect_phase(segment)} for segment in segments]
+
+
 @register.filter
 def dict_get(dictionary: dict | None, key: str):
     """Lookup generico por chave variavel — Django template so faz

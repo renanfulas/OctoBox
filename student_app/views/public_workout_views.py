@@ -29,6 +29,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 from django.views.generic import View
@@ -693,6 +694,25 @@ class PublicWorkoutOfflineView(View):
             {'plans': tuple(PUBLIC_WORKOUT_LIBRARY.values())},
         )
         return HttpResponse(html)
+
+
+class PublicWorkoutSignOutView(View):
+    """POST /renan/<slug>/sair — "Sair da conta" da tela Perfil (fundacao B3,
+    pedido do Renan pra fechar o paralelo com o app do aluno).
+
+    So apaga o cookie de posse (PUBLIC_WORKOUT_OWNER_COOKIE, B0) — o
+    corredor ainda nao tem login de sessao (fases B/C da Onda B3), entao
+    hoje isto e' groundwork visual/funcional pra quando essa fase ligar, nao
+    uma barreira de acesso de verdade: quem voltar a abrir /renan/<slug>
+    ganha o cookie de volta automaticamente (PublicWorkoutDetailView.get
+    sempre re-seta), so os endpoints de leitura/escrita que dependem dele
+    ficam temporariamente sem posse ate a proxima visita.
+    """
+
+    def post(self, request, plan_slug, *args, **kwargs):
+        response = redirect('public-workout-offline')
+        response.delete_cookie(PUBLIC_WORKOUT_OWNER_COOKIE, samesite='Lax')
+        return response
 
 
 class PublicWorkoutLocalStorageBackupView(View):
