@@ -2343,6 +2343,66 @@ class PublicWorkoutSignOutViewTests(TestCase):
         self.assertEqual(response.status_code, 405)
 
 
+class PublicWorkoutTemplatePreviewViewTests(TestCase):
+    """GET /renan/<slug>/preview-b3 — preview de desenvolvimento do
+    template unico (workout.html, Onda B3), so' com DEBUG=True. Existe pra
+    nao depender de gerar HTML na mao via `manage.py shell` toda vez (ver
+    docstring de PublicWorkoutTemplatePreviewView) — nunca serve trafego de
+    aluno de verdade, entao o teste mais importante daqui e' justamente
+    confirmar que fica 404 fora de DEBUG."""
+
+    def _publish(self, slug='bruno'):
+        from public_workouts.schema import build_example_payload
+        from public_workouts.services import publish_program
+
+        publish_program(slug=slug, payload=build_example_payload())
+
+    @override_settings(DEBUG=False)
+    def test_returns_404_outside_debug_even_when_published(self):
+        self._publish()
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        self.assertEqual(response.status_code, 404)
+
+    @override_settings(DEBUG=True)
+    def test_renders_workout_html_template_for_published_program(self):
+        self._publish()
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn('workout-shell', content)
+        self.assertIn('workout-mobile-nav', content)
+        self.assertIn('Programa de exemplo', content)  # program_label do build_example_payload
+
+    @override_settings(DEBUG=True)
+    def test_returns_404_when_program_not_yet_published(self):
+        # bruno existe em PUBLIC_WORKOUT_LIBRARY mas ninguem chamou
+        # publish_program nesta base de teste.
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        self.assertEqual(response.status_code, 404)
+
+    @override_settings(DEBUG=True)
+    def test_returns_404_for_unknown_slug(self):
+        response = self.client.get('/renan/nao-existe/preview-b3')
+
+        self.assertEqual(response.status_code, 404)
+
+    @override_settings(DEBUG=True)
+    def test_never_requires_owner_cookie(self):
+        # Diferente da rota real (/renan/<slug>), o preview nao depende do
+        # cookie B0 -- e' uma ferramenta de dev, nao a experiencia do aluno.
+        self._publish()
+        self.assertNotIn('renan_slug', self.client.cookies)
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        self.assertEqual(response.status_code, 200)
+
+
 class PublicWorkoutAssessmentsEndpointTests(TestCase):
     """GET /renan/<slug>/avaliacoes.json — exige cookie assinado do dono do slug.
 
