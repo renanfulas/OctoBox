@@ -51,15 +51,22 @@ _WEEK_NUMBER_RE = re.compile(r'[Ss]emana\s+(\d+)')
 # existir como PublicWorkoutProgram versionado, nao quando o cliente comecou
 # a treinar de fato -- ajuste aqui se souber a data real).
 LEGACY_PROGRAM_METADATA: dict[str, dict[str, object]] = {
-    'bruno': {'program_label': 'Treino Bruno', 'weeks': 5},
-    'franciele': {'program_label': 'Treino Franciele', 'weeks': 4},
-    'giovanna': {'program_label': 'Treino Giovanna', 'weeks': 4},
-    'henrique': {'program_label': 'Treino Henrique', 'weeks': 4},
-    'john': {'program_label': 'Treino John Espanha (Legado)', 'weeks': 4},
+    # `weeks` dos 8 slugs com periodization abaixo foi realinhado com o
+    # numero de linhas de `periodization.weeks_table` (payload real,
+    # extraido pelo parser) apos a fatia Cardio+Periodizacao do PR #249 --
+    # o valor antigo era anterior a essa fatia e ficava atras do que a
+    # propria tabela de periodizacao mostra (ex.: bruno tinha weeks=5 com
+    # tabela de 6 semanas). johnespanha/thaislima nao tem periodization
+    # nesta fatia, entao ficam como estavam.
+    'bruno': {'program_label': 'Treino Bruno', 'weeks': 6},
+    'franciele': {'program_label': 'Treino Franciele', 'weeks': 5},
+    'giovanna': {'program_label': 'Treino Giovanna', 'weeks': 6},
+    'henrique': {'program_label': 'Treino Henrique', 'weeks': 6},
+    'john': {'program_label': 'Treino John Espanha (Legado)', 'weeks': 6},
     'johnespanha': {'program_label': 'Treino John Espanha', 'weeks': 4},
-    'juliana': {'program_label': 'Treino Juliana', 'weeks': 5},
-    'milene': {'program_label': 'Treino Milene', 'weeks': 5},
-    'rafael': {'program_label': 'Treino Rafael', 'weeks': 4},
+    'juliana': {'program_label': 'Treino Juliana', 'weeks': 6},
+    'milene': {'program_label': 'Treino Milene', 'weeks': 6},
+    'rafael': {'program_label': 'Treino Rafael', 'weeks': 7},
     'thaislima': {'program_label': 'Treino Thais Lima', 'weeks': 4},
 }
 
