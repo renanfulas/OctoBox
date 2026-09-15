@@ -3,7 +3,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('student_app', '0019_movementlibrary'),
+        ('student_app', '0020_alter_replicationbatch_created_by_and_more'),
     ]
 
     operations = [
