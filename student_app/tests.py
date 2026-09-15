@@ -2218,6 +2218,30 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertIn(settings.CSRF_COOKIE_NAME, response.cookies)
 
 
+class PublicWorkoutSignOutViewTests(TestCase):
+    """POST /renan/<slug>/sair — "Sair da conta" da tela Perfil (fundacao B3).
+
+    So apaga o cookie de posse (B0) — o corredor ainda nao tem login de
+    sessao de verdade (ver docstring de PublicWorkoutSignOutView).
+    """
+
+    def test_clears_owner_cookie_and_redirects_to_offline(self):
+        self.client.get('/renan/giovanna')  # seta o cookie do dono
+        self.assertIn('renan_slug', self.client.cookies)
+
+        response = self.client.post('/renan/giovanna/sair')
+
+        self.assertRedirects(response, '/renan/offline/')
+        self.assertEqual(self.client.cookies['renan_slug'].value, '')
+
+    def test_get_is_not_allowed(self):
+        # Acao com efeito colateral (apaga cookie) -- so POST, nunca GET
+        # (evita logout acidental via prefetch/crawler).
+        response = self.client.get('/renan/giovanna/sair')
+
+        self.assertEqual(response.status_code, 405)
+
+
 class PublicWorkoutAssessmentsEndpointTests(TestCase):
     """GET /renan/<slug>/avaliacoes.json — exige cookie assinado do dono do slug.
 

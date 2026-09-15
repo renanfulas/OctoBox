@@ -10,6 +10,20 @@
  *   de marca.
  */
 
+/* Tema escuro (so' o template unico/workout.html tem toggle de tema —
+   as paginas legadas que tambem carregam este CSS nunca setam
+   body[data-theme="dark"], entao este bloco fica inerte la, sem risco de
+   regressao). --white/--dark/--border/--muted nunca tiveram valor de tema
+   nenhum antes (_base.html so' define --accent/--accent-bg/--accent-dark
+   por plano) -- os cards do relatorio ficavam brancos fixos com o resto da
+   pagina escuro. */
+body[data-theme="dark"] {
+  --white: var(--theme-surface-strong);
+  --dark: var(--theme-text-primary);
+  --border: var(--theme-border-soft);
+  --muted: var(--theme-text-muted);
+}
+
 .assess-wrap{display:flex;flex-direction:column;gap:16px}
 
 .assess-empty{
@@ -26,6 +40,9 @@
 .assess-card-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#888);font-weight:700}
 .assess-card-value{font-size:21px;font-weight:700;color:var(--dark,#1a1a1a)}
 .assess-card-note{font-size:10px;color:var(--muted,#888)}
+.assess-card-delta{font-size:10.5px;font-weight:700}
+.assess-card-delta--up{color:#B91C1C}
+.assess-card-delta--down{color:#3A6F10}
 
 .assess-badge{display:inline-flex;align-self:flex-start;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px}
 .assess-badge--good{background:#EAF3DE;color:#3A6F10}

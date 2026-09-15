@@ -30,12 +30,15 @@ POR QUE ELE EXISTE:
 
 from __future__ import annotations
 
+import re
 from datetime import date as _date
 
 from django import template
 from django.utils import timezone
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
-from public_workouts.dashboard import build_program_summary, build_week_overview
+from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
 
 register = template.Library()
 
@@ -45,6 +48,35 @@ def program_summary(payload: dict) -> dict:
     """Wrapper de template pra dashboard.build_program_summary — o template
     so tem `program` (o payload) no contexto, nao precisa de var nova."""
     return build_program_summary(payload)
+
+
+@register.simple_tag
+def week_streak_label(week_days) -> str:
+    """'2 de 4 dias com treino' — mesma logica de complete_count do app do
+    aluno (student_shell.py), so que o denominador aqui e' os dias
+    PRESCRITOS (has_program), nao os 7 dias corridos — programa do
+    corredor tem dia de descanso fixo por semana, "0 de 7" seria enganoso."""
+    prescribed = [day for day in week_days if day.has_program]
+    if not prescribed:
+        return ''
+    completed = sum(1 for day in prescribed if day.is_complete)
+    return f'{completed} de {len(prescribed)} dia{"s" if len(prescribed) != 1 else ""} com treino'
+
+
+@register.filter
+def day_short(day_id: str) -> str:
+    """Wrapper de template pra dashboard.day_short_label — dia curto (Seg/
+    Ter/...) reusado no seletor de dia do Treino (item pedido pelo Renan:
+    mesmo formato "dia + palavra-chave" do "Sua semana" do Início)."""
+    return day_short_label(day_id)
+
+
+@register.simple_tag
+def day_workout_keyword(day) -> str:
+    """Wrapper de template pra dashboard.day_keyword — recebe o `day` do
+    payload inteiro (nao so' os campos soltos) pra assinatura ficar simples
+    no template: `{% day_workout_keyword day %}`."""
+    return day_keyword(day_id=day.get('day_id', ''), label=day.get('label', ''))
 
 
 @register.simple_tag
@@ -95,6 +127,97 @@ def humanize_movement_slug(movement_slug: str) -> str:
     if not movement_slug:
         return ''
     return movement_slug.replace('-', ' ').capitalize()
+
+
+_GLOSSARY_TERMS = {
+    'rir': ('RIR (Reps in Reserve)', 'Repetições que ainda sobrariam na reserva se a série continuasse até a falha. Ex.: RIR 2 = parou a 2 repetições da falha.'),
+    'amrap': ('AMRAP (As Many Reps As Possible)', 'Fazer o máximo de repetições possível na série, dentro da técnica segura.'),
+    'feeder': ('Série Feeder', 'Série leve de ativação antes da série principal (Top) — prepara a articulação e o padrão de movimento sem gerar fadiga.'),
+    'top': ('Série Top (Top Set)', 'A série mais pesada do exercício no dia — o estímulo-alvo do treino, feita depois do aquecimento/feeder.'),
+    'prep': ('Série Prep (preparatória)', 'Série de aquecimento específico com carga leve/moderada, antes das séries de trabalho.'),
+}
+
+_GLOSSARY_PATTERN = re.compile(
+    r'\b(' + '|'.join(re.escape(term) for term in _GLOSSARY_TERMS) + r')\b',
+    re.IGNORECASE,
+)
+
+
+@register.filter
+def glossary_highlight(text: str):
+    """Marca termos de jargao de treino (RIR, AMRAP, Feeder, Top, Prep) dentro
+    de reps_spec/rir_spec (texto livre do treinador, schema.py) com uma
+    'bolinha' clicavel que revela a definicao — pedido do Renan pra quem
+    nao conhece o dicionario de treino.
+
+    So estes 5 termos: sao os que realmente aparecem nos 10 programas reais
+    publicados (conferido via payload, nao adivinhado) — nao generaliza pra
+    qualquer palavra tecnica, que arriscaria falso-positivo (ex. 'top' dentro
+    de 'topo' e' evitado com \\b, mas uma lista maior sem curadoria arriscaria
+    marcar termo errado como se fosse dicionario de treino).
+
+    Retorna SafeString: escapa o texto ao redor, so o termo casado vira HTML.
+    """
+    if not text:
+        return ''
+
+    pieces = []
+    last_end = 0
+    for match in _GLOSSARY_PATTERN.finditer(text):
+        pieces.append(escape(text[last_end:match.start()]))
+        term = match.group(0)
+        label, description = _GLOSSARY_TERMS[term.lower()]
+        pieces.append(
+            '<span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é {label}?">'
+            '{term}<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup>'
+            '<span class="workout-glossary-tip" role="tooltip"><strong>{label}</strong>{description}</span>'
+            '</span>'.format(
+                label=escape(label),
+                term=escape(term),
+                description=escape(description),
+            )
+        )
+        last_end = match.end()
+    pieces.append(escape(text[last_end:]))
+    return mark_safe(''.join(pieces))
+
+
+_PHASE_DETECTORS = (
+    ('prep', re.compile(r'\bprep', re.IGNORECASE)),
+    ('feeder', re.compile(r'\bfeeder', re.IGNORECASE)),
+    ('top', re.compile(r'\btop\b', re.IGNORECASE)),
+    ('max', re.compile(r'\bamrap\b|\bmax\b', re.IGNORECASE)),
+)
+
+
+def _detect_phase(segment: str) -> str:
+    for phase, pattern in _PHASE_DETECTORS:
+        if pattern.search(segment):
+            return phase
+    return 'plain'
+
+
+@register.filter
+def reps_phases(reps_spec: str):
+    """Quebra `reps_spec` em fases (Prep/Feeder/Top/AMRAP) quando o texto do
+    treinador junta varias com ' → ' (ex.: '2-3× Prep → 1× Feeder → 3× Top
+    (6-8)', formato de `gym-reps` nos 8 dos 10 templates legados que tem
+    esse padrao — ver parser.py). Devolve lista de dicts {text, phase} pro
+    template desenhar um "chip" colorido por fase (pedido do Renan: "voltar
+    o padrao de feeder/topset/amrap"), ou lista VAZIA quando so' ha 1 fase —
+    nesse caso o template mantem a linha simples de sempre (nao vale a pena
+    um chip grande pra 'reps_spec': '3x12', a maioria dos movimentos sem
+    quebra de fase).
+
+    Cada `text` ja passa por glossary_highlight (SafeString) — o template
+    nao precisa aplicar o filtro de novo.
+    """
+    if not reps_spec:
+        return []
+    segments = [segment.strip() for segment in reps_spec.split('→') if segment.strip()]
+    if len(segments) < 2:
+        return []
+    return [{'text': glossary_highlight(segment), 'phase': _detect_phase(segment)} for segment in segments]
 
 
 @register.filter

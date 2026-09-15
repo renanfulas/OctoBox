@@ -198,7 +198,7 @@ def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) ->
         'count': len(assessments),
     }
 
-    indicators = _build_indicators(last=last, sex=sex, height_cm=height_cm)
+    indicators = _build_indicators(first=first, last=last, sex=sex, height_cm=height_cm)
 
     return {
         'assessments': serialized,
@@ -212,33 +212,62 @@ def _classification_dict(classification) -> dict:
     return {'label': classification.label, 'level': classification.level}
 
 
-def _build_indicators(*, last: PublicWorkoutAssessment, sex: str | None, height_cm: float | None) -> dict:
-    measurements = last.measurements or {}
+def _compute_indicator_values(*, assessment: PublicWorkoutAssessment, sex: str | None, height_cm: float | None) -> dict:
+    """So os valores numericos (bmi/whr/body_fat_percent), sem classificacao
+    nem `source` -- usado tanto pro indicador atual (_build_indicators)
+    quanto pro calculo de delta desde a 1a avaliacao (Renan pediu
+    "comparacao desde a 1a avaliacao em tudo", nao so no peso)."""
+    measurements = assessment.measurements or {}
     waist = _num(measurements.get('cintura'))
     hip = _num(measurements.get('quadril'))
     neck = _num(measurements.get('pescoco'))
-    weight = _num(last.weight_kg)
+    weight = _num(assessment.weight_kg)
+
+    bmi = compute_bmi(weight_kg=weight, height_cm=height_cm)
+    whr = compute_whr(waist_cm=waist, hip_cm=hip) if sex else None
+
+    bf_percent = _num(assessment.body_fat_percent)
+    if bf_percent is None and sex and height_cm:
+        bf_percent = estimate_body_fat_navy(sex=sex, height_cm=height_cm, waist_cm=waist, neck_cm=neck, hip_cm=hip)
+
+    return {'bmi': bmi, 'whr': whr, 'body_fat_percent': bf_percent if sex else None}
+
+
+def _build_indicators(
+    *, first: PublicWorkoutAssessment, last: PublicWorkoutAssessment, sex: str | None, height_cm: float | None
+) -> dict:
+    last_values = _compute_indicator_values(assessment=last, sex=sex, height_cm=height_cm)
+    first_values = (
+        _compute_indicator_values(assessment=first, sex=sex, height_cm=height_cm)
+        if first is not last
+        else last_values
+    )
 
     indicators: dict = {'bmi': None, 'whr': None, 'body_fat_percent': None}
 
-    bmi = compute_bmi(weight_kg=weight, height_cm=height_cm)
-    if bmi is not None:
-        indicators['bmi'] = {'value': bmi, 'classification': _classification_dict(classify_bmi(bmi))}
+    if last_values['bmi'] is not None:
+        indicators['bmi'] = {
+            'value': last_values['bmi'],
+            'classification': _classification_dict(classify_bmi(last_values['bmi'])),
+            'delta': _delta(first_values['bmi'], last_values['bmi']),
+        }
 
-    whr = compute_whr(waist_cm=waist, hip_cm=hip)
-    if whr is not None and sex:
-        indicators['whr'] = {'value': whr, 'classification': _classification_dict(classify_whr(sex=sex, whr=whr))}
+    if last_values['whr'] is not None and sex:
+        indicators['whr'] = {
+            'value': last_values['whr'],
+            'classification': _classification_dict(classify_whr(sex=sex, whr=last_values['whr'])),
+            'delta': _delta(first_values['whr'], last_values['whr']),
+        }
 
-    bf_percent = _num(last.body_fat_percent)
-    bf_source = last.body_fat_source or 'manual'
-    if bf_percent is None and sex and height_cm:
-        bf_percent = estimate_body_fat_navy(sex=sex, height_cm=height_cm, waist_cm=waist, neck_cm=neck, hip_cm=hip)
-        bf_source = 'navy_estimate'
-    if bf_percent is not None and sex:
+    if last_values['body_fat_percent'] is not None and sex:
+        bf_source = last.body_fat_source or 'manual'
+        if _num(last.body_fat_percent) is None:
+            bf_source = 'navy_estimate'
         indicators['body_fat_percent'] = {
-            'value': bf_percent,
+            'value': last_values['body_fat_percent'],
             'source': bf_source,
-            'classification': _classification_dict(classify_body_fat(sex=sex, bf_percent=bf_percent)),
+            'classification': _classification_dict(classify_body_fat(sex=sex, bf_percent=last_values['body_fat_percent'])),
+            'delta': _delta(first_values['body_fat_percent'], last_values['body_fat_percent']),
         }
 
     return indicators
