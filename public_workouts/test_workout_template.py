@@ -143,21 +143,21 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-input data-movement-slug="agachamento-livre" data-program-id="exemplo-2026-q1" hidden', html)
         self.assertIn('data-workout-load-toggle', html)
 
-    def test_movement_not_tracked_has_no_load_input_row(self):
+    def test_movement_not_tracked_still_has_load_input_row(self):
+        # Pedido do Renan: "clica expande em todos os exercicios" -- o
+        # registro de carga (load_tracker.js/services.record_load, que
+        # nunca validou is_tracked) fica disponivel pra QUALQUER movimento,
+        # nao so' os curados como "rastreado". is_tracked continua so'
+        # controlando a badge "rastreado" (curadoria do treinador), nunca
+        # se o card e clicavel.
         payload = build_example_payload()
         payload['days'][0]['blocks'][0]['movements'][0]['is_tracked'] = False
 
         html = _render(payload)
 
-        # Substrings precisam ser especificas o suficiente pra nao confundir
-        # com o texto do <script> inline (que referencia os MESMOS nomes de
-        # atributo via querySelectorAll/hasAttribute pro toggle de clique) nem
-        # com a bolinha de glossario (glossary_highlight tambem usa
-        # role="button" aria-expanded, sempre presente independente de
-        # is_tracked) -- checa o cluster de atributos inteiro da tag de
-        # verdade, nunca so' um nome de atributo isolado.
-        self.assertNotIn('<div class="workout-load-input"', html)
-        self.assertNotIn('data-workout-load-toggle tabindex="0" role="button" aria-expanded', html)
+        self.assertIn('<div class="workout-load-input"', html)
+        self.assertIn('data-workout-load-toggle tabindex="0" role="button" aria-expanded', html)
+        self.assertNotIn('workout-tracked-chip', html)
 
     def test_body_carries_plan_slug_for_load_tracker_js(self):
         html = _render(build_example_payload(), plan_slug='giovanna')
@@ -212,6 +212,44 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertEqual(html.count('class="workout-day-panel'), 2)
         self.assertIn('workout-day-seg', html)
         self.assertIn('workout-day-qua', html)
+
+    def test_day_tab_splits_prefixed_label_into_short_day_and_keyword(self):
+        payload = build_example_payload()
+        payload['days'][0]['label'] = 'Segunda - Pernas Quadríceps'
+
+        html = _render(payload)
+
+        self.assertIn('<span class="workout-day-tab__day">Seg</span>', html)
+        self.assertIn('<span class="workout-day-tab__keyword">Pernas Quadríceps</span>', html)
+
+    def test_day_tab_keeps_label_unchanged_when_no_weekday_prefix(self):
+        # juliana/henrique: label real e' so' a palavra-chave, sem "Segunda -".
+        payload = build_example_payload()
+        payload['days'][0]['label'] = 'Superior A'
+
+        html = _render(payload)
+
+        self.assertIn('<span class="workout-day-tab__day">Seg</span>', html)
+        self.assertIn('<span class="workout-day-tab__keyword">Superior A</span>', html)
+
+    def test_all_movements_are_clickable_regardless_of_is_tracked(self):
+        # Pedido do Renan: registrar carga disponivel em TODO exercicio, nao
+        # so' nos curados como "rastreado" pelo treinador.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'].append({
+            **payload['days'][0]['blocks'][0]['movements'][0],
+            'movement_slug': 'outro-movimento',
+            'is_tracked': False,
+        })
+
+        html = _render(payload)
+
+        # 'data-workout-load-toggle' sozinho tambem aparece 1x no <script>
+        # inline (querySelectorAll) -- conta o cluster de atributos da tag
+        # de verdade, mesmo padrao ja usado nos outros testes deste arquivo.
+        self.assertEqual(html.count('data-workout-load-toggle tabindex="0" role="button" aria-expanded'), 2)
+        self.assertEqual(html.count('<div class="workout-load-input"'), 2)
+        self.assertEqual(html.count('workout-tracked-chip'), 1)
 
     def test_history_tab_renders_without_data(self):
         # "Histórico" (nome antigo do tab combinado) virou dois paineis de

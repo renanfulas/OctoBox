@@ -1924,6 +1924,47 @@ bloqueio).
 >   revisão isolada, não misturada com o resto deste lote (puramente
 >   visual, sem tocar payload).
 
+> **Atualização (quarta rodada — espaçamento, seletor de dia do Treino
+> igual ao "Sua semana", registro de carga em todo exercício, 2 bugs de
+> alinhamento):**
+> - Espaçamento mais generoso no trilho "Sua semana" (Início, 6px→9px) e na
+>   lista de exercícios do Treino (10px→14px) — pedido direto do Renan.
+> - Seletor de dia do Treino (`.workout-day-tab`) trocou o formato antigo
+>   (rótulo único, ex. "Segunda - Pernas Quadríceps") pelo MESMO padrão
+>   "dia curto + palavra-chave" do card de "Sua semana", lado a lado —
+>   referência visual enviada pelo Renan. `day_short_label`/`day_keyword`
+>   (`dashboard.py`) derivam os dois pedaços: o dia curto vem de `day_id`
+>   (nunca de `day.label`, que é texto livre do treinador); a palavra-chave
+>   remove o prefixo "<Dia da semana><separador>" de `day.label` SÓ quando
+>   ele bate com o nome completo do dia — checado contra os 10 payloads
+>   reais, que usam 3 formatos diferentes (hífen "-", travessão "—", ou
+>   nenhum prefixo — juliana/henrique já são só a palavra-chave).
+> - Registrar carga deixou de exigir `is_tracked`: `record_load`
+>   (`services.py`, já existia) nunca validou esse campo — é puramente um
+>   sinal de curadoria do treinador (badge "rastreado"), nunca um portão de
+>   acesso. O que parecia "só o primeiro exercício registra" era simplesmente
+>   o fato de raramente haver mais de 1 `is_tracked=True` por dia nos dados
+>   reais — confirmado ao vivo com milene/thaislima (únicos 2 casos de 2
+>   rastreados no mesmo dia) que o toggle já funcionava independente por
+>   card; a mudança real foi abrir o clique pra QUALQUER exercício.
+> - **2 bugs de alinhamento achados e corrigidos**:
+>   1. Ícone de tema (Perfil) flutuava no meio da linha em vez de colado à
+>      direita — `.theme-toggle-icon` (`design-system/topbar.css`) é
+>      `width:100%;height:100%` pensado pra um botão circular pequeno
+>      (`.theme-toggle` do topbar), não pra uma linha inteira
+>      (`.workout-profile-row`). Override local com tamanho fixo (20px).
+>   2. Fundo branco fixo no tema escuro (Avaliação) — `assessments.css` usa
+>      `--white`/`--dark`/`--border`/`--muted` com fallback fixo (nunca
+>      tiveram valor de tema: `_base.html` legado só define
+>      `--accent`/`--accent-bg`/`--accent-dark` por plano, cor de marca, não
+>      claro/escuro). Redeclarados sob `body[data-theme="dark"]` dentro do
+>      próprio `assessments.css` — inerte nas 10 páginas legadas (nunca têm
+>      toggle de tema pra ativar esse seletor), então sem risco de regressão
+>      lá.
+> - Suíte completa (406 testes, `public_workouts` + `student_app`) verde;
+>   verificado num Chromium real nos dois temas, incluindo o clique em
+>   exercício não-rastreado abrindo o widget de carga.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
