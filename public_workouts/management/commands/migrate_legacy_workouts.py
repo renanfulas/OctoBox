@@ -48,11 +48,26 @@ _WEEK_NUMBER_RE = re.compile(r'[Ss]emana\s+(\d+)')
 
 # Decisao de negocio, nao dado extraivel do HTML -- ver docstring do modulo.
 # `started_on`: data real (ISO YYYY-MM-DD) em que o aluno comecou o
-# mesociclo atual. None = ainda nao preenchido -- o comando cai pro
-# fallback de date.today() e avisa no relatorio (dry-run e publicacao real).
-# Preencha aqui quando souber a data real de cada aluno; enquanto for None,
-# toda republicacao (inclusive v2, v3...) grava a data de hoje, nao a data
-# em que o mesociclo comecou de fato.
+# mesociclo atual. Preenchido em 2026-09-15 a partir da data do commit no
+# GitHub em que o HTML de cada aluno foi colocado/reescrito de verdade
+# (pedido explicito do Renan: "a data que esta la foi a data que comecou"),
+# ignorando commits cosmeticos que tocaram os 10 de uma vez sem mudar
+# conteudo de treino (extracao de design system, aba Avaliacoes):
+#   bruno/giovanna/john/milene: ja existiam no 1o commit do repo
+#     (32339c6, 2026-06-23) -- nenhuma reescrita de conteudo depois disso,
+#     entao 2026-06-23 e' a data mais antiga visivel no historico.
+#   henrique: e7853bd (2026-08-26, PR #162 "novo treino publico ... 5 dias").
+#   johnespanha: 852a351 (2026-08-28, PR #170 "novo treino publico ...").
+#   juliana: 703564a (2026-08-31, "novo ciclo Juliana -- quadriceps alta
+#     frequencia 4 dias") -- reescrita mais recente que o PR #158 (02/08).
+#   franciele: 2bf74fe (2026-09-06, "adiciona treino publico da Franciele").
+#   rafael: 93ac1fe (2026-09-06, "adiciona treino publico do Rafael").
+#   thaislima: mesma situacao de bruno/giovanna/john/milene (2026-06-23).
+# Pedido explicito do Renan pra quem ja passou da duracao (`weeks`) hoje
+# (bruno/giovanna/john/milene/thaislima, todos com data de 2026-06-23):
+# usar hoje-14 dias (2026-09-01) em vez da data real do commit, pra nao
+# publicar um mesociclo "encerrado ha meses" -- ver
+# docs/plans/public-workouts-produtizacao-corda.md pra contexto da decisao.
 LEGACY_PROGRAM_METADATA: dict[str, dict[str, object]] = {
     # `weeks` dos 8 slugs com periodization abaixo foi realinhado com o
     # numero de linhas de `periodization.weeks_table` (payload real,
@@ -61,16 +76,16 @@ LEGACY_PROGRAM_METADATA: dict[str, dict[str, object]] = {
     # propria tabela de periodizacao mostra (ex.: bruno tinha weeks=5 com
     # tabela de 6 semanas). johnespanha/thaislima nao tem periodization
     # nesta fatia, entao ficam como estavam.
-    'bruno': {'program_label': 'Treino Bruno', 'weeks': 6, 'started_on': None},
-    'franciele': {'program_label': 'Treino Franciele', 'weeks': 5, 'started_on': None},
-    'giovanna': {'program_label': 'Treino Giovanna', 'weeks': 6, 'started_on': None},
-    'henrique': {'program_label': 'Treino Henrique', 'weeks': 6, 'started_on': None},
-    'john': {'program_label': 'Treino John Espanha (Legado)', 'weeks': 6, 'started_on': None},
-    'johnespanha': {'program_label': 'Treino John Espanha', 'weeks': 4, 'started_on': None},
-    'juliana': {'program_label': 'Treino Juliana', 'weeks': 6, 'started_on': None},
-    'milene': {'program_label': 'Treino Milene', 'weeks': 6, 'started_on': None},
-    'rafael': {'program_label': 'Treino Rafael', 'weeks': 7, 'started_on': None},
-    'thaislima': {'program_label': 'Treino Thais Lima', 'weeks': 4, 'started_on': None},
+    'bruno': {'program_label': 'Treino Bruno', 'weeks': 6, 'started_on': '2026-09-01'},
+    'franciele': {'program_label': 'Treino Franciele', 'weeks': 5, 'started_on': '2026-09-06'},
+    'giovanna': {'program_label': 'Treino Giovanna', 'weeks': 6, 'started_on': '2026-09-01'},
+    'henrique': {'program_label': 'Treino Henrique', 'weeks': 6, 'started_on': '2026-08-26'},
+    'john': {'program_label': 'Treino John Espanha (Legado)', 'weeks': 6, 'started_on': '2026-09-01'},
+    'johnespanha': {'program_label': 'Treino John Espanha', 'weeks': 4, 'started_on': '2026-08-28'},
+    'juliana': {'program_label': 'Treino Juliana', 'weeks': 6, 'started_on': '2026-08-31'},
+    'milene': {'program_label': 'Treino Milene', 'weeks': 6, 'started_on': '2026-09-01'},
+    'rafael': {'program_label': 'Treino Rafael', 'weeks': 7, 'started_on': '2026-09-06'},
+    'thaislima': {'program_label': 'Treino Thais Lima', 'weeks': 4, 'started_on': '2026-09-01'},
 }
 
 
