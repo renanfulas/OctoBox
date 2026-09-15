@@ -20,17 +20,74 @@ POR QUE ELE EXISTE:
   e `trends_by_movement` (Onda A3, ja calculados em services.py) sao dicts
   chaveados por `movement_slug`, e o template precisa deles dentro do
   `{% regroup %}` por movimento.
+- workout_greeting/initial (fundacao visual do topbar, pedido do Renan)
+  sao um duplicado deliberado de student_app/templatetags/student_shell.py
+  ({% load student_shell %} do template deste produto violaria D.00/D.3 —
+  ver docstring de workout.html). A logica e trivial (nem 10 linhas) e nao
+  depende de nenhum modelo — duplicar aqui e mais barato que arriscar
+  acoplamento entre produtos so pra nao repetir um if/elif de horario.
 """
 
 from __future__ import annotations
 
 import re
+from datetime import date as _date
 
 from django import template
+from django.utils import timezone
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 
+from public_workouts.dashboard import build_program_summary, build_week_overview
+
 register = template.Library()
+
+
+@register.simple_tag
+def program_summary(payload: dict) -> dict:
+    """Wrapper de template pra dashboard.build_program_summary — o template
+    so tem `program` (o payload) no contexto, nao precisa de var nova."""
+    return build_program_summary(payload)
+
+
+@register.simple_tag
+def week_overview(payload: dict, load_history=None) -> list:
+    """Wrapper de template pra dashboard.build_week_overview — converte as
+    datas ISO string de `load_history` (mesmo shape de services.list_load_history)
+    pra `date` antes de chamar a funcao pura."""
+    completed_dates = set()
+    for entry in load_history or ():
+        performed_on = entry.get('performed_on') if hasattr(entry, 'get') else None
+        if not performed_on:
+            continue
+        completed_dates.add(_date.fromisoformat(performed_on) if isinstance(performed_on, str) else performed_on)
+    return build_week_overview(payload=payload, completed_dates=completed_dates)
+
+
+@register.simple_tag
+def workout_greeting(name: str = '') -> str:
+    """Saudação por hora local + primeiro nome ('Boa tarde, Juliana').
+
+    Mesmo relogio/faixas de horario de student_shell.student_greeting —
+    duplicado de proposito (ver docstring do modulo), nao importado.
+    """
+    hour = timezone.localtime().hour
+    if hour < 12:
+        greeting = 'Bom dia'
+    elif hour < 18:
+        greeting = 'Boa tarde'
+    else:
+        greeting = 'Boa noite'
+
+    first_name = (name or '').strip().split(' ')[0]
+    return f'{greeting}, {first_name}' if first_name else greeting
+
+
+@register.filter
+def initial(name: str) -> str:
+    """'Juliana' -> 'J' — fallback de avatar antes de existir foto."""
+    stripped = (name or '').strip()
+    return stripped[0].upper() if stripped else '?'
 
 
 @register.filter

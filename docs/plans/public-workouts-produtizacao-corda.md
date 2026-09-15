@@ -1813,6 +1813,58 @@ bloqueio).
 > avaliacoes.json é buscado), calcula e salva corretamente, idade fica
 > lembrada em localStorage entre visitas (evita perguntar de novo, sem
 > precisar de coluna nova no banco).
+>
+> **Atualização (fundação visual "topbar + bottom nav", pedido explícito do
+> Renan de aproximar o layout do corredor do app do aluno de box):**
+> **exceção documentada a D.4** — Renan autorizou explicitamente a Frente A
+> editar `templates/public_workouts/workout.html` + CSS/JS deste app
+> (normalmente arquivos da Frente B), depois de revisar o app do aluno de
+> box junto com ela. `workout.html` (fundação da Onda B3, ainda sem
+> URL/view) ganhou 5 telas de nível superior por bottom nav — **Início,
+> Avaliação, Treino, Cargas, Perfil** — REIMPLEMENTADAS do zero (nunca
+> importando template/CSS do `student_app`, mesma regra D.00/D.3 de sempre;
+> só os tokens `--theme-*` já usados no resto do arquivo são compartilhados):
+> - **Início**: topbar com saudação por horário + primeiro nome
+>   (`public_workouts_extras.py::workout_greeting`, duplicado deliberado —
+>   nem 10 linhas — de `student_shell.student_greeting`, nunca importado
+>   entre apps) e avatar com iniciais (fundação pronta pra foto depois, sem
+>   campo novo — usa `PublicWorkoutPlan.short_name` já existente, `PublicWorkoutAccount`
+>   não guarda nome). Card de resumo do programa é **texto determinístico**
+>   (`public_workouts/dashboard.py::build_program_summary`) — decisão do
+>   Renan: sem chamada de IA nesta entrega (custo de API e cache ficam pra
+>   quando o resumo por Haiku for desenhado de verdade), contrato estável
+>   (`headline`/`body`) pra Haiku substituir só o corpo depois. "Sua semana"
+>   (`build_week_overview`) usa `day_id` como abreviação real do dia (o
+>   parser da Onda A2 já gera seg/ter/qua/...) — sincroniza sozinho, sem
+>   pedir input do treinador; "dia completo" olha só se existe
+>   `PublicWorkoutLoadLog` na data real daquele dia da semana corrente.
+> - **Avaliação**: leitura de `build_report` (S1, já existia) — resumo de
+>   peso/indicadores. Não inclui o formulário de lançamento (isso continua
+>   sendo `assessments.js` nos templates legados) — fica de fora desta
+>   entrega de propósito.
+> - **Treino**: mesmos sub-tabs de dia de sempre, movimentos viraram cards
+>   estilo WOD do app do aluno (`.student-wod-movement-card`) em vez de
+>   tabela — mesmo dado (`reps_spec`/`rir_spec`/`load_type`/`is_tracked`),
+>   só troca de marcação/CSS. `load_tracker.js` não mudou uma linha (já era
+>   por atributo, não por estrutura de tabela).
+> - **Cargas** e **Perfil**: o antigo painel único "Histórico" virou dois —
+>   Cargas ficou com a evolução de carga, Perfil com as versões do programa
+>   **+ Pagamentos** (link pro `start_customer_portal_session`, Onda B2)
+>   **+ Tema** (reusa `static/js/core/shell.js`, script genérico já
+>   existente no repo — não é o `student_app/theme.js`, que se autodesliga
+>   fora do app do aluno via `data-student-app`).
+> - Troca de aba agora acontece em **dois níveis independentes** (painéis
+>   de topo + sub-abas de dia dentro de Treino) sem um nível derrubar o
+>   outro — script generalizado pra escopar "quem fica destacado" ao nav
+>   mais próximo (`closest('[data-workout-tab-nav]')`) e "qual painel
+>   aparece" ao container do painel-alvo, reusando o mesmo mecanismo CSS de
+>   `interactive-tabs.css` (por filho direto) que já existia.
+> - Verificado num Chromium real (servidor Django real + preview isolado
+>   pros assets estáticos): as 5 telas, troca de tema, troca de dia dentro
+>   de Treino sem perder o destaque de "Treino" no bottom nav, mobile
+>   (375px). Continua **sem URL/view real** — mesmo estágio de fundação do
+>   resto do arquivo; `student_name`/`assessment_report`/`customer_portal_url`
+>   são contexto opcional até uma view de verdade alimentá-los.
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|

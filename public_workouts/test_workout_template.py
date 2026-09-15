@@ -36,6 +36,10 @@ def _render(
     trends_by_movement=None,
     plan_slug='bruno',
     movement_labels=None,
+    student_name='',
+    student_photo_url=None,
+    assessment_report=None,
+    customer_portal_url=None,
 ) -> str:
     return render_to_string('public_workouts/workout.html', {
         'program': payload,
@@ -46,6 +50,10 @@ def _render(
         'trends_by_movement': trends_by_movement or {},
         'plan_slug': plan_slug,
         'movement_labels': movement_labels or {},
+        'student_name': student_name,
+        'student_photo_url': student_photo_url,
+        'assessment_report': assessment_report,
+        'customer_portal_url': customer_portal_url,
     })
 
 
@@ -201,12 +209,14 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-step="2.5"', html)
         self.assertIn('data-workout-load-hint', html)
 
-    def test_records_tab_button_and_panel_exist(self):
+    def test_records_section_exists_inside_cargas_panel(self):
+        # "Suas Cargas" (recorde por movimento) mora dentro do painel de
+        # nivel superior "Cargas" (bottom nav) desde a reestruturacao de
+        # 5 telas — nao e mais uma aba propria dentro do dia.
         html = _render(build_example_payload())
 
-        self.assertIn('data-workout-tab-target="workout-records"', html)
-        self.assertIn('id="workout-records"', html)
-        self.assertIn('Suas Cargas', html)
+        self.assertIn('id="workout-panel-cargas"', html)
+        self.assertIn('Seus recordes', html)
 
     def test_records_tab_shows_empty_state_without_load_history(self):
         html = _render(build_example_payload(), load_history=[])
@@ -265,13 +275,17 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('workout-day-qua', html)
 
     def test_history_tab_renders_without_data(self):
+        # "Histórico" (nome antigo do tab combinado) virou dois paineis de
+        # nivel superior: Cargas (evolucao de carga) e Perfil (versoes do
+        # programa) — pedido do Renan pra estrutura de bottom nav.
         html = _render(build_example_payload())
 
-        self.assertIn('Histórico', html)
+        self.assertIn('id="workout-panel-cargas"', html)
+        self.assertIn('id="workout-panel-perfil"', html)
         self.assertIn('Nenhuma versão publicada ainda.', html)
         self.assertIn('Nenhuma carga registrada ainda.', html)
         # nao pode inflar a contagem que test_multi_day_multi_block_payload_renders_each_once faz
-        self.assertNotIn('class="workout-day-panel workout-history-panel', html)
+        self.assertNotIn('class="workout-day-panel workout-panel-cargas', html)
 
     def test_history_tab_renders_program_version_list_with_active_badge(self):
         html = _render(build_example_payload(), program_versions=[
@@ -400,6 +414,133 @@ class WorkoutTemplateRenderTests(TestCase):
 
         self.assertNotIn('workout-load-chart-version-line', html)
         self.assertNotIn('workout-load-chart-dot--version', html)
+
+
+class WorkoutTopbarAndNavTests(TestCase):
+    """Fundação visual pedida pelo Renan (topbar/semana/bottom nav), com o
+    mesmo padrão do app do aluno de box — reimplementada do zero aqui
+    (D.00/D.3: nunca importa templates/CSS do student_app)."""
+
+    def test_greeting_includes_first_name(self):
+        html = _render(build_example_payload(), student_name='Juliana Silva')
+
+        self.assertIn('Juliana', html)
+        self.assertNotIn('Silva', html)  # so o primeiro nome, mesmo corte de student_shell.student_greeting
+
+    def test_greeting_without_name_still_renders(self):
+        html = _render(build_example_payload(), student_name='')
+
+        self.assertIn('workout-topbar-greeting', html)
+
+    def test_avatar_shows_first_letter_when_no_photo(self):
+        html = _render(build_example_payload(), student_name='Juliana', student_photo_url=None)
+
+        self.assertIn('>J<', html)
+        self.assertNotIn('<img', html)
+
+    def test_avatar_shows_photo_when_provided(self):
+        html = _render(build_example_payload(), student_name='Juliana', student_photo_url='https://example.com/foto.jpg')
+
+        self.assertIn('<img src="https://example.com/foto.jpg"', html)
+
+    def test_bottom_nav_has_five_destinations_in_order(self):
+        html = _render(build_example_payload())
+
+        expected_order = ['workout-panel-inicio', 'workout-panel-avaliacao', 'workout-panel-treino', 'workout-panel-cargas', 'workout-panel-perfil']
+        positions = [html.index(f'data-workout-tab-target="{target}"', html.index('workout-mobile-nav')) for target in expected_order]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_inicio_panel_is_active_by_default(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('id="workout-panel-inicio" class="is-tab-active"', html)
+
+    def test_week_strip_shows_seven_days(self):
+        html = _render(build_example_payload())
+
+        for label in ('Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'):
+            self.assertIn(f'>{label}<', html)
+
+    def test_week_strip_marks_prescribed_day_not_rest(self):
+        # build_example_payload tem um unico dia, day_id='seg' — os outros
+        # 6 dias da semana ficam "Descanso" (is-rest). "hoje" varia por
+        # execucao do teste, entao nao travamos qual dia especifico esta
+        # marcado is-today aqui.
+        html = _render(build_example_payload())
+
+        self.assertIn('Treino previsto', html)
+        self.assertIn('Descanso', html)
+
+    def test_week_strip_marks_complete_day_from_load_history(self):
+        import datetime
+
+        payload = build_example_payload()  # dia unico day_id='seg'
+        # segunda-feira da semana CORRENTE (build_week_overview usa date.today()
+        # internamente, entao a carga registrada precisa cair na mesma semana
+        # de "hoje" pra aparecer, nao importa quando o teste rodar).
+        today = datetime.date.today()
+        monday = today - datetime.timedelta(days=today.weekday())
+        html = _render(payload, load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': monday.isoformat(), 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+        ])
+
+        self.assertIn('carga registrada', html)
+
+    def test_program_summary_headline_and_body_render(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('workout-summary-card', html)
+        self.assertIn('Programa de exemplo', html)
+        self.assertIn('Montado pra rodar', html)
+
+
+class WorkoutAssessmentPanelTests(TestCase):
+    def test_empty_state_without_report(self):
+        html = _render(build_example_payload(), assessment_report=None)
+
+        self.assertIn('Nenhuma avaliação registrada ainda.', html)
+
+    def test_shows_weight_and_indicators_when_report_provided(self):
+        html = _render(build_example_payload(), assessment_report={
+            'summary': {
+                'weight_kg': {'current': 68.5, 'first': 72.0, 'delta': -3.5},
+                'measurements': {},
+                'first_date': '2026-01-05',
+                'last_date': '2026-03-01',
+                'count': 3,
+            },
+            'indicators': {
+                'bmi': {'value': 22.1, 'classification': {'label': 'Peso normal', 'level': 'ok'}},
+                'whr': None,
+                'body_fat_percent': {'value': 24.5, 'source': 'navy_estimate', 'classification': {'label': 'Aceitável', 'level': 'ok'}},
+            },
+        })
+
+        # Django formata numero com separador decimal pt-BR (USE_L10N) — "," nao "."
+        # (mesma convencao ja testada acima pra 75,0% RM / 100,0 kg).
+        self.assertIn('68,5 kg', html)
+        self.assertIn('IMC 22,1', html)
+        self.assertIn('Peso normal', html)
+        self.assertIn('%Gordura 24,5% · Aceitável', html)
+        self.assertIn('3 avaliações registradas', html)
+
+
+class WorkoutProfilePanelTests(TestCase):
+    def test_payments_link_shown_when_portal_url_provided(self):
+        html = _render(build_example_payload(), customer_portal_url='https://billing.stripe.com/session/abc')
+
+        self.assertIn('href="https://billing.stripe.com/session/abc"', html)
+        self.assertIn('Pagamentos', html)
+
+    def test_payments_shows_unavailable_without_portal_url(self):
+        html = _render(build_example_payload(), customer_portal_url=None)
+
+        self.assertIn('indisponível', html)
+
+    def test_theme_toggle_button_present(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('data-ui="theme-toggle"', html)
 
 
 class HumanizeMovementSlugFilterTests(TestCase):

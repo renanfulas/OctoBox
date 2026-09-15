@@ -40,8 +40,270 @@
     max-width: 720px;
     margin: 0 auto;
     padding: 16px;
+    padding-bottom: 100px; /* espaco pro bottom nav fixo (item 4) nao cobrir conteudo */
     display: grid;
     gap: 20px;
+}
+
+/* ============================================================
+ * Topbar + bottom nav + Sua semana (fundacao visual pedida pelo
+ * Renan pra aproximar do app do aluno de box) — reimplementados do
+ * zero aqui, nunca herdando de student_app/** (D.00/D.3): so os
+ * TOKENS --theme-* sao compartilhados, classes/markup sao proprios
+ * deste produto.
+ * ============================================================ */
+
+.workout-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 2px 2px 4px;
+}
+
+.workout-topbar-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.workout-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--brand) 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--brand) 32%, transparent);
+    color: color-mix(in srgb, var(--brand) 75%, var(--theme-text-primary) 25%);
+    font-weight: 800;
+    overflow: hidden;
+}
+
+.workout-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.workout-topbar-greeting {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--theme-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.workout-topbar-bell {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: var(--theme-text-secondary);
+}
+
+.workout-topbar-bell svg {
+    width: 21px;
+    height: 21px;
+}
+
+.workout-summary-card h2 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+}
+
+.workout-summary-card p {
+    margin: 0;
+    color: var(--theme-text-secondary);
+    line-height: 1.5;
+}
+
+.workout-week-strip {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid var(--theme-border-soft);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+}
+
+.workout-week-strip__head {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--theme-text-muted);
+}
+
+.workout-week-strip__track {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.workout-week-day {
+    display: grid;
+    place-items: center;
+    min-height: 46px;
+    padding: 9px 0;
+    border-radius: 14px;
+    border: 1px solid var(--theme-border-soft);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+    color: var(--theme-text-muted);
+    font-size: 0.69rem;
+    font-weight: 700;
+}
+
+.workout-week-day.is-rest {
+    opacity: 0.5;
+}
+
+.workout-week-day.is-today {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
+    color: color-mix(in srgb, var(--brand) 75%, var(--theme-text-primary) 25%);
+}
+
+.workout-week-day.is-complete {
+    border-style: solid;
+    border-color: color-mix(in srgb, var(--brand) 35%, transparent);
+    background: color-mix(in srgb, var(--brand) 16%, var(--theme-surface-secondary) 84%);
+    color: color-mix(in srgb, var(--brand) 75%, var(--theme-text-primary) 25%);
+}
+
+.workout-mobile-nav {
+    position: fixed;
+    left: 14px;
+    right: 14px;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    z-index: 12;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    padding: 6px;
+    border-radius: 22px;
+    border: 1px solid var(--theme-border-soft);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, var(--theme-bg-root) 4%);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.workout-mobile-nav-link {
+    display: grid;
+    place-items: center;
+    gap: 3px;
+    min-height: 52px;
+    padding: 7px 4px;
+    border-radius: 16px;
+    font-size: 0.69rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--theme-text-muted);
+    border: 1px solid transparent;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.workout-mobile-nav-link svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.workout-mobile-nav-link.is-active {
+    color: var(--theme-text-primary);
+    background: color-mix(in srgb, var(--brand) 20%, transparent);
+    border-color: color-mix(in srgb, var(--brand) 32%, transparent);
+}
+
+/* Cards de movimento estilo WOD (Treino, item 5) — troca a tabela antiga
+   por card horizontal (nome+prescricao a esquerda, carga a direita),
+   mesmo layout de .student-wod-movement-card do app do aluno. */
+.workout-movement-list {
+    display: grid;
+    gap: 10px;
+}
+
+.workout-movement-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+}
+
+.workout-movement-copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.workout-movement-copy strong {
+    font-size: 0.94rem;
+    font-weight: 700;
+}
+
+.workout-movement-copy span {
+    color: var(--theme-text-muted);
+    font-size: 0.8rem;
+}
+
+.workout-movement-load {
+    flex: 0 0 auto;
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--theme-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Avaliacao (leitura) */
+.workout-assessment-summary {
+    display: grid;
+    gap: 12px;
+}
+
+.workout-assessment-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Perfil (versoes + conta) */
+.workout-profile-list {
+    display: grid;
+}
+
+.workout-profile-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 4px;
+    border: none;
+    border-bottom: 1px solid var(--theme-border-soft);
+    text-decoration: none;
+    color: inherit;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
+.workout-profile-list .workout-profile-row:last-child {
+    border-bottom: none;
+}
+
+.workout-profile-row__label {
+    font-size: 0.92rem;
+    font-weight: 600;
 }
 
 .workout-day-nav {
@@ -63,11 +325,16 @@
     background: color-mix(in srgb, var(--brand) 18%, var(--theme-surface-secondary) 82%);
 }
 
-.workout-block-card {
-    padding: 0;
-}
-
+/* Achado nesta sessao: so 1 dos 5 usos de .workout-block-card e tabela
+   (Versoes do programa, painel Perfil) — os outros 4 (Avaliacoes, Seus
+   recordes, Evolucao de carga, Conta) botam <h2>/conteudo direto no card,
+   sem passar por .operation-table-wrap. Zerar o padding aqui deixava a
+   maioria dos usos com o titulo colado/sobrepondo o card-decor-topstripe.
+   Correcao: card volta a herdar o padding:16px normal de .student-card;
+   so a tabela sangra ate a borda via margin negativo, pra manter o
+   scroll horizontal exatamente como era antes. */
 .workout-block-card .operation-table-wrap {
+    margin: -16px;
     padding: 16px;
     overflow-x: auto;
 }
