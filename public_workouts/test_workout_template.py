@@ -1052,6 +1052,32 @@ class MovementDisplayNameAndVariationRenderTests(TestCase):
         self.assertIn('href="https://musclewiki.com/exercise/dumbbell-bench-press"', html)
         self.assertIn('Supino com halteres', html)
 
+    def test_variation_is_hidden_by_default_behind_a_toggle(self):
+        # Pedido do Renan: mesmo padrao de clique-expande do registro de
+        # carga -- oculto por padrao, um toggle proprio revela.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Supino com halteres', 'reference_url': 'https://musclewiki.com/exercise/dumbbell-bench-press'},
+        ]
+
+        html = _render(payload)
+
+        self.assertIn('data-workout-variation-toggle', html)
+        self.assertIn('<span class="workout-movement-variation" data-workout-variation hidden>', html)
+
+    def test_variation_toggle_available_regardless_of_is_tracked(self):
+        # Igual ao registro de carga: a disponibilidade do toggle nao
+        # depende de is_tracked.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['is_tracked'] = False
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Supino com halteres', 'reference_url': 'https://musclewiki.com/exercise/dumbbell-bench-press'},
+        ]
+
+        html = _render(payload)
+
+        self.assertIn('data-workout-variation-toggle', html)
+
     def test_multiple_variations_all_render(self):
         payload = build_example_payload()
         payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [

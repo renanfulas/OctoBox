@@ -2041,6 +2041,17 @@ bloqueio).
 >   variação exibidos corretamente. Mesmo estágio de "aditivo, não
 >   republicado ainda" do restante desta seção.
 
+> **Atualização (variação oculta por padrão, pedido explícito do Renan):**
+> A linha "Variação: `<link>`" virou um toggle — colapsada por padrão
+> (`data-workout-variation`, `hidden`), um gatilho "Ver variação" revela ao
+> clicar (`data-workout-variation-toggle`), mesmo padrão de clique-expande
+> já usado no registro de carga (item anterior desta mesma onda B3).
+> Disponível em todo exercício com variação, sem depender de nenhuma outra
+> flag — mesmo espírito do registro de carga não depender de `is_tracked`.
+> Handler do card (`data-workout-load-toggle`) ganhou mais uma exclusão de
+> clique/teclado pro toggle de variação não abrir o widget de carga junto.
+> Suíte (341 testes) verde; verificado num Chromium real.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |

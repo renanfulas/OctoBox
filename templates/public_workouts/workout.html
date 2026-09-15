@@ -158,7 +158,8 @@ PONTOS CRITICOS:
                 <strong>{{ movement|movement_display_name }}</strong>
                 {% endif %}
                 {% if movement.variations %}
-                <span class="workout-movement-variation">Variação:
+                <span class="workout-movement-variation-toggle" data-workout-variation-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar variação de {{ movement|movement_display_name }}">Ver variação</span>
+                <span class="workout-movement-variation" data-workout-variation hidden>Variação:
                   {% for variation in movement.variations %}<a href="{{ variation.reference_url }}" target="_blank" rel="noopener">{{ variation.label }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
                 </span>
                 {% endif %}
@@ -619,12 +620,35 @@ PONTOS CRITICOS:
     card.addEventListener('click', function (event) {
       if (event.target.closest('a')) return; // link do MuscleWiki abre normal, nao alterna
       if (event.target.closest('[data-workout-glossary]')) return; // bolinha de jargao so mostra definicao
+      if (event.target.closest('[data-workout-variation-toggle]')) return; // toggle proprio, ver abaixo
       toggle();
     });
     card.addEventListener('keydown', function (event) {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       if (event.target.closest('a')) return;
       if (event.target.closest('[data-workout-glossary]')) return;
+      if (event.target.closest('[data-workout-variation-toggle]')) return;
+      event.preventDefault();
+      toggle();
+    });
+  });
+
+  // "Ver variação": mesmo padrao de clique-expande do registro de carga
+  // acima (oculto por padrao, colado ao card, nunca disputa clique com o
+  // toggle de carga — excluido explicitamente nos handlers do card acima).
+  // Pedido do Renan: disponivel em TODO exercicio que tiver variacao
+  // sugerida pelo treinador (`.ex-var` do HTML legado), nao so' os
+  // rastreados — mesmo espirito do item de carga.
+  document.querySelectorAll('[data-workout-variation-toggle]').forEach(function (trigger) {
+    function toggle() {
+      var panel = trigger.nextElementSibling;
+      if (!panel || !panel.hasAttribute('data-workout-variation')) return;
+      panel.hidden = !panel.hidden;
+      trigger.setAttribute('aria-expanded', panel.hidden ? 'false' : 'true');
+    }
+    trigger.addEventListener('click', toggle);
+    trigger.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       toggle();
     });
