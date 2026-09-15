@@ -47,9 +47,12 @@ from public_workouts.services import publish_program
 _WEEK_NUMBER_RE = re.compile(r'[Ss]emana\s+(\d+)')
 
 # Decisao de negocio, nao dado extraivel do HTML -- ver docstring do modulo.
-# `started_on` default e a data de hoje (dia em que o registro passa a
-# existir como PublicWorkoutProgram versionado, nao quando o cliente comecou
-# a treinar de fato -- ajuste aqui se souber a data real).
+# `started_on`: data real (ISO YYYY-MM-DD) em que o aluno comecou o
+# mesociclo atual. None = ainda nao preenchido -- o comando cai pro
+# fallback de date.today() e avisa no relatorio (dry-run e publicacao real).
+# Preencha aqui quando souber a data real de cada aluno; enquanto for None,
+# toda republicacao (inclusive v2, v3...) grava a data de hoje, nao a data
+# em que o mesociclo comecou de fato.
 LEGACY_PROGRAM_METADATA: dict[str, dict[str, object]] = {
     # `weeks` dos 8 slugs com periodization abaixo foi realinhado com o
     # numero de linhas de `periodization.weeks_table` (payload real,
@@ -58,16 +61,16 @@ LEGACY_PROGRAM_METADATA: dict[str, dict[str, object]] = {
     # propria tabela de periodizacao mostra (ex.: bruno tinha weeks=5 com
     # tabela de 6 semanas). johnespanha/thaislima nao tem periodization
     # nesta fatia, entao ficam como estavam.
-    'bruno': {'program_label': 'Treino Bruno', 'weeks': 6},
-    'franciele': {'program_label': 'Treino Franciele', 'weeks': 5},
-    'giovanna': {'program_label': 'Treino Giovanna', 'weeks': 6},
-    'henrique': {'program_label': 'Treino Henrique', 'weeks': 6},
-    'john': {'program_label': 'Treino John Espanha (Legado)', 'weeks': 6},
-    'johnespanha': {'program_label': 'Treino John Espanha', 'weeks': 4},
-    'juliana': {'program_label': 'Treino Juliana', 'weeks': 6},
-    'milene': {'program_label': 'Treino Milene', 'weeks': 6},
-    'rafael': {'program_label': 'Treino Rafael', 'weeks': 7},
-    'thaislima': {'program_label': 'Treino Thais Lima', 'weeks': 4},
+    'bruno': {'program_label': 'Treino Bruno', 'weeks': 6, 'started_on': None},
+    'franciele': {'program_label': 'Treino Franciele', 'weeks': 5, 'started_on': None},
+    'giovanna': {'program_label': 'Treino Giovanna', 'weeks': 6, 'started_on': None},
+    'henrique': {'program_label': 'Treino Henrique', 'weeks': 6, 'started_on': None},
+    'john': {'program_label': 'Treino John Espanha (Legado)', 'weeks': 6, 'started_on': None},
+    'johnespanha': {'program_label': 'Treino John Espanha', 'weeks': 4, 'started_on': None},
+    'juliana': {'program_label': 'Treino Juliana', 'weeks': 6, 'started_on': None},
+    'milene': {'program_label': 'Treino Milene', 'weeks': 6, 'started_on': None},
+    'rafael': {'program_label': 'Treino Rafael', 'weeks': 7, 'started_on': None},
+    'thaislima': {'program_label': 'Treino Thais Lima', 'weeks': 4, 'started_on': None},
 }
 
 
@@ -106,12 +109,14 @@ class Command(BaseCommand):
 
             suggested_weeks = self._suggest_weeks(html)
             configured_weeks = metadata['weeks']
+            configured_started_on = metadata.get('started_on')
+            started_on = configured_started_on or date.today().isoformat()
 
             payload, skipped = build_program_payload_from_html(
                 html=html,
                 program_id=f'{slug}-legado-v1',
                 program_label=metadata['program_label'],
-                started_on=date.today().isoformat(),
+                started_on=started_on,
                 weeks=configured_weeks,
                 accent_variant=accent_variant,
             )
@@ -121,6 +126,7 @@ class Command(BaseCommand):
             self._print_report(
                 slug=slug, payload=payload, skipped=skipped, errors=errors,
                 suggested_weeks=suggested_weeks, configured_weeks=configured_weeks,
+                configured_started_on=configured_started_on,
             )
 
             if errors:
@@ -137,13 +143,24 @@ class Command(BaseCommand):
         numbers = [int(match) for match in _WEEK_NUMBER_RE.findall(html)]
         return max(numbers) if numbers else None
 
-    def _print_report(self, *, slug, payload, skipped, errors, suggested_weeks, configured_weeks) -> None:
+    def _print_report(
+        self, *, slug, payload, skipped, errors, suggested_weeks, configured_weeks, configured_started_on,
+    ) -> None:
         accent = payload['accent_variant'] or 'neutro'
-        self.stdout.write(f"\n=== {slug} ({payload['program_id']}, {payload['weeks']} semanas, accent={accent}) ===")
+        self.stdout.write(
+            f"\n=== {slug} ({payload['program_id']}, {payload['weeks']} semanas, "
+            f"started_on={payload['started_on']}, accent={accent}) ==="
+        )
         if suggested_weeks is not None and suggested_weeks != configured_weeks:
             self.stdout.write(self.style.WARNING(
                 f'  aviso: HTML sugere {suggested_weeks} semanas (maior "Semana N" encontrado), '
                 f'configurado {configured_weeks} -- confira LEGACY_PROGRAM_METADATA.'
+            ))
+        if configured_started_on is None:
+            self.stdout.write(self.style.WARNING(
+                f"  aviso: started_on nao configurado para {slug!r}, usando hoje "
+                f"({payload['started_on']}) -- preencha LEGACY_PROGRAM_METADATA['{slug}']['started_on'] "
+                f"quando souber a data real em que o mesociclo comecou."
             ))
 
         total_movements = 0
