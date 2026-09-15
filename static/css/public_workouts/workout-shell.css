@@ -89,6 +89,15 @@
     display: block;
 }
 
+/* Avatar grande do cabecalho do Perfil (item pedido: "estrutura igual do
+   app dos alunos" -- mesmo componente .workout-avatar do topbar, so maior;
+   nao cria um segundo componente de avatar do zero). */
+.workout-avatar--lg {
+    width: 72px;
+    height: 72px;
+    font-size: 1.6rem;
+}
+
 .workout-topbar-greeting {
     font-size: 1rem;
     font-weight: 800;
@@ -135,9 +144,33 @@
 }
 
 .workout-week-strip__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     font-size: 0.78rem;
     font-weight: 700;
     color: var(--theme-text-muted);
+}
+
+.workout-week-strip__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: color-mix(in srgb, var(--brand) 64%, var(--theme-text-primary) 36%);
+}
+
+.workout-week-strip__flame {
+    width: 13px;
+    height: 13px;
+    flex: 0 0 auto;
+    color: var(--brand);
+}
+
+.workout-week-strip__score {
+    color: var(--theme-text-muted);
+    font-size: 0.75rem;
+    text-align: right;
 }
 
 .workout-week-strip__track {
@@ -157,10 +190,24 @@
     color: var(--theme-text-muted);
     font-size: 0.69rem;
     font-weight: 700;
+    font-family: inherit;
+}
+
+/* Botao (dia com treino, clicavel) vs. span (descanso, so leitura). */
+button.workout-week-day {
+    cursor: pointer;
+}
+
+button.workout-week-day:hover,
+button.workout-week-day:focus-visible {
+    outline: none;
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
+    background: color-mix(in srgb, var(--brand) 10%, var(--theme-surface-secondary) 90%);
 }
 
 .workout-week-day.is-rest {
     opacity: 0.5;
+    cursor: default;
 }
 
 .workout-week-day.is-today {
@@ -239,6 +286,18 @@
     padding: 14px 16px;
 }
 
+/* Rastreado = clicavel (alterna "registrar carga de hoje", item 4 do
+   pedido do Renan) — os nao-rastreados nao tem data-workout-load-toggle,
+   ficam sem cursor/foco de proposito (nada pra abrir). */
+.workout-movement-card[data-workout-load-toggle] {
+    cursor: pointer;
+}
+
+.workout-movement-card[data-workout-load-toggle]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
 .workout-movement-copy {
     min-width: 0;
     display: grid;
@@ -255,6 +314,69 @@
     font-size: 0.8rem;
 }
 
+/* Quebra de fase (Prep/Feeder/Top/AMRAP) de reps_spec — pedido do Renan pra
+   "voltar" o padrao rico dos templates legados (colunas de sets-tbl com
+   pilula colorida por tipo de serie: .st-p/.st-f/.st-t/.st-m em
+   static/css/public_workouts/components.css). So aparece quando
+   reps_phases() acha mais de 1 fase (texto com "→") — reps_spec simples
+   ("3x12") continua na linha unica de sempre, sem pilula grande a toa. */
+.workout-phase-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 2px;
+}
+
+.workout-phase-row .workout-phase-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.workout-phase-row .workout-phase-chip--prep {
+    background: color-mix(in srgb, var(--theme-text-muted) 18%, transparent);
+    color: var(--theme-text-secondary);
+}
+
+.workout-phase-row .workout-phase-chip--feeder {
+    background: var(--theme-accent-warning-alpha);
+    color: color-mix(in srgb, var(--theme-accent-warning) 75%, var(--theme-text-primary) 25%);
+}
+
+.workout-phase-row .workout-phase-chip--top {
+    background: color-mix(in srgb, var(--brand) 16%, transparent);
+    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
+}
+
+.workout-phase-row .workout-phase-chip--max {
+    background: var(--theme-accent-danger-alpha);
+    color: color-mix(in srgb, var(--theme-accent-danger) 75%, var(--theme-text-primary) 25%);
+}
+
+.workout-phase-row .workout-phase-chip--plain {
+    background: color-mix(in srgb, var(--theme-text-muted) 12%, transparent);
+    color: var(--theme-text-secondary);
+}
+
+.workout-phase-note {
+    display: block;
+    margin-top: 2px;
+}
+
+/* glossary_highlight() marca Prep/Feeder/Top/AMRAP com <span
+   class="workout-glossary-term"> mesmo dentro de um chip — sem isto, a
+   palavra destacada ficaria cinza-mudo (.workout-movement-copy span pega
+   qualquer span descendente, especificidade maior que so' .workout-phase-chip)
+   em vez de herdar a cor propria do chip. */
+.workout-phase-chip .workout-glossary-term {
+    color: inherit;
+}
+
 .workout-movement-load {
     flex: 0 0 auto;
     text-align: right;
@@ -263,19 +385,39 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Avaliacao (leitura) */
-.workout-assessment-summary {
-    display: grid;
-    gap: 12px;
-}
-
-.workout-assessment-indicators {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
 /* Perfil (versoes + conta) */
+.workout-profile-header {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 8px 0 4px;
+    text-align: center;
+}
+
+.workout-profile-header__name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--theme-text-primary);
+}
+
+.workout-profile-header__email {
+    font-size: 0.82rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-signout-button {
+    width: 100%;
+    padding: 13px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-danger) 32%, transparent);
+    background: var(--theme-accent-danger-alpha);
+    color: color-mix(in srgb, var(--theme-accent-danger) 78%, var(--theme-text-primary) 22%);
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+}
+
 .workout-profile-list {
     display: grid;
 }
@@ -289,7 +431,12 @@
     border: none;
     border-bottom: 1px solid var(--theme-border-soft);
     text-decoration: none;
-    color: inherit;
+    /* Fresh --theme-text-primary, nao "inherit" puro -- mesmo motivo do
+       .workout-profile-row__label logo abaixo: "inherit" pega o `body {
+       color: var(--ink) }` de tokens.css, alias congelado no tom claro no
+       tema escuro. Cobre o valor a direita da linha (ex.: e-mail em "Dados
+       pessoais"), que nao tem classe propria pra um color: fresco so dele. */
+    color: var(--theme-text-primary);
     background: none;
     width: 100%;
     text-align: left;
@@ -304,6 +451,11 @@
 .workout-profile-row__label {
     font-size: 0.92rem;
     font-weight: 600;
+    /* Fresh --theme-text-primary, nao inherit puro: o `body { color: var(--ink) }`
+       de tokens.css e' um alias congelado no tom claro (--ink e' resolvido uma
+       unica vez em :root, nunca redeclarado em body[data-theme="dark"]) -- ver
+       mesmo bug ja documentado em static/css/access/overview.css. */
+    color: var(--theme-text-primary);
 }
 
 .workout-day-nav {
@@ -326,7 +478,7 @@
 }
 
 .workout-block-card {
-    padding: 0;
+    padding: 16px;
 }
 
 .workout-block-card .operation-table-wrap {
@@ -334,11 +486,27 @@
     overflow-x: auto;
 }
 
+/* components/tables.css usa th{color:var(--legacy-copy-strong)} (token nunca
+   declarado em lugar nenhum, cai pro cor herdada) e td{color:var(--ink)}
+   (alias congelado no tom claro, mesmo bug do .workout-profile-row__label
+   acima) -- os dois ficam ilegiveis no tema escuro. Override local, direto
+   nos tokens frescos, sem tocar o CSS compartilhado (usado por outras
+   telas que nao tem esse problema por outro motivo). */
+.workout-block-card th,
+.workout-block-card td {
+    color: var(--theme-text-primary);
+}
+
 .workout-tracked-chip {
     min-height: auto;
     padding: 2px 8px;
     font-size: 0.72rem;
     margin-inline-start: 8px;
+    /* justify-self:start — `.workout-movement-copy` e' grid, e desde que a
+       quebra de fase (.workout-phase-row) virou irmao direto (nao mais
+       aninhado dentro do <span> de texto), esta pilula tambem virou item de
+       grid direto e teria "stretch" (padrao) esticando a largura toda. */
+    justify-self: start;
 }
 
 /* Telas pequenas (~400px): a tabela de movimentos nunca deve forcar
@@ -348,18 +516,6 @@
     .workout-block-card table {
         min-width: 480px;
     }
-}
-
-/* Aba Historico (Onda B4, fatia adiantada): versoes do programa + evolucao
-   de carga por movimento. Painel proprio (nao .workout-day-panel) — ver
-   comentario no <script> inline de workout.html sobre por que. */
-.workout-history-panel {
-    display: grid;
-    gap: 20px;
-}
-
-.workout-history-panel .student-card {
-    padding: 16px;
 }
 
 .workout-version-row td {
@@ -552,6 +708,64 @@
     font-size: 0.85em;
 }
 
+/* Bolinha de dicionario de treino (RIR, AMRAP, Feeder, Top, Prep — ver
+   glossary_highlight em public_workouts_extras.py). O termo em si fica com
+   a cor normal do texto (nao e' um link) -- so o "ⓘ" superescrito sinaliza
+   que e' clicavel, pra nao competir visualmente com o link do MuscleWiki
+   (.workout-wiki-link, que usa --brand). */
+.workout-glossary-term {
+    position: relative;
+    display: inline;
+    cursor: pointer;
+    border-bottom: 1px dotted var(--theme-text-muted);
+}
+
+.workout-glossary-term:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.workout-glossary-dot {
+    color: var(--brand);
+    font-size: 0.72em;
+    margin-inline-start: 1px;
+}
+
+/* position:fixed (nao absolute) de proposito: varios ancestrais do termo
+   (.workout-movement-card, .student-card) tem overflow:hidden pro
+   card-decor-topstripe respeitar o border-radius — um tooltip position:absolute
+   ficaria cortado pelo card. Coordenadas viram inline style via JS no clique
+   (ver <script> de workout.html), calculadas com getBoundingClientRect(). */
+.workout-glossary-tip {
+    display: none;
+    position: fixed;
+    z-index: 50;
+    width: max-content;
+    max-width: 240px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    font-weight: 400;
+    color: var(--theme-text-secondary);
+    white-space: normal;
+}
+
+.workout-glossary-tip strong {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--theme-text-primary);
+    font-size: 0.8rem;
+}
+
+.workout-glossary-term.is-open .workout-glossary-tip {
+    display: block;
+}
+
 /* Registro de carga de hoje (item 8) — linha propria logo abaixo do
    movimento rastreado, span nas 4 colunas (D.00: reusa .operation-table-wrap
    em vez de inventar um segundo layout de card). */
@@ -570,6 +784,14 @@
     border-radius: 10px;
     background: color-mix(in srgb, var(--brand) 6%, var(--theme-surface-secondary) 94%);
     border: 1px solid var(--theme-border-soft);
+}
+
+/* [hidden] do HTML e a classe acima empatam em especificidade (0,1,0) --
+   sem isso, o `display:flex` da classe vence o `display:none` implicito
+   do navegador e o widget (colapsado por padrao, item 4 do pedido do
+   Renan) fica visivel mesmo com o atributo `hidden` presente. */
+.workout-load-input[hidden] {
+    display: none;
 }
 
 .workout-load-input__label {
