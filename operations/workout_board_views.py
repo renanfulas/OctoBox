@@ -19,7 +19,11 @@ from shared_support.page_payloads import attach_page_payload
 
 from operations.operations_executive_summary_context import build_operations_executive_summary_context
 from operations.workout_approval_board_context import build_workout_approval_board_context
-from operations.workout_smart_paste_context import build_weekly_wod_smart_paste_context, _max_week_start
+from operations.workout_smart_paste_context import (
+    build_weekly_wod_smart_paste_context,
+    count_unresolved_smart_paste_movements,
+    _max_week_start,
+)
 from operations.workout_publication_history_context import build_workout_publication_history_context
 from operations.workout_rm_quick_edit_actions import save_workout_student_rm_quick_edit
 from operations.workout_rm_quick_edit_context import (
@@ -38,6 +42,7 @@ from operations.forms import (
 from operations.services.wod_paste_parser import load_wod_movement_dictionary, parse_weekly_wod_text, resolve_movement_slug
 from operations.services.wod_paste_freeform_parser import _freeform_should_take_over, parse_weekly_wod_freeform
 from operations.services.wod_slug_resolver import apply_llm_slug_resolution
+from operations.services.smart_paste_rate_limit import smart_paste_rate_limit_exceeded
 from operations.services.wod_smartplan_weekly_parser import detect_and_convert_smartplan_weekly
 from operations.services.wod_projection import build_projection_preview, project_plan_to_sessions
 from operations.services.wod_replication_batches import undo_replication_batch
@@ -325,6 +330,16 @@ class WorkoutSmartPasteView(OperationBaseView):
             messages.success(request, f'Template salvo "{template.name}" criado a partir do Smart Paste.')
             return redirect('workout-template-management')
 
+        if action != 'confirm_plan' and smart_paste_rate_limit_exceeded(request):
+            messages.error(
+                request,
+                'Muitas submissoes em pouco tempo. Espere alguns minutos antes de organizar outro texto.',
+            )
+            context = self._build_context(plan=plan)
+            if self._is_hx_request():
+                return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
+            return self.render_to_response(context)
+
         today_date = self.get_base_context().get('today') or timezone.localdate()
         form = WeeklyWodSmartPasteForm(request.POST, max_week_start=_max_week_start(today_date))
         if not form.is_valid():
@@ -340,6 +355,22 @@ class WorkoutSmartPasteView(OperationBaseView):
         plan.label = cleaned['label']
         plan.source_text = cleaned['source_text']
         if action == 'confirm_plan':
+            # Guarda server-side: o botao "Confirmar rascunho semanal" fica
+            # disabled no template quando ha pendencia, mas isso e so client-side
+            # (atributo HTML inspecionavel/removivel). Sem esta checagem, um
+            # plano com movimento nao resolvido confirmado e depois replicado
+            # grava o texto cru digitado pelo coach como rotulo do exercicio no
+            # WOD real do aluno (slug generico 'custom' em wod_projection.py).
+            unresolved_count = count_unresolved_smart_paste_movements(plan.parsed_payload or {})
+            if unresolved_count:
+                messages.error(
+                    request,
+                    f'Feche as {unresolved_count} pendencia(s) de revisao antes de confirmar a semana.',
+                )
+                context = self._build_context(plan=plan, parsed_payload=plan.parsed_payload)
+                if self._is_hx_request():
+                    return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
+                return self.render_to_response(context)
             plan.status = WeeklyWodPlanStatus.CONFIRMED
         else:
             plan.status = WeeklyWodPlanStatus.DRAFT

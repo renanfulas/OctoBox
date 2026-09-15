@@ -29,6 +29,18 @@ from .models import StudentOnboardingJourney
 from .security import build_student_device_fingerprint
 
 
+def _safe_photo_url(identity_payload) -> str:
+    """photo_url so deve ir para a sessao (payload de onboarding) como str.
+
+    Espelha a guarda defensiva de oauth_actions._maybe_update_photo_url:
+    identity_payload em producao e sempre um OAuthIdentityPayload real, mas
+    um valor nao-str aqui (ex.: mock de teste sem photo_url configurado)
+    quebraria a serializacao da sessao Django.
+    """
+    photo_url = getattr(identity_payload, 'photo_url', '')
+    return photo_url if isinstance(photo_url, str) else ''
+
+
 def resolve_student_oauth_journey(*, repository, invite_token: str) -> str:
     if not invite_token:
         return ''
@@ -100,6 +112,11 @@ def handle_student_special_oauth_journey(
             'provider': identity_payload.provider,
             'provider_subject': identity_payload.provider_subject,
             'email': identity_payload.email,
+            # Bug: sem isto, a foto do Google capturada no OAuth se perdia —
+            # esta jornada desvia para o wizard ANTES de
+            # oauth_actions._maybe_update_photo_url rodar, e save_identity()
+            # so persiste o photo_url que vier explicito neste payload.
+            'photo_url': _safe_photo_url(identity_payload),
             'box_invite_link_id': box_invite_link.id,
             'box_invite_link_token': str(box_invite_link.token),
         }
@@ -149,6 +166,8 @@ def handle_student_special_oauth_journey(
         'provider': identity_payload.provider,
         'provider_subject': identity_payload.provider_subject,
         'email': identity_payload.email,
+        # Ver comentario equivalente no payload de MASS_BOX_INVITE acima.
+        'photo_url': _safe_photo_url(identity_payload),
     }
     if not payload['box_root_slug'] or not payload['identity_id'] or not payload['student_id']:
         return _redirect_with_message(request, 'warning', 'Sua sessão de cadastro não ficou completa. Tente entrar novamente.')

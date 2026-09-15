@@ -140,6 +140,10 @@ class OnboardingWorkflow:
                     provider_subject=provider_subject,
                     email=email,
                     invitation=None,
+                    # Bug: essa jornada desvia para o wizard antes do callback
+                    # aplicar a foto do Google (oauth_actions._maybe_update_photo_url).
+                    # Sem repassar aqui, o photo_url capturado no OAuth se perdia.
+                    photo_url=pending_onboarding.get('photo_url', ''),
                 )
         except IdentitySaveConflictError as exc:
             # Onda 3: 'email-conflict' e deterministico e comum (o e-mail do Google/Apple
@@ -240,9 +244,20 @@ class OnboardingWorkflow:
         if student.status == StudentStatus.LEAD:
             student.status = StudentStatus.ACTIVE
         student.save()
+        identity_update_fields = []
         if identity.email != student.email and student.email:
             identity.email = student.email
-            identity.save(update_fields=['email', 'updated_at'])
+            identity_update_fields.append('email')
+        # Bug: essa jornada tambem desvia para o wizard antes do callback
+        # aplicar a foto do Google (oauth_actions._maybe_update_photo_url), e
+        # a identity ja existe (criada no convite) — nao passa por save_identity.
+        # So sobrescreve com um valor novo, nunca apaga uma foto ja salva.
+        pending_photo_url = (pending_onboarding.get('photo_url') or '').strip()
+        if pending_photo_url and identity.photo_url != pending_photo_url:
+            identity.photo_url = pending_photo_url
+            identity_update_fields.append('photo_url')
+        if identity_update_fields:
+            identity.save(update_fields=[*identity_update_fields, 'updated_at'])
         ensure_pending_enrollment(
             student=student,
             plan=cleaned_data.get('selected_plan'),

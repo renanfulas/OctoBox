@@ -91,6 +91,7 @@ class StudentAppExperienceTests(TestCase):
         *,
         provider_subject='provider-subject-new-mass',
         email='novo@app.com',
+        photo_url='',
     ):
         link = StudentBoxInviteLink.objects.create(
             box_root_slug=get_box_runtime_slug(),
@@ -105,6 +106,7 @@ class StudentAppExperienceTests(TestCase):
             'provider_subject': provider_subject,
             'email': email,
             'box_invite_link_id': link.id,
+            'photo_url': photo_url,
         }
         session.save()
         return link
@@ -225,6 +227,37 @@ class StudentAppExperienceTests(TestCase):
                 metadata__identity_id=identity.id,
             ).exists()
         )
+
+    def test_mass_onboarding_persists_google_photo_url_captured_during_oauth(self):
+        """Bug: a foto do Google era perdida no wizard de onboarding em massa.
+
+        handle_student_special_oauth_journey (mass box invite) desvia para o
+        wizard ANTES de oauth_actions._maybe_update_photo_url rodar, e
+        save_identity() so persistia photo_url quando ele vinha explicito no
+        payload da sessao. Sem isso, o aluno completava o cadastro via Google
+        e nunca ganhava avatar.
+        """
+        client = Client()
+        self._set_mass_onboarding_session(
+            client,
+            provider_subject='provider-subject-mass-photo',
+            photo_url='https://example.com/mass-google-photo.jpg',
+        )
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno Com Foto',
+                'phone': '5511888899999',
+                'birth_date': '02/01/2000',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        identity = StudentIdentity.objects.get(provider_subject='provider-subject-mass-photo')
+        self.assertEqual(identity.photo_url, 'https://example.com/mass-google-photo.jpg')
 
     def test_mass_onboarding_renders_hardened_input_attrs(self):
         client = Client()
@@ -382,6 +415,74 @@ class StudentAppExperienceTests(TestCase):
                 metadata__identity_id=identity.id,
             ).exists()
         )
+
+    def test_imported_lead_onboarding_persists_google_photo_url_captured_during_oauth(self):
+        """Bug irmao do mass onboarding: convite individual de lead importado
+        tambem desvia para o wizard antes de _maybe_update_photo_url rodar, e
+        a identity ja existe (criada no convite) — nao passa por
+        save_identity(). Sem repassar photo_url aqui, o avatar do Google
+        nunca era aplicado nesse fluxo.
+        """
+        client = Client()
+        student = Student.objects.create(
+            full_name='Lead Com Foto',
+            phone='5511666677788',
+            email='',
+            status=StudentStatus.LEAD,
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=student.id, student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='provider-subject-imported-lead-photo',
+            email='leadphoto@app.com',
+            status=StudentIdentityStatus.ACTIVE,
+            photo_url='',
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=student.id,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        client.cookies['octobox_student_session'] = build_student_session_value(
+            identity_id=identity.id,
+            box_root_slug=get_box_runtime_slug(),
+        )
+        invitation = StudentAppInvitation.objects.create(
+            student_id=student.id, student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            invited_email='leadphoto@app.com',
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'box_root_slug': get_box_runtime_slug(),
+            'student_id': student.id,
+            'identity_id': identity.id,
+            'invitation_id': invitation.id,
+            'email': 'leadphoto@app.com',
+            'photo_url': 'https://example.com/lead-google-photo.jpg',
+        }
+        session.save()
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Lead Com Foto Atualizado',
+                'phone': '5511666677788',
+                'birth_date': '06/05/1999',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        identity.refresh_from_db()
+        self.assertEqual(identity.photo_url, 'https://example.com/lead-google-photo.jpg')
 
     def test_onboarding_redirects_to_login_when_session_is_missing(self):
         client = Client()

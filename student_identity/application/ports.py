@@ -63,6 +63,7 @@ class StudentIdentityRepositoryPort(Protocol):
         provider_subject: str,
         email: str,
         invitation=None,
+        photo_url: str = '',
     ) -> StudentIdentityRecord:
         ...
 
