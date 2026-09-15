@@ -6,7 +6,7 @@ from datetime import date
 
 from django.test import SimpleTestCase
 
-from public_workouts.dashboard import build_program_summary, build_week_overview
+from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
 from public_workouts.schema import build_example_payload
 
 
@@ -105,3 +105,37 @@ class BuildProgramSummaryTests(SimpleTestCase):
         summary = build_program_summary(payload)
 
         self.assertNotIn('acompanhada', summary['body'])
+
+
+class DayShortLabelTests(SimpleTestCase):
+    def test_known_day_id_returns_three_letter_abbreviation(self):
+        self.assertEqual(day_short_label('seg'), 'Seg')
+        self.assertEqual(day_short_label('sab'), 'Sáb')
+
+    def test_unknown_day_id_returns_itself(self):
+        self.assertEqual(day_short_label('xyz'), 'xyz')
+
+
+class DayKeywordTests(SimpleTestCase):
+    def test_strips_hyphen_prefixed_weekday_name(self):
+        # franciele: 'Segunda - Pernas Quadríceps'
+        self.assertEqual(day_keyword(day_id='seg', label='Segunda - Pernas Quadríceps'), 'Pernas Quadríceps')
+
+    def test_strips_em_dash_prefixed_weekday_name(self):
+        # bruno: 'Upper A — Push Pesado' nao tem prefixo de dia -- so' testa
+        # o caso que TEM: 'Segunda — Inferior — Glúteo' (johnespanha).
+        self.assertEqual(
+            day_keyword(day_id='seg', label='Segunda — Inferior — Glúteo + Abdômen'),
+            'Inferior — Glúteo + Abdômen',
+        )
+
+    def test_label_without_weekday_prefix_is_returned_unchanged(self):
+        # juliana/henrique: label e' so' a palavra-chave, sem nome de dia.
+        self.assertEqual(day_keyword(day_id='seg', label='Quadríceps'), 'Quadríceps')
+        self.assertEqual(day_keyword(day_id='seg', label='Upper A — Push Pesado'), 'Upper A — Push Pesado')
+
+    def test_unknown_day_id_returns_label_unchanged(self):
+        self.assertEqual(day_keyword(day_id='xyz', label='Segunda - Pernas'), 'Segunda - Pernas')
+
+    def test_empty_label_returns_empty(self):
+        self.assertEqual(day_keyword(day_id='seg', label=''), '')

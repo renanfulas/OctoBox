@@ -38,7 +38,7 @@ from django.utils import timezone
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from public_workouts.dashboard import build_program_summary, build_week_overview
+from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
 
 register = template.Library()
 
@@ -61,6 +61,22 @@ def week_streak_label(week_days) -> str:
         return ''
     completed = sum(1 for day in prescribed if day.is_complete)
     return f'{completed} de {len(prescribed)} dia{"s" if len(prescribed) != 1 else ""} com treino'
+
+
+@register.filter
+def day_short(day_id: str) -> str:
+    """Wrapper de template pra dashboard.day_short_label — dia curto (Seg/
+    Ter/...) reusado no seletor de dia do Treino (item pedido pelo Renan:
+    mesmo formato "dia + palavra-chave" do "Sua semana" do Início)."""
+    return day_short_label(day_id)
+
+
+@register.simple_tag
+def day_workout_keyword(day) -> str:
+    """Wrapper de template pra dashboard.day_keyword — recebe o `day` do
+    payload inteiro (nao so' os campos soltos) pra assinatura ficar simples
+    no template: `{% day_workout_keyword day %}`."""
+    return day_keyword(day_id=day.get('day_id', ''), label=day.get('label', ''))
 
 
 @register.simple_tag
