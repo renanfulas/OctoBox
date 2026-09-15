@@ -64,6 +64,25 @@ def _smart_paste_display_label(movement):
     return label_raw
 
 
+def count_unresolved_smart_paste_movements(parsed_payload):
+    """Conta movimentos sem `movement_slug` resolvido, sem mutar o payload.
+
+    Usada pelo view para recusar `confirm_plan` server-side quando ainda
+    existem pendências — o botão "Confirmar rascunho semanal" no template
+    fica `disabled` quando há pendências, mas isso é só client-side (HTML
+    inspecionável); sem esta checagem, confirmar (e depois replicar) um
+    plano com pendência grava o texto cru do coach ("agachamnto" etc.) como
+    rótulo do exercício no WOD real do aluno, com slug genérico 'custom'.
+    """
+    count = 0
+    for day in parsed_payload.get('days', []) or []:
+        for block in day.get('blocks', []) or []:
+            for movement in block.get('movements', []) or []:
+                if not movement.get('movement_slug'):
+                    count += 1
+    return count
+
+
 def _decorate_preview_payload(parsed_payload):
     unresolved_items = []
     auto_fixed_items = []

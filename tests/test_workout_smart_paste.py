@@ -132,6 +132,68 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'id="smart-paste-projection-panel"')
         self.assertContains(response, 'Montar preview de replicacao')
 
+    def test_confirm_plan_rejects_when_movement_still_unresolved(self):
+        """
+        Guarda server-side: o botao "Confirmar rascunho semanal" fica
+        disabled no template quando ha pendencia de revisao, mas isso e so
+        client-side (atributo HTML inspecionavel/removivel via DevTools).
+
+        Achado numa simulacao E2E manual: POSTando action=confirm_plan
+        direto (bypassando o disabled) num plano com um movimento sem
+        movement_slug resolvido, o servidor confirmava mesmo assim -- e
+        replicar depois grava o texto cru digitado pelo coach como rotulo
+        do exercicio no WOD real do aluno (ver project_plan_to_sessions,
+        que cai no slug generico 'custom' quando movement_slug esta vazio).
+        """
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2026-04-20',
+            label='Semana com pendencia',
+            source_text=SMART_PASTE_SAMPLE,
+            parsed_payload={
+                'week_label': None,
+                'parse_warnings': [],
+                'days': [
+                    {
+                        'weekday': 0,
+                        'weekday_label': 'Segunda',
+                        'blocks': [
+                            {
+                                'kind': 'wod',
+                                'title': 'Wod',
+                                'movements': [
+                                    {
+                                        'movement_label_raw': 'movimentoinventadoxyz123',
+                                        'movement_slug': '',
+                                        'reps_spec': '10',
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            created_by=self.coach,
+        )
+
+        response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'plan_id': plan.id,
+                'week_start': '20/04',
+                'label': 'Semana com pendencia',
+                'source_text': SMART_PASTE_SAMPLE,
+                'action': 'confirm_plan',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        plan.refresh_from_db()
+        self.assertEqual(plan.status, WeeklyWodPlanStatus.DRAFT)
+        self.assertContains(response, 'pendencia')
+        self.assertNotContains(response, 'Plano semanal confirmado.')
+        self.assertNotContains(response, 'id="smart-paste-projection-panel"')
+
     def test_confirmed_week_shows_projection_panel_in_layout_instead_of_preview_card(self):
         today = timezone.localdate()
         current_week_start = today + timedelta(days=(7 - today.weekday()) % 7)
