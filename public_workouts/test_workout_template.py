@@ -1010,3 +1010,64 @@ class MovementCardPhaseChipRenderTests(TestCase):
 
         self.assertNotIn('workout-phase-row', html)
         self.assertIn('3x12', html)
+
+
+class MovementDisplayNameAndVariationRenderTests(TestCase):
+    """`movement.name` (portugues, escrito pelo treinador) e' aditivo —
+    achado real: nomes estavam saindo em ingles (slug do MuscleWiki
+    humanizado) porque o template nunca usava `name`, so' `movement_slug`."""
+
+    def test_movement_with_name_shows_portuguese_text_not_slug(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['name'] = 'Agachamento com barra livre'
+        # slug continua em ingles de proposito (vem do MuscleWiki) -- so' a
+        # exibicao muda.
+        payload['days'][0]['blocks'][0]['movements'][0]['movement_slug'] = 'barbell-squat'
+
+        html = _render(payload)
+
+        self.assertIn('Agachamento com barra livre', html)
+        self.assertNotIn('>Barbell squat<', html)
+
+    def test_movement_without_name_falls_back_to_humanized_slug(self):
+        # Movimento publicado ANTES desta fatia, sem `name` no payload.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['movement_slug'] = 'barbell-squat'
+        payload['days'][0]['blocks'][0]['movements'][0].pop('name', None)
+
+        html = _render(payload)
+
+        self.assertIn('Barbell squat', html)
+
+    def test_single_variation_renders_as_link(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Supino com halteres', 'reference_url': 'https://musclewiki.com/exercise/dumbbell-bench-press'},
+        ]
+
+        html = _render(payload)
+
+        self.assertIn('workout-movement-variation', html)
+        self.assertIn('Variação:', html)
+        self.assertIn('href="https://musclewiki.com/exercise/dumbbell-bench-press"', html)
+        self.assertIn('Supino com halteres', html)
+
+    def test_multiple_variations_all_render(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Hack squat', 'reference_url': 'https://musclewiki.com/exercise/machine-hack-squat'},
+            {'label': 'Leg press 45°', 'reference_url': 'https://musclewiki.com/exercise/machine-leg-press'},
+        ]
+
+        html = _render(payload)
+
+        self.assertIn('Hack squat', html)
+        self.assertIn('Leg press 45°', html)
+
+    def test_movement_without_variations_omits_variation_line(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0].pop('variations', None)
+
+        html = _render(payload)
+
+        self.assertNotIn('workout-movement-variation', html)

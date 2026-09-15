@@ -71,6 +71,25 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
         f'{path}.reference_url: string ou null',
     )
 
+    # `name`/`variations` sao ADITIVOS (movimento publicado antes desta
+    # fatia nao tem essas chaves) -- so' validam a FORMA quando presentes,
+    # nunca exigem.
+    name = movement.get('name')
+    _require(name is None or isinstance(name, str), errors, f'{path}.name: string ou ausente')
+
+    variations = movement.get('variations')
+    if variations is not None:
+        _require(isinstance(variations, list), errors, f'{path}.variations: lista ou ausente')
+        if isinstance(variations, list):
+            for vindex, variation in enumerate(variations):
+                _require(
+                    isinstance(variation, dict)
+                    and isinstance(variation.get('label'), str) and variation.get('label')
+                    and isinstance(variation.get('reference_url'), str) and variation.get('reference_url'),
+                    errors,
+                    f'{path}.variations[{vindex}]: objeto com label/reference_url string nao vazia',
+                )
+
 
 def _validate_block(block: dict, *, path: str, errors: list[str]) -> None:
     if not isinstance(block, dict):

@@ -149,13 +149,18 @@ PONTOS CRITICOS:
             {% for movement in block.movements %}
             <article
               class="student-card card-decor-topstripe workout-movement-card"
-              data-workout-load-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar registro de carga de hoje em {{ movement.movement_slug|humanize_movement_slug }}"
+              data-workout-load-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar registro de carga de hoje em {{ movement|movement_display_name }}"
             >
               <div class="workout-movement-copy">
                 {% if movement.reference_url %}
-                <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement.movement_slug|humanize_movement_slug }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
+                <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_display_name }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
                 {% else %}
-                <strong>{{ movement.movement_slug|humanize_movement_slug }}</strong>
+                <strong>{{ movement|movement_display_name }}</strong>
+                {% endif %}
+                {% if movement.variations %}
+                <span class="workout-movement-variation">Variação:
+                  {% for variation in movement.variations %}<a href="{{ variation.reference_url }}" target="_blank" rel="noopener">{{ variation.label }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+                </span>
                 {% endif %}
                 {% with phases=movement.reps_spec|reps_phases %}
                 {% if phases %}
@@ -190,7 +195,7 @@ PONTOS CRITICOS:
                   placeholder="kg"
                   class="workout-load-input__field"
                   data-workout-load-field
-                  aria-label="Carga de hoje em {{ movement.movement_slug|humanize_movement_slug }}, em quilos"
+                  aria-label="Carga de hoje em {{ movement|movement_display_name }}, em quilos"
                 >
                 <button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
               </div>

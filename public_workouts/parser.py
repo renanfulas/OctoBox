@@ -84,6 +84,10 @@ class _ExerciseNode:
     rows: list[_SetRow] = field(default_factory=list)
     has_tracker: bool = False
     day_id: str = ''
+    # (label, url) por `.var-link` dentro de `.ex-var` — normalmente 1, mas
+    # bruno.html tem um caso real com 2 (hack squat sugerindo leg press E
+    # hack squat como variacao) -- lista, nunca um campo unico.
+    variations: list[tuple[str, str]] = field(default_factory=list)
 
     def _is_flat_table(self) -> bool:
         # franciele.html e' o unico dos 10 programas cuja sets-tbl nao tem a
@@ -124,8 +128,14 @@ class _ExerciseNode:
         return slugify(self.name) or 'movimento-sem-nome'
 
     def to_movement_dict(self, *, url: str | None = None, reps_spec: str | None = None, rir_spec: str | None = None) -> dict:
-        return {
+        movement = {
             'movement_slug': self.movement_slug(url=url),
+            # Nome em PORTUGUES escrito pelo treinador (`.ex-name`) — antes
+            # so' era usado como fallback de slug (`movement_slug` acima),
+            # nunca guardado pra exibicao; o template caia pro slug em
+            # ingles do MuscleWiki humanizado. Aditivo (schema.py) — nunca
+            # quebra payload ja publicado sem este campo.
+            'name': self.name,
             'reps_spec': self.reps_spec() if reps_spec is None else reps_spec,
             'rir_spec': self.rir_spec() if rir_spec is None else rir_spec,
             'is_tracked': self.has_tracker,
@@ -133,6 +143,9 @@ class _ExerciseNode:
             'load_value': None,
             'reference_url': url if url is not None else self.wiki_url,
         }
+        if self.variations:
+            movement['variations'] = [{'label': label, 'reference_url': variation_url} for label, variation_url in self.variations]
+        return movement
 
     def is_biset_inline(self) -> bool:
         return bool(self.gym_wiki_url) and self.gym_wiki_url != self.wiki_url
@@ -231,6 +244,7 @@ class _ProgramHTMLParser(HTMLParser):
         self._current_row_is_top = False
         self._current_row_kind_text = ''
         self._pending_alternative = False  # True logo após um .or-divider
+        self._pending_variation_url: str | None = None  # href do .var-link em captura
 
     # ------------------------------------------------------------------
     # Infra de captura de texto
@@ -316,6 +330,12 @@ class _ProgramHTMLParser(HTMLParser):
                 self._current_ex.wiki_url = href
             elif 'gym-wiki' in classes and href and self._current_ex.gym_wiki_url is None:
                 self._current_ex.gym_wiki_url = href
+            elif 'var-link' in classes and href:
+                # `.ex-var` pode ter mais de um `.var-link` (bruno.html tem
+                # 1 caso real com 2) -- guarda o href aqui, o texto (nome da
+                # variacao) vem via captura normal, fechado em </a> abaixo.
+                self._pending_variation_url = href
+                self._start_capture('var_link')
         elif tag == 'table' and 'sets-tbl' in classes:
             self._in_table = True
         elif tag == 'tr' and self._in_table:
@@ -365,6 +385,13 @@ class _ProgramHTMLParser(HTMLParser):
             return
 
         if self._ex_depth == 0:
+            return
+
+        if tag == 'a' and self._capture == 'var_link':
+            label = self._end_capture()
+            if label and self._pending_variation_url:
+                self._current_ex.variations.append((label, self._pending_variation_url))
+            self._pending_variation_url = None
             return
 
         if self._capture == 'cell' and tag in ('td', 'span'):

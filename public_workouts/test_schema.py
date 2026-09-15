@@ -128,3 +128,30 @@ class SchemaValidationTests(TestCase):
         }
         errors = validate_payload(payload)
         self.assertTrue(any('chart[0].h' in error for error in errors))
+
+    def test_movement_name_and_variations_are_optional(self):
+        # Aditivo: movimento publicado antes desta fatia nao tem essas
+        # chaves -- continua valido.
+        payload = build_example_payload()
+        self.assertNotIn('name', payload['days'][0]['blocks'][0]['movements'][0])
+        self.assertEqual(validate_payload(payload), [])
+
+    def test_movement_with_name_and_variations_passes(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['name'] = 'Agachamento livre'
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Hack squat', 'reference_url': 'https://musclewiki.com/exercise/machine-hack-squat'},
+        ]
+        self.assertEqual(validate_payload(payload), [])
+
+    def test_movement_variation_missing_label_is_rejected(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [{'reference_url': 'https://x.com'}]
+        errors = validate_payload(payload)
+        self.assertTrue(any('variations[0]' in error for error in errors))
+
+    def test_movement_variations_not_a_list_is_rejected(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = 'nao e lista'
+        errors = validate_payload(payload)
+        self.assertTrue(any('variations' in error for error in errors))
