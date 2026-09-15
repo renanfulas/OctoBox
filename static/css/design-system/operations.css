@@ -193,11 +193,14 @@ body[data-theme="dark"] .smart-paste-card .coach-wod-editor-head .eyebrow {
 
 /*
  * Campo de data (week_start): o global input tem min-height: 48px e 1fr de largura.
- * Aqui o campo deve mostrar só "dd/mm" — tamanho fixo, compacto ao lado do botão.
- * width em ch: "dd/mm" = 5 chars + padding interno ≈ 9ch totais.
+ * Aqui o campo deve mostrar "dd/mm/aaaa" — tamanho fixo, compacto ao lado do botão.
+ * width em ch: "dd/mm/aaaa" = 10 chars + padding interno ≈ 13ch totais.
+ * (Antes de incluir o ano, o campo mostrava só "dd/mm" e cabia em 9ch — o valor
+ * cresceu quando o fix de "calendario descartava o ano" passou a gravar/exibir
+ * o ano sempre, mas o campo ficou pequeno demais e cortava o ultimo digito.)
  */
 .smart-paste-date-input-wrap input[data-smart-date-input] {
-    width: 9ch;
+    width: 13ch;
     min-width: 0;
     min-height: 40px;
     height: 40px;
@@ -1338,120 +1341,9 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
     }
 }
 
-/* SmartPlan GPT banner — topo da Smart Paste tab */
-.smart-paste-gpt-banner {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
-    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
-    border: 1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent);
-    border-radius: var(--radius-md);
-    flex-wrap: wrap;
-}
-
-.smart-paste-gpt-banner .eyebrow {
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent-primary);
-    white-space: nowrap;
-}
-
-.smart-paste-gpt-banner p {
-    flex: 1;
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    min-width: 160px;
-}
-
-.smart-paste-gpt-banner__steps {
-    flex: 1;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    min-width: 200px;
-}
-
-.smart-paste-gpt-banner__steps li {
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-}
-
-.smart-paste-gpt-banner__steps strong {
-    color: var(--accent-primary);
-    font-variant-numeric: tabular-nums;
-}
-
-.smart-paste-gpt-banner .button {
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-/* Footer do dialog com CTA SmartPlan */
-.smart-paste-day-dialog__footer {
-    flex-shrink: 0;
-    border-top: 1px solid var(--theme-border-soft);
-    padding: 0.9rem 1.25rem;
-}
-
-.smart-paste-day-dialog__smartplan {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.75rem 0.9rem;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--theme-accent-primary) 7%, transparent);
-    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 20%, transparent);
-    flex-wrap: wrap;
-}
-
-.smart-paste-day-dialog__smartplan .eyebrow {
-    margin-bottom: 0.2rem;
-}
-
-.smart-paste-day-dialog__smartplan > div {
-    flex: 1;
-    min-width: 160px;
-}
-
-.smart-paste-day-dialog__smartplan p {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--theme-text-secondary);
-    line-height: 1.4;
-}
-
-.smart-paste-day-dialog__smartplan-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-}
-
-.smart-paste-day-dialog__smartplan .button,
-.smart-paste-day-dialog__smartplan-actions .button {
-    white-space: nowrap;
-}
-
-/* Textarea oculto com texto gerado do dia para clipboard */
-.smart-paste-day-gpt-source {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-}
-
 @media (max-width: 720px) {
     .smart-paste-date-input-wrap {
-        grid-template-columns: minmax(5.25rem, 5.75rem) minmax(0, 1fr);
+        grid-template-columns: minmax(7rem, 7.5rem) minmax(0, 1fr);
         justify-content: stretch;
         width: 100%;
     }
@@ -1569,7 +1461,7 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
     }
 
     .smart-paste-date-input-wrap {
-        grid-template-columns: minmax(4.9rem, 5.35rem) minmax(0, 1fr);
+        grid-template-columns: minmax(6.5rem, 7rem) minmax(0, 1fr);
         gap: 0.5rem;
     }
 
