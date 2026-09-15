@@ -1821,6 +1821,63 @@ bloqueio).
 >   resto do arquivo; `student_name`/`assessment_report`/`customer_portal_url`
 >   são contexto opcional até uma view de verdade alimentá-los.
 
+> **Atualização (segunda rodada de refinamento visual, pedido explícito do
+> Renan após ver a fundação acima — mesma exceção a D.4 já concedida):**
+> - **Início**: ícone de chama SVG + trilho de dias gamificado — dia
+>   prescrito é `<button>` clicável que pula direto pra Treino no dia certo
+>   (`data-workout-jump-panel`/`-jump-day`, mecanismo próprio que só simula
+>   `.click()` nos botões reais, nunca duplica o estado `is-active`).
+> - **Avaliação**: painel deixou de ser reimplementação própria — passou a
+>   **reaproveitar `assessments.js`/`assessments.css` inalterados** (mesmo
+>   script/CSS já validado nos 10 templates legados: silhueta SVG, gauges de
+>   RCQ/%gordura com bola+gradiente, gráfico de peso, timeline, formulário).
+>   `mountPanel()` ganhou suporte a montar em `#workout-panel-avaliacao`
+>   (elemento novo) sem tocar o caminho legado (`.tabs`/`#tab-avaliacoes`).
+>   IMC/RCQ/%gordura ganharam **delta desde a 1ª avaliação** (seta ▲/▼),
+>   estendendo `_build_indicators` (não é um dos 3 contratos congelados
+>   S1/S2/S3 — `build_report` pode crescer aditivamente).
+> - **Treino**: card de movimento rastreado agora é clicável (`role="button"`,
+>   Enter/Espaço) e alterna o widget "registrar carga hoje" (some por padrão,
+>   `hidden`). Termos de jargão de treino (RIR, AMRAP, Feeder, Top, Prep —
+>   conferidos contra os 10 payloads reais publicados, não adivinhados) viram
+>   uma "bolinha" clicável com definição (`glossary_highlight`,
+>   `public_workouts_extras.py`), popover `position:fixed` posicionado por
+>   `getBoundingClientRect()` (os cards têm `overflow:hidden` pro
+>   decor-topstripe — `position:absolute` cortaria o popover).
+> - **2 bugs reais achados e corrigidos nesta verificação** (não eram
+>   ambíguos — reproduzidos e resolvidos):
+>   1. **Alinhamento "comendo o topo" em Cargas/Perfil**: `.workout-block-card`
+>      tinha `padding: 0` (pensado só pra tabela de versões, que compensava
+>      com padding próprio) + a regra que restaurava padding pros outros
+>      cards do antigo painel único "Histórico" (`.workout-history-panel
+>      .student-card`) ficou órfã quando esse painel virou Cargas + Perfil
+>      separados — nunca foi migrada. Início nunca teve o bug porque usa
+>      `.workout-summary-card`, não `.workout-block-card`.
+>   2. **Contraste ilegível no tema escuro** (tabela "Versões do programa" +
+>      linhas "Pagamentos"/"Tema" em Perfil): `body { color: var(--ink) }`
+>      (`tokens.css`) e `td { color: var(--ink) }`/`th { color:
+>      var(--legacy-copy-strong) }` (`components/tables.css`) usam aliases
+>      "legacy compatibility" resolvidos **uma única vez em `:root`** — CSS
+>      custom property herda o VALOR JÁ RESOLVIDO, não a referência, então
+>      `--ink` fica travado no tom claro mesmo com `body[data-theme="dark"]`
+>      ativo (que só redeclara `--theme-text-primary`, nunca `--ink`) — mesmo
+>      bug já documentado em `static/css/access/overview.css` pra outro
+>      componente. Resto do template escapa do bug porque usa
+>      `--theme-text-*`/`--brand` **direto** (`.student-card h2`, `--brand`
+>      via `[data-accent-variant]`, `.workout-movement-copy span`), nunca via
+>      alias. Corrigido local (`workout-shell.css`), sem tocar `tokens.css`
+>      nem `components/tables.css` (compartilhados, usados por outras telas
+>      que não têm esse problema por outro motivo).
+> - **Achado, não corrigido (fora de escopo desta rodada)**: o formulário de
+>   avaliação (`assessments.js`/`.assess-*`) mantém fundo **branco fixo** no
+>   tema escuro — texto continua legível (contraste OK), é só inconsistência
+>   visual, não o bug de legibilidade acima. Esse CSS é compartilhado com os
+>   10 templates legados em produção — precisa de decisão explícita antes de
+>   mexer (blast radius maior que os dois bugs acima).
+> - Suíte completa (275 testes) verde após o lote; verificado num Chromium
+>   real nos dois temas, incluindo o popover de jargão e os deltas de
+>   indicador com dados reais da franciele.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |

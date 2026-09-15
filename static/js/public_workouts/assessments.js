@@ -243,6 +243,18 @@
     return '<div class="assess-gauge"><div class="assess-gauge-marker" style="left:' + pct + '%"></div></div>';
   }
 
+  // Comparacao desde a 1a avaliacao em TODOS os indicadores (pedido do
+  // Renan), nao so no peso — indicators.*.delta vem de
+  // services.py::_build_indicators. 0/null = sem mudanca ou so 1
+  // avaliacao ainda, nao mostra nada (mesma supressao de deltaTspan).
+  function indicatorDeltaHtml(delta) {
+    if (delta === null || delta === undefined || delta === 0) return '';
+    var direction = delta > 0 ? 'up' : 'down';
+    var arrow = delta > 0 ? '▲' : '▼';
+    return '<span class="assess-card-delta assess-card-delta--' + direction + '">' +
+      arrow + ' ' + fmtNum(Math.abs(delta)) + ' desde a 1ª avaliação</span>';
+  }
+
   function buildSummaryCards(indicators) {
     if (!indicators) return '';
     var cards = [];
@@ -252,6 +264,7 @@
           '<div class="assess-card-label">IMC</div>' +
           '<div class="assess-card-value">' + fmtNum(indicators.bmi.value) + '</div>' +
           badgeHtml(indicators.bmi.classification) +
+          indicatorDeltaHtml(indicators.bmi.delta) +
           gaugeHtml('bmi', indicators.bmi.value) +
           '</div>'
       );
@@ -262,6 +275,7 @@
           '<div class="assess-card-label">RCQ (Cintura/Quadril)</div>' +
           '<div class="assess-card-value">' + String(indicators.whr.value).replace('.', ',') + '</div>' +
           badgeHtml(indicators.whr.classification) +
+          indicatorDeltaHtml(indicators.whr.delta) +
           gaugeHtml('whr', indicators.whr.value) +
           '</div>'
       );
@@ -273,6 +287,7 @@
           '<div class="assess-card-label">% Gordura' + bodyFatSourceSuffix(bf.source) + '</div>' +
           '<div class="assess-card-value">' + fmtNum(bf.value) + '%</div>' +
           badgeHtml(bf.classification) +
+          indicatorDeltaHtml(bf.delta) +
           gaugeHtml('body_fat_percent', bf.value) +
           '</div>'
       );
@@ -725,9 +740,33 @@
 
   // Dois slots: o formulario (montado uma vez, sobrevive aos refreshes) e o
   // relatorio de leitura (recriado a cada fetch — ver loadReport).
+  //
+  // Dois hospedeiros possiveis:
+  // - `#workout-panel-avaliacao` (template unico, Onda B3): o painel de
+  //   nivel superior JA existe no HTML (bottom nav proprio cuida de
+  //   mostrar/esconder via .is-tab-active) — so injeta os dois slots
+  //   dentro dele, nunca cria um `#tab-avaliacoes` novo ali.
+  // - `.tabs` (paginas legadas dos 10 clientes reais): comportamento
+  //   original, inalterado — cria `#tab-avaliacoes` como irmao de `.tabs`,
+  //   escondido ate o showTab() generico ativar.
   function mountPanel() {
+    var existing = document.getElementById('tab-avaliacoes');
+    if (existing) return existing;
+
+    var unifiedHost = document.getElementById('workout-panel-avaliacao');
+    if (unifiedHost) {
+      if (unifiedHost.querySelector('#assess-form-slot')) return unifiedHost;
+      var mount = document.createElement('div');
+      mount.className = 'assess-wrap';
+      mount.innerHTML =
+        '<div id="assess-form-slot"></div>' +
+        '<div id="assess-report-slot"><div class="assess-empty">Carregando avaliações…</div></div>';
+      unifiedHost.appendChild(mount);
+      return unifiedHost;
+    }
+
     var tabsRow = document.querySelector('.tabs');
-    if (!tabsRow || document.getElementById('tab-avaliacoes')) return null;
+    if (!tabsRow) return null;
     var panel = document.createElement('div');
     panel.id = 'tab-avaliacoes';
     panel.style.display = 'none';
