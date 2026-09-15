@@ -122,13 +122,16 @@ PONTOS CRITICOS:
         {% for day in program.days %}
         <button
           type="button"
-          class="student-status-badge workout-day-tab{% if forloop.first %} is-active{% endif %}"
+          class="workout-day-tab{% if forloop.first %} is-active{% endif %}"
           data-workout-tab-target="workout-day-{{ day.day_id }}"
           role="tab"
           id="workout-tab-{{ day.day_id }}"
           aria-controls="workout-day-{{ day.day_id }}"
           aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
-        >{{ day.label }}</button>
+        >
+          <span class="workout-day-tab__day">{{ day.day_id|day_short }}</span>
+          <span class="workout-day-tab__keyword">{% day_workout_keyword day %}</span>
+        </button>
         {% endfor %}
       </nav>
 
@@ -146,7 +149,7 @@ PONTOS CRITICOS:
             {% for movement in block.movements %}
             <article
               class="student-card card-decor-topstripe workout-movement-card"
-              {% if movement.is_tracked %}data-workout-load-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar registro de carga de hoje em {{ movement.movement_slug|humanize_movement_slug }}"{% endif %}
+              data-workout-load-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar registro de carga de hoje em {{ movement.movement_slug|humanize_movement_slug }}"
             >
               <div class="workout-movement-copy">
                 {% if movement.reference_url %}
@@ -176,7 +179,6 @@ PONTOS CRITICOS:
                 {% else %}Livre{% endif %}
               </div>
             </article>
-            {% if movement.is_tracked %}
             <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}" hidden>
               <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
               <div class="workout-load-input__row">
@@ -194,7 +196,6 @@ PONTOS CRITICOS:
               </div>
               <span class="workout-load-input__status" data-workout-load-status aria-live="polite"></span>
             </div>
-            {% endif %}
             {% empty %}
             <p class="table-empty-cell">Nenhum movimento neste bloco.</p>
             {% endfor %}

@@ -176,7 +176,7 @@
 .workout-week-strip__track {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 6px;
+    gap: 9px;
 }
 
 .workout-week-day {
@@ -275,7 +275,7 @@ button.workout-week-day:focus-visible {
    mesmo layout de .student-wod-movement-card do app do aluno. */
 .workout-movement-list {
     display: grid;
-    gap: 10px;
+    gap: 14px;
 }
 
 .workout-movement-card {
@@ -458,23 +458,81 @@ button.workout-week-day:focus-visible {
     color: var(--theme-text-primary);
 }
 
+/* .theme-toggle-icon (design-system/topbar.css) e' pensado pra preencher um
+   botao pequeno de tamanho fixo (o .theme-toggle circular do topbar) --
+   width:100%/height:100% la' faz sentido. Aqui o "botao" e' a linha INTEIRA
+   (.workout-profile-row, full-width), entao o icone tentava ocupar 100% do
+   espaco sobrando da linha e ficava flutuando no meio em vez de colado a
+   direita, junto do resto do conteudo a direita (ex.: "Pagamentos →"). */
+.workout-profile-row .theme-toggle-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Seletor de dia do Treino (item pedido pelo Renan: mesmo formato "dia +
+   palavra-chave" do card de "Sua semana" do Início, lado a lado) -- cada
+   dia vira um card proprio (nao mais .student-status-badge, que e' pensado
+   pra pilula de UMA linha so'). flex:1 1 0 divide o espaco igual entre
+   quantos dias o programa tiver (3 a 5 nos 10 reais); overflow-x:auto e'
+   so' rede de seguranca pra tela muito estreita. */
 .workout-day-nav {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 9px;
     overflow-x: auto;
     padding-bottom: 4px;
 }
 
 .workout-day-tab {
+    flex: 1 1 0;
+    min-width: 64px;
+    display: grid;
+    place-items: center;
+    gap: 2px;
+    min-height: 50px;
+    padding: 8px 4px;
+    border-radius: 14px;
+    border: 1px solid var(--theme-border-soft);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+    color: inherit;
+    font-family: inherit;
     cursor: pointer;
-    border: 1px solid transparent;
-    background: color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent);
+    text-align: center;
+}
+
+.workout-day-tab:hover,
+.workout-day-tab:focus-visible {
+    outline: none;
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
+}
+
+.workout-day-tab__day {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--theme-text-muted);
+}
+
+.workout-day-tab__keyword {
+    max-width: 100%;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--theme-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .workout-day-tab.is-active {
     border-color: var(--brand);
     background: color-mix(in srgb, var(--brand) 18%, var(--theme-surface-secondary) 82%);
+}
+
+.workout-day-tab.is-active .workout-day-tab__day,
+.workout-day-tab.is-active .workout-day-tab__keyword {
+    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
 }
 
 .workout-block-card {
