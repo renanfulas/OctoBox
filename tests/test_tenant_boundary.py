@@ -1049,3 +1049,17 @@ class B14PublicWorkoutViewsNeverTouchTenantAppsTest(TestCase):
         response = self.client.get('/renan/giovanna/treino.pdf')
 
         self.assertEqual(response.status_code, 200)
+
+    def test_preview_page_renders_without_touching_tenant_apps(self):
+        # PublicWorkoutPreviewView (Onda B3) — mesmo risco do
+        # PublicWorkoutDetailView original: arquivo mora dentro do pacote
+        # student_app (TENANT_APP), um `from .models import` de distancia
+        # de um vazamento silencioso.
+        from public_workouts.schema import build_example_payload
+        from public_workouts.services import publish_program
+
+        publish_program(slug='giovanna', payload=build_example_payload())
+
+        response = self.client.get('/renan/giovanna/preview')
+
+        self.assertEqual(response.status_code, 200)

@@ -297,6 +297,29 @@ def _iter_movement_slugs(payload: dict):
                     yield slug, movement.get('reference_url')
 
 
+def build_movement_label_lookup(payload: dict) -> dict[str, str]:
+    """Onda B3, item 1/2 — nome de exercicio em PT-BR pro template unico.
+
+    `humanize_movement_slug` (templatetags) e' so um PALPITE mecanico
+    ("barbell-bench-press" -> "Barbell bench press", em ingles, sem
+    tradução real) — sempre foi documentado como fallback, de proposito,
+    porque o template nao consultava PublicWorkoutMovement. Essa consulta
+    e essa. `_ensure_movements_exist` (chamada por publish_program) ja
+    garante que todo movement_slug de um programa publicado tem UMA linha
+    aqui — na pior hipotese so o mesmo palpite mecanico (`status=pending`,
+    label_pt=slug humanizado), na melhor um nome de verdade (extraido dos
+    10 HTMLs legados pela Onda A0, `extract_movements_from_html`) — nunca
+    uma consulta que "nao acha nada" pra um programa publicado de verdade.
+
+    Uma query so (`filter(slug__in=...)`), nao uma por movimento: o
+    payload pode repetir o mesmo movement_slug em blocos/dias diferentes.
+    """
+    slugs = {slug for slug, _ in _iter_movement_slugs(payload)}
+    if not slugs:
+        return {}
+    return dict(PublicWorkoutMovement.objects.filter(slug__in=slugs).values_list('slug', 'label_pt'))
+
+
 def _ensure_movements_exist(payload: dict) -> None:
     """Movimento desconhecido entra `pending` e nao bloqueia a publicacao
     (Onda A1, item 6). `modality` fica como 'strength' — melhor palpite
