@@ -2296,6 +2296,67 @@ bloqueio).
 > dialeto `.hiit-card`); suíte completa + `manage.py check` verificados
 > antes da publicação real.
 
+> **Atualização (periodização canônica pras outras clientes, pedido do
+> Renan — "pegue todos os treinos e corrija a periodização igual ou
+> semelhante a juliana com o gráfico etc"):** li o `weeks_table` real
+> (foco + diretriz de carga + nota do treinador) das 9 clientes restantes
+> pra decidir, caso a caso, se a progressão de mesociclo delas é
+> compatível com os 6 `phase_type` fechados — a mesma regra de leitura
+> humana já usada pra Juliana, nunca correspondência automática por
+> palavra-chave.
+>
+> **3 entraram no mapeamento curado** (`CURATED_WEEKS_MAPPING`):
+> - `henrique`: Adaptação→Volume→Intensidade→Pico→**Pico Máximo**→Deload.
+>   "Pico Máximo" repete `peak` de propósito — a própria diretriz diz
+>   "carga mais alta em todas as séries do ramp", um 2º degrau do MESMO
+>   pico, não uma fase nova.
+> - `milene`: Adaptação→Volume→Força-Hipertrofia→**Volume Alto**→Peak→
+>   Deload. "Volume Alto" repete `volume` pelo mesmo motivo (mesmo eixo,
+>   guidance "Bomba e estresse metabólico").
+> - `john`: Carga base→**Progressão×3**→Pico→Deload. As 3 semanas de
+>   "Progressão" têm o MESMO rótulo no HTML mas incrementos crescentes
+>   reais (+2,5kg/+5kg/+7,5kg vs. a mesma semana-base) — mapeadas pra 3
+>   fases DIFERENTES e crescentes (volume→força-hiper→intensidade) pra
+>   preservar essa progressão na sugestão de carga. Achatar as 3 na mesma
+>   fase congelaria a sugestão (razão 1.0), contradizendo o texto real.
+>
+> **4 ficaram de fora, de propósito — não é trabalho pendente, é conteúdo
+> que genuinamente não é periodização de força por %RM:**
+> - `giovanna`: vocabulário de CrossFit ("Base técnica"/"Sobrecarga"/
+>   **"Metabólico"**/"Peak controlado") — a semana de condicionamento
+>   metabólico/AMRAP não tem %RM-alvo real; forçar um `phase_type`
+>   baseado em %RM daria sugestão de carga ERRADA justo nessa semana.
+> - `bruno`: bloco de CORTE (`vnote` real: *"a meta não é progredir carga
+>   — é segurar a carga enquanto o peso corporal cai"*) — "Manutenção"
+>   (×3 semanas) e "Teste" não existem no vocabulário fechado hoje.
+>   Migrar exigiria **propor phase_type novo ao Renan primeiro** (mesma
+>   regra já escrita no plano original: se o objetivo não encaixa em
+>   nenhuma chave existente, é sinal de crescer `PHASE_PROFILES`, não de
+>   inventar correspondência). Fica pendente de decisão explícita.
+> - `franciele`: `weeks_table` é uma progressão de CORRIDA (caminhada →
+>   trote → corrida contínua), não periodização de força — %RM/RIR não
+>   se aplica.
+> - `rafael`: confirmado que NÃO é um parser bug — `#tab-period` dele
+>   descreve o RITMO SEMANAL de treino (Dia A/Descanso/Dia B/Coringa
+>   condicional), conteúdo genuinamente diferente de fases de mesociclo.
+>
+> `johnespanha`/`thaislima` continuam sem periodização — nunca tiveram
+> `#tab-period` no HTML original, não é regressão nem pendência.
+>
+> Entregue: `CURATED_WEEKS_MAPPING` estendido (henrique/john/milene, com
+> comentário explicando cada decisão de repetição/divergência de rótulo);
+> docstring do comando atualizada explicando por que os outros 4 ficam de
+> fora; 1 teste novo (`test_newly_curated_slugs_publish_a_schema_valid_canonical_mapping`).
+> Suíte completa (595 testes + 110 subtestes) verde; `manage.py check`
+> sem problemas. Verificado num Chromium real: henrique mostra "S4 ·
+> agora" no gráfico com Pico/Pico Máximo lado a lado e o banner "Semana 4
+> de 6 · Pico · alvo 1-3 reps · RIR 0,0 · ~94% RM" na aba Treino.
+>
+> **Pendente:** decisão do Renan sobre propor `phase_type` novo(s) pro
+> bloco de corte do bruno antes de migrá-lo; giovanna/franciele/rafael
+> ficam no `chart`/`weeks_table` livre indefinidamente (conteúdo não
+> compatível com o modelo, não uma migração adiada).
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
