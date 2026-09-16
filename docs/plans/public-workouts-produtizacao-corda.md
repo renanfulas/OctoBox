@@ -2225,6 +2225,77 @@ bloqueio).
 > Renan — "a gente usar a aba cargas apenas para comparar a evolução"),
 > nenhuma entrada de dado nova lá.
 
+> **Atualização (auditoria dos 10 clientes — pedido do Renan: "faça
+> exatamente esse template em todos os treinos e todos deixe em português
+> o nome dos exercícios" + "algumas coisas da aba cardio e periodização
+> regrediram"):** cruzando o payload JÁ PUBLICADO de cada um dos 10
+> clientes contra o que o parser ATUAL produziria a partir do mesmo HTML
+> legado, achei que **7 dos 10 nunca tinham sido republicados** desde que
+> `name` (nome em português) e a extração de `cardio` embutido foram
+> adicionados ao parser em fatias anteriores — não é regressão de código,
+> é publicação que ficou pra trás:
+>
+> - henrique/john/johnespanha/juliana/milene/thaislima: `name` ausente em
+>   100% dos movimentos (caía no fallback de slug humanizado em inglês,
+>   ex. "Machine hack squat" em vez de "Hack Squat na máquina" —
+>   inclusive a PRÓPRIA Juliana, usada como prova de conceito da
+>   periodização canônica, estava nesse estado).
+> - henrique/john/johnespanha/juliana/thaislima: `cardio` inteiro ausente
+>   do payload (aba Cardio publicada vazia), apesar do HTML ter conteúdo
+>   real prescrito.
+> - rafael: `cardio` presente mas sem o detail "Dias" (a fatia que
+>   corrigiu isso, PR #254, nunca foi republicada pro Rafael
+>   especificamente, só bruno/franciele/giovanna).
+> - henrique/john/thaislima: `started_on`/`weeks` desatualizados —
+>   ficaram numa versão anterior a `feat(public-workouts): preenche
+>   started_on real dos 10 clientes via git log`.
+>
+> Além da staleness, achei **2 bugs reais no parser** ao investigar por que
+> milene continuava sem cardio mesmo depois de republicar:
+>
+> 1. `milene.html` usa um dialeto de cardio 100% próprio
+>    (`.hiit-card`/`.hiit-head`/`.hiit-row`/`.hiit-note`, protocolo de
+>    HIIT na esteira) que `_EmbeddedStageParser` nunca reconhecia —
+>    nenhuma condição de classe batia, então o card inteiro (incluindo a
+>    justificativa fisiológica escrita pelo treinador sobre GH em
+>    atletas 44 anos) ficava invisível. Corrigido tratando `.hiit-*` como
+>    ALIAS estrutural de `.c-*` (mesma forma: card→head+badge→linhas
+>    label/valor→nota), não um parser novo.
+> 2. `thaislima.html` usa `.int-badge`/`.hiit-badge` em vez de
+>    `.km-badge` em 2 das suas 3 sessões de `#tab-cardio` — como
+>    `_CardioTabParser` só reconhecia a classe `km-badge` pra fechar a
+>    captura do título e abrir a do badge, o texto do badge ficava
+>    GRUDADO no título ("🟡 Dia Médio Quinta · 20 min" numa string só, em
+>    vez de título "🟡 Dia Médio" + badge "Quinta · 20 min" separados).
+>    Mesmo fix de generalização de classe (`_CARD_BADGE_CLASSES`),
+>    aplicado nos DOIS parsers (`_CardioTabParser` e
+>    `_EmbeddedStageParser`, já que ambos tinham a mesma checagem estreita
+>    copiada).
+>
+> **Fora de escopo desta fatia, documentado como achado (não corrigido):**
+> `thaislima.html` tem um card `.muay-card`/`.muay-body` (dia de Muay
+> Thai) com uma prescrição real de cardio bike opcional escrita em prosa
+> livre dentro do corpo do texto, não em linhas label/valor estruturadas.
+> Extrair isso exigiria parsear prosa (mesmo risco documentado alhures
+> neste plano — "chutar dado é pior que não extrair") — nenhum exercício é
+> perdido (não é um `.ex`), só uma nota de contexto fica de fora do
+> payload estruturado.
+>
+> Corrigido: os 2 bugs de parser acima + republicação real dos 7 clientes
+> defasados (`migrate_legacy_workouts`, sem mudar nenhuma decisão de
+> negócio em `LEGACY_PROGRAM_METADATA`) + reaplicação de
+> `periodization.weeks` da Juliana via `upgrade_periodization_model`
+> (republicar por HTML sempre perde essa curadoria manual, que só existe
+> no payload já publicado — não vem do HTML). Novo workflow
+> `.github/workflows/upgrade-periodization-model.yml` (mesmo padrão
+> auditável e `dry_run`-por-padrão de `publish-legacy-workouts.yml`) pra
+> nunca mais depender de SSH manual nesse passo. Resultado: os 10 clientes
+> têm 100% dos movimentos com nome em português, e a aba Cardio mostra
+> conteúdo real pra todo mundo que tem cardio prescrito no HTML de
+> origem. Testes novos em `test_parser.py` (badge alternativo +
+> dialeto `.hiit-card`); suíte completa + `manage.py check` verificados
+> antes da publicação real.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
