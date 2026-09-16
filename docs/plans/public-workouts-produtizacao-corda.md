@@ -2114,6 +2114,43 @@ bloqueio).
 > Suíte completa (457 testes, `public_workouts` + `student_app`) verde;
 > `manage.py check` sem problemas.
 
+> **Atualização (terceira colisão de nome PT-BR entre duas sessões — desta
+> vez reconciliada por UNIÃO, não por descarte):**
+> Depois das duas rodadas anteriores (legenda de série e widget de carga,
+> ambas resolvidas descartando a versão mais fraca), o main avançou de
+> novo com uma TERCEIRA solução paralela pro mesmo problema de nome PT-BR
+> do exercício — desta vez via `movement.name` aditivo direto no payload
+> (`schema.py`, escrito pelo parser da Frente A) + filtro
+> `movement_display_name`. Diferente das duas rodadas anteriores, as duas
+> soluções resolvem problemas DIFERENTES, não competem: `movement.name` é
+> o dado mais fresco (a versão do payload que o parser já reprocessou),
+> enquanto o catálogo `PublicWorkoutMovement` (`movement_labels`, Onda A0)
+> é a cobertura retroativa dos programas publicados ANTES dessa fatia do
+> parser — os 10 legados de produção, hoje. Unidas num filtro só,
+> `movement_name(movement, movement_labels)`: prioriza `movement.name`,
+> senão cai pro catálogo, senão humaniza o slug. `movement_display_name`
+> (só cobria os 2 primeiros casos) foi removido — nada mais chamava.
+> **Risco de débito técnico anotado, não resolvido nesta sessão**: a
+> chamada do filtro (`movement|movement_name:movement_labels`) exige
+> `movement_labels` no contexto do template — Django levanta
+> `VariableDoesNotExist` (erro 500, não degradação silenciosa) quando o
+> ARGUMENTO de um filtro referencia uma chave ausente do contexto, ao
+> contrário do valor filtrado em si. Hoje as duas views que renderizam
+> `workout.html` (`PublicWorkoutPreviewView` e `PublicWorkoutTemplatePreviewView`,
+> a `/preview-b3` documentada acima) passam essa chave — se uma TERCEIRA
+> view futura esquecer, quebra com 500 em vez de exibir o slug humanizado.
+> Vale um valor padrão centralizado (context processor ou wrapper de view)
+> se aparecer mais uma view renderizando este template.
+> Também achado nesta reconciliação: a queixa do Renan ("não to
+> conseguindo ver no preview", que motivou a criação da `/preview-b3`
+> acima) pode ter sido o gate de posse da MINHA `/preview` — se ele abriu
+> `/renan/<slug>/preview` sem estar "logado" como dono daquele slug
+> (mesmo cookie de sessão do B0 que a rota real exige), a resposta é 404,
+> igual a "não aparece nada". Não confirmado com o Renan ainda — vale
+> perguntar antes de consolidar as duas rotas de preview em uma só.
+> 627 testes verdes (+ os que vieram do main); `manage.py check` sem
+> problemas.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
