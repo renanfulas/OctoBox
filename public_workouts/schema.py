@@ -71,6 +71,25 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
         f'{path}.reference_url: string ou null',
     )
 
+    # `name`/`variations` sao ADITIVOS (movimento publicado antes desta
+    # fatia nao tem essas chaves) -- so' validam a FORMA quando presentes,
+    # nunca exigem.
+    name = movement.get('name')
+    _require(name is None or isinstance(name, str), errors, f'{path}.name: string ou ausente')
+
+    variations = movement.get('variations')
+    if variations is not None:
+        _require(isinstance(variations, list), errors, f'{path}.variations: lista ou ausente')
+        if isinstance(variations, list):
+            for vindex, variation in enumerate(variations):
+                _require(
+                    isinstance(variation, dict)
+                    and isinstance(variation.get('label'), str) and variation.get('label')
+                    and isinstance(variation.get('reference_url'), str) and variation.get('reference_url'),
+                    errors,
+                    f'{path}.variations[{vindex}]: objeto com label/reference_url string nao vazia',
+                )
+
 
 def _validate_block(block: dict, *, path: str, errors: list[str]) -> None:
     if not isinstance(block, dict):
@@ -99,12 +118,95 @@ def _validate_day(day: dict, *, path: str, errors: list[str]) -> None:
             _validate_block(block, path=f'{path}.blocks[{index}]', errors=errors)
 
 
+def _validate_cardio_session(session: dict, *, path: str, errors: list[str]) -> None:
+    if not isinstance(session, dict):
+        errors.append(f'{path}: precisa ser um objeto')
+        return
+    _require(isinstance(session.get('title'), str) and session['title'], errors, f'{path}.title: obrigatorio, string nao vazia')
+    _require(isinstance(session.get('badge'), str), errors, f'{path}.badge: obrigatorio, string (pode ser vazia)')
+    _require(isinstance(session.get('note'), str), errors, f'{path}.note: obrigatorio, string (pode ser vazia)')
+    details = session.get('details')
+    _require(isinstance(details, list), errors, f'{path}.details: lista (pode ser vazia)')
+    if isinstance(details, list):
+        for index, detail in enumerate(details):
+            _require(
+                isinstance(detail, dict) and isinstance(detail.get('label'), str) and isinstance(detail.get('value'), str),
+                errors,
+                f'{path}.details[{index}]: objeto com label/value string',
+            )
+
+
+def _validate_cardio(cardio: dict, *, errors: list[str]) -> None:
+    if not isinstance(cardio, dict):
+        errors.append('cardio: precisa ser um objeto')
+        return
+    sessions = cardio.get('sessions')
+    _require(isinstance(sessions, list) and len(sessions) > 0, errors, 'cardio.sessions: lista nao vazia')
+    if isinstance(sessions, list):
+        for index, session in enumerate(sessions):
+            _validate_cardio_session(session, path=f'cardio.sessions[{index}]', errors=errors)
+
+
+def _validate_periodization_row(row: dict, *, path: str, required_keys: tuple[str, ...], errors: list[str]) -> None:
+    if not isinstance(row, dict):
+        errors.append(f'{path}: precisa ser um objeto')
+        return
+    for key in required_keys:
+        _require(isinstance(row.get(key), str), errors, f'{path}.{key}: obrigatorio, string')
+
+
+def _validate_periodization(periodization: dict, *, errors: list[str]) -> None:
+    if not isinstance(periodization, dict):
+        errors.append('periodization: precisa ser um objeto')
+        return
+
+    weeks_table = periodization.get('weeks_table')
+    _require(isinstance(weeks_table, list) and len(weeks_table) > 0, errors, 'periodization.weeks_table: lista nao vazia')
+    if isinstance(weeks_table, list):
+        for index, row in enumerate(weeks_table):
+            _validate_periodization_row(
+                row, path=f'periodization.weeks_table[{index}]',
+                required_keys=('week', 'focus', 'reps', 'guidance'), errors=errors,
+            )
+
+    volume_table = periodization.get('volume_table')
+    _require(isinstance(volume_table, list), errors, 'periodization.volume_table: lista (pode ser vazia)')
+    if isinstance(volume_table, list):
+        for index, row in enumerate(volume_table):
+            _validate_periodization_row(
+                row, path=f'periodization.volume_table[{index}]',
+                required_keys=('muscle_group', 'sets_per_week', 'frequency', 'where'), errors=errors,
+            )
+
+    _require(isinstance(periodization.get('note'), str), errors, 'periodization.note: obrigatorio, string (pode ser vazia)')
+
+    chart = periodization.get('chart')
+    _require(isinstance(chart, list), errors, 'periodization.chart: lista (pode ser vazia)')
+    if isinstance(chart, list):
+        for index, point in enumerate(chart):
+            if not isinstance(point, dict):
+                errors.append(f'periodization.chart[{index}]: precisa ser um objeto')
+                continue
+            for key in ('label', 'focus', 'reps', 'color', 'bg', 'fg'):
+                _require(isinstance(point.get(key), str) and point[key], errors, f'periodization.chart[{index}].{key}: obrigatorio, string nao vazia')
+            _require(
+                isinstance(point.get('h'), (int, float)) and 0 <= point['h'] <= 100,
+                errors,
+                f'periodization.chart[{index}].h: numero entre 0 e 100',
+            )
+
+
 def validate_payload(payload: dict) -> list[str]:
     """Valida um payload de PublicWorkoutProgram contra o contrato da Onda S0.
 
     Nao levanta excecao — devolve a lista de erros (vazia = valido). Quem
     chama decide o que fazer com eles (publish_program, na Onda A1, vira
     PayloadValidationError via assert_valid_payload).
+
+    `cardio`/`periodization` sao OPCIONAIS (Onda A2, fatia de cardio/
+    periodizacao) — ausentes = cliente sem essa aba no HTML legado original
+    (ver parser.py). Adicao aditiva ao contrato congelado (D.5): nenhum
+    campo existente muda de forma, so' duas chaves novas de nivel superior.
     """
     errors: list[str] = []
 
@@ -137,6 +239,12 @@ def validate_payload(payload: dict) -> list[str]:
     if isinstance(days, list):
         for index, day in enumerate(days):
             _validate_day(day, path=f'days[{index}]', errors=errors)
+
+    if payload.get('cardio') is not None:
+        _validate_cardio(payload['cardio'], errors=errors)
+
+    if payload.get('periodization') is not None:
+        _validate_periodization(payload['periodization'], errors=errors)
 
     return errors
 

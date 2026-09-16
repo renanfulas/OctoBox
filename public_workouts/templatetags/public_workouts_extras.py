@@ -38,7 +38,7 @@ from django.utils import timezone
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from public_workouts.dashboard import build_program_summary, build_week_overview
+from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
 
 register = template.Library()
 
@@ -61,6 +61,22 @@ def week_streak_label(week_days) -> str:
         return ''
     completed = sum(1 for day in prescribed if day.is_complete)
     return f'{completed} de {len(prescribed)} dia{"s" if len(prescribed) != 1 else ""} com treino'
+
+
+@register.filter
+def day_short(day_id: str) -> str:
+    """Wrapper de template pra dashboard.day_short_label — dia curto (Seg/
+    Ter/...) reusado no seletor de dia do Treino (item pedido pelo Renan:
+    mesmo formato "dia + palavra-chave" do "Sua semana" do Início)."""
+    return day_short_label(day_id)
+
+
+@register.simple_tag
+def day_workout_keyword(day) -> str:
+    """Wrapper de template pra dashboard.day_keyword — recebe o `day` do
+    payload inteiro (nao so' os campos soltos) pra assinatura ficar simples
+    no template: `{% day_workout_keyword day %}`."""
+    return day_keyword(day_id=day.get('day_id', ''), label=day.get('label', ''))
 
 
 @register.simple_tag
@@ -111,6 +127,24 @@ def humanize_movement_slug(movement_slug: str) -> str:
     if not movement_slug:
         return ''
     return movement_slug.replace('-', ' ').capitalize()
+
+
+@register.filter
+def movement_name(movement: dict, movement_labels: dict | None = None) -> str:
+    """Nome pra exibir na tela — uniao das DUAS fontes PT-BR que surgiram em
+    paralelo (duas sessoes, mesmo problema): `movement.name` (portugues,
+    escrito pelo treinador nesta VERSAO do payload — aditivo, ver
+    schema.py) tem prioridade quando presente; senao cai pro catalogo
+    retroativo (`movement_labels`, services.build_movement_label_lookup,
+    Onda A0 — cobre os 10 programas legados que ainda nao tem `name` no
+    payload); senao humaniza `movement_slug`. Delega a resolucao dos dois
+    ultimos casos pra resolve_movement_display_name (mesma logica, testada
+    a parte) em vez de duplicar."""
+    movement = movement or {}
+    name = movement.get('name')
+    if name:
+        return name
+    return resolve_movement_display_name(movement.get('movement_slug', ''), movement_labels)
 
 
 _GLOSSARY_TERMS = {

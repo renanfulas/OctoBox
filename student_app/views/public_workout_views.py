@@ -790,6 +790,47 @@ class PublicWorkoutOfflineView(View):
         return HttpResponse(html)
 
 
+class PublicWorkoutTemplatePreviewView(View):
+    """GET /renan/<slug>/preview-b3 — preview do template unico (Onda B3,
+    `templates/public_workouts/workout.html`) contra o payload JA
+    PUBLICADO do slug.
+
+    So' responde com `settings.DEBUG=True` (404 em producao) — o proprio
+    `workout.html` documenta que ainda nao esta ligado a nenhuma rota real
+    (fase de acesso/hard reset/sw.js novo da Onda B3 real ainda faltam).
+    Existe so' pra nao depender de gerar HTML na mao via `manage.py shell`
+    toda vez que alguem quer conferir o trabalho em andamento — nunca serve
+    trafego de aluno de verdade, nunca precisa do cookie de posse B0.
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        if not settings.DEBUG:
+            raise Http404('Preview do template unico so existe em DEBUG.')
+
+        from public_workouts.services import build_movement_label_lookup, get_active_program, list_program_versions
+
+        plan = _get_public_workout_entry(plan_slug)
+        program = get_active_program(slug=plan.slug)
+        if program is None:
+            return HttpResponse(f'"{plan.slug}" ainda nao tem programa publicado (services.publish_program).', status=404)
+
+        html = render_to_string('public_workouts/workout.html', {
+            'plan_slug': plan.slug,
+            'accent_variant': plan.assessment_sex,
+            'program': program,
+            'program_versions': list_program_versions(slug=plan.slug),
+            'load_history': [],
+            'one_rep_max_by_movement': {},
+            'trends_by_movement': {},
+            'movement_labels': build_movement_label_lookup(program),
+            'student_name': plan.short_name,
+            'student_photo_url': None,
+            'customer_portal_url': None,
+            'account_email': None,
+        })
+        return HttpResponse(html)
+
+
 class PublicWorkoutSignOutView(View):
     """POST /renan/<slug>/sair — "Sair da conta" da tela Perfil (fundacao B3,
     pedido do Renan pra fechar o paralelo com o app do aluno).

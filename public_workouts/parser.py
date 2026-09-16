@@ -44,6 +44,7 @@ PONTOS CRÍTICOS:
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
@@ -83,6 +84,10 @@ class _ExerciseNode:
     rows: list[_SetRow] = field(default_factory=list)
     has_tracker: bool = False
     day_id: str = ''
+    # (label, url) por `.var-link` dentro de `.ex-var` — normalmente 1, mas
+    # bruno.html tem um caso real com 2 (hack squat sugerindo leg press E
+    # hack squat como variacao) -- lista, nunca um campo unico.
+    variations: list[tuple[str, str]] = field(default_factory=list)
 
     def _is_flat_table(self) -> bool:
         # franciele.html e' o unico dos 10 programas cuja sets-tbl nao tem a
@@ -123,8 +128,14 @@ class _ExerciseNode:
         return slugify(self.name) or 'movimento-sem-nome'
 
     def to_movement_dict(self, *, url: str | None = None, reps_spec: str | None = None, rir_spec: str | None = None) -> dict:
-        return {
+        movement = {
             'movement_slug': self.movement_slug(url=url),
+            # Nome em PORTUGUES escrito pelo treinador (`.ex-name`) — antes
+            # so' era usado como fallback de slug (`movement_slug` acima),
+            # nunca guardado pra exibicao; o template caia pro slug em
+            # ingles do MuscleWiki humanizado. Aditivo (schema.py) — nunca
+            # quebra payload ja publicado sem este campo.
+            'name': self.name,
             'reps_spec': self.reps_spec() if reps_spec is None else reps_spec,
             'rir_spec': self.rir_spec() if rir_spec is None else rir_spec,
             'is_tracked': self.has_tracker,
@@ -132,6 +143,9 @@ class _ExerciseNode:
             'load_value': None,
             'reference_url': url if url is not None else self.wiki_url,
         }
+        if self.variations:
+            movement['variations'] = [{'label': label, 'reference_url': variation_url} for label, variation_url in self.variations]
+        return movement
 
     def is_biset_inline(self) -> bool:
         return bool(self.gym_wiki_url) and self.gym_wiki_url != self.wiki_url
@@ -230,6 +244,7 @@ class _ProgramHTMLParser(HTMLParser):
         self._current_row_is_top = False
         self._current_row_kind_text = ''
         self._pending_alternative = False  # True logo após um .or-divider
+        self._pending_variation_url: str | None = None  # href do .var-link em captura
 
     # ------------------------------------------------------------------
     # Infra de captura de texto
@@ -315,6 +330,12 @@ class _ProgramHTMLParser(HTMLParser):
                 self._current_ex.wiki_url = href
             elif 'gym-wiki' in classes and href and self._current_ex.gym_wiki_url is None:
                 self._current_ex.gym_wiki_url = href
+            elif 'var-link' in classes and href:
+                # `.ex-var` pode ter mais de um `.var-link` (bruno.html tem
+                # 1 caso real com 2) -- guarda o href aqui, o texto (nome da
+                # variacao) vem via captura normal, fechado em </a> abaixo.
+                self._pending_variation_url = href
+                self._start_capture('var_link')
         elif tag == 'table' and 'sets-tbl' in classes:
             self._in_table = True
         elif tag == 'tr' and self._in_table:
@@ -364,6 +385,13 @@ class _ProgramHTMLParser(HTMLParser):
             return
 
         if self._ex_depth == 0:
+            return
+
+        if tag == 'a' and self._capture == 'var_link':
+            label = self._end_capture()
+            if label and self._pending_variation_url:
+                self._current_ex.variations.append((label, self._pending_variation_url))
+            self._pending_variation_url = None
             return
 
         if self._capture == 'cell' and tag in ('td', 'span'):
@@ -431,6 +459,277 @@ class _ProgramHTMLParser(HTMLParser):
         self._current_day_blocks = []
 
 
+class _CardioTabParser(HTMLParser):
+    """Extrai `#tab-cardio` (aba dedicada de cardio semanal — juliana/bruno/
+    henrique/johnespanha/thaislima; ver docstring do modulo pra decisao de
+    so' cobrir ESTE formato, nao o cardio embutido por dia de franciele/
+    milene, formato diferente demais pra unificar nesta fatia).
+
+    So' captura `.c-card` (sessao de cardio): `.c-head` vira `title` (texto
+    direto do head, sem o `.km-badge` filho) + `badge` (texto do
+    `.km-badge`); `.c-row` vira um item de `details` (label/value); `.c-note`
+    vira `note`. Ignora `.cardio-week` (resumo semanal) de proposito — e'
+    so' um resumo do que ja esta nos `.c-card`s, o template deriva a visao
+    compacta a partir da lista de `sessions`, sem duplicar dado no payload.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.sessions: list[dict] = []
+
+        self._tab_depth = 0
+        self._card_depth = 0
+        self._current_session: dict | None = None
+        self._capture: str | None = None
+        self._buffer: list[str] = []
+        self._in_row = False
+        self._row_parts: list[str] = []
+
+    def _start_capture(self, target: str) -> None:
+        self._capture = target
+        self._buffer = []
+
+    def _end_capture(self) -> str:
+        text = ''.join(self._buffer).strip()
+        self._capture = None
+        self._buffer = []
+        return text
+
+    def handle_data(self, data: str) -> None:
+        if self._capture is not None:
+            self._buffer.append(data)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attrs_dict = dict(attrs)
+        classes = (attrs_dict.get('class') or '').split()
+
+        if self._tab_depth == 0:
+            if tag == 'div' and attrs_dict.get('id') == 'tab-cardio':
+                self._tab_depth = 1
+            return
+
+        if tag == 'div':
+            self._tab_depth += 1
+            if self._card_depth == 0:
+                if 'c-card' in classes:
+                    self._card_depth = 1
+                    self._current_session = {'title': '', 'badge': '', 'details': [], 'note': ''}
+                return
+            self._card_depth += 1
+            if 'c-head' in classes:
+                self._start_capture('head')
+            elif 'c-row' in classes:
+                self._in_row = True
+                self._row_parts = []
+            elif 'c-note' in classes:
+                self._start_capture('note')
+            return
+
+        if self._card_depth == 0:
+            return
+        if tag == 'span':
+            if 'km-badge' in classes:
+                # `.km-badge` e' o ULTIMO filho de `.c-head` nos 5 clientes
+                # reais com esta aba (texto do head sempre vem antes) --
+                # fecha a captura de 'head' aqui (vira `title`) e comeca uma
+                # nova captura so' pro badge, em vez de misturar os dois
+                # textos no mesmo buffer.
+                if self._capture == 'head':
+                    self._current_session['title'] = self._end_capture()
+                self._start_capture('badge')
+            elif self._in_row:
+                self._start_capture('row-part')
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == 'span':
+            if self._capture == 'badge':
+                self._current_session['badge'] = self._end_capture()
+            elif self._capture == 'row-part':
+                self._row_parts.append(self._end_capture())
+            return
+
+        if tag != 'div':
+            return
+
+        if self._card_depth == 0:
+            if self._tab_depth > 0:
+                self._tab_depth -= 1
+            return
+
+        if self._capture == 'head':
+            self._current_session['title'] = self._end_capture()
+        elif self._capture == 'note':
+            self._current_session['note'] = self._end_capture()
+
+        if self._in_row:
+            self._in_row = False
+            if len(self._row_parts) >= 2:
+                self._current_session['details'].append({'label': self._row_parts[0], 'value': self._row_parts[1]})
+            self._row_parts = []
+
+        self._card_depth -= 1
+        self._tab_depth -= 1
+        if self._card_depth == 0 and self._current_session is not None:
+            if self._current_session['title']:
+                self.sessions.append(self._current_session)
+            self._current_session = None
+
+
+class _PeriodizationTabParser(HTMLParser):
+    """Extrai `#tab-period`: `weeks_table` (`.period-tbl table`),
+    `volume_table` (`table.vol-tbl`) e `note` (`.vnote`). O grafico
+    (`chart`) NAO vem daqui — ja e' JSON pronto num `<script
+    type="application/json" id="period-chart-data">` em outro ponto do
+    HTML, extraido por `_extract_chart_json` sem precisar de parsing de
+    tabela nenhum."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.weeks_table: list[dict] = []
+        self.volume_table: list[dict] = []
+        self.note = ''
+
+        self._tab_depth = 0
+        self._table_kind: str | None = None  # 'weeks' | 'volume' | None
+        self._in_row = False
+        self._in_header_row = False
+        self._row_cells: list[str] = []
+        self._capture: str | None = None
+        self._buffer: list[str] = []
+        self._in_vnote = False
+
+    def _start_capture(self) -> None:
+        self._capture = 'cell'
+        self._buffer = []
+
+    def _end_capture(self) -> str:
+        text = ''.join(self._buffer).strip()
+        self._capture = None
+        self._buffer = []
+        return text
+
+    def handle_data(self, data: str) -> None:
+        if self._capture is not None:
+            self._buffer.append(data)
+        elif self._in_vnote:
+            self._buffer.append(data)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attrs_dict = dict(attrs)
+        classes = (attrs_dict.get('class') or '').split()
+
+        if self._tab_depth == 0:
+            if tag == 'div' and attrs_dict.get('id') == 'tab-period':
+                self._tab_depth = 1
+            return
+
+        if tag == 'div':
+            self._tab_depth += 1
+            if 'period-tbl' in classes:
+                self._table_kind = 'weeks'
+            elif 'vnote' in classes:
+                self._in_vnote = True
+                self._buffer = []
+            return
+
+        if tag == 'table':
+            if 'vol-tbl' in classes:
+                self._table_kind = 'volume'
+            return
+
+        if self._table_kind is None:
+            return
+
+        if tag == 'tr':
+            self._in_row = True
+            self._row_cells = []
+        elif tag == 'th' and self._in_row:
+            self._in_header_row = True
+        elif tag in ('td', 'th') and self._in_row:
+            self._start_capture()
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in ('td', 'th') and self._capture == 'cell':
+            self._row_cells.append(self._end_capture())
+            return
+
+        if tag == 'tr' and self._in_row:
+            self._in_row = False
+            if not self._in_header_row and self._row_cells:
+                self._append_row(self._row_cells)
+            self._in_header_row = False
+            self._row_cells = []
+            return
+
+        if tag == 'table':
+            if self._table_kind == 'volume':
+                self._table_kind = None
+            return
+
+        if tag == 'div':
+            if self._in_vnote:
+                self.note = ''.join(self._buffer).strip()
+                self._in_vnote = False
+                self._buffer = []
+            if self._table_kind == 'weeks':
+                self._table_kind = None
+            self._tab_depth -= 1
+
+    def _append_row(self, cells: list[str]) -> None:
+        if self._table_kind == 'weeks':
+            week, focus, reps, guidance = (cells + ['', '', '', ''])[:4]
+            self.weeks_table.append({'week': week, 'focus': focus, 'reps': reps, 'guidance': guidance})
+        elif self._table_kind == 'volume':
+            muscle_group, sets_per_week, frequency, where = (cells + ['', '', '', ''])[:4]
+            self.volume_table.append({
+                'muscle_group': muscle_group, 'sets_per_week': sets_per_week,
+                'frequency': frequency, 'where': where,
+            })
+
+
+_CHART_JSON_RE = re.compile(
+    r'<script[^>]*id=["\']period-chart-data["\'][^>]*>(.*?)</script>', re.DOTALL,
+)
+
+
+def _extract_chart_json(html: str) -> list[dict]:
+    match = _CHART_JSON_RE.search(html)
+    if not match:
+        return []
+    try:
+        data = json.loads(match.group(1))
+    except (ValueError, TypeError):
+        return []
+    return data if isinstance(data, list) else []
+
+
+def parse_cardio_tab(html: str) -> dict | None:
+    """`#tab-cardio` (formato juliana/bruno/henrique/johnespanha/thaislima)
+    -> `{'sessions': [...]}` pronto pro schema, ou None se o HTML nao tem
+    essa aba (a maioria dos clientes — cardio embutido por dia ou ausente,
+    ver docstring de _CardioTabParser)."""
+    parser = _CardioTabParser()
+    parser.feed(html)
+    if not parser.sessions:
+        return None
+    return {'sessions': parser.sessions}
+
+
+def parse_periodization_tab(html: str) -> dict | None:
+    """`#tab-period` -> `{'weeks_table', 'volume_table', 'note', 'chart'}`
+    pronto pro schema, ou None se o HTML nao tem essa aba."""
+    parser = _PeriodizationTabParser()
+    parser.feed(html)
+    if not parser.weeks_table:
+        return None
+    return {
+        'weeks_table': parser.weeks_table,
+        'volume_table': parser.volume_table,
+        'note': parser.note,
+        'chart': _extract_chart_json(html),
+    }
+
+
 def parse_legacy_html(html: str) -> tuple[list[dict], list[SkippedExercise]]:
     """HTML legado -> (days prontos pro payload, exercícios pulados p/ revisão).
 
@@ -457,7 +756,12 @@ def build_program_payload_from_html(
 
     `program_id`/`program_label`/`started_on`/`weeks`/`accent_variant` vêm de
     fora sempre — são decisão de negócio, nunca advinhados do HTML (ver
-    docstring do módulo)."""
+    docstring do módulo).
+
+    `cardio`/`periodization` são aditivos (schema.py) e OPCIONAIS — ficam de
+    fora do payload quando o HTML não tem a aba correspondente (formato de
+    aba dedicada, ver docstring de _CardioTabParser/_PeriodizationTabParser
+    sobre por que só esse formato é coberto nesta fatia)."""
     days, skipped = parse_legacy_html(html)
     payload = {
         'schema_version': SCHEMA_VERSION,
@@ -468,7 +772,19 @@ def build_program_payload_from_html(
         'accent_variant': accent_variant,
         'days': days,
     }
+    cardio = parse_cardio_tab(html)
+    if cardio is not None:
+        payload['cardio'] = cardio
+    periodization = parse_periodization_tab(html)
+    if periodization is not None:
+        payload['periodization'] = periodization
     return payload, skipped
 
 
-__all__ = ['SkippedExercise', 'build_program_payload_from_html', 'parse_legacy_html']
+__all__ = [
+    'SkippedExercise',
+    'build_program_payload_from_html',
+    'parse_cardio_tab',
+    'parse_legacy_html',
+    'parse_periodization_tab',
+]

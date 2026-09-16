@@ -176,7 +176,7 @@
 .workout-week-strip__track {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 6px;
+    gap: 9px;
 }
 
 .workout-week-day {
@@ -275,7 +275,7 @@ button.workout-week-day:focus-visible {
    mesmo layout de .student-wod-movement-card do app do aluno. */
 .workout-movement-list {
     display: grid;
-    gap: 10px;
+    gap: 14px;
 }
 
 .workout-movement-card {
@@ -307,11 +307,53 @@ button.workout-week-day:focus-visible {
 .workout-movement-copy strong {
     font-size: 0.94rem;
     font-weight: 700;
+    /* Fresh --theme-text-primary: movimentos SEM reference_url (ex.: nota
+       de cardio como "Corrida 10 min", sem link do MuscleWiki) caem no
+       <strong> puro, sem a cor propria de .workout-wiki-link (que usa
+       --brand) -- herdavam o `body { color: var(--ink) }` congelado no tom
+       claro, mesmo bug ja corrigido em outros pontos do arquivo. */
+    color: var(--theme-text-primary);
 }
 
 .workout-movement-copy span {
     color: var(--theme-text-muted);
     font-size: 0.8rem;
+}
+
+/* "Variação: <link>" (.ex-var do HTML legado — sugestao de exercicio
+   alternativo do treinador, ex.: "Supino com halteres" pro Supino com
+   barra). Reusa a cor de --brand do .workout-wiki-link nos links, mas fica
+   fora do <strong> — e' um dado secundario, nao o nome do movimento. */
+.workout-movement-variation a {
+    color: var(--brand);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.workout-movement-variation a:hover,
+.workout-movement-variation a:focus-visible {
+    text-decoration: underline;
+}
+
+/* "Ver variação" — mesmo espirito do card de movimento clicavel (colapsado
+   por padrao, clique revela): fica pequeno e discreto, nunca com o mesmo
+   peso visual do nome do movimento ou dos chips de fase. */
+.workout-movement-variation-toggle {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--theme-text-muted);
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.workout-movement-variation-toggle:hover,
+.workout-movement-variation-toggle:focus-visible {
+    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
 }
 
 /* Quebra de fase (Prep/Feeder/Top/AMRAP) de reps_spec — pedido do Renan pra
@@ -458,23 +500,81 @@ button.workout-week-day:focus-visible {
     color: var(--theme-text-primary);
 }
 
+/* .theme-toggle-icon (design-system/topbar.css) e' pensado pra preencher um
+   botao pequeno de tamanho fixo (o .theme-toggle circular do topbar) --
+   width:100%/height:100% la' faz sentido. Aqui o "botao" e' a linha INTEIRA
+   (.workout-profile-row, full-width), entao o icone tentava ocupar 100% do
+   espaco sobrando da linha e ficava flutuando no meio em vez de colado a
+   direita, junto do resto do conteudo a direita (ex.: "Pagamentos →"). */
+.workout-profile-row .theme-toggle-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Seletor de dia do Treino (item pedido pelo Renan: mesmo formato "dia +
+   palavra-chave" do card de "Sua semana" do Início, lado a lado) -- cada
+   dia vira um card proprio (nao mais .student-status-badge, que e' pensado
+   pra pilula de UMA linha so'). flex:1 1 0 divide o espaco igual entre
+   quantos dias o programa tiver (3 a 5 nos 10 reais); overflow-x:auto e'
+   so' rede de seguranca pra tela muito estreita. */
 .workout-day-nav {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 9px;
     overflow-x: auto;
     padding-bottom: 4px;
 }
 
 .workout-day-tab {
+    flex: 1 1 0;
+    min-width: 64px;
+    display: grid;
+    place-items: center;
+    gap: 2px;
+    min-height: 50px;
+    padding: 8px 4px;
+    border-radius: 14px;
+    border: 1px solid var(--theme-border-soft);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+    color: inherit;
+    font-family: inherit;
     cursor: pointer;
-    border: 1px solid transparent;
-    background: color-mix(in srgb, var(--theme-surface-secondary) 92%, transparent);
+    text-align: center;
+}
+
+.workout-day-tab:hover,
+.workout-day-tab:focus-visible {
+    outline: none;
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
+}
+
+.workout-day-tab__day {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--theme-text-muted);
+}
+
+.workout-day-tab__keyword {
+    max-width: 100%;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--theme-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .workout-day-tab.is-active {
     border-color: var(--brand);
     background: color-mix(in srgb, var(--brand) 18%, var(--theme-surface-secondary) 82%);
+}
+
+.workout-day-tab.is-active .workout-day-tab__day,
+.workout-day-tab.is-active .workout-day-tab__keyword {
+    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
 }
 
 /* Achado duas vezes em paralelo (duas sessoes, mesmo dia): so 1 dos usos de
@@ -937,4 +1037,127 @@ button.workout-week-day:focus-visible {
 .workout-record-card__date {
     font-size: 0.7rem;
     color: var(--theme-text-muted);
+}
+
+/* ============================================================
+ * Cardio + Periodizacao (Onda A2, fatia cardio/periodizacao) --
+ * alcancadas so' pelo ciclo do botao "Treino" do bottom nav (ver <script>
+ * no fim de workout.html), nunca tem paineis fixos na nav.
+ * ============================================================ */
+
+.workout-cardio-card {
+    display: grid;
+    gap: 10px;
+}
+
+.workout-cardio-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.workout-cardio-card__head strong {
+    font-size: 0.98rem;
+    color: var(--theme-text-primary);
+}
+
+.workout-cardio-badge {
+    background: color-mix(in srgb, var(--brand) 16%, transparent);
+    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
+}
+
+.workout-cardio-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px 16px;
+    margin: 0;
+}
+
+.workout-cardio-detail dt {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--theme-text-muted);
+}
+
+.workout-cardio-detail dd {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--theme-text-primary);
+}
+
+.workout-cardio-note {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--theme-text-secondary);
+}
+
+/* Grafico de progressao do mesociclo -- mesmo dado/logica visual do
+   app.js legado (chartData/buildChart), so' renderizado no servidor (o
+   payload ja tem altura/cor por semana prontos, ver parser.py) em vez de
+   um <script type="application/json"> + JS montando DOM no cliente. */
+.workout-period-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.workout-period-chart__col {
+    flex: 1 1 0;
+    min-width: 56px;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+}
+
+.workout-period-chart__bar-wrap {
+    height: 120px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.workout-period-chart__reps {
+    font-size: 0.66rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.workout-period-chart__bar {
+    width: 60%;
+    min-height: 4px;
+    border-radius: 6px 6px 2px 2px;
+}
+
+.workout-period-chart__focus {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.workout-period-chart__label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--theme-text-muted);
+}
+
+.workout-period-note {
+    margin: 12px 0 0;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--theme-text-secondary);
 }

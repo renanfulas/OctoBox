@@ -40,6 +40,45 @@ _WEEKDAY_LABELS = {
     'seg': 'Seg', 'ter': 'Ter', 'qua': 'Qua', 'qui': 'Qui',
     'sex': 'Sex', 'sab': 'Sáb', 'dom': 'Dom',
 }
+_WEEKDAY_FULL_NAMES = {
+    'seg': 'Segunda', 'ter': 'Terça', 'qua': 'Quarta', 'qui': 'Quinta',
+    'sex': 'Sexta', 'sab': 'Sábado', 'dom': 'Domingo',
+}
+# Separadores vistos nos 10 programas reais pro prefixo "<Dia da semana><sep>"
+# de day.label (schema.py) -- nunca so' hifen: bruno/johnespanha usam
+# travessao "—" (em dash), franciele usa hifen "-". Ordem importa: precisa
+# tentar o mais longo (" — ") antes do mais curto (" - ") pra nao cortar
+# no meio de um travessao.
+_DAY_LABEL_SEPARATORS = (' — ', ' – ', ' - ')
+
+
+def day_short_label(day_id: str) -> str:
+    """'seg' -> 'Seg' — mesma abreviacao de 3 letras de _WEEKDAY_LABELS,
+    exposta pra uso fora de build_week_overview (Treino tambem quer o dia
+    curto, nao so' Inicio)."""
+    return _WEEKDAY_LABELS.get(day_id, day_id)
+
+
+def day_keyword(*, day_id: str, label: str) -> str:
+    """Extrai a "palavra-chave" do treino de `day.label`, sem o nome do dia
+    duplicado (o dia curto ja aparece em `day_short_label` ao lado).
+
+    NEM TODO `day.label` real tem o nome do dia como prefixo — juliana e
+    henrique usam so' a palavra-chave pura ("Quadríceps", "Superior A"),
+    sem "Segunda -"/"Terça —" na frente (conferido nos payloads publicados,
+    nao adivinhado). Por isso so' remove o prefixo quando ele bate com o
+    nome completo do dia (_WEEKDAY_FULL_NAMES) seguido de um dos separadores
+    conhecidos — nunca corta um label que nao tem esse prefixo."""
+    full_name = _WEEKDAY_FULL_NAMES.get(day_id)
+    if not full_name or not label:
+        return label
+    if not label.lower().startswith(full_name.lower()):
+        return label
+    remainder = label[len(full_name):]
+    for separator in _DAY_LABEL_SEPARATORS:
+        if remainder.startswith(separator):
+            return remainder[len(separator):]
+    return label
 
 
 @dataclass(frozen=True)
@@ -108,4 +147,4 @@ def build_program_summary(payload: dict) -> dict:
     return {'headline': headline, 'body': body}
 
 
-__all__ = ['WeekDay', 'build_program_summary', 'build_week_overview']
+__all__ = ['WeekDay', 'build_program_summary', 'build_week_overview', 'day_keyword', 'day_short_label']

@@ -259,7 +259,9 @@ class DjangoStudentIdentityRepository:
         provider_subject: str,
         email: str,
         invitation=None,
+        photo_url: str = '',
     ) -> StudentIdentityRecord:
+        normalized_photo_url = (photo_url or '').strip()
         identity = self.find_live_by_student_id(student.id)
         if identity is None:
             # Onda 1 (docs/plans/student-login-magic-link-bugs-corda.md): find_live_by_student_id
@@ -279,6 +281,7 @@ class DjangoStudentIdentityRepository:
                 provider_subject=provider_subject,
                 email=(email or '').strip().lower(),
                 invited_at=timezone.now() if invitation is not None else None,
+                photo_url=normalized_photo_url,
             )
         else:
             identity.student_id = student.id
@@ -291,6 +294,10 @@ class DjangoStudentIdentityRepository:
                 identity.primary_box_root_slug = box_root_slug
             if invitation is not None and identity.invited_at is None:
                 identity.invited_at = timezone.now()
+            # So sobrescreve com um valor novo — nunca apaga uma foto ja salva
+            # com um payload sem foto (ex.: Apple normalmente nao manda picture).
+            if normalized_photo_url:
+                identity.photo_url = normalized_photo_url
 
         # Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md): o commit bd01222e
         # removeu a validacao de duplicidade de e-mail do onboarding sem substitui-la — so

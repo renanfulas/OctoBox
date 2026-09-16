@@ -93,9 +93,37 @@ class KnowledgeChunkEmbedding(TimeStampedModel):
         return f'{self.chunk} [{self.model}:{self.dimensions}]'
 
 
+class WodMovementLearnedAlias(TimeStampedModel):
+    """Correcao de nome de movimento de treino aprendida a partir do Haiku.
+
+    Funciona como uma memoria que cresce: quando o resolvedor de slugs
+    (operations/services/wod_slug_resolver.py) chama o Haiku pra identificar
+    um nome de movimento que o dicionario deterministico nao reconheceu, o
+    resultado fica salvo aqui. Da proxima vez que o mesmo texto aparecer —
+    em qualquer box, indice compartilhado no schema public, igual o RAG —
+    o resolver usa a memoria direto, sem gastar outra chamada de API.
+
+    Erro de digitacao/sinonimo de exercicio e vocabulario universal de
+    CrossFit, nao dado de negocio de uma box especifica.
+    """
+    raw_text_normalized = models.CharField(max_length=160, unique=True, db_index=True)
+    raw_text_sample = models.CharField(max_length=160)
+    movement_slug = models.SlugField(max_length=64)
+    note = models.CharField(max_length=200, blank=True)
+    hit_count = models.PositiveIntegerField(default=1)
+    last_seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-hit_count', 'raw_text_normalized']
+
+    def __str__(self):
+        return f'{self.raw_text_sample} → {self.movement_slug}'
+
+
 __all__ = [
     'KnowledgeChunk',
     'KnowledgeChunkEmbedding',
     'KnowledgeDocument',
     'KnowledgeSourceKind',
+    'WodMovementLearnedAlias',
 ]

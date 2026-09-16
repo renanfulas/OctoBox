@@ -147,21 +147,21 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-input data-movement-slug="agachamento-livre" data-program-id="exemplo-2026-q1" hidden', html)
         self.assertIn('data-workout-load-toggle', html)
 
-    def test_movement_not_tracked_has_no_load_input_row(self):
+    def test_movement_not_tracked_still_has_load_input_row(self):
+        # Pedido do Renan: "clica expande em todos os exercicios" -- o
+        # registro de carga (load_tracker.js/services.record_load, que
+        # nunca validou is_tracked) fica disponivel pra QUALQUER movimento,
+        # nao so' os curados como "rastreado". is_tracked continua so'
+        # controlando a badge "rastreado" (curadoria do treinador), nunca
+        # se o card e clicavel.
         payload = build_example_payload()
         payload['days'][0]['blocks'][0]['movements'][0]['is_tracked'] = False
 
         html = _render(payload)
 
-        # Substrings precisam ser especificas o suficiente pra nao confundir
-        # com o texto do <script> inline (que referencia os MESMOS nomes de
-        # atributo via querySelectorAll/hasAttribute pro toggle de clique) nem
-        # com a bolinha de glossario (glossary_highlight tambem usa
-        # role="button" aria-expanded, sempre presente independente de
-        # is_tracked) -- checa o cluster de atributos inteiro da tag de
-        # verdade, nunca so' um nome de atributo isolado.
-        self.assertNotIn('<div class="workout-load-input"', html)
-        self.assertNotIn('data-workout-load-toggle tabindex="0" role="button" aria-expanded', html)
+        self.assertIn('<div class="workout-load-input"', html)
+        self.assertIn('data-workout-load-toggle tabindex="0" role="button" aria-expanded', html)
+        self.assertNotIn('workout-tracked-chip', html)
 
     def test_body_carries_plan_slug_for_load_tracker_js(self):
         html = _render(build_example_payload(), plan_slug='giovanna')
@@ -265,6 +265,44 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertEqual(html.count('class="workout-day-panel'), 2)
         self.assertIn('workout-day-seg', html)
         self.assertIn('workout-day-qua', html)
+
+    def test_day_tab_splits_prefixed_label_into_short_day_and_keyword(self):
+        payload = build_example_payload()
+        payload['days'][0]['label'] = 'Segunda - Pernas Quadríceps'
+
+        html = _render(payload)
+
+        self.assertIn('<span class="workout-day-tab__day">Seg</span>', html)
+        self.assertIn('<span class="workout-day-tab__keyword">Pernas Quadríceps</span>', html)
+
+    def test_day_tab_keeps_label_unchanged_when_no_weekday_prefix(self):
+        # juliana/henrique: label real e' so' a palavra-chave, sem "Segunda -".
+        payload = build_example_payload()
+        payload['days'][0]['label'] = 'Superior A'
+
+        html = _render(payload)
+
+        self.assertIn('<span class="workout-day-tab__day">Seg</span>', html)
+        self.assertIn('<span class="workout-day-tab__keyword">Superior A</span>', html)
+
+    def test_all_movements_are_clickable_regardless_of_is_tracked(self):
+        # Pedido do Renan: registrar carga disponivel em TODO exercicio, nao
+        # so' nos curados como "rastreado" pelo treinador.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'].append({
+            **payload['days'][0]['blocks'][0]['movements'][0],
+            'movement_slug': 'outro-movimento',
+            'is_tracked': False,
+        })
+
+        html = _render(payload)
+
+        # 'data-workout-load-toggle' sozinho tambem aparece 1x no <script>
+        # inline (querySelectorAll) -- conta o cluster de atributos da tag
+        # de verdade, mesmo padrao ja usado nos outros testes deste arquivo.
+        self.assertEqual(html.count('data-workout-load-toggle tabindex="0" role="button" aria-expanded'), 2)
+        self.assertEqual(html.count('<div class="workout-load-input"'), 2)
+        self.assertEqual(html.count('workout-tracked-chip'), 1)
 
     def test_history_tab_renders_without_data(self):
         # "Histórico" (nome antigo do tab combinado) virou dois paineis de
@@ -443,11 +481,22 @@ class WorkoutTopbarAndNavTests(TestCase):
         self.assertIn('<img src="https://example.com/foto.jpg"', html)
 
     def test_bottom_nav_has_five_destinations_in_order(self):
+        # Treino nao tem mais [data-workout-tab-target] fixo -- virou o
+        # botao de ciclo (Treino/Cardio/Periodizacao, ver
+        # data-workout-cycle-nav) pedido pelo Renan, ainda assim ocupa o
+        # 3o slot visualmente entre Avaliacao e Cargas.
         html = _render(build_example_payload())
 
-        expected_order = ['workout-panel-inicio', 'workout-panel-avaliacao', 'workout-panel-treino', 'workout-panel-cargas', 'workout-panel-perfil']
-        positions = [html.index(f'data-workout-tab-target="{target}"', html.index('workout-mobile-nav')) for target in expected_order]
-        self.assertEqual(positions, sorted(positions))
+        nav_start = html.index('workout-mobile-nav')
+        fixed_order = ['workout-panel-inicio', 'workout-panel-avaliacao']
+        positions = [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in fixed_order]
+        cycle_nav_position = html.index('data-workout-cycle-nav', nav_start)
+        trailing_order = ['workout-panel-cargas', 'workout-panel-perfil']
+        positions += [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in trailing_order]
+
+        self.assertEqual(positions[:2], sorted(positions[:2]))
+        self.assertTrue(positions[1] < cycle_nav_position < positions[2])
+        self.assertEqual(positions[2:], sorted(positions[2:]))
 
     def test_inicio_panel_is_active_by_default(self):
         html = _render(build_example_payload())
@@ -515,6 +564,104 @@ class WorkoutTopbarAndNavTests(TestCase):
 
         self.assertNotIn('dia com treino', html)
         self.assertNotIn('dias com treino', html)
+
+
+class CardioPeriodizacaoCycleNavTests(TestCase):
+    """Botao de ciclo "Treino" do bottom nav (pedido do Renan): um SO' slot
+    alterna Treino/Cardio/Periodizacao a cada toque, em vez de 3 botoes
+    fixos. Cardio/Periodizacao saem da lista de alvos quando o payload nao
+    tem esse dado (aditivo ao schema, ver schema.py)."""
+
+    def test_cycle_targets_only_treino_without_cardio_or_periodization(self):
+        html = _render(build_example_payload())
+
+        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.group(1), 'workout-panel-treino')
+
+    def test_cycle_targets_include_cardio_when_present(self):
+        payload = build_example_payload()
+        payload['cardio'] = {'sessions': [{'title': 'LISS', 'badge': '', 'details': [], 'note': ''}]}
+
+        html = _render(payload)
+
+        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        self.assertEqual(match.group(1), 'workout-panel-treino|workout-panel-cardio')
+
+    def test_cycle_targets_include_both_when_present(self):
+        payload = build_example_payload()
+        payload['cardio'] = {'sessions': [{'title': 'LISS', 'badge': '', 'details': [], 'note': ''}]}
+        payload['periodization'] = {
+            'weeks_table': [{'week': 'S1', 'focus': 'x', 'reps': 'x', 'guidance': 'x'}],
+            'volume_table': [], 'note': '', 'chart': [],
+        }
+
+        html = _render(payload)
+
+        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        self.assertEqual(match.group(1), 'workout-panel-treino|workout-panel-cardio|workout-panel-periodizacao')
+
+    def test_cardio_panel_empty_without_cardio_data(self):
+        html = _render(build_example_payload())
+
+        self.assertNotIn('workout-cardio-card', html)
+
+    def test_periodization_panel_empty_without_periodization_data(self):
+        html = _render(build_example_payload())
+
+        self.assertNotIn('workout-period-chart', html)
+        self.assertNotIn('Semana a semana', html)
+
+
+class CardioPeriodizacaoPanelContentTests(TestCase):
+    def test_cardio_session_renders_title_badge_details_and_note(self):
+        payload = build_example_payload()
+        payload['cardio'] = {
+            'sessions': [{
+                'title': 'LISS leve',
+                'badge': 'Quarta · pós-treino',
+                'details': [{'label': 'Duração', 'value': '20 min contínuos'}],
+                'note': 'Feito depois do treino de superior.',
+            }],
+        }
+
+        html = _render(payload)
+
+        self.assertIn('LISS leve', html)
+        self.assertIn('Quarta · pós-treino', html)
+        self.assertIn('Duração', html)
+        self.assertIn('20 min contínuos', html)
+        self.assertIn('Feito depois do treino de superior.', html)
+
+    def test_periodization_renders_chart_weeks_table_and_volume_table(self):
+        payload = build_example_payload()
+        payload['periodization'] = {
+            'weeks_table': [{'week': 'Semana 1', 'focus': 'Adaptação', 'reps': 'Teto', 'guidance': 'Carga base'}],
+            'volume_table': [{'muscle_group': 'Quadríceps', 'sets_per_week': '~22', 'frequency': '2×/sem', 'where': 'Terça'}],
+            'note': 'Respeite o deload.',
+            'chart': [{'label': 'S1', 'focus': 'Adaptação', 'reps': 'Teto', 'color': '#FB7185', 'bg': '#FFF1F2', 'fg': '#BE123C', 'h': 65}],
+        }
+
+        html = _render(payload)
+
+        self.assertIn('workout-period-chart', html)
+        self.assertIn('background:#FB7185', html)
+        self.assertIn('Semana 1', html)
+        self.assertIn('Carga base', html)
+        self.assertIn('Quadríceps', html)
+        self.assertIn('Respeite o deload.', html)
+
+    def test_periodization_without_chart_omits_chart_section(self):
+        payload = build_example_payload()
+        payload['periodization'] = {
+            'weeks_table': [{'week': 'Semana 1', 'focus': 'x', 'reps': 'x', 'guidance': 'x'}],
+            'volume_table': [], 'note': '', 'chart': [],
+        }
+
+        html = _render(payload)
+
+        self.assertNotIn('workout-period-chart', html)
+        self.assertIn('Semana a semana', html)
 
 
 class WorkoutAssessmentPanelTests(TestCase):
@@ -973,3 +1120,90 @@ class MovementCardPhaseChipRenderTests(TestCase):
 
         self.assertNotIn('workout-phase-row', html)
         self.assertIn('3x12', html)
+
+
+class MovementDisplayNameAndVariationRenderTests(TestCase):
+    """`movement.name` (portugues, escrito pelo treinador) e' aditivo —
+    achado real: nomes estavam saindo em ingles (slug do MuscleWiki
+    humanizado) porque o template nunca usava `name`, so' `movement_slug`."""
+
+    def test_movement_with_name_shows_portuguese_text_not_slug(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['name'] = 'Agachamento com barra livre'
+        # slug continua em ingles de proposito (vem do MuscleWiki) -- so' a
+        # exibicao muda.
+        payload['days'][0]['blocks'][0]['movements'][0]['movement_slug'] = 'barbell-squat'
+
+        html = _render(payload)
+
+        self.assertIn('Agachamento com barra livre', html)
+        self.assertNotIn('>Barbell squat<', html)
+
+    def test_movement_without_name_falls_back_to_humanized_slug(self):
+        # Movimento publicado ANTES desta fatia, sem `name` no payload.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['movement_slug'] = 'barbell-squat'
+        payload['days'][0]['blocks'][0]['movements'][0].pop('name', None)
+
+        html = _render(payload)
+
+        self.assertIn('Barbell squat', html)
+
+    def test_single_variation_renders_as_link(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Supino com halteres', 'reference_url': 'https://musclewiki.com/exercise/dumbbell-bench-press'},
+        ]
+
+        html = _render(payload)
+
+        self.assertIn('workout-movement-variation', html)
+        self.assertIn('Variação:', html)
+        self.assertIn('href="https://musclewiki.com/exercise/dumbbell-bench-press"', html)
+        self.assertIn('Supino com halteres', html)
+
+    def test_variation_is_hidden_by_default_behind_a_toggle(self):
+        # Pedido do Renan: mesmo padrao de clique-expande do registro de
+        # carga -- oculto por padrao, um toggle proprio revela.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Supino com halteres', 'reference_url': 'https://musclewiki.com/exercise/dumbbell-bench-press'},
+        ]
+
+        html = _render(payload)
+
+        self.assertIn('data-workout-variation-toggle', html)
+        self.assertIn('<span class="workout-movement-variation" data-workout-variation hidden>', html)
+
+    def test_variation_toggle_available_regardless_of_is_tracked(self):
+        # Igual ao registro de carga: a disponibilidade do toggle nao
+        # depende de is_tracked.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['is_tracked'] = False
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Supino com halteres', 'reference_url': 'https://musclewiki.com/exercise/dumbbell-bench-press'},
+        ]
+
+        html = _render(payload)
+
+        self.assertIn('data-workout-variation-toggle', html)
+
+    def test_multiple_variations_all_render(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Hack squat', 'reference_url': 'https://musclewiki.com/exercise/machine-hack-squat'},
+            {'label': 'Leg press 45°', 'reference_url': 'https://musclewiki.com/exercise/machine-leg-press'},
+        ]
+
+        html = _render(payload)
+
+        self.assertIn('Hack squat', html)
+        self.assertIn('Leg press 45°', html)
+
+    def test_movement_without_variations_omits_variation_line(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0].pop('variations', None)
+
+        html = _render(payload)
+
+        self.assertNotIn('workout-movement-variation', html)

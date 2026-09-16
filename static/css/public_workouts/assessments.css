@@ -10,6 +10,20 @@
  *   de marca.
  */
 
+/* Tema escuro (so' o template unico/workout.html tem toggle de tema —
+   as paginas legadas que tambem carregam este CSS nunca setam
+   body[data-theme="dark"], entao este bloco fica inerte la, sem risco de
+   regressao). --white/--dark/--border/--muted nunca tiveram valor de tema
+   nenhum antes (_base.html so' define --accent/--accent-bg/--accent-dark
+   por plano) -- os cards do relatorio ficavam brancos fixos com o resto da
+   pagina escuro. */
+body[data-theme="dark"] {
+  --white: var(--theme-surface-strong);
+  --dark: var(--theme-text-primary);
+  --border: var(--theme-border-soft);
+  --muted: var(--theme-text-muted);
+}
+
 .assess-wrap{display:flex;flex-direction:column;gap:16px}
 
 .assess-empty{

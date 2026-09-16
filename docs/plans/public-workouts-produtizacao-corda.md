@@ -1969,6 +1969,151 @@ bloqueio).
 >   revisão isolada, não misturada com o resto deste lote (puramente
 >   visual, sem tocar payload).
 
+> **Atualização (quarta rodada — espaçamento, seletor de dia do Treino
+> igual ao "Sua semana", registro de carga em todo exercício, 2 bugs de
+> alinhamento):**
+> - Espaçamento mais generoso no trilho "Sua semana" (Início, 6px→9px) e na
+>   lista de exercícios do Treino (10px→14px) — pedido direto do Renan.
+> - Seletor de dia do Treino (`.workout-day-tab`) trocou o formato antigo
+>   (rótulo único, ex. "Segunda - Pernas Quadríceps") pelo MESMO padrão
+>   "dia curto + palavra-chave" do card de "Sua semana", lado a lado —
+>   referência visual enviada pelo Renan. `day_short_label`/`day_keyword`
+>   (`dashboard.py`) derivam os dois pedaços: o dia curto vem de `day_id`
+>   (nunca de `day.label`, que é texto livre do treinador); a palavra-chave
+>   remove o prefixo "<Dia da semana><separador>" de `day.label` SÓ quando
+>   ele bate com o nome completo do dia — checado contra os 10 payloads
+>   reais, que usam 3 formatos diferentes (hífen "-", travessão "—", ou
+>   nenhum prefixo — juliana/henrique já são só a palavra-chave).
+> - Registrar carga deixou de exigir `is_tracked`: `record_load`
+>   (`services.py`, já existia) nunca validou esse campo — é puramente um
+>   sinal de curadoria do treinador (badge "rastreado"), nunca um portão de
+>   acesso. O que parecia "só o primeiro exercício registra" era simplesmente
+>   o fato de raramente haver mais de 1 `is_tracked=True` por dia nos dados
+>   reais — confirmado ao vivo com milene/thaislima (únicos 2 casos de 2
+>   rastreados no mesmo dia) que o toggle já funcionava independente por
+>   card; a mudança real foi abrir o clique pra QUALQUER exercício.
+> - **2 bugs de alinhamento achados e corrigidos**:
+>   1. Ícone de tema (Perfil) flutuava no meio da linha em vez de colado à
+>      direita — `.theme-toggle-icon` (`design-system/topbar.css`) é
+>      `width:100%;height:100%` pensado pra um botão circular pequeno
+>      (`.theme-toggle` do topbar), não pra uma linha inteira
+>      (`.workout-profile-row`). Override local com tamanho fixo (20px).
+>   2. Fundo branco fixo no tema escuro (Avaliação) — `assessments.css` usa
+>      `--white`/`--dark`/`--border`/`--muted` com fallback fixo (nunca
+>      tiveram valor de tema: `_base.html` legado só define
+>      `--accent`/`--accent-bg`/`--accent-dark` por plano, cor de marca, não
+>      claro/escuro). Redeclarados sob `body[data-theme="dark"]` dentro do
+>      próprio `assessments.css` — inerte nas 10 páginas legadas (nunca têm
+>      toggle de tema pra ativar esse seletor), então sem risco de regressão
+>      lá.
+> - Suíte completa (406 testes, `public_workouts` + `student_app`) verde;
+>   verificado num Chromium real nos dois temas, incluindo o clique em
+>   exercício não-rastreado abrindo o widget de carga.
+
+> **Atualização (Cardio + Periodização, pedido explícito do Renan com
+> referência em `juliana.html`) — extensão aditiva do contrato congelado
+> (schema.py), acordo direto com o Renan nesta sessão:**
+> - **Schema**: duas chaves opcionais de nível superior, `cardio` e
+>   `periodization` — ausentes = cliente sem essas abas no HTML legado
+>   (a maioria dos programas já publicados antes desta fatia). Nenhum campo
+>   existente muda de forma; `validate_payload` só valida o conteúdo
+>   quando a chave está presente.
+> - **Parser** (`parse_cardio_tab`/`parse_periodization_tab`,
+>   `public_workouts/parser.py`): dois extratores NOVOS e ISOLADOS do
+>   parser de dia/exercício já congelado (`_ProgramHTMLParser` não foi
+>   tocado — zero risco de regressão no que já está em produção). Cobrem
+>   só o formato de **aba dedicada** (`<div id="tab-cardio">`/`<div
+>   id="tab-period">`, presente em bruno/juliana/henrique/johnespanha/
+>   thaislima para cardio, e em 8 dos 10 clientes para periodização) —
+>   **decisão explícita do Renan**: não tenta unificar com o cardio
+>   embutido por dia da franciele (`.c-card`/`.stage-title` "Etapa N") nem
+>   com o protocolo HIIT da milene (`.hiit-card`), formatos grandes demais
+>   pra unificar nesta fatia. O gráfico de periodização vem de um
+>   `<script type="application/json" id="period-chart-data">` já pronto no
+>   HTML legado (mesmo dado que `app.js::buildChart` já usava no cliente) —
+>   extraído por regex direto, sem precisar de parsing de árvore.
+> - **Achado importante que reduziu risco**: `.c-card` (cardio embutido) é
+>   o MESMO componente usado pro plano alimentar da rafael — confirmado que
+>   os cards de refeição ficam estruturalmente FORA de qualquer `.session`,
+>   então não haveria colisão mesmo se a fatia futura de cardio embutido
+>   fosse implementada.
+> - **UI**: pedido explícito do Renan — o botão "Treino" do bottom nav virou
+>   um **ciclo de 1 slot só** (Treino → Cardio → Periodização → Treino a
+>   cada toque), em vez de 3 botões fixos (a nav não tem espaço pros 5 de
+>   sempre + 2 novos). Cardio/Periodização saem do ciclo quando o payload
+>   não tem esse dado (`data-cycle-targets` filtrado pelo template). Ícone e
+>   rótulo do botão trocam junto (`bonequinho correndo` pra Cardio, barras
+>   ascendentes pra Periodização) — chegar de OUTRO botão da nav sempre
+>   reseta pro estado Treino; só avança no ciclo quando o próprio botão já
+>   está ativo. O atalho de "dia da semana" do Início (que pulava direto
+>   pra Treino) foi ajustado pra resetar o ciclo em vez de simular clique
+>   (que só avançaria se o ciclo já estivesse em Cardio/Periodização).
+> - Gráfico do mesociclo renderizado no SERVIDOR (Django template, cores/
+>   altura já vêm prontas do payload) em vez do `buildChart()` client-side
+>   do `app.js` legado — mesmo dado, sem duplicar lógica de montagem de DOM
+>   em JS.
+> - Suíte completa (434 testes) verde; verificado num Chromium real nos
+>   dois temas com dado real re-parseado da juliana (não publicado ainda —
+>   ver "Pendente" abaixo), incluindo o ciclo completo Treino→Cardio→
+>   Periodização→Treino e o reset via atalho de dia da semana.
+> - **Pendente, fora deste lote**: republicar de verdade (`migrate_legacy_workouts`
+>   sem `--dry-run`) os clientes reais afetados — decisão de tocar dado
+>   publicado de cliente pagante fica pra confirmação explícita separada,
+>   mesmo processo da migração original da Onda A2.
+
+> **Atualização (nome em português + exercício alternativo, achado real do
+> Renan revisando o Treino):**
+> - **Nomes em inglês**: `ex.name` (nome em português escrito pelo
+>   treinador, ex. "Cadeira extensora") **sempre foi capturado** pelo
+>   parser — só nunca foi guardado no payload pra exibição, apenas usado
+>   como fallback de slug quando não há `wiki-btn`. O template sempre
+>   mostrou `movement_slug` humanizado (ex. `machine-leg-extension` →
+>   "Machine leg extension", em inglês) em vez do nome real. Corrigido
+>   aditivamente: `movement.name` no payload (`parser.py`), consumido via
+>   novo filtro `movement_display_name` (`public_workouts_extras.py`) que
+>   prefere `name` e cai pro slug humanizado só quando ausente — movimento
+>   publicado antes desta fatia continua funcionando sem quebrar.
+> - **Exercício alternativo**: `.ex-var`/`.var-link` (sugestão de variação
+>   do treinador, ex. "Supino com halteres" pro Supino com barra) nunca
+>   tinha sido capturado. Achado real ao migrar: bruno.html tem um caso
+>   com **2** variações no mesmo `.ex-var` (agachamento livre sugerindo
+>   hack squat E leg press) — schema modela `variations` como lista, nunca
+>   um campo único. Exibido como linha discreta "Variação: `<link>`" logo
+>   abaixo do nome do movimento (`.workout-movement-variation`), sem
+>   competir visualmente com o nome principal.
+> - Suíte completa (339 testes) verde; verificado num Chromium real (dois
+>   temas) com dado real re-parseado da juliana — nomes em português e
+>   variação exibidos corretamente. Mesmo estágio de "aditivo, não
+>   republicado ainda" do restante desta seção.
+
+> **Atualização (variação oculta por padrão, pedido explícito do Renan):**
+> A linha "Variação: `<link>`" virou um toggle — colapsada por padrão
+> (`data-workout-variation`, `hidden`), um gatilho "Ver variação" revela ao
+> clicar (`data-workout-variation-toggle`), mesmo padrão de clique-expande
+> já usado no registro de carga (item anterior desta mesma onda B3).
+> Disponível em todo exercício com variação, sem depender de nenhuma outra
+> flag — mesmo espírito do registro de carga não depender de `is_tracked`.
+> Handler do card (`data-workout-load-toggle`) ganhou mais uma exclusão de
+> clique/teclado pro toggle de variação não abrir o widget de carga junto.
+> Suíte (341 testes) verde; verificado num Chromium real.
+
+> **Atualização (rota de preview do template único, achado do Renan —
+> "não to conseguindo ver no preview"):**
+> Toda a verificação visual desta onda B3 dependia de eu gerar HTML na mão
+> via `manage.py shell` + salvar num arquivo `static/tmp_workout_previewN.html`
+> que eu mesmo apagava no fim de cada sessão — se o Renan tentasse abrir
+> depois, dava 404 (parecia bug, mas era o arquivo temporário já limpo).
+> Criada `GET /renan/<slug>/preview-b3` (`PublicWorkoutTemplatePreviewView`)
+> — renderiza `workout.html` contra o payload JÁ PUBLICADO do slug (mesmo
+> `get_active_program`/`list_program_versions` de sempre), **só responde
+> com `settings.DEBUG=True`** (404 em produção, nunca serve tráfego de
+> aluno de verdade, nunca precisa do cookie de posse B0). URL permanente —
+> não depende mais de nenhum passo manual meu pra conferir o trabalho.
+> 5 testes novos (404 fora de DEBUG mesmo publicado, 200 com conteúdo
+> esperado, 404 sem publicação, 404 slug desconhecido, dispensa cookie).
+> Suíte completa (457 testes, `public_workouts` + `student_app`) verde;
+> `manage.py check` sem problemas.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
