@@ -196,9 +196,9 @@ PONTOS CRITICOS:
                 {% elif load.kind == 'phase_progressive' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong> <span class="workout-movement-load__pct">{{ load.percentage }}% RM</span>
                 {% elif load.kind == 'rir_estimate' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong>
                 {% else %}Livre{% endif %}
+                {% if load.show_registration_hint %}<span class="workout-movement-load-hint">Registre sua carga para controlar a kilagem.</span>{% endif %}
               </div>
             </article>
-            {% if load.show_registration_hint %}<span class="workout-movement-load-hint">Registre sua carga para controlar a kilagem.</span>{% endif %}
             <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}" hidden>
               <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
               <div class="workout-load-input__row">

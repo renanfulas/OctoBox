@@ -148,6 +148,22 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-input data-movement-slug="agachamento-livre" data-program-id="exemplo-2026-q1" hidden', html)
         self.assertIn('data-workout-load-toggle', html)
 
+    def test_load_input_widget_is_always_the_immediate_next_sibling_of_the_card(self):
+        # Regressao real: o JS de toggle (`card.nextElementSibling`, ver
+        # <script> em workout.html) so' acha o widget de carga se NADA
+        # ficar entre `</article>` e `.workout-load-input` na arvore --
+        # nem o hint "Registre sua carga..." (show_registration_hint,
+        # movement_load_display), que precisa morar DENTRO do <article>.
+        # Sem 1RM nenhum (caso mais comum) e' exatamente quando o hint
+        # aparece, entao testa contra o payload de exemplo puro (sem
+        # one_rep_max_by_movement) pra pegar esse caso.
+        html = _render(build_example_payload())
+
+        matches = re.findall(r'</article>\s*<div class="workout-load-input"', html)
+        articles = html.count('workout-movement-card')
+        self.assertEqual(len(matches), articles)
+        self.assertGreater(articles, 0)
+
     def test_movement_not_tracked_still_has_load_input_row(self):
         # Pedido do Renan: "clica expande em todos os exercicios" -- o
         # registro de carga (load_tracker.js/services.record_load, que
