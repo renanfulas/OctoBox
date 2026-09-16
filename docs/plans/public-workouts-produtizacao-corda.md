@@ -2121,6 +2121,54 @@ bloqueio).
 > 8 testes novos; suíte completa (477 testes) verde; `manage.py check`
 > sem problemas.
 
+> **Atualização (Periodização canônica — semana em destaque + carga
+> sugerida, implementado):** o plano de periodização canônica ficou pronto
+> como documento numa sessão anterior; esta implementou de verdade,
+> **com uma correção crítica encontrada ao reanalisar antes de codar**:
+>
+> A proposta original de "Caminho 3" (fase canônica ativa) recalculava
+> `kg = %RM_da_fase × 1RM_estimado` do zero a cada semana. Cruzando contra
+> o próprio dado real da Juliana (`vnote`: *"a carga é o que progride
+> semana a semana"*; `weeks_table`: incrementos pequenos e relativos —
+> "+2,5 kg vs. Semana 1", nunca um número novo desconectado), essa
+> premissa quebrava: produziria saltos bruscos entre fases (Volume 67% →
+> Intensidade 85% seria +27% relativo numa semana só) desconectados do que
+> o aluno realmente levantou — uma sugestão errada e potencialmente
+> perigosa. Correção: `periodization.suggest_progressive_load_kg` ancora
+> na ÚLTIMA carga REAL registrada nesse movimento dentro do PROGRAMA ATUAL
+> (`program_id` bate), escalada pela razão entre o %RM-meio da fase de
+> agora e o %RM-meio da fase de quando aquela carga foi registrada — nunca
+> recalcula do zero. O 1RM estimado (quando existe) só limita um TETO de
+> segurança (nunca deixa a razão sugerir acima do %RM máximo da fase
+> atual), protegendo contra um log anômalo se propagando pra sempre.
+>
+> Entregue: `public_workouts/periodization.py` (`PHASE_PROFILES` — 6 fases,
+> %RM/RIR/reps com fonte real NSCA/Prilepin/Bompa/Helms —,
+> `current_week_number`/`current_phase_profile` com `today` injetável,
+> `build_chart_points_from_weeks`, `suggest_progressive_load_kg`);
+> `periodization.weeks` no schema (aditivo, `chart`/`weeks_table` viram
+> opcionais só quando `weeks` está presente); `load_suggestion.py`
+> (Caminho 4 — estimativa pontual a partir do reps/RIR do PRÓPRIO
+> exercício quando não há fase canônica ou não há âncora ainda, nunca
+> "chuta" de texto ambíguo); `estimate_working_weight_kg` (inverso de
+> `estimate_one_rep_max`) em `one_rep_max.py`; cascata de 5 níveis em
+> `movement_load_display` (fixed_kg → percentage_of_rm+1RM → fase
+> progressiva → estimativa por texto → "Registre sua carga..."); destaque
+> visual da semana atual no gráfico + banner de fase na aba Treino; comando
+> `upgrade_periodization_model` (Juliana republicada localmente com as 6
+> fases). 62 testes novos; suíte completa (564 testes) verde; `manage.py
+> check` sem problemas. Verificado num Chromium real contra o dado
+> publicado de verdade da Juliana — inclusive o teto de segurança
+> funcionando (razão pura sugeria 80kg partindo de uma carga real de 80kg
+> na mesma fase, mas o teto de 62% RM da Adaptação limitou a sugestão
+> final a 67,5kg) — e confirmado ZERO mudança visual pro Bruno (não
+> migrado).
+>
+> **Pendente:** curar `periodization.weeks` pras outras 9 clientes (uma de
+> cada vez, decisão manual — ver `CURATED_WEEKS_MAPPING` em
+> `upgrade_periodization_model.py`); aplicar `sets_multiplier` na UI
+> (fundação já pronta, só não ligada ainda — ver docstring do módulo).
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |

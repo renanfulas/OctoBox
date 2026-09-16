@@ -17,12 +17,17 @@ import re
 from django.template.loader import render_to_string
 from django.test import TestCase
 
+from public_workouts.periodization import PHASE_PROFILES
 from public_workouts.schema import build_example_payload
 from public_workouts.templatetags.public_workouts_extras import (
+    current_period_week_number,
     dict_get,
     glossary_highlight,
     humanize_movement_slug,
     load_chart_points,
+    movement_load_display,
+    periodization_chart_points,
+    periodization_phase_banner,
     reps_phases,
 )
 
@@ -1097,3 +1102,235 @@ class MovementDisplayNameAndVariationRenderTests(TestCase):
         html = _render(payload)
 
         self.assertNotIn('workout-movement-variation', html)
+
+
+def _canonical_periodization(weeks):
+    return {'weeks': weeks, 'volume_table': [], 'note': ''}
+
+
+_SIX_CANONICAL_WEEKS = [
+    {'week_number': 1, 'phase_type': 'adaptation'},
+    {'week_number': 2, 'phase_type': 'volume'},
+    {'week_number': 3, 'phase_type': 'strength_hypertrophy'},
+    {'week_number': 4, 'phase_type': 'intensity'},
+    {'week_number': 5, 'phase_type': 'peak'},
+    {'week_number': 6, 'phase_type': 'deload'},
+]
+
+
+class PeriodizationChartPointsFilterTests(TestCase):
+    def test_legacy_chart_passthrough_gets_week_number_none(self):
+        chart = [{'label': 'S1', 'focus': 'x', 'reps': 'x', 'color': '#fff', 'bg': '#fff', 'fg': '#fff', 'h': 50}]
+
+        points = periodization_chart_points({'chart': chart})
+
+        self.assertEqual(points[0]['week_number'], None)
+        self.assertEqual(points[0]['label'], 'S1')
+
+    def test_canonical_weeks_take_priority_over_legacy_chart(self):
+        periodization = {
+            'weeks': _SIX_CANONICAL_WEEKS,
+            'chart': [{'label': 'legado', 'focus': 'x', 'reps': 'x', 'color': '#fff', 'bg': '#fff', 'fg': '#fff', 'h': 1}],
+        }
+
+        points = periodization_chart_points(periodization)
+
+        self.assertEqual(len(points), 6)
+        self.assertEqual(points[0]['label'], 'S1')
+        self.assertIsNotNone(points[0]['week_number'])
+
+    def test_empty_periodization_returns_empty_list(self):
+        self.assertEqual(periodization_chart_points({}), [])
+        self.assertEqual(periodization_chart_points(None), [])
+
+
+class CurrentPeriodWeekNumberFilterTests(TestCase):
+    def test_delegates_to_periodization_module(self):
+        payload = {
+            'started_on': '2026-01-05',
+            'periodization': _canonical_periodization(_SIX_CANONICAL_WEEKS),
+        }
+
+        # sem `today` explicito o filtro usa date.today() -- so' confirma
+        # que nao quebra e devolve um inteiro dentro da faixa esperada.
+        result = current_period_week_number(payload)
+
+        self.assertTrue(result is None or 1 <= result <= 6)
+
+    def test_none_without_periodization(self):
+        self.assertIsNone(current_period_week_number({'started_on': '2026-01-05'}))
+
+
+class PeriodizationPhaseBannerTagTests(TestCase):
+    def test_invisible_without_canonical_weeks(self):
+        payload = build_example_payload()
+
+        banner = periodization_phase_banner(payload)
+
+        self.assertFalse(banner['visible'])
+
+    def test_visible_with_canonical_weeks_shows_phase_details(self):
+        payload = build_example_payload()
+        payload['periodization'] = _canonical_periodization(_SIX_CANONICAL_WEEKS)
+
+        banner = periodization_phase_banner(payload)
+
+        self.assertTrue(banner['visible'])
+        self.assertIn(banner['phase_label'], [p.label for p in PHASE_PROFILES.values()])
+        self.assertIsInstance(banner['total_weeks'], int)
+        self.assertEqual(banner['total_weeks'], 6)
+
+
+class MovementLoadDisplayTagTests(TestCase):
+    def _movement(self, **overrides):
+        movement = {
+            'movement_slug': 'hack-squat',
+            'reps_spec': '3× Top (6-8)',
+            'rir_spec': 'RIR 1-2',
+            'load_type': 'free',
+            'load_value': None,
+        }
+        movement.update(overrides)
+        return movement
+
+    def test_fixed_kg_short_circuits_everything_else(self):
+        movement = self._movement(load_type='fixed_kg', load_value=40)
+
+        result = movement_load_display(movement, {}, None, {}, [])
+
+        self.assertEqual(result, {'kind': 'fixed_kg', 'value_kg': 40, 'percentage': None, 'show_registration_hint': False})
+
+    def test_percentage_of_rm_without_one_rep_max_shows_percentage_and_hint(self):
+        movement = self._movement(load_type='percentage_of_rm', load_value=70.0)
+
+        result = movement_load_display(movement, {}, None, {}, [])
+
+        self.assertEqual(result['kind'], 'percentage')
+        self.assertIsNone(result['value_kg'])
+        self.assertEqual(result['percentage'], 70.0)
+        self.assertTrue(result['show_registration_hint'])
+
+    def test_percentage_of_rm_with_one_rep_max_computes_kg(self):
+        movement = self._movement(load_type='percentage_of_rm', load_value=70.0)
+        one_rm = {'hack-squat': {'value_kg': 100.0}}
+
+        result = movement_load_display(movement, {}, None, one_rm, [])
+
+        self.assertEqual(result['kind'], 'percentage')
+        self.assertEqual(result['value_kg'], 70.0)
+        self.assertFalse(result['show_registration_hint'])
+
+    def test_canonical_phase_with_prior_log_uses_progressive_ratio(self):
+        movement = self._movement()
+        payload = {
+            'program_id': 'juliana-2026-q1', 'started_on': '2026-01-05',
+            'periodization': _canonical_periodization(_SIX_CANONICAL_WEEKS),
+        }
+        load_history = [{
+            'movement_slug': 'hack-squat', 'weight_kg': 80.0,
+            'performed_on': '2026-01-05', 'program_id': 'juliana-2026-q1',
+        }]
+
+        result = movement_load_display(movement, payload, PHASE_PROFILES['volume'], {}, load_history)
+
+        self.assertEqual(result['kind'], 'phase_progressive')
+        self.assertGreater(result['value_kg'], 80.0)
+        self.assertFalse(result['show_registration_hint'])
+
+    def test_canonical_phase_without_prior_log_falls_back_to_rir_estimate(self):
+        movement = self._movement()  # reps_spec/rir_spec parseaveis
+        payload = {
+            'program_id': 'juliana-2026-q1', 'started_on': '2026-01-05',
+            'periodization': _canonical_periodization(_SIX_CANONICAL_WEEKS),
+        }
+        one_rm = {'hack-squat': {'value_kg': 100.0}}
+
+        result = movement_load_display(movement, payload, PHASE_PROFILES['adaptation'], one_rm, [])
+
+        self.assertEqual(result['kind'], 'rir_estimate')
+        self.assertIsNotNone(result['value_kg'])
+
+    def test_no_phase_uses_rir_estimate_when_one_rep_max_available(self):
+        movement = self._movement()
+        one_rm = {'hack-squat': {'value_kg': 100.0}}
+
+        result = movement_load_display(movement, {}, None, one_rm, [])
+
+        self.assertEqual(result['kind'], 'rir_estimate')
+        self.assertIsNotNone(result['value_kg'])
+        self.assertFalse(result['show_registration_hint'])
+
+    def test_nothing_resolves_without_one_rep_max_shows_free_and_hint(self):
+        movement = self._movement()
+
+        result = movement_load_display(movement, {}, None, {}, [])
+
+        self.assertEqual(result['kind'], 'free')
+        self.assertIsNone(result['value_kg'])
+        self.assertTrue(result['show_registration_hint'])
+
+    def test_ambiguous_reps_spec_with_one_rep_max_shows_free_without_hint(self):
+        # 1RM ja existe (o aluno ja registrou carga) -- so' esse exercicio
+        # em especifico tem texto ambiguo demais pra estimar. Nao mostra o
+        # hint de registro (seria enganoso, ele ja registrou).
+        movement = self._movement(reps_spec='Feeder → 3× Top (crescente) → 1× Max')
+        one_rm = {'hack-squat': {'value_kg': 100.0}}
+
+        result = movement_load_display(movement, {}, None, one_rm, [])
+
+        self.assertEqual(result['kind'], 'free')
+        self.assertFalse(result['show_registration_hint'])
+
+
+class PeriodizationCanonicalTreinoRenderTests(TestCase):
+    """Renderizacao ponta-a-ponta: gráfico com destaque de semana atual,
+    banner de fase, e a cascata de carga integrada no template real."""
+
+    def test_current_week_column_gets_highlight_class(self):
+        payload = build_example_payload()
+        payload['started_on'] = '2026-01-05'
+        payload['periodization'] = _canonical_periodization(_SIX_CANONICAL_WEEKS)
+
+        html = _render(payload)
+
+        self.assertIn('workout-period-chart__col--current', html)
+
+    def test_legacy_client_chart_never_gets_highlight_class(self):
+        payload = build_example_payload()
+        payload['periodization'] = {
+            'weeks_table': [{'week': 'S1', 'focus': 'x', 'reps': 'x', 'guidance': 'x'}],
+            'volume_table': [], 'note': '',
+            'chart': [{'label': 'S1', 'focus': 'x', 'reps': 'x', 'color': '#fff', 'bg': '#fff', 'fg': '#fff', 'h': 50}],
+        }
+
+        html = _render(payload)
+
+        self.assertNotIn('workout-period-chart__col--current', html)
+
+    def test_phase_banner_appears_for_canonical_client(self):
+        payload = build_example_payload()
+        payload['started_on'] = '2026-01-05'
+        payload['periodization'] = _canonical_periodization(_SIX_CANONICAL_WEEKS)
+
+        html = _render(payload)
+
+        self.assertIn('workout-phase-banner', html)
+
+    def test_phase_banner_absent_for_legacy_client(self):
+        html = _render(build_example_payload())
+
+        self.assertNotIn('workout-phase-banner', html)
+
+    def test_registration_hint_renders_in_treino_tab_without_one_rep_max(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('Registre sua carga para controlar a kilagem.', html)
+
+    def test_registration_hint_absent_once_one_rep_max_exists(self):
+        payload = build_example_payload()
+        movement = payload['days'][0]['blocks'][0]['movements'][0]
+        one_rm = {movement['movement_slug']: {'value_kg': 100.0}}
+
+        html = _render(payload, one_rep_max_by_movement=one_rm)
+
+        self.assertNotIn('Registre sua carga para controlar a kilagem.', html)
