@@ -1,0 +1,78 @@
+name: Upgrade Periodization Model (produção)
+
+# Disparo manual, escopo estreito: roda SÓ
+# `manage.py upgrade_periodization_model` na VPS de produção -- nunca um
+# comando arbitrário. Reusa os mesmos segredos de SSH de
+# publish-legacy-workouts.yml/deploy-vps.yml (VPS_HOST/VPS_USER/VPS_SSH_KEY/
+# VPS_PORT); esta sessão nunca ve a credencial, só o Action a usa. `dry_run`
+# default `true` -- disparo acidental sem trocar o campo nunca publica nada
+# de verdade. `slug` e' OBRIGATORIO (sem "vazio = todos" -- ao contrario de
+# publish-legacy-workouts.yml, este comando exige --slug e so aceita quem ja
+# tem curadoria manual em CURATED_WEEKS_MAPPING).
+#
+# POR QUE EXISTE:
+# - Onda B3+ do CORDA (docs/plans/public-workouts-produtizacao-corda.md,
+#   "Periodização canônica") -- acrescentar `periodization.weeks` ao payload
+#   JA PUBLICADO de um cliente e' decisao de negocio deliberada (dado de
+#   cliente pagante), nunca automatica no deploy de rotina. Mesmo racional
+#   de publish-legacy-workouts.yml: um botao auditavel em vez de SSH manual
+#   ou credencial de banco exposta a uma sessao de IA.
+# - Achado real que motivou este workflow: republicar um cliente via
+#   migrate_legacy_workouts (ex.: juliana, pra recapturar nome em português
+#   corrigido no parser) RE-PARSEIA o HTML legado do zero -- isso PERDE o
+#   `periodization.weeks` curado manualmente (o HTML nao tem essa chave,
+#   so' existe no payload ja publicado). upgrade_periodization_model precisa
+#   rodar de novo LOGO DEPOIS, sempre que o cliente canonico for republicado
+#   por qualquer outro motivo.
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Slug do cliente (precisa estar em CURATED_WEEKS_MAPPING)'
+        required: true
+      dry_run:
+        description: 'true = so imprime o relatorio; false = publica de verdade'
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vps-production-main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Rodar upgrade_periodization_model na VPS
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          timeout: 2m
+          command_timeout: 10m
+          envs: INPUT_SLUG,INPUT_DRY_RUN
+          script: |
+            set -euo pipefail
+            APP=/srv/octobox/app
+            VENV=/srv/octobox/venv
+            ENV=/srv/octobox/shared/octobox.env
+            set -a && source "$ENV" && set +a
+
+            ARGS=(--slug="$INPUT_SLUG")
+            if [ "${INPUT_DRY_RUN:-true}" = "true" ]; then
+              ARGS+=(--dry-run)
+            fi
+
+            echo "==> python manage.py upgrade_periodization_model ${ARGS[*]}"
+            "$VENV/bin/python" "$APP/manage.py" upgrade_periodization_model "${ARGS[@]}"
+        env:
+          INPUT_SLUG: ${{ inputs.slug }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
