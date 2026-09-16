@@ -764,15 +764,45 @@ class ParseEmbeddedStageContentTests(SimpleTestCase):
         session = cardio_sessions[0]
         self.assertEqual(session['title'], 'Esteira, sem inclinação')
         self.assertEqual(session['badge'], '15-20 min')
-        self.assertEqual(session['details'], [{'label': 'Progressão', 'value': 'Ver fase atual na aba Periodização'}])
+        self.assertEqual(session['details'], [
+            {'label': 'Dias', 'value': 'Terça'},
+            {'label': 'Progressão', 'value': 'Ver fase atual na aba Periodização'},
+        ])
         self.assertEqual(session['note'], 'Feito depois do treino de força, nunca antes.')
 
-    def test_identical_cardio_card_repeated_across_days_is_deduplicated(self):
+    def test_identical_cardio_card_repeated_across_days_is_deduplicated_with_days_merged(self):
+        # achado do Renan: sem o detail "Dias", uma sessao deduplicada
+        # perdia a explicacao de em quais dias ela vale.
         html = self._franciele_terca() + self._franciele_terca().replace('id="ter"', 'id="qui"')
 
         _, cardio_sessions = parse_embedded_stage_content(html)
 
         self.assertEqual(len(cardio_sessions), 1)
+        self.assertEqual(cardio_sessions[0]['details'][0], {'label': 'Dias', 'value': 'Terça e Quinta'})
+
+    def test_three_or_more_days_join_with_comma_and_final_e(self):
+        html = (
+            self._franciele_terca()
+            + self._franciele_terca().replace('id="ter"', 'id="qui"')
+            + self._franciele_terca().replace('id="ter"', 'id="sex"')
+        )
+
+        _, cardio_sessions = parse_embedded_stage_content(html)
+
+        self.assertEqual(cardio_sessions[0]['details'][0], {'label': 'Dias', 'value': 'Terça, Quinta e Sexta'})
+
+    def test_dedicated_cardio_tab_sessions_never_get_a_dias_detail(self):
+        # `_CardioTabParser` (aba dedicada) nao tem conceito de "dia" -- o
+        # detail "Dias" e' exclusivo do cardio embutido por dia.
+        html = '''
+        <div id="tab-cardio">
+          <div class="c-card"><div class="c-head"><span>LISS leve</span><span class="km-badge">Quarta</span></div></div>
+        </div>
+        '''
+
+        session = parse_cardio_tab(html)['sessions'][0]
+
+        self.assertNotIn('Dias', [d['label'] for d in session['details']])
 
     def test_force_stage_never_produces_auxiliary_movements(self):
         # "Etapa 2 - Forca" usa `.ex`, nunca `.c-card` -- garante que o
@@ -855,6 +885,49 @@ class ParseEmbeddedStageContentTests(SimpleTestCase):
         movement = auxiliary_by_day['seg'][0]['movements'][0]
         self.assertEqual(movement['name'], 'Prancha frontal')
         self.assertEqual(movement['reps_spec'], '')
+
+    def test_c_head_card_without_cardio_modality_in_title_is_discarded_entirely(self):
+        # Recorte fiel de giovanna.html: dias de CrossFit (nao cardio) tem
+        # `.c-card` com `.c-head` ("Orientacao do dia") que NAO e cardio --
+        # so' a de sabado ("Corrida 4-5 km") e. Sem o filtro de titulo, a
+        # nota de orientacao virava cardio errado (chute).
+        html = '''
+        <div id="seg" class="session">
+          <div class="c-card">
+            <div class="c-head"><span>Orientacao do dia</span><span class="km-badge">RPE 7-8</span></div>
+            <div class="c-row"><span class="c-lbl">Ajuste</span><span>Reduza 1 serie se pesar</span></div>
+          </div>
+        </div>
+        <div id="sab" class="session">
+          <div class="c-card">
+            <div class="c-head"><span>Corrida 4-5 km</span><span class="km-badge">Borg 7/10</span></div>
+          </div>
+        </div>
+        '''
+
+        auxiliary_by_day, cardio_sessions = parse_embedded_stage_content(html)
+
+        self.assertEqual(auxiliary_by_day, {})  # nunca vira exercicio falso
+        self.assertEqual(len(cardio_sessions), 1)
+        self.assertEqual(cardio_sessions[0]['title'], 'Corrida 4-5 km')
+
+    def test_meal_plan_style_card_title_is_discarded_not_treated_as_cardio(self):
+        # rafael.html: cards de "Refeicao N" ficam fora de `.session` de
+        # verdade (nunca chegam aqui) -- confirma que, SE algum cliente
+        # futuro colocasse um card assim dentro de uma `.session`, o filtro
+        # de titulo ainda protegeria contra virar cardio errado.
+        html = '''
+        <div id="seg" class="session">
+          <div class="c-card">
+            <div class="c-head"><span>Refeição 1 — 06:30</span><span class="km-badge">397 kcal</span></div>
+          </div>
+        </div>
+        '''
+
+        auxiliary_by_day, cardio_sessions = parse_embedded_stage_content(html)
+
+        self.assertEqual(auxiliary_by_day, {})
+        self.assertEqual(cardio_sessions, [])
 
 
 class BuildProgramPayloadFromHtmlEmbeddedStageTests(SimpleTestCase):

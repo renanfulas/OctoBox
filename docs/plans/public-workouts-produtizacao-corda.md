@@ -2098,6 +2098,29 @@ bloqueio).
 > `publish-legacy-workouts.yml` (PR #253) — só afeta franciele/rafael
 > localmente até isso rodar.
 
+> **Atualização (2 achados ao auditar os 10 clientes contra o pedido do
+> Renan "corrija de todos os treinos... sem explicação de dias"):**
+> 1. O cardio embutido por dia deduplicado (franciele repete o mesmo card
+>    em 3 dias) tinha perdido a explicação de EM QUAIS dias ele vale.
+>    `_EmbeddedStageParser.cardio_sessions()` agora agrupa por identidade
+>    de conteúdo e injeta um detail `"Dias"` na frente (`"Terça, Quinta e
+>    Sexta"`) com os dias reais mesclados — novo `dashboard.day_full_label`
+>    reaproveitado, não duplicado.
+> 2. Auditoria dos 10 revelou giovanna.html: usa a MESMA marcação
+>    (`.c-card`+`.c-head`) tanto pra cardio real (sábado, "Corrida 4-5 km")
+>    quanto pra notas de orientação do dia de CrossFit ("Orientação do
+>    dia", "Regra prática", "Estratégia" — NENHUMA é cardio) nos outros
+>    dias. `.c-head` sozinho não bastava. Novo `_looks_like_cardio_title`
+>    exige que o TÍTULO nomeie uma modalidade de cardio reconhecida (o
+>    treinador sempre precisa dizer o quê fazer pra prescrever cardio) —
+>    card com `.c-head` que não bate é descartado por completo (nem
+>    cardio, nem exercício — não existe campo pra "nota de orientação").
+>    giovanna: 4→1 sessões de cardio (as 3 erradas removidas).
+> Auditados os 10 clientes um a um (`build_program_payload_from_html`
+> direto contra cada HTML real) — nenhum outro tinha esse tipo de gap.
+> 8 testes novos; suíte completa (477 testes) verde; `manage.py check`
+> sem problemas.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |

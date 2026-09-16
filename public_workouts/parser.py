@@ -51,6 +51,7 @@ from html.parser import HTMLParser
 
 from django.utils.text import slugify
 
+from .dashboard import day_full_label
 from .musclewiki import movement_slug_from_url
 
 SCHEMA_VERSION = 1
@@ -575,6 +576,28 @@ class _CardioTabParser(HTMLParser):
             self._current_session = None
 
 
+# Modalidades reais de cardio vistas nos clientes com `.c-card` embutido
+# por dia (franciele/rafael/giovanna/johnespanha) -- coach SEMPRE precisa
+# nomear a modalidade pra prescrever cardio (não dá pra prescrever "faça
+# cardio" sem dizer o quê), então isso funciona como sinal positivo
+# confiável. Existe porque `.c-head` sozinho NÃO basta: giovanna reusa a
+# MESMA marcação (`.c-card`+`.c-head`) pra notas de orientação do dia de
+# CrossFit ("Orientação do dia", "Regra prática", "Estratégia" — nenhuma
+# delas é cardio) e rafael pra cards de refeição (fora de `.session`,
+# nunca chegam aqui, mas o princípio de "não confiar só em `.c-head`" é o
+# mesmo). Case-insensitive, substrings sem acento pra cobrir as duas
+# grafias.
+_CARDIO_TITLE_KEYWORDS = (
+    'corrid', 'esteira', 'bike', 'bicicl', 'eliptic', 'remo', 'natac',
+    'caminhad', 'trote', 'hiit', 'liss', 'cardio', 'zona', 'sprint', 'pedal',
+)
+
+
+def _looks_like_cardio_title(title: str) -> bool:
+    lowered = title.lower()
+    return any(keyword in lowered for keyword in _CARDIO_TITLE_KEYWORDS)
+
+
 class _EmbeddedStageParser(HTMLParser):
     """Extrai `.c-card` embutido DENTRO de cada `.session` (franciele.html/
     rafael.html: sem aba dedicada `#tab-cardio`). `_CardioTabParser` so'
@@ -585,20 +608,35 @@ class _EmbeddedStageParser(HTMLParser):
     so' que disparada por "dentro de uma sessao" em vez de "dentro de
     `#tab-cardio`".
 
-    Classificacao — NAO por texto de `.stage-title` (franciele usa "Etapa N
-    - Cardio", mas rafael.html nao tem `.stage-title` NENHUM, os cards de
-    cardio vem soltos logo apos os `.ex` do dia — vocabulario de texto
-    nunca seria confiavel pros dois). O sinal estrutural real: toda sessao
-    de cardio observada nos 2 clientes reais tem `.c-head` (titulo + `.km-
-    badge`) como primeiro filho; todo card de mobilidade/ativacao/
-    coordenacao e' so' uma lista de `.c-row` SEM `.c-head`. Por isso
-    `_card_is_cardio` vira True assim que um `.c-head` aparece dentro do
-    card atual, nunca antes. Cardio vira entrada de `cardio_sessions`
-    (agregado do PROGRAMA inteiro, dedup por igualdade exata — franciele
-    repete o mesmo `.c-card` em ter/qui/sex, uma sessao so' no payload);
-    sem `.c-head` -> cada `.c-row` vira um MOVIMENTO leve (sem wiki-btn) no
+    Classificação em 2 passos — nenhum dos dois sozinho basta:
+    1. Estrutural: todo card de cardio observado tem `.c-head` (título +
+       `.km-badge`) como primeiro filho; card de mobilidade/ativação/
+       coordenação é só uma lista de `.c-row` SEM `.c-head`. Sem
+       `.c-head` → vira movimento auxiliar direto (ver abaixo), nunca
+       cardio.
+    2. Com `.c-head`, ainda precisa CONFIRMAR que é cardio de verdade —
+       giovanna.html reusa a MESMA marcação (`.c-card`+`.c-head`) pra
+       notas de orientação do dia de CrossFit ("Orientação do dia", "Regra
+       prática", "Estratégia" — nenhuma é cardio) nos dias de força, só a
+       de sábado ("Corrida 4-5 km") é cardio de verdade. `.stage-title`
+       também não ajuda aqui (rafael.html não tem NENHUM, giovanna.html
+       também não usa "Etapa N"). O sinal que sobra e que É confiável:
+       `_looks_like_cardio_title` — o treinador SEMPRE precisa nomear a
+       modalidade pra prescrever cardio (não dá pra prescrever "faça
+       cardio" sem dizer correr/pedalar/etc.), então o título é onde essa
+       modalidade aparece. Card com `.c-head` cujo título NÃO bate nenhuma
+       modalidade conhecida é DESCARTADO por completo (nem cardio, nem
+       movimento auxiliar) — não existe campo no schema pra "nota de
+       orientação do dia", e chutar isso como cardio ou como exercício
+       seria pior que não mostrar nada.
+
+    Cardio confirmado vira entrada de `cardio_sessions()` (agregado do
+    PROGRAMA inteiro, dedup por identidade de conteúdo com os dias
+    mesclados num detail "Dias" — franciele repete o mesmo `.c-card` em
+    ter/qui/sex, uma sessão só no payload, mas dizendo em quais dias vale).
+    Sem `.c-head` → cada `.c-row` vira um MOVIMENTO leve (sem wiki-btn) no
     `auxiliary_blocks_by_day` daquele dia, prependado aos blocos de
-    "Etapa 2 - Forca" (que continua exclusivamente pelo `.ex`/
+    "Etapa 2 - Força" (que continua exclusivamente pelo `.ex`/
     _ProgramHTMLParser, nunca se mistura com `.c-card`).
 
     PONTOS CRITICOS:
@@ -610,14 +648,18 @@ class _EmbeddedStageParser(HTMLParser):
     - So' entra em jogo dentro de `.session` — `.c-card` de uma aba
       dedicada `#tab-cardio` (fora de qualquer `.session`) nunca aciona
       esta classe (`_session_depth` fica 0 o tempo todo la fora), entao
-      nunca duplica/conflita com `_CardioTabParser` pros 5 clientes que
-      já tem aba dedicada.
+      nunca duplica/conflita com `_CardioTabParser` pros clientes que já
+      tem aba dedicada (mesmo quando o card embutido é redundante com ela,
+      como em johnespanha — `build_program_payload_from_html` prioriza a
+      aba dedicada quando ela existe, nunca concatena os dois).
     """
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.auxiliary_blocks_by_day: dict[str, list[dict]] = {}
-        self.cardio_sessions: list[dict] = []
+        # (day_id, card) por OCORRENCIA -- sem dedup ainda (precisa saber de
+        # QUAIS dias cada card veio antes de juntar; ver cardio_sessions()).
+        self._cardio_occurrences: list[tuple[str, dict]] = []
 
         self._session_depth = 0
         self._current_day_id: str | None = None
@@ -725,8 +767,12 @@ class _EmbeddedStageParser(HTMLParser):
             return
 
         if self._card_is_cardio:
-            if card['title'] and card not in self.cardio_sessions:
-                self.cardio_sessions.append(card)
+            if card['title'] and self._current_day_id and _looks_like_cardio_title(card['title']):
+                self._cardio_occurrences.append((self._current_day_id, card))
+            # `.c-head` presente mas titulo nao bate nenhuma modalidade de
+            # cardio conhecida (ex.: nota de orientacao do dia em
+            # giovanna.html) -- descartado por completo, nunca vira
+            # movimento auxiliar (nao e' um exercicio) nem cardio (chute).
             return
 
         movements = []
@@ -748,6 +794,42 @@ class _EmbeddedStageParser(HTMLParser):
         if movements and self._current_day_id:
             self.auxiliary_blocks_by_day.setdefault(self._current_day_id, []).append({'movements': movements})
 
+    def cardio_sessions(self) -> list[dict]:
+        """Agrupa as ocorrências de `.c-card` de cardio por IDENTIDADE de
+        conteúdo (título/badge/details/note) e injeta um detail "Dias" na
+        frente com os dias da semana em que aquele card apareceu. Sem isso,
+        2+ ocorrências idênticas em dias diferentes (franciele repete o
+        mesmo card em ter/qui/sex) viravam 1 sessão sem dizer em quais dias
+        ela vale (achado do Renan: "cardio ficou sem explicação de dias") —
+        `_CardioTabParser` (aba dedicada) não tem esse conceito de "dia",
+        então esse detail só existe pro cardio embutido por dia."""
+        grouped: dict[tuple, dict] = {}
+        order: list[tuple] = []
+        for day_id, card in self._cardio_occurrences:
+            key = (card['title'], card['badge'], tuple((d['label'], d['value']) for d in card['details']), card['note'])
+            if key not in grouped:
+                grouped[key] = {'card': card, 'day_ids': []}
+                order.append(key)
+            if day_id not in grouped[key]['day_ids']:
+                grouped[key]['day_ids'].append(day_id)
+
+        sessions = []
+        for key in order:
+            entry = grouped[key]
+            card = dict(entry['card'])
+            day_labels = [day_full_label(day_id) for day_id in entry['day_ids']]
+            card['details'] = [{'label': 'Dias', 'value': _join_natural_pt(day_labels)}] + list(card['details'])
+            sessions.append(card)
+        return sessions
+
+
+def _join_natural_pt(items: list[str]) -> str:
+    """['Terça', 'Quinta', 'Sexta'] -> 'Terça, Quinta e Sexta' — juncao
+    natural em portugues (ultimo item com "e", nao virgula)."""
+    if len(items) == 1:
+        return items[0]
+    return ', '.join(items[:-1]) + ' e ' + items[-1]
+
 
 def parse_embedded_stage_content(html: str) -> tuple[dict[str, list[dict]], list[dict]]:
     """HTML legado -> (blocos auxiliares por dia, sessões de cardio embutidas)
@@ -757,7 +839,7 @@ def parse_embedded_stage_content(html: str) -> tuple[dict[str, list[dict]], list
     de `.session`)."""
     parser = _EmbeddedStageParser()
     parser.feed(html)
-    return parser.auxiliary_blocks_by_day, parser.cardio_sessions
+    return parser.auxiliary_blocks_by_day, parser.cardio_sessions()
 
 
 class _PeriodizationTabParser(HTMLParser):
