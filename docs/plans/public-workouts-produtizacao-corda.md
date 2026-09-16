@@ -2169,6 +2169,62 @@ bloqueio).
 > `upgrade_periodization_model.py`); aplicar `sets_multiplier` na UI
 > (fundação já pronta, só não ligada ainda — ver docstring do módulo).
 
+> **Atualização (ramp de Prep/Feeder em kg, pedido explícito do Renan — "A
+> Ramp, e a sincronia com a periodização dessas cargas"):** as bolinhas de
+> glossário de Prep/Feeder (`reps_phases`, chips do exercício) ganharam o
+> peso sugerido pra CADA série de aquecimento, não só um número único pro
+> Top set. Percentuais com fonte real (BarBend/StrongFirst): Prep ~40-55%
+> do peso do Top, Feeder ~60-80% — citação chave: *"once you reach 50-60%
+> of your working set weight, the rest of your ramp-up sets should be
+> 10-15% increases per set"* e *"any set at or above ~85-90% counts as a
+> working set"* (por isso o Feeder nunca pode chegar lá). Estágios com mais
+> de 1 série (ex.: "2×Prep") interpolam linearmente do piso ao teto da
+> faixa — 1 série só usa o meio da faixa. Top e Max (AMRAP após o Top) usam
+> a própria carga do Top (Max é o mesmo peso, não uma fração nova — prática
+> padrão de "quantas reps saem nesse peso").
+>
+> **Sincronia com a periodização é automática por construção, não por
+> código extra**: o ramp escala a partir do `top_weight_kg` que
+> `movement_load_display` já resolveu pra ESTA semana (fase progressiva
+> quando existe, senão %RM explícito ou estimativa por texto — a mesma
+> cascata de 5 níveis da atualização acima). Se o Top muda de semana pra
+> semana, o ramp muda junto sozinho — não existe um segundo cálculo de
+> progressão paralelo. Deliberadamente um módulo novo e separado
+> (`public_workouts/warmup_ramp.py`), não uma extensão de
+> `periodization.PHASE_PROFILES`: são dois conceitos de "fase" já
+> distintos no código — estágio por EXERCÍCIO (Prep/Feeder/Top/Max) vs.
+> fase do MESOCICLO (Adaptação/Volume/.../Deload) — e confundi-los
+> quebraria a leitura de quem mexer no código depois.
+>
+> Entregue: `warmup_ramp.py` (`extract_leading_set_count`,
+> `stage_ramp_kg`, arredondado pro múltiplo de 2,5kg); `glossary_highlight`
+> e `reps_phases` estendidos (`public_workouts_extras.py`) pra aceitar o
+> `top_weight_kg` já resolvido e injetar "Peso sugerido: X kg → Y kg." na
+> descrição do balão certo (nunca no balão errado); reordenação do
+> `movement_load_display` em `workout.html` pra rodar ANTES do bloco que
+> desenha os chips (precisa do `load.value_kg` pronto). 16 testes novos em
+> `test_warmup_ramp.py` + 11 novos em `test_workout_template.py`; suíte
+> completa (592 testes + 110 subtestes) verde; `manage.py check` sem
+> problemas. Verificado num Chromium real contra o dado publicado de
+> verdade da Juliana com 1RM/histórico simulados: Prep (2 séries, Top a
+> 67,5kg) mostrou "27,5 kg → 37,5 kg", Feeder (1 série) mostrou "47,5 kg" —
+> batendo com o cálculo manual (faixas 40-55%/60-80% sobre 67,5kg).
+>
+> **Achado e correção no meio do caminho:** este trabalho descobriu (e
+> corrigiu, PR separada) uma regressão real introduzida pela própria
+> atualização de periodização acima — o hint "Registre sua carga..."
+> tinha sido inserido entre `</article>` e `.workout-load-input`, e o JS
+> de toggle acha o widget via `card.nextElementSibling` (não
+> `querySelector`), então o clique parou de reabrir o registro de carga
+> pra qualquer exercício sem 1RM ainda (o caso mais comum). Corrigido
+> nesta mesma fatia (o hint volta a morar dentro de
+> `.workout-movement-load`) com um teste de regressão dedicado
+> (`test_load_input_widget_is_always_the_immediate_next_sibling_of_the_card`).
+>
+> **Pendente:** Cargas continua só comparação/histórico (confirmado com o
+> Renan — "a gente usar a aba cargas apenas para comparar a evolução"),
+> nenhuma entrada de dado nova lá.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
