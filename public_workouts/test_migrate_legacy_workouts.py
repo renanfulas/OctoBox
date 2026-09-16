@@ -26,7 +26,11 @@ from public_workouts.models import PublicWorkoutProgram
 
 EXPECTED_COUNTS = {
     'bruno': {'days': 5, 'movements': 26, 'skipped': 0},
-    'franciele': {'days': 5, 'movements': 29, 'skipped': 0},
+    # franciele: 29 (so' "Etapa 2 - Forca") + 20 (4 dias com "Etapa 1 -
+    # Mobilidade/..." x 4 c-row + qua x4, sex x4 = 20 movimentos auxiliares
+    # via _EmbeddedStageParser, ate entao ignorados por completo -- mudanca
+    # intencional, nao regressao (ver parser.py::_EmbeddedStageParser).
+    'franciele': {'days': 5, 'movements': 49, 'skipped': 0},
     'giovanna': {'days': 3, 'movements': 12, 'skipped': 0},
     'henrique': {'days': 5, 'movements': 26, 'skipped': 0},
     'john': {'days': 6, 'movements': 30, 'skipped': 0},

@@ -2069,6 +2069,58 @@ bloqueio).
 > Suíte completa (457 testes, `public_workouts` + `student_app`) verde;
 > `manage.py check` sem problemas.
 
+> **Atualização (parser cobre `.c-card` embutido por dia — franciele/
+> rafael, achado do Renan: "treino da franciele está incompleto... e o
+> cardio não aparece"):**
+> `_CardioTabParser` já documentava a lacuna de propósito ("não o cardio
+> embutido por dia de franciele/milene, formato diferente demais pra
+> unificar nesta fatia") — esta é essa fatia. franciele.html/rafael.html
+> não têm aba `#tab-cardio` dedicada: cada dia embute "Etapa 1 -
+> Mobilidade/Ativação/Coordenação" (rótulo varia, nunca um vocabulário
+> fechado) e, em alguns dias, "Etapa 3 - Cardio", cada uma com seu próprio
+> `.c-card`. Novo `_EmbeddedStageParser` (`public_workouts/parser.py`)
+> escaneia `.c-card` DENTRO de cada `.session` — nunca interfere com
+> `_CardioTabParser` (que só olha fora de `.session`, `#tab-cardio`).
+> Classificação é **estrutural**, não por texto de rótulo (rafael.html não
+> tem `.stage-title` nenhum, o card de cardio vem solto após os `.ex`):
+> todo `.c-card` de cardio observado tem `.c-head` (título+badge); todo
+> card de mobilidade é só uma lista de `.c-row`, sem `.c-head`. Mobilidade
+> vira movimentos leves (sem wiki-btn, slug pela DESCRIÇÃO da linha, nunca
+> pelo `.c-lbl` — o mesmo label se repete no mesmo dia com descrições
+> diferentes) prependados ao bloco de Força; cardio vira `cardio.sessions`
+> (dedup por igualdade exata — franciele repete o mesmo card em 3 dias).
+> franciele: 29→49 movimentos (fixture de contagem atualizada
+> intencionalmente) + 1 sessão de cardio; rafael: sem mudança na Força
+> (cardio nunca tinha sido capturado nem incorretamente, era só ignorado) +
+> 4 sessões de cardio novas. 16 testes novos (`test_parser.py`); suíte
+> completa (473 testes) verde; `manage.py check` sem problemas.
+> **Pendente:** republicar de verdade em produção via o workflow manual
+> `publish-legacy-workouts.yml` (PR #253) — só afeta franciele/rafael
+> localmente até isso rodar.
+
+> **Atualização (2 achados ao auditar os 10 clientes contra o pedido do
+> Renan "corrija de todos os treinos... sem explicação de dias"):**
+> 1. O cardio embutido por dia deduplicado (franciele repete o mesmo card
+>    em 3 dias) tinha perdido a explicação de EM QUAIS dias ele vale.
+>    `_EmbeddedStageParser.cardio_sessions()` agora agrupa por identidade
+>    de conteúdo e injeta um detail `"Dias"` na frente (`"Terça, Quinta e
+>    Sexta"`) com os dias reais mesclados — novo `dashboard.day_full_label`
+>    reaproveitado, não duplicado.
+> 2. Auditoria dos 10 revelou giovanna.html: usa a MESMA marcação
+>    (`.c-card`+`.c-head`) tanto pra cardio real (sábado, "Corrida 4-5 km")
+>    quanto pra notas de orientação do dia de CrossFit ("Orientação do
+>    dia", "Regra prática", "Estratégia" — NENHUMA é cardio) nos outros
+>    dias. `.c-head` sozinho não bastava. Novo `_looks_like_cardio_title`
+>    exige que o TÍTULO nomeie uma modalidade de cardio reconhecida (o
+>    treinador sempre precisa dizer o quê fazer pra prescrever cardio) —
+>    card com `.c-head` que não bate é descartado por completo (nem
+>    cardio, nem exercício — não existe campo pra "nota de orientação").
+>    giovanna: 4→1 sessões de cardio (as 3 erradas removidas).
+> Auditados os 10 clientes um a um (`build_program_payload_from_html`
+> direto contra cada HTML real) — nenhum outro tinha esse tipo de gap.
+> 8 testes novos; suíte completa (477 testes) verde; `manage.py check`
+> sem problemas.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
