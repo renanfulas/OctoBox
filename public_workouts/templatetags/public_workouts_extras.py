@@ -35,6 +35,7 @@ from datetime import date as _date
 
 from django import template
 from django.utils import timezone
+from django.utils.formats import number_format
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
@@ -46,6 +47,7 @@ from public_workouts.periodization import (
     current_week_number,
     suggest_progressive_load_kg,
 )
+from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
 
 register = template.Library()
 
@@ -163,8 +165,13 @@ _GLOSSARY_PATTERN = re.compile(
 )
 
 
+def _format_ramp_kg_sentence(weights: list[float]) -> str:
+    formatted = ' → '.join(number_format(weight, decimal_pos=1) + ' kg' for weight in weights)
+    return f' Peso sugerido: {formatted}.'
+
+
 @register.filter
-def glossary_highlight(text: str):
+def glossary_highlight(text: str, ramp=None):
     """Marca termos de jargao de treino (RIR, AMRAP, Feeder, Top, Prep) dentro
     de reps_spec/rir_spec (texto livre do treinador, schema.py) com uma
     'bolinha' clicavel que revela a definicao — pedido do Renan pra quem
@@ -176,17 +183,29 @@ def glossary_highlight(text: str):
     de 'topo' e' evitado com \\b, mas uma lista maior sem curadoria arriscaria
     marcar termo errado como se fosse dicionario de treino).
 
+    `ramp`: tupla opcional `(stage_key, pesos_kg)` (`warmup_ramp.stage_ramp_kg`,
+    ver `reps_phases` abaixo) — quando o termo casado (case-insensitive) for
+    EXATAMENTE esse `stage_key` (prep/feeder/top/max), a dica ganha uma
+    linha extra com o(s) peso(s) sugerido(s) pra essa fase NESTE exercicio,
+    nesta semana. Nunca aparece pros outros termos (RIR/AMRAP sem stage
+    correspondente aqui nao tem peso pra sugerir).
+
     Retorna SafeString: escapa o texto ao redor, so o termo casado vira HTML.
     """
     if not text:
         return ''
+
+    ramp_stage, ramp_weights = ramp if ramp else (None, None)
 
     pieces = []
     last_end = 0
     for match in _GLOSSARY_PATTERN.finditer(text):
         pieces.append(escape(text[last_end:match.start()]))
         term = match.group(0)
-        label, description = _GLOSSARY_TERMS[term.lower()]
+        term_key = term.lower()
+        label, description = _GLOSSARY_TERMS[term_key]
+        if ramp_weights and term_key == ramp_stage:
+            description = description + _format_ramp_kg_sentence(ramp_weights)
         pieces.append(
             '<span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é {label}?">'
             '{term}<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup>'
@@ -218,7 +237,7 @@ def _detect_phase(segment: str) -> str:
 
 
 @register.filter
-def reps_phases(reps_spec: str):
+def reps_phases(reps_spec: str, top_weight_kg=None):
     """Quebra `reps_spec` em fases (Prep/Feeder/Top/AMRAP) quando o texto do
     treinador junta varias com ' → ' (ex.: '2-3× Prep → 1× Feeder → 3× Top
     (6-8)', formato de `gym-reps` nos 8 dos 10 templates legados que tem
@@ -229,6 +248,16 @@ def reps_phases(reps_spec: str):
     um chip grande pra 'reps_spec': '3x12', a maioria dos movimentos sem
     quebra de fase).
 
+    `top_weight_kg` (opcional, `{{ movement.reps_spec|reps_phases:load.value_kg }}`
+    no template, `load` já vindo de `movement_load_display`): quando
+    presente, cada fase Prep/Feeder/Top/Max ganha um ramp de carga
+    (`warmup_ramp.stage_ramp_kg`) embutido na PRÓPRIA dica de glossário
+    daquele chip — pedido do Renan: "ao registrar a kilagem aparecer a
+    kilagem apropriada no balão". Sincronizado com a periodização de
+    graça: `top_weight_kg` já veio da cascata de `movement_load_display`
+    (fase progressiva quando existe), então o ramp muda junto quando o Top
+    muda de semana pra semana — nunca um segundo cálculo desalinhado.
+
     Cada `text` ja passa por glossary_highlight (SafeString) — o template
     nao precisa aplicar o filtro de novo.
     """
@@ -237,7 +266,18 @@ def reps_phases(reps_spec: str):
     segments = [segment.strip() for segment in reps_spec.split('→') if segment.strip()]
     if len(segments) < 2:
         return []
-    return [{'text': glossary_highlight(segment), 'phase': _detect_phase(segment)} for segment in segments]
+
+    phases = []
+    for segment in segments:
+        stage = _detect_phase(segment)
+        ramp = None
+        if top_weight_kg:
+            set_count = extract_leading_set_count(segment)
+            weights = stage_ramp_kg(stage=stage, set_count=set_count, top_weight_kg=top_weight_kg)
+            if weights:
+                ramp = (stage, weights)
+        phases.append({'text': glossary_highlight(segment, ramp), 'phase': stage})
+    return phases
 
 
 @register.filter

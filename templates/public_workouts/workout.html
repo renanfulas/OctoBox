@@ -159,6 +159,7 @@ PONTOS CRITICOS:
               class="student-card card-decor-topstripe workout-movement-card"
               data-workout-load-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar registro de carga de hoje em {{ movement|movement_display_name }}"
             >
+              {% movement_load_display movement program current_phase one_rep_max_by_movement load_history as load %}
               <div class="workout-movement-copy">
                 {% if movement.reference_url %}
                 <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_display_name }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
@@ -171,7 +172,7 @@ PONTOS CRITICOS:
                   {% for variation in movement.variations %}<a href="{{ variation.reference_url }}" target="_blank" rel="noopener">{{ variation.label }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
                 </span>
                 {% endif %}
-                {% with phases=movement.reps_spec|reps_phases %}
+                {% with phases=movement.reps_spec|reps_phases:load.value_kg %}
                 {% if phases %}
                 <div class="workout-phase-row">
                   {% for phase in phases %}
@@ -187,7 +188,6 @@ PONTOS CRITICOS:
                 {% endwith %}
                 {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
               </div>
-              {% movement_load_display movement program current_phase one_rep_max_by_movement load_history as load %}
               <div class="workout-movement-load">
                 {% if load.kind == 'fixed_kg' %}{{ load.value_kg }} kg
                 {% elif load.kind == 'percentage' %}
@@ -196,9 +196,9 @@ PONTOS CRITICOS:
                 {% elif load.kind == 'phase_progressive' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong> <span class="workout-movement-load__pct">{{ load.percentage }}% RM</span>
                 {% elif load.kind == 'rir_estimate' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong>
                 {% else %}Livre{% endif %}
+                {% if load.show_registration_hint %}<span class="workout-movement-load-hint">Registre sua carga para controlar a kilagem.</span>{% endif %}
               </div>
             </article>
-            {% if load.show_registration_hint %}<span class="workout-movement-load-hint">Registre sua carga para controlar a kilagem.</span>{% endif %}
             <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}" hidden>
               <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
               <div class="workout-load-input__row">

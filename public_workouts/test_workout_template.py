@@ -148,6 +148,21 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-input data-movement-slug="agachamento-livre" data-program-id="exemplo-2026-q1" hidden', html)
         self.assertIn('data-workout-load-toggle', html)
 
+    def test_load_input_widget_is_always_the_immediate_next_sibling_of_the_card(self):
+        # Regressao real: o JS de toggle (workout.html, [data-workout-load-toggle])
+        # acha o widget via `card.nextElementSibling`, nao querySelector -- se
+        # QUALQUER elemento (ex.: o hint de "Registre sua carga") for inserido
+        # entre </article> e .workout-load-input, o clique para de reabrir o
+        # widget silenciosamente. Movimento sem 1RM (o caso mais comum) sempre
+        # renderiza o hint, entao esse regex tem que casar mesmo nesse caso.
+        html = _render(build_example_payload())
+
+        card_count = html.count('workout-movement-card')
+        sibling_count = len(re.findall(r'</article>\s*<div class="workout-load-input"', html))
+
+        self.assertGreater(card_count, 0)
+        self.assertEqual(sibling_count, card_count)
+
     def test_movement_not_tracked_still_has_load_input_row(self):
         # Pedido do Renan: "clica expande em todos os exercicios" -- o
         # registro de carga (load_tracker.js/services.record_load, que
@@ -931,6 +946,29 @@ class GlossaryHighlightFilterTests(TestCase):
 
         self.assertEqual(html.count('data-workout-glossary'), 3)
 
+    def test_ramp_appends_suggested_weight_to_matching_term_only(self):
+        html = glossary_highlight('3x Top (6-8)', ramp=('top', [82.5]))
+
+        self.assertIn('Peso sugerido', html)
+        self.assertIn('82,5 kg', html)
+
+    def test_ramp_never_touches_a_different_term(self):
+        # ramp e' pro estagio 'feeder', mas o texto so' tem 'Top' -- nao
+        # pode vazar peso nenhum pro termo errado.
+        html = glossary_highlight('3x Top (6-8)', ramp=('feeder', [60.0]))
+
+        self.assertNotIn('Peso sugerido', html)
+
+    def test_ramp_with_multiple_weights_shows_full_progression(self):
+        html = glossary_highlight('2x Prep', ramp=('prep', [40.0, 55.0]))
+
+        self.assertIn('40,0 kg → 55,0 kg', html)
+
+    def test_no_ramp_keeps_original_static_definition(self):
+        html = glossary_highlight('3x Top (6-8)')
+
+        self.assertNotIn('Peso sugerido', html)
+
 
 class MovementCardGlossaryRenderTests(TestCase):
     def test_reps_spec_with_rir_renders_glossary_bubble(self):
@@ -992,6 +1030,43 @@ class RepsPhasesFilterTests(TestCase):
         self.assertIn('data-workout-glossary', phases[0]['text'])
         self.assertIn('data-workout-glossary', phases[1]['text'])
 
+    def test_without_top_weight_no_ramp_appears_in_any_bubble(self):
+        phases = reps_phases('2× Prep → 1× Feeder → 3× Top (6-8)')
+
+        for phase in phases:
+            self.assertNotIn('Peso sugerido', phase['text'])
+
+    def test_with_top_weight_each_stage_gets_its_own_ramp(self):
+        phases = reps_phases('2× Prep → 1× Feeder → 3× Top (6-8)', top_weight_kg=100.0)
+
+        prep, feeder, top = phases
+        self.assertIn('Peso sugerido', prep['text'])
+        self.assertIn('Peso sugerido', feeder['text'])
+        self.assertIn('Peso sugerido', top['text'])
+        # Top e' sempre a propria referencia (100kg), sem ramp — so' 1 numero.
+        self.assertIn('100,0 kg.', top['text'])
+
+    def test_prep_ramp_is_lighter_than_feeder_ramp(self):
+        phases = reps_phases('2× Prep → 1× Feeder → 3× Top (6-8)', top_weight_kg=100.0)
+
+        prep_text, feeder_text = phases[0]['text'], phases[1]['text']
+        # prep (40-55%) sempre mais leve que feeder (60-80%) pro mesmo Top.
+        self.assertIn('40,0 kg', prep_text)
+        self.assertIn('70,0 kg', feeder_text)
+
+    def test_plain_phase_never_gets_a_ramp(self):
+        phases = reps_phases('2× Algo → 1× Outro', top_weight_kg=100.0)
+
+        for phase in phases:
+            self.assertNotIn('Peso sugerido', phase['text'])
+
+    def test_ramp_set_count_follows_the_segments_own_prefix(self):
+        phases = reps_phases('2× Prep → 1× Feeder → 3× Top (6-8)', top_weight_kg=100.0)
+
+        prep_text = phases[0]['text']
+        # 2 sets de Prep -> ramp com 2 numeros distintos (piso e teto da faixa).
+        self.assertIn('40,0 kg → 55,0 kg', prep_text)
+
 
 class MovementCardPhaseChipRenderTests(TestCase):
     def test_multi_phase_reps_spec_renders_chip_row(self):
@@ -1015,6 +1090,28 @@ class MovementCardPhaseChipRenderTests(TestCase):
 
         self.assertNotIn('workout-phase-row', html)
         self.assertIn('3x12', html)
+
+    def test_ramp_appears_in_phase_chip_tooltips_once_a_top_weight_resolves(self):
+        # pedido do Renan: "ao registrar a kilagem aparecer a kilagem
+        # apropriada no balão" -- fim-a-fim, com 1RM real disponivel.
+        payload = build_example_payload()
+        movement = payload['days'][0]['blocks'][0]['movements'][0]
+        movement['reps_spec'] = '2× Prep → 1× Feeder → 3× Top (6-8)'
+        movement['rir_spec'] = 'RIR 1-2'
+        one_rm = {movement['movement_slug']: {'value_kg': 100.0}}
+
+        html = _render(payload, one_rep_max_by_movement=one_rm)
+
+        self.assertIn('Peso sugerido', html)
+
+    def test_no_ramp_in_tooltips_without_any_one_rep_max_data(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reps_spec'] = '2× Prep → 1× Feeder → 3× Top (6-8)'
+        payload['days'][0]['blocks'][0]['movements'][0]['rir_spec'] = 'RIR 1-2'
+
+        html = _render(payload)
+
+        self.assertNotIn('Peso sugerido', html)
 
 
 class MovementDisplayNameAndVariationRenderTests(TestCase):
