@@ -60,6 +60,24 @@ class UpgradePeriodizationModelCommandTests(TestCase):
         self.assertEqual(program['program_label'], payload['program_label'])
         self.assertEqual(len(program['days']), len(payload['days']))
 
+    def test_newly_curated_slugs_publish_a_schema_valid_canonical_mapping(self):
+        # Auditoria "pegue todos os treinos e corrija a periodizacao"
+        # (pedido do Renan): henrique/john/milene entraram no mapeamento
+        # curado nesta fatia -- confere que os 3 publicam sem erro de
+        # schema e batem com o mapeamento declarado (nao regride pra
+        # juliana nem promove alguem que ainda nao deveria estar aqui,
+        # ex. bruno/giovanna, que ficaram de fora de proposito).
+        for slug in ('henrique', 'john', 'milene'):
+            services.publish_program(slug=slug, payload=build_example_payload())
+
+            call_command('upgrade_periodization_model', slug=slug)
+
+            program = services.get_active_program(slug=slug)
+            self.assertEqual(program['periodization']['weeks'], CURATED_WEEKS_MAPPING[slug])
+
+        self.assertNotIn('bruno', CURATED_WEEKS_MAPPING)
+        self.assertNotIn('giovanna', CURATED_WEEKS_MAPPING)
+
     def test_preserves_existing_periodization_fields_alongside_weeks(self):
         payload = build_example_payload()
         payload['periodization'] = {

@@ -8,11 +8,20 @@ POR QUE EXISTE:
   payload JÁ PUBLICADO de um cliente, mapeando o `chart` livre que ele já
   tem pras 6 fases canônicas. Aditivo (schema.py): `chart`/`weeks_table`
   continuam intactos, `weeks` só se soma.
-- Escopo desta fatia é SÓ a Juliana (prova de conceito, pedido do Renan) —
-  o mapeamento pras outras 9 clientes é curadoria manual (o `focus` de cada
-  uma usa vocabulário próprio, não dá pra automatizar sem inventar
-  correspondência — ver "Achado de pesquisa" no plano), feita uma de cada
-  vez quando fizer sentido migrá-las.
+- Escopo inicial era só a Juliana (prova de conceito). Auditoria posterior
+  (pedido do Renan: "pegue todos os treinos e corrija a periodização...
+  com o gráfico etc") cobriu as outras 9 e migrou mais 3 (henrique/john/
+  milene) cujo `weeks_table` real é uma progressão de mesociclo compatível
+  com o vocabulário fechado. As outras 6 ficam de fora de propósito (ver
+  comentário de `CURATED_WEEKS_MAPPING`) — não é trabalho pendente, é
+  conteúdo que genuinamente não é periodização de força por %RM (CrossFit
+  metabólico, corte com manutenção, progressão de corrida, ritmo semanal,
+  ou nenhuma aba de periodização no HTML). Migrar giovanna/bruno no
+  futuro depende de decidir explicitamente sobre novo(s) phase_type
+  (Manutenção/Teste pro bruno) e se vale forçar CrossFit num modelo
+  pensado pra força linear (giovanna) — proposta ao Renan, não decisão
+  unilateral. franciele/rafael/johnespanha/thaislima não têm conteúdo
+  compatível de jeito nenhum (corrida/ritmo semanal/nada).
 
 USO:
     python manage.py upgrade_periodization_model --dry-run --slug=juliana
@@ -35,16 +44,81 @@ from django.core.management.base import BaseCommand, CommandError
 from public_workouts import schema
 from public_workouts.services import get_active_program, publish_program
 
-# Mapeamento manual, conferido contra o `chart` real já publicado de cada
-# cliente (S1..S6 na ordem de aparição). Só Juliana nesta fatia (ver
-# docstring do módulo) -- adicionar uma cliente nova aqui é decisão
-# separada, uma de cada vez.
+# Mapeamento manual, conferido contra o `weeks_table`/`chart` real já
+# publicado de cada cliente (S1..S6 na ordem de aparição) -- decisão de
+# leitura humana, nunca adivinhação automática (ver docstring do módulo).
+# Auditoria desta fatia (pedido do Renan: "pegue todos os treinos e
+# corrija a periodização... com o gráfico etc"): das 9 clientes restantes,
+# só 3 têm um `weeks_table` que descreve de verdade uma progressão de
+# MESOCICLO compatível com os 6 `phase_type` fechados de
+# `periodization.PHASE_PROFILES` -- as outras 6 ficam de fora desta
+# curadoria por não caber no modelo sem forçar (ver "Achados desta
+# auditoria" abaixo, não são bugs, são conteúdo genuinamente diferente):
+#
+# - giovanna: vocabulário de CrossFit ("Base técnica"/"Sobrecarga"/
+#   "Metabólico"/"Peak controlado") -- a semana "Metabólico" (AMRAP/
+#   condicionamento) não tem um %RM-alvo real, forçar num phase_type
+#   baseado em %RM daria sugestão de carga ERRADA pra essa semana.
+# - bruno: bloco de CORTE ("a meta não é progredir carga — é segurar a
+#   carga enquanto o peso corporal cai"). "Manutenção" (×3 semanas) e
+#   "Teste" não existem no vocabulário fechado hoje -- migrar exigiria
+#   PROPOR phase_type novo ao Renan primeiro (mesma regra já documentada
+#   no plano: "se o objetivo do bloco não encaixa em nenhuma chave
+#   existente, é sinal de que PHASE_PROFILES precisa crescer, não de
+#   inventar"). Fica pendente de decisão, não migrado nesta fatia.
+# - franciele: `weeks_table` é uma progressão de CORRIDA (caminhada ->
+#   trote -> corrida contínua), não uma periodização de força -- o
+#   modelo de %RM/RIR simplesmente não se aplica.
+# - rafael: `#tab-period` dele descreve o RITMO SEMANAL de treino (Dia
+#   A/Descanso/Dia B/Coringa condicional), não fases de mesociclo --
+#   conteúdo genuinamente diferente, não um "chart" incompleto.
+# - johnespanha/thaislima: HTML não tem `#tab-period` nenhum -- não há
+#   dado nenhum pra migrar (nunca tiveram periodização, não é regressão).
 CURATED_WEEKS_MAPPING = {
     'juliana': [
         {'week_number': 1, 'phase_type': 'adaptation'},
         {'week_number': 2, 'phase_type': 'volume'},
         {'week_number': 3, 'phase_type': 'strength_hypertrophy'},
         {'week_number': 4, 'phase_type': 'intensity'},
+        {'week_number': 5, 'phase_type': 'peak'},
+        {'week_number': 6, 'phase_type': 'deload'},
+    ],
+    'henrique': [
+        # 'Pico Máximo' (S5) repete 'peak' de proposito -- guidance real
+        # ("carga mais alta em todas as series do ramp") e' um 2o degrau
+        # do MESMO pico, nao uma fase nova; nao existe conceito de
+        # "pico do pico" no vocabulario fechado.
+        {'week_number': 1, 'phase_type': 'adaptation'},
+        {'week_number': 2, 'phase_type': 'volume'},
+        {'week_number': 3, 'phase_type': 'intensity'},
+        {'week_number': 4, 'phase_type': 'peak'},
+        {'week_number': 5, 'phase_type': 'peak'},
+        {'week_number': 6, 'phase_type': 'deload'},
+    ],
+    'john': [
+        # "Progressão" (S2-S4) repete o MESMO rotulo no HTML mas cada
+        # semana tem um incremento absoluto diferente e crescente
+        # (+2,5kg / +5kg / +7,5kg vs. S1, todos vs. a MESMA semana base
+        # -- nao e' cumulativo) -- mapeado pra 3 fases DIFERENTES e
+        # crescentes (volume->forca-hiper->intensidade) pra preservar
+        # essa progressao real na sugestao de carga, em vez de achatar
+        # as 3 semanas na mesma fase (o que congelaria a sugestao).
+        {'week_number': 1, 'phase_type': 'adaptation'},
+        {'week_number': 2, 'phase_type': 'volume'},
+        {'week_number': 3, 'phase_type': 'strength_hypertrophy'},
+        {'week_number': 4, 'phase_type': 'intensity'},
+        {'week_number': 5, 'phase_type': 'peak'},
+        {'week_number': 6, 'phase_type': 'deload'},
+    ],
+    'milene': [
+        # 'Volume Alto' (S4) repete 'volume' de proposito -- guidance real
+        # ("Bomba e estresse metabolico") e' o MESMO eixo de volume da S2,
+        # so' que mais alto; nao existe "volume alto" separado no
+        # vocabulario fechado.
+        {'week_number': 1, 'phase_type': 'adaptation'},
+        {'week_number': 2, 'phase_type': 'volume'},
+        {'week_number': 3, 'phase_type': 'strength_hypertrophy'},
+        {'week_number': 4, 'phase_type': 'volume'},
         {'week_number': 5, 'phase_type': 'peak'},
         {'week_number': 6, 'phase_type': 'deload'},
     ],
