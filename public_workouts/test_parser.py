@@ -559,6 +559,29 @@ class ParseCardioTabTests(SimpleTestCase):
         self.assertEqual(result['sessions'][0]['title'], 'Corrida livre')
         self.assertEqual(result['sessions'][0]['badge'], '')
 
+    def test_int_badge_and_hiit_badge_class_variants_are_also_recognized(self):
+        # Recorte fiel de thaislima.html: 2 das 3 sessoes usam `.int-badge`/
+        # `.hiit-badge` em vez de `.km-badge`. Antes do fix, so' `km-badge`
+        # fechava a captura de 'head' -- o texto do badge ficava GRUDADO no
+        # titulo (ex.: "🟡 Dia Médio Quinta · 20 min" numa string so').
+        html = '''
+        <div id="tab-cardio">
+          <div class="c-card">
+            <div class="c-head">🟡 Dia Médio <span class="int-badge">Quinta · 20 min</span></div>
+          </div>
+          <div class="c-card">
+            <div class="c-head">🔴 HIIT Pesado <span class="hiit-badge">Sábado · 20 min</span></div>
+          </div>
+        </div>
+        '''
+
+        result = parse_cardio_tab(html)
+
+        self.assertEqual(result['sessions'][0]['title'], '🟡 Dia Médio')
+        self.assertEqual(result['sessions'][0]['badge'], 'Quinta · 20 min')
+        self.assertEqual(result['sessions'][1]['title'], '🔴 HIIT Pesado')
+        self.assertEqual(result['sessions'][1]['badge'], 'Sábado · 20 min')
+
 
 class ParsePeriodizationTabTests(SimpleTestCase):
     """Recortes fieis de juliana.html (grafico + tabela semanal + tabela de
@@ -910,6 +933,40 @@ class ParseEmbeddedStageContentTests(SimpleTestCase):
         self.assertEqual(auxiliary_by_day, {})  # nunca vira exercicio falso
         self.assertEqual(len(cardio_sessions), 1)
         self.assertEqual(cardio_sessions[0]['title'], 'Corrida 4-5 km')
+
+    def test_hiit_card_dialect_is_recognized_same_as_c_card(self):
+        # Recorte fiel de milene.html: protocolo de HIIT na esteira usa uma
+        # familia de classe PROPRIA (.hiit-card/.hiit-head/.hiit-row/
+        # .hiit-note), sem NENHUM `.c-*`. Antes do fix o card inteiro era
+        # invisivel (nenhuma condicao do parser reconhecia essas classes) --
+        # achado real ao auditar a aba Cardio ao vivo.
+        html = '''
+        <div id="qua" class="session">
+          <div class="hiit-card">
+            <div class="hiit-head">
+              Protocolo HIIT — Esteira
+              <span class="hiit-badge">25-30 min total</span>
+            </div>
+            <div class="hiit-row"><span class="hiit-lbl">Aquecimento</span><span>5 min · caminhada</span></div>
+            <div class="hiit-row"><span class="hiit-lbl">Sprints</span><span>30-40s forte / 60-90s leve</span></div>
+            <div class="hiit-note">Fazer depois do core, nao antes.</div>
+          </div>
+        </div>
+        '''
+
+        auxiliary_by_day, cardio_sessions = parse_embedded_stage_content(html)
+
+        self.assertEqual(auxiliary_by_day, {})
+        self.assertEqual(len(cardio_sessions), 1)
+        session = cardio_sessions[0]
+        self.assertEqual(session['title'], 'Protocolo HIIT — Esteira')
+        self.assertEqual(session['badge'], '25-30 min total')
+        self.assertEqual(session['details'], [
+            {'label': 'Dias', 'value': 'Quarta'},
+            {'label': 'Aquecimento', 'value': '5 min · caminhada'},
+            {'label': 'Sprints', 'value': '30-40s forte / 60-90s leve'},
+        ])
+        self.assertEqual(session['note'], 'Fazer depois do core, nao antes.')
 
     def test_meal_plan_style_card_title_is_discarded_not_treated_as_cardio(self):
         # rafael.html: cards de "Refeicao N" ficam fora de `.session` de

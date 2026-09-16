@@ -460,6 +460,16 @@ class _ProgramHTMLParser(HTMLParser):
         self._current_day_blocks = []
 
 
+# Nomes de classe alternativos pro badge dentro de um `.c-head` -- achado
+# real ao auditar a aba Cardio ao vivo (Renan: "algumas coisas da aba
+# cardio... regrediram"): thaislima usa `.int-badge`/`.hiit-badge` em vez
+# de `.km-badge` pra 2 das suas 3 sessoes. Sem isso, o texto do badge
+# nunca fecha a captura de 'head' (so' `km-badge` disparava a troca) e fica
+# GRUDADO no titulo (ex.: "🟡 Dia Médio Quinta · 20 min" em vez de titulo
+# "🟡 Dia Médio" + badge "Quinta · 20 min" separados).
+_CARD_BADGE_CLASSES = ('km-badge', 'int-badge', 'hiit-badge')
+
+
 class _CardioTabParser(HTMLParser):
     """Extrai `#tab-cardio` (aba dedicada de cardio semanal — juliana/bruno/
     henrique/johnespanha/thaislima; ver docstring do modulo pra decisao de
@@ -529,12 +539,12 @@ class _CardioTabParser(HTMLParser):
         if self._card_depth == 0:
             return
         if tag == 'span':
-            if 'km-badge' in classes:
-                # `.km-badge` e' o ULTIMO filho de `.c-head` nos 5 clientes
-                # reais com esta aba (texto do head sempre vem antes) --
-                # fecha a captura de 'head' aqui (vira `title`) e comeca uma
-                # nova captura so' pro badge, em vez de misturar os dois
-                # textos no mesmo buffer.
+            if any(badge_class in classes for badge_class in _CARD_BADGE_CLASSES):
+                # `.km-badge`/`.int-badge`/`.hiit-badge` e' o ULTIMO filho de
+                # `.c-head` nos clientes reais com esta aba (texto do head
+                # sempre vem antes) -- fecha a captura de 'head' aqui (vira
+                # `title`) e comeca uma nova captura so' pro badge, em vez de
+                # misturar os dois textos no mesmo buffer.
                 if self._capture == 'head':
                     self._current_session['title'] = self._end_capture()
                 self._start_capture('badge')
@@ -606,7 +616,10 @@ class _EmbeddedStageParser(HTMLParser):
     modulo/_CardioTabParser). Esta classe fecha essa lacuna documentada,
     reusando a MESMA extracao de `.c-card` (c-head/km-badge/c-row/c-note),
     so' que disparada por "dentro de uma sessao" em vez de "dentro de
-    `#tab-cardio`".
+    `#tab-cardio`". `.hiit-card`/`.hiit-head`/`.hiit-row`/`.hiit-note`
+    (milene.html — protocolo de HIIT na esteira) e' um dialeto ALIAS da
+    mesma forma estrutural, sem nenhum `.c-*`; achado real ao auditar a aba
+    Cardio ao vivo (ficava totalmente invisivel sem isso).
 
     Classificação em 2 passos — nenhum dos dois sozinho basta:
     1. Estrutural: todo card de cardio observado tem `.c-head` (título +
@@ -694,7 +707,7 @@ class _EmbeddedStageParser(HTMLParser):
             if self._card_depth == 0:
                 return
             if tag == 'span':
-                if 'km-badge' in classes:
+                if any(badge_class in classes for badge_class in _CARD_BADGE_CLASSES):
                     if self._capture == 'head':
                         self._current_card['title'] = self._end_capture()
                     self._start_capture('badge')
@@ -711,20 +724,25 @@ class _EmbeddedStageParser(HTMLParser):
         self._session_depth += 1
 
         if self._card_depth == 0:
-            if 'c-card' in classes:
+            # `.hiit-card` (milene.html): dialeto proprio pro protocolo de
+            # HIIT na esteira, sem NENHUM `.c-*` -- mesma forma estrutural
+            # de `.c-card` (head+badge, linhas label/valor, nota), so' com
+            # nomes de classe diferentes. Sem isso o card inteiro fica
+            # invisivel (nenhuma condicao abaixo bate).
+            if 'c-card' in classes or 'hiit-card' in classes:
                 self._card_depth = 1
                 self._current_card = {'title': '', 'badge': '', 'details': [], 'note': ''}
-                self._card_is_cardio = False  # decidido abaixo, so' se aparecer um `.c-head`
+                self._card_is_cardio = False  # decidido abaixo, so' se aparecer um head
             return
 
         self._card_depth += 1
-        if 'c-head' in classes:
+        if 'c-head' in classes or 'hiit-head' in classes:
             self._start_capture('head')
             self._card_is_cardio = True
-        elif 'c-row' in classes:
+        elif 'c-row' in classes or 'hiit-row' in classes:
             self._in_row = True
             self._row_parts = []
-        elif 'c-note' in classes:
+        elif 'c-note' in classes or 'hiit-note' in classes:
             self._start_capture('note')
 
     def handle_endtag(self, tag: str) -> None:
