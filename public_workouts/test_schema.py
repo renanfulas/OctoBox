@@ -155,3 +155,68 @@ class SchemaValidationTests(TestCase):
         payload['days'][0]['blocks'][0]['movements'][0]['variations'] = 'nao e lista'
         errors = validate_payload(payload)
         self.assertTrue(any('variations' in error for error in errors))
+
+
+class PeriodizationWeeksValidationTests(TestCase):
+    """`periodization.weeks` (modelo canônico, Onda B3+) — aditivo e
+    opcional; quando presente, `weeks_table`/`chart` também viram
+    opcionais (a fonte de verdade passa a ser `weeks`)."""
+
+    def _payload_with_weeks(self, weeks):
+        payload = build_example_payload()
+        payload['periodization'] = {'weeks': weeks, 'volume_table': [], 'note': ''}
+        return payload
+
+    def test_canonical_weeks_alone_is_valid_without_weeks_table_or_chart(self):
+        payload = self._payload_with_weeks([
+            {'week_number': 1, 'phase_type': 'adaptation'},
+            {'week_number': 2, 'phase_type': 'volume'},
+        ])
+
+        self.assertEqual(validate_payload(payload), [])
+
+    def test_unknown_phase_type_is_rejected(self):
+        payload = self._payload_with_weeks([{'week_number': 1, 'phase_type': 'nao-existe'}])
+
+        errors = validate_payload(payload)
+        self.assertTrue(any('phase_type' in error for error in errors))
+
+    def test_zero_or_negative_week_number_is_rejected(self):
+        payload = self._payload_with_weeks([{'week_number': 0, 'phase_type': 'adaptation'}])
+
+        errors = validate_payload(payload)
+        self.assertTrue(any('week_number' in error for error in errors))
+
+    def test_empty_weeks_list_is_rejected(self):
+        payload = self._payload_with_weeks([])
+
+        errors = validate_payload(payload)
+        self.assertTrue(any('periodization.weeks' in error for error in errors))
+
+    def test_optional_note_per_week_is_accepted(self):
+        payload = self._payload_with_weeks([
+            {'week_number': 1, 'phase_type': 'adaptation', 'note': 'Semana de acomodação'},
+        ])
+
+        self.assertEqual(validate_payload(payload), [])
+
+    def test_legacy_client_without_weeks_still_requires_weeks_table_and_chart(self):
+        # zero mudanca de comportamento pros 9 clientes ainda nao migrados.
+        payload = build_example_payload()
+        payload['periodization'] = {'volume_table': [], 'note': ''}  # sem weeks, sem weeks_table, sem chart
+
+        errors = validate_payload(payload)
+        self.assertTrue(any('weeks_table' in error for error in errors))
+        self.assertTrue(any('chart' in error for error in errors))
+
+    def test_weeks_table_and_chart_can_coexist_with_canonical_weeks(self):
+        # nao e' proibido ter os dois -- so' deixa de ser obrigatorio.
+        payload = self._payload_with_weeks([{'week_number': 1, 'phase_type': 'adaptation'}])
+        payload['periodization']['weeks_table'] = [
+            {'week': '1', 'focus': 'Adaptação', 'reps': '12-15', 'guidance': 'RIR 3-4'},
+        ]
+        payload['periodization']['chart'] = [
+            {'label': 'S1', 'focus': 'Adaptação', 'reps': 'Teto', 'color': '#FB7185', 'bg': '#FFF1F2', 'fg': '#BE123C', 'h': 56},
+        ]
+
+        self.assertEqual(validate_payload(payload), [])

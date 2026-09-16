@@ -134,6 +134,25 @@
     line-height: 1.5;
 }
 
+/* Banner de fase ativa (Treino) -- so' aparece pra cliente ja migrado pro
+   modelo canonico de periodizacao. Mesmo cartao/topstripe dos outros
+   blocos, sem paleta nova. */
+.workout-phase-banner {
+    display: grid;
+    gap: 2px;
+}
+
+.workout-phase-banner strong {
+    font-size: 0.95rem;
+    color: var(--theme-text-primary);
+}
+
+.workout-phase-banner__meta {
+    font-size: 0.76rem;
+    color: var(--theme-text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
 .workout-week-strip {
     display: grid;
     gap: 12px;
@@ -425,6 +444,33 @@ button.workout-week-day:focus-visible {
     font-size: 0.8rem;
     color: var(--theme-text-muted);
     font-variant-numeric: tabular-nums;
+}
+
+/* Carga calculada (percentage_of_rm com 1RM, fase canonica de
+   periodizacao, ou estimativa via reps/RIR do proprio exercicio) --
+   kg em destaque, %RM como legenda pequena embaixo. Mesma disciplina de
+   paleta de .workout-load-chart-1rm (nao inventa cor nova so' pra isto). */
+.workout-movement-load__kg {
+    display: block;
+    color: var(--theme-text-primary);
+    font-size: 0.92rem;
+}
+
+.workout-movement-load__pct {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--theme-text-muted);
+}
+
+/* Hint "Registre sua carga..." -- mesmo estilo textual pequeno-mudo da
+   bolinha de glossario (.workout-glossary-term), sem o clique proprio: ja
+   mora dentro do card inteiro que abre o registro de carga ao clicar. */
+.workout-movement-load-hint {
+    display: block;
+    margin: -6px 0 8px;
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+    font-style: italic;
 }
 
 /* Perfil (versoes + conta) */
@@ -1011,6 +1057,21 @@ button.workout-week-day:focus-visible {
     display: grid;
     justify-items: center;
     gap: 6px;
+    border-radius: 10px;
+    padding: 4px 2px;
+}
+
+/* Semana atual em destaque -- mesmo token de --brand ja usado no
+   :focus-visible da bolinha de glossario, sem inventar paleta nova. */
+.workout-period-chart__col--current {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    background: color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+.workout-period-chart__col--current .workout-period-chart__label {
+    color: var(--brand);
+    font-weight: 800;
 }
 
 .workout-period-chart__bar-wrap {

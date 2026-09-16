@@ -39,6 +39,13 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
+from public_workouts.load_suggestion import suggest_movement_load
+from public_workouts.periodization import (
+    build_chart_points_from_weeks,
+    current_phase_profile,
+    current_week_number,
+    suggest_progressive_load_kg,
+)
 
 register = template.Library()
 
@@ -349,3 +356,141 @@ def load_chart_points(entries: list[dict]) -> dict:
         'delta_weight_kg': delta,
         'trend': _trend(delta),
     }
+
+
+@register.filter
+def periodization_chart_points(periodization: dict | None) -> list[dict]:
+    """Pontos do gráfico "Progressão do mesociclo" — de `periodization.weeks`
+    (modelo canônico, `periodization.build_chart_points_from_weeks`) quando
+    existe; senão o `periodization.chart` legado de sempre, cada ponto com
+    `week_number=None` acrescentado (nunca destaca semana pra cliente ainda
+    não migrado — não há como saber com segurança qual coluna do `chart`
+    livre corresponde à semana de hoje, ver docstring de periodization.py)."""
+    if not periodization:
+        return []
+    weeks = periodization.get('weeks')
+    if weeks:
+        return build_chart_points_from_weeks(weeks)
+    return [dict(point, week_number=None) for point in (periodization.get('chart') or [])]
+
+
+@register.filter
+def current_period_week_number(payload: dict) -> int | None:
+    """Wrapper de template pra periodization.current_week_number."""
+    return current_week_number(payload)
+
+
+@register.simple_tag
+def current_period_phase(payload: dict):
+    """PhaseProfile ativo agora (ou `None`) — computado UMA vez no topo da
+    aba Treino (`{% current_period_phase program as phase %}`) e passado
+    pra `movement_load_display` de cada movimento, em vez de cada
+    movimento recalcular a mesma coisa."""
+    return current_phase_profile(payload)
+
+
+@register.simple_tag
+def periodization_phase_banner(payload: dict) -> dict:
+    """Banner "Semana 3 de 6 · Força-Hipertrofia — alvo 6-8 reps · RIR 1-2
+    · ~76% RM" no topo da aba Treino — só aparece (`visible=True`) quando o
+    programa já tem `periodization.weeks` (modelo canônico); `visible=
+    False` pros outros clientes, nada muda pra eles."""
+    phase = current_phase_profile(payload)
+    if phase is None:
+        return {'visible': False}
+
+    weeks = (payload.get('periodization') or {}).get('weeks') or []
+    return {
+        'visible': True,
+        'week_number': current_week_number(payload),
+        'total_weeks': len(weeks),
+        'phase_label': phase.label,
+        'reps_min': phase.reps_target_range[0],
+        'reps_max': phase.reps_target_range[1],
+        'rir_target': phase.rir_target,
+        'pct_mid': round(sum(phase.intensity_pct_range) / 2),
+    }
+
+
+def _last_log_for_movement(load_history: list[dict], movement_slug: str) -> dict | None:
+    """Último registro de carga pra ESTE movimento — `load_history` já vem
+    ordenado (movement_slug, performed_on) ascendente (services.
+    list_load_history), então o último match ao percorrer de trás pra
+    frente é sempre o mais recente pra esse movimento especificamente,
+    mesmo com vários movimentos intercalados na lista inteira."""
+    for entry in reversed(load_history or ()):
+        if entry.get('movement_slug') == movement_slug:
+            return entry
+    return None
+
+
+def _round_to_nearest_load(value: float) -> float:
+    return round(value / 2.5) * 2.5
+
+
+@register.simple_tag
+def movement_load_display(movement: dict, payload: dict, phase, one_rep_max_by_movement: dict, load_history: list) -> dict:
+    """Cascata de exibição de carga do movimento — devolve um dict pronto
+    pro template só desenhar (`kind`/`value_kg`/`percentage`/
+    `show_registration_hint`), mantendo toda a lógica testável em Python
+    (mesmo padrão de `load_chart_points`). Ordem (primeira que resolver
+    ganha):
+
+    1. `load_type == 'fixed_kg'` — literal, já é kg.
+    2. `load_type == 'percentage_of_rm'` explícito — % + kg calculado
+       quando já existe 1RM pro movimento; só a % + hint sem 1RM ainda
+       (nunca só a % quando dá pra virar kg — porcentagem sozinha não é
+       acionável pro aluno).
+    3. Fase canônica ativa (`phase` não é `None`) —
+       `periodization.suggest_progressive_load_kg`, ancorado na ÚLTIMA
+       carga real registrada nesse movimento (nunca recalcula do zero
+       contra 1RM estimado, ver docstring de periodization.py).
+    4. Sem fase canônica, ou fase canônica sem âncora ainda (bootstrap,
+       primeira vez neste movimento) — `load_suggestion.
+       suggest_movement_load`, estimativa pontual a partir do próprio
+       reps_spec/rir_spec do exercício.
+    5. Nada resolveu e não há 1RM nenhum pro movimento — "Livre" + hint de
+       registro."""
+    movement_slug = movement.get('movement_slug')
+    one_rm_estimate = (one_rep_max_by_movement or {}).get(movement_slug)
+    one_rep_max_kg = one_rm_estimate.get('value_kg') if one_rm_estimate else None
+    has_one_rep_max = one_rep_max_kg is not None
+
+    load_type = movement.get('load_type')
+    load_value = movement.get('load_value')
+
+    if load_type == 'fixed_kg':
+        return {'kind': 'fixed_kg', 'value_kg': load_value, 'percentage': None, 'show_registration_hint': False}
+
+    if load_type == 'percentage_of_rm' and load_value is not None:
+        value_kg = _round_to_nearest_load(load_value / 100 * one_rep_max_kg) if has_one_rep_max else None
+        return {
+            'kind': 'percentage',
+            'value_kg': value_kg,
+            'percentage': load_value,
+            'show_registration_hint': not has_one_rep_max,
+        }
+
+    if phase is not None:
+        last_log = _last_log_for_movement(load_history, movement_slug)
+        value_kg = suggest_progressive_load_kg(
+            payload=payload, current_phase=phase, last_log=last_log, one_rep_max_kg=one_rep_max_kg,
+        )
+        if value_kg is not None:
+            return {
+                'kind': 'phase_progressive',
+                'value_kg': value_kg,
+                'percentage': round(sum(phase.intensity_pct_range) / 2),
+                'show_registration_hint': False,
+            }
+
+    suggestion = suggest_movement_load(movement=movement, one_rep_max_kg=one_rep_max_kg)
+    if suggestion is not None:
+        return {
+            'kind': 'rir_estimate',
+            'value_kg': suggestion['value_kg'],
+            'percentage': None,
+            'show_registration_hint': False,
+        }
+
+    return {'kind': 'free', 'value_kg': None, 'percentage': None, 'show_registration_hint': not has_one_rep_max}

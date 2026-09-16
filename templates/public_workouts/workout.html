@@ -118,6 +118,14 @@ PONTOS CRITICOS:
     </section>
 
     <section id="workout-panel-treino" data-workout-tab-panel>
+      {% current_period_phase program as current_phase %}
+      {% periodization_phase_banner program as phase_banner %}
+      {% if phase_banner.visible %}
+      <article class="student-card card-decor-topstripe workout-phase-banner">
+        <strong>Semana {{ phase_banner.week_number }} de {{ phase_banner.total_weeks }} · {{ phase_banner.phase_label }}</strong>
+        <span class="workout-phase-banner__meta">alvo {{ phase_banner.reps_min }}-{{ phase_banner.reps_max }} reps · RIR {{ phase_banner.rir_target }} · ~{{ phase_banner.pct_mid }}% RM</span>
+      </article>
+      {% endif %}
       <nav class="workout-day-nav" role="tablist" aria-label="Dias do programa" data-workout-tab-nav>
         {% for day in program.days %}
         <button
@@ -179,12 +187,18 @@ PONTOS CRITICOS:
                 {% endwith %}
                 {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
               </div>
+              {% movement_load_display movement program current_phase one_rep_max_by_movement load_history as load %}
               <div class="workout-movement-load">
-                {% if movement.load_type == 'percentage_of_rm' %}{{ movement.load_value }}% RM
-                {% elif movement.load_type == 'fixed_kg' %}{{ movement.load_value }} kg
+                {% if load.kind == 'fixed_kg' %}{{ load.value_kg }} kg
+                {% elif load.kind == 'percentage' %}
+                  {% if load.value_kg %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong> <span class="workout-movement-load__pct">{{ load.percentage }}% RM</span>
+                  {% else %}{{ load.percentage }}% RM{% endif %}
+                {% elif load.kind == 'phase_progressive' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong> <span class="workout-movement-load__pct">{{ load.percentage }}% RM</span>
+                {% elif load.kind == 'rir_estimate' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong>
                 {% else %}Livre{% endif %}
               </div>
             </article>
+            {% if load.show_registration_hint %}<span class="workout-movement-load-hint">Registre sua carga para controlar a kilagem.</span>{% endif %}
             <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}" hidden>
               <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
               <div class="workout-load-input__row">
@@ -244,24 +258,27 @@ PONTOS CRITICOS:
 
     <section id="workout-panel-periodizacao" data-workout-tab-panel>
       {% if program.periodization %}
-      {% if program.periodization.chart %}
+      {% with chart_points=program.periodization|periodization_chart_points current_week=program|current_period_week_number %}
+      {% if chart_points %}
       <article class="student-card card-decor-topstripe workout-block-card">
         <h2>Progressão do mesociclo</h2>
         <div class="workout-period-chart">
-          {% for point in program.periodization.chart %}
-          <div class="workout-period-chart__col">
+          {% for point in chart_points %}
+          <div class="workout-period-chart__col{% if point.week_number and point.week_number == current_week %} workout-period-chart__col--current{% endif %}">
             <div class="workout-period-chart__bar-wrap">
               <span class="workout-period-chart__reps" style="color:{{ point.fg }}">{{ point.reps }}</span>
               <div class="workout-period-chart__bar" style="height:{{ point.h }}%;background:{{ point.color }}"></div>
             </div>
             <span class="workout-period-chart__focus" style="background:{{ point.bg }};color:{{ point.fg }}">{{ point.focus }}</span>
-            <span class="workout-period-chart__label">{{ point.label }}</span>
+            <span class="workout-period-chart__label">{{ point.label }}{% if point.week_number and point.week_number == current_week %} · agora{% endif %}</span>
           </div>
           {% endfor %}
         </div>
       </article>
       {% endif %}
+      {% endwith %}
 
+      {% if program.periodization.weeks_table %}
       <article class="student-card card-decor-topstripe workout-block-card">
         <h2>Semana a semana</h2>
         <div class="operation-table-wrap">
@@ -276,8 +293,9 @@ PONTOS CRITICOS:
             </tbody>
           </table>
         </div>
-        {% if program.periodization.note %}<p class="workout-period-note">{{ program.periodization.note }}</p>{% endif %}
       </article>
+      {% endif %}
+      {% if program.periodization.note %}<p class="workout-period-note">{{ program.periodization.note }}</p>{% endif %}
 
       {% if program.periodization.volume_table %}
       <article class="student-card card-decor-topstripe workout-block-card">
