@@ -26,6 +26,7 @@ from .public_workout_login import (
     PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX,
     PublicWorkoutLoginRateLimitExceeded,
     request_login_token,
+    resolve_or_create_public_workout_account,
     verify_login_token,
 )
 from .public_workout_session import (
@@ -66,6 +67,55 @@ class PublicWorkoutLoginTokenModelTests(TestCase):
         token.mark_used()
         token.save()
         self.assertFalse(token.is_valid)
+
+
+class ResolveOrCreatePublicWorkoutAccountPhotoTests(TestCase):
+    """`photo_url` (Renan: "usar a foto do Google... no avatar da tela
+    Treino"): so' o login por Google tem uma foto pra oferecer -- login
+    por e-mail (chama sem esse argumento) nunca pode apagar uma foto que
+    ja existia (mesma pegadinha real ja corrigida pro /aluno/, PR
+    "corrige foto do Google perdida")."""
+
+    def test_new_account_via_google_gets_the_photo(self):
+        account = resolve_or_create_public_workout_account(
+            email='nova@example.com', photo_url='https://lh3.googleusercontent.com/a/foto1',
+        )
+
+        self.assertEqual(account.photo_url, 'https://lh3.googleusercontent.com/a/foto1')
+
+    def test_new_account_via_email_has_no_photo(self):
+        account = resolve_or_create_public_workout_account(email='so-email@example.com')
+
+        self.assertEqual(account.photo_url, '')
+
+    def test_existing_email_only_account_gains_photo_on_first_google_login(self):
+        resolve_or_create_public_workout_account(email='depois-google@example.com')
+
+        account = resolve_or_create_public_workout_account(
+            email='depois-google@example.com', photo_url='https://lh3.googleusercontent.com/a/foto2',
+        )
+
+        self.assertEqual(account.photo_url, 'https://lh3.googleusercontent.com/a/foto2')
+
+    def test_email_login_never_clears_an_existing_photo(self):
+        resolve_or_create_public_workout_account(
+            email='com-foto@example.com', photo_url='https://lh3.googleusercontent.com/a/foto3',
+        )
+
+        account = resolve_or_create_public_workout_account(email='com-foto@example.com')
+
+        self.assertEqual(account.photo_url, 'https://lh3.googleusercontent.com/a/foto3')
+
+    def test_google_login_refreshes_a_changed_photo(self):
+        resolve_or_create_public_workout_account(
+            email='foto-muda@example.com', photo_url='https://lh3.googleusercontent.com/a/velha',
+        )
+
+        account = resolve_or_create_public_workout_account(
+            email='foto-muda@example.com', photo_url='https://lh3.googleusercontent.com/a/nova',
+        )
+
+        self.assertEqual(account.photo_url, 'https://lh3.googleusercontent.com/a/nova')
 
 
 class RequestLoginTokenTests(TestCase):

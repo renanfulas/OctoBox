@@ -52,17 +52,31 @@ def _resolve_student_identity_id(*, email: str) -> int | None:
     return StudentIdentity.objects.filter(email__iexact=email).values_list('id', flat=True).first()
 
 
-def resolve_or_create_public_workout_account(*, email: str) -> PublicWorkoutAccount:
+def resolve_or_create_public_workout_account(*, email: str, photo_url: str = '') -> PublicWorkoutAccount:
     """Acha ou cria a PublicWorkoutAccount pelo e-mail — usado tanto pelo
     login por e-mail (abaixo) quanto pelo login por Google
     (public_workout_oauth.py). Um so lugar decide como resolver conta a
     partir de um e-mail vindo de fora; o vinculo com StudentIdentity
-    continua so informativo (N5 do CORDA)."""
+    continua so informativo (N5 do CORDA).
+
+    `photo_url` (opcional, so' o login por Google tem uma pra oferecer —
+    ver identity.photo_url em oauth_providers.py) so' ATUALIZA a conta
+    quando vem preenchido; login por e-mail (chama sem esse argumento)
+    nunca limpa uma foto que ja existia. Conta nova via Google ja nasce
+    com a foto; conta que so' tinha e-mail ganha a foto na primeira vez
+    que logar por Google."""
     normalized_email = email.strip().lower()
-    account, _ = PublicWorkoutAccount.objects.get_or_create(
+    photo_url = (photo_url or '').strip()
+    account, created = PublicWorkoutAccount.objects.get_or_create(
         email=normalized_email,
-        defaults={'student_identity_id': _resolve_student_identity_id(email=normalized_email)},
+        defaults={
+            'student_identity_id': _resolve_student_identity_id(email=normalized_email),
+            'photo_url': photo_url,
+        },
     )
+    if not created and photo_url and account.photo_url != photo_url:
+        account.photo_url = photo_url
+        account.save(update_fields=['photo_url', 'updated_at'])
     return account
 
 

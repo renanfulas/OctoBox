@@ -163,7 +163,7 @@ class PublicWorkoutGoogleCallbackView(View):
         except OAuthProviderError:
             return render(request, self.template_name, {'error': 'google_falhou', 'next_url': next_url})
 
-        account = resolve_or_create_public_workout_account(email=identity.email)
+        account = resolve_or_create_public_workout_account(email=identity.email, photo_url=identity.photo_url)
         account.last_login_at = timezone.now()
         account.save(update_fields=['last_login_at', 'updated_at'])
 
