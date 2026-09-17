@@ -2357,6 +2357,53 @@ bloqueio).
 > ficam no `chart`/`weeks_table` livre indefinidamente (conteúdo não
 > compatível com o modelo, não uma migração adiada).
 
+> **Atualização (fechamento do template único — testes de regressão +
+> auditoria de QA, pedido do Renan: "o template é basicamente esse, vamos
+> fechar com testes... faça um teste de QA pra ver bugs, vulnerabilidades
+> e etc"):**
+>
+> **Gap de teste real encontrado e fechado**: `test_workout_template.py`
+> só usava `build_example_payload()`/fixtures sintéticas; `test_migrate_
+> legacy_workouts.py` validava o payload dos 10 clientes reais contra o
+> SCHEMA mas nunca renderizava esse payload pelo template — um filtro
+> (`reps_phases`, `movement_load_display`, `glossary_highlight`) que só
+> quebrasse contra um formato de texto real e específico passaria batido
+> nos dois. Novo `test_workout_template_real_clients.py`: renderiza o
+> payload REAL (parseado do HTML de verdade) dos 10 clientes pelo
+> template inteiro — com e sem 1RM/histórico de carga simulados — e,
+> pros 4 clientes com periodização canônica curada (henrique/john/
+> juliana/milene), injeta o `CURATED_WEEKS_MAPPING` real antes de
+> renderizar, exercitando banner de fase + gráfico + ramp de Prep/Feeder
+> contra texto de verdade. 4 testes novos, 24 subtestes.
+>
+> **Vulnerabilidade real encontrada e corrigida**: `reference_url`
+> (movimento e variação) vira `href="{{ }}"` direto em `workout.html` —
+> o auto-escape do Django escapa caracteres HTML especiais mas NUNCA
+> valida o esquema da URL. Um valor `javascript:alert(1)` passaria
+> batido pro atributo e executaria ao clicar no link do exercício.
+> **Hoje não é explorável**: `reference_url` só vem do HTML legado
+> versionado no repo (parser.py) ou de edição via `PublicWorkoutMovementAdmin`
+> (staff autenticado) — nunca de input de aluno/anônimo. Corrigido mesmo
+> assim como barreira barata antes de qualquer fluxo futuro (edição
+> self-service, sugestão de link pelo aluno) tornar isso alcançável por
+> alguém não confiável: `schema.py::_is_safe_reference_url` exige
+> esquema `http`/`https` (ou `None`), tanto no `movement.reference_url`
+> quanto em `variations[].reference_url`. 5 testes novos.
+>
+> **Revisado e confirmado correto, sem mudança** (auditoria, não achado):
+> auth do endpoint de registro de carga (`PublicWorkoutRecordLoadView`
+> exige sessão de login + posse do slug, 401/404 nunca 403); assinatura
+> de webhook do Stripe verificada antes de processar; CSRF via cookie em
+> todo POST do corredor (`load_tracker.js`); `PublicWorkoutTemplatePreviewView`
+> (`/preview-b3`) checa `settings.DEBUG` na PRIMEIRA linha do `get()`,
+> 404 garantido em produção; `one_rep_max.py`/`load_suggestion.py`/
+> `periodization.py`/`warmup_ramp.py` já tinham guarda contra divisão por
+> zero e reps/RIR fora de faixa (nenhum bug de cálculo encontrado — os
+> guard-rails escritos ao longo da sessão já cobriam isso).
+>
+> Suíte completa: 600 testes + 134 subtestes verde; `manage.py check`
+> sem problemas.
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
