@@ -2,6 +2,8 @@
 
 **Status:** proposta · **Data:** 2026-09-12 · **Dono:** Renan · **Revisão:** 6
 
+**Vender isso (branding, oferta, preço, landing page):** [public-workouts-go-to-market-plan.md](public-workouts-go-to-market-plan.md)
+
 ---
 
 # SUMÁRIO EXECUTIVO

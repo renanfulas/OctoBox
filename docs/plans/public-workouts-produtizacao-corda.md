@@ -2,6 +2,7 @@
 
 **Plano de produto (o "porquê"):** [public-workouts-produtizacao-plan.md](public-workouts-produtizacao-plan.md)
 **Este documento:** execução técnica, dividida em duas frentes paralelas.
+**Vender isso (branding, oferta, preço, landing page):** [public-workouts-go-to-market-plan.md](public-workouts-go-to-market-plan.md)
 
 ---
 
