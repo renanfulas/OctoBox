@@ -1925,6 +1925,14 @@ bloqueio).
 >   revisão isolada, não misturada com o resto deste lote (puramente
 >   visual, sem tocar payload).
 
+> **Nota (go-to-market, 2026-09-17):** a "fatia própria" do plano alimentar citada acima
+> deixou de ter um bloqueio de dono — a esposa do Renan é nutricionista com CRN ativo e
+> vai assumir essa frente. O trabalho técnico descrito acima (parser + testes + dry-run)
+> continua não dimensionado e não iniciado; o que mudou é que agora existe profissional
+> habilitada para decidir o conteúdo, então essa fatia pode ser escopada em uma onda
+> própria quando fizer sentido, sem o impeditivo legal que valia antes. Ver
+> [public-workouts-go-to-market-plan.md](public-workouts-go-to-market-plan.md) §R1 e §6.
+
 > **Atualização (quarta rodada — espaçamento, seletor de dia do Treino
 > igual ao "Sua semana", registro de carga em todo exercício, 2 bugs de
 > alinhamento):**
