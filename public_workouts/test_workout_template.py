@@ -946,6 +946,15 @@ class GlossaryHighlightFilterTests(TestCase):
 
         self.assertEqual(html.count('data-workout-glossary'), 3)
 
+    def test_max_set_gets_its_own_glossary_bubble(self):
+        # Achado real do Renan clicando no chip "1x Max": faltava 'max' em
+        # _GLOSSARY_TERMS -- Prep/Feeder/Top tinham balao, Max nao.
+        html = glossary_highlight('1x Max')
+
+        self.assertIn('data-workout-glossary', html)
+        self.assertIn('>Max<', html)
+        self.assertIn('Max Set', html)
+
     def test_ramp_appends_suggested_weight_to_matching_term_only(self):
         html = glossary_highlight('3x Top (6-8)', ramp=('top', [82.5]))
 

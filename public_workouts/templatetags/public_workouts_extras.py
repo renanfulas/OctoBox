@@ -157,6 +157,7 @@ _GLOSSARY_TERMS = {
     'feeder': ('Série Feeder', 'Série leve de ativação antes da série principal (Top) — prepara a articulação e o padrão de movimento sem gerar fadiga.'),
     'top': ('Série Top (Top Set)', 'A série mais pesada do exercício no dia — o estímulo-alvo do treino, feita depois do aquecimento/feeder.'),
     'prep': ('Série Prep (preparatória)', 'Série de aquecimento específico com carga leve/moderada, antes das séries de trabalho.'),
+    'max': ('Max Set', 'Série final no mesmo peso do Top Set, feita até o máximo de repetições possíveis (AMRAP) — mede quantas reps sobram naquela carga, não é uma carga nova.'),
 }
 
 _GLOSSARY_PATTERN = re.compile(
@@ -177,7 +178,7 @@ def glossary_highlight(text: str, ramp=None):
     'bolinha' clicavel que revela a definicao — pedido do Renan pra quem
     nao conhece o dicionario de treino.
 
-    So estes 5 termos: sao os que realmente aparecem nos 10 programas reais
+    So estes 6 termos: sao os que realmente aparecem nos 10 programas reais
     publicados (conferido via payload, nao adivinhado) — nao generaliza pra
     qualquer palavra tecnica, que arriscaria falso-positivo (ex. 'top' dentro
     de 'topo' e' evitado com \\b, mas uma lista maior sem curadoria arriscaria
