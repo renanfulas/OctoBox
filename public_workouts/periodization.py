@@ -58,13 +58,32 @@ class PhaseProfile:
     reps_target_range: tuple[int, int]
     sets_multiplier: float  # 1.0 = volume normal; <1 reduz, >1 aumenta -- fundação (ver plano), ainda não aplicado na UI
     color: str
+    # Achado real ao propor phase_type novo pro bloco de corte do Bruno:
+    # `suggest_progressive_load_kg` ESCALA a carga pela razão entre
+    # %RM-meio das duas fases -- correto pras 6 fases originais (todas
+    # "suba a intensidade"), mas ERRADO pra uma fase cujo objetivo
+    # EXPLÍCITO é "não progredir carga, segurar a carga" (vnote real do
+    # Bruno). `hold_load=True` faz a fase ecoar o ÚLTIMO peso registrado
+    # sem escalar nada -- o %RM/reps/RIR da fase continuam servindo só
+    # pro banner (o que realmente acontece fisiologicamente: mesmo peso
+    # absoluto vira % relativa mais alta com a capacidade de recuperação
+    # reduzida em déficit, não uma inconsistência de dado).
+    hold_load: bool = False
 
 
 # Fontes (ver docs/plans/public-workouts-produtizacao-corda.md, "O modelo
 # canônico"): NSCA (zonas por %1RM), Prilepin (reps/série por faixa),
 # Bompa (fases clássicas de periodização), Helms/RPE-RIR (ondulação
 # semanal), consenso geral de deload (~50-70% intensidade e/ou 40-60%
-# menos volume).
+# menos volume). `maintenance`/`test` (bloco de corte do Bruno, ver
+# docstring de `hold_load` acima): %RM/reps/RIR pra `maintenance` batem
+# com o zoneamento de força-hipertrofia de Prilepin/NSCA (75-85%/6-10
+# reps) — é o que Bruno de fato mostra (RIR 1-2, reps caindo de 8-10 pra
+# 6-8 ao longo do bloco); `test` é o teste de retenção com AMRAP único
+# (RIR 0, zona de teste quase-máximo 85-95% de Prilepin/NSCA). Volume
+# reduzido nos dois (sets_multiplier <1) segue o mesmo consenso de
+# manter intensidade e cortar volume em déficit calórico (Garthe et al.,
+# treino de força durante perda de gordura).
 PHASE_PROFILES: dict[str, PhaseProfile] = {
     'adaptation': PhaseProfile('adaptation', 'Adaptação', (50, 62), 3.5, (12, 15), 1.0, '#FB7185'),
     'volume': PhaseProfile('volume', 'Volume', (62, 72), 2.5, (8, 12), 1.15, '#F43F5E'),
@@ -72,6 +91,8 @@ PHASE_PROFILES: dict[str, PhaseProfile] = {
     'intensity': PhaseProfile('intensity', 'Intensidade', (80, 90), 0.5, (3, 6), 0.85, '#BE123C'),
     'peak': PhaseProfile('peak', 'Pico', (90, 97), 0.0, (1, 3), 0.7, '#9F1239'),
     'deload': PhaseProfile('deload', 'Deload', (50, 65), 4.5, (8, 10), 0.5, '#10B981'),
+    'maintenance': PhaseProfile('maintenance', 'Manutenção', (67, 80), 1.5, (6, 10), 0.85, '#F59E0B', hold_load=True),
+    'test': PhaseProfile('test', 'Teste', (85, 95), 0.0, (1, 5), 0.6, '#0EA5E9', hold_load=True),
 }
 
 PHASE_TYPE_KEYS = tuple(PHASE_PROFILES.keys())
@@ -167,11 +188,21 @@ def suggest_progressive_load_kg(
     o teto (nunca deixa a razão sugerir acima do %RM máximo da fase atual
     contra o 1RM estimado, protege contra um log anômalo se propagando).
 
+    `current_phase.hold_load=True` (ex.: `maintenance`/`test`, bloco de
+    corte -- ver docstring de `PhaseProfile.hold_load`) pula a escala por
+    razão inteiramente: devolve a ÚLTIMA carga registrada tal e qual,
+    porque o objetivo dessas fases é EXPLICITAMENTE não progredir peso —
+    escalar pela razão de %RM aqui produziria o mesmo salto perigoso que
+    o "achado crítico" original deste módulo já corrigiu pras fases de
+    progressão. Nesse caso nem precisa resolver a fase de quando o log
+    foi feito (irrelevante — o alvo é sempre "repete o último peso").
+
     `None` (cai pro fallback/hint) quando: não há log ainda pra esse
     movimento (bootstrap -- primeira vez neste programa); o log é de um
     programa ANTERIOR (`program_id` não bate -- carga de outro ciclo não é
-    uma base de comparação válida); ou a fase de quando o log foi feito
-    não é resolvível (log de antes de existir periodização canônica)."""
+    uma base de comparação válida); ou (fases sem `hold_load`) a fase de
+    quando o log foi feito não é resolvível (log de antes de existir
+    periodização canônica)."""
     if last_log is None or last_log.get('weight_kg') is None:
         return None
 
@@ -179,15 +210,18 @@ def suggest_progressive_load_kg(
     if program_id and last_log.get('program_id') != program_id:
         return None
 
-    logged_on_raw = last_log.get('performed_on')
-    if not logged_on_raw:
-        return None
-    phase_when_logged = current_phase_profile(payload, today=date.fromisoformat(logged_on_raw))
-    if phase_when_logged is None:
-        return None
+    if current_phase.hold_load:
+        suggested = float(last_log['weight_kg'])
+    else:
+        logged_on_raw = last_log.get('performed_on')
+        if not logged_on_raw:
+            return None
+        phase_when_logged = current_phase_profile(payload, today=date.fromisoformat(logged_on_raw))
+        if phase_when_logged is None:
+            return None
 
-    ratio = _phase_midpoint(current_phase) / _phase_midpoint(phase_when_logged)
-    suggested = float(last_log['weight_kg']) * ratio
+        ratio = _phase_midpoint(current_phase) / _phase_midpoint(phase_when_logged)
+        suggested = float(last_log['weight_kg']) * ratio
 
     if one_rep_max_kg:
         ceiling = (current_phase.intensity_pct_range[1] / 100) * one_rep_max_kg

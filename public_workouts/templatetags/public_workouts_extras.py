@@ -47,6 +47,7 @@ from public_workouts.periodization import (
     current_week_number,
     suggest_progressive_load_kg,
 )
+from public_workouts.substitutions import suggest_substitutes
 from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
 
 register = template.Library()
@@ -149,6 +150,21 @@ def movement_display_name(movement: dict) -> str:
     if name:
         return name
     return humanize_movement_slug((movement or {}).get('movement_slug', ''))
+
+
+@register.filter
+def sibling_variations(movement_slug: str) -> list[dict]:
+    """"Variação irmã" (Onda A3/B4, item 3 do "Pronto quando" do CORDA) —
+    outros movimentos ATIVOS do MESMO `movement_pattern` (catálogo,
+    `PublicWorkoutMovement`), exibidos na aba Cargas como REFERÊNCIA ao
+    lado do gráfico do movimento — nunca entram no cálculo de 1RM/
+    tendência daquele `movement_slug` (que fica estritamente isolado por
+    slug, ver docstring de one_rep_max.py: "NUNCA compara 1RM entre
+    movement_slug diferentes"). Reusa `suggest_substitutes` (Onda A3,
+    já existia) tal e qual — nenhuma lógica nova, só a exibição que
+    faltava. Lista vazia (nunca quebra o template) quando o movimento
+    não está classificado ou não tem irmã ativa no catálogo."""
+    return suggest_substitutes(movement_slug=movement_slug, limit=3)
 
 
 _GLOSSARY_TERMS = {
