@@ -38,6 +38,7 @@ import re
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.generic import View
 
 from public_workouts.billing import get_or_create_subscription
@@ -48,12 +49,24 @@ from public_workouts.stripe_checkout import (
     start_subscription_checkout,
 )
 
+from .oauth_providers import GoogleOAuthProvider, OAuthProviderError
 from .public_workout_login import (
     PublicWorkoutLoginRateLimitExceeded,
     request_login_token,
+    resolve_or_create_public_workout_account,
     verify_login_token,
 )
+from .public_workout_oauth import build_public_workout_oauth_state, read_public_workout_oauth_state
 from .public_workout_session import attach_public_workout_session_cookie, get_public_workout_account_id_from_request
+
+_PUBLIC_WORKOUT_GOOGLE_CALLBACK_URL_NAME = 'public-workout-oauth-google-callback'
+
+
+def _build_public_workout_google_provider() -> GoogleOAuthProvider:
+    """GoogleOAuthProvider apontando pro callback do corredor, nunca pro
+    de /aluno/ — ver oauth_providers.BaseOAuthProvider e
+    public_workout_oauth.py."""
+    return GoogleOAuthProvider(callback_url_name=_PUBLIC_WORKOUT_GOOGLE_CALLBACK_URL_NAME, callback_url_kwargs={})
 
 
 _PUBLIC_WORKOUT_NEXT_RE = re.compile(r'^/renan/[-a-z0-9]+/?$')
@@ -99,6 +112,67 @@ class PublicWorkoutLoginView(View):
             return render(request, self.template_name, {'error': 'muitos_pedidos', 'next_url': next_url})
 
         return render(request, self.template_name, {'sent_to': email})
+
+
+class PublicWorkoutGoogleStartView(View):
+    """GET /treinos/login/google — inicia o login social do corredor.
+
+    Reusa GoogleOAuthProvider (oauth_providers.py) como SERVICO: e o
+    mesmo codigo que fala com a API do Google para o /aluno/, so que
+    configurado pra redirecionar de volta pro callback do corredor (ver
+    _build_public_workout_google_provider), nunca pro
+    StudentOAuthCallbackView. `state` carrega o `next_url` assinado
+    (public_workout_oauth.py) — nunca request.session.
+    """
+
+    def get(self, request, *args, **kwargs):
+        next_url = _safe_public_workout_next(request.GET.get('next'))
+        try:
+            authorize_url = _build_public_workout_google_provider().get_authorize_url(
+                state=build_public_workout_oauth_state(next_url=next_url),
+                request=request,
+            )
+        except OAuthProviderError:
+            return redirect(f"{reverse('public-workout-login')}?error=google_indisponivel")
+        return redirect(authorize_url)
+
+
+class PublicWorkoutGoogleCallbackView(View):
+    """GET /treinos/login/google/callback — troca o `code` do Google pelo
+    e-mail e loga.
+
+    Espelha o GET com ?token= de PublicWorkoutLoginView: consome uma
+    prova de identidade de uso unico (aqui, code+state do Google,
+    validados pelo proprio Google e pela assinatura do state) e seta o
+    mesmo cookie do corredor. Nunca cria nem consulta StudentIdentity —
+    so a referencia fraca ja resolvida por
+    resolve_or_create_public_workout_account (N5 do CORDA).
+    """
+
+    template_name = 'treinos/login.html'
+
+    def get(self, request, *args, **kwargs):
+        state_payload = read_public_workout_oauth_state(request.GET.get('state', ''))
+        next_url = _safe_public_workout_next((state_payload or {}).get('next_url', ''))
+        code = (request.GET.get('code') or '').strip()
+        if state_payload is None or not code:
+            return render(request, self.template_name, {'error': 'link_invalido', 'next_url': next_url})
+
+        try:
+            identity = _build_public_workout_google_provider().exchange_code(code=code, request=request)
+        except OAuthProviderError:
+            return render(request, self.template_name, {'error': 'google_falhou', 'next_url': next_url})
+
+        account = resolve_or_create_public_workout_account(email=identity.email)
+        account.last_login_at = timezone.now()
+        account.save(update_fields=['last_login_at', 'updated_at'])
+
+        if next_url:
+            response = redirect(next_url)
+        else:
+            response = render(request, self.template_name, {'logged_in_as': account.email})
+        attach_public_workout_session_cookie(response, account_id=account.id)
+        return response
 
 
 class PublicWorkoutSubscribeView(View):

@@ -52,6 +52,20 @@ def _resolve_student_identity_id(*, email: str) -> int | None:
     return StudentIdentity.objects.filter(email__iexact=email).values_list('id', flat=True).first()
 
 
+def resolve_or_create_public_workout_account(*, email: str) -> PublicWorkoutAccount:
+    """Acha ou cria a PublicWorkoutAccount pelo e-mail — usado tanto pelo
+    login por e-mail (abaixo) quanto pelo login por Google
+    (public_workout_oauth.py). Um so lugar decide como resolver conta a
+    partir de um e-mail vindo de fora; o vinculo com StudentIdentity
+    continua so informativo (N5 do CORDA)."""
+    normalized_email = email.strip().lower()
+    account, _ = PublicWorkoutAccount.objects.get_or_create(
+        email=normalized_email,
+        defaults={'student_identity_id': _resolve_student_identity_id(email=normalized_email)},
+    )
+    return account
+
+
 def request_login_token(*, email: str, base_url: str, next_url: str = '') -> PublicWorkoutLoginToken:
     """Cria (ou reusa) a conta pelo e-mail, emite token e envia o link de login.
 
@@ -72,10 +86,7 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
         raise PublicWorkoutLoginRateLimitExceeded(normalized_email)
     platform_cache.set(rate_limit_key, attempts + 1, timeout=PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_WINDOW_SECONDS)
 
-    account, _ = PublicWorkoutAccount.objects.get_or_create(
-        email=normalized_email,
-        defaults={'student_identity_id': _resolve_student_identity_id(email=normalized_email)},
-    )
+    account = resolve_or_create_public_workout_account(email=normalized_email)
     token = PublicWorkoutLoginToken.objects.create(
         account=account,
         expires_at=timezone.now() + timezone.timedelta(seconds=PUBLIC_WORKOUT_LOGIN_TOKEN_TTL_SECONDS),
