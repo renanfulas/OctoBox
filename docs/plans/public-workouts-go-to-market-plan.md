@@ -2,6 +2,7 @@
 
 **Plano de produto (o "porquê" técnico):** [public-workouts-produtizacao-plan.md](public-workouts-produtizacao-plan.md)
 **Execução técnica:** [public-workouts-produtizacao-corda.md](public-workouts-produtizacao-corda.md)
+**Como construir o que este plano pede:** [public-workouts-escala-e-nutricao-corda.md](public-workouts-escala-e-nutricao-corda.md)
 **Este documento:** branding, público, oferta, preço, aquisição e a landing page que vende isso.
 
 **Status:** rascunho v2 · **Data:** 2026-09-17 · **Dono:** Renan · **Revisão:** 2
