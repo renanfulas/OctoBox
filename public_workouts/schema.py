@@ -20,6 +20,8 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 from .periodization import PHASE_TYPE_KEYS
 
 SCHEMA_VERSION = 1
@@ -40,6 +42,23 @@ class PayloadValidationError(ValueError):
 def _require(condition: bool, errors: list[str], message: str) -> None:
     if not condition:
         errors.append(message)
+
+
+def _is_safe_reference_url(url: str) -> bool:
+    """Achado da auditoria de QA: `reference_url` vira `href="{{ }}"` direto
+    no template (workout.html) — o auto-escape do Django escapa caracteres
+    HTML especiais, mas NAO valida o esquema. Um valor tipo
+    `javascript:alert(1)` passaria batido pro atributo e executaria ao
+    clicar. Hoje `reference_url` só vem do HTML legado versionado no repo
+    (nunca de input de aluno/anonimo — ver parser.py), então não é
+    explorável agora, mas exigir http(s) aqui é a mesma barreira barata
+    que já vale a pena antes de qualquer fluxo futuro (ex.: edição via
+    admin) tornar isso alcançável por alguém não confiável."""
+    try:
+        scheme = urlparse(url).scheme.lower()
+    except ValueError:
+        return False
+    return scheme in ('http', 'https')
 
 
 def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
@@ -68,9 +87,9 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
 
     reference_url = movement.get('reference_url')
     _require(
-        reference_url is None or isinstance(reference_url, str),
+        reference_url is None or (isinstance(reference_url, str) and _is_safe_reference_url(reference_url)),
         errors,
-        f'{path}.reference_url: string ou null',
+        f'{path}.reference_url: precisa ser http(s) ou null',
     )
 
     # `name`/`variations` sao ADITIVOS (movimento publicado antes desta
@@ -87,9 +106,10 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
                 _require(
                     isinstance(variation, dict)
                     and isinstance(variation.get('label'), str) and variation.get('label')
-                    and isinstance(variation.get('reference_url'), str) and variation.get('reference_url'),
+                    and isinstance(variation.get('reference_url'), str) and variation.get('reference_url')
+                    and _is_safe_reference_url(variation.get('reference_url')),
                     errors,
-                    f'{path}.variations[{vindex}]: objeto com label/reference_url string nao vazia',
+                    f'{path}.variations[{vindex}]: objeto com label/reference_url http(s) nao vazia',
                 )
 
 
