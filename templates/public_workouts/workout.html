@@ -390,6 +390,11 @@ PONTOS CRITICOS:
             {% else %}
             <p>Ainda não há carga suficiente registrada para montar o gráfico.</p>
             {% endif %}
+            {% with siblings=group.grouper|sibling_variations %}
+            {% if siblings %}
+            <p class="workout-load-chart-siblings">Variação: {% for sibling in siblings %}{% if sibling.reference_url %}<a href="{{ sibling.reference_url }}" target="_blank" rel="noopener">{{ sibling.label_pt }}</a>{% else %}{{ sibling.label_pt }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+            {% endif %}
+            {% endwith %}
           </div>
           {% endwith %}
         {% empty %}

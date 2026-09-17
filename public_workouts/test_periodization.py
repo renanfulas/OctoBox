@@ -222,3 +222,82 @@ class SuggestProgressiveLoadKgTests(SimpleTestCase):
         result = suggest_progressive_load_kg(payload=payload, current_phase=PHASE_PROFILES['volume'], last_log=log)
 
         self.assertEqual(result % 2.5, 0)
+
+
+class HoldLoadPhaseTests(SimpleTestCase):
+    """Bloco de corte do Bruno: `maintenance`/`test` tem `hold_load=True`
+    -- a meta real é "não progredir carga, segurar a carga" (vnote real
+    dele), então NUNCA escala pela razão de %RM entre fases, mesmo quando
+    a fase de agora tem %RM-meio bem maior que a fase de quando o log foi
+    feito (o que aconteceria erroneamente se caísse no caminho normal)."""
+
+    _BRUNO_WEEKS = [
+        {'week_number': 1, 'phase_type': 'adaptation'},
+        {'week_number': 2, 'phase_type': 'maintenance'},
+        {'week_number': 3, 'phase_type': 'maintenance'},
+        {'week_number': 4, 'phase_type': 'maintenance'},
+        {'week_number': 5, 'phase_type': 'test'},
+        {'week_number': 6, 'phase_type': 'deload'},
+    ]
+
+    def _payload(self, **overrides):
+        payload = _payload_with_weeks(self._BRUNO_WEEKS, started_on='2026-01-05', program_id='bruno-2026-q1')
+        payload.update(overrides)
+        return payload
+
+    def test_maintenance_holds_the_last_logged_weight_unchanged(self):
+        payload = self._payload()
+        # log feito na semana 1 (Adaptacao, mid=56%) -- se escalasse pela
+        # razao normal pra Manutencao (mid=73.5%), sugeriria ~105kg. Com
+        # hold_load, tem que devolver os mesmos 80kg.
+        log = {'weight_kg': 80.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1'}
+
+        result = suggest_progressive_load_kg(payload=payload, current_phase=PHASE_PROFILES['maintenance'], last_log=log)
+
+        self.assertEqual(result, 80.0)
+
+    def test_maintenance_to_maintenance_also_holds(self):
+        payload = self._payload()
+        log = {'weight_kg': 80.0, 'performed_on': '2026-01-12', 'program_id': 'bruno-2026-q1'}  # semana 2, Manutencao
+
+        result = suggest_progressive_load_kg(payload=payload, current_phase=PHASE_PROFILES['maintenance'], last_log=log)
+
+        self.assertEqual(result, 80.0)
+
+    def test_test_phase_also_holds_the_same_weight(self):
+        payload = self._payload()
+        log = {'weight_kg': 80.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1'}  # semana 1, Adaptacao
+
+        result = suggest_progressive_load_kg(payload=payload, current_phase=PHASE_PROFILES['test'], last_log=log)
+
+        self.assertEqual(result, 80.0)
+
+    def test_hold_load_never_needs_to_resolve_the_logged_phase(self):
+        # Log de ANTES de periodization.weeks existir (fase nao resolvivel)
+        # -- caminho normal devolveria None aqui (ver
+        # test_none_when_log_predates_periodization_weeks acima), mas
+        # hold_load nem precisa saber a fase de quando o log foi feito.
+        payload = self._payload()
+        log = {'weight_kg': 80.0, 'performed_on': '2025-01-01', 'program_id': 'bruno-2026-q1'}
+
+        result = suggest_progressive_load_kg(payload=payload, current_phase=PHASE_PROFILES['maintenance'], last_log=log)
+
+        self.assertEqual(result, 80.0)
+
+    def test_hold_load_still_respects_one_rep_max_ceiling(self):
+        payload = self._payload()
+        log = {'weight_kg': 95.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1'}
+
+        result = suggest_progressive_load_kg(
+            payload=payload, current_phase=PHASE_PROFILES['maintenance'], last_log=log, one_rep_max_kg=100.0,
+        )
+
+        # teto da fase Manutencao e' 80% do 1RM estimado -- abaixo do log de 95kg
+        ceiling = round((80 / 100) * 100.0 / 2.5) * 2.5
+        self.assertEqual(result, ceiling)
+        self.assertLess(result, 95.0)
+
+    def test_maintenance_and_test_are_the_only_hold_load_phases(self):
+        hold_load_keys = {key for key, phase in PHASE_PROFILES.items() if phase.hold_load}
+
+        self.assertEqual(hold_load_keys, {'maintenance', 'test'})

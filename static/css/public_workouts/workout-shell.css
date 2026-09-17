@@ -832,6 +832,23 @@ button.workout-week-day:focus-visible {
     fill: var(--theme-text-muted);
 }
 
+/* "Variacao irma" (Pronto-quando #3, secao A3/B4 do CORDA) -- referencia
+   rotulada de outro movimento do MESMO movement_pattern (catalogo), nunca
+   entra no calculo de 1RM/tendencia deste grafico. Mesmo tom muted do
+   "Ainda nao ha carga..." acima, discreto de proposito -- e' contexto,
+   nao um dado do proprio movimento. */
+.workout-load-chart-siblings {
+    margin: 0.5rem 0 0;
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-load-chart-siblings a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .workout-load-chart-line {
         animation: none;

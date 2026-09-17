@@ -156,6 +156,41 @@ class SchemaValidationTests(TestCase):
         errors = validate_payload(payload)
         self.assertTrue(any('variations' in error for error in errors))
 
+    def test_movement_reference_url_accepts_http_and_https(self):
+        payload = build_example_payload()
+        for url in ('https://musclewiki.com/exercise/x', 'http://musclewiki.com/exercise/x'):
+            payload['days'][0]['blocks'][0]['movements'][0]['reference_url'] = url
+            self.assertEqual(validate_payload(payload), [], f'{url} deveria ser aceito')
+
+    def test_movement_reference_url_rejects_javascript_scheme(self):
+        # Achado da auditoria de QA: reference_url vira href="{{ }}" direto
+        # no template -- o auto-escape do Django nao valida esquema, so
+        # caracteres HTML especiais. Sem esta trava, um `javascript:` aqui
+        # executaria ao clicar no link do exercicio.
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reference_url'] = 'javascript:alert(1)'
+        errors = validate_payload(payload)
+        self.assertTrue(any('reference_url' in error for error in errors))
+
+    def test_movement_reference_url_rejects_data_scheme(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reference_url'] = 'data:text/html,<script>alert(1)</script>'
+        errors = validate_payload(payload)
+        self.assertTrue(any('reference_url' in error for error in errors))
+
+    def test_movement_reference_url_none_is_still_accepted(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reference_url'] = None
+        self.assertEqual(validate_payload(payload), [])
+
+    def test_movement_variation_reference_url_rejects_javascript_scheme(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['variations'] = [
+            {'label': 'Hack squat', 'reference_url': 'javascript:alert(1)'},
+        ]
+        errors = validate_payload(payload)
+        self.assertTrue(any('variations[0]' in error for error in errors))
+
 
 class PeriodizationWeeksValidationTests(TestCase):
     """`periodization.weeks` (modelo canônico, Onda B3+) — aditivo e

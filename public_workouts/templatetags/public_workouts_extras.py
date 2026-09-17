@@ -47,6 +47,7 @@ from public_workouts.periodization import (
     current_week_number,
     suggest_progressive_load_kg,
 )
+from public_workouts.substitutions import suggest_substitutes
 from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
 
 register = template.Library()
@@ -151,12 +152,28 @@ def movement_display_name(movement: dict) -> str:
     return humanize_movement_slug((movement or {}).get('movement_slug', ''))
 
 
+@register.filter
+def sibling_variations(movement_slug: str) -> list[dict]:
+    """"Variação irmã" (Onda A3/B4, item 3 do "Pronto quando" do CORDA) —
+    outros movimentos ATIVOS do MESMO `movement_pattern` (catálogo,
+    `PublicWorkoutMovement`), exibidos na aba Cargas como REFERÊNCIA ao
+    lado do gráfico do movimento — nunca entram no cálculo de 1RM/
+    tendência daquele `movement_slug` (que fica estritamente isolado por
+    slug, ver docstring de one_rep_max.py: "NUNCA compara 1RM entre
+    movement_slug diferentes"). Reusa `suggest_substitutes` (Onda A3,
+    já existia) tal e qual — nenhuma lógica nova, só a exibição que
+    faltava. Lista vazia (nunca quebra o template) quando o movimento
+    não está classificado ou não tem irmã ativa no catálogo."""
+    return suggest_substitutes(movement_slug=movement_slug, limit=3)
+
+
 _GLOSSARY_TERMS = {
     'rir': ('RIR (Reps in Reserve)', 'Repetições que ainda sobrariam na reserva se a série continuasse até a falha. Ex.: RIR 2 = parou a 2 repetições da falha.'),
     'amrap': ('AMRAP (As Many Reps As Possible)', 'Fazer o máximo de repetições possível na série, dentro da técnica segura.'),
     'feeder': ('Série Feeder', 'Série leve de ativação antes da série principal (Top) — prepara a articulação e o padrão de movimento sem gerar fadiga.'),
     'top': ('Série Top (Top Set)', 'A série mais pesada do exercício no dia — o estímulo-alvo do treino, feita depois do aquecimento/feeder.'),
     'prep': ('Série Prep (preparatória)', 'Série de aquecimento específico com carga leve/moderada, antes das séries de trabalho.'),
+    'max': ('Max Set', 'Série final no mesmo peso do Top Set, feita até o máximo de repetições possíveis (AMRAP) — mede quantas reps sobram naquela carga, não é uma carga nova.'),
 }
 
 _GLOSSARY_PATTERN = re.compile(
@@ -177,7 +194,7 @@ def glossary_highlight(text: str, ramp=None):
     'bolinha' clicavel que revela a definicao — pedido do Renan pra quem
     nao conhece o dicionario de treino.
 
-    So estes 5 termos: sao os que realmente aparecem nos 10 programas reais
+    So estes 6 termos: sao os que realmente aparecem nos 10 programas reais
     publicados (conferido via payload, nao adivinhado) — nao generaliza pra
     qualquer palavra tecnica, que arriscaria falso-positivo (ex. 'top' dentro
     de 'topo' e' evitado com \\b, mas uma lista maior sem curadoria arriscaria
