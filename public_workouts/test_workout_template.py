@@ -17,6 +17,7 @@ import re
 from django.template.loader import render_to_string
 from django.test import TestCase
 
+from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementStatus
 from public_workouts.periodization import PHASE_PROFILES
 from public_workouts.schema import build_example_payload
 from public_workouts.templatetags.public_workouts_extras import (
@@ -29,6 +30,7 @@ from public_workouts.templatetags.public_workouts_extras import (
     periodization_chart_points,
     periodization_phase_banner,
     reps_phases,
+    sibling_variations,
 )
 
 
@@ -318,6 +320,39 @@ class WorkoutTemplateRenderTests(TestCase):
 
         self.assertIn('Ainda não há carga suficiente registrada para montar o gráfico.', html)
         self.assertNotIn('workout-load-chart-line', html)
+
+    def test_history_tab_shows_sibling_variation_as_labeled_reference(self):
+        # "Variação irmã" (Pronto quando #3, secao A3/B4 do CORDA): outro
+        # movimento ATIVO do MESMO movement_pattern aparece como referencia
+        # rotulada ao lado do grafico -- nunca precisa de carga propria
+        # registrada, e' so' informativo (suggest_substitutes ja garante
+        # que nunca entra no calculo de 1RM/tendencia deste movimento).
+        PublicWorkoutMovement.objects.create(
+            slug='agachamento-livre', label_pt='Agachamento livre', movement_pattern='squat',
+            status=PublicWorkoutMovementStatus.ACTIVE, reference_url='https://musclewiki.com/exercise/barbell-squat',
+        )
+        PublicWorkoutMovement.objects.create(
+            slug='machine-hack-squat', label_pt='Hack squat na máquina', movement_pattern='squat',
+            status=PublicWorkoutMovementStatus.ACTIVE, reference_url='https://musclewiki.com/exercise/machine-hack-squat',
+        )
+
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+        ])
+
+        self.assertIn('workout-load-chart-siblings', html)
+        self.assertIn('Variação:', html)
+        self.assertIn('Hack squat na máquina', html)
+        self.assertIn('href="https://musclewiki.com/exercise/machine-hack-squat"', html)
+
+    def test_history_tab_hides_sibling_note_when_movement_unclassified(self):
+        # Sem PublicWorkoutMovement classificado (catalogo nao tem o slug,
+        # ou nao tem movement_pattern) -- nao aparece nada, nunca quebra.
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+        ])
+
+        self.assertNotIn('workout-load-chart-siblings', html)
 
     def test_history_tab_shows_one_rep_max_estimate_when_provided(self):
         html = _render(
@@ -699,6 +734,29 @@ class HumanizeMovementSlugFilterTests(TestCase):
 
     def test_none_stays_empty(self):
         self.assertEqual(humanize_movement_slug(None), '')
+
+
+class SiblingVariationsFilterTests(TestCase):
+    """"Variação irmã" (Onda A3/B4, item 3 do "Pronto quando" do CORDA) --
+    reusa suggest_substitutes tal e qual, só prova a fiação do filtro."""
+
+    def test_movement_with_active_sibling_returns_it(self):
+        PublicWorkoutMovement.objects.create(
+            slug='barbell-squat', label_pt='Agachamento livre com barra', movement_pattern='squat',
+            status=PublicWorkoutMovementStatus.ACTIVE, reference_url='https://musclewiki.com/exercise/barbell-squat',
+        )
+        PublicWorkoutMovement.objects.create(
+            slug='machine-hack-squat', label_pt='Hack squat na máquina', movement_pattern='squat',
+            status=PublicWorkoutMovementStatus.ACTIVE, reference_url='https://musclewiki.com/exercise/machine-hack-squat',
+        )
+
+        result = sibling_variations('barbell-squat')
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['label_pt'], 'Hack squat na máquina')
+
+    def test_unclassified_movement_returns_empty(self):
+        self.assertEqual(sibling_variations('nao-existe-no-catalogo'), [])
 
 
 class DictGetFilterTests(TestCase):

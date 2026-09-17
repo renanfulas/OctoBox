@@ -32,14 +32,14 @@ from pathlib import Path
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from public_workouts.management.commands.extract_movements_from_html import LEGACY_WORKOUT_SLUGS
 from public_workouts.management.commands.migrate_legacy_workouts import LEGACY_PROGRAM_METADATA
 from public_workouts.parser import build_program_payload_from_html
 from public_workouts.schema import validate_payload
 
-_CANONICAL_PERIODIZATION_SLUGS = ('henrique', 'john', 'juliana', 'milene')
+_CANONICAL_PERIODIZATION_SLUGS = ('henrique', 'john', 'juliana', 'milene', 'bruno')
 
 
 def _real_payload(slug: str) -> dict:
@@ -80,7 +80,7 @@ def _first_movement_slug(payload: dict) -> str:
     return payload['days'][0]['blocks'][0]['movements'][0]['movement_slug']
 
 
-class AllRealClientsRenderWithoutErrorTests(SimpleTestCase):
+class AllRealClientsRenderWithoutErrorTests(TestCase):
     def test_all_ten_real_clients_render_without_exception(self):
         for slug in LEGACY_WORKOUT_SLUGS:
             with self.subTest(slug=slug):
@@ -119,16 +119,19 @@ class AllRealClientsRenderWithoutErrorTests(SimpleTestCase):
                 self.assertIn(payload['program_label'], html)
 
 
-class CanonicalPeriodizationRealClientsRenderTests(SimpleTestCase):
-    """Os 4 clientes com `periodization.weeks` curado (henrique/john/
-    juliana/milene, `CURATED_WEEKS_MAPPING` em
+class CanonicalPeriodizationRealClientsRenderTests(TestCase):
+    """Os 5 clientes com `periodization.weeks` curado (henrique/john/
+    juliana/milene/bruno, `CURATED_WEEKS_MAPPING` em
     upgrade_periodization_model.py) exercitam caminho extra: banner de
     fase + grafico com semana atual destacada + ramp de Prep/Feeder nos
-    chips. O parser NUNCA produz `weeks` sozinho (so' existe depois da
-    curadoria manual em cima do payload JA publicado — ver docstring de
-    upgrade_periodization_model.py) — por isso injetamos o MESMO
-    mapeamento curado aqui antes de renderizar, replicando o payload real
-    publicado sem precisar de banco.
+    chips. `bruno` especificamente exercita o caminho `hold_load` (fases
+    `maintenance`/`test`, bloco de corte) através do template inteiro,
+    não só da função pura (ver `HoldLoadPhaseTests` em
+    test_periodization.py). O parser NUNCA produz `weeks` sozinho (so'
+    existe depois da curadoria manual em cima do payload JA publicado —
+    ver docstring de upgrade_periodization_model.py) — por isso injetamos
+    o MESMO mapeamento curado aqui antes de renderizar, replicando o
+    payload real publicado sem precisar de banco.
 
     `current_period_phase` (workout.html) usa `date.today()` sem override
     pra teste (decisao correta pra producao) -- por isso os testes aqui
@@ -146,7 +149,7 @@ class CanonicalPeriodizationRealClientsRenderTests(SimpleTestCase):
         payload['periodization'] = periodization
         return payload
 
-    def test_curated_mapping_covers_exactly_these_four_slugs(self):
+    def test_curated_mapping_covers_exactly_these_five_slugs(self):
         from public_workouts.management.commands.upgrade_periodization_model import CURATED_WEEKS_MAPPING
 
         self.assertEqual(set(CURATED_WEEKS_MAPPING), set(_CANONICAL_PERIODIZATION_SLUGS))

@@ -12,14 +12,17 @@ POR QUE EXISTE:
   (pedido do Renan: "pegue todos os treinos e corrija a periodização...
   com o gráfico etc") cobriu as outras 9 e migrou mais 3 (henrique/john/
   milene) cujo `weeks_table` real é uma progressão de mesociclo compatível
-  com o vocabulário fechado. As outras 6 ficam de fora de propósito (ver
-  comentário de `CURATED_WEEKS_MAPPING`) — não é trabalho pendente, é
-  conteúdo que genuinamente não é periodização de força por %RM (CrossFit
-  metabólico, corte com manutenção, progressão de corrida, ritmo semanal,
-  ou nenhuma aba de periodização no HTML). Migrar giovanna/bruno no
-  futuro depende de decidir explicitamente sobre novo(s) phase_type
-  (Manutenção/Teste pro bruno) e se vale forçar CrossFit num modelo
-  pensado pra força linear (giovanna) — proposta ao Renan, não decisão
+  com o vocabulário fechado. Uma 5ª cliente (bruno) exigiu propor
+  `phase_type` novo — feito (Renan aprovou: "vamos tomar essa frente"):
+  `maintenance`/`test` (`periodization.py::PHASE_PROFILES`), com
+  `hold_load=True` porque o objetivo real do bloco de corte dela é NUNCA
+  progredir carga (ver docstring de `PhaseProfile.hold_load`). As outras
+  5 ficam de fora de propósito (ver comentário de `CURATED_WEEKS_MAPPING`)
+  — não é trabalho pendente, é conteúdo que genuinamente não é
+  periodização de força por %RM (CrossFit metabólico, progressão de
+  corrida, ritmo semanal, ou nenhuma aba de periodização no HTML). Migrar
+  giovanna no futuro depende de decidir se vale forçar CrossFit num
+  modelo pensado pra força linear — proposta ao Renan, não decisão
   unilateral. franciele/rafael/johnespanha/thaislima não têm conteúdo
   compatível de jeito nenhum (corrida/ritmo semanal/nada).
 
@@ -120,6 +123,21 @@ CURATED_WEEKS_MAPPING = {
         {'week_number': 3, 'phase_type': 'strength_hypertrophy'},
         {'week_number': 4, 'phase_type': 'volume'},
         {'week_number': 5, 'phase_type': 'peak'},
+        {'week_number': 6, 'phase_type': 'deload'},
+    ],
+    'bruno': [
+        # Bloco de CORTE real (vnote: "a meta não é progredir carga — é
+        # segurar a carga enquanto o peso corporal cai"). "Manutenção"
+        # (S2-S4) e "Teste" (S5) SÓ existem no vocabulário fechado por
+        # causa desta cliente -- ambos com `hold_load=True`
+        # (periodization.py::PhaseProfile), entao nunca escalam a carga
+        # pela razao de %RM entre fases (o que produziria um numero maior
+        # do que S1, exatamente o oposto do objetivo real do bloco).
+        {'week_number': 1, 'phase_type': 'adaptation'},
+        {'week_number': 2, 'phase_type': 'maintenance'},
+        {'week_number': 3, 'phase_type': 'maintenance'},
+        {'week_number': 4, 'phase_type': 'maintenance'},
+        {'week_number': 5, 'phase_type': 'test'},
         {'week_number': 6, 'phase_type': 'deload'},
     ],
 }

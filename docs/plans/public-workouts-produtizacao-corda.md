@@ -2352,10 +2352,12 @@ bloqueio).
 > agora" no gráfico com Pico/Pico Máximo lado a lado e o banner "Semana 4
 > de 6 · Pico · alvo 1-3 reps · RIR 0,0 · ~94% RM" na aba Treino.
 >
-> **Pendente:** decisão do Renan sobre propor `phase_type` novo(s) pro
-> bloco de corte do bruno antes de migrá-lo; giovanna/franciele/rafael
-> ficam no `chart`/`weeks_table` livre indefinidamente (conteúdo não
-> compatível com o modelo, não uma migração adiada).
+> **Pendente (na época):** decisão do Renan sobre propor `phase_type`
+> novo(s) pro bloco de corte do bruno antes de migrá-lo — resolvido, ver
+> "Atualização (variação irmã + phase_type novo pro corte do Bruno)"
+> mais abaixo. giovanna/franciele/rafael continuam no `chart`/
+> `weeks_table` livre indefinidamente (conteúdo não compatível com o
+> modelo, não uma migração adiada).
 
 > **Atualização (fechamento do template único — testes de regressão +
 > auditoria de QA, pedido do Renan: "o template é basicamente esse, vamos
@@ -2404,6 +2406,75 @@ bloqueio).
 > Suíte completa: 600 testes + 134 subtestes verde; `manage.py check`
 > sem problemas.
 
+> **Atualização (variação irmã + phase_type novo pro corte do Bruno,
+> pedido do Renan em resposta ao mapa de pendências do CORDA — "vamos
+> tomar essa frente. Atualize os planos"):**
+>
+> **Variação irmã (item 3 do "Pronto quando" acima, agora ✅):** novo
+> filtro `sibling_variations` (`public_workouts_extras.py`) reusa
+> `suggest_substitutes` tal e qual — nenhuma lógica nova, só a exibição
+> que faltava. Na aba Cargas, cada gráfico de movimento ganha uma linha
+> "Variação: <outros ativos do mesmo `movement_pattern`, linkados>"
+> quando o catálogo tem irmã classificada — puramente informativo, nunca
+> entra no cálculo de 1RM/tendência daquele `movement_slug` (que
+> continua estritamente isolado por slug). Verificado num Chromium real
+> contra dado publicado da Bruno: "Agachamento livre com barra" mostra
+> "Variação: Agachamento goblet com halter, Agachamento sumô com
+> halteres, Hack squat", todos linkados pro MuscleWiki certo.
+>
+> **`phase_type` novo pro bloco de corte do Bruno — `maintenance`/
+> `test`:** ao desenhar os dois, apareceu um problema real que a
+> primeira leitura não tinha capturado — `suggest_progressive_load_kg`
+> ESCALA a carga pela razão de %RM entre fases, correto pras 6 fases
+> originais (todas "suba a intensidade"), mas ERRADO pra uma fase cujo
+> objetivo é EXPLICITAMENTE "não progredir carga, segurar a carga"
+> (vnote real da Bruno). Escalar teria sugerido ~105kg partindo de 80kg
+> ao entrar em Manutenção — o MESMO tipo de salto perigoso que o
+> "achado crítico" original deste documento já tinha corrigido pras
+> fases de progressão, só que na direção oposta.
+>
+> Correção: novo campo `PhaseProfile.hold_load` (default `False`,
+> retrocompatível com as 6 fases existentes). Quando `True`,
+> `suggest_progressive_load_kg` pula a escala por razão inteiramente e
+> devolve a ÚLTIMA carga registrada tal e qual — nem precisa resolver a
+> fase de quando aquele log foi feito (irrelevante pra "repete o último
+> peso"). O %RM/reps/RIR da fase continuam servindo só pro banner
+> informativo (fisiologicamente consistente, não uma inconsistência de
+> dado: o mesmo peso absoluto vira % relativa mais alta com a
+> capacidade de recuperação reduzida em déficit calórico).
+>
+> `maintenance` (67-80% RM, RIR 1,5, 6-10 reps — zona de
+> força-hipertrofia de Prilepin/NSCA, batendo com o RIR 1-2 e a queda de
+> reps 8-10→6-8 que a Bruno já tem escrito) e `test` (85-95% RM, RIR 0,
+> 1-5 reps — zona de teste quase-máximo, pro AMRAP único de retenção da
+> Semana 5) entram em `PHASE_PROFILES`, ambos com `hold_load=True` e
+> `sets_multiplier` reduzido (consenso de manter intensidade e cortar
+> volume em déficit calórico). `CURATED_WEEKS_MAPPING['bruno']`: S1
+> Adaptação → S2-S4 Manutenção → S5 Teste → S6 Deload — mapa 1:1 com o
+> `weeks_table` real dela, sem aproximação.
+>
+> Entregue: `periodization.py` (`hold_load` + 2 fases novas + branch
+> dedicado em `suggest_progressive_load_kg`); `CURATED_WEEKS_MAPPING`
+> estendido; `sibling_variations` + wiring em `workout.html`/CSS. 6
+> testes novos de `hold_load` (`test_periodization.py`) + 2 de
+> `sibling_variations` + 2 de render (`test_workout_template.py`) + 1 no
+> comando (`test_upgrade_periodization_model.py`) + `bruno` promovido a
+> `TestCase` em `test_workout_template_real_clients.py` (a nova
+> `sibling_variations` consulta o banco, `SimpleTestCase` não permite
+> mais). Suíte completa (616 testes + 135 subtestes) verde; `manage.py
+> check` sem problemas. Verificado num Chromium real contra o payload
+> publicado de verdade da Bruno (semana 3 real dela = Manutenção):
+> banner mostra "Semana 3 de 6 · Manutenção · alvo 6-10 reps · RIR 1,5 ·
+> ~74% RM", gráfico destaca "S3 · agora" com as 3 semanas de Manutenção
+> lado a lado e Teste/Deload depois, e a carga sugerida do agachamento
+> ficou EXATAMENTE nos 90kg do último registro simulado (não escalou),
+> confirmando `hold_load` funcionando ponta a ponta.
+>
+> **Pendente:** publicar de verdade em produção (`upgrade_periodization_model
+> --slug=bruno`) — aguardando deploy do código desta fatia primeiro,
+> mesmo fluxo de confirmação explícita já usado pras publicações
+> anteriores (dado de cliente pagante).
+
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
 | ✅ `estimate_one_rep_max` + faixas de confiança | ✅ gráfico SVG reusando o padrão de `assessments.js`, com 1RM e sinal de tendência |
@@ -2416,12 +2487,8 @@ bloqueio).
 ### Pronto quando
 1. ✅ 1RM devolve `None` acima de 15 reps efetivas.
 2. ✅ O gráfico mostra marcador de troca de programa no lugar certo.
-3. Variação irmã aparece como referência, rotulada, sem entrar no cálculo
-   — a parte de **cálculo** está pronta (`detect_one_rep_max_trend` nunca
-   mistura `movement_slug` diferentes, testado); o `movement_pattern`
-   revisado (agrupamento) e `suggest_substitutes` já existem. Falta só a
-   **exibição** (mostrar a variação irmã na tela) — tela da Frente B,
-   não bloqueada em dado da Frente A.
+3. ✅ Variação irmã aparece como referência, rotulada, sem entrar no
+   cálculo — ver "Atualização" abaixo.
 4. ✅ Review semanal recebe **sinais**, não tabela crua.
 
 ---
