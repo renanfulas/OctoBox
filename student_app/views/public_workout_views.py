@@ -838,18 +838,38 @@ class PublicWorkoutTemplatePreviewView(View):
     Existe so' pra nao depender de gerar HTML na mao via `manage.py shell`
     toda vez que alguem quer conferir o trabalho em andamento — nunca serve
     trafego de aluno de verdade, nunca precisa do cookie de posse B0.
+
+    Se ja existir uma sessao de LOGIN ativa (PublicWorkoutAccount, ex.:
+    quem entrou por Google/e-mail em `/treinos/login`), usa o nome/foto/
+    e-mail DELA em vez do nome generico do plano — unica forma de
+    conferir a foto do Google no avatar antes do corte de producao real
+    (rota ainda nao existe, ver docstring acima). Sem sessao, comportamento
+    inalterado (nome do plano, sem foto).
     """
 
     def get(self, request, plan_slug, *args, **kwargs):
         if not settings.DEBUG:
             raise Http404('Preview do template unico so existe em DEBUG.')
 
+        from public_workouts.models import PublicWorkoutAccount
         from public_workouts.services import get_active_program, list_program_versions
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
 
         plan = _get_public_workout_entry(plan_slug)
         program = get_active_program(slug=plan.slug)
         if program is None:
             return HttpResponse(f'"{plan.slug}" ainda nao tem programa publicado (services.publish_program).', status=404)
+
+        student_name = plan.short_name
+        student_photo_url = None
+        account_email = None
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is not None:
+            account = PublicWorkoutAccount.objects.filter(id=account_id).first()
+            if account is not None:
+                student_name = account.email.split('@')[0]
+                student_photo_url = account.photo_url or None
+                account_email = account.email
 
         html = render_to_string('public_workouts/workout.html', {
             'plan_slug': plan.slug,
@@ -859,10 +879,10 @@ class PublicWorkoutTemplatePreviewView(View):
             'load_history': [],
             'one_rep_max_by_movement': {},
             'trends_by_movement': {},
-            'student_name': plan.short_name,
-            'student_photo_url': None,
+            'student_name': student_name,
+            'student_photo_url': student_photo_url,
             'customer_portal_url': None,
-            'account_email': None,
+            'account_email': account_email,
         })
         return HttpResponse(html)
 

@@ -13,6 +13,9 @@
   button{width:100%;padding:12px 14px;border-radius:12px;border:0;background:#f5efe4;color:#11203b;font-weight:700;font-size:1rem;cursor:pointer;}
   .error{color:#fca5a5;}
   .success{color:#86efac;}
+  .google-button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#f5efe4;font-size:1rem;font-weight:600;text-decoration:none;margin-bottom:16px;}
+  .divider{display:flex;align-items:center;gap:10px;color:#64748b;font-size:.8rem;margin:0 0 16px;}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:#334155;}
 </style>
 </head>
 <body>
@@ -29,7 +32,11 @@
       <p class="error">Digite um e-mail válido.</p>
     {% elif error == 'muitos_pedidos' %}
       <p class="error">Muitos pedidos seguidos. Espere alguns minutos e tente de novo.</p>
+    {% elif error == 'google_falhou' or error == 'google_indisponivel' %}
+      <p class="error">Não deu pra entrar com o Google agora. Tente de novo ou use seu e-mail abaixo.</p>
     {% endif %}
+    <a class="google-button" href="{% url 'public-workout-oauth-google-start' %}{% if next_url %}?next={{ next_url }}{% endif %}">Entrar com Google</a>
+    <p class="divider">ou</p>
     <p>Digite seu e-mail e enviamos um link de acesso — sem senha.</p>
     <form method="post">
       {% csrf_token %}

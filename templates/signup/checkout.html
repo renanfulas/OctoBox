@@ -26,6 +26,7 @@ PONTOS CRITICOS:
     <link rel="stylesheet" href="{% static 'css/design-system/tokens.css' %}?v={{ static_asset_version }}">
     <link rel="stylesheet" href="{% static 'css/design-system/pages/marketing-landing.css' %}?v={{ static_asset_version }}">
     <link rel="stylesheet" href="{% static 'css/design-system/pages/signup-checkout.css' %}?v={{ static_asset_version }}">
+    <link rel="stylesheet" href="{% static 'css/design-system/components/states.css' %}?v={{ static_asset_version }}">
 </head>
 <body data-page="signup-checkout">
     <header class="checkout-nav">
@@ -78,7 +79,11 @@ PONTOS CRITICOS:
                 {% if messages %}
                     <div class="checkout-messages" role="status">
                         {% for message in messages %}
-                            <div class="checkout-message checkout-message--{{ message.tags|default:'info' }}">{{ message }}</div>
+                            {% if message.tags == 'error' %}
+                                {% include "includes/ui/states/state_notice.html" with tone='danger' copy=message compact=True %}
+                            {% else %}
+                                {% include "includes/ui/states/state_notice.html" with tone=message.tags|default:'info' copy=message compact=True %}
+                            {% endif %}
                         {% endfor %}
                     </div>
                 {% endif %}

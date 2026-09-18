@@ -58,6 +58,7 @@ Runtime real e testes vencem qualquer doc.
 - **Só roda em PostgreSQL.** `django-tenants` não tem caminho SQLite — `migrate`/`runserver` em SQLite quebra com `'DatabaseWrapper' object has no attribute 'set_schema'`. Cluster dev local: porta 5433 (ver memória `octobox-local-postgres-cluster`).
 - **O RAG (`knowledge`) é SHARED** (índice único no `public`, indexado uma vez — não por box). O índice é **descartável** (regenera com `ingest_project_knowledge`); o que é durável é o markdown versionado (incl. `docs/decisions/`).
 - Rodar testes: ver [docs/testing/README.md](docs/testing/README.md) (pytest + Postgres + `--create-db --migrations`).
+- **`config/urls_public.py` é código morto.** `ROOT_URLCONF` é sempre `config.urls` — nenhum middleware troca `request.urlconf` (django-tenants entra só como app/DB router, não como middleware de request). Toda rota de `urls_public.py` já existe em `config/urls.py`. A isolação real de "roda sem tenant" é `control.middleware.TenantBySessionMiddleware.PUBLIC_SCHEMA_PATHS` (whitelist de path, não domínio/porta). Não editar `urls_public.py` esperando efeito em produção. Plano de mitigação: [docs/plans/urls-public-dead-code-mitigation-corda.md](docs/plans/urls-public-dead-code-mitigation-corda.md).
 
 ## Manter o índice fresco (opcional, recomendado)
 

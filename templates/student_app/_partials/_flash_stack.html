@@ -1,7 +1,11 @@
 {% if messages %}
 <section class="student-flash-stack" aria-live="polite">
     {% for message in messages %}
-    <article class="student-flash student-flash--{{ message.tags|default:'info' }}">{{ message }}</article>
+        {% if message.tags == 'error' %}
+            {% include "includes/ui/states/state_notice.html" with tone='danger' copy=message compact=True %}
+        {% else %}
+            {% include "includes/ui/states/state_notice.html" with tone=message.tags|default:'info' copy=message compact=True %}
+        {% endif %}
     {% endfor %}
 </section>
 {% endif %}
