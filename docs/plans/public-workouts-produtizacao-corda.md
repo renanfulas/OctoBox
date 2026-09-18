@@ -2,6 +2,8 @@
 
 **Plano de produto (o "porquê"):** [public-workouts-produtizacao-plan.md](public-workouts-produtizacao-plan.md)
 **Este documento:** execução técnica, dividida em duas frentes paralelas.
+**Vender isso (branding, oferta, preço, landing page):** [public-workouts-go-to-market-plan.md](public-workouts-go-to-market-plan.md)
+**Continuação técnica (Entrega 5 concretizada + Entrega 6 nutrição):** [public-workouts-escala-e-nutricao-corda.md](public-workouts-escala-e-nutricao-corda.md)
 
 ---
 
@@ -1923,6 +1925,14 @@ bloqueio).
 >   já "congelado" com republicação de dado real de cliente pagante merece
 >   revisão isolada, não misturada com o resto deste lote (puramente
 >   visual, sem tocar payload).
+
+> **Nota (go-to-market, 2026-09-17):** a "fatia própria" do plano alimentar citada acima
+> deixou de ter um bloqueio de dono — a esposa do Renan é nutricionista com CRN ativo e
+> vai assumir essa frente. O trabalho técnico descrito acima (parser + testes + dry-run)
+> continua não dimensionado e não iniciado; o que mudou é que agora existe profissional
+> habilitada para decidir o conteúdo, então essa fatia pode ser escopada em uma onda
+> própria quando fizer sentido, sem o impeditivo legal que valia antes. Ver
+> [public-workouts-go-to-market-plan.md](public-workouts-go-to-market-plan.md) §R1 e §6.
 
 > **Atualização (quarta rodada — espaçamento, seletor de dia do Treino
 > igual ao "Sua semana", registro de carga em todo exercício, 2 bugs de
