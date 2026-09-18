@@ -47,15 +47,27 @@ from .formulas import (
     compute_whr,
     estimate_body_fat_navy,
 )
+from django.utils import timezone
+
 from .models import (
     PublicWorkoutAccount,
     PublicWorkoutAssessment,
     PublicWorkoutLoadLog,
+    PublicWorkoutMealPlan,
     PublicWorkoutMovement,
     PublicWorkoutMovementModality,
     PublicWorkoutPayment,
+    PublicWorkoutPhysicalRestrictionTag,
     PublicWorkoutProgram,
+    PublicWorkoutProgramDraft,
+    PublicWorkoutProgramDraftStatus,
+    PublicWorkoutTier,
+    PublicWorkoutTrainingExperience,
+    PublicWorkoutTrainingGoal,
+    PublicWorkoutTrainingLocation,
+    PublicWorkoutTrainingProfile,
 )
+from .nutrition_schema import assert_valid_payload as assert_valid_nutrition_payload
 from .one_rep_max import detect_one_rep_max_trend, estimate_one_rep_max
 from .schema import assert_valid_payload
 
@@ -358,6 +370,287 @@ def publish_program(*, slug: str, payload: dict) -> PublicWorkoutProgram:
             weeks=payload['weeks'],
             version=next_version,
             is_active=True,
+            payload=payload,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Anamnese de treino + rascunhos de programa (D4 do plano de produto: coleta
+# antes da IA existir; review-gate: NADA gerado por IA vira PublicWorkoutProgram
+# sem aprovacao humana explicita — decisao confirmada do Renan, nao opcional).
+# ---------------------------------------------------------------------------
+
+
+class TrainingIntakeValidationError(ValueError):
+    """Levantada quando a anamnese chega sem consentimento explicito ou com
+    valor de escolha invalido — mesmo espirito de AssessmentValueError/
+    LoadValueError (erro de entrada, nao julgamento de treino).
+
+    NENHUMA linha de PublicWorkoutTrainingProfile existe sem passar por
+    save_training_profile: e' a unica garantia de que
+    consent_ai_processing_at nunca fica None numa anamnese que ja foi lida
+    por program_generation_ai.py (N4/D2 do plano de produto — campos 6/7
+    podem conter dado de saude sensivel indo pra API da Anthropic, exige
+    consentimento separado do consentimento generico de cadastro)."""
+
+
+def save_training_profile(
+    *,
+    account_id: int,
+    goal: str,
+    physical_restrictions: list[str],
+    physical_restrictions_detail: str,
+    training_experience: str,
+    days_per_week: int,
+    training_location: str,
+    motivation: str,
+    biggest_difficulty: str,
+    consent_given: bool,
+) -> PublicWorkoutTrainingProfile:
+    """Cria ou atualiza (E12 — revalidacao futura reusa a mesma linha, nunca
+    duplica) a anamnese de treino da conta. `update_or_create` de proposito:
+    o OneToOneField ja' impede duplicata no banco, mas um segundo POST do
+    mesmo aluno (revisao de resposta, ou o re-ask futuro de E12) deve
+    atualizar a mesma linha, nunca levantar IntegrityError."""
+    if not consent_given:
+        raise TrainingIntakeValidationError('consentimento obrigatorio para usar a anamnese em geracao por IA')
+    if goal not in PublicWorkoutTrainingGoal.values:
+        raise TrainingIntakeValidationError(f'goal invalido: {goal!r}')
+    if training_experience not in PublicWorkoutTrainingExperience.values:
+        raise TrainingIntakeValidationError(f'training_experience invalido: {training_experience!r}')
+    if training_location not in PublicWorkoutTrainingLocation.values:
+        raise TrainingIntakeValidationError(f'training_location invalido: {training_location!r}')
+    if not (1 <= days_per_week <= 7):
+        raise TrainingIntakeValidationError(f'days_per_week fora da faixa 1-7: {days_per_week!r}')
+    invalid_tags = set(physical_restrictions) - set(PublicWorkoutPhysicalRestrictionTag.values)
+    if invalid_tags:
+        raise TrainingIntakeValidationError(f'physical_restrictions com tag(s) invalida(s): {sorted(invalid_tags)!r}')
+
+    profile, _created = PublicWorkoutTrainingProfile.objects.update_or_create(
+        account_id=account_id,
+        defaults={
+            'goal': goal,
+            'physical_restrictions': list(physical_restrictions),
+            'physical_restrictions_detail': physical_restrictions_detail,
+            'training_experience': training_experience,
+            'days_per_week': days_per_week,
+            'training_location': training_location,
+            'motivation': motivation,
+            'biggest_difficulty': biggest_difficulty,
+            'consent_ai_processing_at': timezone.now(),
+        },
+    )
+    return profile
+
+
+def get_training_profile(*, account_id: int) -> PublicWorkoutTrainingProfile | None:
+    return PublicWorkoutTrainingProfile.objects.filter(account_id=account_id).first()
+
+
+def serialize_training_profile(profile: PublicWorkoutTrainingProfile) -> dict:
+    """Serializacao CRUA (chaves de enum — 'joelho', 'hypertrophy' — nunca o
+    rotulo em PT-BR). Usada tanto pro snapshot congelado em
+    PublicWorkoutProgramDraft.training_profile_snapshot (auditoria: "o que a
+    IA viu" sobrevive mesmo se a anamnese for revalidada depois) quanto por
+    flag_movements_against_restrictions (que casa contra as CHAVES das tags,
+    nao contra rotulo). A conversao pra texto legivel em PT-BR pro prompt da
+    IA fica em program_generation_ai.py, no ponto de uso — este modulo nunca
+    importa nada de IA (ver test_never_calls_an_ai_provider)."""
+    return {
+        'goal': profile.goal,
+        'physical_restrictions': list(profile.physical_restrictions),
+        'physical_restrictions_detail': profile.physical_restrictions_detail,
+        'training_experience': profile.training_experience,
+        'days_per_week': profile.days_per_week,
+        'training_location': profile.training_location,
+        'motivation': profile.motivation,
+        'biggest_difficulty': profile.biggest_difficulty,
+    }
+
+
+# Palavras-chave (em `movement_slug`, nao em `name` — slug e' sempre ASCII/
+# kebab-case, forma mais estavel pra casar substring) associadas a cada tag
+# de restricao — heuristica DETERMINISTICA e deliberadamente ampla (falso
+# positivo custa 1 segundo de leitura extra na revisao; falso negativo nao
+# piora nada que a revisao humana ja nao cobrisse sozinha).
+_RESTRICTION_MOVEMENT_KEYWORDS: dict[str, tuple[str, ...]] = {
+    'joelho': ('agachamento', 'leg-press', 'afundo', 'avanco', 'extensora', 'stiff', 'passada', 'bulgaro'),
+    'ombro': ('desenvolvimento', 'elevacao-lateral', 'supino', 'remada-alta', 'press', 'crucifixo'),
+    'lombar': ('stiff', 'levantamento-terra', 'terra', 'remada-curvada', 'bom-dia', 'hiperextensao'),
+    'quadril': ('agachamento', 'stiff', 'levantamento-terra', 'afundo', 'passada'),
+    'punho_cotovelo': ('rosca', 'triceps', 'supino', 'desenvolvimento', 'francesa'),
+    'tornozelo': ('agachamento', 'panturrilha', 'avanco', 'passada'),
+}
+
+
+def flag_movements_against_restrictions(*, payload: dict, physical_restrictions: list[str]) -> list[dict]:
+    """Cruza as tags de restricao da anamnese com slug dos movimentos de um
+    payload — reforco barato pro gate de revisao humana (a IA e' instruida a
+    respeitar restricoes, mas instrucao seguida por LLM nao e' garantia; a
+    revisao do Renan e' a garantia de verdade). So' aponta candidatos a olhar
+    com mais atencao — nunca bloqueia nem remove nada do payload sozinho.
+    Lista vazia (nunca None) quando nao ha restricao com heuristica conhecida
+    ou nenhum movimento bate."""
+    relevant = {
+        tag: _RESTRICTION_MOVEMENT_KEYWORDS[tag] for tag in physical_restrictions if tag in _RESTRICTION_MOVEMENT_KEYWORDS
+    }
+    if not relevant:
+        return []
+
+    flags = []
+    for slug, _reference_url in _iter_movement_slugs(payload):
+        haystack = slug.lower()
+        for tag, keywords in relevant.items():
+            if any(keyword in haystack for keyword in keywords):
+                flags.append({'movement_slug': slug, 'restriction_tag': tag})
+    return flags
+
+
+class ProgramDraftReviewError(ValueError):
+    """Levantada quando approve_and_publish_draft/reject_program_draft e'
+    chamado sobre um rascunho que ja' saiu de PENDING_REVIEW — dois cliques
+    na mesma acao (ou dois revisores) nunca publica duas vezes nem sobrescreve
+    uma rejeicao ja registrada."""
+
+
+def create_program_draft(
+    *,
+    account_id: int,
+    slug: str,
+    payload: dict,
+    source: str,
+    ai_model: str = '',
+    training_profile_snapshot: dict | None = None,
+) -> PublicWorkoutProgramDraft:
+    """Cria um rascunho PENDING_REVIEW — NUNCA chama publish_program daqui
+    (D.2, frase 2 continua valendo: nada vira PublicWorkoutProgram sem
+    aprovacao humana explicita, ver approve_and_publish_draft). Nao valida
+    schema aqui de proposito: quem chama (admin form ou o modulo de IA) ja'
+    validou antes de chegar nesta funcao, e approve_and_publish_draft valida
+    de novo (assert_valid_payload, dentro do publish_program existente) como
+    ultima trava antes de publicar de verdade — validar 3x seria ruido, 2x e'
+    o padrao que PublicWorkoutMealPlanAdmin ja' usa (form + service).
+
+    `.create()` isolado no proprio `transaction.atomic()` (savepoint) —
+    mesma pegadinha que `record_load` ja documenta: a constraint parcial
+    (`unique_pending_review_draft_per_account_slug`) pode levantar
+    IntegrityError esperado (clique duplo em "Gerar rascunho com IA"), e
+    sem o savepoint isso "envenena" a transacao inteira do request/teste
+    ate o rollback — qualquer query depois do except (inclusive so'
+    renderizar a changelist do admin de volta) levantaria
+    TransactionManagementError em vez do fluxo normal de erro."""
+    with transaction.atomic():
+        return PublicWorkoutProgramDraft.objects.create(
+            account_id=account_id,
+            slug=slug,
+            payload=payload,
+            source=source,
+            ai_model=ai_model,
+            training_profile_snapshot=training_profile_snapshot or {},
+        )
+
+
+def _resolve_stable_program_id(*, slug: str) -> str:
+    """program_id precisa ser ESTAVEL por slug pra `version` continuar
+    contando certo entre programas sucessivos do mesmo aluno: publish_program
+    calcula `next_version` via Max(version) WHERE program_id=X (ver acima) —
+    um program_id novo a cada aprovacao reseta a contagem pra 1, mesmo sendo
+    o 2o/3o programa real da pessoa (ex.: um program_id carimbado com a data
+    da geracao criaria um program_id diferente a cada rascunho). Reusa o
+    program_id do ultimo PublicWorkoutProgram ja publicado pra este slug
+    (qualquer versao, ativa ou nao); sem nenhum ainda publicado, cai num
+    default estavel que toda aprovacao futura pra este slug vai encontrar e
+    reusar. Chamado de approve_and_publish_draft — nunca confia no
+    program_id que veio dentro do payload do rascunho (IA ou digitado a
+    mao), o mesmo espirito de determinismo ja aplicado a `started_on`/
+    `schema_version` em program_generation_ai.py."""
+    latest = PublicWorkoutProgram.objects.filter(slug=slug).order_by('-version').first()
+    if latest is not None:
+        return latest.program_id
+    return f'{slug}-program'
+
+
+def approve_and_publish_draft(*, draft_id: int, reviewed_by) -> PublicWorkoutProgram:
+    """Aprova um rascunho PENDING_REVIEW e publica de verdade — chama o
+    publish_program JA EXISTENTE e NAO MODIFICADO (zero risco de regressao
+    pro caminho de publicacao manual que management commands/testes ja'
+    usam). `select_for_update` (mesmo padrao de activate_program_version)
+    fecha a janela entre dois cliques simultaneos em "Aprovar e publicar" no
+    mesmo rascunho."""
+    with transaction.atomic():
+        draft = PublicWorkoutProgramDraft.objects.select_for_update().get(pk=draft_id)
+        if draft.status != PublicWorkoutProgramDraftStatus.PENDING_REVIEW:
+            raise ProgramDraftReviewError(
+                f'rascunho {draft_id} nao esta pendente de revisao (status={draft.status!r})'
+            )
+
+        payload = dict(draft.payload)
+        payload['program_id'] = _resolve_stable_program_id(slug=draft.slug)
+
+        program = publish_program(slug=draft.slug, payload=payload)
+
+        draft.status = PublicWorkoutProgramDraftStatus.APPROVED
+        draft.reviewed_by = reviewed_by
+        draft.reviewed_at = timezone.now()
+        draft.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'updated_at'])
+
+    return program
+
+
+def reject_program_draft(*, draft_id: int, reviewed_by, reason: str = '') -> PublicWorkoutProgramDraft:
+    """Rejeita um rascunho PENDING_REVIEW sem tocar em PublicWorkoutProgram —
+    fallback e' literalmente o status quo (Renan monta/corrige por fora)."""
+    with transaction.atomic():
+        draft = PublicWorkoutProgramDraft.objects.select_for_update().get(pk=draft_id)
+        if draft.status != PublicWorkoutProgramDraftStatus.PENDING_REVIEW:
+            raise ProgramDraftReviewError(
+                f'rascunho {draft_id} nao esta pendente de revisao (status={draft.status!r})'
+            )
+        draft.status = PublicWorkoutProgramDraftStatus.REJECTED
+        draft.reviewed_by = reviewed_by
+        draft.reviewed_at = timezone.now()
+        draft.rejection_reason = reason
+        draft.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'rejection_reason', 'updated_at'])
+    return draft
+
+
+def require_nutrition_tier(subscription) -> bool:
+    """D.4 (Entrega 6, Fase 4): gate de acesso a nutricao — a regra vive
+    num unico lugar, chamada por toda view de nutricao ANTES de qualquer
+    query de conteudo. Quem chama devolve 404 (nunca 403 — 403 confirmaria
+    que existe conteudo de nutricao pra aquela conta, mesma regra de A1)."""
+    return subscription.tier in (PublicWorkoutTier.COMPLETO, PublicWorkoutTier.PREMIUM)
+
+
+def get_active_meal_plan(*, account_id: int) -> dict | None:
+    """Payload do plano alimentar ativo da conta, ja resolvido. None se a
+    conta nunca teve um plano publicado. Mesmo contrato de get_active_program."""
+    meal_plan = PublicWorkoutMealPlan.objects.filter(account_id=account_id, is_active=True).first()
+    if meal_plan is None:
+        return None
+    return meal_plan.payload
+
+
+def publish_meal_plan(*, account_id: int, payload: dict, authored_by) -> PublicWorkoutMealPlan:
+    """Publica um novo snapshot de plano alimentar pra `account_id` e ativa
+    (D.6: o payload publicado e imutavel — nunca reescreve uma versao ja
+    existente). Mesmo padrao de publish_program, por account em vez de slug
+    (o plano alimentar nunca tem link publico compartilhavel)."""
+    assert_valid_nutrition_payload(payload)
+
+    with transaction.atomic():
+        last_version = PublicWorkoutMealPlan.objects.filter(account_id=account_id).aggregate(
+            django_models.Max('version')
+        )['version__max']
+        next_version = (last_version or 0) + 1
+
+        PublicWorkoutMealPlan.objects.filter(account_id=account_id, is_active=True).update(is_active=False)
+
+        return PublicWorkoutMealPlan.objects.create(
+            account_id=account_id,
+            version=next_version,
+            is_active=True,
+            authored_by=authored_by,
             payload=payload,
         )
 

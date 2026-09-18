@@ -19,6 +19,8 @@ paths = [
   '''(^|[\\/])templates[\\/]public_workouts[\\/].*$''',
   # Django admin test fixture password (create_superuser in a test setUp) —
   # not a real credential, same class of false positive as student_identity/tests.py.
-  '''(^|[\\/])public_workouts[\\/]test_movement_admin\.py$''',
-  '''(^|[\\/])public_workouts[\\/]test_subscription_admin\.py$''',
+  # Generalizado (era um arquivo por vez: test_movement_admin.py,
+  # test_subscription_admin.py) pra cobrir qualquer test_*_admin.py futuro
+  # do mesmo padrao, sem precisar editar este arquivo de novo a cada PR.
+  '''(^|[\\/])public_workouts[\\/]test_.*_admin\.py$''',
 ]

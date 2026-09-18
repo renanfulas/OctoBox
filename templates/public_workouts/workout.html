@@ -456,6 +456,22 @@ PONTOS CRITICOS:
       </article>
 
       <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Nutrição</h2>
+        {% if nutrition_unlocked %}
+        <div
+          data-workout-nutrition
+          data-nutrition-url="{% url 'public-workout-meal-plan' plan_slug=plan_slug %}"
+        >
+          <button type="button" class="workout-load-input__save" data-workout-nutrition-generate>Ver plano alimentar</button>
+          <div class="workout-nutrition__content" data-workout-nutrition-content hidden></div>
+          <span class="workout-nutrition__status" data-workout-nutrition-status aria-live="polite"></span>
+        </div>
+        {% else %}
+        <p>Disponível nos planos Completo e Premium. Fale com o Renan para fazer upgrade.</p>
+        {% endif %}
+      </article>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
         <h2>Versões do programa</h2>
         {% if program_versions %}
         <div class="operation-table-wrap">
@@ -792,6 +808,7 @@ PONTOS CRITICOS:
 <script src="{% static 'js/core/shell.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/load_tracker.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/weekly_review.js' %}" defer></script>
+<script src="{% static 'js/public_workouts/nutrition.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/assessments.js' %}" defer></script>
 </body>
 </html>

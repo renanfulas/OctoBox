@@ -19,6 +19,7 @@ from .public_workout_views import (
     PublicWorkoutLandingView,
     PublicWorkoutLoginView,
     PublicWorkoutSubscribeView,
+    PublicWorkoutTrainingIntakeView,
 )
 
 urlpatterns = [
@@ -27,5 +28,6 @@ urlpatterns = [
     path('subscribe', PublicWorkoutSubscribeView.as_view(), name='public-workout-subscribe'),
     path('cadastro', PublicWorkoutColdSignupView.as_view(), name='public-workout-cold-signup'),
     path('billing-portal', PublicWorkoutBillingPortalView.as_view(), name='public-workout-billing-portal'),
+    path('anamnese', PublicWorkoutTrainingIntakeView.as_view(), name='public-workout-training-intake'),
     path('stripe/webhook/', public_workout_stripe_webhook_receiver, name='public-workout-stripe-webhook'),
 ]
