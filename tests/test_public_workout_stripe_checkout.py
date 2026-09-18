@@ -26,7 +26,7 @@ from public_workouts.stripe_checkout import (
 class StartSubscriptionCheckoutTests(TestCase):
     def setUp(self):
         self.account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.subscription = get_or_create_subscription(account=self.account, plan_slug='giovanna')
+        self.subscription = get_or_create_subscription(account=self.account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
 
     @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='', STRIPE_SECRET_KEY='sk_test_x')
     def test_raises_when_price_id_not_configured(self):

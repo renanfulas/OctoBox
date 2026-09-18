@@ -24,7 +24,9 @@ PONTOS CRITICOS:
   assinatura do corredor, POST /treinos/subscribe, e' uma chamada de API
   que ja exige `plan_slug` conhecido, nao uma tela de "escolha seu
   plano") — devolve uma pagina minima informativa em vez de inventar
-  destino que nao existe.
+  destino que nao existe. Mesma logica se aplica a uma assinatura que
+  existe mas ainda nao tem `plan_slug` (cadastro a frio, Entrega 5/Fase 2,
+  D.2): sem isso o redirect virava literalmente `/renan/None`.
 """
 
 from __future__ import annotations
@@ -49,7 +51,7 @@ class StudentPublicWorkoutLinkView(StudentIdentityRequiredMixin, View):
         )
 
         subscription = getattr(account, 'subscription', None)
-        if subscription is None:
+        if subscription is None or not subscription.plan_slug:
             return HttpResponse(
                 '<p>Você ainda não tem uma consultoria ativa no corredor de treinos. '
                 'Fale com seu personal para assinar.</p>',

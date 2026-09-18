@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import PublicWorkoutAssessment, PublicWorkoutMovement, PublicWorkoutMovementStatus
+from .models import (
+    PublicWorkoutAssessment,
+    PublicWorkoutMovement,
+    PublicWorkoutMovementStatus,
+    PublicWorkoutSubscription,
+    PublicWorkoutSubscriptionStatus,
+)
 
 
 @admin.register(PublicWorkoutAssessment)
@@ -43,3 +49,31 @@ class PublicWorkoutMovementAdmin(admin.ModelAdmin):
     def promote_to_active(self, request, queryset):
         updated = queryset.update(status=PublicWorkoutMovementStatus.ACTIVE)
         self.message_user(request, f'{updated} movimento(s) promovido(s) para active.')
+
+
+class AwaitingActivationFilter(admin.SimpleListFilter):
+    """Fila de ativação (Entrega 5, Fase 2, D.2/RT2): quem pagou de verdade
+    (status=ACTIVE) mas ainda não tem plan_slug — Renan/esposa ainda não
+    criaram o PublicWorkoutProgram/atribuíram o slug. É uma query, não uma
+    tabela própria — RT2 exige que isso apareça em algum lugar que se olhe
+    todo dia, não que só exista no banco."""
+
+    title = 'aguardando ativação'
+    parameter_name = 'aguardando_ativacao'
+
+    def lookups(self, request, model_admin):
+        return (('sim', 'Sim — pagou, sem plan_slug'),)
+
+    def queryset(self, request, queryset):
+        if self.value() == 'sim':
+            return queryset.filter(status=PublicWorkoutSubscriptionStatus.ACTIVE, plan_slug__isnull=True)
+        return queryset
+
+
+@admin.register(PublicWorkoutSubscription)
+class PublicWorkoutSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('account', 'tier', 'status', 'plan_slug', 'created_at')
+    list_filter = (AwaitingActivationFilter, 'tier', 'status')
+    search_fields = ('account__email', 'plan_slug')
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at', 'updated_at')

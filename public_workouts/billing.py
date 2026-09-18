@@ -34,6 +34,7 @@ from .models import (
     PublicWorkoutSubscription,
     PublicWorkoutSubscriptionEvent,
     PublicWorkoutSubscriptionStatus,
+    PublicWorkoutTier,
 )
 from .notifications import notify_payment_due
 
@@ -217,16 +218,31 @@ def reactivate_subscription(subscription, *, reason: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def get_or_create_subscription(*, account, plan_slug: str) -> PublicWorkoutSubscription:
+def get_or_create_subscription(
+    *, account, tier: PublicWorkoutTier, plan_slug: str | None = None
+) -> PublicWorkoutSubscription:
     """Devolve a assinatura do corredor da conta, criando na primeira vez.
 
     `account` e OneToOne com PublicWorkoutSubscription — chamar de novo pra
     mesma conta sempre devolve a mesma linha, nunca cria duas (P6 do CORDA:
-    duplo clique em "assinar" nao pode duplicar assinatura).
+    duplo clique em "assinar" nao pode duplicar assinatura). Se a
+    assinatura ja existe, os valores de `defaults` sao ignorados —
+    comportamento preexistente, nao uma regressao desta fase.
+
+    `tier` e obrigatorio (nunca confia em default do model pra isso — ADR-1).
+    `plan_slug` e opcional a partir da Entrega 5/Fase 2 (D.2): cadastro a
+    frio cria a assinatura ANTES de existir slug/PublicWorkoutProgram.
+    `status` nasce sempre PENDING_PAYMENT, nunca o default ACTIVE do model
+    (RT7/D.2b/ADR-7) — so o webhook do corredor (stripe_handlers.py,
+    apos confirmar tier/price real na Stripe) promove pra ACTIVE.
     """
     subscription, _ = PublicWorkoutSubscription.objects.get_or_create(
         account=account,
-        defaults={'plan_slug': plan_slug},
+        defaults={
+            'plan_slug': plan_slug,
+            'tier': tier,
+            'status': PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
+        },
     )
     return subscription
 
