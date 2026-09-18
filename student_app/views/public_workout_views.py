@@ -929,21 +929,29 @@ class PublicWorkoutTemplatePreviewView(View):
 
 
 class PublicWorkoutSignOutView(View):
-    """POST /renan/<slug>/sair — "Sair da conta" da tela Perfil (fundacao B3,
-    pedido do Renan pra fechar o paralelo com o app do aluno).
+    """POST /renan/<slug>/sair — "Sair da conta" da tela Perfil.
 
-    So apaga o cookie de posse (PUBLIC_WORKOUT_OWNER_COOKIE, B0) — o
-    corredor ainda nao tem login de sessao (fases B/C da Onda B3), entao
-    hoje isto e' groundwork visual/funcional pra quando essa fase ligar, nao
-    uma barreira de acesso de verdade: quem voltar a abrir /renan/<slug>
-    ganha o cookie de volta automaticamente (PublicWorkoutDetailView.get
-    sempre re-seta), so os endpoints de leitura/escrita que dependem dele
-    ficam temporariamente sem posse ate a proxima visita.
+    Apaga os DOIS cookies de identidade do corredor: o cookie de posse
+    (PUBLIC_WORKOUT_OWNER_COOKIE, B0 — quem abriu o link primeiro) e o
+    cookie de login por e-mail (octobox_treinos_session, Onda B1). A
+    docstring original desta view (escrita antes do B1 existir) dizia que
+    so' o B0 importava — ficou desatualizada: sem apagar tambem a sessao de
+    login, quem clicava "Sair da conta" continuava logado como o mesmo
+    PublicWorkoutAccount por baixo, e ao abrir o link de OUTRO aluno recebia
+    404 (_confirm_login_session_owns_slug_or_404 nunca deixa a sessao
+    logada ver o slug de outra conta) — parecendo "conta trocada" quando na
+    verdade nunca saiu de verdade. Achado ao vivo verificando o corredor,
+    corrigido aqui: agora quem voltar a abrir /renan/<slug> (qualquer slug)
+    ganha o cookie de posse de volta automaticamente, sem carregar
+    identidade de login nenhuma.
     """
 
     def post(self, request, plan_slug, *args, **kwargs):
+        from student_identity.public_workout_session import clear_public_workout_session_cookie
+
         response = redirect('public-workout-offline')
         response.delete_cookie(PUBLIC_WORKOUT_OWNER_COOKIE, samesite='Lax')
+        clear_public_workout_session_cookie(response)
         return response
 
 
