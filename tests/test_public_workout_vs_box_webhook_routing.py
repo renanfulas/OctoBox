@@ -103,7 +103,7 @@ class WebhookAuthAndDedupTests(TestCase):
 class RouteToCorrectHandlerTests(TestCase):
     def setUp(self):
         self.account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.subscription = get_or_create_subscription(account=self.account, plan_slug='giovanna')
+        self.subscription = get_or_create_subscription(account=self.account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
 
     def test_checkout_session_completed_without_coaching_metadata_is_ignored(self):
         event = _make_event(
@@ -242,6 +242,11 @@ class RouteToCorrectHandlerTests(TestCase):
         self.assertEqual(payment.gross_amount, Decimal('89.90'))
 
     def test_invoice_payment_failed_marks_subscription_past_due(self):
+        # so' downgrade de ACTIVE (billing.py:323) — precondicao explicita
+        # desde a Fase 2 (D.2b), ja que get_or_create_subscription nao
+        # nasce mais ACTIVE por default.
+        self.subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        self.subscription.save(update_fields=['status'])
         link_stripe_ids(self.subscription, customer_id='cus_1', stripe_subscription_id='sub_1')
         event = _make_event(
             event_id='evt_5',
@@ -293,7 +298,7 @@ class NeverTouchesBoxStatusTests(TestCase):
         self.box_status_before = self.box.status
 
         account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.subscription = get_or_create_subscription(account=account, plan_slug='giovanna')
+        self.subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
         link_stripe_ids(self.subscription, customer_id='cus_1', stripe_subscription_id='sub_1')
 
     def test_full_lifecycle_of_corredor_events_leaves_box_status_untouched(self):
