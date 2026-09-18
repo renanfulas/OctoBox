@@ -200,6 +200,16 @@ PONTOS CRITICOS:
               </div>
             </article>
             <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}" hidden>
+              {% with siblings=movement.movement_slug|sibling_variations %}
+              {% if siblings %}
+              <div class="workout-load-input__substitutes" data-workout-substitute-pills>
+                <button type="button" class="workout-load-input__substitute-pill is-active" data-substitute-slug="{{ movement.movement_slug }}">{{ movement|movement_display_name }}</button>
+                {% for sibling in siblings %}
+                <button type="button" class="workout-load-input__substitute-pill" data-substitute-slug="{{ sibling.slug }}">{{ sibling.label_pt }}</button>
+                {% endfor %}
+              </div>
+              {% endif %}
+              {% endwith %}
               <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
               <div class="workout-load-input__row">
                 <input
@@ -318,6 +328,16 @@ PONTOS CRITICOS:
     </section>
 
     <section id="workout-panel-cargas" data-workout-tab-panel>
+      <article
+        class="student-card card-decor-topstripe workout-block-card"
+        data-workout-weekly-review
+        data-weekly-review-url="{% url 'public-workout-weekly-review' plan_slug=plan_slug %}"
+      >
+        <h2>Revisão semanal</h2>
+        <p class="workout-weekly-review__text" data-workout-weekly-review-text hidden></p>
+        <button type="button" class="workout-load-input__save" data-workout-weekly-review-generate>Gerar revisão</button>
+        <span class="workout-weekly-review__status" data-workout-weekly-review-status aria-live="polite"></span>
+      </article>
       <article class="student-card card-decor-topstripe workout-block-card">
         <h2>Evolução de carga</h2>
         {% regroup load_history by movement_slug as load_history_by_movement %}
@@ -771,6 +791,7 @@ PONTOS CRITICOS:
 </script>
 <script src="{% static 'js/core/shell.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/load_tracker.js' %}" defer></script>
+<script src="{% static 'js/public_workouts/weekly_review.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/assessments.js' %}" defer></script>
 </body>
 </html>

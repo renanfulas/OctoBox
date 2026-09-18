@@ -60,7 +60,11 @@ PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 ano
 # deliberado — nao depende do mtime dos assets estaticos, que nao mudam
 # nesta correcao. Bumpar de novo sempre que uma correcao de seguranca
 # precisar forcar a troca de cache em todos os aparelhos.
-PUBLIC_WORKOUT_CACHE_EPOCH = 2
+# Bump para 3 (Entrega 4, corte pra workout.html): o HTML que /renan/<slug>
+# devolve mudou de arquivo por-cliente pra template unico — sem isto, o
+# service worker ja instalado nos aparelhos dos 10 clientes continua
+# servindo a pagina legada em cache, offline, indefinidamente.
+PUBLIC_WORKOUT_CACHE_EPOCH = 3
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -283,11 +287,23 @@ PUBLIC_WORKOUT_STYLESHEETS: tuple[str, ...] = (
     '/static/css/public_workouts/install-prompt.css',
     '/static/css/public_workouts/assessments.css',
     '/static/css/public_workouts/mobile.css',
+    # Entrega 4 — exclusivos de workout.html (template unico, ver <head>
+    # do proprio arquivo): sem eles no precache, o corte pra producao abre
+    # offline sem estilo nenhum.
+    '/static/css/student_app/app.css',
+    '/static/css/design-system/components/tables.css',
+    '/static/css/design-system/components/interactive-tabs.css',
+    '/static/css/design-system/neon.css',
+    '/static/css/public_workouts/workout-shell.css',
 )
 
 PUBLIC_WORKOUT_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/app.js',
     '/static/js/public_workouts/assessments.js',
+    # Entrega 4 — exclusivos de workout.html.
+    '/static/js/core/shell.js',
+    '/static/js/public_workouts/load_tracker.js',
+    '/static/js/public_workouts/weekly_review.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}
@@ -517,18 +533,26 @@ def _inject_legacy_pwa_head(html: str, plan: PublicWorkoutPlan, asset_version: s
     `data-plan-slug` no <body>, que e como assessments.js descobre qual
     plano buscar em /renan/<slug>/avaliacoes.json.
     """
-    head_injection = (
-        f'<meta name="theme-color" content="{plan.theme_color}">\n'
-        '<meta name="mobile-web-app-capable" content="yes">\n'
-        '<meta name="apple-mobile-web-app-capable" content="yes">\n'
-        '<meta name="apple-mobile-web-app-status-bar-style" content="default">\n'
-        f'<meta name="apple-mobile-web-app-title" content="{plan.title}">\n'
-        f'<link rel="manifest" href="{plan.manifest_url}">\n'
-        f'<link rel="apple-touch-icon" href="{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}">\n'
-        '<link rel="icon" href="/static/images/student-app-icon.svg" type="image/svg+xml">\n'
-        f'<link rel="icon" href="{PUBLIC_WORKOUT_ICON_192}" sizes="192x192" type="image/png">\n'
-        f'<link rel="stylesheet" href="/static/css/public_workouts/assessments.css?v={asset_version}">'
-    )
+    head_injection_lines = [
+        f'<meta name="theme-color" content="{plan.theme_color}">',
+        '<meta name="mobile-web-app-capable" content="yes">',
+        '<meta name="apple-mobile-web-app-capable" content="yes">',
+        '<meta name="apple-mobile-web-app-status-bar-style" content="default">',
+        f'<meta name="apple-mobile-web-app-title" content="{plan.title}">',
+        f'<link rel="manifest" href="{plan.manifest_url}">',
+        f'<link rel="apple-touch-icon" href="{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}">',
+        '<link rel="icon" href="/static/images/student-app-icon.svg" type="image/svg+xml">',
+        f'<link rel="icon" href="{PUBLIC_WORKOUT_ICON_192}" sizes="192x192" type="image/png">',
+    ]
+    # Entrega 4: workout.html (template unico) ja inclui assessments.css
+    # direto no <head> via {% static %} — injetar de novo duplicaria o
+    # <link>. Os 10 arquivos legados nunca tem essa string (e por isso esta
+    # injecao existe), entao a guarda nao muda nada pra eles.
+    if 'assessments.css' not in html:
+        head_injection_lines.append(
+            f'<link rel="stylesheet" href="/static/css/public_workouts/assessments.css?v={asset_version}">'
+        )
+    head_injection = '\n'.join(head_injection_lines)
     for marker in _LEGACY_VIEWPORT_MARKERS:
         if marker in html:
             html = html.replace(marker, f'{marker}\n{head_injection}', 1)
@@ -553,8 +577,10 @@ def _inject_legacy_pwa_head(html: str, plan: PublicWorkoutPlan, asset_version: s
     return html
 
 
-def _render_public_workout_html(plan_slug: str) -> str:
-    """Renderiza a pagina do plano a partir do template do aluno.
+def _render_legacy_template_html(plan_slug: str) -> str:
+    """Renderiza a pagina do plano a partir do arquivo HTML por-cliente
+    (bruno.html etc.) — mecanismo original, mantido para os slugs que
+    ainda nao foram cortados pra `workout.html` (ver `_legacy_template_slugs`).
 
     O <head>, o prompt de instalacao e o registro do service worker vem
     de public_workouts/_base.html PARA TEMPLATES CONVERTIDOS. Arquivos
@@ -586,6 +612,68 @@ def _render_public_workout_html(plan_slug: str) -> str:
     return html
 
 
+def _legacy_template_slugs() -> frozenset[str]:
+    """Escape hatch de rollout canario / kill switch (Entrega 4): slug
+    listado aqui continua no arquivo legado mesmo com `PublicWorkoutProgram`
+    ativo. Reverte por env var + restart, sem deploy — ver
+    `PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS` em config/settings/base.py."""
+    return getattr(settings, 'PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS', frozenset())
+
+
+def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None) -> str:
+    """Renderiza `/renan/<slug>` — Entrega 4: template unico
+    (`public_workouts/workout.html`) quando o slug tem `PublicWorkoutProgram`
+    ativo e nao esta na lista de escape; senao cai no arquivo legado
+    por-cliente (`_render_legacy_template_html`), mesmo comportamento de
+    sempre.
+
+    Import tardio de `public_workouts.services`: este modulo e importado
+    POR `public_workouts` (`PUBLIC_WORKOUT_LIBRARY`), um import no topo
+    criaria ciclo — mesmo motivo documentado em
+    `_confirm_login_session_owns_slug_or_404`.
+
+    `account_id=None` (visitante sem sessao B1 resolvida ainda) degrada
+    para `trends_by_movement`/`one_rep_max_by_movement`/`load_history`
+    vazios — nunca quebra a pagina, so mostra a aba Cargas sem historico.
+    """
+    plan = _get_public_workout_entry(plan_slug)
+
+    from public_workouts.services import (
+        build_student_package,
+        build_weekly_review,
+        get_active_program,
+        list_load_history,
+        list_program_versions,
+    )
+
+    program = get_active_program(slug=plan.slug)
+    if program is None or plan.slug in _legacy_template_slugs():
+        return _render_legacy_template_html(plan_slug)
+
+    if account_id is not None:
+        weekly_review = build_weekly_review(account_id=account_id)
+        package = build_student_package(account_id=account_id, slug=plan.slug)
+        load_history = list_load_history(account_id=account_id)
+    else:
+        weekly_review = {'trends_by_movement': {}}
+        package = {'one_rep_max_by_movement': {}}
+        load_history = []
+
+    return render_to_string('public_workouts/workout.html', {
+        'plan_slug': plan.slug,
+        'accent_variant': plan.assessment_sex,
+        'program': program,
+        'program_versions': list_program_versions(slug=plan.slug),
+        'load_history': load_history,
+        'one_rep_max_by_movement': package['one_rep_max_by_movement'],
+        'trends_by_movement': weekly_review['trends_by_movement'],
+        'student_name': plan.short_name,
+        'student_photo_url': None,
+        'customer_portal_url': None,
+        'account_email': None,
+    })
+
+
 class PublicWorkoutDetailView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
@@ -598,7 +686,34 @@ class PublicWorkoutDetailView(View):
         from django.middleware.csrf import get_token
 
         get_token(request)
-        response = HttpResponse(_render_public_workout_html(plan_slug))
+
+        # Entrega 4: os clientes legados nunca passaram pelo fluxo de
+        # login por token (/treinos/login) — foram onboardados manuais
+        # antes dele existir. Sem sessao B1 ja ativa, resolve a conta pela
+        # PublicWorkoutSubscription do proprio slug (get_or_create feito
+        # uma vez via seed_legacy_workout_accounts) e ja estabelece a
+        # sessao nesta mesma visita — mesmo modelo de confianca que o B0
+        # ja usa hoje (posse do link prova identidade; fase B de login
+        # obrigatorio ainda nao esta ligada, ver docstring do B0 acima).
+        from public_workouts.models import PublicWorkoutSubscription
+        from student_identity.public_workout_session import (
+            attach_public_workout_session_cookie,
+            get_public_workout_account_id_from_request,
+        )
+
+        account_id = get_public_workout_account_id_from_request(request)
+        had_session = account_id is not None
+        if account_id is None:
+            subscription = (
+                PublicWorkoutSubscription.objects.filter(plan_slug=plan.slug)
+                .values_list('account_id', flat=True)
+                .first()
+            )
+            account_id = subscription
+
+        response = HttpResponse(_render_public_workout_html(plan_slug, account_id=account_id))
+        if account_id is not None and not had_session:
+            attach_public_workout_session_cookie(response, account_id=account_id)
         # B0: quem abre a pagina prova posse do link — e o que autoriza a
         # leitura de /avaliacoes.json a seguir. Cookie por instancia, nao
         # global: cada slug so autoriza a si mesmo.
@@ -833,6 +948,41 @@ class PublicWorkoutPackageView(View):
 
         package = build_student_package(account_id=account_id, slug=plan.slug)
         return JsonResponse(package, status=200)
+
+
+class PublicWorkoutWeeklyReviewView(View):
+    """GET /renan/<slug>/revisao-semanal — Entrega 4: pega os sinais
+    deterministicos de `build_weekly_review` (S/A3) e tenta transformar em
+    texto curto via `weekly_review_ai.generate_weekly_review_text` (Claude
+    Haiku). Sob demanda (a propria tela so chama isto quando o aluno clica
+    em "gerar revisao"), nunca no GET principal da pagina — custo/latencia
+    de LLM por page-load seria inaceitavel.
+
+    PONTOS CRITICOS:
+    - Mesma regra de auth de PublicWorkoutPackageView: sessao de LOGIN
+      ativa, 401 sem sessao, 404 se a sessao nao e' dona deste slug.
+    - `review_text` pode vir `null` (sem IA configurada, sem sinal, timeout,
+      erro) — isso e' resposta 200 valida, nunca 500. A tela sempre tem
+      fallback neutro pra esse caso.
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        from public_workouts.services import build_weekly_review
+        from public_workouts.weekly_review_ai import generate_weekly_review_text
+
+        review = build_weekly_review(account_id=account_id)
+        review_text = generate_weekly_review_text(review)
+        return JsonResponse({'review_text': review_text}, status=200)
 
 
 class PublicWorkoutExportDataView(View):
