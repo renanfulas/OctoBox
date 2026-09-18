@@ -41,6 +41,19 @@ class PublicWorkoutLandingViewTests(TestCase):
 
         self.assertIn('csrfmiddlewaretoken', response.content.decode('utf-8'))
 
+    def test_shows_real_credentials_never_a_todo_placeholder(self):
+        # Regressao: um comentario Django multi-linha ja vazou como texto
+        # literal aqui uma vez (so {# #} de uma linha e' valido). Trava o
+        # conteudo real e garante que nenhum placeholder de TODO sobrevive.
+        response = self.client.get(reverse('public-workout-landing'))
+        content = response.content.decode('utf-8')
+
+        self.assertIn('Renan Fulas', content)
+        self.assertIn('CREF 155070-G/SP', content)
+        self.assertIn('Giovanna Fontes', content)
+        self.assertIn('CRN-3 67286', content)
+        self.assertNotIn('TODO', content)
+
     def test_does_not_register_a_service_worker_or_pwa_install_banner(self):
         # D.7 revisado: a landing NAO estende _base.html (banner de
         # instalacao + service worker fazem sentido pra aluno com treino,
