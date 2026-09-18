@@ -10,6 +10,16 @@ existente no plano original em vez de inventar um trilho paralelo.
 **Status:** proposta · **Data:** 2026-09-17 · **Dono:** Renan (+ esposa, frente de
 nutrição) · **Nível de esforço avaliado:** chief-architect (ver §Contexto)
 
+> **Atualização (mesmo dia, pós-Revisão 3 do GTM):** a decisão do §7.6 do GTM mudou de
+> "v1 100% manual, payload livre" para **"nasce estruturada desde o v1"** — o dono do
+> produto decidiu não aceitar o `payload` como blob JSON livre decidido ad-hoc pela
+> nutricionista. D.6 abaixo foi reescrito: `payload` agora segue um schema explícito
+> (mesmo padrão de `public_workouts/schema.py`, hand-rolled, sem lib externa), com um
+> novo `nutrition_schema.py` espelhando as mesmas convenções do schema de treino. Isso
+> **não** muda a decisão de que o preenchimento continua manual (a nutricionista digita
+> no admin, não há parser/IA gerando o plano) — muda só a forma dos dados, não quem
+> produz. Ver ADR-6 (nova) e Fase 4 revisada.
+
 ---
 
 # C — Contexto
@@ -106,9 +116,11 @@ Três razões, na ordem em que apareceram durante a leitura do código:
 3. Modelar um **segundo profissional de conteúdo** (a nutricionista) de forma
    pequena o suficiente para não ser "Connect Express disfarçado", mas real o
    suficiente para não hardcodar "esposa do Renan" em string solta no código.
-4. Dar à nutrição uma **v1 deliberadamente manual** (decisão já tomada no GTM
-   §7.6: productizar depois de validar demanda), com o mínimo de fricção para
-   a nutricionista publicar.
+4. Dar à nutrição uma **v1 com preenchimento manual mas payload estruturado**
+   (decisão do GTM §7.6, revertida na Revisão 3: sem parser/IA gerando o
+   plano, mas também sem blob livre — schema validado desde o início, ver
+   D.6/ADR-6), com o mínimo de fricção possível para a nutricionista
+   publicar dentro dessa estrutura.
 5. Publicar a **landing page** como novo ponto de entrada público, sem tocar o
    fluxo autenticado existente.
 6. Fazer tudo isso **sem quebrar os 10 alunos legados** já migrados e cobrando
@@ -278,10 +290,13 @@ com `Box`/conta Connect naquele momento. Hoje ele resolve exatamente o
 problema de hoje (duas pessoas, dois papéis, dois registros profissionais),
 sem construir a parte de dinheiro que ainda não é necessária.
 
-## D.6 — Nutrição: mesmo padrão do treino, v1 sem IA nem editor
+## D.6 — Nutrição: mesmo padrão de snapshot do treino, payload estruturado (não blob livre)
 
 Seguindo D-1/D.00 do CORDA original ("Postgres é a verdade, snapshot imutável
-publicado por versão"), sem reinventar mecanismo:
+publicado por versão"), sem reinventar o mecanismo de versionamento — mas,
+diferente da proposta original deste documento, **o formato interno do
+`payload` segue um schema explícito**, decisão tomada na Revisão 3 do GTM
+(§7.6: "quero já nascer estruturado", não payload livre decidido ad-hoc).
 
 ```python
 class PublicWorkoutNutritionProfile(TimeStampedModel):
@@ -299,12 +314,13 @@ class PublicWorkoutNutritionProfile(TimeStampedModel):
 class PublicWorkoutMealPlan(models.Model):
     """Snapshot publicado do plano alimentar — mesmo padrão de
     PublicWorkoutProgram (D-1 do CORDA original): nunca UPDATE, nova
-    versão é nova linha, is_active decide qual serve."""
+    versão é nova linha, is_active decide qual serve. payload validado
+    por nutrition_schema.assert_valid_payload() antes de save() (D.6)."""
     account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='meal_plans')
     version = models.PositiveIntegerField()
     is_active = models.BooleanField(default=False, db_index=True)
     authored_by = models.ForeignKey(PublicWorkoutProfessional, on_delete=models.PROTECT)
-    payload = models.JSONField()   # estrutura decidida pela nutricionista, não pelo código
+    payload = models.JSONField()   # forma fixa por nutrition_schema.py, conteúdo pela nutricionista
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -317,17 +333,95 @@ class PublicWorkoutMealPlan(models.Model):
         ]
 ```
 
-**v1 é 100% manual, por decisão já registrada (GTM §7.6):** sem parser, sem
-formato de "refeição" modelado em campos — `payload` é o que a nutricionista
-escrever num formulário simples do Django Admin (mesmo padrão já usado para
-`PublicWorkoutMovement`, citado no histórico de commits). Isso não é
-preguiça — é a mesma lição que o corredor de treinos inteiro já ensinou: não
-productizar antes de validar demanda e formato de atendimento.
+### O schema do `payload` — espelha `public_workouts/schema.py`, não reinventa convenção
+
+Mesma filosofia do schema de treino: validador manual (`_require` + lista de
+erros), sem lib externa, `schema_version` próprio (independente do `version`
+do model — um é "forma do JSON", o outro é "revisão do conteúdo nutricional
+daquele aluno"). Desenhado a partir dos dois casos reais de dieta que já
+existem no HTML legado (`rafael.html`, `bruno.html` — este com tabela de
+substituição por função, achado do agente de exploração desta rodada):
+
+```python
+# public_workouts/nutrition_schema.py — contrato do payload de PublicWorkoutMealPlan
+# Mesmo espírito de schema.py: valida a mão, sem lib externa, campos aditivos
+# viram opcionais (nunca quebra payload antigo ao adicionar campo novo).
+
+NUTRITION_SCHEMA_VERSION = 1
+
+MACRO_KEYS = ('kcal', 'protein_g', 'carbs_g', 'fat_g')
+
+{
+    'schema_version': 1,
+    'daily_targets': {'kcal': 2400, 'protein_g': 180, 'carbs_g': 260, 'fat_g': 70},
+    'meals': [
+        {
+            'meal_id': 'refeicao-1',           # obrigatório, único dentro do payload
+            'label': 'Café da manhã',           # obrigatório
+            'time': '07:00',                    # opcional, 'HH:MM'
+            'items': [
+                {
+                    'food': 'Ovo inteiro',
+                    'quantity': '3 unidades',   # texto livre, como no HTML legado ("150g", "1 fatia")
+                    'kcal': 210, 'protein_g': 18, 'carbs_g': 1.5, 'fat_g': 15,  # opcionais por item
+                },
+            ],
+            'substitutes': [                    # opcional — mesma ideia da tabela de swap do bruno.html
+                {'food': 'Tapioca', 'quantity': '2 unidades pequenas'},
+            ],
+            'note': 'Pode trocar o café por lanche se treinar em jejum.',   # opcional, texto livre
+        },
+    ],
+}
+```
+
+Regras de validação (`assert_valid_payload`, mesmo estilo de
+`_validate_movement` em `schema.py`): `daily_targets` obrigatório com as 4
+chaves de `MACRO_KEYS`, todas números ≥ 0; `meals` lista não-vazia;
+`meal_id` único dentro do payload (mesmo cuidado que `day_id` já tem no
+schema de treino); `items` lista não-vazia por refeição; `food`/`quantity`
+strings obrigatórias, macros por item **opcionais** (a nutricionista nem
+sempre quebra o macro por alimento, só o total da refeição/dia — não forçar
+granularidade que o HTML legado também não tinha); `substitutes` e `note`
+aditivos.
+
+### Por que substituições ficam embutidas no payload, não numa tabela `FoodItem` compartilhada
+
+Alternativa considerada e rejeitada por agora: extrair um catálogo global de
+alimentos com grupos de equivalência, espelhando `PublicWorkoutMovement` +
+`movement_pattern` + `suggest_substitutes()` (o mesmo padrão que já existe
+para substituição de exercício, achado do agente de exploração). Rejeitado
+porque:
+
+- Exercícios são um catálogo genuinamente compartilhado entre todos os
+  alunos (o mesmo agachamento serve pra qualquer programa). Substituições de
+  alimento no HTML legado (`bruno.html`) são compostas pela nutricionista
+  para aquele plano — quantidade e escolha dependem do macro-alvo individual,
+  não é uma tabela universal "frango = ovo" independente de contexto.
+- Construir um catálogo de alimentos com quantidades equivalentes por macro
+  é trabalho de nutrição de verdade (tabela TACO/USDA, conversão por
+  gramas), não é decisão de arquitetura de software — não é algo para
+  inventar no código sem a nutricionista definir o conteúdo primeiro.
+
+**Reconsiderar se:** depois de alguns planos publicados, os mesmos grupos de
+substituição se repetirem entre alunos (sinal de que existe uma taxonomia
+real por trás) — aí extrair vira redução de trabalho duplicado, não
+antecipação especulativa. Mesma régua de "pagar adiantado só quando o
+padrão já apareceu 2+ vezes" usada em ADR-3 (`PublicWorkoutProfessional`).
 
 **Por que `account`, não `slug`:** o plano alimentar nunca teve — e não deveria
 ganhar agora — o conceito de "link público compartilhável" que o treino tem.
 É sempre privado, sempre atrás de login. Modelar por `account` em vez de
 `slug` já deixa isso estruturalmente impossível de vazar por engano (RT5).
+
+**O que "manual" ainda quer dizer, mesmo com schema estruturado:** a decisão
+do GTM §7.6 mudou a *forma* dos dados, não quem os produz. Continua sem
+parser de PDF, sem IA gerando o plano, sem importação automática — a
+nutricionista preenche um formulário no Django Admin com campos por
+refeição/item (não mais um textarea único). O ganho de ter schema é
+validação (não aceita payload malformado) e a possibilidade de, no futuro,
+renderizar o plano num template em vez de copiar HTML à mão — não é
+"produto de nutrição completo", ainda é v1.
 
 ## D.7 — Landing page: HTML no template, não CMS
 
@@ -480,6 +574,31 @@ classDiagram
   chamada a mais na API da Stripe para resolver o price do line item quando
   necessário) — trade-off aceito porque o custo de errar é dinheiro.
 
+### ADR-6 — `PublicWorkoutMealPlan.payload` segue schema explícito (`nutrition_schema.py`), não JSONField livre
+
+- **Status:** aceita (decisão revertida da proposta original deste documento
+  após GTM Revisão 3, §7.6).
+- **Contexto:** a primeira versão deste documento propunha `payload` como
+  JSONField sem forma fixa ("estrutura decidida pela nutricionista, não pelo
+  código"), espelhando o `payload` de texto livre que já existe no HTML
+  legado. O dono do produto rejeitou essa opção explicitamente.
+- **Escolhida:** schema hand-rolled em `nutrition_schema.py`, mesmo padrão de
+  `public_workouts/schema.py` (validador manual, `schema_version` próprio,
+  campos aditivos opcionais) — ver D.6.
+- **Alternativas consideradas:**
+  1. JSONField livre (proposta original) — rejeitada pelo dono do produto:
+     sem validação, o formato fica ao sabor de quem preenche, dificulta
+     renderizar de forma consistente entre alunos.
+  2. Catálogo de alimentos compartilhado com grupos de equivalência
+     (espelhando `PublicWorkoutMovement`) — rejeitada por agora (ver D.6):
+     tabela de equivalência nutricional é trabalho de conteúdo, não de
+     arquitetura, e ainda não há sinal de repetição entre planos que
+     justifique extrair uma taxonomia global.
+- **Consequência:** o formulário de admin da Fase 4 precisa de campos
+  estruturados por refeição/item (não um textarea único) — mais trabalho de
+  UI de admin do que a proposta original, mas o ganho é validação real e a
+  possibilidade de renderizar o plano num template padronizado depois.
+
 ---
 
 # Migração — fases
@@ -525,17 +644,27 @@ migration aplicada).
 
 ## Fase 4 — Módulo de nutrição mínimo (pode rodar em paralelo à Fase 3)
 
+- `public_workouts/nutrition_schema.py`: validador do payload (D.6), espelha
+  `schema.py` — primeiro artefato desta fase, porque tudo abaixo depende dele.
 - Migrations: `PublicWorkoutProfessional`, `PublicWorkoutNutritionProfile`,
   `PublicWorkoutMealPlan`, FK `authored_by` em `PublicWorkoutProgram`.
 - Migration de dado: popular as duas linhas de `PublicWorkoutProfessional`
   (Renan/treino, esposa/nutrição) com nome e registro reais.
-- Admin do Django para a nutricionista publicar o `PublicWorkoutMealPlan`
-  (formulário simples, sem editor rico).
+- Admin do Django para a nutricionista publicar o `PublicWorkoutMealPlan` —
+  **formulário estruturado por refeição/item** (formset inline no admin:
+  refeição → itens → macros opcionais), não um textarea único; `save()`
+  chama `nutrition_schema.assert_valid_payload()` antes de persistir,
+  rejeita publicação malformada com os erros do validador. Ainda v1 manual
+  (a nutricionista digita, sem parser/IA) — só a forma dos dados mudou
+  (ADR-6).
 - Rota autenticada de leitura do plano alimentar ativo, gate por tier (D.4).
 - CRN exibido em qualquer tela que mostre conteúdo nutricional.
 - **Pronto quando:** uma conta tier Completo vê o próprio plano alimentar
-  ativo; uma conta tier Essencial recebe 404 na mesma rota; o CRN aparece na
-  tela.
+  ativo, renderizado a partir do payload estruturado (refeições, itens,
+  macros, substituições); uma conta tier Essencial recebe 404 na mesma
+  rota; o CRN aparece na tela; um payload malformado (ex.: refeição sem
+  `items`) é rejeitado no admin com erro do `nutrition_schema.py`, nunca
+  salvo quebrado.
 
 ---
 
@@ -547,6 +676,11 @@ migration aplicada).
 - **Segurança:** `PublicWorkoutMealPlan` segue a mesma régua de A1/A4 (404 para
   quem não é dono, nunca em cache de service worker) — não é uma régua nova a
   inventar, é copiar a existente (RT5).
+- **Contrato de payload:** `nutrition_schema.py` precisa de testes próprios
+  (casos válidos e cada campo obrigatório faltando/malformado) antes de a
+  Fase 4 ser considerada pronta — mesmo padrão de cobertura que já existe
+  para `schema.py` do treino (ver `public_workouts/test_workout_template.py`).
+  `assert_valid_payload()` é chamado no `save()`/admin, nunca só documentado.
 - **Observabilidade:** a fila de ativação (D.2) precisa de uma forma de
   Renan/esposa notarem que cresceu — no mínimo, um contador visível no admin;
   idealmente, o mesmo canal de notificação já usado para outras réguas do

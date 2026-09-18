@@ -5,13 +5,23 @@
 **Como construir o que este plano pede:** [public-workouts-escala-e-nutricao-corda.md](public-workouts-escala-e-nutricao-corda.md)
 **Este documento:** branding, público, oferta, preço, aquisição e a landing page que vende isso.
 
-**Status:** rascunho v2 · **Data:** 2026-09-17 · **Dono:** Renan · **Revisão:** 2
+**Status:** rascunho v3 · **Data:** 2026-09-17 · **Dono:** Renan · **Revisão:** 3
 
 > **O que mudou na Revisão 2:** a esposa do Renan é nutricionista com **CRN ativo** e vai
 > assumir a frente de nutrição — o risco legal do R1 (prescrever dieta sem ser
 > nutricionista) deixa de existir. Isso reabre a oferta "treino + nutrição" desde o
 > lançamento, mas troca o risco legal por um risco operacional novo: agora são **duas**
 > agendas humanas limitando o volume, não uma. Ver R1, §3 e §6 atualizados.
+
+> **O que mudou na Revisão 3:** as seis decisões do §7 (antigo "só você pode tomar")
+> foram respondidas. Resumo: **já existe audiência** e **já existe orçamento de tráfego
+> pago** (isso muda a ordem do funil no §4 — ver nota nova); a nutricionista é **sócia da
+> oferta combinada**, não prestadora à parte; o atendimento dela é **assíncrono**
+> (formulário → plano), igual ao espírito do treino v1; e a nutrição **nasce estruturada**
+> no produto, não como texto livre — decisão que muda o desenho técnico do §6 e da
+> Entrega 6 (ver `public-workouts-escala-e-nutricao-corda.md`, D.6 revisado). A única
+> pergunta que **continua sem resposta** é o valor real cobrado hoje dos 10 legados — não
+> é por falta de pergunta, é porque ninguém mediu ainda; ver nota no §3.
 
 > Regra herdada do GTM B2B do OctoBox ([docs/gtm/README.md](../gtm/README.md)): **nenhuma
 > peça de venda pode prometer o que a operação ainda não sustenta.** Este documento segue
@@ -173,28 +183,37 @@ estoque de imagem.
    prova de credibilidade que se constrói uma vez e vale para sempre — use isso no hero
    da página, não só numa seção "sobre nós".
 
-**Nome da marca — decisão sua, não invento por você:**
-O produto **não pode usar a cara do OctoBox** (é o SaaS B2B para donos de academia —
-o aluno de consultoria nunca deveria ver essa marca, conforme já decidido no plano
-técnico). Precisa de nome/identidade **pessoal, ligado a você como profissional**, não
-ao software. Três direções possíveis, para você escolher ou combinar:
-- **Nome próprio + especialidade**: "Renan Personal", "Treino com Renan" — aposta na
-  confiança pessoal, funciona bem se você já tem alguma presença (Instagram, indicação).
-- **Nome de método/sistema**: algo como "Método [X]" ou "[X] Treino" — funciona melhor
-  para escalar depois para outros personais (`/joao/`, `/milene/`...), porque não fica
-  preso à sua imagem.
-- **Nome do problema resolvido**: foca na dor ("Evolua Real", "Treino que Funciona") —
-  mais genérico, mais fácil de testar em anúncio, mais difícil de defender depois.
-- **Marca de dupla** (nova opção, Revisão 2): nome que abrace as duas frentes
-  explicitamente — algo como "[Nome] Treino & Nutrição". Funciona bem justamente porque
-  o diferencial real agora é ter dois profissionais registrados, não um genérico
-  "personal completo". Custo: a marca fica mais amarrada às duas pessoas, dificulta
-  escalar para outros profissionais depois — mas hoje isso não é o problema que vocês
-  estão resolvendo (§7 decide se será).
+**Nome da marca — decidido na Revisão 3 (com sua entrada: "meu nome sozinho ainda é
+genérico, quero algo mais elaborado").**
 
-Pergunta em aberto (ver §8): você já tem um nome/perfil que os 10 alunos atuais
-reconhecem? Se sim, é o ponto de partida óbvio — não descarte marca que já tem confiança
-construída.
+O produto **não pode usar a cara do OctoBox** (é o SaaS B2B para donos de academia — o
+aluno de consultoria nunca deveria ver essa marca, conforme já decidido no plano
+técnico). Você confirmou que hoje só quem já é próximo sabe que você vende consultoria —
+ou seja, o nome próprio ainda não carrega reconhecimento de marca por si só (ao contrário
+do que a Revisão 2 supunha ao listar "Renan Personal" como aposta óbvia). Isso descarta a
+opção 1 (nome próprio) e pede algo que se sustente sozinho, sem depender de fama pessoal
+prévia.
+
+O diferencial real (§0/§2 acima) não é "personal simpático" — é **prova mensurável**: o
+gráfico de evolução de carga é dado real, não promessa. É esse fio que amarra as opções
+abaixo, em vez de nomes genéricos de nicho fitness ("Evolua", "Foco", "Shape"):
+
+| Nome | Por que funciona | Ponto de atenção |
+|---|---|---|
+| **Curva** (ex.: *Curva Treino & Nutrição*) | Nome mais forte da lista: aponta direto para o ativo de marketing mais concreto que vocês têm — o gráfico de evolução de carga é literalmente uma curva. Curto, fácil de falar, funciona em Instagram (@curva.treino) e não soa "fitness genérico" | Precisa de uma linha de apoio no hero explicando a curva na primeira frase, senão o nome sozinho não entrega o significado |
+| **Vetor** (ex.: *Vetor Performance*) | Vetor tem direção **e** magnitude — combina com "treino com direção certa, não giro no lugar", e soa técnico/confiável sem ser frio | Mais abstrato que "Curva"; exige mais copy de apoio para o público não-técnico entender a referência |
+| **Cerne** (ex.: *Cerne Treino & Nutrição*) | Cerne = núcleo, essência — soa premium, funciona bem para a marca de dupla (duas frentes, um núcleo comum) | Não referencia o diferencial de dado real tão diretamente quanto "Curva" |
+
+**Recomendação: "Curva".** É o único nome da lista que já nasce contando a história do
+produto (dado real, progresso medido) antes de qualquer linha de copy — e funciona tanto
+como marca de dupla ("Curva Treino & Nutrição") quanto, se um dia vocês decidirem
+escalar para outros profissionais (fora de escopo por ora, ver C5 do plano técnico), como
+guarda-chuva neutro que não fica preso ao nome de uma pessoa só.
+
+Se nenhum dos três "bater", a via de saída é gerar uma segunda rodada com você me dando
+2–3 palavras/sensações que você quer que a marca transmita (ex.: "científico", "sério",
+"acessível") — nomes de marca funcionam melhor com um ponto de partida emocional seu do
+que com uma lista genérica.
 
 ---
 
@@ -230,17 +249,41 @@ uma, gastam tempo de revisão por cliente. Resista à tentação de colocar nutr
 nível Essencial "de graça para competir" — isso reintroduz o mesmo erro do R3 (prometer
 mais do que a operação sustenta), só que agora com duas agendas em vez de uma.
 
+### Recalibração pós-Revisão 3 — o que muda quando audiência e orçamento já existem
+
+Você me pediu para fazer a aferição entre público, demanda, preço e volume em vez de
+só confirmar um número — então é isso: com **audiência já existente** (§7.1) e
+**orçamento de tráfego pago já definido** (§7.2), o gargalo de topo de funil que a
+Revisão 1/2 assumia ("sem base própria, depende só de orgânico crescer devagar")
+**deixa de existir**. Isso muda o §4 (ver nota abaixo), mas **não muda o teto real do
+negócio**, que continua sendo a agenda de revisão humana — na verdade, essa
+recalibração aponta um risco novo: se demanda deixar de ser o fator limitante, leads
+vão chegar mais rápido do que antes, e a fila sem SLA do RT2 (plano técnico) fica mais
+provável de estourar mais cedo, não menos. Trate isso como motivo para **priorizar a
+Entrega 5 (onboarding self-service) e medir a capacidade real da nutricionista antes de
+acelerar o tráfego pago**, não como licença para acelerar tudo de uma vez.
+
+O que essa recalibração **não** resolve: o valor real cobrado hoje dos 10 alunos
+legados. Perguntei diretamente (§7.3) e a resposta foi pedir esta aferição em vez de um
+número — o que é uma resposta válida sobre a *lógica* do funil, mas não substitui o
+dado que falta. **Isso continua sendo medido, não estimado** — a linha "Base hoje" da
+tabela abaixo segue com o valor do plano técnico original (R$ 89,90) como placeholder
+explícito, não como fato confirmado.
+
 ### Projeção mês a mês (ilustrativa — não é previsão, é hipótese a validar em 2–3 semanas de dados reais)
 
-Recalculada para o mix E (ticket médio maior, menos alunos necessários que a Revisão 1):
+Recalculada para o mix E (ticket médio maior, menos alunos necessários que a Revisão 1).
+Mês 1 sobe em relação à Revisão 2 porque audiência+orçamento já existentes encurtam o
+tempo até a primeira onda de conversão — o teto dos meses 3–4 **não muda**, porque
+continua sendo a agenda de revisão dos dois, não a velocidade de geração de leads:
 
 | Mês | Ativos no fim do mês | MRR aproximado (mix E) | O que precisa ser verdade |
 |---|---|---|---|
-| Base hoje | 10 (legados) | ~R$ 1.400 (estimado — **confirme o valor real cobrado hoje**) | — |
-| Mês 1 | ~18 | ~R$ 3.300 | Landing no ar, funil de indicação ativo, sua esposa já validou o formato de atendimento nutricional (§7) |
-| Mês 2 | ~30 | ~R$ 5.500 | Conteúdo orgânico rodando, primeiras conversões pagas testadas |
-| Mês 3 | ~41 | ~R$ 7.600 | A agenda de revisão **dos dois** precisa aguentar o ritmo — Entrega 5 (onboarding self-service) e o formato de atendimento da nutricionista são os dois tetos a observar aqui |
-| Mês 4 | ~53 | **~R$ 9.800–10.200** | Meta batida — assumindo churn ~10%/mês, não confirmado, e as duas agendas seguindo sem sobrecarga |
+| Base hoje | 10 (legados) | ~R$ 900 (placeholder a R$ 89,90/aluno — **valor real ainda não medido**, ver nota acima) | — |
+| Mês 1 | ~22 | ~R$ 4.000 | Audiência existente + orçamento pago já testando anúncio desde a semana 1 (não precisa esperar orgânico converter primeiro) |
+| Mês 2 | ~34 | ~R$ 6.200 | Conteúdo orgânico + pago rodando juntos; capacidade real da nutricionista já medida (§6.3) |
+| Mês 3 | ~44 | ~R$ 8.200 | A agenda de revisão **dos dois** é o teto agora, não a demanda — Entrega 5 (onboarding self-service) precisa estar no ar, senão a fila (RT2) cresce mais rápido do que antes por ter mais leads chegando |
+| Mês 4 | ~54 | **~R$ 9.900–10.300** | Meta batida — assumindo churn ~10%/mês, não confirmado, e as duas agendas seguindo sem sobrecarga |
 
 **O número que decide tudo e ninguém mede antes de vender: taxa de cancelamento
 mensal.** Se o churn for 20% em vez de 10%, a mesma quantidade de vendas novas produz
@@ -251,25 +294,37 @@ metade do crescimento líquido. Trate isso como a primeira métrica a acompanhar
 
 ## 4. Funil e canais de aquisição
 
-Ordem por **confiança/custo**, não por "o que é mais chamativo":
+Ordem por **confiança/custo**, não por "o que é mais chamativo". Revisão 3: como você já
+tem audiência **e** orçamento de tráfego pago (§7.1/§7.2), o canal 5 deixa de ser
+"depois que os outros provarem" e passa a rodar **em paralelo desde a semana 1** — mas
+como teste pequeno, não como aposta principal, pelos motivos abaixo.
 
 1. **Indicação dos 10 alunos atuais (primeiro, grátis, mais alta conversão).** Eles já
    confiam no resultado. Um programa simples de indicação (ex.: 1 mês grátis por
    indicado que assina) converte muito melhor que tráfego frio, porque a prova social já
    está feita.
-2. **Conteúdo orgânico usando a prova real que o app já gera.** O gráfico de evolução de
+2. **Sua audiência já existente (Instagram/WhatsApp/indicação ativa, Revisão 3).**
+   Diferente de tráfego frio, aqui já existe algum nível de confiança construída — é o
+   canal mais barato depois da indicação, e o primeiro lugar para anunciar a landing
+   quando ela ficar pronta.
+3. **Conteúdo orgânico usando a prova real que o app já gera.** O gráfico de evolução de
    carga e a avaliação física (silhueta, %gordura) são ativos de marketing que a maioria
    dos personal trainers **não tem** — a maioria mostra print de planilha ou treino
    escrito à mão. Isso é diferencial de verdade, use nos Reels.
-3. **A base de pacientes já atendidos pela sua esposa (novo, Revisão 2) — canal quente
-   que já existe, sem precisar negociar parceria.** Paciente dela que já confia no
-   trabalho nutricional e não tem treino estruturado é lead qualificado de graça — some
-   isso ao passo 1, é o mesmo princípio (confiança já construída) por outra porta.
-4. **Parcerias locais** (fisioterapeutas, academias sem treino estruturado) — tráfego já
+4. **A base de pacientes já atendidos pela sua esposa (Revisão 2) — canal quente que já
+   existe, sem precisar negociar parceria.** Paciente dela que já confia no trabalho
+   nutricional e não tem treino estruturado é lead qualificado de graça — some isso ao
+   passo 1, é o mesmo princípio (confiança já construída) por outra porta.
+5. **Parcerias locais** (fisioterapeutas, academias sem treino estruturado) — tráfego já
    qualificado, custo baixo, mas mais lento de negociar.
-5. **Tráfego pago — só depois que a página converter organicamente pelo menos algumas
-   vezes.** Pagar para levar gente para um funil não testado é queimar dinheiro para
-   descobrir o que o passo 1–4 já teria mostrado de graça.
+6. **Tráfego pago — testado em paralelo desde a semana 1, com verba pequena, nunca como
+   aposta principal antes da Entrega 5.** Como você já tem orçamento, não faz sentido
+   esperar; mas o motivo original da Revisão 2 para ir por último **ainda vale em
+   parte**: gastar para acelerar a entrada de leads não resolve nada se a fila de
+   revisão manual (RT2 do plano técnico) já está no teto — nesse cenário, tráfego pago
+   só faz a fila crescer mais rápido, não o MRR. Use as primeiras semanas de verba para
+   **testar criativo/mensagem** (custo baixo, aprendizado alto), e só escale o valor
+   depois que a Entrega 5 e a capacidade da nutricionista estiverem medidas (§6).
 
 ---
 
@@ -287,7 +342,7 @@ prometer o que ainda não existe):
 | **Prova social** | Depoimento dos alunos reais + antes/depois honesto (com consentimento explícito, LGPD) | Os 10 alunos legados são a prova, não atores |
 | **Oferta e preço** | Os três níveis (Essencial / Completo com nutrição / Premium) claros, sem letra miúda | — |
 | **Garantia** | Ex.: primeiros 7 dias, se não fizer sentido, cancela sem custo | Reduz risco percebido sem prometer resultado de corpo |
-| **FAQ / objeção** | "Preciso de equipamento?", "E se eu me machucar?", "Funciona pra iniciante?", **"a dieta é individual ou um PDF genérico?"** | Respostas ancoradas nos 7 campos de anamnese já existentes + no formato de atendimento que sua esposa definir (§7) |
+| **FAQ / objeção** | "Preciso de equipamento?", "E se eu me machucar?", "Funciona pra iniciante?", **"a dieta é individual ou um PDF genérico?"** | Respostas ancoradas nos 7 campos de anamnese já existentes + no formato assíncrono (formulário → plano) da sua esposa, decidido no §7.5 |
 | **CTA final** | Escassez **real**: vagas limitadas pela sua capacidade de revisão | Nunca inventar contador regressivo falso — é o tipo de mentira que o R3 acima descreve |
 
 ---
@@ -303,16 +358,20 @@ avisando com antecedência, como pedido:
    experiência do aluno cair**, o que aumenta o churn bem no momento em que você mais
    precisa dele baixo.
 2. **A nutrição precisa de um módulo próprio no produto — hoje não existe nenhum.**
-   *(Reescrito na Revisão 2 — o risco deixou de ser legal e virou puramente de escopo.)*
-   O que existe é um caso manual (texto solto em HTML). Construir isso direito, seguindo
-   o mesmo padrão que o CORDA já usa para o resto do produto (D.00: modelo próprio,
-   nunca estender tabela do box; ver `public-workouts-produtizacao-corda.md`), significa
-   pelo menos: uma **anamnese nutricional própria** (comorbidades, alergias, rotina
-   alimentar — diferente dos 7 campos da anamnese de treino, que não cobrem isso), um
-   jeito de **sua esposa entregar e revisar** o plano (mesmo dilema do editor de treino:
-   render assistido por IA vs. 100% manual no começo), e decidir se o plano alimentar
-   **versiona** como o `PublicWorkoutProgram` versiona o treino. Nada disso está
-   dimensionado em dias ainda — é trabalho novo de verdade, não um ajuste.
+   *(Reescrito na Revisão 2 — o risco deixou de ser legal e virou puramente de escopo;
+   reescrito de novo na Revisão 3 — §7.6 decidiu que nasce estruturada, não texto
+   livre, o que aumenta um pouco o escopo desta entrega.)* O que existe é um caso
+   manual (texto solto em HTML). Construir isso direito, seguindo o mesmo padrão que o
+   CORDA já usa para o resto do produto (D.00: modelo próprio, nunca estender tabela do
+   box; ver `public-workouts-escala-e-nutricao-corda.md`, D.6), significa pelo menos:
+   uma **anamnese nutricional própria** (comorbidades, alergias, rotina alimentar —
+   diferente dos 7 campos da anamnese de treino, que não cobrem isso), um **schema
+   explícito para o plano alimentar** (refeições, itens, macros, substituições —
+   validado, não um blob livre), um jeito de **sua esposa entregar e revisar** o plano
+   por um formulário estruturado (a decisão de v1 continua manual — sem parser/IA — só
+   a forma dos dados mudou), e o versionamento que o `PublicWorkoutProgram` já usa para
+   o treino, reaproveitado. Ainda não está dimensionado em dias — é trabalho novo de
+   verdade, agora com forma mais clara do que antes da Revisão 3.
 3. **A agenda da nutricionista é um gargalo tão real quanto a sua.** Cenário E (§3) já
    assume isso no preço, mas vale dizer sem rodeio: se ela também revisa cada plano à
    mão, o teto de alunos do nível Completo/Premium é o tempo dela, não o seu. Meça a
@@ -324,33 +383,37 @@ avisando com antecedência, como pedido:
 
 ---
 
-## 7. Decisões que só você pode tomar
+## 7. Decisões — cinco de seis resolvidas na Revisão 3
 
-Preenchi o resto do plano com a opção mais segura/razoável em cada uma destas — ajuste
-se sua realidade for diferente:
-
-1. **Você já tem audiência (Instagram, WhatsApp de leads, indicação ativa) ou começa do
-   zero?** Muda o mix de canais do §4 inteiro.
-2. **Tem orçamento definido para tráfego pago, ou o plano dos primeiros 90 dias precisa
-   ser 100% orgânico + indicação?**
-3. **Qual é o valor real cobrado hoje dos 10 alunos legados?** Isso corrige a linha
-   "Base hoje" da projeção do §3, que hoje está estimada, não medida.
-4. **Como vai funcionar a divisão de receita entre você e sua esposa na frente de
-   nutrição?** *(novo, Revisão 2)* Ela é sócia da oferta combinada, presta serviço por
-   consulta paga à parte, ou o valor dela já vem embutido no preço do nível
-   Completo/Premium? Isso não é detalhe de contabilidade — muda se ela tem incentivo pra
-   escalar volume ou pra manter qualidade com poucos clientes.
-5. **O atendimento nutricional dela é por consulta própria (chamada, agenda dela) ou
-   assíncrono (formulário → plano entregue)?** *(novo, Revisão 2)* Decide o desenho do
-   produto do jeito que os 7 campos de anamnese de treino decidiram o desenho do editor
-   de treino — e decide também quantos clientes ela consegue sustentar por mês.
-6. **A v1 da nutrição é manual (ela monta e entrega, tipo PDF/consulta — do jeito que o
-   treino também começou 100% manual) ou já nasce estruturada no app?** *(novo, Revisão
-   2)* Recomendação: **manual primeiro.** É a mesma lição que o próprio corredor de
-   treinos já ensinou nesse repositório — productizar antes de validar demanda é como
-   construir a garagem antes de saber se você vai comprar carro. Valide o formato e o
-   preço com os primeiros clientes reais; a Entrega técnica de nutrição (item 2 do §6)
-   se dimensiona melhor depois disso.
+1. **✅ Audiência: você já tem (Instagram, WhatsApp de leads, indicação ativa).** Muda o
+   mix de canais do §4 — audiência própria entrou como canal 2, antes de orgânico do
+   zero.
+2. **✅ Orçamento de tráfego pago: existe.** Entra em paralelo desde a semana 1 (canal 6
+   do §4), mas com verba pequena de teste até a Entrega 5 e a capacidade da
+   nutricionista estarem medidas — gastar mais cedo do que isso só acelera a fila, não
+   o MRR (ver recalibração no §3).
+3. **⏳ Ainda em aberto — valor real cobrado hoje dos 10 alunos legados.** Perguntado
+   direto nesta revisão; a resposta foi pedir a aferição de público×demanda×preço×volume
+   (feita no §3) em vez do número. Isso resolve a *lógica* do funil, mas a linha "Base
+   hoje" da projeção continua com um placeholder (R$ 89,90, valor do plano técnico), não
+   um dado medido. Precisa do número real para a projeção deixar de ser estimativa.
+4. **✅ Divisão de receita: sócia da oferta combinada.** Ela participa da receita dos
+   níveis Completo/Premium, não presta serviço à parte. Consequência a observar: isso
+   dá a ela incentivo para **volume**, mas o teto real continua sendo a agenda dela
+   (tempo, não dinheiro) — o incentivo de sócia não resolve o RT2/item 3 do §6, só muda
+   quem sente o efeito financeiro se a fila crescer demais.
+5. **✅ Atendimento nutricional: assíncrono (formulário → plano entregue).** Mesmo
+   espírito do treino v1 — sem agenda de chamada para modelar. Isso simplifica o
+   trabalho técnico do §6/Entrega 6: a `PublicWorkoutNutritionProfile` (anamnese) já
+   cobre o "formulário", e o plano entregue é o `PublicWorkoutMealPlan` — não precisa de
+   nenhum sistema de agendamento novo.
+6. **✅ Nutrição v1: nasce estruturada, não texto livre.** Reverte a recomendação
+   original deste documento ("manual primeiro, sem estrutura"). O preenchimento
+   continua manual (sua esposa digita, sem parser/IA) — o que muda é que o
+   `payload` segue um schema validado (refeições, itens, macros, substituições) em vez
+   de um blob livre. Ver `public-workouts-escala-e-nutricao-corda.md` D.6/ADR-6 para o
+   desenho técnico completo — o efeito colateral é que a Entrega 6 fica um pouco maior
+   (schema + validação + formulário de admin estruturado), não é mais "ajuste pequeno".
 
 ---
 
