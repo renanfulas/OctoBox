@@ -20,6 +20,7 @@ from public_workouts.one_rep_max import (
     MAX_EFFECTIVE_REPS,
     detect_one_rep_max_trend,
     estimate_one_rep_max,
+    estimate_working_weight_kg,
 )
 
 
@@ -106,6 +107,54 @@ def _log(account, *, movement_slug, weight_kg, reps, performed_on, rir=Decimal('
         performed_on=performed_on,
         idempotency_key=f'{movement_slug}-{performed_on.isoformat()}-{weight_kg}',
     )
+
+
+class EstimateWorkingWeightKgTests(TestCase):
+    """Inverso de estimate_one_rep_max -- Caminho 4 de load_suggestion.py
+    (exercicio sem fase canonica de periodizacao)."""
+
+    def test_is_the_inverse_of_estimate_one_rep_max_low_reps(self):
+        one_rm = estimate_one_rep_max(weight_kg=100, reps=5, rir=0)
+
+        working_weight = estimate_working_weight_kg(one_rep_max_kg=one_rm.value_kg, target_reps=5, target_rir=0)
+
+        self.assertAlmostEqual(working_weight, 100, delta=2.5)
+
+    def test_is_the_inverse_of_estimate_one_rep_max_blend_range(self):
+        one_rm = estimate_one_rep_max(weight_kg=80, reps=8, rir=0)
+
+        working_weight = estimate_working_weight_kg(one_rep_max_kg=one_rm.value_kg, target_reps=8, target_rir=0)
+
+        self.assertAlmostEqual(working_weight, 80, delta=2.5)
+
+    def test_is_the_inverse_of_estimate_one_rep_max_epley_range(self):
+        one_rm = estimate_one_rep_max(weight_kg=60, reps=12, rir=0)
+
+        working_weight = estimate_working_weight_kg(one_rep_max_kg=one_rm.value_kg, target_reps=12, target_rir=0)
+
+        self.assertAlmostEqual(working_weight, 60, delta=2.5)
+
+    def test_more_rir_in_reserve_suggests_lighter_weight(self):
+        heavy = estimate_working_weight_kg(one_rep_max_kg=100, target_reps=8, target_rir=0)
+        light = estimate_working_weight_kg(one_rep_max_kg=100, target_reps=8, target_rir=3)
+
+        self.assertGreater(heavy, light)
+
+    def test_none_above_max_effective_reps(self):
+        result = estimate_working_weight_kg(one_rep_max_kg=100, target_reps=14, target_rir=2)  # 16 efetivas
+
+        self.assertIsNone(result)
+
+    def test_none_without_one_rep_max(self):
+        self.assertIsNone(estimate_working_weight_kg(one_rep_max_kg=None, target_reps=8, target_rir=1))
+
+    def test_none_without_target_reps(self):
+        self.assertIsNone(estimate_working_weight_kg(one_rep_max_kg=100, target_reps=None, target_rir=1))
+
+    def test_result_rounds_to_nearest_two_point_five(self):
+        result = estimate_working_weight_kg(one_rep_max_kg=101, target_reps=7, target_rir=1)
+
+        self.assertEqual(result % 2.5, 0)
 
 
 class DetectOneRepMaxTrendTests(TestCase):

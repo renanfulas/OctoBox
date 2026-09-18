@@ -134,6 +134,25 @@
     line-height: 1.5;
 }
 
+/* Banner de fase ativa (Treino) -- so' aparece pra cliente ja migrado pro
+   modelo canonico de periodizacao. Mesmo cartao/topstripe dos outros
+   blocos, sem paleta nova. */
+.workout-phase-banner {
+    display: grid;
+    gap: 2px;
+}
+
+.workout-phase-banner strong {
+    font-size: 0.95rem;
+    color: var(--theme-text-primary);
+}
+
+.workout-phase-banner__meta {
+    font-size: 0.76rem;
+    color: var(--theme-text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
 .workout-week-strip {
     display: grid;
     gap: 12px;
@@ -425,6 +444,39 @@ button.workout-week-day:focus-visible {
     font-size: 0.8rem;
     color: var(--theme-text-muted);
     font-variant-numeric: tabular-nums;
+}
+
+/* Carga calculada (percentage_of_rm com 1RM, fase canonica de
+   periodizacao, ou estimativa via reps/RIR do proprio exercicio) --
+   kg em destaque, %RM como legenda pequena embaixo. Mesma disciplina de
+   paleta de .workout-load-chart-1rm (nao inventa cor nova so' pra isto). */
+.workout-movement-load__kg {
+    display: block;
+    color: var(--theme-text-primary);
+    font-size: 0.92rem;
+}
+
+.workout-movement-load__pct {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--theme-text-muted);
+}
+
+/* Hint "Registre sua carga..." -- mesmo estilo textual pequeno-mudo da
+   bolinha de glossario (.workout-glossary-term), sem o clique proprio: ja
+   mora dentro do card inteiro que abre o registro de carga ao clicar. */
+/* Fica DENTRO de .workout-movement-load, nunca como irmao solto entre
+   </article> e .workout-load-input -- o JS de toggle acha o widget via
+   card.nextElementSibling (workout.html), entao qualquer elemento inserido
+   ali quebra o clique-para-revelar carga (regressao ja aconteceu 1x). */
+.workout-movement-load-hint {
+    display: block;
+    max-width: 110px;
+    margin-top: 4px;
+    font-size: 0.68rem;
+    line-height: 1.3;
+    color: var(--theme-text-muted);
+    font-style: italic;
 }
 
 /* Perfil (versoes + conta) */
@@ -786,6 +838,23 @@ button.workout-week-day:focus-visible {
     fill: var(--theme-text-muted);
 }
 
+/* "Variacao irma" (Pronto-quando #3, secao A3/B4 do CORDA) -- referencia
+   rotulada de outro movimento do MESMO movement_pattern (catalogo), nunca
+   entra no calculo de 1RM/tendencia deste grafico. Mesmo tom muted do
+   "Ainda nao ha carga..." acima, discreto de proposito -- e' contexto,
+   nao um dado do proprio movimento. */
+.workout-load-chart-siblings {
+    margin: 0.5rem 0 0;
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-load-chart-siblings a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .workout-load-chart-line {
         animation: none;
@@ -1039,6 +1108,50 @@ button.workout-week-day:focus-visible {
     color: var(--theme-text-muted);
 }
 
+/* Troca de exercicio (Entrega 4) -- pills das variacoes irma dentro do
+   proprio widget de registro de carga. A pill ativa mostra qual
+   movement_slug o clique em "Salvar" vai gravar (ver
+   wireSubstitutePills em load_tracker.js); nao muda o treino
+   prescrito, so a gravacao de hoje. */
+.workout-load-input__substitutes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex-basis: 100%;
+}
+
+.workout-load-input__substitute-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.workout-load-input__substitute-pill.is-active {
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
+    color: var(--theme-text-primary, inherit);
+}
+
+/* Revisao semanal (Entrega 4) -- texto sob demanda (botao "Gerar
+   revisao"), nunca carregado automatico no GET da pagina. */
+.workout-weekly-review__text {
+    margin: 0 0 10px;
+    line-height: 1.5;
+    color: var(--theme-text-primary, inherit);
+}
+
+.workout-weekly-review__status {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+}
+
 /* ============================================================
  * Cardio + Periodizacao (Onda A2, fatia cardio/periodizacao) --
  * alcancadas so' pelo ciclo do botao "Treino" do bottom nav (ver <script>
@@ -1114,6 +1227,21 @@ button.workout-week-day:focus-visible {
     display: grid;
     justify-items: center;
     gap: 6px;
+    border-radius: 10px;
+    padding: 4px 2px;
+}
+
+/* Semana atual em destaque -- mesmo token de --brand ja usado no
+   :focus-visible da bolinha de glossario, sem inventar paleta nova. */
+.workout-period-chart__col--current {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    background: color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+.workout-period-chart__col--current .workout-period-chart__label {
+    color: var(--brand);
+    font-weight: 800;
 }
 
 .workout-period-chart__bar-wrap {

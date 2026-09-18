@@ -302,6 +302,27 @@
     });
   }
 
+  // Troca de exercicio (Entrega 4): pills de variacao irma
+  // (public_workouts_extras.py::sibling_variations, ja usadas so como
+  // referencia na aba Cargas) ganham acao aqui — clicar troca QUAL
+  // movimento este widget grava, sem endpoint novo nenhum:
+  // record_load ja aceita qualquer movement_slug livremente
+  // (public_workouts/services.py), nunca validou contra o payload do dia.
+  // buildEntryFromWidget le data-movement-slug do proprio widget em tempo
+  // de Salvar, entao so mudar esse atributo aqui basta — zero mudanca no
+  // fluxo de outbox/idempotencia acima.
+  function wireSubstitutePills(widget) {
+    var pillsContainer = widget.querySelector('[data-workout-substitute-pills]');
+    if (!pillsContainer) { return; }
+    var pills = pillsContainer.querySelectorAll('[data-substitute-slug]');
+    pills.forEach(function (pill) {
+      pill.addEventListener('click', function () {
+        widget.setAttribute('data-movement-slug', pill.getAttribute('data-substitute-slug'));
+        pills.forEach(function (p) { p.classList.toggle('is-active', p === pill); });
+      });
+    });
+  }
+
   function wireWidgets() {
     document.querySelectorAll('[data-workout-load-input]').forEach(function (widget) {
       var field = widget.querySelector('[data-workout-load-field]');
@@ -312,6 +333,7 @@
         var delta = parseFloat(stepBtn.getAttribute('data-workout-load-step'));
         stepBtn.addEventListener('click', function () { stepField(field, delta); });
       });
+      wireSubstitutePills(widget);
     });
   }
 

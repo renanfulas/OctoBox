@@ -35,10 +35,20 @@ from datetime import date as _date
 
 from django import template
 from django.utils import timezone
+from django.utils.formats import number_format
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
+from public_workouts.load_suggestion import suggest_movement_load
+from public_workouts.periodization import (
+    build_chart_points_from_weeks,
+    current_phase_profile,
+    current_week_number,
+    suggest_progressive_load_kg,
+)
+from public_workouts.substitutions import suggest_substitutes
+from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
 
 register = template.Library()
 
@@ -147,12 +157,28 @@ def movement_name(movement: dict, movement_labels: dict | None = None) -> str:
     return resolve_movement_display_name(movement.get('movement_slug', ''), movement_labels)
 
 
+@register.filter
+def sibling_variations(movement_slug: str) -> list[dict]:
+    """"Variação irmã" (Onda A3/B4, item 3 do "Pronto quando" do CORDA) —
+    outros movimentos ATIVOS do MESMO `movement_pattern` (catálogo,
+    `PublicWorkoutMovement`), exibidos na aba Cargas como REFERÊNCIA ao
+    lado do gráfico do movimento — nunca entram no cálculo de 1RM/
+    tendência daquele `movement_slug` (que fica estritamente isolado por
+    slug, ver docstring de one_rep_max.py: "NUNCA compara 1RM entre
+    movement_slug diferentes"). Reusa `suggest_substitutes` (Onda A3,
+    já existia) tal e qual — nenhuma lógica nova, só a exibição que
+    faltava. Lista vazia (nunca quebra o template) quando o movimento
+    não está classificado ou não tem irmã ativa no catálogo."""
+    return suggest_substitutes(movement_slug=movement_slug, limit=3)
+
+
 _GLOSSARY_TERMS = {
     'rir': ('RIR (Reps in Reserve)', 'Repetições que ainda sobrariam na reserva se a série continuasse até a falha. Ex.: RIR 2 = parou a 2 repetições da falha.'),
     'amrap': ('AMRAP (As Many Reps As Possible)', 'Fazer o máximo de repetições possível na série, dentro da técnica segura.'),
     'feeder': ('Série Feeder', 'Série leve de ativação antes da série principal (Top) — prepara a articulação e o padrão de movimento sem gerar fadiga.'),
     'top': ('Série Top (Top Set)', 'A série mais pesada do exercício no dia — o estímulo-alvo do treino, feita depois do aquecimento/feeder.'),
     'prep': ('Série Prep (preparatória)', 'Série de aquecimento específico com carga leve/moderada, antes das séries de trabalho.'),
+    'max': ('Max Set', 'Série final no mesmo peso do Top Set, feita até o máximo de repetições possíveis (AMRAP) — mede quantas reps sobram naquela carga, não é uma carga nova.'),
 }
 
 _GLOSSARY_PATTERN = re.compile(
@@ -161,30 +187,47 @@ _GLOSSARY_PATTERN = re.compile(
 )
 
 
+def _format_ramp_kg_sentence(weights: list[float]) -> str:
+    formatted = ' → '.join(number_format(weight, decimal_pos=1) + ' kg' for weight in weights)
+    return f' Peso sugerido: {formatted}.'
+
+
 @register.filter
-def glossary_highlight(text: str):
+def glossary_highlight(text: str, ramp=None):
     """Marca termos de jargao de treino (RIR, AMRAP, Feeder, Top, Prep) dentro
     de reps_spec/rir_spec (texto livre do treinador, schema.py) com uma
     'bolinha' clicavel que revela a definicao — pedido do Renan pra quem
     nao conhece o dicionario de treino.
 
-    So estes 5 termos: sao os que realmente aparecem nos 10 programas reais
+    So estes 6 termos: sao os que realmente aparecem nos 10 programas reais
     publicados (conferido via payload, nao adivinhado) — nao generaliza pra
     qualquer palavra tecnica, que arriscaria falso-positivo (ex. 'top' dentro
     de 'topo' e' evitado com \\b, mas uma lista maior sem curadoria arriscaria
     marcar termo errado como se fosse dicionario de treino).
+
+    `ramp`: tupla opcional `(stage_key, pesos_kg)` (`warmup_ramp.stage_ramp_kg`,
+    ver `reps_phases` abaixo) — quando o termo casado (case-insensitive) for
+    EXATAMENTE esse `stage_key` (prep/feeder/top/max), a dica ganha uma
+    linha extra com o(s) peso(s) sugerido(s) pra essa fase NESTE exercicio,
+    nesta semana. Nunca aparece pros outros termos (RIR/AMRAP sem stage
+    correspondente aqui nao tem peso pra sugerir).
 
     Retorna SafeString: escapa o texto ao redor, so o termo casado vira HTML.
     """
     if not text:
         return ''
 
+    ramp_stage, ramp_weights = ramp if ramp else (None, None)
+
     pieces = []
     last_end = 0
     for match in _GLOSSARY_PATTERN.finditer(text):
         pieces.append(escape(text[last_end:match.start()]))
         term = match.group(0)
-        label, description = _GLOSSARY_TERMS[term.lower()]
+        term_key = term.lower()
+        label, description = _GLOSSARY_TERMS[term_key]
+        if ramp_weights and term_key == ramp_stage:
+            description = description + _format_ramp_kg_sentence(ramp_weights)
         pieces.append(
             '<span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é {label}?">'
             '{term}<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup>'
@@ -216,7 +259,7 @@ def _detect_phase(segment: str) -> str:
 
 
 @register.filter
-def reps_phases(reps_spec: str):
+def reps_phases(reps_spec: str, top_weight_kg=None):
     """Quebra `reps_spec` em fases (Prep/Feeder/Top/AMRAP) quando o texto do
     treinador junta varias com ' → ' (ex.: '2-3× Prep → 1× Feeder → 3× Top
     (6-8)', formato de `gym-reps` nos 8 dos 10 templates legados que tem
@@ -227,6 +270,16 @@ def reps_phases(reps_spec: str):
     um chip grande pra 'reps_spec': '3x12', a maioria dos movimentos sem
     quebra de fase).
 
+    `top_weight_kg` (opcional, `{{ movement.reps_spec|reps_phases:load.value_kg }}`
+    no template, `load` já vindo de `movement_load_display`): quando
+    presente, cada fase Prep/Feeder/Top/Max ganha um ramp de carga
+    (`warmup_ramp.stage_ramp_kg`) embutido na PRÓPRIA dica de glossário
+    daquele chip — pedido do Renan: "ao registrar a kilagem aparecer a
+    kilagem apropriada no balão". Sincronizado com a periodização de
+    graça: `top_weight_kg` já veio da cascata de `movement_load_display`
+    (fase progressiva quando existe), então o ramp muda junto quando o Top
+    muda de semana pra semana — nunca um segundo cálculo desalinhado.
+
     Cada `text` ja passa por glossary_highlight (SafeString) — o template
     nao precisa aplicar o filtro de novo.
     """
@@ -235,7 +288,18 @@ def reps_phases(reps_spec: str):
     segments = [segment.strip() for segment in reps_spec.split('→') if segment.strip()]
     if len(segments) < 2:
         return []
-    return [{'text': glossary_highlight(segment), 'phase': _detect_phase(segment)} for segment in segments]
+
+    phases = []
+    for segment in segments:
+        stage = _detect_phase(segment)
+        ramp = None
+        if top_weight_kg:
+            set_count = extract_leading_set_count(segment)
+            weights = stage_ramp_kg(stage=stage, set_count=set_count, top_weight_kg=top_weight_kg)
+            if weights:
+                ramp = (stage, weights)
+        phases.append({'text': glossary_highlight(segment, ramp), 'phase': stage})
+    return phases
 
 
 @register.filter
@@ -392,3 +456,141 @@ def personal_record(entries: list[dict]) -> dict:
         'performed_on': best.get('performed_on'),
         'reps': best.get('reps'),
     }
+
+
+@register.filter
+def periodization_chart_points(periodization: dict | None) -> list[dict]:
+    """Pontos do gráfico "Progressão do mesociclo" — de `periodization.weeks`
+    (modelo canônico, `periodization.build_chart_points_from_weeks`) quando
+    existe; senão o `periodization.chart` legado de sempre, cada ponto com
+    `week_number=None` acrescentado (nunca destaca semana pra cliente ainda
+    não migrado — não há como saber com segurança qual coluna do `chart`
+    livre corresponde à semana de hoje, ver docstring de periodization.py)."""
+    if not periodization:
+        return []
+    weeks = periodization.get('weeks')
+    if weeks:
+        return build_chart_points_from_weeks(weeks)
+    return [dict(point, week_number=None) for point in (periodization.get('chart') or [])]
+
+
+@register.filter
+def current_period_week_number(payload: dict) -> int | None:
+    """Wrapper de template pra periodization.current_week_number."""
+    return current_week_number(payload)
+
+
+@register.simple_tag
+def current_period_phase(payload: dict):
+    """PhaseProfile ativo agora (ou `None`) — computado UMA vez no topo da
+    aba Treino (`{% current_period_phase program as phase %}`) e passado
+    pra `movement_load_display` de cada movimento, em vez de cada
+    movimento recalcular a mesma coisa."""
+    return current_phase_profile(payload)
+
+
+@register.simple_tag
+def periodization_phase_banner(payload: dict) -> dict:
+    """Banner "Semana 3 de 6 · Força-Hipertrofia — alvo 6-8 reps · RIR 1-2
+    · ~76% RM" no topo da aba Treino — só aparece (`visible=True`) quando o
+    programa já tem `periodization.weeks` (modelo canônico); `visible=
+    False` pros outros clientes, nada muda pra eles."""
+    phase = current_phase_profile(payload)
+    if phase is None:
+        return {'visible': False}
+
+    weeks = (payload.get('periodization') or {}).get('weeks') or []
+    return {
+        'visible': True,
+        'week_number': current_week_number(payload),
+        'total_weeks': len(weeks),
+        'phase_label': phase.label,
+        'reps_min': phase.reps_target_range[0],
+        'reps_max': phase.reps_target_range[1],
+        'rir_target': phase.rir_target,
+        'pct_mid': round(sum(phase.intensity_pct_range) / 2),
+    }
+
+
+def _last_log_for_movement(load_history: list[dict], movement_slug: str) -> dict | None:
+    """Último registro de carga pra ESTE movimento — `load_history` já vem
+    ordenado (movement_slug, performed_on) ascendente (services.
+    list_load_history), então o último match ao percorrer de trás pra
+    frente é sempre o mais recente pra esse movimento especificamente,
+    mesmo com vários movimentos intercalados na lista inteira."""
+    for entry in reversed(load_history or ()):
+        if entry.get('movement_slug') == movement_slug:
+            return entry
+    return None
+
+
+def _round_to_nearest_load(value: float) -> float:
+    return round(value / 2.5) * 2.5
+
+
+@register.simple_tag
+def movement_load_display(movement: dict, payload: dict, phase, one_rep_max_by_movement: dict, load_history: list) -> dict:
+    """Cascata de exibição de carga do movimento — devolve um dict pronto
+    pro template só desenhar (`kind`/`value_kg`/`percentage`/
+    `show_registration_hint`), mantendo toda a lógica testável em Python
+    (mesmo padrão de `load_chart_points`). Ordem (primeira que resolver
+    ganha):
+
+    1. `load_type == 'fixed_kg'` — literal, já é kg.
+    2. `load_type == 'percentage_of_rm'` explícito — % + kg calculado
+       quando já existe 1RM pro movimento; só a % + hint sem 1RM ainda
+       (nunca só a % quando dá pra virar kg — porcentagem sozinha não é
+       acionável pro aluno).
+    3. Fase canônica ativa (`phase` não é `None`) —
+       `periodization.suggest_progressive_load_kg`, ancorado na ÚLTIMA
+       carga real registrada nesse movimento (nunca recalcula do zero
+       contra 1RM estimado, ver docstring de periodization.py).
+    4. Sem fase canônica, ou fase canônica sem âncora ainda (bootstrap,
+       primeira vez neste movimento) — `load_suggestion.
+       suggest_movement_load`, estimativa pontual a partir do próprio
+       reps_spec/rir_spec do exercício.
+    5. Nada resolveu e não há 1RM nenhum pro movimento — "Livre" + hint de
+       registro."""
+    movement_slug = movement.get('movement_slug')
+    one_rm_estimate = (one_rep_max_by_movement or {}).get(movement_slug)
+    one_rep_max_kg = one_rm_estimate.get('value_kg') if one_rm_estimate else None
+    has_one_rep_max = one_rep_max_kg is not None
+
+    load_type = movement.get('load_type')
+    load_value = movement.get('load_value')
+
+    if load_type == 'fixed_kg':
+        return {'kind': 'fixed_kg', 'value_kg': load_value, 'percentage': None, 'show_registration_hint': False}
+
+    if load_type == 'percentage_of_rm' and load_value is not None:
+        value_kg = _round_to_nearest_load(load_value / 100 * one_rep_max_kg) if has_one_rep_max else None
+        return {
+            'kind': 'percentage',
+            'value_kg': value_kg,
+            'percentage': load_value,
+            'show_registration_hint': not has_one_rep_max,
+        }
+
+    if phase is not None:
+        last_log = _last_log_for_movement(load_history, movement_slug)
+        value_kg = suggest_progressive_load_kg(
+            payload=payload, current_phase=phase, last_log=last_log, one_rep_max_kg=one_rep_max_kg,
+        )
+        if value_kg is not None:
+            return {
+                'kind': 'phase_progressive',
+                'value_kg': value_kg,
+                'percentage': round(sum(phase.intensity_pct_range) / 2),
+                'show_registration_hint': False,
+            }
+
+    suggestion = suggest_movement_load(movement=movement, one_rep_max_kg=one_rep_max_kg)
+    if suggestion is not None:
+        return {
+            'kind': 'rir_estimate',
+            'value_kg': suggestion['value_kg'],
+            'percentage': None,
+            'show_registration_hint': False,
+        }
+
+    return {'kind': 'free', 'value_kg': None, 'percentage': None, 'show_registration_hint': not has_one_rep_max}

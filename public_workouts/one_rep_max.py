@@ -107,6 +107,46 @@ def estimate_one_rep_max(*, weight_kg, reps, rir=0) -> OneRepMaxEstimate | None:
     )
 
 
+_LOAD_ROUNDING_KG = 2.5
+
+
+def estimate_working_weight_kg(*, one_rep_max_kg, target_reps, target_rir=0) -> float | None:
+    """Inverso de `estimate_one_rep_max` -- dado um 1RM (estimado ou
+    conhecido) e um alvo de reps+RIR pra um set de trabalho, devolve o
+    peso a usar. MESMO corte de faixas de `estimate_one_rep_max` (Brzycki/
+    blend/Epley invertidos algebricamente -- os 3 sao lineares em peso,
+    entao invertem sem precisar de solver numerico). Arredonda pro
+    multiplo de 2.5kg mais proximo (mesmo `step` do input de carga do
+    aluno). `None` fora da faixa valida (>15 reps efetivas, igual
+    `estimate_one_rep_max` -- ali se mede resistencia, nao forca maxima).
+
+    Usado pelo Caminho 4 de `load_suggestion.py` (exercicio SEM fase
+    canonica de periodizacao -- estima peso a partir do proprio reps_spec/
+    rir_spec do exercicio). NAO usado pelo Caminho 3
+    (`periodization.suggest_progressive_load_kg`) -- fase canonica ancora
+    na ultima carga REAL registrada, nunca recalcula do zero contra 1RM
+    estimado (ver docstring de periodization.py)."""
+    if one_rep_max_kg is None or target_reps is None:
+        return None
+
+    one_rep_max_kg = float(one_rep_max_kg)
+    effective_reps = round(float(target_reps) + float(target_rir or 0))
+
+    if effective_reps <= 0 or effective_reps > MAX_EFFECTIVE_REPS:
+        return None
+
+    if effective_reps <= _LOW_REP_CEILING:
+        raw_kg = one_rep_max_kg * (37 - effective_reps) / 36  # inverso de _brzycki
+    elif effective_reps <= _MODERATE_REP_CEILING:
+        brzycki_coeff = 36 / (37 - effective_reps)
+        epley_coeff = 1 + effective_reps / 30
+        raw_kg = one_rep_max_kg / ((brzycki_coeff + epley_coeff) / 2)  # inverso da media (linear em peso)
+    else:
+        raw_kg = one_rep_max_kg / (1 + effective_reps / 30)  # inverso de _epley
+
+    return round(raw_kg / _LOAD_ROUNDING_KG) * _LOAD_ROUNDING_KG
+
+
 @dataclass(frozen=True)
 class OneRepMaxTrend:
     movement_slug: str
@@ -180,4 +220,5 @@ __all__ = [
     'OneRepMaxTrend',
     'detect_one_rep_max_trend',
     'estimate_one_rep_max',
+    'estimate_working_weight_kg',
 ]

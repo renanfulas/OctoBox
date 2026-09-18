@@ -20,6 +20,10 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
+from .periodization import PHASE_TYPE_KEYS
+
 SCHEMA_VERSION = 1
 
 # Mesmo vocabulario de WorkoutLoadType (student_app/models.py) — o corredor
@@ -38,6 +42,23 @@ class PayloadValidationError(ValueError):
 def _require(condition: bool, errors: list[str], message: str) -> None:
     if not condition:
         errors.append(message)
+
+
+def _is_safe_reference_url(url: str) -> bool:
+    """Achado da auditoria de QA: `reference_url` vira `href="{{ }}"` direto
+    no template (workout.html) — o auto-escape do Django escapa caracteres
+    HTML especiais, mas NAO valida o esquema. Um valor tipo
+    `javascript:alert(1)` passaria batido pro atributo e executaria ao
+    clicar. Hoje `reference_url` só vem do HTML legado versionado no repo
+    (nunca de input de aluno/anonimo — ver parser.py), então não é
+    explorável agora, mas exigir http(s) aqui é a mesma barreira barata
+    que já vale a pena antes de qualquer fluxo futuro (ex.: edição via
+    admin) tornar isso alcançável por alguém não confiável."""
+    try:
+        scheme = urlparse(url).scheme.lower()
+    except ValueError:
+        return False
+    return scheme in ('http', 'https')
 
 
 def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
@@ -66,9 +87,9 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
 
     reference_url = movement.get('reference_url')
     _require(
-        reference_url is None or isinstance(reference_url, str),
+        reference_url is None or (isinstance(reference_url, str) and _is_safe_reference_url(reference_url)),
         errors,
-        f'{path}.reference_url: string ou null',
+        f'{path}.reference_url: precisa ser http(s) ou null',
     )
 
     # `name`/`variations` sao ADITIVOS (movimento publicado antes desta
@@ -85,9 +106,10 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
                 _require(
                     isinstance(variation, dict)
                     and isinstance(variation.get('label'), str) and variation.get('label')
-                    and isinstance(variation.get('reference_url'), str) and variation.get('reference_url'),
+                    and isinstance(variation.get('reference_url'), str) and variation.get('reference_url')
+                    and _is_safe_reference_url(variation.get('reference_url')),
                     errors,
-                    f'{path}.variations[{vindex}]: objeto com label/reference_url string nao vazia',
+                    f'{path}.variations[{vindex}]: objeto com label/reference_url http(s) nao vazia',
                 )
 
 
@@ -155,13 +177,45 @@ def _validate_periodization_row(row: dict, *, path: str, required_keys: tuple[st
         _require(isinstance(row.get(key), str), errors, f'{path}.{key}: obrigatorio, string')
 
 
+def _validate_periodization_week(row: dict, *, path: str, errors: list[str]) -> None:
+    if not isinstance(row, dict):
+        errors.append(f'{path}: precisa ser um objeto')
+        return
+
+    week_number = row.get('week_number')
+    _require(isinstance(week_number, int) and week_number > 0, errors, f'{path}.week_number: obrigatorio, inteiro positivo')
+
+    phase_type = row.get('phase_type')
+    _require(phase_type in PHASE_TYPE_KEYS, errors, f'{path}.phase_type: precisa ser um de {PHASE_TYPE_KEYS}')
+
+    note = row.get('note')
+    _require(note is None or isinstance(note, str), errors, f'{path}.note: string ou ausente')
+
+
 def _validate_periodization(periodization: dict, *, errors: list[str]) -> None:
     if not isinstance(periodization, dict):
         errors.append('periodization: precisa ser um objeto')
         return
 
+    # `weeks` (modelo canonico, Onda B3+ — ver periodization.py) e' ADITIVO
+    # e OPCIONAL: quando presente, substitui `weeks_table`/`chart` como
+    # fonte de verdade pro template (periodization_chart_points ja resolve
+    # isso), entao os dois viram opcionais tambem. Sem `weeks`, o contrato
+    # de sempre continua exigindo `weeks_table`/`chart` nao vazios — zero
+    # mudanca pros 9 clientes ainda nao migrados.
+    weeks = periodization.get('weeks')
+    has_canonical_weeks = weeks is not None
+    if has_canonical_weeks:
+        _require(isinstance(weeks, list) and len(weeks) > 0, errors, 'periodization.weeks: lista nao vazia')
+        if isinstance(weeks, list):
+            for index, row in enumerate(weeks):
+                _validate_periodization_week(row, path=f'periodization.weeks[{index}]', errors=errors)
+
     weeks_table = periodization.get('weeks_table')
-    _require(isinstance(weeks_table, list) and len(weeks_table) > 0, errors, 'periodization.weeks_table: lista nao vazia')
+    if has_canonical_weeks:
+        _require(weeks_table is None or isinstance(weeks_table, list), errors, 'periodization.weeks_table: lista ou ausente')
+    else:
+        _require(isinstance(weeks_table, list) and len(weeks_table) > 0, errors, 'periodization.weeks_table: lista nao vazia')
     if isinstance(weeks_table, list):
         for index, row in enumerate(weeks_table):
             _validate_periodization_row(
@@ -181,7 +235,10 @@ def _validate_periodization(periodization: dict, *, errors: list[str]) -> None:
     _require(isinstance(periodization.get('note'), str), errors, 'periodization.note: obrigatorio, string (pode ser vazia)')
 
     chart = periodization.get('chart')
-    _require(isinstance(chart, list), errors, 'periodization.chart: lista (pode ser vazia)')
+    if has_canonical_weeks:
+        _require(chart is None or isinstance(chart, list), errors, 'periodization.chart: lista ou ausente')
+    else:
+        _require(isinstance(chart, list), errors, 'periodization.chart: lista (pode ser vazia)')
     if isinstance(chart, list):
         for index, point in enumerate(chart):
             if not isinstance(point, dict):

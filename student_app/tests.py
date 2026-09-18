@@ -2125,6 +2125,15 @@ class StudentAppExperienceTests(TestCase):
 
 
 class PublicWorkoutPwaTests(TestCase):
+    # NOTA (Entrega 4, corte pra workout.html): esta classe nunca chama
+    # publish_program, entao PublicWorkoutProgram.objects fica vazio pra
+    # todo slug testado aqui — _render_public_workout_html cai sempre no
+    # fallback legado (_render_legacy_template_html), igual sempre foi.
+    # Os testes abaixo continuam validos SEM alteracao por isso. A
+    # cobertura do caminho novo (workout.html com programa ativo) fica em
+    # PublicWorkoutDetailViewCutoverTests, mais abaixo, que publica de
+    # verdade antes de testar.
+
     def test_public_workout_pages_are_open_without_login(self):
         juliana_response = self.client.get('/renan/juliana')
         bruno_response = self.client.get('/renan/bruno')
@@ -2401,6 +2410,83 @@ class PublicWorkoutTemplatePreviewViewTests(TestCase):
         response = self.client.get('/renan/bruno/preview-b3')
 
         self.assertEqual(response.status_code, 200)
+
+
+class PublicWorkoutDetailViewCutoverTests(TestCase):
+    """GET /renan/<slug> — Entrega 4: corte pra workout.html quando o slug
+    tem PublicWorkoutProgram ativo (docs/plans/
+    public-workouts-produtizacao-corda.md, tabela de status da Frente B).
+
+    Publica de verdade em cada teste (mesmo padrao de
+    PublicWorkoutTemplatePreviewViewTests._publish) — sem isso,
+    get_active_program devolve None e o fallback legado mascararia
+    qualquer bug do caminho novo, exatamente como acontece em
+    PublicWorkoutPwaTests (nenhum publish_program la, de proposito)."""
+
+    def _publish(self, slug='bruno'):
+        from public_workouts.schema import build_example_payload
+        from public_workouts.services import publish_program
+
+        publish_program(slug=slug, payload=build_example_payload())
+
+    def test_renders_workout_html_when_program_is_active(self):
+        self._publish('bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn('workout-shell', content)
+        self.assertIn('workout-mobile-nav', content)
+
+    def test_falls_back_to_legacy_when_no_program_published(self):
+        # giovanna: nenhum publish_program chamado nesta base de teste —
+        # comportamento identico ao de sempre (PublicWorkoutPwaTests).
+        response = self.client.get('/renan/giovanna')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('workout-shell', response.content.decode('utf-8'))
+
+    @override_settings(PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS=frozenset({'bruno'}))
+    def test_legacy_escape_hatch_wins_even_with_active_program(self):
+        # Kill switch de rollout (PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS):
+        # mesmo com programa publicado, slug listado continua no legado.
+        self._publish('bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('workout-shell', response.content.decode('utf-8'))
+
+    def test_visitor_without_any_account_gets_empty_load_data(self):
+        # Ninguem visitou ainda, nenhuma PublicWorkoutSubscription existe
+        # pra 'bruno' nesta base de teste — account_id fica None, a pagina
+        # nao pode quebrar, so degrada Cargas/revisao/1RM pra vazio.
+        self._publish('bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nenhuma carga registrada ainda.')
+
+    def test_visitor_auto_logs_in_when_a_subscription_already_exists(self):
+        # Achado da varredura: os clientes legados nunca passaram por
+        # /treinos/login (seed_legacy_workout_accounts so cria a conta e a
+        # PublicWorkoutSubscription). Sem sessao B1 propria ainda, a
+        # primeira visita resolve a conta pela subscription do slug e ja
+        # estabelece a sessao — sem isso, POST /carga ficaria 401 pra
+        # sempre pra quem nunca logou.
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+        from student_identity.public_workout_session import PUBLIC_WORKOUT_SESSION_COOKIE_NAME
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='bruno@example.com')
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
 
 class PublicWorkoutAssessmentsEndpointTests(TestCase):

@@ -17,15 +17,22 @@ import re
 from django.template.loader import render_to_string
 from django.test import TestCase
 
+from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementStatus
+from public_workouts.periodization import PHASE_PROFILES
 from public_workouts.schema import build_example_payload
 from public_workouts.templatetags.public_workouts_extras import (
+    current_period_week_number,
     dict_get,
     glossary_highlight,
     humanize_movement_slug,
     load_chart_points,
+    movement_load_display,
+    periodization_chart_points,
+    periodization_phase_banner,
     personal_record,
     reps_phases,
     resolve_movement_display_name,
+    sibling_variations,
 )
 
 
@@ -146,6 +153,21 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('<div class="workout-load-input" data-workout-load-input', html)
         self.assertIn('data-workout-load-input data-movement-slug="agachamento-livre" data-program-id="exemplo-2026-q1" hidden', html)
         self.assertIn('data-workout-load-toggle', html)
+
+    def test_load_input_widget_is_always_the_immediate_next_sibling_of_the_card(self):
+        # Regressao real: o JS de toggle (workout.html, [data-workout-load-toggle])
+        # acha o widget via `card.nextElementSibling`, nao querySelector -- se
+        # QUALQUER elemento (ex.: o hint de "Registre sua carga") for inserido
+        # entre </article> e .workout-load-input, o clique para de reabrir o
+        # widget silenciosamente. Movimento sem 1RM (o caso mais comum) sempre
+        # renderiza o hint, entao esse regex tem que casar mesmo nesse caso.
+        html = _render(build_example_payload())
+
+        card_count = html.count('workout-movement-card')
+        sibling_count = len(re.findall(r'</article>\s*<div class="workout-load-input"', html))
+
+        self.assertGreater(card_count, 0)
+        self.assertEqual(sibling_count, card_count)
 
     def test_movement_not_tracked_still_has_load_input_row(self):
         # Pedido do Renan: "clica expande em todos os exercicios" -- o
@@ -351,6 +373,39 @@ class WorkoutTemplateRenderTests(TestCase):
 
         self.assertIn('Ainda não há carga suficiente registrada para montar o gráfico.', html)
         self.assertNotIn('workout-load-chart-line', html)
+
+    def test_history_tab_shows_sibling_variation_as_labeled_reference(self):
+        # "Variação irmã" (Pronto quando #3, secao A3/B4 do CORDA): outro
+        # movimento ATIVO do MESMO movement_pattern aparece como referencia
+        # rotulada ao lado do grafico -- nunca precisa de carga propria
+        # registrada, e' so' informativo (suggest_substitutes ja garante
+        # que nunca entra no calculo de 1RM/tendencia deste movimento).
+        PublicWorkoutMovement.objects.create(
+            slug='agachamento-livre', label_pt='Agachamento livre', movement_pattern='squat',
+            status=PublicWorkoutMovementStatus.ACTIVE, reference_url='https://musclewiki.com/exercise/barbell-squat',
+        )
+        PublicWorkoutMovement.objects.create(
+            slug='machine-hack-squat', label_pt='Hack squat na máquina', movement_pattern='squat',
+            status=PublicWorkoutMovementStatus.ACTIVE, reference_url='https://musclewiki.com/exercise/machine-hack-squat',
+        )
+
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+        ])
+
+        self.assertIn('workout-load-chart-siblings', html)
+        self.assertIn('Variação:', html)
+        self.assertIn('Hack squat na máquina', html)
+        self.assertIn('href="https://musclewiki.com/exercise/machine-hack-squat"', html)
+
+    def test_history_tab_hides_sibling_note_when_movement_unclassified(self):
+        # Sem PublicWorkoutMovement classificado (catalogo nao tem o slug,
+        # ou nao tem movement_pattern) -- nao aparece nada, nunca quebra.
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+        ])
+
+        self.assertNotIn('workout-load-chart-siblings', html)
 
     def test_history_tab_shows_one_rep_max_estimate_when_provided(self):
         html = _render(
@@ -734,6 +789,29 @@ class HumanizeMovementSlugFilterTests(TestCase):
         self.assertEqual(humanize_movement_slug(None), '')
 
 
+class SiblingVariationsFilterTests(TestCase):
+    """"Variação irmã" (Onda A3/B4, item 3 do "Pronto quando" do CORDA) --
+    reusa suggest_substitutes tal e qual, só prova a fiação do filtro."""
+
+    def test_movement_with_active_sibling_returns_it(self):
+        PublicWorkoutMovement.objects.create(
+            slug='barbell-squat', label_pt='Agachamento livre com barra', movement_pattern='squat',
+            status=PublicWorkoutMovementStatus.ACTIVE, reference_url='https://musclewiki.com/exercise/barbell-squat',
+        )
+        PublicWorkoutMovement.objects.create(
+            slug='machine-hack-squat', label_pt='Hack squat na máquina', movement_pattern='squat',
+            status=PublicWorkoutMovementStatus.ACTIVE, reference_url='https://musclewiki.com/exercise/machine-hack-squat',
+        )
+
+        result = sibling_variations('barbell-squat')
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['label_pt'], 'Hack squat na máquina')
+
+    def test_unclassified_movement_returns_empty(self):
+        self.assertEqual(sibling_variations('nao-existe-no-catalogo'), [])
+
+
 class DictGetFilterTests(TestCase):
     def test_returns_value_for_existing_key(self):
         self.assertEqual(dict_get({'a': 1, 'b': 2}, 'b'), 2)
@@ -1036,6 +1114,38 @@ class GlossaryHighlightFilterTests(TestCase):
 
         self.assertEqual(html.count('data-workout-glossary'), 3)
 
+    def test_max_set_gets_its_own_glossary_bubble(self):
+        # Achado real do Renan clicando no chip "1x Max": faltava 'max' em
+        # _GLOSSARY_TERMS -- Prep/Feeder/Top tinham balao, Max nao.
+        html = glossary_highlight('1x Max')
+
+        self.assertIn('data-workout-glossary', html)
+        self.assertIn('>Max<', html)
+        self.assertIn('Max Set', html)
+
+    def test_ramp_appends_suggested_weight_to_matching_term_only(self):
+        html = glossary_highlight('3x Top (6-8)', ramp=('top', [82.5]))
+
+        self.assertIn('Peso sugerido', html)
+        self.assertIn('82,5 kg', html)
+
+    def test_ramp_never_touches_a_different_term(self):
+        # ramp e' pro estagio 'feeder', mas o texto so' tem 'Top' -- nao
+        # pode vazar peso nenhum pro termo errado.
+        html = glossary_highlight('3x Top (6-8)', ramp=('feeder', [60.0]))
+
+        self.assertNotIn('Peso sugerido', html)
+
+    def test_ramp_with_multiple_weights_shows_full_progression(self):
+        html = glossary_highlight('2x Prep', ramp=('prep', [40.0, 55.0]))
+
+        self.assertIn('40,0 kg → 55,0 kg', html)
+
+    def test_no_ramp_keeps_original_static_definition(self):
+        html = glossary_highlight('3x Top (6-8)')
+
+        self.assertNotIn('Peso sugerido', html)
+
 
 class MovementCardGlossaryRenderTests(TestCase):
     def test_reps_spec_with_rir_renders_glossary_bubble(self):
@@ -1097,6 +1207,43 @@ class RepsPhasesFilterTests(TestCase):
         self.assertIn('data-workout-glossary', phases[0]['text'])
         self.assertIn('data-workout-glossary', phases[1]['text'])
 
+    def test_without_top_weight_no_ramp_appears_in_any_bubble(self):
+        phases = reps_phases('2× Prep → 1× Feeder → 3× Top (6-8)')
+
+        for phase in phases:
+            self.assertNotIn('Peso sugerido', phase['text'])
+
+    def test_with_top_weight_each_stage_gets_its_own_ramp(self):
+        phases = reps_phases('2× Prep → 1× Feeder → 3× Top (6-8)', top_weight_kg=100.0)
+
+        prep, feeder, top = phases
+        self.assertIn('Peso sugerido', prep['text'])
+        self.assertIn('Peso sugerido', feeder['text'])
+        self.assertIn('Peso sugerido', top['text'])
+        # Top e' sempre a propria referencia (100kg), sem ramp — so' 1 numero.
+        self.assertIn('100,0 kg.', top['text'])
+
+    def test_prep_ramp_is_lighter_than_feeder_ramp(self):
+        phases = reps_phases('2× Prep → 1× Feeder → 3× Top (6-8)', top_weight_kg=100.0)
+
+        prep_text, feeder_text = phases[0]['text'], phases[1]['text']
+        # prep (40-55%) sempre mais leve que feeder (60-80%) pro mesmo Top.
+        self.assertIn('40,0 kg', prep_text)
+        self.assertIn('70,0 kg', feeder_text)
+
+    def test_plain_phase_never_gets_a_ramp(self):
+        phases = reps_phases('2× Algo → 1× Outro', top_weight_kg=100.0)
+
+        for phase in phases:
+            self.assertNotIn('Peso sugerido', phase['text'])
+
+    def test_ramp_set_count_follows_the_segments_own_prefix(self):
+        phases = reps_phases('2× Prep → 1× Feeder → 3× Top (6-8)', top_weight_kg=100.0)
+
+        prep_text = phases[0]['text']
+        # 2 sets de Prep -> ramp com 2 numeros distintos (piso e teto da faixa).
+        self.assertIn('40,0 kg → 55,0 kg', prep_text)
+
 
 class MovementCardPhaseChipRenderTests(TestCase):
     def test_multi_phase_reps_spec_renders_chip_row(self):
@@ -1120,6 +1267,28 @@ class MovementCardPhaseChipRenderTests(TestCase):
 
         self.assertNotIn('workout-phase-row', html)
         self.assertIn('3x12', html)
+
+    def test_ramp_appears_in_phase_chip_tooltips_once_a_top_weight_resolves(self):
+        # pedido do Renan: "ao registrar a kilagem aparecer a kilagem
+        # apropriada no balão" -- fim-a-fim, com 1RM real disponivel.
+        payload = build_example_payload()
+        movement = payload['days'][0]['blocks'][0]['movements'][0]
+        movement['reps_spec'] = '2× Prep → 1× Feeder → 3× Top (6-8)'
+        movement['rir_spec'] = 'RIR 1-2'
+        one_rm = {movement['movement_slug']: {'value_kg': 100.0}}
+
+        html = _render(payload, one_rep_max_by_movement=one_rm)
+
+        self.assertIn('Peso sugerido', html)
+
+    def test_no_ramp_in_tooltips_without_any_one_rep_max_data(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['reps_spec'] = '2× Prep → 1× Feeder → 3× Top (6-8)'
+        payload['days'][0]['blocks'][0]['movements'][0]['rir_spec'] = 'RIR 1-2'
+
+        html = _render(payload)
+
+        self.assertNotIn('Peso sugerido', html)
 
 
 class MovementDisplayNameAndVariationRenderTests(TestCase):
@@ -1207,3 +1376,235 @@ class MovementDisplayNameAndVariationRenderTests(TestCase):
         html = _render(payload)
 
         self.assertNotIn('workout-movement-variation', html)
+
+
+def _canonical_periodization(weeks):
+    return {'weeks': weeks, 'volume_table': [], 'note': ''}
+
+
+_SIX_CANONICAL_WEEKS = [
+    {'week_number': 1, 'phase_type': 'adaptation'},
+    {'week_number': 2, 'phase_type': 'volume'},
+    {'week_number': 3, 'phase_type': 'strength_hypertrophy'},
+    {'week_number': 4, 'phase_type': 'intensity'},
+    {'week_number': 5, 'phase_type': 'peak'},
+    {'week_number': 6, 'phase_type': 'deload'},
+]
+
+
+class PeriodizationChartPointsFilterTests(TestCase):
+    def test_legacy_chart_passthrough_gets_week_number_none(self):
+        chart = [{'label': 'S1', 'focus': 'x', 'reps': 'x', 'color': '#fff', 'bg': '#fff', 'fg': '#fff', 'h': 50}]
+
+        points = periodization_chart_points({'chart': chart})
+
+        self.assertEqual(points[0]['week_number'], None)
+        self.assertEqual(points[0]['label'], 'S1')
+
+    def test_canonical_weeks_take_priority_over_legacy_chart(self):
+        periodization = {
+            'weeks': _SIX_CANONICAL_WEEKS,
+            'chart': [{'label': 'legado', 'focus': 'x', 'reps': 'x', 'color': '#fff', 'bg': '#fff', 'fg': '#fff', 'h': 1}],
+        }
+
+        points = periodization_chart_points(periodization)
+
+        self.assertEqual(len(points), 6)
+        self.assertEqual(points[0]['label'], 'S1')
+        self.assertIsNotNone(points[0]['week_number'])
+
+    def test_empty_periodization_returns_empty_list(self):
+        self.assertEqual(periodization_chart_points({}), [])
+        self.assertEqual(periodization_chart_points(None), [])
+
+
+class CurrentPeriodWeekNumberFilterTests(TestCase):
+    def test_delegates_to_periodization_module(self):
+        payload = {
+            'started_on': '2026-01-05',
+            'periodization': _canonical_periodization(_SIX_CANONICAL_WEEKS),
+        }
+
+        # sem `today` explicito o filtro usa date.today() -- so' confirma
+        # que nao quebra e devolve um inteiro dentro da faixa esperada.
+        result = current_period_week_number(payload)
+
+        self.assertTrue(result is None or 1 <= result <= 6)
+
+    def test_none_without_periodization(self):
+        self.assertIsNone(current_period_week_number({'started_on': '2026-01-05'}))
+
+
+class PeriodizationPhaseBannerTagTests(TestCase):
+    def test_invisible_without_canonical_weeks(self):
+        payload = build_example_payload()
+
+        banner = periodization_phase_banner(payload)
+
+        self.assertFalse(banner['visible'])
+
+    def test_visible_with_canonical_weeks_shows_phase_details(self):
+        payload = build_example_payload()
+        payload['periodization'] = _canonical_periodization(_SIX_CANONICAL_WEEKS)
+
+        banner = periodization_phase_banner(payload)
+
+        self.assertTrue(banner['visible'])
+        self.assertIn(banner['phase_label'], [p.label for p in PHASE_PROFILES.values()])
+        self.assertIsInstance(banner['total_weeks'], int)
+        self.assertEqual(banner['total_weeks'], 6)
+
+
+class MovementLoadDisplayTagTests(TestCase):
+    def _movement(self, **overrides):
+        movement = {
+            'movement_slug': 'hack-squat',
+            'reps_spec': '3× Top (6-8)',
+            'rir_spec': 'RIR 1-2',
+            'load_type': 'free',
+            'load_value': None,
+        }
+        movement.update(overrides)
+        return movement
+
+    def test_fixed_kg_short_circuits_everything_else(self):
+        movement = self._movement(load_type='fixed_kg', load_value=40)
+
+        result = movement_load_display(movement, {}, None, {}, [])
+
+        self.assertEqual(result, {'kind': 'fixed_kg', 'value_kg': 40, 'percentage': None, 'show_registration_hint': False})
+
+    def test_percentage_of_rm_without_one_rep_max_shows_percentage_and_hint(self):
+        movement = self._movement(load_type='percentage_of_rm', load_value=70.0)
+
+        result = movement_load_display(movement, {}, None, {}, [])
+
+        self.assertEqual(result['kind'], 'percentage')
+        self.assertIsNone(result['value_kg'])
+        self.assertEqual(result['percentage'], 70.0)
+        self.assertTrue(result['show_registration_hint'])
+
+    def test_percentage_of_rm_with_one_rep_max_computes_kg(self):
+        movement = self._movement(load_type='percentage_of_rm', load_value=70.0)
+        one_rm = {'hack-squat': {'value_kg': 100.0}}
+
+        result = movement_load_display(movement, {}, None, one_rm, [])
+
+        self.assertEqual(result['kind'], 'percentage')
+        self.assertEqual(result['value_kg'], 70.0)
+        self.assertFalse(result['show_registration_hint'])
+
+    def test_canonical_phase_with_prior_log_uses_progressive_ratio(self):
+        movement = self._movement()
+        payload = {
+            'program_id': 'juliana-2026-q1', 'started_on': '2026-01-05',
+            'periodization': _canonical_periodization(_SIX_CANONICAL_WEEKS),
+        }
+        load_history = [{
+            'movement_slug': 'hack-squat', 'weight_kg': 80.0,
+            'performed_on': '2026-01-05', 'program_id': 'juliana-2026-q1',
+        }]
+
+        result = movement_load_display(movement, payload, PHASE_PROFILES['volume'], {}, load_history)
+
+        self.assertEqual(result['kind'], 'phase_progressive')
+        self.assertGreater(result['value_kg'], 80.0)
+        self.assertFalse(result['show_registration_hint'])
+
+    def test_canonical_phase_without_prior_log_falls_back_to_rir_estimate(self):
+        movement = self._movement()  # reps_spec/rir_spec parseaveis
+        payload = {
+            'program_id': 'juliana-2026-q1', 'started_on': '2026-01-05',
+            'periodization': _canonical_periodization(_SIX_CANONICAL_WEEKS),
+        }
+        one_rm = {'hack-squat': {'value_kg': 100.0}}
+
+        result = movement_load_display(movement, payload, PHASE_PROFILES['adaptation'], one_rm, [])
+
+        self.assertEqual(result['kind'], 'rir_estimate')
+        self.assertIsNotNone(result['value_kg'])
+
+    def test_no_phase_uses_rir_estimate_when_one_rep_max_available(self):
+        movement = self._movement()
+        one_rm = {'hack-squat': {'value_kg': 100.0}}
+
+        result = movement_load_display(movement, {}, None, one_rm, [])
+
+        self.assertEqual(result['kind'], 'rir_estimate')
+        self.assertIsNotNone(result['value_kg'])
+        self.assertFalse(result['show_registration_hint'])
+
+    def test_nothing_resolves_without_one_rep_max_shows_free_and_hint(self):
+        movement = self._movement()
+
+        result = movement_load_display(movement, {}, None, {}, [])
+
+        self.assertEqual(result['kind'], 'free')
+        self.assertIsNone(result['value_kg'])
+        self.assertTrue(result['show_registration_hint'])
+
+    def test_ambiguous_reps_spec_with_one_rep_max_shows_free_without_hint(self):
+        # 1RM ja existe (o aluno ja registrou carga) -- so' esse exercicio
+        # em especifico tem texto ambiguo demais pra estimar. Nao mostra o
+        # hint de registro (seria enganoso, ele ja registrou).
+        movement = self._movement(reps_spec='Feeder → 3× Top (crescente) → 1× Max')
+        one_rm = {'hack-squat': {'value_kg': 100.0}}
+
+        result = movement_load_display(movement, {}, None, one_rm, [])
+
+        self.assertEqual(result['kind'], 'free')
+        self.assertFalse(result['show_registration_hint'])
+
+
+class PeriodizationCanonicalTreinoRenderTests(TestCase):
+    """Renderizacao ponta-a-ponta: gráfico com destaque de semana atual,
+    banner de fase, e a cascata de carga integrada no template real."""
+
+    def test_current_week_column_gets_highlight_class(self):
+        payload = build_example_payload()
+        payload['started_on'] = '2026-01-05'
+        payload['periodization'] = _canonical_periodization(_SIX_CANONICAL_WEEKS)
+
+        html = _render(payload)
+
+        self.assertIn('workout-period-chart__col--current', html)
+
+    def test_legacy_client_chart_never_gets_highlight_class(self):
+        payload = build_example_payload()
+        payload['periodization'] = {
+            'weeks_table': [{'week': 'S1', 'focus': 'x', 'reps': 'x', 'guidance': 'x'}],
+            'volume_table': [], 'note': '',
+            'chart': [{'label': 'S1', 'focus': 'x', 'reps': 'x', 'color': '#fff', 'bg': '#fff', 'fg': '#fff', 'h': 50}],
+        }
+
+        html = _render(payload)
+
+        self.assertNotIn('workout-period-chart__col--current', html)
+
+    def test_phase_banner_appears_for_canonical_client(self):
+        payload = build_example_payload()
+        payload['started_on'] = '2026-01-05'
+        payload['periodization'] = _canonical_periodization(_SIX_CANONICAL_WEEKS)
+
+        html = _render(payload)
+
+        self.assertIn('workout-phase-banner', html)
+
+    def test_phase_banner_absent_for_legacy_client(self):
+        html = _render(build_example_payload())
+
+        self.assertNotIn('workout-phase-banner', html)
+
+    def test_registration_hint_renders_in_treino_tab_without_one_rep_max(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('Registre sua carga para controlar a kilagem.', html)
+
+    def test_registration_hint_absent_once_one_rep_max_exists(self):
+        payload = build_example_payload()
+        movement = payload['days'][0]['blocks'][0]['movements'][0]
+        one_rm = {movement['movement_slug']: {'value_kg': 100.0}}
+
+        html = _render(payload, one_rep_max_by_movement=one_rm)
+
+        self.assertNotIn('Registre sua carga para controlar a kilagem.', html)

@@ -2,6 +2,8 @@
 
 **Plano de produto (o "porquê"):** [public-workouts-produtizacao-plan.md](public-workouts-produtizacao-plan.md)
 **Este documento:** execução técnica, dividida em duas frentes paralelas.
+**Vender isso (branding, oferta, preço, landing page):** [public-workouts-go-to-market-plan.md](public-workouts-go-to-market-plan.md)
+**Continuação técnica (Entrega 5 concretizada + Entrega 6 nutrição):** [public-workouts-escala-e-nutricao-corda.md](public-workouts-escala-e-nutricao-corda.md)
 
 ---
 
@@ -1969,6 +1971,14 @@ bloqueio).
 >   revisão isolada, não misturada com o resto deste lote (puramente
 >   visual, sem tocar payload).
 
+> **Nota (go-to-market, 2026-09-17):** a "fatia própria" do plano alimentar citada acima
+> deixou de ter um bloqueio de dono — a esposa do Renan é nutricionista com CRN ativo e
+> vai assumir essa frente. O trabalho técnico descrito acima (parser + testes + dry-run)
+> continua não dimensionado e não iniciado; o que mudou é que agora existe profissional
+> habilitada para decidir o conteúdo, então essa fatia pode ser escopada em uma onda
+> própria quando fizer sentido, sem o impeditivo legal que valia antes. Ver
+> [public-workouts-go-to-market-plan.md](public-workouts-go-to-market-plan.md) §R1 e §6.
+
 > **Atualização (quarta rodada — espaçamento, seletor de dia do Treino
 > igual ao "Sua semana", registro de carga em todo exercício, 2 bugs de
 > alinhamento):**
@@ -2150,6 +2160,411 @@ bloqueio).
 > perguntar antes de consolidar as duas rotas de preview em uma só.
 > 627 testes verdes (+ os que vieram do main); `manage.py check` sem
 > problemas.
+> **Atualização (parser cobre `.c-card` embutido por dia — franciele/
+> rafael, achado do Renan: "treino da franciele está incompleto... e o
+> cardio não aparece"):**
+> `_CardioTabParser` já documentava a lacuna de propósito ("não o cardio
+> embutido por dia de franciele/milene, formato diferente demais pra
+> unificar nesta fatia") — esta é essa fatia. franciele.html/rafael.html
+> não têm aba `#tab-cardio` dedicada: cada dia embute "Etapa 1 -
+> Mobilidade/Ativação/Coordenação" (rótulo varia, nunca um vocabulário
+> fechado) e, em alguns dias, "Etapa 3 - Cardio", cada uma com seu próprio
+> `.c-card`. Novo `_EmbeddedStageParser` (`public_workouts/parser.py`)
+> escaneia `.c-card` DENTRO de cada `.session` — nunca interfere com
+> `_CardioTabParser` (que só olha fora de `.session`, `#tab-cardio`).
+> Classificação é **estrutural**, não por texto de rótulo (rafael.html não
+> tem `.stage-title` nenhum, o card de cardio vem solto após os `.ex`):
+> todo `.c-card` de cardio observado tem `.c-head` (título+badge); todo
+> card de mobilidade é só uma lista de `.c-row`, sem `.c-head`. Mobilidade
+> vira movimentos leves (sem wiki-btn, slug pela DESCRIÇÃO da linha, nunca
+> pelo `.c-lbl` — o mesmo label se repete no mesmo dia com descrições
+> diferentes) prependados ao bloco de Força; cardio vira `cardio.sessions`
+> (dedup por igualdade exata — franciele repete o mesmo card em 3 dias).
+> franciele: 29→49 movimentos (fixture de contagem atualizada
+> intencionalmente) + 1 sessão de cardio; rafael: sem mudança na Força
+> (cardio nunca tinha sido capturado nem incorretamente, era só ignorado) +
+> 4 sessões de cardio novas. 16 testes novos (`test_parser.py`); suíte
+> completa (473 testes) verde; `manage.py check` sem problemas.
+> **Pendente:** republicar de verdade em produção via o workflow manual
+> `publish-legacy-workouts.yml` (PR #253) — só afeta franciele/rafael
+> localmente até isso rodar.
+
+> **Atualização (2 achados ao auditar os 10 clientes contra o pedido do
+> Renan "corrija de todos os treinos... sem explicação de dias"):**
+> 1. O cardio embutido por dia deduplicado (franciele repete o mesmo card
+>    em 3 dias) tinha perdido a explicação de EM QUAIS dias ele vale.
+>    `_EmbeddedStageParser.cardio_sessions()` agora agrupa por identidade
+>    de conteúdo e injeta um detail `"Dias"` na frente (`"Terça, Quinta e
+>    Sexta"`) com os dias reais mesclados — novo `dashboard.day_full_label`
+>    reaproveitado, não duplicado.
+> 2. Auditoria dos 10 revelou giovanna.html: usa a MESMA marcação
+>    (`.c-card`+`.c-head`) tanto pra cardio real (sábado, "Corrida 4-5 km")
+>    quanto pra notas de orientação do dia de CrossFit ("Orientação do
+>    dia", "Regra prática", "Estratégia" — NENHUMA é cardio) nos outros
+>    dias. `.c-head` sozinho não bastava. Novo `_looks_like_cardio_title`
+>    exige que o TÍTULO nomeie uma modalidade de cardio reconhecida (o
+>    treinador sempre precisa dizer o quê fazer pra prescrever cardio) —
+>    card com `.c-head` que não bate é descartado por completo (nem
+>    cardio, nem exercício — não existe campo pra "nota de orientação").
+>    giovanna: 4→1 sessões de cardio (as 3 erradas removidas).
+> Auditados os 10 clientes um a um (`build_program_payload_from_html`
+> direto contra cada HTML real) — nenhum outro tinha esse tipo de gap.
+> 8 testes novos; suíte completa (477 testes) verde; `manage.py check`
+> sem problemas.
+
+> **Atualização (Periodização canônica — semana em destaque + carga
+> sugerida, implementado):** o plano de periodização canônica ficou pronto
+> como documento numa sessão anterior; esta implementou de verdade,
+> **com uma correção crítica encontrada ao reanalisar antes de codar**:
+>
+> A proposta original de "Caminho 3" (fase canônica ativa) recalculava
+> `kg = %RM_da_fase × 1RM_estimado` do zero a cada semana. Cruzando contra
+> o próprio dado real da Juliana (`vnote`: *"a carga é o que progride
+> semana a semana"*; `weeks_table`: incrementos pequenos e relativos —
+> "+2,5 kg vs. Semana 1", nunca um número novo desconectado), essa
+> premissa quebrava: produziria saltos bruscos entre fases (Volume 67% →
+> Intensidade 85% seria +27% relativo numa semana só) desconectados do que
+> o aluno realmente levantou — uma sugestão errada e potencialmente
+> perigosa. Correção: `periodization.suggest_progressive_load_kg` ancora
+> na ÚLTIMA carga REAL registrada nesse movimento dentro do PROGRAMA ATUAL
+> (`program_id` bate), escalada pela razão entre o %RM-meio da fase de
+> agora e o %RM-meio da fase de quando aquela carga foi registrada — nunca
+> recalcula do zero. O 1RM estimado (quando existe) só limita um TETO de
+> segurança (nunca deixa a razão sugerir acima do %RM máximo da fase
+> atual), protegendo contra um log anômalo se propagando pra sempre.
+>
+> Entregue: `public_workouts/periodization.py` (`PHASE_PROFILES` — 6 fases,
+> %RM/RIR/reps com fonte real NSCA/Prilepin/Bompa/Helms —,
+> `current_week_number`/`current_phase_profile` com `today` injetável,
+> `build_chart_points_from_weeks`, `suggest_progressive_load_kg`);
+> `periodization.weeks` no schema (aditivo, `chart`/`weeks_table` viram
+> opcionais só quando `weeks` está presente); `load_suggestion.py`
+> (Caminho 4 — estimativa pontual a partir do reps/RIR do PRÓPRIO
+> exercício quando não há fase canônica ou não há âncora ainda, nunca
+> "chuta" de texto ambíguo); `estimate_working_weight_kg` (inverso de
+> `estimate_one_rep_max`) em `one_rep_max.py`; cascata de 5 níveis em
+> `movement_load_display` (fixed_kg → percentage_of_rm+1RM → fase
+> progressiva → estimativa por texto → "Registre sua carga..."); destaque
+> visual da semana atual no gráfico + banner de fase na aba Treino; comando
+> `upgrade_periodization_model` (Juliana republicada localmente com as 6
+> fases). 62 testes novos; suíte completa (564 testes) verde; `manage.py
+> check` sem problemas. Verificado num Chromium real contra o dado
+> publicado de verdade da Juliana — inclusive o teto de segurança
+> funcionando (razão pura sugeria 80kg partindo de uma carga real de 80kg
+> na mesma fase, mas o teto de 62% RM da Adaptação limitou a sugestão
+> final a 67,5kg) — e confirmado ZERO mudança visual pro Bruno (não
+> migrado).
+>
+> **Pendente:** curar `periodization.weeks` pras outras 9 clientes (uma de
+> cada vez, decisão manual — ver `CURATED_WEEKS_MAPPING` em
+> `upgrade_periodization_model.py`); aplicar `sets_multiplier` na UI
+> (fundação já pronta, só não ligada ainda — ver docstring do módulo).
+
+> **Atualização (ramp de Prep/Feeder em kg, pedido explícito do Renan — "A
+> Ramp, e a sincronia com a periodização dessas cargas"):** as bolinhas de
+> glossário de Prep/Feeder (`reps_phases`, chips do exercício) ganharam o
+> peso sugerido pra CADA série de aquecimento, não só um número único pro
+> Top set. Percentuais com fonte real (BarBend/StrongFirst): Prep ~40-55%
+> do peso do Top, Feeder ~60-80% — citação chave: *"once you reach 50-60%
+> of your working set weight, the rest of your ramp-up sets should be
+> 10-15% increases per set"* e *"any set at or above ~85-90% counts as a
+> working set"* (por isso o Feeder nunca pode chegar lá). Estágios com mais
+> de 1 série (ex.: "2×Prep") interpolam linearmente do piso ao teto da
+> faixa — 1 série só usa o meio da faixa. Top e Max (AMRAP após o Top) usam
+> a própria carga do Top (Max é o mesmo peso, não uma fração nova — prática
+> padrão de "quantas reps saem nesse peso").
+>
+> **Sincronia com a periodização é automática por construção, não por
+> código extra**: o ramp escala a partir do `top_weight_kg` que
+> `movement_load_display` já resolveu pra ESTA semana (fase progressiva
+> quando existe, senão %RM explícito ou estimativa por texto — a mesma
+> cascata de 5 níveis da atualização acima). Se o Top muda de semana pra
+> semana, o ramp muda junto sozinho — não existe um segundo cálculo de
+> progressão paralelo. Deliberadamente um módulo novo e separado
+> (`public_workouts/warmup_ramp.py`), não uma extensão de
+> `periodization.PHASE_PROFILES`: são dois conceitos de "fase" já
+> distintos no código — estágio por EXERCÍCIO (Prep/Feeder/Top/Max) vs.
+> fase do MESOCICLO (Adaptação/Volume/.../Deload) — e confundi-los
+> quebraria a leitura de quem mexer no código depois.
+>
+> Entregue: `warmup_ramp.py` (`extract_leading_set_count`,
+> `stage_ramp_kg`, arredondado pro múltiplo de 2,5kg); `glossary_highlight`
+> e `reps_phases` estendidos (`public_workouts_extras.py`) pra aceitar o
+> `top_weight_kg` já resolvido e injetar "Peso sugerido: X kg → Y kg." na
+> descrição do balão certo (nunca no balão errado); reordenação do
+> `movement_load_display` em `workout.html` pra rodar ANTES do bloco que
+> desenha os chips (precisa do `load.value_kg` pronto). 16 testes novos em
+> `test_warmup_ramp.py` + 11 novos em `test_workout_template.py`; suíte
+> completa (592 testes + 110 subtestes) verde; `manage.py check` sem
+> problemas. Verificado num Chromium real contra o dado publicado de
+> verdade da Juliana com 1RM/histórico simulados: Prep (2 séries, Top a
+> 67,5kg) mostrou "27,5 kg → 37,5 kg", Feeder (1 série) mostrou "47,5 kg" —
+> batendo com o cálculo manual (faixas 40-55%/60-80% sobre 67,5kg).
+>
+> **Achado e correção no meio do caminho:** este trabalho descobriu (e
+> corrigiu, PR separada) uma regressão real introduzida pela própria
+> atualização de periodização acima — o hint "Registre sua carga..."
+> tinha sido inserido entre `</article>` e `.workout-load-input`, e o JS
+> de toggle acha o widget via `card.nextElementSibling` (não
+> `querySelector`), então o clique parou de reabrir o registro de carga
+> pra qualquer exercício sem 1RM ainda (o caso mais comum). Corrigido
+> nesta mesma fatia (o hint volta a morar dentro de
+> `.workout-movement-load`) com um teste de regressão dedicado
+> (`test_load_input_widget_is_always_the_immediate_next_sibling_of_the_card`).
+>
+> **Pendente:** Cargas continua só comparação/histórico (confirmado com o
+> Renan — "a gente usar a aba cargas apenas para comparar a evolução"),
+> nenhuma entrada de dado nova lá.
+
+> **Atualização (auditoria dos 10 clientes — pedido do Renan: "faça
+> exatamente esse template em todos os treinos e todos deixe em português
+> o nome dos exercícios" + "algumas coisas da aba cardio e periodização
+> regrediram"):** cruzando o payload JÁ PUBLICADO de cada um dos 10
+> clientes contra o que o parser ATUAL produziria a partir do mesmo HTML
+> legado, achei que **7 dos 10 nunca tinham sido republicados** desde que
+> `name` (nome em português) e a extração de `cardio` embutido foram
+> adicionados ao parser em fatias anteriores — não é regressão de código,
+> é publicação que ficou pra trás:
+>
+> - henrique/john/johnespanha/juliana/milene/thaislima: `name` ausente em
+>   100% dos movimentos (caía no fallback de slug humanizado em inglês,
+>   ex. "Machine hack squat" em vez de "Hack Squat na máquina" —
+>   inclusive a PRÓPRIA Juliana, usada como prova de conceito da
+>   periodização canônica, estava nesse estado).
+> - henrique/john/johnespanha/juliana/thaislima: `cardio` inteiro ausente
+>   do payload (aba Cardio publicada vazia), apesar do HTML ter conteúdo
+>   real prescrito.
+> - rafael: `cardio` presente mas sem o detail "Dias" (a fatia que
+>   corrigiu isso, PR #254, nunca foi republicada pro Rafael
+>   especificamente, só bruno/franciele/giovanna).
+> - henrique/john/thaislima: `started_on`/`weeks` desatualizados —
+>   ficaram numa versão anterior a `feat(public-workouts): preenche
+>   started_on real dos 10 clientes via git log`.
+>
+> Além da staleness, achei **2 bugs reais no parser** ao investigar por que
+> milene continuava sem cardio mesmo depois de republicar:
+>
+> 1. `milene.html` usa um dialeto de cardio 100% próprio
+>    (`.hiit-card`/`.hiit-head`/`.hiit-row`/`.hiit-note`, protocolo de
+>    HIIT na esteira) que `_EmbeddedStageParser` nunca reconhecia —
+>    nenhuma condição de classe batia, então o card inteiro (incluindo a
+>    justificativa fisiológica escrita pelo treinador sobre GH em
+>    atletas 44 anos) ficava invisível. Corrigido tratando `.hiit-*` como
+>    ALIAS estrutural de `.c-*` (mesma forma: card→head+badge→linhas
+>    label/valor→nota), não um parser novo.
+> 2. `thaislima.html` usa `.int-badge`/`.hiit-badge` em vez de
+>    `.km-badge` em 2 das suas 3 sessões de `#tab-cardio` — como
+>    `_CardioTabParser` só reconhecia a classe `km-badge` pra fechar a
+>    captura do título e abrir a do badge, o texto do badge ficava
+>    GRUDADO no título ("🟡 Dia Médio Quinta · 20 min" numa string só, em
+>    vez de título "🟡 Dia Médio" + badge "Quinta · 20 min" separados).
+>    Mesmo fix de generalização de classe (`_CARD_BADGE_CLASSES`),
+>    aplicado nos DOIS parsers (`_CardioTabParser` e
+>    `_EmbeddedStageParser`, já que ambos tinham a mesma checagem estreita
+>    copiada).
+>
+> **Fora de escopo desta fatia, documentado como achado (não corrigido):**
+> `thaislima.html` tem um card `.muay-card`/`.muay-body` (dia de Muay
+> Thai) com uma prescrição real de cardio bike opcional escrita em prosa
+> livre dentro do corpo do texto, não em linhas label/valor estruturadas.
+> Extrair isso exigiria parsear prosa (mesmo risco documentado alhures
+> neste plano — "chutar dado é pior que não extrair") — nenhum exercício é
+> perdido (não é um `.ex`), só uma nota de contexto fica de fora do
+> payload estruturado.
+>
+> Corrigido: os 2 bugs de parser acima + republicação real dos 7 clientes
+> defasados (`migrate_legacy_workouts`, sem mudar nenhuma decisão de
+> negócio em `LEGACY_PROGRAM_METADATA`) + reaplicação de
+> `periodization.weeks` da Juliana via `upgrade_periodization_model`
+> (republicar por HTML sempre perde essa curadoria manual, que só existe
+> no payload já publicado — não vem do HTML). Novo workflow
+> `.github/workflows/upgrade-periodization-model.yml` (mesmo padrão
+> auditável e `dry_run`-por-padrão de `publish-legacy-workouts.yml`) pra
+> nunca mais depender de SSH manual nesse passo. Resultado: os 10 clientes
+> têm 100% dos movimentos com nome em português, e a aba Cardio mostra
+> conteúdo real pra todo mundo que tem cardio prescrito no HTML de
+> origem. Testes novos em `test_parser.py` (badge alternativo +
+> dialeto `.hiit-card`); suíte completa + `manage.py check` verificados
+> antes da publicação real.
+
+> **Atualização (periodização canônica pras outras clientes, pedido do
+> Renan — "pegue todos os treinos e corrija a periodização igual ou
+> semelhante a juliana com o gráfico etc"):** li o `weeks_table` real
+> (foco + diretriz de carga + nota do treinador) das 9 clientes restantes
+> pra decidir, caso a caso, se a progressão de mesociclo delas é
+> compatível com os 6 `phase_type` fechados — a mesma regra de leitura
+> humana já usada pra Juliana, nunca correspondência automática por
+> palavra-chave.
+>
+> **3 entraram no mapeamento curado** (`CURATED_WEEKS_MAPPING`):
+> - `henrique`: Adaptação→Volume→Intensidade→Pico→**Pico Máximo**→Deload.
+>   "Pico Máximo" repete `peak` de propósito — a própria diretriz diz
+>   "carga mais alta em todas as séries do ramp", um 2º degrau do MESMO
+>   pico, não uma fase nova.
+> - `milene`: Adaptação→Volume→Força-Hipertrofia→**Volume Alto**→Peak→
+>   Deload. "Volume Alto" repete `volume` pelo mesmo motivo (mesmo eixo,
+>   guidance "Bomba e estresse metabólico").
+> - `john`: Carga base→**Progressão×3**→Pico→Deload. As 3 semanas de
+>   "Progressão" têm o MESMO rótulo no HTML mas incrementos crescentes
+>   reais (+2,5kg/+5kg/+7,5kg vs. a mesma semana-base) — mapeadas pra 3
+>   fases DIFERENTES e crescentes (volume→força-hiper→intensidade) pra
+>   preservar essa progressão na sugestão de carga. Achatar as 3 na mesma
+>   fase congelaria a sugestão (razão 1.0), contradizendo o texto real.
+>
+> **4 ficaram de fora, de propósito — não é trabalho pendente, é conteúdo
+> que genuinamente não é periodização de força por %RM:**
+> - `giovanna`: vocabulário de CrossFit ("Base técnica"/"Sobrecarga"/
+>   **"Metabólico"**/"Peak controlado") — a semana de condicionamento
+>   metabólico/AMRAP não tem %RM-alvo real; forçar um `phase_type`
+>   baseado em %RM daria sugestão de carga ERRADA justo nessa semana.
+> - `bruno`: bloco de CORTE (`vnote` real: *"a meta não é progredir carga
+>   — é segurar a carga enquanto o peso corporal cai"*) — "Manutenção"
+>   (×3 semanas) e "Teste" não existem no vocabulário fechado hoje.
+>   Migrar exigiria **propor phase_type novo ao Renan primeiro** (mesma
+>   regra já escrita no plano original: se o objetivo não encaixa em
+>   nenhuma chave existente, é sinal de crescer `PHASE_PROFILES`, não de
+>   inventar correspondência). Fica pendente de decisão explícita.
+> - `franciele`: `weeks_table` é uma progressão de CORRIDA (caminhada →
+>   trote → corrida contínua), não periodização de força — %RM/RIR não
+>   se aplica.
+> - `rafael`: confirmado que NÃO é um parser bug — `#tab-period` dele
+>   descreve o RITMO SEMANAL de treino (Dia A/Descanso/Dia B/Coringa
+>   condicional), conteúdo genuinamente diferente de fases de mesociclo.
+>
+> `johnespanha`/`thaislima` continuam sem periodização — nunca tiveram
+> `#tab-period` no HTML original, não é regressão nem pendência.
+>
+> Entregue: `CURATED_WEEKS_MAPPING` estendido (henrique/john/milene, com
+> comentário explicando cada decisão de repetição/divergência de rótulo);
+> docstring do comando atualizada explicando por que os outros 4 ficam de
+> fora; 1 teste novo (`test_newly_curated_slugs_publish_a_schema_valid_canonical_mapping`).
+> Suíte completa (595 testes + 110 subtestes) verde; `manage.py check`
+> sem problemas. Verificado num Chromium real: henrique mostra "S4 ·
+> agora" no gráfico com Pico/Pico Máximo lado a lado e o banner "Semana 4
+> de 6 · Pico · alvo 1-3 reps · RIR 0,0 · ~94% RM" na aba Treino.
+>
+> **Pendente (na época):** decisão do Renan sobre propor `phase_type`
+> novo(s) pro bloco de corte do bruno antes de migrá-lo — resolvido, ver
+> "Atualização (variação irmã + phase_type novo pro corte do Bruno)"
+> mais abaixo. giovanna/franciele/rafael continuam no `chart`/
+> `weeks_table` livre indefinidamente (conteúdo não compatível com o
+> modelo, não uma migração adiada).
+
+> **Atualização (fechamento do template único — testes de regressão +
+> auditoria de QA, pedido do Renan: "o template é basicamente esse, vamos
+> fechar com testes... faça um teste de QA pra ver bugs, vulnerabilidades
+> e etc"):**
+>
+> **Gap de teste real encontrado e fechado**: `test_workout_template.py`
+> só usava `build_example_payload()`/fixtures sintéticas; `test_migrate_
+> legacy_workouts.py` validava o payload dos 10 clientes reais contra o
+> SCHEMA mas nunca renderizava esse payload pelo template — um filtro
+> (`reps_phases`, `movement_load_display`, `glossary_highlight`) que só
+> quebrasse contra um formato de texto real e específico passaria batido
+> nos dois. Novo `test_workout_template_real_clients.py`: renderiza o
+> payload REAL (parseado do HTML de verdade) dos 10 clientes pelo
+> template inteiro — com e sem 1RM/histórico de carga simulados — e,
+> pros 4 clientes com periodização canônica curada (henrique/john/
+> juliana/milene), injeta o `CURATED_WEEKS_MAPPING` real antes de
+> renderizar, exercitando banner de fase + gráfico + ramp de Prep/Feeder
+> contra texto de verdade. 4 testes novos, 24 subtestes.
+>
+> **Vulnerabilidade real encontrada e corrigida**: `reference_url`
+> (movimento e variação) vira `href="{{ }}"` direto em `workout.html` —
+> o auto-escape do Django escapa caracteres HTML especiais mas NUNCA
+> valida o esquema da URL. Um valor `javascript:alert(1)` passaria
+> batido pro atributo e executaria ao clicar no link do exercício.
+> **Hoje não é explorável**: `reference_url` só vem do HTML legado
+> versionado no repo (parser.py) ou de edição via `PublicWorkoutMovementAdmin`
+> (staff autenticado) — nunca de input de aluno/anônimo. Corrigido mesmo
+> assim como barreira barata antes de qualquer fluxo futuro (edição
+> self-service, sugestão de link pelo aluno) tornar isso alcançável por
+> alguém não confiável: `schema.py::_is_safe_reference_url` exige
+> esquema `http`/`https` (ou `None`), tanto no `movement.reference_url`
+> quanto em `variations[].reference_url`. 5 testes novos.
+>
+> **Revisado e confirmado correto, sem mudança** (auditoria, não achado):
+> auth do endpoint de registro de carga (`PublicWorkoutRecordLoadView`
+> exige sessão de login + posse do slug, 401/404 nunca 403); assinatura
+> de webhook do Stripe verificada antes de processar; CSRF via cookie em
+> todo POST do corredor (`load_tracker.js`); `PublicWorkoutTemplatePreviewView`
+> (`/preview-b3`) checa `settings.DEBUG` na PRIMEIRA linha do `get()`,
+> 404 garantido em produção; `one_rep_max.py`/`load_suggestion.py`/
+> `periodization.py`/`warmup_ramp.py` já tinham guarda contra divisão por
+> zero e reps/RIR fora de faixa (nenhum bug de cálculo encontrado — os
+> guard-rails escritos ao longo da sessão já cobriam isso).
+>
+> Suíte completa: 600 testes + 134 subtestes verde; `manage.py check`
+> sem problemas.
+
+> **Atualização (variação irmã + phase_type novo pro corte do Bruno,
+> pedido do Renan em resposta ao mapa de pendências do CORDA — "vamos
+> tomar essa frente. Atualize os planos"):**
+>
+> **Variação irmã (item 3 do "Pronto quando" acima, agora ✅):** novo
+> filtro `sibling_variations` (`public_workouts_extras.py`) reusa
+> `suggest_substitutes` tal e qual — nenhuma lógica nova, só a exibição
+> que faltava. Na aba Cargas, cada gráfico de movimento ganha uma linha
+> "Variação: <outros ativos do mesmo `movement_pattern`, linkados>"
+> quando o catálogo tem irmã classificada — puramente informativo, nunca
+> entra no cálculo de 1RM/tendência daquele `movement_slug` (que
+> continua estritamente isolado por slug). Verificado num Chromium real
+> contra dado publicado da Bruno: "Agachamento livre com barra" mostra
+> "Variação: Agachamento goblet com halter, Agachamento sumô com
+> halteres, Hack squat", todos linkados pro MuscleWiki certo.
+>
+> **`phase_type` novo pro bloco de corte do Bruno — `maintenance`/
+> `test`:** ao desenhar os dois, apareceu um problema real que a
+> primeira leitura não tinha capturado — `suggest_progressive_load_kg`
+> ESCALA a carga pela razão de %RM entre fases, correto pras 6 fases
+> originais (todas "suba a intensidade"), mas ERRADO pra uma fase cujo
+> objetivo é EXPLICITAMENTE "não progredir carga, segurar a carga"
+> (vnote real da Bruno). Escalar teria sugerido ~105kg partindo de 80kg
+> ao entrar em Manutenção — o MESMO tipo de salto perigoso que o
+> "achado crítico" original deste documento já tinha corrigido pras
+> fases de progressão, só que na direção oposta.
+>
+> Correção: novo campo `PhaseProfile.hold_load` (default `False`,
+> retrocompatível com as 6 fases existentes). Quando `True`,
+> `suggest_progressive_load_kg` pula a escala por razão inteiramente e
+> devolve a ÚLTIMA carga registrada tal e qual — nem precisa resolver a
+> fase de quando aquele log foi feito (irrelevante pra "repete o último
+> peso"). O %RM/reps/RIR da fase continuam servindo só pro banner
+> informativo (fisiologicamente consistente, não uma inconsistência de
+> dado: o mesmo peso absoluto vira % relativa mais alta com a
+> capacidade de recuperação reduzida em déficit calórico).
+>
+> `maintenance` (67-80% RM, RIR 1,5, 6-10 reps — zona de
+> força-hipertrofia de Prilepin/NSCA, batendo com o RIR 1-2 e a queda de
+> reps 8-10→6-8 que a Bruno já tem escrito) e `test` (85-95% RM, RIR 0,
+> 1-5 reps — zona de teste quase-máximo, pro AMRAP único de retenção da
+> Semana 5) entram em `PHASE_PROFILES`, ambos com `hold_load=True` e
+> `sets_multiplier` reduzido (consenso de manter intensidade e cortar
+> volume em déficit calórico). `CURATED_WEEKS_MAPPING['bruno']`: S1
+> Adaptação → S2-S4 Manutenção → S5 Teste → S6 Deload — mapa 1:1 com o
+> `weeks_table` real dela, sem aproximação.
+>
+> Entregue: `periodization.py` (`hold_load` + 2 fases novas + branch
+> dedicado em `suggest_progressive_load_kg`); `CURATED_WEEKS_MAPPING`
+> estendido; `sibling_variations` + wiring em `workout.html`/CSS. 6
+> testes novos de `hold_load` (`test_periodization.py`) + 2 de
+> `sibling_variations` + 2 de render (`test_workout_template.py`) + 1 no
+> comando (`test_upgrade_periodization_model.py`) + `bruno` promovido a
+> `TestCase` em `test_workout_template_real_clients.py` (a nova
+> `sibling_variations` consulta o banco, `SimpleTestCase` não permite
+> mais). Suíte completa (616 testes + 135 subtestes) verde; `manage.py
+> check` sem problemas. Verificado num Chromium real contra o payload
+> publicado de verdade da Bruno (semana 3 real dela = Manutenção):
+> banner mostra "Semana 3 de 6 · Manutenção · alvo 6-10 reps · RIR 1,5 ·
+> ~74% RM", gráfico destaca "S3 · agora" com as 3 semanas de Manutenção
+> lado a lado e Teste/Deload depois, e a carga sugerida do agachamento
+> ficou EXATAMENTE nos 90kg do último registro simulado (não escalou),
+> confirmando `hold_load` funcionando ponta a ponta.
+>
+> **Pendente:** publicar de verdade em produção (`upgrade_periodization_model
+> --slug=bruno`) — aguardando deploy do código desta fatia primeiro,
+> mesmo fluxo de confirmação explícita já usado pras publicações
+> anteriores (dado de cliente pagante).
 
 | Frente A (serviços) | Frente B (telas) |
 |---|---|
@@ -2163,12 +2578,8 @@ bloqueio).
 ### Pronto quando
 1. ✅ 1RM devolve `None` acima de 15 reps efetivas.
 2. ✅ O gráfico mostra marcador de troca de programa no lugar certo.
-3. Variação irmã aparece como referência, rotulada, sem entrar no cálculo
-   — a parte de **cálculo** está pronta (`detect_one_rep_max_trend` nunca
-   mistura `movement_slug` diferentes, testado); o `movement_pattern`
-   revisado (agrupamento) e `suggest_substitutes` já existem. Falta só a
-   **exibição** (mostrar a variação irmã na tela) — tela da Frente B,
-   não bloqueada em dado da Frente A.
+3. ✅ Variação irmã aparece como referência, rotulada, sem entrar no
+   cálculo — ver "Atualização" abaixo.
 4. ✅ Review semanal recebe **sinais**, não tabela crua.
 
 ---

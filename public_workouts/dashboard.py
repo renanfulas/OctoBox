@@ -59,6 +59,14 @@ def day_short_label(day_id: str) -> str:
     return _WEEKDAY_LABELS.get(day_id, day_id)
 
 
+def day_full_label(day_id: str) -> str:
+    """'ter' -> 'Terça' — nome completo do dia (_WEEKDAY_FULL_NAMES),
+    exposto pra uso fora deste modulo (parser.py precisa disso pra montar
+    "Dias: Terça, Quinta e Sexta" no cardio embutido por dia — ver
+    _EmbeddedStageParser)."""
+    return _WEEKDAY_FULL_NAMES.get(day_id, day_id)
+
+
 def day_keyword(*, day_id: str, label: str) -> str:
     """Extrai a "palavra-chave" do treino de `day.label`, sem o nome do dia
     duplicado (o dia curto ja aparece em `day_short_label` ao lado).
