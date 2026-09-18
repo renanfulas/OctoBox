@@ -283,6 +283,15 @@ class PublicWorkoutSubscriptionStatus(models.TextChoices):
     PAST_DUE = 'past_due', 'Em atraso'
     SUSPENDED = 'suspended', 'Suspensa'
     CANCELED = 'canceled', 'Cancelada'
+    # Preparado pro cadastro a frio (Entrega 5, Fase 2) — ainda sem nenhum
+    # caminho de codigo que cria assinatura com este valor (ADR-7).
+    PENDING_PAYMENT = 'pending_payment', 'Aguardando pagamento'
+
+
+class PublicWorkoutTier(models.TextChoices):
+    ESSENCIAL = 'essencial', 'Essencial'
+    COMPLETO = 'completo', 'Completo'
+    PREMIUM = 'premium', 'Premium'
 
 
 class PublicWorkoutSubscription(models.Model):
@@ -299,6 +308,12 @@ class PublicWorkoutSubscription(models.Model):
         related_name='subscription',
     )
     plan_slug = models.CharField(max_length=50, db_index=True)
+    tier = models.CharField(
+        max_length=16,
+        choices=PublicWorkoutTier.choices,
+        default=PublicWorkoutTier.ESSENCIAL,
+        db_index=True,
+    )
     status = models.CharField(
         max_length=16,
         choices=PublicWorkoutSubscriptionStatus.choices,

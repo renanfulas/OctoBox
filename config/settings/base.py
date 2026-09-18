@@ -604,6 +604,13 @@ PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT = env_str('PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT',
 # e cada endpoint tem sua propria assinatura HMAC — nunca o mesmo valor
 # de STRIPE_WEBHOOK_SECRET (esse e do endpoint do box).
 PUBLIC_WORKOUT_STRIPE_PRICE_ID = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID', '')
+# Entrega 5 (Escala, tier plumbing): um Price ID por tier. ESSENCIAL cai de
+# volta pro price antigo (PUBLIC_WORKOUT_STRIPE_PRICE_ID) quando a variavel
+# especifica nao esta setada — os 10 legados continuam usando exatamente o
+# mesmo Price ID de sempre, sem precisar reconfigurar nada no primeiro deploy.
+PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL', '') or PUBLIC_WORKOUT_STRIPE_PRICE_ID
+PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO', '')
+PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM', '')
 PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET = env_str('PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET', '')
 # Entrega 4 (corte pra workout.html, docs/plans/public-workouts-produtizacao-corda.md):
 # escape hatch de rollout canario/kill switch. Slug listado aqui continua

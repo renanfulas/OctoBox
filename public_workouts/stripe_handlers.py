@@ -51,7 +51,8 @@ from integrations.mesh import FAILURE_KIND_NON_RETRYABLE, FAILURE_KIND_RETRYABLE
 from integrations.stripe.models import PaymentWebhookEvent
 
 from . import billing
-from .models import PublicWorkoutSubscription
+from .models import PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
+from .stripe_checkout import _TIER_PRICE_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +97,49 @@ def _resolve_subscription_by_stripe_id(stripe_subscription_id: str) -> PublicWor
     return PublicWorkoutSubscription.objects.filter(stripe_subscription_id=stripe_subscription_id).first()
 
 
+def _confirm_tier_price_and_activate(
+    subscription: PublicWorkoutSubscription, *, stripe_subscription_id: str, tier_from_metadata: str | None, event_id: str
+) -> None:
+    """Cross-check de D.3/RT3: so ativa se o Price ID REAL da assinatura
+    Stripe bater com o tier que veio na metadata. Nunca confia so na
+    metadata pra dinheiro — divergencia fica pendente pra revisao manual,
+    nunca resolvida por adivinhacao.
+
+    Existe porque nenhum ponto do fluxo de checkout seta `status=ACTIVE`
+    explicitamente hoje (confirmado: nem aqui, nem billing.link_stripe_ids)
+    — o valor so vinha do default do model. ADR-7 decidiu tornar isso
+    explicito a partir da Fase 1 (tier plumbing), porque e um caminho
+    compartilhado por todo mundo que paga, nao so o cadastro a frio.
+    """
+    if not stripe_subscription_id:
+        return
+
+    import stripe
+
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key:
+        logger.error('checkout.session.completed do corredor: STRIPE_SECRET_KEY ausente, nao foi possivel confirmar tier/price. event=%s', event_id)
+        return
+    stripe.api_key = secret_key
+
+    stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+    real_price_id = stripe_subscription['items']['data'][0]['price']['id']
+
+    setting_name = _TIER_PRICE_SETTINGS.get(tier_from_metadata)
+    configured_price_id = (getattr(settings, setting_name, '') or '').strip() if setting_name else ''
+
+    if not configured_price_id or real_price_id != configured_price_id:
+        logger.error(
+            'checkout.session.completed do corredor: tier/price nao confere, fica pendente pra revisao manual. '
+            'event=%s subscription_id=%s tier_metadata=%r real_price_id=%r',
+            event_id, subscription.pk, tier_from_metadata, real_price_id,
+        )
+        return
+
+    subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+    subscription.save(update_fields=['status', 'updated_at'])
+
+
 def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
     session = event.payload.get('data', {}).get('object', {})
     metadata = session.get('metadata', {}) or {}
@@ -119,6 +163,13 @@ def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
         billing.link_stripe_ids(
             subscription, customer_id=stripe_customer_id, stripe_subscription_id=stripe_subscription_id
         )
+
+    _confirm_tier_price_and_activate(
+        subscription,
+        stripe_subscription_id=stripe_subscription_id,
+        tier_from_metadata=metadata.get('tier'),
+        event_id=event.event_id,
+    )
 
 
 def _handle_invoice_payment_succeeded(event: PaymentWebhookEvent) -> None:
