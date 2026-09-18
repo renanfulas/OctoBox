@@ -605,6 +605,11 @@ PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT = env_str('PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT',
 # de STRIPE_WEBHOOK_SECRET (esse e do endpoint do box).
 PUBLIC_WORKOUT_STRIPE_PRICE_ID = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID', '')
 PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET = env_str('PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET', '')
+# Entrega 4 (corte pra workout.html, docs/plans/public-workouts-produtizacao-corda.md):
+# escape hatch de rollout canario/kill switch. Slug listado aqui continua
+# servindo o template legado por-cliente (bruno.html etc.) mesmo com
+# PublicWorkoutProgram ativo — reverte por env var + restart, sem deploy.
+PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS = frozenset(filter(None, env_str('PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS', '').split(',')))
 STUDENT_OAUTH_PUBLIC_BASE_URL = env_str('STUDENT_OAUTH_PUBLIC_BASE_URL')
 STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY')
 STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY')

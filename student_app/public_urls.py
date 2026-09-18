@@ -29,6 +29,7 @@ from .views import (
     PublicWorkoutServiceWorkerView,
     PublicWorkoutSignOutView,
     PublicWorkoutTemplatePreviewView,
+    PublicWorkoutWeeklyReviewView,
 )
 
 
@@ -44,6 +45,11 @@ urlpatterns = [
     ),
     path('<slug:plan_slug>/carga', PublicWorkoutRecordLoadView.as_view(), name='public-workout-record-load'),
     path('<slug:plan_slug>/pacote.json', PublicWorkoutPackageView.as_view(), name='public-workout-package'),
+    path(
+        '<slug:plan_slug>/revisao-semanal',
+        PublicWorkoutWeeklyReviewView.as_view(),
+        name='public-workout-weekly-review',
+    ),
     path(
         '<slug:plan_slug>/avaliacoes',
         PublicWorkoutRecordAssessmentView.as_view(),
