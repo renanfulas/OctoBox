@@ -34,6 +34,7 @@ from public_workouts.models import (
     PublicWorkoutPaymentStatus,
     PublicWorkoutSubscription,
     PublicWorkoutSubscriptionStatus,
+    PublicWorkoutTier,
 )
 
 
@@ -46,6 +47,16 @@ class GetOrCreateSubscriptionTests(TestCase):
 
         self.assertEqual(first.pk, second.pk)
         self.assertEqual(PublicWorkoutSubscription.objects.filter(account=account).count(), 1)
+
+    def test_new_subscription_defaults_to_essencial_tier(self):
+        # Fase 1 (tier plumbing): a migration nao muda quem ja existe, e
+        # quem nasce sem tier explicito continua ESSENCIAL — mesmo Price ID
+        # de sempre pros 10 alunos legados, nenhuma regressao visivel.
+        account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
+
+        subscription = get_or_create_subscription(account=account, plan_slug='giovanna')
+
+        self.assertEqual(subscription.tier, PublicWorkoutTier.ESSENCIAL)
 
 
 class LinkStripeIdsTests(TestCase):
