@@ -51,11 +51,14 @@ from .models import (
     PublicWorkoutAccount,
     PublicWorkoutAssessment,
     PublicWorkoutLoadLog,
+    PublicWorkoutMealPlan,
     PublicWorkoutMovement,
     PublicWorkoutMovementModality,
     PublicWorkoutPayment,
     PublicWorkoutProgram,
+    PublicWorkoutTier,
 )
+from .nutrition_schema import assert_valid_payload as assert_valid_nutrition_payload
 from .one_rep_max import detect_one_rep_max_trend, estimate_one_rep_max
 from .schema import assert_valid_payload
 
@@ -358,6 +361,47 @@ def publish_program(*, slug: str, payload: dict) -> PublicWorkoutProgram:
             weeks=payload['weeks'],
             version=next_version,
             is_active=True,
+            payload=payload,
+        )
+
+
+def require_nutrition_tier(subscription) -> bool:
+    """D.4 (Entrega 6, Fase 4): gate de acesso a nutricao — a regra vive
+    num unico lugar, chamada por toda view de nutricao ANTES de qualquer
+    query de conteudo. Quem chama devolve 404 (nunca 403 — 403 confirmaria
+    que existe conteudo de nutricao pra aquela conta, mesma regra de A1)."""
+    return subscription.tier in (PublicWorkoutTier.COMPLETO, PublicWorkoutTier.PREMIUM)
+
+
+def get_active_meal_plan(*, account_id: int) -> dict | None:
+    """Payload do plano alimentar ativo da conta, ja resolvido. None se a
+    conta nunca teve um plano publicado. Mesmo contrato de get_active_program."""
+    meal_plan = PublicWorkoutMealPlan.objects.filter(account_id=account_id, is_active=True).first()
+    if meal_plan is None:
+        return None
+    return meal_plan.payload
+
+
+def publish_meal_plan(*, account_id: int, payload: dict, authored_by) -> PublicWorkoutMealPlan:
+    """Publica um novo snapshot de plano alimentar pra `account_id` e ativa
+    (D.6: o payload publicado e imutavel — nunca reescreve uma versao ja
+    existente). Mesmo padrao de publish_program, por account em vez de slug
+    (o plano alimentar nunca tem link publico compartilhavel)."""
+    assert_valid_nutrition_payload(payload)
+
+    with transaction.atomic():
+        last_version = PublicWorkoutMealPlan.objects.filter(account_id=account_id).aggregate(
+            django_models.Max('version')
+        )['version__max']
+        next_version = (last_version or 0) + 1
+
+        PublicWorkoutMealPlan.objects.filter(account_id=account_id, is_active=True).update(is_active=False)
+
+        return PublicWorkoutMealPlan.objects.create(
+            account_id=account_id,
+            version=next_version,
+            is_active=True,
+            authored_by=authored_by,
             payload=payload,
         )
 

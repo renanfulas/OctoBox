@@ -21,7 +21,13 @@ from django.test import TestCase
 
 from finance.model_definitions import Payment as BoxPayment
 from public_workouts.billing import create_payment_with_notice_schedule
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+from public_workouts.models import (
+    PublicWorkoutAccount,
+    PublicWorkoutMealPlan,
+    PublicWorkoutNutritionProfile,
+    PublicWorkoutProfessional,
+    PublicWorkoutSubscription,
+)
 from public_workouts.schema import build_example_payload
 from public_workouts.services import publish_program
 from student_identity.models import StudentAppInvitation
@@ -88,3 +94,19 @@ class PublicWorkoutsIsolationTests(TestCase):
                     offending.append(f'{path}: from {module} import ...')
 
         self.assertEqual(offending, [], f'corredor importando stripe do box: {offending}')
+
+    def test_nutrition_models_have_no_foreign_key_outside_public_workouts(self):
+        # Entrega 6, Fase 4 (D.00, guardrails operacionais): PublicWorkoutProfessional
+        # nao referencia StudentIdentity nem nenhum outro model do box —
+        # so' entra num vinculo com Box/conta Connect no dia em que o
+        # multi-personal chegar de verdade (D.5).
+        offending = []
+        for model in (PublicWorkoutProfessional, PublicWorkoutNutritionProfile, PublicWorkoutMealPlan):
+            for field in model._meta.get_fields():
+                related_model = getattr(field, 'related_model', None)
+                if related_model is None:
+                    continue
+                if related_model._meta.app_label != 'public_workouts':
+                    offending.append(f'{model.__name__}.{field.name} -> {related_model._meta.app_label}.{related_model.__name__}')
+
+        self.assertEqual(offending, [], f'modelo de nutricao com FK fora de public_workouts: {offending}')

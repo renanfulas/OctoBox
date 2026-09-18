@@ -1,13 +1,21 @@
+import json
+
+from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
 
+from . import nutrition_schema
 from .models import (
     PublicWorkoutAssessment,
+    PublicWorkoutMealPlan,
     PublicWorkoutMovement,
     PublicWorkoutMovementStatus,
+    PublicWorkoutProfessional,
+    PublicWorkoutProfessionalRole,
     PublicWorkoutSubscription,
     PublicWorkoutSubscriptionStatus,
 )
+from .services import publish_meal_plan
 
 
 @admin.register(PublicWorkoutAssessment)
@@ -77,3 +85,84 @@ class PublicWorkoutSubscriptionAdmin(admin.ModelAdmin):
     search_fields = ('account__email', 'plan_slug')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(PublicWorkoutProfessional)
+class PublicWorkoutProfessionalAdmin(admin.ModelAdmin):
+    list_display = ('name', 'role', 'registration_council', 'registration_number', 'is_active')
+    list_filter = ('role', 'is_active')
+    search_fields = ('name', 'registration_number')
+
+
+class PublicWorkoutMealPlanForm(forms.ModelForm):
+    """Entrega 6, Fase 4 (D.6): payload continua sendo JSON estruturado —
+    o formulario aceita a forma final como texto JSON (nao um campo por
+    refeicao/item, que exigiria um formset aninhado sem lib nova — ver
+    plano) e valida a mao contra nutrition_schema antes de aceitar salvar.
+    Nunca aceita payload malformado, mesmo digitado direto no admin.
+    """
+
+    payload = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 24, 'cols': 100}),
+        help_text=(
+            'JSON estruturado — schema_version, daily_targets (kcal/protein_g/carbs_g/fat_g) '
+            'e meals (meal_id/label/items/substitutes/note). Ver public_workouts/nutrition_schema.py.'
+        ),
+    )
+
+    class Meta:
+        model = PublicWorkoutMealPlan
+        fields = ['account', 'authored_by', 'payload']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Django reconstroi este form so' com `payload` quando renderiza a
+        # tela de leitura de uma versao ja publicada (has_change_permission
+        # devolve False, ver PublicWorkoutMealPlanAdmin) — 'authored_by'
+        # simplesmente nao existe em self.fields nesse caso.
+        if 'authored_by' in self.fields:
+            self.fields['authored_by'].queryset = PublicWorkoutProfessional.objects.filter(
+                role=PublicWorkoutProfessionalRole.NUTRICAO,
+            )
+        if self.instance.pk and isinstance(self.instance.payload, dict):
+            self.initial['payload'] = json.dumps(self.instance.payload, indent=2, ensure_ascii=False)
+
+    def clean_payload(self):
+        raw = self.cleaned_data['payload']
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise forms.ValidationError(f'JSON invalido: {exc}') from exc
+
+        errors = nutrition_schema.validate_payload(payload)
+        if errors:
+            raise forms.ValidationError(errors)
+        return payload
+
+
+@admin.register(PublicWorkoutMealPlan)
+class PublicWorkoutMealPlanAdmin(admin.ModelAdmin):
+    """Cada save cria uma VERSAO NOVA (D.6, mesmo padrao de
+    PublicWorkoutProgram) — nunca UPDATE numa linha existente. `version`/
+    `is_active` sao computados por publish_meal_plan, nunca digitados."""
+
+    form = PublicWorkoutMealPlanForm
+    list_display = ('account', 'version', 'is_active', 'authored_by', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('account__email',)
+    ordering = ('-created_at',)
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            return  # nunca UPDATE (D.6) — so' novo publish cria versao nova.
+        publish_meal_plan(
+            account_id=obj.account_id,
+            payload=form.cleaned_data['payload'],
+            authored_by=obj.authored_by,
+        )
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return True

@@ -1001,6 +1001,44 @@ class PublicWorkoutWeeklyReviewView(View):
         return JsonResponse({'review_text': review_text}, status=200)
 
 
+class PublicWorkoutMealPlanView(View):
+    """GET /renan/<slug>/nutricao.json — le' o plano alimentar ATIVO da
+    conta logada (Entrega 6, Fase 4 — docs/plans/
+    public-workouts-escala-e-nutricao-corda.md, D.4/D.6).
+
+    PONTOS CRITICOS:
+    - Mesma regra de auth de PublicWorkoutPackageView: sessao de LOGIN
+      ativa, 401 sem sessao, 404 se a sessao nao e' dona deste slug.
+    - Gate de tier (D.4): so' Completo/Premium tem acesso. 404, nunca 403
+      -- 403 confirmaria que existe conteudo de nutricao pra aquela conta
+      (mesma regra do gate de posse B0/B3). Sem assinatura nenhuma
+      tambem cai em 404, nunca 500.
+    - `meal_plan: null` (tier qualifica mas ninguem publicou plano ainda)
+      e' resposta 200 valida, nunca 404 -- mesmo espirito de
+      PublicWorkoutWeeklyReviewView (`review_text: null`).
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        from public_workouts.models import PublicWorkoutSubscription
+        from public_workouts.services import get_active_meal_plan, require_nutrition_tier
+
+        subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
+        if subscription is None or not require_nutrition_tier(subscription):
+            raise Http404('Nutricao nao disponivel pra este plano.')
+
+        return JsonResponse({'meal_plan': get_active_meal_plan(account_id=account_id)}, status=200)
+
+
 class PublicWorkoutExportDataView(View):
     """GET /renan/<slug>/meus-dados.json — export de dados do titular
     (Onda A3, LGPD/GDPR). Mesma regra de auth dos demais endpoints de

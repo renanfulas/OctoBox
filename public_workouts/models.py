@@ -137,6 +137,31 @@ class PublicWorkoutMovement(models.Model):
         return f'{self.slug} — {self.label_pt}'
 
 
+class PublicWorkoutProfessionalRole(models.TextChoices):
+    TREINO = 'treino', 'Treino'
+    NUTRICAO = 'nutricao', 'Nutrição'
+
+
+class PublicWorkoutProfessional(TimeStampedModel):
+    """Profissional de conteudo do corredor (Entrega 5, Fase 4 — D.5/ADR-3).
+
+    NAO e' o multi-personal completo (Connect Express, contas conectadas —
+    C5 do CORDA original continua fora de escopo). Resolve exatamente um
+    problema: atribuir autoria e credencial (CREF/CRN) a um conteudo, sem
+    hardcodar nome/registro em template solto.
+    """
+
+    name = models.CharField(max_length=120)
+    role = models.CharField(max_length=16, choices=PublicWorkoutProfessionalRole.choices)
+    registration_council = models.CharField(max_length=16)  # 'CREF' ou 'CRN'
+    registration_number = models.CharField(max_length=32)
+    bio = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self) -> str:
+        return f'{self.name} ({self.registration_council} {self.registration_number})'
+
+
 class PublicWorkoutProgram(models.Model):
     """Snapshot publicado e imutavel de um programa (Onda A1 do CORDA).
 
@@ -160,6 +185,10 @@ class PublicWorkoutProgram(models.Model):
     version = models.PositiveIntegerField()
     is_active = models.BooleanField(default=False, db_index=True)
     payload = models.JSONField()
+    # Nullable (D.5): nao quebra os programas legados ja publicados antes
+    # da Fase 4 existir. Migracao de dado povoa retroativamente com a
+    # linha do Renan — decisao de conteudo, nao automatica (ADR-3).
+    authored_by = models.ForeignKey(PublicWorkoutProfessional, null=True, blank=True, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -368,6 +397,61 @@ class PublicWorkoutSubscriptionEvent(models.Model):
 
     def __str__(self) -> str:
         return f'{self.subscription_id}: {self.from_status} -> {self.to_status} ({self.reason})'
+
+
+# ---------------------------------------------------------------------------
+# Nutricao (Entrega 6, Fase 4 do CORDA de escala/nutricao). D.00: modelos
+# proprios do corredor, nenhuma FK pra fora de public_workouts/ — mesma
+# fronteira que ja vale pro resto deste app.
+# ---------------------------------------------------------------------------
+
+
+class PublicWorkoutNutritionProfile(TimeStampedModel):
+    """Anamnese nutricional — NAO reusa os 7 campos da anamnese de treino
+    (comorbidade e rotina alimentar nao tem equivalente la)."""
+
+    account = models.OneToOneField(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='nutrition_profile')
+    comorbidades = models.TextField(blank=True)
+    alergias_restricoes = models.TextField(blank=True)
+    rotina_alimentar = models.TextField(blank=True)
+    preferencias = models.TextField(blank=True)
+
+    def __str__(self) -> str:
+        return f'Anamnese nutricional — {self.account.email}'
+
+
+class PublicWorkoutMealPlan(models.Model):
+    """Snapshot publicado do plano alimentar — mesmo padrao de
+    PublicWorkoutProgram (D-1 do CORDA): nunca UPDATE, nova versao e' nova
+    linha, is_active decide qual serve. `payload` validado por
+    nutrition_schema.assert_valid_payload() antes de save() (D.6) — nunca
+    so' documentado.
+
+    Por `account`, nunca `slug` (D.6): o plano alimentar nao tem — e nao
+    deveria ganhar — o conceito de link publico compartilhavel que o
+    treino tem. Sempre privado, sempre atras de login.
+    """
+
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='meal_plans')
+    version = models.PositiveIntegerField()
+    is_active = models.BooleanField(default=False, db_index=True)
+    authored_by = models.ForeignKey(PublicWorkoutProfessional, on_delete=models.PROTECT)
+    payload = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-version']
+        constraints = [
+            models.UniqueConstraint(fields=['account', 'version'], name='unique_meal_plan_version'),
+            models.UniqueConstraint(
+                fields=['account'],
+                condition=models.Q(is_active=True),
+                name='unique_active_meal_plan_per_account',
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.account.email} v{self.version} [{"ativo" if self.is_active else "inativo"}]'
 
 
 class PublicWorkoutPaymentStatus(models.TextChoices):
