@@ -16,11 +16,13 @@ from public_workouts.stripe_handlers import public_workout_stripe_webhook_receiv
 from .public_workout_views import (
     PublicWorkoutBillingPortalView,
     PublicWorkoutColdSignupView,
+    PublicWorkoutLandingView,
     PublicWorkoutLoginView,
     PublicWorkoutSubscribeView,
 )
 
 urlpatterns = [
+    path('', PublicWorkoutLandingView.as_view(), name='public-workout-landing'),
     path('login', PublicWorkoutLoginView.as_view(), name='public-workout-login'),
     path('subscribe', PublicWorkoutSubscribeView.as_view(), name='public-workout-subscribe'),
     path('cadastro', PublicWorkoutColdSignupView.as_view(), name='public-workout-cold-signup'),
