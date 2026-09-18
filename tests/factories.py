@@ -25,8 +25,8 @@ import factory
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from finance.models import Payment, PaymentStatus
-from operations.models import ClassSession
+from finance.models import Enrollment, MembershipPlan, Payment, PaymentStatus
+from operations.models import Attendance, ClassSession
 from student_app.models import SessionWorkout
 from students.models import Student
 
@@ -76,6 +76,32 @@ class SessionWorkoutFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SessionWorkout
 
+    session = factory.SubFactory(ClassSessionFactory)
+
+
+class MembershipPlanFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = MembershipPlan
+
+    name = factory.Sequence(lambda n: f'Plano Teste {n}')
+    price = '199.90'
+
+
+class EnrollmentFactory(factory.django.DjangoModelFactory):
+    """Matricula. payment_source default DIRECT — testes de parceiro sobrescrevem."""
+
+    class Meta:
+        model = Enrollment
+
+    student = factory.SubFactory(StudentFactory)
+    plan = factory.SubFactory(MembershipPlanFactory)
+
+
+class AttendanceFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Attendance
+
+    student = factory.SubFactory(StudentFactory)
     session = factory.SubFactory(ClassSessionFactory)
 
 
