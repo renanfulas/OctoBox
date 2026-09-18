@@ -287,9 +287,22 @@ PUBLIC_WORKOUT_STYLESHEETS: tuple[str, ...] = (
     '/static/css/public_workouts/install-prompt.css',
     '/static/css/public_workouts/assessments.css',
     '/static/css/public_workouts/mobile.css',
-    # Entrega 4 — exclusivos de workout.html (template unico, ver <head>
-    # do proprio arquivo): sem eles no precache, o corte pra producao abre
-    # offline sem estilo nenhum.
+)
+
+PUBLIC_WORKOUT_SCRIPTS: tuple[str, ...] = (
+    '/static/js/public_workouts/app.js',
+    '/static/js/public_workouts/assessments.js',
+)
+
+# Entrega 4 — exclusivos de workout.html (template unico, ver <head>/fim do
+# proprio arquivo). NAO entram em PUBLIC_WORKOUT_STYLESHEETS/_SCRIPTS de
+# proposito: aquelas duas tuplas tambem alimentam `stylesheet_urls` no
+# contexto de `_render_legacy_template_html` (os arquivos legados fazem
+# `{% for url in stylesheet_urls %}` no proprio <head>) — misturar aqui
+# vazaria <link>/<script> de workout.html pras paginas legadas, que nao os
+# usam. Só entram no precache do service worker (PublicWorkoutServiceWorkerView),
+# que precisa dos dois conjuntos juntos pra qualquer pagina abrir offline.
+PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS: tuple[str, ...] = (
     '/static/css/student_app/app.css',
     '/static/css/design-system/components/tables.css',
     '/static/css/design-system/components/interactive-tabs.css',
@@ -297,10 +310,7 @@ PUBLIC_WORKOUT_STYLESHEETS: tuple[str, ...] = (
     '/static/css/public_workouts/workout-shell.css',
 )
 
-PUBLIC_WORKOUT_SCRIPTS: tuple[str, ...] = (
-    '/static/js/public_workouts/app.js',
-    '/static/js/public_workouts/assessments.js',
-    # Entrega 4 — exclusivos de workout.html.
+PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/core/shell.js',
     '/static/js/public_workouts/load_tracker.js',
     '/static/js/public_workouts/weekly_review.js',
@@ -786,10 +796,16 @@ class PublicWorkoutServiceWorkerView(View):
                 'app_scope': PUBLIC_WORKOUT_SCOPE,
                 'plan_slugs': plan_slugs,
                 # CSS e JS compartilhados entram no precache: sem eles a
-                # pagina abre offline sem estilo e sem tracker.
+                # pagina abre offline sem estilo e sem tracker. Inclui os
+                # dois conjuntos (legado + workout.html, Entrega 4) porque
+                # o precache e' um so pra qualquer pagina que o SW cubra —
+                # so os <link>/<script> de CADA TEMPLATE ficam separados
+                # (ver comentario de PUBLIC_WORKOUT_UNIFIED_TEMPLATE_*).
                 'static_asset_urls': (
                     PUBLIC_WORKOUT_STYLESHEETS
                     + PUBLIC_WORKOUT_SCRIPTS
+                    + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS
+                    + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS
                     + PUBLIC_WORKOUT_STATIC_ASSETS
                 ),
             },
