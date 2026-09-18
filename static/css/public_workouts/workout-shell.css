@@ -629,11 +629,17 @@ button.workout-week-day:focus-visible {
     color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
 }
 
+/* Achado duas vezes em paralelo (duas sessoes, mesmo dia): so 1 dos usos de
+   .workout-block-card e tabela (Versoes do programa, painel Perfil) — os
+   outros (Seus recordes, Evolucao de carga, Conta) botam <h2>/conteudo
+   direto no card, sem passar por .operation-table-wrap. Zerar o padding
+   deixava o titulo colado/sobrepondo o card-decor-topstripe. */
 .workout-block-card {
     padding: 16px;
 }
 
 .workout-block-card .operation-table-wrap {
+    margin: -16px;
     padding: 16px;
     overflow-x: auto;
 }
@@ -1003,6 +1009,103 @@ button.workout-week-day:focus-visible {
 
 .workout-load-input__status--error {
     color: var(--theme-accent-danger);
+}
+
+/* Dica de ultima carga ("Última vez: 80 kg — toque pra usar") — clicavel,
+   preenche o campo sem exigir digitar de novo o mesmo numero de sempre. */
+.workout-load-input__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.workout-load-input__hint {
+    font-size: 0.72rem;
+    color: var(--brand);
+    cursor: pointer;
+    text-decoration: underline dotted;
+}
+
+.workout-load-input__hint:empty {
+    display: none;
+}
+
+/* Stepper +/-2,5kg — mesmo alvo de toque generoso (36px) que .wk-input
+   das paginas legadas tinha, sem herdar o resto daquele CSS (D.00: reusa
+   o PADRAO de tamanho de toque, nao o arquivo). */
+.workout-load-input__step {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary, inherit);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.workout-load-input__step:active {
+    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
+}
+
+/* Confirmacao de "salvo" — pulso curto na borda, sem animacao continua
+   (mesmo respeito a prefers-reduced-motion do resto do arquivo, so que
+   aqui a transition em si ja e curta o bastante pra nao precisar de guard). */
+.workout-load-input--saved {
+    border-color: var(--theme-accent-success);
+    box-shadow: 0 0 0 3px var(--theme-accent-success-alpha);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Aba "Suas Cargas" — recorde (maior peso ja registrado) por movimento,
+   grid de cards curtos. Complementa a aba Historico (que mostra EVOLUCAO);
+   aqui e so o numero que motiva, sem grafico. */
+.workout-records-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.workout-record-card {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--theme-border-soft);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--theme-surface-secondary) 94%), var(--theme-surface-secondary));
+}
+
+.workout-record-card__label {
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.workout-record-card__value {
+    font-size: 1.35rem;
+    color: var(--brand);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-record-card__unit {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--theme-text-muted);
+    text-shadow: none;
+}
+
+.workout-record-card__date {
+    font-size: 0.7rem;
+    color: var(--theme-text-muted);
 }
 
 /* Troca de exercicio (Entrega 4) -- pills das variacoes irma dentro do

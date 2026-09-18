@@ -140,16 +140,21 @@ def humanize_movement_slug(movement_slug: str) -> str:
 
 
 @register.filter
-def movement_display_name(movement: dict) -> str:
-    """Nome pra exibir na tela: `name` (portugues, escrito pelo treinador —
-    aditivo, ver schema.py) quando presente; senao humaniza `movement_slug`
-    (movimento publicado ANTES desta fatia, sem `name` no payload ainda —
-    tambem cobre o fallback ja existente de slug sem wiki-btn, que usa
-    slugify(nome) e perderia acento/maiuscula mesmo tendo nome capturado)."""
-    name = (movement or {}).get('name')
+def movement_name(movement: dict, movement_labels: dict | None = None) -> str:
+    """Nome pra exibir na tela — uniao das DUAS fontes PT-BR que surgiram em
+    paralelo (duas sessoes, mesmo problema): `movement.name` (portugues,
+    escrito pelo treinador nesta VERSAO do payload — aditivo, ver
+    schema.py) tem prioridade quando presente; senao cai pro catalogo
+    retroativo (`movement_labels`, services.build_movement_label_lookup,
+    Onda A0 — cobre os 10 programas legados que ainda nao tem `name` no
+    payload); senao humaniza `movement_slug`. Delega a resolucao dos dois
+    ultimos casos pra resolve_movement_display_name (mesma logica, testada
+    a parte) em vez de duplicar."""
+    movement = movement or {}
+    name = movement.get('name')
     if name:
         return name
-    return humanize_movement_slug((movement or {}).get('movement_slug', ''))
+    return resolve_movement_display_name(movement.get('movement_slug', ''), movement_labels)
 
 
 @register.filter
@@ -298,6 +303,23 @@ def reps_phases(reps_spec: str, top_weight_kg=None):
 
 
 @register.filter
+def resolve_movement_display_name(movement_slug: str, movement_labels: dict | None) -> str:
+    """Onda B3 — nome de exercicio pra exibir: PT-BR de verdade quando
+    `movement_labels` (services.build_movement_label_lookup, uma query em
+    lote contra PublicWorkoutMovement) tem entrada pro slug, senao o
+    mesmo palpite mecanico de humanize_movement_slug. Filtro proprio (nao
+    `default` encadeado com humanize_movement_slug) de proposito: um rotulo
+    de verdade tipo "Wall Ball" ou "GHD Sit-up" passado por
+    humanize_movement_slug sairia errado (`.capitalize()` derruba as
+    maiusculas internas)."""
+    if movement_labels:
+        label = movement_labels.get(movement_slug)
+        if label:
+            return label
+    return humanize_movement_slug(movement_slug)
+
+
+@register.filter
 def dict_get(dictionary: dict | None, key: str):
     """Lookup generico por chave variavel — Django template so faz
     `dicionario.chave` (subscript literal). Devolve None se o dict for
@@ -412,6 +434,27 @@ def load_chart_points(entries: list[dict]) -> dict:
         'latest_weight_kg': points[-1]['weight_kg'],
         'delta_weight_kg': delta,
         'trend': _trend(delta),
+    }
+
+
+@register.filter
+def personal_record(entries: list[dict]) -> dict:
+    """Onda B3 — aba "Suas Cargas": maior peso ja registrado de UM
+    movimento (mesmo shape de services.list_load_history, ja filtrado
+    pro movimento — mesmo uso de `{% regroup %}` que load_chart_points ja
+    faz na aba Historico). Diferente de load_chart_points (que mostra
+    EVOLUCAO), aqui so o recorde importa — 1 registro so ja e suficiente,
+    sem o corte de "2 pontos minimo" daquele filtro."""
+    weighted = [entry for entry in entries if entry.get('weight_kg') is not None]
+    if not weighted:
+        return {'has_data': False, 'weight_kg': None, 'performed_on': None, 'reps': None}
+
+    best = max(weighted, key=lambda entry: entry['weight_kg'])
+    return {
+        'has_data': True,
+        'weight_kg': best['weight_kg'],
+        'performed_on': best.get('performed_on'),
+        'reps': best.get('reps'),
     }
 
 

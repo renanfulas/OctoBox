@@ -35,11 +35,19 @@ PONTOS CRITICOS:
   mantem os sub-tabs de dia por dentro (dois `.interactive-tab-container`
   aninhados — CSS existente ja escopa por filho direto, script de tabs foi
   generalizado pra nao cruzar os dois niveis, ver <script> no fim).
-- `customer_portal_url`/`student_name` sao contexto OPCIONAL (None-safe) —
-  nenhuma view real os alimenta ainda, mesmo estagio de "fundacao, nao
-  ligado a URL" do resto deste arquivo. Avaliacao NAO usa contexto Django
-  nenhum -- e' 100% client-side via assessments.js (fetch de
-  avaliacoes.json), igual aos 10 templates legados.
+- `customer_portal_url`/`student_name`/`account_email` sao contexto OPCIONAL
+  (None-safe) — nenhuma view real os alimenta ainda, mesmo estagio de
+  "fundacao, nao ligado a URL" do resto deste arquivo. Avaliacao NAO usa
+  contexto Django nenhum -- e' 100% client-side via assessments.js (fetch
+  de avaliacoes.json), igual aos 10 templates legados.
+- Reconciliado nesta sessao com um SEGUNDO redesign concorrente (chips de
+  fase Feeder/Top/AMRAP + glossario inline, `reps_phases`/`glossary_highlight`)
+  que chegou em cima do primeiro — a legenda em balao/`highlight_set_stages`
+  desta sessao foi DESCARTADA em favor da versao deles (mais completa, ja
+  validada pelo Renan). O que sobrevive desta sessao: nome PT-BR do
+  exercicio (`movement_labels`/`resolve_movement_display_name`), stepper
+  ±2,5kg + dica de ultima carga no widget de registro de carga, secao
+  "Seus recordes" no topo do painel Cargas.
 -->
 <html lang="pt-BR">
 <head>
@@ -157,17 +165,17 @@ PONTOS CRITICOS:
             {% for movement in block.movements %}
             <article
               class="student-card card-decor-topstripe workout-movement-card"
-              data-workout-load-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar registro de carga de hoje em {{ movement|movement_display_name }}"
+              data-workout-load-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar registro de carga de hoje em {{ movement|movement_name:movement_labels }}"
             >
               {% movement_load_display movement program current_phase one_rep_max_by_movement load_history as load %}
               <div class="workout-movement-copy">
                 {% if movement.reference_url %}
-                <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_display_name }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
+                <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_name:movement_labels }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
                 {% else %}
-                <strong>{{ movement|movement_display_name }}</strong>
+                <strong>{{ movement|movement_name:movement_labels }}</strong>
                 {% endif %}
                 {% if movement.variations %}
-                <span class="workout-movement-variation-toggle" data-workout-variation-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar variação de {{ movement|movement_display_name }}">Ver variação</span>
+                <span class="workout-movement-variation-toggle" data-workout-variation-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar variação de {{ movement|movement_name:movement_labels }}">Ver variação</span>
                 <span class="workout-movement-variation" data-workout-variation hidden>Variação:
                   {% for variation in movement.variations %}<a href="{{ variation.reference_url }}" target="_blank" rel="noopener">{{ variation.label }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
                 </span>
@@ -203,15 +211,19 @@ PONTOS CRITICOS:
               {% with siblings=movement.movement_slug|sibling_variations %}
               {% if siblings %}
               <div class="workout-load-input__substitutes" data-workout-substitute-pills>
-                <button type="button" class="workout-load-input__substitute-pill is-active" data-substitute-slug="{{ movement.movement_slug }}">{{ movement|movement_display_name }}</button>
+                <button type="button" class="workout-load-input__substitute-pill is-active" data-substitute-slug="{{ movement.movement_slug }}">{{ movement|movement_name:movement_labels }}</button>
                 {% for sibling in siblings %}
                 <button type="button" class="workout-load-input__substitute-pill" data-substitute-slug="{{ sibling.slug }}">{{ sibling.label_pt }}</button>
                 {% endfor %}
               </div>
               {% endif %}
               {% endwith %}
-              <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+              <div class="workout-load-input__head">
+                <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+                <span class="workout-load-input__hint" data-workout-load-hint></span>
+              </div>
               <div class="workout-load-input__row">
+                <button type="button" class="workout-load-input__step" data-workout-load-step="-2.5" aria-label="Diminuir 2,5 kg">−</button>
                 <input
                   type="number"
                   inputmode="decimal"
@@ -220,8 +232,9 @@ PONTOS CRITICOS:
                   placeholder="kg"
                   class="workout-load-input__field"
                   data-workout-load-field
-                  aria-label="Carga de hoje em {{ movement|movement_display_name }}, em quilos"
+                  aria-label="Carga de hoje em {{ movement|movement_name:movement_labels }}, em quilos"
                 >
+                <button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>
                 <button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
               </div>
               <span class="workout-load-input__status" data-workout-load-status aria-live="polite"></span>
@@ -339,13 +352,35 @@ PONTOS CRITICOS:
         <span class="workout-weekly-review__status" data-workout-weekly-review-status aria-live="polite"></span>
       </article>
       <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Seus recordes</h2>
+        {% regroup load_history by movement_slug as load_history_by_movement_for_records %}
+        {% if load_history_by_movement_for_records %}
+        <div class="workout-records-grid">
+          {% for group in load_history_by_movement_for_records %}
+          {% with record=group.list|personal_record %}
+          {% if record.has_data %}
+          <div class="workout-record-card" data-workout-record-card>
+            <span class="workout-record-card__label">{{ group.grouper|resolve_movement_display_name:movement_labels }}</span>
+            <strong class="workout-record-card__value">{{ record.weight_kg }} <span class="workout-record-card__unit">kg</span></strong>
+            <span class="workout-record-card__date">{{ record.performed_on }}</span>
+          </div>
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
+        </div>
+        {% else %}
+        <p>Nenhuma carga registrada ainda.</p>
+        {% endif %}
+      </article>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
         <h2>Evolução de carga</h2>
         {% regroup load_history by movement_slug as load_history_by_movement %}
         {% for group in load_history_by_movement %}
           {% with chart=group.list|load_chart_points %}
           <div class="workout-load-chart{% if chart.has_data %} has-data{% endif %}">
             <div class="workout-load-chart-head">
-              <h3>{{ group.grouper|humanize_movement_slug }}</h3>
+              <h3>{{ group.grouper|resolve_movement_display_name:movement_labels }}</h3>
               {% if chart.has_data %}
               <span class="workout-load-chart-current">
                 <strong>{{ chart.latest_weight_kg }} kg</strong>
@@ -376,7 +411,7 @@ PONTOS CRITICOS:
               viewBox="{{ chart.viewbox }}"
               preserveAspectRatio="none"
               role="img"
-              aria-label="Evolução de carga em {{ group.grouper|humanize_movement_slug }}: {{ chart.latest_weight_kg }} kg, {{ chart.trend }}"
+              aria-label="Evolução de carga em {{ group.grouper|resolve_movement_display_name:movement_labels }}: {{ chart.latest_weight_kg }} kg, {{ chart.trend }}"
             >
               <defs>
                 <linearGradient id="workout-load-fill-{{ forloop.counter }}" x1="0" y1="0" x2="0" y2="1">
