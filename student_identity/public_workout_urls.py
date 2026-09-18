@@ -18,11 +18,13 @@ from .public_workout_views import (
     PublicWorkoutColdSignupView,
     PublicWorkoutGoogleCallbackView,
     PublicWorkoutGoogleStartView,
+    PublicWorkoutLandingView,
     PublicWorkoutLoginView,
     PublicWorkoutSubscribeView,
 )
 
 urlpatterns = [
+    path('', PublicWorkoutLandingView.as_view(), name='public-workout-landing'),
     path('login', PublicWorkoutLoginView.as_view(), name='public-workout-login'),
     path('login/google', PublicWorkoutGoogleStartView.as_view(), name='public-workout-oauth-google-start'),
     path('login/google/callback', PublicWorkoutGoogleCallbackView.as_view(), name='public-workout-oauth-google-callback'),

@@ -39,7 +39,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.generic import View
+from django.views.generic import TemplateView, View
 
 from public_workouts.billing import get_or_create_subscription
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutTier
@@ -78,6 +78,20 @@ def _safe_public_workout_next(raw: str | None) -> str:
     fora do corredor). Ver PONTOS CRITICOS no topo do arquivo."""
     candidate = (raw or '').strip()
     return candidate if _PUBLIC_WORKOUT_NEXT_RE.match(candidate) else ''
+
+
+class PublicWorkoutLandingView(TemplateView):
+    """GET /treinos/ — landing de vendas do corredor pra um desconhecido
+    (Entrega 5, Fase 3 — D.7 do plano de escala/nutrição).
+
+    Sem lógica de negócio: so' copy estático + os 3 CTAs de preço, cada um
+    postando pra PublicWorkoutColdSignupView via JS (landing.js). Copy
+    hardcoded no template Django, de proposito (D.7) — trocar uma frase
+    aqui e' git commit + deploy, mais rapido que um painel de CMS que
+    ninguem pediu ainda.
+    """
+
+    template_name = 'public_workouts/landing.html'
 
 
 class PublicWorkoutLoginView(View):

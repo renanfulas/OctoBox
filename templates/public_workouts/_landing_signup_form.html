@@ -1,0 +1,6 @@
+{% load static %}<form class="curva-signup-form" data-curva-signup-form data-tier="{{ tier }}" action="{% url 'public-workout-cold-signup' %}" method="post">
+  {% csrf_token %}
+  <input type="email" name="email" placeholder="seu@email.com" required autocomplete="email">
+  <button type="submit" class="curva-signup-submit">{{ cta }}</button>
+  <p class="curva-signup-status" data-curva-signup-status aria-live="polite"></p>
+</form>
