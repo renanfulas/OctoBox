@@ -7,7 +7,7 @@
  *   banner de instalacao de PWA e registra service worker em /renan/ —
  *   os dois fazem sentido pra um aluno que ja tem treino, nao pra um
  *   visitante anonimo decidindo se compra. So reusa os tokens neutros de
- *   tokens.css (--bg/--white/--card/--border/--dark/--muted/--r-*/--shadow),
+ *   tokens.css (--bg/--white/--card/--border/--dark/--muted/--r-tokens/--shadow),
  *   nunca o accent por aluno (nao existe aluno ainda nesta pagina).
  * - marca propria ("Curva Treino & Nutricao", GTM §2) — accent definido
  *   aqui, independente do accent por aluno do corredor autenticado.
