@@ -42,7 +42,7 @@ from django.utils import timezone
 from django.views.generic import View
 
 from public_workouts.billing import get_or_create_subscription
-from public_workouts.models import PublicWorkoutAccount
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutTier
 from public_workouts.stripe_checkout import (
     PublicWorkoutStripeNotConfiguredError,
     start_customer_portal_session,
@@ -197,7 +197,13 @@ class PublicWorkoutSubscribeView(View):
         if not plan_slug:
             return JsonResponse({'error': 'plan_slug_obrigatorio'}, status=400)
 
-        subscription = get_or_create_subscription(account=account, plan_slug=plan_slug)
+        # Fluxo legado (aluno ja onboardado manualmente por Renan): sempre
+        # ESSENCIAL, unico tier que existia antes da Entrega 5. Escolha de
+        # tier por quem assina de verdade so existe no cadastro a frio
+        # (PublicWorkoutColdSignupView, abaixo).
+        subscription = get_or_create_subscription(
+            account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug=plan_slug
+        )
 
         login_url = request.build_absolute_uri(reverse('public-workout-login'))
         try:
@@ -210,6 +216,45 @@ class PublicWorkoutSubscribeView(View):
             return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
 
         return JsonResponse({'checkout_url': checkout_url})
+
+
+class PublicWorkoutColdSignupView(View):
+    """POST /treinos/cadastro — inicia o checkout pra um DESCONHECIDO, sem
+    cookie de sessao e sem plan_slug (Entrega 5, Fase 2 — D.1/D.2/D.2b).
+
+    Duas travas que PublicWorkoutSubscribeView exige (cookie de sessao +
+    plan_slug ja existente) nao se aplicam aqui de proposito — e exatamente
+    o gap que o cadastro a frio fecha: um estranho que nunca falou com o
+    Renan e nunca recebeu link de login. A assinatura nasce PENDING_PAYMENT
+    (get_or_create_subscription, D.2b) — so o webhook confirma pra ACTIVE
+    depois do pagamento de verdade (RT7). `plan_slug` fica None: quem
+    atribui e Renan/esposa, manualmente, ao revisar a fila (D.2).
+    """
+
+    def post(self, request, *args, **kwargs):
+        email = (request.POST.get('email') or '').strip().lower()
+        tier = request.POST.get('tier')
+        if not email or '@' not in email or tier not in PublicWorkoutTier.values:
+            return JsonResponse({'error': 'email_ou_tier_invalido'}, status=400)
+
+        account, _ = PublicWorkoutAccount.objects.get_or_create(email=email)
+        subscription = get_or_create_subscription(account=account, tier=tier)
+
+        login_url = request.build_absolute_uri(reverse('public-workout-login'))
+        try:
+            checkout_url = start_subscription_checkout(
+                subscription=subscription,
+                success_url=f'{login_url}?assinatura=sucesso',
+                cancel_url=f'{login_url}?assinatura=cancelada',
+            )
+        except PublicWorkoutStripeNotConfiguredError as exc:
+            return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
+
+        response = JsonResponse({'checkout_url': checkout_url})
+        # Ja loga o visitante (attach_public_workout_session_cookie, B1) —
+        # sem isso ele precisaria de um segundo round-trip de e-mail/token
+        # so pra ver a propria fila de status depois do pagamento.
+        return attach_public_workout_session_cookie(response, account_id=account.pk)
 
 
 class PublicWorkoutBillingPortalView(View):

@@ -1005,6 +1005,50 @@ button.workout-week-day:focus-visible {
     color: var(--theme-accent-danger);
 }
 
+/* Troca de exercicio (Entrega 4) -- pills das variacoes irma dentro do
+   proprio widget de registro de carga. A pill ativa mostra qual
+   movement_slug o clique em "Salvar" vai gravar (ver
+   wireSubstitutePills em load_tracker.js); nao muda o treino
+   prescrito, so a gravacao de hoje. */
+.workout-load-input__substitutes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex-basis: 100%;
+}
+
+.workout-load-input__substitute-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.workout-load-input__substitute-pill.is-active {
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
+    color: var(--theme-text-primary, inherit);
+}
+
+/* Revisao semanal (Entrega 4) -- texto sob demanda (botao "Gerar
+   revisao"), nunca carregado automatico no GET da pagina. */
+.workout-weekly-review__text {
+    margin: 0 0 10px;
+    line-height: 1.5;
+    color: var(--theme-text-primary, inherit);
+}
+
+.workout-weekly-review__status {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+}
+
 /* ============================================================
  * Cardio + Periodizacao (Onda A2, fatia cardio/periodizacao) --
  * alcancadas so' pelo ciclo do botao "Treino" do bottom nav (ver <script>

@@ -18,6 +18,9 @@ from public_workouts.models import (
     PublicWorkoutAccount,
     PublicWorkoutLocalStorageBackup,
     PublicWorkoutLoginToken,
+    PublicWorkoutSubscription,
+    PublicWorkoutSubscriptionStatus,
+    PublicWorkoutTier,
 )
 
 from .delivery_gateways import StudentEmailDeliveryError
@@ -440,6 +443,81 @@ class PublicWorkoutSubscribeViewTests(TestCase):
         self.assertEqual(response.json()['error'], 'stripe_nao_configurado')
 
 
+class PublicWorkoutColdSignupViewTests(TestCase):
+    # Entrega 5, Fase 2 (docs/plans/public-workouts-escala-e-nutricao-corda.md,
+    # D.1/D.2/D.2b): ao contrario de PublicWorkoutSubscribeView, esta view
+    # tem que funcionar pra um DESCONHECIDO — sem cookie, sem plan_slug.
+
+    def _post(self, **data):
+        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+            start_checkout.return_value = 'https://checkout.stripe.com/pay/cs_test_cold'
+            return self.client.post(reverse('public-workout-cold-signup'), data)
+
+    def test_works_without_any_session_cookie(self):
+        response = self._post(email='estranho@example.com', tier=PublicWorkoutTier.COMPLETO)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['checkout_url'], 'https://checkout.stripe.com/pay/cs_test_cold')
+
+    def test_missing_email_returns_400(self):
+        response = self._post(email='', tier=PublicWorkoutTier.ESSENCIAL)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'email_ou_tier_invalido')
+
+    def test_invalid_tier_returns_400(self):
+        response = self._post(email='estranho@example.com', tier='vip-supremo')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'email_ou_tier_invalido')
+
+    def test_missing_tier_returns_400(self):
+        response = self._post(email='estranho@example.com')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'email_ou_tier_invalido')
+
+    def test_creates_account_and_pending_payment_subscription_without_plan_slug(self):
+        self._post(email='novo@example.com', tier=PublicWorkoutTier.PREMIUM)
+
+        account = PublicWorkoutAccount.objects.get(email='novo@example.com')
+        subscription = account.subscription
+        self.assertEqual(subscription.tier, PublicWorkoutTier.PREMIUM)
+        self.assertEqual(subscription.status, PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
+        self.assertIsNone(subscription.plan_slug)
+
+    def test_attaches_session_cookie_so_visitor_is_already_logged_in(self):
+        response = self._post(email='novo2@example.com', tier=PublicWorkoutTier.ESSENCIAL)
+
+        self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+        account = PublicWorkoutAccount.objects.get(email='novo2@example.com')
+        request = Mock(COOKIES={PUBLIC_WORKOUT_SESSION_COOKIE_NAME: response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME].value})
+        self.assertEqual(get_public_workout_account_id_from_request(request), account.pk)
+
+    def test_second_signup_with_same_email_does_not_create_a_second_subscription(self):
+        # RT1 (Entrega 5): duplo clique no CTA da landing nao pode duplicar.
+        self._post(email='duplocheck@example.com', tier=PublicWorkoutTier.ESSENCIAL)
+        self._post(email='duplocheck@example.com', tier=PublicWorkoutTier.PREMIUM)
+
+        account = PublicWorkoutAccount.objects.get(email='duplocheck@example.com')
+        self.assertEqual(PublicWorkoutSubscription.objects.filter(account=account).count(), 1)
+        # Comportamento preexistente de get_or_create_subscription: os
+        # defaults da SEGUNDA chamada sao ignorados.
+        self.assertEqual(account.subscription.tier, PublicWorkoutTier.ESSENCIAL)
+
+    def test_stripe_not_configured_returns_503(self):
+        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+            from public_workouts.stripe_checkout import PublicWorkoutStripeNotConfiguredError
+
+            start_checkout.side_effect = PublicWorkoutStripeNotConfiguredError('sem price id')
+            response = self.client.post(
+                reverse('public-workout-cold-signup'), {'email': 'semstripe@example.com', 'tier': PublicWorkoutTier.ESSENCIAL}
+            )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()['error'], 'stripe_nao_configurado')
+
+
 class PublicWorkoutBillingPortalViewTests(TestCase):
     # Onda B2, item 6 (Customer Portal) — ultimo item pendente da onda.
     # Mesmo mecanismo de sessao/erros de PublicWorkoutSubscribeViewTests.
@@ -479,7 +557,7 @@ class PublicWorkoutBillingPortalViewTests(TestCase):
         from public_workouts.billing import get_or_create_subscription
 
         account = PublicWorkoutAccount.objects.create(email='checkoutincompleto@example.com')
-        get_or_create_subscription(account=account, plan_slug='bruno')
+        get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno')
         self._login(account)
 
         response = self.client.post(reverse('public-workout-billing-portal'))
@@ -491,7 +569,7 @@ class PublicWorkoutBillingPortalViewTests(TestCase):
         from public_workouts.billing import get_or_create_subscription, link_stripe_ids
 
         account = PublicWorkoutAccount.objects.create(email='semstripeportal@example.com')
-        subscription = get_or_create_subscription(account=account, plan_slug='bruno')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno')
         link_stripe_ids(subscription, customer_id='cus_123', stripe_subscription_id='sub_123')
         self._login(account)
 
@@ -508,7 +586,7 @@ class PublicWorkoutBillingPortalViewTests(TestCase):
         from public_workouts.billing import get_or_create_subscription, link_stripe_ids
 
         account = PublicWorkoutAccount.objects.create(email='comportal@example.com')
-        subscription = get_or_create_subscription(account=account, plan_slug='bruno')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno')
         link_stripe_ids(subscription, customer_id='cus_456', stripe_subscription_id='sub_456')
         self._login(account)
 

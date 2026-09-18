@@ -290,6 +290,15 @@ class PublicWorkoutSubscriptionStatus(models.TextChoices):
     PAST_DUE = 'past_due', 'Em atraso'
     SUSPENDED = 'suspended', 'Suspensa'
     CANCELED = 'canceled', 'Cancelada'
+    # Preparado pro cadastro a frio (Entrega 5, Fase 2) — ainda sem nenhum
+    # caminho de codigo que cria assinatura com este valor (ADR-7).
+    PENDING_PAYMENT = 'pending_payment', 'Aguardando pagamento'
+
+
+class PublicWorkoutTier(models.TextChoices):
+    ESSENCIAL = 'essencial', 'Essencial'
+    COMPLETO = 'completo', 'Completo'
+    PREMIUM = 'premium', 'Premium'
 
 
 class PublicWorkoutSubscription(models.Model):
@@ -305,7 +314,18 @@ class PublicWorkoutSubscription(models.Model):
         on_delete=models.CASCADE,
         related_name='subscription',
     )
-    plan_slug = models.CharField(max_length=50, db_index=True)
+    # Nullable a partir da Entrega 5/Fase 2 (D.2, ADR-2): cadastro a frio
+    # cria a assinatura ANTES de existir slug/PublicWorkoutProgram — a fila
+    # de ativacao e a query `status=ACTIVE, plan_slug__isnull=True`, nunca
+    # uma tabela propria. A unicidade de assinatura por conta continua
+    # vindo do OneToOneField acima, nunca deste campo (P6 do CORDA).
+    plan_slug = models.CharField(max_length=50, null=True, blank=True)
+    tier = models.CharField(
+        max_length=16,
+        choices=PublicWorkoutTier.choices,
+        default=PublicWorkoutTier.ESSENCIAL,
+        db_index=True,
+    )
     status = models.CharField(
         max_length=16,
         choices=PublicWorkoutSubscriptionStatus.choices,
@@ -326,6 +346,15 @@ class PublicWorkoutSubscription(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            # Parcial: linhas em fila (D.2) tem plan_slug vazio e nao
+            # precisam entrar num indice de busca por slug.
+            models.Index(
+                fields=['plan_slug'],
+                name='pw_sub_plan_slug_not_null_idx',
+                condition=models.Q(plan_slug__isnull=False),
+            ),
+        ]
 
     def __str__(self) -> str:
         return f'{self.plan_slug} [{self.status}]'
