@@ -64,7 +64,11 @@ PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 ano
 # devolve mudou de arquivo por-cliente pra template unico — sem isto, o
 # service worker ja instalado nos aparelhos dos 10 clientes continua
 # servindo a pagina legada em cache, offline, indefinidamente.
-PUBLIC_WORKOUT_CACHE_EPOCH = 3
+# Bump para 4 (botao de nutricao): novo asset (nutrition.js) entrou em
+# PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS abaixo — sem bump, PWA ja
+# instalado no aparelho do aluno nunca baixa o script novo (mesmo motivo
+# do bump anterior).
+PUBLIC_WORKOUT_CACHE_EPOCH = 4
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -314,6 +318,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/core/shell.js',
     '/static/js/public_workouts/load_tracker.js',
     '/static/js/public_workouts/weekly_review.js',
+    '/static/js/public_workouts/nutrition.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}
@@ -352,9 +357,55 @@ def public_workout_asset_version() -> str:
     return version
 
 
+def _synthesize_public_workout_plan(slug: str) -> PublicWorkoutPlan | None:
+    """Fallback pra slug que NAO esta em PUBLIC_WORKOUT_LIBRARY mas TEM
+    PublicWorkoutProgram ativo publicado (ex.: aprovado via
+    services.approve_and_publish_draft — pipeline de anamnese+IA). Sem
+    isto, um aluno novo aprovado por esse fluxo cairia em 404 em
+    /renan/<slug> ate alguem editar este dict a mao e fazer deploy — gap
+    real ja' documentado em
+    docs/plans/public-workouts-produtizacao-corda.md:155,158 ("trocar a
+    fonte dos slugs de dict para query em PublicWorkoutProgram").
+
+    So' sintetiza tema GENERICO (nunca uma das paletas artesanais dos 10
+    clientes legados) — branding fino por aluno continua sendo trabalho
+    editorial de quem, se/quando quiser, adicionar a entrada de verdade
+    neste dict depois. `template_file` fica vazio de proposito: so' e' lido
+    quando o slug esta' em `_legacy_template_slugs()` (kill switch por env
+    var), que nunca contem um slug que nao veio deste dict primeiro — um
+    slug sintetizado aqui sempre renderiza pelo template unico
+    (workout.html), nunca pelo caminho legado.
+
+    Retorna None (nunca levanta) quando nem o dict nem o banco conhecem o
+    slug — `_get_public_workout_entry` decide o 404, esta funcao so'
+    resolve a origem do dado."""
+    from public_workouts.services import get_active_program
+
+    if get_active_program(slug=slug) is None:
+        return None
+
+    return PublicWorkoutPlan(
+        slug=slug,
+        title=f'Treino {slug.capitalize()}',
+        theme_color='#0f172a',
+        background_color='#f5efe4',
+        template_file='',
+        accent=PublicWorkoutAccent('#2451C4', '#EAF0FD', '#BFDBFE', '#DBEAFE', '#1B3A96'),
+        tabs=(_TAB_TREINO, _TAB_AVALIACOES),
+        tracker_weeks=0,
+        store_key=f'{slug}_v1',
+    )
+
+
 def _get_public_workout_entry(plan_slug: str) -> PublicWorkoutPlan:
     normalized_slug = (plan_slug or '').strip().lower()
     plan = PUBLIC_WORKOUT_LIBRARY.get(normalized_slug)
+    if plan is None:
+        # Query extra (indexada por slug) so' acontece pro caso ausente do
+        # dict em memoria — custo aceito: corredor de baixo trafego, e o
+        # caminho comum (slug real, nos 10 legados ou ja' sintetizado antes)
+        # nunca chega aqui.
+        plan = _synthesize_public_workout_plan(normalized_slug)
     if plan is None:
         raise Http404('Treino publico nao encontrado.')
     return plan
@@ -648,12 +699,14 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
     """
     plan = _get_public_workout_entry(plan_slug)
 
+    from public_workouts.models import PublicWorkoutSubscription
     from public_workouts.services import (
         build_student_package,
         build_weekly_review,
         get_active_program,
         list_load_history,
         list_program_versions,
+        require_nutrition_tier,
     )
 
     program = get_active_program(slug=plan.slug)
@@ -664,10 +717,13 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         weekly_review = build_weekly_review(account_id=account_id)
         package = build_student_package(account_id=account_id, slug=plan.slug)
         load_history = list_load_history(account_id=account_id)
+        subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
+        nutrition_unlocked = bool(subscription and require_nutrition_tier(subscription))
     else:
         weekly_review = {'trends_by_movement': {}}
         package = {'one_rep_max_by_movement': {}}
         load_history = []
+        nutrition_unlocked = False
 
     return render_to_string('public_workouts/workout.html', {
         'plan_slug': plan.slug,
@@ -681,6 +737,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'student_photo_url': None,
         'customer_portal_url': None,
         'account_email': None,
+        'nutrition_unlocked': nutrition_unlocked,
     })
 
 
@@ -863,6 +920,10 @@ class PublicWorkoutTemplatePreviewView(View):
             'student_photo_url': None,
             'customer_portal_url': None,
             'account_email': None,
+            # Preview nunca tem sessao de aluno (ver docstring da view) —
+            # sem account_id nao ha' como resolver tier/assinatura, mesmo
+            # tratamento que account_email/student_photo_url acima.
+            'nutrition_unlocked': False,
         })
         return HttpResponse(html)
 

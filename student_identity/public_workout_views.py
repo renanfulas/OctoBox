@@ -41,7 +41,15 @@ from django.urls import reverse
 from django.views.generic import TemplateView, View
 
 from public_workouts.billing import get_or_create_subscription
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutTier
+from public_workouts.models import (
+    PublicWorkoutAccount,
+    PublicWorkoutPhysicalRestrictionTag,
+    PublicWorkoutTier,
+    PublicWorkoutTrainingExperience,
+    PublicWorkoutTrainingGoal,
+    PublicWorkoutTrainingLocation,
+)
+from public_workouts.services import TrainingIntakeValidationError, get_training_profile, save_training_profile
 from public_workouts.stripe_checkout import (
     PublicWorkoutStripeNotConfiguredError,
     start_customer_portal_session,
@@ -57,13 +65,22 @@ from .public_workout_session import attach_public_workout_session_cookie, get_pu
 
 
 _PUBLIC_WORKOUT_NEXT_RE = re.compile(r'^/renan/[-a-z0-9]+/?$')
+# Literal exato (nao regex — sem parametro nenhum aqui), somado ao padrao de
+# /renan/<slug> acima: permite que o login redirecione pra anamnese depois
+# do primeiro checkout, sem abrir mao da disciplina de whitelist exata que
+# o resto do arquivo ja documenta (nunca url_has_allowed_host_and_scheme,
+# que aceitaria qualquer path do mesmo host).
+_PUBLIC_WORKOUT_NEXT_LITERALS = ('/treinos/anamnese',)
 
 
 def _safe_public_workout_next(raw: str | None) -> str:
-    """So aceita path exato de /renan/<slug> — string vazia pra qualquer
-    outra coisa (ausente, absoluto com host, esquema `javascript:`, rota
-    fora do corredor). Ver PONTOS CRITICOS no topo do arquivo."""
+    """So aceita path exato de /renan/<slug> ou um dos literais whitelisted
+    acima — string vazia pra qualquer outra coisa (ausente, absoluto com
+    host, esquema `javascript:`, rota fora do corredor). Ver PONTOS
+    CRITICOS no topo do arquivo."""
     candidate = (raw or '').strip()
+    if candidate in _PUBLIC_WORKOUT_NEXT_LITERALS:
+        return candidate
     return candidate if _PUBLIC_WORKOUT_NEXT_RE.match(candidate) else ''
 
 
@@ -239,3 +256,68 @@ class PublicWorkoutBillingPortalView(View):
             return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
 
         return JsonResponse({'portal_url': portal_url})
+
+
+class PublicWorkoutTrainingIntakeView(View):
+    """GET/POST /treinos/anamnese — anamnese de treino (D4 do plano de
+    produto: "tudo que alimenta a IA comeca a coletar antes da IA existir").
+
+    Pagina HTML server-rendered, nao endpoint JSON (diferente das outras
+    views deste arquivo): sem sessao ativa, redireciona pro login com
+    ?next=/treinos/anamnese em vez de devolver 401 — o aluno chega aqui
+    clicando num link, nao via fetch() de JS.
+
+    Toda validacao de verdade (consentimento obrigatorio, valores de
+    escolha validos) mora em services.save_training_profile — esta view so'
+    traduz POST em kwargs e trata TrainingIntakeValidationError como erro
+    de formulario re-renderizado, nunca 500.
+    """
+
+    template_name = 'treinos/anamnese.html'
+
+    def _form_context(self, account_id: int) -> dict:
+        return {
+            'goals': PublicWorkoutTrainingGoal.choices,
+            'experiences': PublicWorkoutTrainingExperience.choices,
+            'locations': PublicWorkoutTrainingLocation.choices,
+            'restriction_tags': PublicWorkoutPhysicalRestrictionTag.choices,
+            'profile': get_training_profile(account_id=account_id),
+        }
+
+    def get(self, request, *args, **kwargs):
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return redirect(f"{reverse('public-workout-login')}?next=/treinos/anamnese")
+        return render(request, self.template_name, self._form_context(account_id))
+
+    def post(self, request, *args, **kwargs):
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return redirect(f"{reverse('public-workout-login')}?next=/treinos/anamnese")
+
+        try:
+            raw_days = int(request.POST.get('days_per_week') or 0)
+        except ValueError:
+            raw_days = 0
+
+        try:
+            save_training_profile(
+                account_id=account_id,
+                goal=request.POST.get('goal') or '',
+                physical_restrictions=request.POST.getlist('physical_restrictions'),
+                physical_restrictions_detail=(request.POST.get('physical_restrictions_detail') or '').strip(),
+                training_experience=request.POST.get('training_experience') or '',
+                days_per_week=raw_days,
+                training_location=request.POST.get('training_location') or '',
+                motivation=(request.POST.get('motivation') or '').strip(),
+                biggest_difficulty=(request.POST.get('biggest_difficulty') or '').strip(),
+                consent_given=request.POST.get('consent') == 'on',
+            )
+        except TrainingIntakeValidationError as exc:
+            context = self._form_context(account_id)
+            context['error'] = str(exc)
+            return render(request, self.template_name, context, status=400)
+
+        context = self._form_context(account_id)
+        context['saved'] = True
+        return render(request, self.template_name, context)
