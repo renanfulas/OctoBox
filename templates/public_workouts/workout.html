@@ -210,6 +210,7 @@ PONTOS CRITICOS:
               </div>
               {% endif %}
               {% endwith %}
+              {% todays_logged_weight load_history movement.movement_slug as today_weight %}
               <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
               <div class="workout-load-input__row">
                 <input
@@ -220,11 +221,12 @@ PONTOS CRITICOS:
                   placeholder="kg"
                   class="workout-load-input__field"
                   data-workout-load-field
+                  {% if today_weight is not None %}value="{{ today_weight|unlocalize }}"{% endif %}
                   aria-label="Carga de hoje em {{ movement|movement_display_name }}, em quilos"
                 >
                 <button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
               </div>
-              <span class="workout-load-input__status" data-workout-load-status aria-live="polite"></span>
+              <span class="workout-load-input__status" data-workout-load-status aria-live="polite">{% if today_weight is not None %}Já registrado hoje: {{ today_weight|unlocalize }} kg{% endif %}</span>
             </div>
             {% empty %}
             <p class="table-empty-cell">Nenhum movimento neste bloco.</p>

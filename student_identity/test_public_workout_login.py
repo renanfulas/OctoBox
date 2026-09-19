@@ -268,6 +268,22 @@ class PublicWorkoutLoginViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'seminext@example.com')
 
+    def test_get_with_valid_token_no_next_and_no_subscription_never_shows_awaiting_message(self):
+        # Achado real (usuario), numa rodada de QA seguinte ao anterior:
+        # "logged_in_as" tinha UMA so' mensagem pros dois casos de string
+        # vazia -- quem nunca assinou nada via a MESMA frase de "seu treino
+        # esta sendo preparado" de quem realmente ja pagou e preencheu a
+        # anamnese. Regressao especifica: sem assinatura nenhuma, a frase
+        # de "preparado" nunca aparece (seria enganoso -- essa pessoa nao
+        # pagou nada ainda).
+        token = request_login_token(email='semassinaturanenhuma@example.com', base_url='https://octoboxfit.com.br')
+
+        client = Client()
+        response = client.get(reverse('public-workout-login'), {'token': str(token.token)})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'sendo preparado')
+
     def test_get_with_valid_token_no_next_subscription_without_slug_or_anamnese_redirects_to_anamnese(self):
         # Achado real (usuario): quem ja tem PublicWorkoutSubscription (via
         # cadastro/checkout) mas ainda nao preencheu a anamnese ficava
