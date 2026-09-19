@@ -43,15 +43,17 @@ def build_login_email_subject() -> str:
 
 
 def build_login_email_body(*, login_url: str, expires_in_minutes: int) -> str:
-    """Corpo em texto plano — fallback obrigatorio (nem todo cliente renderiza HTML)."""
+    """Corpo em texto plano — fallback obrigatorio (nem todo cliente renderiza HTML).
+    Texto com acentuacao correta (so o subject fica sem acento — ver docstring
+    do modulo)."""
     return (
         'Toque no link abaixo para entrar no seu treino:\n'
         '\n'
         f'{login_url}\n'
         '\n'
-        f'Vale por {expires_in_minutes} minutos. Se voce nao pediu esse link, ignore este email.\n'
+        f'Vale por {expires_in_minutes} minutos. Se você não pediu esse link, ignore este e-mail.\n'
         '\n'
-        '— Curva Treino & Nutricao\n'
+        '— Curva Treino & Nutrição\n'
     )
 
 
@@ -93,7 +95,7 @@ def build_login_email_html_body(*, login_url: str, expires_in_minutes: int) -> s
                 Cur<span style="color:#2451C4;">va</span>
               </span>
               <span style="display:inline-block;margin-left:6px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#60738f;">
-                TREINO &amp; NUTRICAO
+                TREINO &amp; NUTRIÇÃO
               </span>
             </td>
           </tr>
@@ -114,8 +116,8 @@ def build_login_email_html_body(*, login_url: str, expires_in_minutes: int) -> s
 
               <!-- BODY -->
               <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#3a5371;">
-                Toque no botao abaixo pra entrar direto no seu treino — sem senha,
-                sem complicacao.
+                Toque no botão abaixo pra entrar direto no seu treino — sem senha,
+                sem complicação.
               </p>
 
               <!-- CTA -->
@@ -141,7 +143,7 @@ def build_login_email_html_body(*, login_url: str, expires_in_minutes: int) -> s
               <hr style="border:0;border-top:1px solid rgba(13,19,32,0.08);margin:0 0 28px;">
 
               <p style="margin:0;font-size:13px;line-height:1.5;color:#60738f;">
-                Nao pediu esse link? Pode ignorar este email — ninguem alem de quem
+                Não pediu esse link? Pode ignorar este e-mail — ninguém além de quem
                 clicar consegue entrar na sua conta.
               </p>
 
@@ -152,7 +154,7 @@ def build_login_email_html_body(*, login_url: str, expires_in_minutes: int) -> s
           <tr>
             <td align="center" style="padding:32px 16px 8px;">
               <p style="margin:0;font-size:12px;line-height:1.5;color:#94a3b8;">
-                — Curva Treino &amp; Nutricao · Renan Fulas (CREF 155070-G/SP) · Giovanna Fontes (CRN-3 67286)
+                — Curva Treino &amp; Nutrição · Renan Fulas (CREF 155070-G/SP) · Giovanna Fontes (CRN-3 67286)
               </p>
             </td>
           </tr>
