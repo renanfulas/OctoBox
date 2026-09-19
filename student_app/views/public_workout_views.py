@@ -444,27 +444,32 @@ def _confirm_subscription_active_or_404(plan_slug: str) -> None:
         raise Http404('Treino publico nao encontrado.')
 
 
-def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
+def _confirm_ownership_or_404(request, plan_slug: str) -> None:
     """B3 (CORDA) item 5 — "identidade da sessao dona do slug, senao 404".
 
-    Sempre confirma primeiro que a assinatura do slug esta ACTIVE
-    (_confirm_subscription_active_or_404 acima) — isso vale MESMO sem
-    sessao (visitante anonimo no fluxo B0). A checagem de POSSE abaixo
-    (aluno A logado nao ve o slug do aluno B) so entra em jogo quando ha
-    sessao de LOGIN ativa (PublicWorkoutAccount, Onda B1) — visitante
-    anonimo continua no fluxo B0 de posse por cookie, sem mudanca (fase B
-    de login obrigatorio ainda nao esta ligada, Onda B3 fases B/C). Com
-    sessao ativa: aluno A logado abrindo o slug do aluno B tem que receber
-    404, nunca o treino nem 403 (403 confirmaria que o slug existe —
-    mesma regra do cookie de posse do B0).
+    So entra em jogo quando ha sessao de LOGIN ativa (PublicWorkoutAccount,
+    Onda B1) — visitante anonimo continua no fluxo B0 de posse por cookie,
+    sem mudanca (fase B de login obrigatorio ainda nao esta ligada, Onda
+    B3 fases B/C). Com sessao ativa: aluno A logado abrindo o slug do
+    aluno B tem que receber 404, nunca o treino nem 403 (403 confirmaria
+    que o slug existe — mesma regra do cookie de posse do B0).
+
+    Separada de _confirm_subscription_active_or_404 de proposito (achado
+    real, feedback do Renan): posse errada continua 404 silencioso (nunca
+    revela que o slug de OUTRA pessoa existe), mas pagamento pendente do
+    PROPRIO dono nao devia ser silencioso — a pessoa que chega com o link
+    certo E' o dono (mesma logica de posse-prova-identidade de sempre
+    neste arquivo), entao PublicWorkoutDetailView mostra uma tela
+    explicando o bloqueio e como resolver, em vez de 404 (ver mais abaixo).
+    Os endpoints de API/sub-recurso continuam so' com
+    _confirm_login_session_owns_slug_or_404 (404 direto, sem tela — nao
+    fazem sentido pra visualizacao humana).
 
     Import tardio (nao no topo do arquivo): mesmo motivo de
     _validate_plan_slug em public_workouts/services.py — este modulo e
     importado por public_workouts (PUBLIC_WORKOUT_LIBRARY), um import de
     public_workouts aqui no topo criaria ciclo.
     """
-    _confirm_subscription_active_or_404(plan_slug)
-
     from public_workouts.models import PublicWorkoutSubscription
     from student_identity.public_workout_session import get_public_workout_account_id_from_request
 
@@ -475,6 +480,15 @@ def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
     owns_slug = PublicWorkoutSubscription.objects.filter(account_id=account_id, plan_slug=plan_slug).exists()
     if not owns_slug:
         raise Http404('Treino publico nao encontrado.')
+
+
+def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
+    """Combina as duas checagens acima (status ACTIVE + posse) pros
+    endpoints de API/sub-recurso — 404 direto pras duas, sem tela (nao sao
+    paginas que um humano le, ver docstring de _confirm_ownership_or_404).
+    """
+    _confirm_subscription_active_or_404(plan_slug)
+    _confirm_ownership_or_404(request, plan_slug)
 
 
 def get_public_workout_owner_slug(request) -> str | None:
@@ -780,10 +794,24 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
     })
 
 
+def _render_payment_blocked_html(plan: PublicWorkoutPlan) -> str:
+    """Tela de "pagamento pendente" — achado real (feedback do Renan): 404
+    silencioso e' certo pra quem NAO e' dono (nunca revela que o slug de
+    outra pessoa existe), mas e' errado pro PROPRIO dono, que so' quer
+    saber por que parou de ver o treino e como resolver. Sem firula: um
+    botao que abre o Customer Portal da Stripe (PublicWorkoutBillingPortalView,
+    ja existente) — a pessoa atualiza o cartao/paga o que falta por conta
+    propria, o webhook de invoice.payment_succeeded (billing.py::
+    record_successful_invoice_payment) reativa a assinatura sozinho."""
+    return render_to_string('public_workouts/payment_blocked.html', {
+        'student_name': plan.short_name,
+    })
+
+
 class PublicWorkoutDetailView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
-        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        _confirm_ownership_or_404(request, plan.slug)
         # get_token() marca o cookie CSRF pra ser enviado na resposta —
         # sem isso, o cookie nunca nasce aqui (nenhum template desta pagina
         # usa {% csrf_token %}) e o JS de escrita (autoavaliacao online,
@@ -801,7 +829,7 @@ class PublicWorkoutDetailView(View):
         # sessao nesta mesma visita — mesmo modelo de confianca que o B0
         # ja usa hoje (posse do link prova identidade; fase B de login
         # obrigatorio ainda nao esta ligada, ver docstring do B0 acima).
-        from public_workouts.models import PublicWorkoutSubscription
+        from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
         from student_identity.public_workout_session import (
             attach_public_workout_session_cookie,
             get_public_workout_account_id_from_request,
@@ -816,6 +844,23 @@ class PublicWorkoutDetailView(View):
                 .first()
             )
             account_id = subscription
+
+        # Pagamento bloqueado: tela dedicada (nao 404) — ver docstring de
+        # _render_payment_blocked_html. So' se aplica quando EXISTE
+        # assinatura pra este slug e ela nao esta ACTIVE (mesma condicao
+        # de _confirm_subscription_active_or_404, so' que aqui vira tela
+        # em vez de excecao — os 10 clientes legados sem assinatura Stripe
+        # nenhuma nunca caem neste ramo).
+        blocking_subscription = (
+            PublicWorkoutSubscription.objects.filter(plan_slug=plan.slug)
+            .exclude(status=PublicWorkoutSubscriptionStatus.ACTIVE)
+            .exists()
+        )
+        if blocking_subscription:
+            response = HttpResponse(_render_payment_blocked_html(plan))
+            if account_id is not None and not had_session:
+                attach_public_workout_session_cookie(response, account_id=account_id)
+            return response
 
         response = HttpResponse(_render_public_workout_html(plan_slug, account_id=account_id))
         if account_id is not None and not had_session:

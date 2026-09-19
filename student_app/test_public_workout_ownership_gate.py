@@ -101,7 +101,16 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
     E ela nao esta ACTIVE — nunca quando nao existe assinatura nenhuma
     (os 10 clientes legados nunca passaram pelo checkout Stripe deste
     corredor, ver seed_legacy_workout_accounts.py, e continuam servidos
-    pela PUBLIC_WORKOUT_LIBRARY sem nenhuma linha de assinatura)."""
+    pela PUBLIC_WORKOUT_LIBRARY sem nenhuma linha de assinatura).
+
+    A PAGINA PRINCIPAL (PublicWorkoutDetailView, /renan/<slug>) mostra
+    uma tela de "pagamento pendente" (200, com botao pro Customer Portal)
+    em vez de 404 — feedback direto do Renan: quem chega com o link certo
+    E' o dono (mesma logica de posse-prova-identidade de sempre neste
+    corredor), entao silencio nao ajuda, so confunde. Os ENDPOINTS DE API
+    (carga, avaliacoes.json, pacote.json, etc. — ver
+    _confirm_login_session_owns_slug_or_404) continuam 404 direto, sem
+    tela: nao fazem sentido pra visualizacao humana."""
 
     def test_active_subscription_is_not_blocked(self):
         _make_account_with_subscription(
@@ -111,42 +120,52 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
         response = self.client.get('/renan/bruno')
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Bruno')
 
-    def test_suspended_subscription_blocks_access_even_anonymously(self):
+    def test_suspended_subscription_shows_payment_blocked_screen_not_404(self):
         _make_account_with_subscription(
             email='suspenso@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
         )
 
         response = self.client.get('/renan/bruno')
 
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Atualizar pagamento')
+        self.assertNotContains(response, 'Sua semana')  # nunca o treino de verdade
 
-    def test_past_due_subscription_blocks_access(self):
+    def test_past_due_subscription_shows_payment_blocked_screen(self):
         _make_account_with_subscription(
             email='atraso@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.PAST_DUE
         )
 
         response = self.client.get('/renan/bruno')
 
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Atualizar pagamento')
 
-    def test_canceled_subscription_blocks_access(self):
+    def test_canceled_subscription_shows_payment_blocked_screen(self):
         _make_account_with_subscription(
             email='cancelado@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.CANCELED
         )
 
         response = self.client.get('/renan/bruno')
 
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Atualizar pagamento')
 
-    def test_blocked_slug_never_reveals_content_in_a_404(self):
-        _make_account_with_subscription(
-            email='suspenso2@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
+    def test_api_endpoint_still_404s_silently_when_blocked(self):
+        # Diferente da pagina principal: endpoint de API nao mostra tela,
+        # 404 direto (mesma garantia de sempre pra quem consome via fetch()).
+        account = _make_account_with_subscription(
+            email='suspenso-api@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
+        )
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.pk
         )
 
-        response = self.client.get('/renan/bruno')
+        response = self.client.get('/renan/bruno/pacote.json')
 
-        self.assertNotContains(response, 'Bruno', status_code=404)
+        self.assertEqual(response.status_code, 404)
 
     def test_a_slug_with_no_subscription_row_at_all_is_never_blocked(self):
         # Legado: giovanna nao tem PublicWorkoutSubscription nenhuma neste
@@ -155,10 +174,10 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    def test_logged_in_owner_of_a_suspended_subscription_is_also_blocked(self):
+    def test_logged_in_owner_of_a_suspended_subscription_also_sees_the_blocked_screen(self):
         # O bloqueio nao e' so' pro visitante anonimo — o proprio dono
-        # logado tambem fica de fora enquanto a assinatura nao voltar a
-        # ACTIVE (reactivate_subscription, billing.py).
+        # logado tambem ve a tela de pagamento pendente enquanto a
+        # assinatura nao voltar a ACTIVE (reactivate_subscription, billing.py).
         account = _make_account_with_subscription(
             email='dono-suspenso@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
         )
@@ -168,4 +187,17 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
 
         response = self.client.get('/renan/bruno')
 
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Atualizar pagamento')
+
+    def test_blocked_screen_button_posts_to_the_existing_billing_portal_endpoint(self):
+        # A tela nao inventa uma rota nova pra pagar — reusa
+        # PublicWorkoutBillingPortalView (/treinos/billing-portal), ja
+        # testado em student_identity/test_public_workout_login.py.
+        _make_account_with_subscription(
+            email='suspenso-portal@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, '/treinos/billing-portal')
