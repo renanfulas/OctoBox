@@ -522,6 +522,20 @@ class PublicWorkoutColdSignupViewTests(TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()['error'], 'stripe_nao_configurado')
 
+    def test_success_url_points_straight_to_anamnese_not_back_to_login(self):
+        # Achado real: a landing promete a anamnese "antes do primeiro
+        # plano" (FAQ) mas o retorno do Stripe mandava pra /treinos/login,
+        # pagina que nem olha pro ?assinatura=sucesso — beco sem saida.
+        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+            start_checkout.return_value = 'https://checkout.stripe.com/pay/cs_test_anamnese'
+            self.client.post(
+                reverse('public-workout-cold-signup'), {'email': 'vaipraanamnese@example.com', 'tier': PublicWorkoutTier.COMPLETO}
+            )
+
+        _, kwargs = start_checkout.call_args
+        self.assertIn(reverse('public-workout-training-intake'), kwargs['success_url'])
+        self.assertIn('assinatura=cancelada', kwargs['cancel_url'])
+
 
 class PublicWorkoutBillingPortalViewTests(TestCase):
     # Onda B2, item 6 (Customer Portal) — ultimo item pendente da onda.

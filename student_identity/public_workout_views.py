@@ -229,10 +229,18 @@ class PublicWorkoutColdSignupView(View):
         subscription = get_or_create_subscription(account=account, tier=tier)
 
         login_url = request.build_absolute_uri(reverse('public-workout-login'))
+        # Achado real (usuario): a landing PROMETE a anamnese "antes do
+        # primeiro plano" (FAQ), mas o success_url mandava de volta pra
+        # /treinos/login — pagina que nem olha pro ?assinatura=sucesso, so
+        # mostra o formulario de novo. O cookie de sessao ja foi anexado
+        # AQUI embaixo, antes de ir pro Stripe (SameSite=Lax sobrevive o
+        # redirect de volta, e' navegacao top-level) — entao mandar direto
+        # pra anamnese funciona sem round-trip nenhum de login.
+        anamnese_url = request.build_absolute_uri(reverse('public-workout-training-intake'))
         try:
             checkout_url = start_subscription_checkout(
                 subscription=subscription,
-                success_url=f'{login_url}?assinatura=sucesso',
+                success_url=anamnese_url,
                 cancel_url=f'{login_url}?assinatura=cancelada',
             )
         except PublicWorkoutStripeNotConfiguredError as exc:
@@ -241,7 +249,8 @@ class PublicWorkoutColdSignupView(View):
         response = JsonResponse({'checkout_url': checkout_url})
         # Ja loga o visitante (attach_public_workout_session_cookie, B1) —
         # sem isso ele precisaria de um segundo round-trip de e-mail/token
-        # so pra ver a propria fila de status depois do pagamento.
+        # so pra ver a propria fila de status depois do pagamento, e o
+        # redirect pra anamnese acima dependeria de sessao ja existir.
         return attach_public_workout_session_cookie(response, account_id=account.pk)
 
 
