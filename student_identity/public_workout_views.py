@@ -84,6 +84,36 @@ def _safe_public_workout_next(raw: str | None) -> str:
     return candidate if _PUBLIC_WORKOUT_NEXT_RE.match(candidate) else ''
 
 
+def _resolve_default_next_for_account(account_id: int) -> str:
+    """Quando o link de login chega SEM ?next= explicito — o caso comum de
+    abrir o e-mail direto, sem ter vindo de um /renan/<slug> especifico
+    nesta mesma aba — manda a pessoa direto pro proprio treino, se a conta
+    ja tiver plan_slug atribuido. Achado real (usuario): sem isso, a tela
+    so dizia "login feito, volte pro link do seu treino" e deixava a
+    pessoa perdida.
+
+    Nunca usa dado de request pra montar isso (por isso nao passa por
+    _safe_public_workout_next) — plan_slug vem do proprio banco, resolvido
+    pela conta que acabou de provar posse do e-mail, entao nao ha
+    superficie de redirecionamento aberto aqui pra comecar.
+
+    String vazia (nunca None) quando a conta ainda nao tem slug (ex.: pagou
+    mas ainda esta na fila de ativacao) — nesse caso a tela de confirmacao
+    "login feito" segue sendo o destino certo, nao ha treino pra mostrar
+    ainda.
+    """
+    from public_workouts.models import PublicWorkoutSubscription
+
+    plan_slug = (
+        PublicWorkoutSubscription.objects.filter(account_id=account_id)
+        .exclude(plan_slug__isnull=True)
+        .exclude(plan_slug='')
+        .values_list('plan_slug', flat=True)
+        .first()
+    )
+    return f'/renan/{plan_slug}' if plan_slug else ''
+
+
 class PublicWorkoutLandingView(TemplateView):
     """GET /treinos/ — landing de vendas do corredor pra um desconhecido
     (Entrega 5, Fase 3 — D.7 do plano de escala/nutrição).
@@ -111,8 +141,9 @@ class PublicWorkoutLoginView(View):
         if account is None:
             return render(request, self.template_name, {'error': 'link_invalido', 'next_url': next_url})
 
-        if next_url:
-            response = redirect(next_url)
+        effective_next = next_url or _resolve_default_next_for_account(account.id)
+        if effective_next:
+            response = redirect(effective_next)
         else:
             response = render(request, self.template_name, {'logged_in_as': account.email})
         attach_public_workout_session_cookie(response, account_id=account.id)
