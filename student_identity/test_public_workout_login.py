@@ -21,6 +21,9 @@ from public_workouts.models import (
     PublicWorkoutSubscription,
     PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
+    PublicWorkoutTrainingExperience,
+    PublicWorkoutTrainingGoal,
+    PublicWorkoutTrainingLocation,
 )
 
 from .delivery_gateways import StudentEmailDeliveryError
@@ -252,9 +255,11 @@ class PublicWorkoutLoginViewTests(TestCase):
         self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
     def test_get_with_valid_token_no_next_and_no_subscription_keeps_confirmation_page(self):
-        # Sem plan_slug pra resolver (ex.: pagou mas ainda esta na fila de
-        # ativacao) nao ha treino pra mandar a pessoa — a tela de
-        # confirmacao segue sendo o destino certo.
+        # Conta sem NENHUMA PublicWorkoutSubscription (nunca passou pelo
+        # cadastro, so' digitou um e-mail qualquer em /treinos/login, que
+        # request_login_token aceita de qualquer jeito) -- nao ha o que
+        # resolver, a tela de confirmacao segue sendo o destino certo
+        # (nunca empurra quem nem comecou a assinar pra anamnese).
         token = request_login_token(email='seminext@example.com', base_url='https://octoboxfit.com.br')
 
         client = Client()
@@ -262,6 +267,49 @@ class PublicWorkoutLoginViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'seminext@example.com')
+
+    def test_get_with_valid_token_no_next_subscription_without_slug_or_anamnese_redirects_to_anamnese(self):
+        # Achado real (usuario): quem ja tem PublicWorkoutSubscription (via
+        # cadastro/checkout) mas ainda nao preencheu a anamnese ficava
+        # preso numa tela dizendo "volte pro link do seu treino" -- sem
+        # treino nenhum montado ainda. Agora manda direto pra anamnese.
+        token = request_login_token(email='semanamnese@example.com', base_url='https://octoboxfit.com.br')
+        account = PublicWorkoutAccount.objects.get(email='semanamnese@example.com')
+        PublicWorkoutSubscription.objects.create(account=account)
+
+        client = Client()
+        response = client.get(reverse('public-workout-login'), {'token': str(token.token)})
+
+        self.assertRedirects(response, '/treinos/anamnese', fetch_redirect_response=False)
+
+    def test_get_with_valid_token_no_next_subscription_with_anamnese_but_no_slug_shows_awaiting_message(self):
+        # Anamnese ja preenchida, mas Renan ainda nao montou/atribuiu o
+        # treino (sem plan_slug) -- nao ha pra onde redirecionar, a tela
+        # de confirmacao precisa deixar claro que o treino esta em
+        # preparo, nunca um link morto pro treino que ainda nao existe.
+        from public_workouts.services import save_training_profile
+
+        token = request_login_token(email='aguardandotreino@example.com', base_url='https://octoboxfit.com.br')
+        account = PublicWorkoutAccount.objects.get(email='aguardandotreino@example.com')
+        PublicWorkoutSubscription.objects.create(account=account)
+        save_training_profile(
+            account_id=account.id,
+            goal=PublicWorkoutTrainingGoal.HYPERTROPHY,
+            physical_restrictions=[],
+            physical_restrictions_detail='',
+            training_experience=PublicWorkoutTrainingExperience.NEVER_TRAINED,
+            days_per_week=3,
+            training_location=PublicWorkoutTrainingLocation.FULL_GYM,
+            motivation='',
+            biggest_difficulty='',
+            consent_given=True,
+        )
+
+        client = Client()
+        response = client.get(reverse('public-workout-login'), {'token': str(token.token)})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'sendo preparado')
 
     def test_get_with_valid_token_no_next_but_with_plan_slug_auto_redirects_to_own_treino(self):
         # Achado real (usuario): abrir o link do e-mail direto (sem ter

@@ -87,31 +87,47 @@ def _safe_public_workout_next(raw: str | None) -> str:
 def _resolve_default_next_for_account(account_id: int) -> str:
     """Quando o link de login chega SEM ?next= explicito — o caso comum de
     abrir o e-mail direto, sem ter vindo de um /renan/<slug> especifico
-    nesta mesma aba — manda a pessoa direto pro proprio treino, se a conta
-    ja tiver plan_slug atribuido. Achado real (usuario): sem isso, a tela
-    so dizia "login feito, volte pro link do seu treino" e deixava a
-    pessoa perdida.
+    nesta mesma aba — manda a pessoa pro proximo passo certo dado o estado
+    real da conta. Achado real (usuario): sem isso, a tela so dizia "login
+    feito, volte pro link do seu treino" pra QUALQUER conta sem plan_slug
+    — inclusive quem nunca tinha nem preenchido a anamnese ainda, sem
+    dizer qual link nem onde ele estava.
+
+    Ordem de resolucao:
+    1. Ja tem plan_slug atribuido (Renan ja montou o treino) -> manda pro
+       proprio treino.
+    2. Sem plan_slug, mas JA existe PublicWorkoutSubscription (entrou pelo
+       cadastro/checkout em algum momento, qualquer status) e AINDA sem
+       anamnese preenchida -> manda pra anamnese (mesmo destino que
+       PublicWorkoutColdSignupView.success_url usa logo apos o pagamento —
+       aqui cobre quem saiu daquela aba e voltou depois via link de login).
+    3. Sem plan_slug mas anamnese ja preenchida (falta so' Renan montar o
+       treino) -> string vazia; quem chama mostra a mensagem de "treino em
+       preparo" nesse caso, nunca um link morto.
+    4. Sem NENHUMA PublicWorkoutSubscription (nunca passou pelo cadastro —
+       so' abriu /treinos/login e digitou um e-mail qualquer, que
+       request_login_token aceita de qualquer jeito) -> string vazia,
+       nunca empurra pra anamnese quem nem comecou a assinar.
 
     Nunca usa dado de request pra montar isso (por isso nao passa por
-    _safe_public_workout_next) — plan_slug vem do proprio banco, resolvido
-    pela conta que acabou de provar posse do e-mail, entao nao ha
-    superficie de redirecionamento aberto aqui pra comecar.
-
-    String vazia (nunca None) quando a conta ainda nao tem slug (ex.: pagou
-    mas ainda esta na fila de ativacao) — nesse caso a tela de confirmacao
-    "login feito" segue sendo o destino certo, nao ha treino pra mostrar
-    ainda.
+    _safe_public_workout_next) — tudo resolvido pela propria conta que
+    acabou de provar posse do e-mail, entao nao ha superficie de
+    redirecionamento aberto aqui pra comecar.
     """
     from public_workouts.models import PublicWorkoutSubscription
+    from public_workouts.services import get_training_profile
 
-    plan_slug = (
-        PublicWorkoutSubscription.objects.filter(account_id=account_id)
-        .exclude(plan_slug__isnull=True)
-        .exclude(plan_slug='')
-        .values_list('plan_slug', flat=True)
-        .first()
-    )
-    return f'/renan/{plan_slug}' if plan_slug else ''
+    subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
+    if subscription is None:
+        return ''
+
+    if subscription.plan_slug:
+        return f'/renan/{subscription.plan_slug}'
+
+    if get_training_profile(account_id=account_id) is None:
+        return '/treinos/anamnese'
+
+    return ''
 
 
 class PublicWorkoutLandingView(TemplateView):
