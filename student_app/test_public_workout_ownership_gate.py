@@ -12,16 +12,19 @@ POR QUE ELE EXISTE:
 
 from django.test import TestCase
 
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
 from student_identity.public_workout_session import (
     PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
     build_public_workout_session_value,
 )
 
 
-def _make_account_with_subscription(*, email, plan_slug) -> PublicWorkoutAccount:
+def _make_account_with_subscription(*, email, plan_slug, status=None) -> PublicWorkoutAccount:
     account = PublicWorkoutAccount.objects.create(email=email)
-    PublicWorkoutSubscription.objects.create(account=account, plan_slug=plan_slug)
+    kwargs = {'account': account, 'plan_slug': plan_slug}
+    if status is not None:
+        kwargs['status'] = status
+    PublicWorkoutSubscription.objects.create(**kwargs)
     return account
 
 
@@ -87,3 +90,82 @@ class PublicWorkoutOwnershipGateTests(TestCase):
         from student_identity.public_workout_session import PUBLIC_WORKOUT_SESSION_PATH
 
         self.assertEqual(PUBLIC_WORKOUT_SESSION_PATH, '/')
+
+
+class PublicWorkoutSubscriptionStatusGateTests(TestCase):
+    """P0 do acesso pago (achado real: ate a Onda B2/Fase 4, nada checava
+    status de pagamento pra servir /renan/<slug> — uma assinatura
+    suspensa/em atraso/cancelada continuava vendo o treino inteiro).
+
+    So' bloqueia quando existe uma PublicWorkoutSubscription pra este slug
+    E ela nao esta ACTIVE — nunca quando nao existe assinatura nenhuma
+    (os 10 clientes legados nunca passaram pelo checkout Stripe deste
+    corredor, ver seed_legacy_workout_accounts.py, e continuam servidos
+    pela PUBLIC_WORKOUT_LIBRARY sem nenhuma linha de assinatura)."""
+
+    def test_active_subscription_is_not_blocked(self):
+        _make_account_with_subscription(
+            email='ativo@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.ACTIVE
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_suspended_subscription_blocks_access_even_anonymously(self):
+        _make_account_with_subscription(
+            email='suspenso@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_past_due_subscription_blocks_access(self):
+        _make_account_with_subscription(
+            email='atraso@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.PAST_DUE
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_canceled_subscription_blocks_access(self):
+        _make_account_with_subscription(
+            email='cancelado@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.CANCELED
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_blocked_slug_never_reveals_content_in_a_404(self):
+        _make_account_with_subscription(
+            email='suspenso2@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertNotContains(response, 'Bruno', status_code=404)
+
+    def test_a_slug_with_no_subscription_row_at_all_is_never_blocked(self):
+        # Legado: giovanna nao tem PublicWorkoutSubscription nenhuma neste
+        # teste (mesma realidade dos 10 clientes reais antes da Onda B1/B2).
+        response = self.client.get('/renan/giovanna')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_logged_in_owner_of_a_suspended_subscription_is_also_blocked(self):
+        # O bloqueio nao e' so' pro visitante anonimo — o proprio dono
+        # logado tambem fica de fora enquanto a assinatura nao voltar a
+        # ACTIVE (reactivate_subscription, billing.py).
+        account = _make_account_with_subscription(
+            email='dono-suspenso@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
+        )
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.pk
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 404)

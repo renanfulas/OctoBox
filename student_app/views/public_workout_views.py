@@ -411,21 +411,60 @@ def _get_public_workout_entry(plan_slug: str) -> PublicWorkoutPlan:
     return plan
 
 
+def _confirm_subscription_active_or_404(plan_slug: str) -> None:
+    """P0 do acesso pago pro fluxo de cadastro a frio + Stripe (achado
+    real: ate aqui NADA checava isto — uma assinatura SUSPENDED/PAST_DUE/
+    CANCELED continuava vendo o treino inteiro).
+
+    So' bloqueia quando EXISTE uma PublicWorkoutSubscription pra este slug
+    E ela nao esta ACTIVE — nunca quando nao existe assinatura nenhuma.
+    Isso e' deliberado, nao um buraco: os 10 clientes legados (seed_legacy_
+    workout_accounts) "sao clientes pagantes reais hoje, so que fora do
+    fluxo de checkout Stripe deste corredor" (docstring do proprio
+    comando) — pagam o Renan por fora, nunca tiveram (nem deveriam ter)
+    o acesso deles condicionado a um `PublicWorkoutSubscription.status`
+    que o fluxo Stripe deste corredor nem administra pra eles. O gate so'
+    se aplica a quem de fato passou pelo checkout Stripe (cadastro a frio
+    ou assinatura de legado) e tem uma linha de assinatura pra checar.
+    Nunca 404 vira 403 (mesma razao de sempre em todo este arquivo: 403
+    confirmaria que a conta existe).
+
+    Roda pra QUALQUER visita, com sessao de login ou so' com o cookie de
+    posse B0 — chamada de dentro de _confirm_login_session_owns_slug_or_404
+    (cobre a maioria dos endpoints) e direto por quem usa o cookie B0 em
+    vez de sessao (PublicWorkoutDownloadPdfView).
+
+    Import tardio pelo mesmo motivo de _confirm_login_session_owns_slug_or_404
+    logo abaixo (ciclo com public_workouts).
+    """
+    from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
+
+    subscription = PublicWorkoutSubscription.objects.filter(plan_slug=plan_slug).first()
+    if subscription is not None and subscription.status != PublicWorkoutSubscriptionStatus.ACTIVE:
+        raise Http404('Treino publico nao encontrado.')
+
+
 def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
     """B3 (CORDA) item 5 — "identidade da sessao dona do slug, senao 404".
 
-    So entra em jogo quando ha sessao de LOGIN ativa (PublicWorkoutAccount,
-    Onda B1) — visitante anonimo continua no fluxo B0 de posse por cookie,
-    sem mudanca (fase B de login obrigatorio ainda nao esta ligada, Onda
-    B3 fases B/C). Com sessao ativa: aluno A logado abrindo o slug do
-    aluno B tem que receber 404, nunca o treino nem 403 (403 confirmaria
-    que o slug existe — mesma regra do cookie de posse do B0).
+    Sempre confirma primeiro que a assinatura do slug esta ACTIVE
+    (_confirm_subscription_active_or_404 acima) — isso vale MESMO sem
+    sessao (visitante anonimo no fluxo B0). A checagem de POSSE abaixo
+    (aluno A logado nao ve o slug do aluno B) so entra em jogo quando ha
+    sessao de LOGIN ativa (PublicWorkoutAccount, Onda B1) — visitante
+    anonimo continua no fluxo B0 de posse por cookie, sem mudanca (fase B
+    de login obrigatorio ainda nao esta ligada, Onda B3 fases B/C). Com
+    sessao ativa: aluno A logado abrindo o slug do aluno B tem que receber
+    404, nunca o treino nem 403 (403 confirmaria que o slug existe —
+    mesma regra do cookie de posse do B0).
 
     Import tardio (nao no topo do arquivo): mesmo motivo de
     _validate_plan_slug em public_workouts/services.py — este modulo e
     importado por public_workouts (PUBLIC_WORKOUT_LIBRARY), um import de
     public_workouts aqui no topo criaria ciclo.
     """
+    _confirm_subscription_active_or_404(plan_slug)
+
     from public_workouts.models import PublicWorkoutSubscription
     from student_identity.public_workout_session import get_public_workout_account_id_from_request
 
@@ -1350,6 +1389,7 @@ class PublicWorkoutDownloadPdfView(View):
 
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
+        _confirm_subscription_active_or_404(plan.slug)
         if get_public_workout_owner_slug(request) != plan.slug:
             raise Http404('Treino publico nao encontrado.')
 

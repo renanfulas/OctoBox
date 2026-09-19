@@ -104,6 +104,24 @@ class StartSubscriptionCheckoutTests(TestCase):
             self.assertEqual(kwargs['line_items'], [{'price': expected_price_id, 'quantity': 1}])
             self.assertEqual(kwargs['metadata']['tier'], tier)
 
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_subscription_has_the_trial_period_configured(self, mock_create):
+        # Decisao do Renan: cartao capturado no checkout, sem cobrar por 2
+        # dias — trial nativo da Stripe (subscription_data.trial_period_days),
+        # nao um cupom que zeraria o valor da fatura.
+        from public_workouts.stripe_checkout import PUBLIC_WORKOUT_TRIAL_PERIOD_DAYS
+
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_123')
+
+        start_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+
+        _, kwargs = mock_create.call_args
+        self.assertEqual(kwargs['subscription_data']['trial_period_days'], PUBLIC_WORKOUT_TRIAL_PERIOD_DAYS)
+        self.assertEqual(PUBLIC_WORKOUT_TRIAL_PERIOD_DAYS, 2)
+
     @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO='', STRIPE_SECRET_KEY='sk_test_x')
     def test_raises_a_clear_error_when_a_tiers_price_id_is_not_configured(self):
         self.subscription.tier = PublicWorkoutTier.COMPLETO
