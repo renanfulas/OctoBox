@@ -43,6 +43,13 @@ _TIER_PRICE_SETTINGS = {
     PublicWorkoutTier.PREMIUM: 'PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM',
 }
 
+# Decisao do Renan: cartao capturado no checkout, sem cobrar por 2 dias —
+# trial nativo da Stripe (nao um cupom de desconto, que zeraria o valor da
+# fatura em vez de adiar a cobranca). Se a cobranca no fim do trial falhar,
+# handle_failed_invoice_payment (billing.py) bloqueia o acesso na hora, sem
+# a regua de avisos de 9 dias usada pra renovacao de quem ja paga.
+PUBLIC_WORKOUT_TRIAL_PERIOD_DAYS = 2
+
 
 class PublicWorkoutStripeNotConfiguredError(RuntimeError):
     """Levantada quando o Price ID do tier (ou PUBLIC_WORKOUT_STRIPE_PRICE_ID) nao esta configurado."""
@@ -107,6 +114,7 @@ def start_subscription_checkout(*, subscription, success_url: str, cancel_url: s
                 'plan_slug': subscription.plan_slug,
                 'tier': subscription.tier,
             },
+            'trial_period_days': PUBLIC_WORKOUT_TRIAL_PERIOD_DAYS,
         },
         idempotency_key=f'public-workout-subscription-{subscription.pk}-{price_id[-8:]}',
     )

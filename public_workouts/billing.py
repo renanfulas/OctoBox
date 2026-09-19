@@ -309,12 +309,34 @@ def handle_failed_invoice_payment(
 
     Idempotente por (subscription, stripe_invoice_id) — reenvio do mesmo
     evento nao cria uma segunda regua pro mesmo ciclo.
+
+    Decisao do Renan (trial de 2 dias, PUBLIC_WORKOUT_TRIAL_PERIOD_DAYS em
+    stripe_checkout.py): quando esta e' a PRIMEIRA cobranca que a assinatura
+    ja tentou (nenhum PublicWorkoutPayment anterior, de qualquer status),
+    e' a cobranca de conversao do trial falhando — nao cria a regua de
+    avisos de 9 dias (D-7..D+2, pensada pra lembrar quem ja paga
+    regularmente que o cartao precisa de atencao antes da renovacao). O
+    acesso ja bloqueia na hora mesmo assim: `status` sai de ACTIVE aqui
+    embaixo de qualquer forma, e o gate de conteudo (_confirm_subscription_
+    active_or_404, student_app/views/public_workout_views.py) exige ACTIVE
+    pra servir /renan/<slug> — nao existe estado "PAST_DUE mas ainda ve o
+    treino" no acesso, so' na regua de avisos (que so' faz sentido pra
+    quem ja' e' cliente de verdade).
     """
+    is_first_payment_ever = not PublicWorkoutPayment.objects.filter(subscription=subscription).exists()
+
     existing = PublicWorkoutPayment.objects.filter(
         subscription=subscription, stripe_invoice_id=stripe_invoice_id
     ).first()
     if existing is not None:
         payment = existing
+    elif is_first_payment_ever:
+        payment = PublicWorkoutPayment.objects.create(
+            subscription=subscription,
+            due_date=due_date,
+            gross_amount=gross_amount,
+            stripe_invoice_id=stripe_invoice_id,
+        )
     else:
         payment = create_payment_with_notice_schedule(subscription=subscription, due_date=due_date, gross_amount=gross_amount)
         payment.stripe_invoice_id = stripe_invoice_id
@@ -324,11 +346,16 @@ def handle_failed_invoice_payment(
         previous_status = subscription.status
         subscription.status = PublicWorkoutSubscriptionStatus.PAST_DUE
         subscription.save(update_fields=['status', 'updated_at'])
+        reason = (
+            f'trial nao convertido - invoice {stripe_invoice_id} falhou'
+            if is_first_payment_ever
+            else f'invoice {stripe_invoice_id} falhou'
+        )
         PublicWorkoutSubscriptionEvent.objects.create(
             subscription=subscription,
             from_status=previous_status,
             to_status=subscription.status,
-            reason=f'invoice {stripe_invoice_id} falhou',
+            reason=reason,
         )
     return payment
 
