@@ -1,5 +1,7 @@
 /*
- * ARQUIVO: CTAs de preço da landing do corredor (Entrega 5, Fase 3).
+ * ARQUIVO: CTAs de preço da landing do corredor (Entrega 5, Fase 3) +
+ * animação de entrada das seções (redesign — achado real: dono do
+ * produto achou a versão anterior "feia demais" pra uma página de venda).
  *
  * POR QUE ELE EXISTE:
  * - cada card de preço tem seu próprio mini-formulário (e-mail + tier
@@ -10,6 +12,11 @@
  * - erro nunca é genérico: mostra a mensagem que a view devolveu
  *   (email_ou_tier_invalido, stripe_nao_configurado) traduzida pro
  *   visitante, nunca um "algo deu errado" sem contexto.
+ * - scroll-reveal: o CSS só esconde [data-reveal] quando o <body> tem
+ *   .js-reveal-ready — essa classe só é adicionada AQUI, depois de
+ *   confirmar que IntersectionObserver existe. Se este script falhar ao
+ *   carregar (CDN fora, erro de rede), o conteúdo nunca fica com
+ *   opacity:0 pra sempre — a animação é só um extra, nunca uma trava.
  */
 
 (function () {
@@ -79,8 +86,34 @@
     });
   }
 
+  function wireScrollReveal() {
+    var targets = document.querySelectorAll('[data-reveal]');
+    if (!targets.length || !window.IntersectionObserver) {
+      return;
+    }
+
+    document.body.classList.add('js-reveal-ready');
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+    );
+
+    targets.forEach(function (target) {
+      observer.observe(target);
+    });
+  }
+
   function init() {
     document.querySelectorAll('[data-curva-signup-form]').forEach(wireForm);
+    wireScrollReveal();
   }
 
   if (document.readyState === 'loading') {

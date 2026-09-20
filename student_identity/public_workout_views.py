@@ -84,34 +84,57 @@ def _safe_public_workout_next(raw: str | None) -> str:
     return candidate if _PUBLIC_WORKOUT_NEXT_RE.match(candidate) else ''
 
 
-def _resolve_default_next_for_account(account_id: int) -> str:
+def _resolve_default_next_for_account(account_id: int) -> tuple[str, bool]:
     """Quando o link de login chega SEM ?next= explicito — o caso comum de
     abrir o e-mail direto, sem ter vindo de um /renan/<slug> especifico
-    nesta mesma aba — manda a pessoa direto pro proprio treino, se a conta
-    ja tiver plan_slug atribuido. Achado real (usuario): sem isso, a tela
-    so dizia "login feito, volte pro link do seu treino" e deixava a
-    pessoa perdida.
+    nesta mesma aba — resolve o proximo passo certo dado o estado real da
+    conta. Achado real (usuario): sem isso, a tela so dizia "login feito,
+    volte pro link do seu treino" pra QUALQUER conta sem plan_slug —
+    inclusive quem nunca tinha nem preenchido a anamnese ainda (sem dizer
+    qual link nem onde ele estava) E quem nem tinha assinatura nenhuma
+    (mensagem de "treino em preparo" pra quem nunca comecou a assinar —
+    segundo achado real, numa rodada de QA seguinte).
+
+    Devolve (redirect_path, awaiting_plan). `awaiting_plan` so' e' True no
+    caso 3 abaixo — e' o unico em que faz sentido dizer "seu treino esta
+    sendo preparado"; nos outros dois casos de string vazia (1 e 4) o
+    chamador mostra a tela de confirmacao simples, sem essa frase.
+
+    Ordem de resolucao:
+    1. Sem NENHUMA PublicWorkoutSubscription (nunca passou pelo cadastro —
+       so' abriu /treinos/login e digitou um e-mail qualquer, que
+       request_login_token aceita de qualquer jeito) -> ('', False).
+       Nunca empurra pra anamnese nem diz "treino em preparo" pra quem
+       nem comecou a assinar.
+    2. Ja tem plan_slug atribuido (Renan ja montou o treino) -> manda pro
+       proprio treino.
+    3. Sem plan_slug e AINDA sem anamnese preenchida -> manda pra anamnese
+       (mesmo destino que PublicWorkoutColdSignupView.success_url usa logo
+       apos o pagamento — aqui cobre quem saiu daquela aba e voltou depois
+       via link de login).
+    4. Sem plan_slug mas anamnese ja preenchida (falta so' Renan montar o
+       treino) -> ('', True); quem chama mostra a mensagem de "treino em
+       preparo" nesse caso, nunca um link morto.
 
     Nunca usa dado de request pra montar isso (por isso nao passa por
-    _safe_public_workout_next) — plan_slug vem do proprio banco, resolvido
-    pela conta que acabou de provar posse do e-mail, entao nao ha
-    superficie de redirecionamento aberto aqui pra comecar.
-
-    String vazia (nunca None) quando a conta ainda nao tem slug (ex.: pagou
-    mas ainda esta na fila de ativacao) — nesse caso a tela de confirmacao
-    "login feito" segue sendo o destino certo, nao ha treino pra mostrar
-    ainda.
+    _safe_public_workout_next) — tudo resolvido pela propria conta que
+    acabou de provar posse do e-mail, entao nao ha superficie de
+    redirecionamento aberto aqui pra comecar.
     """
     from public_workouts.models import PublicWorkoutSubscription
+    from public_workouts.services import get_training_profile
 
-    plan_slug = (
-        PublicWorkoutSubscription.objects.filter(account_id=account_id)
-        .exclude(plan_slug__isnull=True)
-        .exclude(plan_slug='')
-        .values_list('plan_slug', flat=True)
-        .first()
-    )
-    return f'/renan/{plan_slug}' if plan_slug else ''
+    subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
+    if subscription is None:
+        return '', False
+
+    if subscription.plan_slug:
+        return f'/renan/{subscription.plan_slug}', False
+
+    if get_training_profile(account_id=account_id) is None:
+        return '/treinos/anamnese', False
+
+    return '', True
 
 
 class PublicWorkoutLandingView(TemplateView):
@@ -141,11 +164,17 @@ class PublicWorkoutLoginView(View):
         if account is None:
             return render(request, self.template_name, {'error': 'link_invalido', 'next_url': next_url})
 
-        effective_next = next_url or _resolve_default_next_for_account(account.id)
+        if next_url:
+            effective_next, awaiting_plan = next_url, False
+        else:
+            effective_next, awaiting_plan = _resolve_default_next_for_account(account.id)
+
         if effective_next:
             response = redirect(effective_next)
         else:
-            response = render(request, self.template_name, {'logged_in_as': account.email})
+            response = render(
+                request, self.template_name, {'logged_in_as': account.email, 'awaiting_plan': awaiting_plan}
+            )
         attach_public_workout_session_cookie(response, account_id=account.id)
         return response
 
