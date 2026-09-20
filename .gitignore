@@ -66,8 +66,12 @@ backups/
 *.orig
 *.rej
 
-# Tooling local de agentes
-.claude/
+# Tooling local de agentes (config/permissoes ficam locais; skills sao
+# conteudo versionavel de verdade -- achado real: sem essa excecao,
+# melhorias em .claude/skills/*/SKILL.md nunca eram commitadas, existiam
+# so no disco de quem editou por ultimo)
+.claude/*
+!.claude/skills/
 /figma/
 
 # Artefatos temporarios de revisao local
