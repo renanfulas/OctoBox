@@ -3,221 +3,131 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Curva — Treino e nutrição com revisão humana real</title>
-<meta name="description" content="Consultoria online de treino e nutrição com periodização de verdade, revisão humana e acompanhamento nutricional real — não um plano genérico de internet.">
-<link rel="stylesheet" href="{% static 'css/public_workouts/tokens.css' %}">
-<link rel="stylesheet" href="{% static 'css/public_workouts/landing.css' %}">
+<title>Curva — Seu esforço merece direção. Treino &amp; Nutrição.</title>
+<meta name="description" content="Saia do treino no automático. Consultoria online com treino periodizado, progresso acompanhado e nutrição individual nos planos Completo e Premium. A partir de R$97/mês.">
+<meta name="theme-color" content="#0a0e1a">
+<link rel="preload" href="{% static 'fonts/manrope/manrope-latin-variable.woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{% static 'css/public_workouts/landing.css' %}?v={{ static_asset_version }}-curva2">
 </head>
-<body class="curva-landing">
-
-<nav class="curva-nav">
-  <div class="curva-nav-inner">
-    <span class="curva-nav-brand">Cur<span>va</span> Treino &amp; Nutrição</span>
-    <a class="curva-nav-cta" href="#curva-precos">Ver planos</a>
-  </div>
-</nav>
-
-<header class="curva-hero">
-  <div class="curva-page">
-    <span class="curva-hero-kicker">Personal Trainer (CREF) + Nutricionista (CRN) de verdade</span>
-    <h1>Treino que muda a cada ciclo. <em>Nunca no achismo.</em></h1>
-    <p>
-      Periodização de verdade baseada no que você registra de carga, avaliação física
-      contínua e, a partir do plano Completo, acompanhamento nutricional real com
-      nutricionista registrada — não um PDF genérico.
-    </p>
-    <a class="curva-hero-cta" href="#curva-precos">Quero começar</a>
-
-    <div class="curva-hero-chart" aria-hidden="true">
-      <div class="curva-hero-chart-label">Evolução de carga · exemplo</div>
-      <svg viewBox="0 0 320 110" xmlns="http://www.w3.org/2000/svg">
-        <polyline points="4,92 50,86 96,74 142,68 188,48 234,40 280,18 316,10"
-          fill="none" stroke="#2451C4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-        <circle cx="316" cy="10" r="5" fill="#2451C4" />
-      </svg>
-    </div>
-  </div>
+<body class="curva-landing" id="topo">
+<a class="curva-skip" href="#conteudo">Pular para o conteúdo</a>
+<header class="curva-nav">
+  <nav class="curva-page curva-nav-inner" aria-label="Navegação principal">
+    <a class="curva-brand" href="#topo" aria-label="Curva — início">curva<span aria-hidden="true">↗</span><small>Treino &amp; Nutrição</small></a>
+    <div class="curva-nav-links"><a href="#curva-diferencial">O método</a><a href="#curva-credenciais">Quem cuida de você</a></div>
+    <div class="curva-nav-actions"><a class="curva-nav-login" href="{% url 'public-workout-login' %}">Já sou cliente</a><a class="curva-nav-cta" href="#curva-precos">Ver planos <span aria-hidden="true">↗</span></a></div>
+  </nav>
 </header>
+<main id="conteudo">
+<section class="curva-hero" aria-labelledby="curva-title">
+  <div class="curva-page curva-hero-grid">
+    <div class="curva-hero-copy">
+      <p class="curva-eyebrow"><span class="curva-signal" aria-hidden="true"></span> Consultoria online. Acompanhamento humano.</p>
+      <h1 id="curva-title">Seu esforço<br>merece <em>direção.</em></h1>
+      <p class="curva-hero-lead">Você entra com a vontade.<br>A gente entra com o método.</p>
+      <p class="curva-hero-description">Treino que evolui com você, progresso registrado e profissionais que acompanham de perto. Nutrição individual a partir do plano Completo.</p>
+      <div class="curva-hero-actions"><a class="curva-button" href="#curva-precos">Encontrar meu plano <span aria-hidden="true">↗</span></a><a class="curva-text-link" href="#curva-diferencial">Conhecer o método <span aria-hidden="true">↓</span></a></div>
+      <p class="curva-hero-note">A partir de <strong>R$97/mês</strong><span aria-hidden="true">·</span> Garantia de 7 dias</p>
+    </div>
+    <div class="curva-hero-art" aria-label="O método Curva conecta seu treino, seus registros e a revisão profissional.">
+      <div class="curva-art-heading"><span>O SEU PRÓXIMO CICLO</span><span aria-hidden="true">↗</span></div>
+      <svg class="curva-trajectory" viewBox="0 0 540 390" fill="none" aria-hidden="true">
+        <defs><linearGradient id="curva-line" x1="35" y1="335" x2="490" y2="55" gradientUnits="userSpaceOnUse"><stop stop-color="#4a90e2" stop-opacity=".12"/><stop offset=".5" stop-color="#4a90e2"/><stop offset="1" stop-color="#00e5ff"/></linearGradient></defs>
+        <path class="curva-art-grid" d="M30 85H510M30 165H510M30 245H510M30 325H510M110 40V350M190 40V350M270 40V350M350 40V350M430 40V350"/>
+        <path class="curva-art-echo" d="M30 340C130 340 190 305 250 250S350 175 490 60M30 365C160 365 185 335 265 280S365 205 510 90"/>
+        <path class="curva-art-line" d="M30 315C140 315 168 288 230 238S332 179 375 135S450 77 490 35"/>
+        <circle cx="230" cy="238" r="6"/><circle cx="375" cy="135" r="6"/><circle cx="490" cy="35" r="7"/>
+      </svg>
+      <div class="curva-art-word" aria-hidden="true">evoluir.</div>
+      <div class="curva-art-note curva-art-note--start"><span>01 / PONTO DE PARTIDA</span><strong>Sua rotina. Seu objetivo.</strong></div>
+      <div class="curva-art-note curva-art-note--end"><span>02 / DIREÇÃO</span><strong>Um plano para você.</strong></div>
+      <div class="curva-method-card"><span class="curva-method-symbol" aria-hidden="true">↻</span><div><strong>Seu treino não para no primeiro plano.</strong><p>Registrar → revisar → ajustar → continuar.</p></div></div>
+      <p class="curva-art-caption">Representação do método. Cada trajetória é individual.</p>
+    </div>
+  </div>
+  <div class="curva-page curva-trust-strip"><p><strong>Treino com método</strong><span>Periodização e registro de cargas</span></p><p><strong>Gente de verdade</strong><span>Revisão profissional do seu plano</span></p><p><strong>Na sua rotina</strong><span>Acompanhamento online, onde você estiver</span></p></div>
+</section>
 
-<section class="curva-section" id="curva-dor" data-reveal>
-  <div class="curva-page">
-    <h2>Se o seu treino de hoje é isso, a gente já viu esse filme</h2>
-    <div class="curva-pain-grid">
-      <div class="curva-pain-card">
-        <strong>Treino que nunca muda</strong>
-        <span>O mesmo plano há meses, sem ajuste de carga ou volume — o corpo parou de responder e ninguém percebeu.</span>
-      </div>
-      <div class="curva-pain-card">
-        <strong>Não sei se estou evoluindo</strong>
-        <span>Sem registro de carga, "sentir mais forte" é a única métrica — e ela mente.</span>
-      </div>
-      <div class="curva-pain-card">
-        <strong>Dieta genérica de internet</strong>
-        <span>Plano alimentar copiado, sem considerar rotina, restrições ou o que você realmente consegue manter.</span>
-      </div>
+<section class="curva-section curva-pain" id="curva-dor" aria-labelledby="curva-pain-title">
+  <div class="curva-page curva-split">
+    <div><p class="curva-eyebrow">SAIA DO AUTOMÁTICO</p><h2 id="curva-pain-title">Treinar muito.<br><span>Sem saber para onde.</span></h2><p class="curva-section-lead">Você aparece, faz sua parte e repete. Mas o treino continua igual — e a dúvida também. O que falta pode ser uma direção mais clara.</p></div>
+    <div class="curva-pain-list">
+      <article><span>01</span><div><h3>A mesma ficha, mês após mês.</h3><p>Na Curva, cada ciclo é uma oportunidade de revisar o que funcionou e ajustar o próximo passo.</p></div></article>
+      <article><span>02</span><div><h3>Progresso que fica só na sensação.</h3><p>Seus registros de carga e avaliações dão contexto para acompanhar sua evolução.</p></div></article>
+      <article><span>03</span><div><h3>Uma dieta que não cabe na sua vida.</h3><p>Nos planos com nutrição, sua rotina, preferências e restrições entram na construção do plano alimentar.</p></div></article>
     </div>
   </div>
 </section>
 
-<section class="curva-section curva-section--alt" id="curva-diferencial" data-reveal>
+<section class="curva-section curva-method" id="curva-diferencial" aria-labelledby="curva-method-title">
   <div class="curva-page">
-    <h2>Como funciona</h2>
-    <p class="curva-section-lead">
-      Revisão humana real, não um algoritmo genérico decidindo seu treino sozinho.
-    </p>
-    <div class="curva-diff-grid">
-      <div class="curva-diff-card">
-        <div class="curva-diff-icon">↗</div>
-        <h3>Periodização de verdade</h3>
-        <p>Seu treino muda a cada 4–6 semanas, baseado no que você registrou de carga — não em achismo nem em template fixo.</p>
-      </div>
-      <div class="curva-diff-card">
-        <div class="curva-diff-icon">✓</div>
-        <h3>Avaliação física contínua</h3>
-        <p>Peso, medidas e composição corporal acompanhados ao longo do tempo, não só na foto do dia 1.</p>
-      </div>
-      <div class="curva-diff-card">
-        <div class="curva-diff-icon">🥗</div>
-        <h3>Nutrição acompanhada de verdade</h3>
-        <p>A partir do Completo, sua alimentação é acompanhada por nutricionista registrada — não um plano genérico de internet.</p>
-      </div>
+    <div class="curva-section-heading"><div><p class="curva-eyebrow">O método Curva</p><h2 id="curva-method-title">Você não precisa adivinhar<br>o próximo passo.</h2></div><p class="curva-section-lead">Um ciclo de acompanhamento que transforma o que acontece no treino em informação para o próximo.</p></div>
+    <div class="curva-method-grid">
+      <article class="curva-method-feature"><span class="curva-step">01 / ENTENDER</span><h3>Começa pela<br>sua vida real.</h3><p>Objetivos, experiência, equipamentos e limitações. Sua anamnese dá o contexto para adaptar o treino a você.</p><div class="curva-feature-tags"><span>Sua rotina</span><span>Seu nível</span><span>Seu objetivo</span></div></article>
+      <article class="curva-method-feature"><span class="curva-step">02 / TREINAR</span><h3>Um plano claro.<br>Na palma da mão.</h3><p>Consulte seu treino, registre as cargas e mantenha seu histórico organizado para acompanhar cada ciclo.</p><div class="curva-feature-line" aria-hidden="true"><span>Treino</span><span>Registro</span><span>Histórico</span></div></article>
+      <article class="curva-method-feature"><span class="curva-step">03 / AJUSTAR</span><h3>O plano acompanha<br>o seu momento.</h3><p>Revisão humana para orientar os ajustes. No Premium, treino e nutrição recebem revisão semanal.</p><a class="curva-text-link" href="#curva-precos">Comparar acompanhamentos <span aria-hidden="true">↗</span></a></article>
     </div>
+    <div class="curva-nutrition"><span class="curva-nutrition-symbol" aria-hidden="true">+</span><div><p class="curva-eyebrow">TREINO + NUTRIÇÃO</p><h3>Duas frentes. A mesma direção.</h3><p>A partir do Completo, você também conta com plano alimentar individual e revisão por nutricionista. Mais contexto para cuidar da sua rotina.</p></div><a class="curva-text-link" href="#curva-precos">Conhecer o Completo <span aria-hidden="true">↗</span></a></div>
   </div>
 </section>
 
-<section class="curva-section" id="curva-credenciais" data-reveal>
-  <div class="curva-page">
-    <h2>Quem está do outro lado</h2>
+<section class="curva-section" id="curva-credenciais" aria-labelledby="curva-team-title">
+  <div class="curva-page curva-split">
+    <div><p class="curva-eyebrow">TECNOLOGIA NO APOIO. PESSOAS NO CUIDADO.</p><h2 id="curva-team-title">Tem gente de verdade<br><span>do seu lado.</span></h2><p class="curva-section-lead">Seu treino e sua alimentação merecem contexto, atenção e responsabilidade profissional. Conheça quem acompanha cada frente.</p></div>
     <div class="curva-credentials">
-      <div class="curva-credential-card">
-        <div class="curva-credential-avatar">R</div>
-        <h3>Renan Fulas</h3>
-        <div class="curva-credential-role">Personal Trainer · CREF 155070-G/SP</div>
-        <p>Responsável pela periodização, revisão de treino e avaliação física de todos os planos.</p>
-      </div>
-      <div class="curva-credential-card">
-        <div class="curva-credential-avatar">G</div>
-        <h3>Giovanna Fontes</h3>
-        <div class="curva-credential-role">Nutricionista · CRN-3 67286</div>
-        <p>Responsável pelo acompanhamento nutricional dos planos Completo e Premium.</p>
-      </div>
+      {% for professional in training_professionals %}<article class="curva-credential-card"><div class="curva-credential-avatar" aria-hidden="true">{{ professional.name|first }}</div><div><p class="curva-step">TREINO E PERIODIZAÇÃO</p><h3>{{ professional.name }}</h3><p class="curva-credential-role">Personal Trainer · {{ professional.registration_council }} {{ professional.registration_number }}</p><p>Revisão de treino e avaliação física em todos os planos.</p></div></article>{% empty %}<article class="curva-credential-card"><div><p class="curva-step">TREINO E PERIODIZAÇÃO</p><h3>Acompanhamento profissional</h3><p>As credenciais do responsável serão exibidas antes da contratação.</p></div></article>{% endfor %}
+      {% for professional in nutrition_professionals %}<article class="curva-credential-card"><div class="curva-credential-avatar curva-credential-avatar--nutrition" aria-hidden="true">{{ professional.name|first }}</div><div><p class="curva-step">NUTRIÇÃO INDIVIDUAL</p><h3>{{ professional.name }}</h3><p class="curva-credential-role">Nutricionista · {{ professional.registration_council }} {{ professional.registration_number }}</p><p>Acompanhamento nutricional nos planos Completo e Premium.</p></div></article>{% empty %}<article class="curva-credential-card"><div><p class="curva-step">NUTRIÇÃO INDIVIDUAL</p><h3>Cuidado com a sua alimentação</h3><p>As credenciais da nutricionista serão exibidas antes da contratação.</p></div></article>{% endfor %}
     </div>
   </div>
 </section>
 
-<section class="curva-section curva-section--alt" id="curva-prova-social">
-  <div class="curva-page">
-    <h2>Alunos reais, resultado real</h2>
-    <div class="curva-social-proof">
-      {% comment %}
-        TODO(Renan): trocar por depoimentos reais dos alunos já ativos, com
-        consentimento explícito (LGPD) — nunca inventar depoimento ou
-        antes/depois aqui.
-      {% endcomment %}
-      <p>Depoimentos dos primeiros alunos chegando em breve.</p>
-    </div>
-  </div>
-</section>
+{% if testimonials %}
+<section class="curva-section curva-testimonials" id="curva-prova-social" aria-labelledby="curva-proof-title"><div class="curva-page"><p class="curva-eyebrow">Quem vive o método</p><h2 id="curva-proof-title">Trajetórias reais.<br>Nas palavras de quem treina.</h2><div class="curva-testimonial-grid">{% for testimonial in testimonials %}<blockquote class="curva-testimonial"><p>“{{ testimonial.quote }}”</p><footer>{{ testimonial.display_name }}{% if testimonial.result_summary %}<span>{{ testimonial.result_summary }}</span>{% endif %}</footer></blockquote>{% endfor %}</div></div></section>
+{% endif %}
 
-<section class="curva-section" id="curva-precos" data-reveal>
+<section class="curva-section curva-pricing" id="curva-precos" aria-labelledby="curva-pricing-title">
   <div class="curva-page">
-    <h2>Escolha seu plano</h2>
-    <p class="curva-section-lead">Sem letra miúda. Cancele quando quiser.</p>
+    <div class="curva-pricing-heading"><p class="curva-eyebrow">O PRÓXIMO PASSO É SEU</p><h2 id="curva-pricing-title">Escolha seu plano.<br><span>Encontre o seu ritmo.</span></h2><p class="curva-section-lead">Três níveis de acompanhamento. Um objetivo: dar direção ao seu esforço.<br>Sem letra miúda. Cancele quando quiser.</p></div>
     <div class="curva-pricing-grid">
-
-      <div class="curva-price-card">
-        <div class="curva-price-tier">Essencial</div>
-        <div class="curva-price-value">R$ 97<small>/mês</small></div>
-        <p class="curva-price-desc">Treino periodizado, sem acompanhamento nutricional.</p>
-        <ul class="curva-price-features">
-          <li>Treino ajustado a cada ciclo</li>
-          <li>Registro de carga e progresso</li>
-          <li>Avaliação física periódica</li>
-        </ul>
-        {% include 'public_workouts/_landing_signup_form.html' with tier='essencial' cta='Assinar Essencial' %}
-      </div>
-
-      <div class="curva-price-card curva-price-card--highlight">
-        <div class="curva-price-badge">Mais escolhido</div>
-        <div class="curva-price-tier">Completo</div>
-        <div class="curva-price-value">R$ 267<small>/mês</small></div>
-        <p class="curva-price-desc">Treino revisado + acompanhamento nutricional real.</p>
-        <ul class="curva-price-features">
-          <li>Tudo do Essencial</li>
-          <li>Plano alimentar individual</li>
-          <li>Revisão nutricional pela nutricionista</li>
-        </ul>
-        {% include 'public_workouts/_landing_signup_form.html' with tier='completo' cta='Assinar Completo' %}
-      </div>
-
-      <div class="curva-price-card">
-        <div class="curva-price-tier">Premium</div>
-        <div class="curva-price-value">R$ 397<small>/mês</small></div>
-        <p class="curva-price-desc">Revisão semanal dos dois profissionais + prioridade.</p>
-        <ul class="curva-price-features">
-          <li>Tudo do Completo</li>
-          <li>Revisão semanal (treino + nutrição)</li>
-          <li>Prioridade nas respostas</li>
-        </ul>
-        {% include 'public_workouts/_landing_signup_form.html' with tier='premium' cta='Assinar Premium' %}
-      </div>
-
+      <article class="curva-price-card" aria-labelledby="tier-essencial">
+        <p class="curva-plan-kicker">DIREÇÃO PARA O SEU TREINO</p><h3 class="curva-price-tier" id="tier-essencial">Essencial</h3><p class="curva-price-desc">Para quem quer treinar com estrutura e acompanhar o próprio progresso.</p>
+        <p class="curva-price-value"><span>R$</span> 97<small>/mês</small></p><p class="curva-plan-scope">Treino periodizado</p>
+        <ul class="curva-price-features"><li>Treino ajustado a cada ciclo</li><li>Registro de carga e progresso</li><li>Avaliação física periódica</li></ul><p class="curva-plan-detail">Não inclui acompanhamento nutricional.</p>
+        {% include 'public_workouts/_landing_signup_form.html' with tier='essencial' cta='Assinar Essencial' capacity=capacity_essencial %}
+      </article>
+      <article class="curva-price-card curva-price-card--highlight" aria-labelledby="tier-completo">
+        <p class="curva-price-badge">TREINO + NUTRIÇÃO <span aria-hidden="true">↗</span></p><p class="curva-plan-kicker">CUIDADO NAS DUAS FRENTES</p><h3 class="curva-price-tier" id="tier-completo">Completo</h3><p class="curva-price-desc">Para alinhar seu treino e sua alimentação com acompanhamento profissional.</p>
+        <p class="curva-price-value"><span>R$</span> 267<small>/mês</small></p><p class="curva-plan-scope">Treino + nutrição individual</p>
+        <ul class="curva-price-features"><li>Tudo do Essencial</li><li>Plano alimentar individual</li><li>Revisão nutricional pela nutricionista</li></ul><p class="curva-plan-detail">Dois profissionais acompanhando sua rotina.</p>
+        {% include 'public_workouts/_landing_signup_form.html' with tier='completo' cta='Assinar Completo' capacity=capacity_completo %}
+      </article>
+      <article class="curva-price-card" aria-labelledby="tier-premium">
+        <p class="curva-plan-kicker">MAIS PROXIMIDADE, TODA SEMANA</p><h3 class="curva-price-tier" id="tier-premium">Premium</h3><p class="curva-price-desc">Para quem busca revisões mais frequentes e prioridade no acompanhamento.</p>
+        <p class="curva-price-value"><span>R$</span> 397<small>/mês</small></p><p class="curva-plan-scope">Treino + nutrição + prioridade</p>
+        <ul class="curva-price-features"><li>Tudo do Completo</li><li>Revisão semanal (treino + nutrição)</li><li>Prioridade nas respostas</li></ul><p class="curva-plan-detail">Revisão semanal dos dois profissionais.</p>
+        {% include 'public_workouts/_landing_signup_form.html' with tier='premium' cta='Assinar Premium' capacity=capacity_premium %}
+      </article>
     </div>
+    <p class="curva-checkout-note">Pagamento seguro pela Stripe · Assinatura mensal recorrente · Cobrança na contratação</p>
+    <div class="curva-guarantee"><div class="curva-guarantee-seal"><strong>7</strong><span>DIAS</span></div><div><h3>Comece com tranquilidade.</h3><p>Se nos primeiros 7 dias sentir que não é pra você, solicite o cancelamento e o reembolso integral da primeira cobrança.</p></div><a href="{% url 'public-workout-terms' %}">Conhecer a garantia <span aria-hidden="true">↗</span></a></div>
   </div>
 </section>
 
-<section class="curva-section curva-section--alt">
-  <div class="curva-page">
-    <div class="curva-guarantee">
-      <div class="curva-guarantee-badge">✓</div>
-      <h2>Garantia dos 7 dias</h2>
-      <p>Se nos primeiros 7 dias sentir que não é pra você, cancela sem custo. Sem pergunta, sem burocracia.</p>
-    </div>
-  </div>
-</section>
+<section class="curva-section curva-start" aria-labelledby="curva-start-title"><div class="curva-page"><p class="curva-eyebrow">DO PRIMEIRO CLIQUE AO PRIMEIRO TREINO</p><h2 id="curva-start-title">Começar é simples.</h2><ol class="curva-start-steps"><li><span>01</span><h3>Escolha seu plano</h3><p>Informe seu e-mail e conclua a assinatura no ambiente seguro de pagamento.</p></li><li><span>02</span><h3>Conte sobre você</h3><p>Preencha a anamnese com sua rotina, objetivos e informações importantes.</p></li><li><span>03</span><h3>Receba sua direção</h3><p>Seu plano é preparado e revisado pelo profissional. Você acompanha as próximas etapas na sua conta.</p></li></ol></div></section>
 
-<section class="curva-section" id="curva-faq" data-reveal>
-  <div class="curva-page">
-    <h2>Perguntas frequentes</h2>
-    <div class="curva-faq">
-      <details>
-        <summary>Preciso de equipamento específico?</summary>
-        <div class="curva-faq-answer">Não. O treino é adaptado ao que você tem disponível — academia completa, equipamento básico ou peso do corpo. Isso entra na sua anamnese antes do primeiro plano.</div>
-      </details>
-      <details>
-        <summary>E se eu me machucar ou tiver alguma limitação?</summary>
-        <div class="curva-faq-answer">Comorbidades, lesões e limitações são perguntadas diretamente na anamnese e consideradas em todo ajuste de treino — não é um template genérico ignorando seu histórico.</div>
-      </details>
-      <details>
-        <summary>Funciona pra quem está começando agora?</summary>
-        <div class="curva-faq-answer">Sim. A periodização se adapta ao seu nível atual — não existe pré-requisito de experiência.</div>
-      </details>
-      <details>
-        <summary>A dieta é individual ou um PDF genérico?</summary>
-        <div class="curva-faq-answer">Individual. Você responde uma anamnese nutricional (comorbidades, alergias, rotina alimentar, preferências) e a nutricionista monta o plano com base nisso — nunca um PDF pronto reaproveitado.</div>
-      </details>
-      <details>
-        <summary>Como funciona a revisão do meu treino?</summary>
-        <div class="curva-faq-answer">Você registra as cargas que consegue a cada treino. A cada ciclo, isso é revisado e o próximo bloco é ajustado com base no que realmente aconteceu — não numa progressão fixa de tabela.</div>
-      </details>
-    </div>
-  </div>
-</section>
+<section class="curva-section" id="curva-faq" aria-labelledby="curva-faq-title"><div class="curva-page curva-split"><div><p class="curva-eyebrow">ANTES DE DAR O PRIMEIRO PASSO</p><h2 id="curva-faq-title">Ainda pensando?<br><span>Vamos esclarecer.</span></h2></div><div class="curva-faq">
+  <details><summary>Funciona para quem está começando?</summary><div class="curva-faq-answer">Sim. Seu nível de experiência entra na anamnese e orienta a preparação do treino. Você não precisa chegar pronto: o ponto de partida é o seu momento atual.</div></details>
+  <details><summary>Preciso treinar em uma academia?</summary><div class="curva-faq-answer">O treino considera os equipamentos que você tem disponíveis. Na anamnese, informe onde pretende treinar e quais recursos pode usar.</div></details>
+  <details><summary>E se eu tiver alguma lesão ou limitação?</summary><div class="curva-faq-answer">Informe seu histórico e suas limitações na anamnese para que o profissional avalie as adaptações. O acompanhamento não substitui atendimento médico ou tratamento de lesões.</div></details>
+  <details><summary>Qual é a diferença entre os três planos?</summary><div class="curva-faq-answer">O Essencial inclui treino periodizado, registro de cargas e avaliação física. O Completo soma plano alimentar individual e revisão nutricional. O Premium acrescenta revisão semanal de treino e nutrição, além de prioridade nas respostas.</div></details>
+  <details><summary>O plano alimentar é individual?</summary><div class="curva-faq-answer">Sim, nos planos Completo e Premium. A nutricionista considera sua anamnese nutricional, rotina alimentar, preferências e restrições para preparar o plano.</div></details>
+  <details><summary>Como o treino é revisado?</summary><div class="curva-faq-answer">Seus registros de carga e avaliações ajudam o profissional a entender o ciclo atual e orientar o próximo. No Premium, a revisão de treino e nutrição é semanal.</div></details>
+  <details><summary>Quando sou cobrado? Posso cancelar?</summary><div class="curva-faq-answer">A cobrança acontece na contratação e a assinatura é renovada mensalmente. Você pode gerenciar o cancelamento na sua conta. Nos primeiros 7 dias da contratação, pode solicitar o reembolso integral da primeira cobrança, conforme os <a href="{% url 'public-workout-terms' %}">Termos do serviço</a>.</div></details>
+</div></div></section>
 
-<section class="curva-section curva-section--alt">
-  <div class="curva-page">
-    <div class="curva-final-cta">
-      <h2>Vagas limitadas pela agenda real de revisão</h2>
-      <p>Cada plano é revisado por uma pessoa, não por um algoritmo — por isso o número de vagas é limitado de verdade.</p>
-      <a class="curva-hero-cta" href="#curva-precos">Ver planos e começar</a>
-    </div>
-  </div>
-</section>
-
-<footer class="curva-footer">
-  Curva Treino &amp; Nutrição — consultoria online.
-</footer>
-
-<script src="{% static 'js/public_workouts/landing.js' %}" defer></script>
+<section class="curva-final-cta" aria-labelledby="curva-final-title"><div class="curva-page"><p class="curva-eyebrow">SUA PRÓXIMA FASE COMEÇA COM UMA ESCOLHA</p><h2 id="curva-final-title">Mude a direção.<br><em>Construa sua curva.</em></h2><p>Um plano para o seu momento.<br>Gente de verdade para acompanhar o caminho.</p><a class="curva-button" href="#curva-precos">Escolher meu acompanhamento <span aria-hidden="true">↗</span></a><span class="curva-final-note">A partir de R$97/mês · Garantia de 7 dias</span></div></section>
+</main>
+<footer class="curva-footer"><div class="curva-page curva-footer-inner"><a class="curva-brand" href="#topo">curva<span aria-hidden="true">↗</span><small>Treino &amp; Nutrição</small></a><p>O seu esforço. A nossa direção.</p><nav aria-label="Links do rodapé"><a href="{% url 'public-workout-login' %}">Entrar</a><a href="{% url 'public-workout-terms' %}">Termos</a><a href="{% url 'public-workout-privacy' %}">Privacidade</a></nav></div></footer>
+<script src="{% static 'js/public_workouts/landing.js' %}?v={{ static_asset_version }}-curva2" defer></script>
 </body>
 </html>

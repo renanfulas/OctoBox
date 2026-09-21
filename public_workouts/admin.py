@@ -3,24 +3,43 @@ import json
 from django import forms
 from django.contrib import admin, messages
 from django.db import IntegrityError, models
+from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from . import nutrition_schema, schema
 from .models import (
     PublicWorkoutAssessment,
+    PublicWorkoutCampaignSpend,
+    PublicWorkoutAcquisitionSession,
+    PublicWorkoutFunnelEvent,
     PublicWorkoutMealPlan,
+    PublicWorkoutMealPlanDelivery,
+    PublicWorkoutMetricSnapshot,
     PublicWorkoutMovement,
     PublicWorkoutMovementStatus,
+    PublicWorkoutNutritionProfile,
     PublicWorkoutProfessional,
     PublicWorkoutProfessionalRole,
     PublicWorkoutProgram,
+    PublicWorkoutProgramDelivery,
+    PublicWorkoutRefundRequest,
+    PublicWorkoutRefundRequestStatus,
+    PublicWorkoutOutboxMessage,
+    PublicWorkoutOutboxStatus,
     PublicWorkoutProgramDraft,
     PublicWorkoutProgramDraftSource,
     PublicWorkoutProgramDraftStatus,
     PublicWorkoutSubscription,
     PublicWorkoutSubscriptionStatus,
+    PublicWorkoutTestimonial,
+    PublicWorkoutWorkItem,
+    PublicWorkoutWorkItemStatus,
+    PublicWorkoutWaitlistEntry,
+    PublicWorkoutWaitlistStatus,
 )
 from .program_generation_ai import generate_program_draft_payload
+from .widgets import NutritionPlanEditorWidget
+from .notifications import notify_program_ready
 from .services import (
     ProgramDraftReviewError,
     approve_and_publish_draft,
@@ -31,6 +50,90 @@ from .services import (
     reject_program_draft,
     serialize_training_profile,
 )
+
+
+@admin.register(PublicWorkoutAcquisitionSession)
+class PublicWorkoutAcquisitionSessionAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'first_source', 'first_medium', 'last_source', 'last_medium',
+        'account', 'subscription', 'first_seen_at', 'last_seen_at',
+    )
+    list_filter = ('first_medium', 'last_medium', 'offer_version')
+    search_fields = ('id', 'first_source', 'last_source', 'first_campaign', 'last_campaign')
+    ordering = ('-last_seen_at',)
+    readonly_fields = [field.name for field in PublicWorkoutAcquisitionSession._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PublicWorkoutFunnelEvent)
+class PublicWorkoutFunnelEventAdmin(admin.ModelAdmin):
+    list_display = ('event_type', 'tier', 'channel', 'source', 'campaign', 'occurred_at')
+    list_filter = ('event_type', 'tier', 'channel', 'occurred_at')
+    search_fields = ('event_id', 'source', 'campaign', 'correlation_id')
+    ordering = ('-occurred_at',)
+    readonly_fields = [field.name for field in PublicWorkoutFunnelEvent._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PublicWorkoutWorkItem)
+class PublicWorkoutWorkItemAdmin(admin.ModelAdmin):
+    list_display = (
+        'account', 'item_type', 'status', 'age', 'is_overdue', 'priority', 'assigned_to',
+        'due_at', 'estimated_effort_minutes', 'actual_effort_minutes',
+    )
+    list_filter = ('status', 'item_type', 'priority', 'assigned_to', 'due_at')
+    search_fields = ('account__email', 'cycle_key', 'blocked_reason')
+    ordering = ('priority', 'due_at', 'created_at')
+    readonly_fields = (
+        'account', 'subscription', 'item_type', 'cycle_key', 'status', 'priority',
+        'estimated_effort_minutes', 'created_at', 'updated_at',
+    )
+    actions = ('start_selected', 'complete_selected', 'block_selected')
+
+    @admin.display(description='Idade')
+    def age(self, obj):
+        delta = timezone.now() - obj.created_at
+        return f'{delta.days}d {delta.seconds // 3600}h'
+
+    @admin.display(boolean=True, description='Atrasado')
+    def is_overdue(self, obj):
+        return obj.status not in (
+            PublicWorkoutWorkItemStatus.DONE, PublicWorkoutWorkItemStatus.CANCELED,
+        ) and obj.due_at < timezone.now()
+
+    @admin.action(description='Iniciar itens selecionados')
+    def start_selected(self, request, queryset):
+        from .operations import transition_work_item
+        for item in queryset:
+            if item.status in (PublicWorkoutWorkItemStatus.OPEN, PublicWorkoutWorkItemStatus.BLOCKED):
+                transition_work_item(item.pk, to_status=PublicWorkoutWorkItemStatus.IN_PROGRESS)
+
+    @admin.action(description='Concluir itens selecionados')
+    def complete_selected(self, request, queryset):
+        from .operations import transition_work_item
+        for item in queryset:
+            if item.status not in (PublicWorkoutWorkItemStatus.DONE, PublicWorkoutWorkItemStatus.CANCELED):
+                transition_work_item(item.pk, to_status=PublicWorkoutWorkItemStatus.DONE)
+
+    @admin.action(description='Bloquear itens selecionados')
+    def block_selected(self, request, queryset):
+        from .operations import transition_work_item
+        for item in queryset:
+            if item.status in (PublicWorkoutWorkItemStatus.OPEN, PublicWorkoutWorkItemStatus.IN_PROGRESS):
+                transition_work_item(
+                    item.pk, to_status=PublicWorkoutWorkItemStatus.BLOCKED,
+                    blocked_reason='Bloqueado manualmente no admin',
+                )
 
 
 @admin.register(PublicWorkoutAssessment)
@@ -103,10 +206,27 @@ class AwaitingActivationFilter(admin.SimpleListFilter):
         )
 
 
+class AwaitingNutritionFilter(admin.SimpleListFilter):
+    title = 'aguardando plano nutricional'
+    parameter_name = 'aguardando_nutricao'
+
+    def lookups(self, request, model_admin):
+        return (('sim', 'Sim — tier com nutrição, sem plano ativo'),)
+
+    def queryset(self, request, queryset):
+        if self.value() != 'sim':
+            return queryset
+        accounts_com_plano = PublicWorkoutMealPlan.objects.filter(is_active=True).values('account_id')
+        return queryset.filter(
+            status=PublicWorkoutSubscriptionStatus.ACTIVE,
+            tier__in=['completo', 'premium'],
+        ).exclude(account_id__in=accounts_com_plano)
+
+
 @admin.register(PublicWorkoutSubscription)
 class PublicWorkoutSubscriptionAdmin(admin.ModelAdmin):
     list_display = ('account', 'tier', 'status', 'plan_slug', 'created_at')
-    list_filter = (AwaitingActivationFilter, 'tier', 'status')
+    list_filter = (AwaitingActivationFilter, AwaitingNutritionFilter, 'tier', 'status')
     search_fields = ('account__email', 'plan_slug')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at')
@@ -175,9 +295,71 @@ class PublicWorkoutSubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(PublicWorkoutProfessional)
 class PublicWorkoutProfessionalAdmin(admin.ModelAdmin):
-    list_display = ('name', 'role', 'registration_council', 'registration_number', 'is_active')
+    list_display = (
+        'name', 'role', 'registration_council', 'registration_number',
+        'weekly_capacity_minutes', 'internal_hourly_cost', 'is_active',
+    )
     list_filter = ('role', 'is_active')
     search_fields = ('name', 'registration_number')
+
+
+@admin.register(PublicWorkoutWaitlistEntry)
+class PublicWorkoutWaitlistEntryAdmin(admin.ModelAdmin):
+    list_display = ('email', 'tier', 'status', 'created_at', 'invited_at', 'expires_at')
+    list_filter = ('status', 'tier', 'created_at')
+    search_fields = ('email',)
+    readonly_fields = (
+        'email', 'tier', 'acquisition_session', 'consented_at', 'invited_at',
+        'expires_at', 'converted_at', 'created_at', 'updated_at',
+    )
+    actions = ('queue_invitation', 'cancel_selected')
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.action(description='Colocar convite na fila de envio')
+    def queue_invitation(self, request, queryset):
+        from .outbox import TOPIC_WAITLIST_INVITE, enqueue_outbox
+
+        queued = 0
+        for entry in queryset.filter(status=PublicWorkoutWaitlistStatus.WAITING):
+            enqueue_outbox(
+                topic=TOPIC_WAITLIST_INVITE,
+                aggregate_type='waitlist', aggregate_id=entry.pk,
+                version=max(1, entry.pk),
+            )
+            queued += 1
+        self.message_user(request, f'{queued} convite(s) colocado(s) na outbox.')
+
+    @admin.action(description='Cancelar entradas selecionadas')
+    def cancel_selected(self, request, queryset):
+        count = queryset.filter(
+            status__in=(PublicWorkoutWaitlistStatus.WAITING, PublicWorkoutWaitlistStatus.INVITED),
+        ).update(status=PublicWorkoutWaitlistStatus.CANCELED)
+        self.message_user(request, f'{count} entrada(s) cancelada(s).')
+
+
+@admin.register(PublicWorkoutNutritionProfile)
+class PublicWorkoutNutritionProfileAdmin(admin.ModelAdmin):
+    """Leitura profissional da anamnese enviada pelo cliente.
+
+    A equipe nao edita respostas sensiveis em nome do aluno; correcoes voltam
+    pelo formulario autenticado e preservam o consentimento explicito.
+    """
+
+    list_display = ('account', 'objetivo', 'consent_health_processing_at', 'updated_at')
+    search_fields = ('account__email', 'objetivo', 'comorbidades', 'alergias_restricoes')
+    readonly_fields = (
+        'account', 'comorbidades', 'alergias_restricoes', 'rotina_alimentar',
+        'preferencias', 'objetivo', 'medicamentos', 'historico',
+        'consent_health_processing_at', 'consent_version', 'created_at', 'updated_at',
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return bool(obj) and super().has_view_permission(request, obj)
 
 
 class PublicWorkoutMealPlanForm(forms.ModelForm):
@@ -189,10 +371,9 @@ class PublicWorkoutMealPlanForm(forms.ModelForm):
     """
 
     payload = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 24, 'cols': 100}),
+        widget=NutritionPlanEditorWidget,
         help_text=(
-            'JSON estruturado — schema_version, daily_targets (kcal/protein_g/carbs_g/fat_g) '
-            'e meals (meal_id/label/items/substitutes/note). Ver public_workouts/nutrition_schema.py.'
+            'Preencha metas, refeições, alimentos e substituições. O payload validado é gerado automaticamente.'
         ),
     )
 
@@ -348,6 +529,11 @@ class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
                 self.message_user(request, str(exc), level=messages.ERROR)
                 continue
             self.message_user(request, f'{draft.slug}: publicado como v{program.version}.', level=messages.SUCCESS)
+            self.message_user(
+                request,
+                f'{draft.slug}: aviso colocado na fila transacional de entrega.',
+                level=messages.SUCCESS,
+            )
 
     @admin.action(description='Rejeitar')
     def reject_action(self, request, queryset):
@@ -362,3 +548,132 @@ class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
                 self.message_user(request, str(exc), level=messages.ERROR)
         if rejected:
             self.message_user(request, f'{rejected} rascunho(s) rejeitado(s).', level=messages.WARNING)
+
+
+@admin.register(PublicWorkoutProgramDelivery)
+class PublicWorkoutProgramDeliveryAdmin(admin.ModelAdmin):
+    list_display = ('program', 'attempt_count', 'attempted_at', 'sent_at', 'opened_at', 'last_error')
+    list_filter = ('sent_at', 'opened_at')
+    readonly_fields = ('program', 'attempt_count', 'attempted_at', 'sent_at', 'opened_at', 'last_error')
+    actions = ['retry_delivery']
+
+    @admin.action(description='Tentar enviar novamente')
+    def retry_delivery(self, request, queryset):
+        sent = 0
+        for delivery in queryset.filter(sent_at__isnull=True).select_related('program'):
+            if notify_program_ready(delivery.program, base_url=request.build_absolute_uri('/')):
+                sent += 1
+        self.message_user(request, f'{sent} aviso(s) enviado(s).')
+
+
+@admin.register(PublicWorkoutMealPlanDelivery)
+class PublicWorkoutMealPlanDeliveryAdmin(admin.ModelAdmin):
+    list_display = ('meal_plan', 'attempt_count', 'attempted_at', 'sent_at', 'opened_at', 'last_error')
+    list_filter = ('sent_at', 'opened_at')
+    readonly_fields = ('meal_plan', 'attempt_count', 'attempted_at', 'sent_at', 'opened_at', 'last_error')
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(PublicWorkoutOutboxMessage)
+class PublicWorkoutOutboxMessageAdmin(admin.ModelAdmin):
+    list_display = ('topic', 'aggregate_type', 'aggregate_id', 'status', 'attempt_count', 'next_attempt_at')
+    list_filter = ('status', 'topic')
+    search_fields = ('idempotency_key', 'aggregate_id', 'last_error')
+    readonly_fields = [field.name for field in PublicWorkoutOutboxMessage._meta.fields]
+    actions = ('retry_dead_messages',)
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.action(description='Reabrir mensagens com falha definitiva')
+    def retry_dead_messages(self, request, queryset):
+        count = queryset.filter(status=PublicWorkoutOutboxStatus.DEAD).update(
+            status=PublicWorkoutOutboxStatus.PENDING,
+            attempt_count=0,
+            next_attempt_at=timezone.now(),
+            last_error='',
+        )
+        self.message_user(request, f'{count} mensagem(ns) reaberta(s).', level=messages.SUCCESS)
+
+
+@admin.register(PublicWorkoutRefundRequest)
+class PublicWorkoutRefundRequestAdmin(admin.ModelAdmin):
+    list_display = ('subscription', 'payment', 'status', 'requested_at', 'processed_at', 'stripe_refund_id')
+    list_filter = ('status', 'requested_at')
+    search_fields = ('subscription__account__email', 'payment__stripe_invoice_id', 'stripe_refund_id')
+    readonly_fields = [field.name for field in PublicWorkoutRefundRequest._meta.fields]
+    actions = ('process_selected_refunds', 'reject_selected')
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.action(description='Executar reembolso integral na Stripe')
+    def process_selected_refunds(self, request, queryset):
+        from .refunds import process_refund_request
+
+        processed = 0
+        for refund_request in queryset.filter(
+            status__in=(PublicWorkoutRefundRequestStatus.REQUESTED, PublicWorkoutRefundRequestStatus.FAILED),
+        ):
+            try:
+                process_refund_request(refund_request.pk)
+            except Exception as exc:
+                self.message_user(request, f'{refund_request}: {exc}', level=messages.ERROR)
+            else:
+                processed += 1
+        if processed:
+            self.message_user(request, f'{processed} reembolso(s) concluido(s).', level=messages.SUCCESS)
+
+    @admin.action(description='Rejeitar pedidos selecionados')
+    def reject_selected(self, request, queryset):
+        count = queryset.filter(status=PublicWorkoutRefundRequestStatus.REQUESTED).update(
+            status=PublicWorkoutRefundRequestStatus.REJECTED,
+            processed_at=timezone.now(),
+        )
+        self.message_user(request, f'{count} pedido(s) rejeitado(s).')
+
+
+@admin.register(PublicWorkoutTestimonial)
+class PublicWorkoutTestimonialAdmin(admin.ModelAdmin):
+    list_display = ('display_name', 'account', 'consented_at', 'approved_at', 'published_at')
+    list_filter = ('approved_at', 'published_at', 'consent_version')
+    search_fields = ('display_name', 'quote', 'account__email')
+    readonly_fields = ('created_at',)
+    actions = ('approve_and_publish', 'unpublish')
+
+    @admin.action(description='Aprovar e publicar com consentimento válido')
+    def approve_and_publish(self, request, queryset):
+        valid = queryset.exclude(consent_version='').filter(consented_at__isnull=False)
+        count = valid.update(approved_at=timezone.now(), published_at=timezone.now())
+        self.message_user(request, f'{count} depoimento(s) publicado(s).')
+
+    @admin.action(description='Retirar da landing')
+    def unpublish(self, request, queryset):
+        count = queryset.update(published_at=None)
+        self.message_user(request, f'{count} depoimento(s) retirado(s).')
+
+
+@admin.register(PublicWorkoutMetricSnapshot)
+class PublicWorkoutMetricSnapshotAdmin(admin.ModelAdmin):
+    list_display = ('metric_date', 'growth_gate', 'captured_at', 'schema_version')
+    list_filter = ('metric_date', 'schema_version')
+    readonly_fields = [field.name for field in PublicWorkoutMetricSnapshot._meta.fields]
+
+    @admin.display(description='Gate de crescimento')
+    def growth_gate(self, obj):
+        return (obj.payload or {}).get('growth_gate', {}).get('status', '—').upper()
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PublicWorkoutCampaignSpend)
+class PublicWorkoutCampaignSpendAdmin(admin.ModelAdmin):
+    list_display = ('source', 'campaign', 'starts_on', 'ends_on', 'amount', 'currency')
+    list_filter = ('source', 'currency', 'starts_on')
+    search_fields = ('source', 'campaign', 'notes')

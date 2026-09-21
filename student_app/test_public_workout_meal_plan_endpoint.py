@@ -33,6 +33,15 @@ def _login(client, account_id):
     client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=account_id)
 
 
+def _make_nutritionist() -> PublicWorkoutProfessional:
+    return PublicWorkoutProfessional.objects.create(
+        name='Nutricionista de teste',
+        role=PublicWorkoutProfessionalRole.NUTRICAO,
+        registration_council='CRN',
+        registration_number='TESTE-ENDPOINT',
+    )
+
+
 class PublicWorkoutMealPlanEndpointTests(TestCase):
     def _url(self, slug='bruno'):
         return reverse('public-workout-meal-plan', kwargs={'plan_slug': slug})
@@ -77,7 +86,7 @@ class PublicWorkoutMealPlanEndpointTests(TestCase):
 
     def test_completo_tier_gets_the_active_meal_plan_payload(self):
         account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno', tier=PublicWorkoutTier.COMPLETO)
-        nutricionista = PublicWorkoutProfessional.objects.get(role=PublicWorkoutProfessionalRole.NUTRICAO)
+        nutricionista = _make_nutritionist()
         payload = build_example_payload()
         publish_meal_plan(account_id=account.pk, payload=payload, authored_by=nutricionista)
         _login(self.client, account.pk)
@@ -98,7 +107,7 @@ class PublicWorkoutMealPlanEndpointTests(TestCase):
     def test_does_not_leak_meal_plan_between_accounts(self):
         owner = _make_account_with_subscription(email='dono@example.com', plan_slug='bruno')
         other = _make_account_with_subscription(email='outro@example.com', plan_slug='juliana')
-        nutricionista = PublicWorkoutProfessional.objects.get(role=PublicWorkoutProfessionalRole.NUTRICAO)
+        nutricionista = _make_nutritionist()
         publish_meal_plan(account_id=owner.pk, payload=build_example_payload(), authored_by=nutricionista)
         _login(self.client, other.pk)
 

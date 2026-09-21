@@ -15,19 +15,33 @@ from public_workouts.stripe_handlers import public_workout_stripe_webhook_receiv
 
 from .public_workout_views import (
     PublicWorkoutBillingPortalView,
+    PublicWorkoutAccountSignOutView,
+    PublicWorkoutAccountView,
     PublicWorkoutColdSignupView,
+    PublicWorkoutFunnelEventView,
     PublicWorkoutLandingView,
     PublicWorkoutLoginView,
+    PublicWorkoutNutritionIntakeView,
+    PublicWorkoutPrivacyView,
+    PublicWorkoutRefundRequestView,
     PublicWorkoutSubscribeView,
     PublicWorkoutTrainingIntakeView,
+    PublicWorkoutTermsView,
 )
 
 urlpatterns = [
     path('', PublicWorkoutLandingView.as_view(), name='public-workout-landing'),
+    path('termos', PublicWorkoutTermsView.as_view(), name='public-workout-terms'),
+    path('privacidade', PublicWorkoutPrivacyView.as_view(), name='public-workout-privacy'),
     path('login', PublicWorkoutLoginView.as_view(), name='public-workout-login'),
     path('subscribe', PublicWorkoutSubscribeView.as_view(), name='public-workout-subscribe'),
     path('cadastro', PublicWorkoutColdSignupView.as_view(), name='public-workout-cold-signup'),
+    path('eventos', PublicWorkoutFunnelEventView.as_view(), name='public-workout-funnel-event'),
     path('billing-portal', PublicWorkoutBillingPortalView.as_view(), name='public-workout-billing-portal'),
+    path('garantia/reembolso', PublicWorkoutRefundRequestView.as_view(), name='public-workout-refund-request'),
+    path('minha-conta', PublicWorkoutAccountView.as_view(), name='public-workout-account'),
+    path('minha-conta/sair', PublicWorkoutAccountSignOutView.as_view(), name='public-workout-account-signout'),
     path('anamnese', PublicWorkoutTrainingIntakeView.as_view(), name='public-workout-training-intake'),
+    path('anamnese-nutricional', PublicWorkoutNutritionIntakeView.as_view(), name='public-workout-nutrition-intake'),
     path('stripe/webhook/', public_workout_stripe_webhook_receiver, name='public-workout-stripe-webhook'),
 ]

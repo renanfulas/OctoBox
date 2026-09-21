@@ -31,6 +31,7 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import logging
 from datetime import date
 from decimal import Decimal
 
@@ -38,6 +39,7 @@ from django.conf import settings
 from django.db import IntegrityError
 from django.db import models as django_models
 from django.db import transaction
+from django.utils import timezone
 
 from .formulas import (
     classify_bmi,
@@ -47,7 +49,8 @@ from .formulas import (
     compute_whr,
     estimate_body_fat_navy,
 )
-from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     PublicWorkoutAccount,
@@ -56,6 +59,7 @@ from .models import (
     PublicWorkoutMealPlan,
     PublicWorkoutMovement,
     PublicWorkoutMovementModality,
+    PublicWorkoutNutritionProfile,
     PublicWorkoutPayment,
     PublicWorkoutPhysicalRestrictionTag,
     PublicWorkoutProgram,
@@ -362,7 +366,7 @@ def publish_program(*, slug: str, payload: dict) -> PublicWorkoutProgram:
 
         PublicWorkoutProgram.objects.filter(slug=slug, is_active=True).update(is_active=False)
 
-        return PublicWorkoutProgram.objects.create(
+        program = PublicWorkoutProgram.objects.create(
             slug=slug,
             program_id=program_id,
             program_label=payload['program_label'],
@@ -372,6 +376,36 @@ def publish_program(*, slug: str, payload: dict) -> PublicWorkoutProgram:
             is_active=True,
             payload=payload,
         )
+        from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutWorkItemType
+        from public_workouts.operations import complete_onboarding_work_item
+
+        subscription = PublicWorkoutSubscription.objects.filter(plan_slug=slug).first()
+        if subscription is not None:
+            completed_item = complete_onboarding_work_item(
+                subscription=subscription,
+                item_type=PublicWorkoutWorkItemType.TRAINING_PROGRAM,
+            )
+            if completed_item is None:
+                logger.warning(
+                    'curva_publication_without_work_item content_type=program content_id=%s subscription_id=%s',
+                    program.pk, subscription.pk,
+                )
+            from public_workouts.acquisition import record_funnel_event
+            from public_workouts.models import PublicWorkoutAcquisitionSession
+            from public_workouts.outbox import TOPIC_PROGRAM_READY, enqueue_outbox
+
+            enqueue_outbox(
+                topic=TOPIC_PROGRAM_READY, aggregate_type='program',
+                aggregate_id=program.pk, version=program.version,
+            )
+            record_funnel_event(
+                'program_published',
+                acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
+                    subscription=subscription,
+                ).first(),
+                account=subscription.account, subscription=subscription, tier=subscription.tier,
+            )
+        return program
 
 
 # ---------------------------------------------------------------------------
@@ -438,6 +472,37 @@ def save_training_profile(
             'motivation': motivation,
             'biggest_difficulty': biggest_difficulty,
             'consent_ai_processing_at': timezone.now(),
+        },
+    )
+    return profile
+
+
+class NutritionIntakeValidationError(ValueError):
+    """Entrada nutricional sem consentimento ou sem informacao util."""
+
+
+def save_nutrition_profile(
+    *, account_id: int, comorbidades: str, alergias_restricoes: str,
+    rotina_alimentar: str, preferencias: str, objetivo: str,
+    medicamentos: str, historico: str, consent_given: bool,
+) -> PublicWorkoutNutritionProfile:
+    if not consent_given:
+        raise NutritionIntakeValidationError('consentimento obrigatorio para tratar dados de saude')
+    if not rotina_alimentar.strip() or not objetivo.strip():
+        raise NutritionIntakeValidationError('rotina alimentar e objetivo sao obrigatorios')
+
+    profile, _created = PublicWorkoutNutritionProfile.objects.update_or_create(
+        account_id=account_id,
+        defaults={
+            'comorbidades': comorbidades.strip(),
+            'alergias_restricoes': alergias_restricoes.strip(),
+            'rotina_alimentar': rotina_alimentar.strip(),
+            'preferencias': preferencias.strip(),
+            'objetivo': objetivo.strip(),
+            'medicamentos': medicamentos.strip(),
+            'historico': historico.strip(),
+            'consent_health_processing_at': timezone.now(),
+            'consent_version': 'nutrition-v1',
         },
     )
     return profile
@@ -646,13 +711,43 @@ def publish_meal_plan(*, account_id: int, payload: dict, authored_by) -> PublicW
 
         PublicWorkoutMealPlan.objects.filter(account_id=account_id, is_active=True).update(is_active=False)
 
-        return PublicWorkoutMealPlan.objects.create(
+        meal_plan = PublicWorkoutMealPlan.objects.create(
             account_id=account_id,
             version=next_version,
             is_active=True,
             authored_by=authored_by,
             payload=payload,
         )
+        from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutWorkItemType
+        from public_workouts.operations import complete_onboarding_work_item
+
+        subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
+        if subscription is not None:
+            completed_item = complete_onboarding_work_item(
+                subscription=subscription,
+                item_type=PublicWorkoutWorkItemType.NUTRITION_PLAN,
+            )
+            if completed_item is None:
+                logger.warning(
+                    'curva_publication_without_work_item content_type=meal_plan content_id=%s subscription_id=%s',
+                    meal_plan.pk, subscription.pk,
+                )
+            from public_workouts.acquisition import record_funnel_event
+            from public_workouts.models import PublicWorkoutAcquisitionSession
+            from public_workouts.outbox import TOPIC_MEAL_PLAN_READY, enqueue_outbox
+
+            enqueue_outbox(
+                topic=TOPIC_MEAL_PLAN_READY, aggregate_type='meal_plan',
+                aggregate_id=meal_plan.pk, version=meal_plan.version,
+            )
+            record_funnel_event(
+                'meal_plan_published',
+                acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
+                    subscription=subscription,
+                ).first(),
+                account=subscription.account, subscription=subscription, tier=subscription.tier,
+            )
+        return meal_plan
 
 
 def activate_program_version(*, slug: str, program_id: str, version: int) -> PublicWorkoutProgram:

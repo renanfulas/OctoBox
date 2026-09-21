@@ -34,34 +34,71 @@ proprio ainda — a tela de assinatura e Onda B3/B4).
 from __future__ import annotations
 
 import re
+import json
+import uuid
+import logging
 
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.urls import reverse
 from django.views.generic import TemplateView, View
 
 from public_workouts.billing import get_or_create_subscription
+from public_workouts.acquisition import (
+    attach_acquisition_cookie,
+    bind_acquisition_session,
+    ensure_acquisition_session,
+    get_acquisition_session,
+    record_funnel_event,
+)
+from public_workouts.contracts import current_contract_versions
+from public_workouts.capacity import get_tier_capacity
+from public_workouts.journey import get_customer_journey
 from public_workouts.models import (
     PublicWorkoutAccount,
+    PublicWorkoutGuaranteeModel,
+    PublicWorkoutFunnelEvent,
+    PublicWorkoutNutritionProfile,
     PublicWorkoutPhysicalRestrictionTag,
+    PublicWorkoutProfessional,
+    PublicWorkoutProfessionalRole,
+    PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
+    PublicWorkoutTestimonial,
+    PublicWorkoutWaitlistEntry,
+    PublicWorkoutWaitlistStatus,
     PublicWorkoutTrainingExperience,
     PublicWorkoutTrainingGoal,
     PublicWorkoutTrainingLocation,
 )
-from public_workouts.services import TrainingIntakeValidationError, get_training_profile, save_training_profile
+from public_workouts.services import (
+    NutritionIntakeValidationError,
+    TrainingIntakeValidationError,
+    get_training_profile,
+    require_nutrition_tier,
+    save_nutrition_profile,
+    save_training_profile,
+)
+
 from public_workouts.stripe_checkout import (
     PublicWorkoutStripeNotConfiguredError,
     start_customer_portal_session,
     start_subscription_checkout,
 )
 
+logger = logging.getLogger(__name__)
+
 from .public_workout_login import (
     PublicWorkoutLoginRateLimitExceeded,
     request_login_token,
     verify_login_token,
 )
-from .public_workout_session import attach_public_workout_session_cookie, get_public_workout_account_id_from_request
+from .public_workout_session import (
+    attach_public_workout_session_cookie,
+    clear_public_workout_session_cookie,
+    get_public_workout_account_id_from_request,
+)
 
 
 _PUBLIC_WORKOUT_NEXT_RE = re.compile(r'^/renan/[-a-z0-9]+/?$')
@@ -70,7 +107,7 @@ _PUBLIC_WORKOUT_NEXT_RE = re.compile(r'^/renan/[-a-z0-9]+/?$')
 # do primeiro checkout, sem abrir mao da disciplina de whitelist exata que
 # o resto do arquivo ja documenta (nunca url_has_allowed_host_and_scheme,
 # que aceitaria qualquer path do mesmo host).
-_PUBLIC_WORKOUT_NEXT_LITERALS = ('/treinos/anamnese',)
+_PUBLIC_WORKOUT_NEXT_LITERALS = ('/treinos/anamnese', '/treinos/anamnese-nutricional', '/treinos/minha-conta')
 
 
 def _safe_public_workout_next(raw: str | None) -> str:
@@ -84,57 +121,38 @@ def _safe_public_workout_next(raw: str | None) -> str:
     return candidate if _PUBLIC_WORKOUT_NEXT_RE.match(candidate) else ''
 
 
-def _resolve_default_next_for_account(account_id: int) -> tuple[str, bool]:
+def _resolve_default_next_for_account(account_id: int) -> str:
     """Quando o link de login chega SEM ?next= explicito — o caso comum de
     abrir o e-mail direto, sem ter vindo de um /renan/<slug> especifico
-    nesta mesma aba — resolve o proximo passo certo dado o estado real da
-    conta. Achado real (usuario): sem isso, a tela so dizia "login feito,
-    volte pro link do seu treino" pra QUALQUER conta sem plan_slug —
-    inclusive quem nunca tinha nem preenchido a anamnese ainda (sem dizer
-    qual link nem onde ele estava) E quem nem tinha assinatura nenhuma
-    (mensagem de "treino em preparo" pra quem nunca comecou a assinar —
-    segundo achado real, numa rodada de QA seguinte).
-
-    Devolve (redirect_path, awaiting_plan). `awaiting_plan` so' e' True no
-    caso 3 abaixo — e' o unico em que faz sentido dizer "seu treino esta
-    sendo preparado"; nos outros dois casos de string vazia (1 e 4) o
-    chamador mostra a tela de confirmacao simples, sem essa frase.
-
-    Ordem de resolucao:
-    1. Sem NENHUMA PublicWorkoutSubscription (nunca passou pelo cadastro —
-       so' abriu /treinos/login e digitou um e-mail qualquer, que
-       request_login_token aceita de qualquer jeito) -> ('', False).
-       Nunca empurra pra anamnese nem diz "treino em preparo" pra quem
-       nem comecou a assinar.
-    2. Ja tem plan_slug atribuido (Renan ja montou o treino) -> manda pro
-       proprio treino.
-    3. Sem plan_slug e AINDA sem anamnese preenchida -> manda pra anamnese
-       (mesmo destino que PublicWorkoutColdSignupView.success_url usa logo
-       apos o pagamento — aqui cobre quem saiu daquela aba e voltou depois
-       via link de login).
-    4. Sem plan_slug mas anamnese ja preenchida (falta so' Renan montar o
-       treino) -> ('', True); quem chama mostra a mensagem de "treino em
-       preparo" nesse caso, nunca um link morto.
+    nesta mesma aba — manda a pessoa direto pro proprio treino, se a conta
+    ja tiver plan_slug atribuido. Achado real (usuario): sem isso, a tela
+    so dizia "login feito, volte pro link do seu treino" e deixava a
+    pessoa perdida.
 
     Nunca usa dado de request pra montar isso (por isso nao passa por
-    _safe_public_workout_next) — tudo resolvido pela propria conta que
-    acabou de provar posse do e-mail, entao nao ha superficie de
-    redirecionamento aberto aqui pra comecar.
+    _safe_public_workout_next) — plan_slug vem do proprio banco, resolvido
+    pela conta que acabou de provar posse do e-mail, entao nao ha
+    superficie de redirecionamento aberto aqui pra comecar.
+
+    String vazia (nunca None) quando a conta ainda nao tem slug (ex.: pagou
+    mas ainda esta na fila de ativacao) — nesse caso a tela de confirmacao
+    "login feito" segue sendo o destino certo, nao ha treino pra mostrar
+    ainda.
     """
-    from public_workouts.models import PublicWorkoutSubscription
-    from public_workouts.services import get_training_profile
+    from public_workouts.models import PublicWorkoutProgram, PublicWorkoutSubscription
 
     subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
-    if subscription is None:
-        return '', False
-
-    if subscription.plan_slug:
-        return f'/renan/{subscription.plan_slug}', False
-
-    if get_training_profile(account_id=account_id) is None:
-        return '/treinos/anamnese', False
-
-    return '', True
+    if (
+        subscription is not None
+        and subscription.status == PublicWorkoutSubscriptionStatus.ACTIVE
+        and subscription.plan_slug
+        and (
+            not subscription.requires_login
+            or PublicWorkoutProgram.objects.filter(slug=subscription.plan_slug, is_active=True).exists()
+        )
+    ):
+        return f'/renan/{subscription.plan_slug}'
+    return reverse('public-workout-account')
 
 
 class PublicWorkoutLandingView(TemplateView):
@@ -150,6 +168,68 @@ class PublicWorkoutLandingView(TemplateView):
 
     template_name = 'public_workouts/landing.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['testimonials'] = PublicWorkoutTestimonial.objects.filter(
+            approved_at__isnull=False, published_at__isnull=False,
+        )[:6]
+        professionals = PublicWorkoutProfessional.objects.filter(is_active=True).order_by('role', 'name')
+        context['training_professionals'] = professionals.filter(role=PublicWorkoutProfessionalRole.TREINO)
+        context['nutrition_professionals'] = professionals.filter(role=PublicWorkoutProfessionalRole.NUTRICAO)
+        context['capacity_essencial'] = get_tier_capacity(PublicWorkoutTier.ESSENCIAL)
+        context['capacity_completo'] = get_tier_capacity(PublicWorkoutTier.COMPLETO)
+        context['capacity_premium'] = get_tier_capacity(PublicWorkoutTier.PREMIUM)
+        try:
+            context['invite_token'] = str(uuid.UUID(self.request.GET.get('invite') or ''))
+        except ValueError:
+            context['invite_token'] = ''
+        return context
+
+    def get(self, request, *args, **kwargs):
+        acquisition_session, _created = ensure_acquisition_session(request)
+        response = super().get(request, *args, **kwargs)
+        record_funnel_event('landing_viewed', acquisition_session=acquisition_session)
+        attach_acquisition_cookie(response, acquisition_session)
+        return response
+
+
+class PublicWorkoutFunnelEventView(View):
+    """Eventos de interação allowlisted; nunca aceita payload comercial/PII."""
+
+    CLIENT_EVENTS = {'cta_clicked', 'faq_opened'}
+
+    def post(self, request, *args, **kwargs):
+        try:
+            payload = json.loads(request.body.decode('utf-8'))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            logger.warning('curva_funnel_client_event_rejected reason=invalid_json')
+            return JsonResponse({'error': 'payload_invalido'}, status=400)
+        if not isinstance(payload, dict) or set(payload) - {'event_type', 'client_event_id'}:
+            logger.warning('curva_funnel_client_event_rejected reason=invalid_shape')
+            return JsonResponse({'error': 'payload_invalido'}, status=400)
+        event_type = payload.get('event_type')
+        if event_type not in self.CLIENT_EVENTS:
+            logger.warning('curva_funnel_client_event_rejected reason=not_allowlisted')
+            return JsonResponse({'error': 'evento_invalido'}, status=400)
+        try:
+            client_event_id = uuid.UUID(str(payload.get('client_event_id') or ''))
+        except ValueError:
+            logger.warning('curva_funnel_client_event_rejected reason=invalid_client_event_id')
+            return JsonResponse({'error': 'client_event_id_invalido'}, status=400)
+        session = get_acquisition_session(request)
+        event = record_funnel_event(
+            event_type, acquisition_session=session, client_event_id=client_event_id,
+        )
+        return JsonResponse({'accepted': event is not None}, status=202)
+
+
+class PublicWorkoutTermsView(TemplateView):
+    template_name = 'public_workouts/terms.html'
+
+
+class PublicWorkoutPrivacyView(TemplateView):
+    template_name = 'public_workouts/privacy.html'
+
 
 class PublicWorkoutLoginView(View):
     template_name = 'treinos/login.html'
@@ -164,17 +244,11 @@ class PublicWorkoutLoginView(View):
         if account is None:
             return render(request, self.template_name, {'error': 'link_invalido', 'next_url': next_url})
 
-        if next_url:
-            effective_next, awaiting_plan = next_url, False
-        else:
-            effective_next, awaiting_plan = _resolve_default_next_for_account(account.id)
-
+        effective_next = next_url or _resolve_default_next_for_account(account.id)
         if effective_next:
             response = redirect(effective_next)
         else:
-            response = render(
-                request, self.template_name, {'logged_in_as': account.email, 'awaiting_plan': awaiting_plan}
-            )
+            response = render(request, self.template_name, {'logged_in_as': account.email})
         attach_public_workout_session_cookie(response, account_id=account.id)
         return response
 
@@ -253,9 +327,113 @@ class PublicWorkoutColdSignupView(View):
         tier = request.POST.get('tier')
         if not email or '@' not in email or tier not in PublicWorkoutTier.values:
             return JsonResponse({'error': 'email_ou_tier_invalido'}, status=400)
+        if request.POST.get('accept_contract') != '1':
+            return JsonResponse({'error': 'aceite_contrato_obrigatorio'}, status=400)
 
-        account, _ = PublicWorkoutAccount.objects.get_or_create(email=email)
+        acquisition_session = get_acquisition_session(request)
+        # E-mail nao prova posse. Uma conta existente — ativa, cancelada ou
+        # com checkout abandonado — precisa voltar pelo magic link antes de
+        # abrir hub, renovacao ou um novo checkout. Somente a conta criada
+        # neste POST recebe a sessao inicial de onboarding mais abaixo.
+        account = PublicWorkoutAccount.objects.filter(email__iexact=email).first()
+        session_account_id = get_public_workout_account_id_from_request(request)
+        owns_existing_account = account is not None and session_account_id == account.pk
+        if account is not None and not owns_existing_account:
+            response = JsonResponse({
+                'checkout_url': request.build_absolute_uri(reverse('public-workout-login')),
+                'login_required': True,
+            })
+            attach_acquisition_cookie(response, acquisition_session)
+            return response
+
+        capacity = get_tier_capacity(tier)
+        invited_entry = None
+        raw_invite_token = (request.POST.get('invite_token') or '').strip()
+        if raw_invite_token:
+            try:
+                invite_uuid = uuid.UUID(raw_invite_token)
+            except ValueError:
+                invite_uuid = None
+            if invite_uuid is not None:
+                invited_entry = PublicWorkoutWaitlistEntry.objects.filter(
+                    invite_token=invite_uuid,
+                    email__iexact=email,
+                    tier=tier,
+                    status=PublicWorkoutWaitlistStatus.INVITED,
+                    expires_at__gte=timezone.now(),
+                ).first()
+                if invited_entry is None:
+                    PublicWorkoutWaitlistEntry.objects.filter(
+                        invite_token=invite_uuid,
+                        status=PublicWorkoutWaitlistStatus.INVITED,
+                        expires_at__lt=timezone.now(),
+                    ).update(status=PublicWorkoutWaitlistStatus.EXPIRED)
+        if not capacity['checkout_allowed'] and invited_entry is None:
+            entry, _created = PublicWorkoutWaitlistEntry.objects.get_or_create(
+                email=email,
+                tier=tier,
+                status=PublicWorkoutWaitlistStatus.WAITING,
+                defaults={'acquisition_session': acquisition_session},
+            )
+            if entry.acquisition_session_id is None and acquisition_session is not None:
+                entry.acquisition_session = acquisition_session
+                entry.save(update_fields=['acquisition_session', 'updated_at'])
+            record_funnel_event(
+                'waitlist_joined', acquisition_session=acquisition_session, tier=tier,
+            )
+            response = JsonResponse({
+                'waitlisted': True,
+                'message': 'Sua prioridade foi registrada. Avisaremos quando abrir uma vaga.',
+            }, status=202)
+            attach_acquisition_cookie(response, acquisition_session)
+            return response
+
+        if account is None:
+            account, account_created = PublicWorkoutAccount.objects.get_or_create(email=email)
+        else:
+            account_created = False
+        if not account_created and not owns_existing_account:
+            # Outra requisicao pode ter criado a conta entre a leitura acima
+            # e este ponto. Mantem a mesma fronteira de posse mesmo sob race.
+            response = JsonResponse({
+                'checkout_url': request.build_absolute_uri(reverse('public-workout-login')),
+                'login_required': True,
+            })
+            attach_acquisition_cookie(response, acquisition_session)
+            return response
         subscription = get_or_create_subscription(account=account, tier=tier)
+        bind_acquisition_session(
+            acquisition_session, account=account, subscription=subscription,
+        )
+        record_funnel_event(
+            'tier_selected', acquisition_session=acquisition_session,
+            account=account, subscription=subscription, tier=tier,
+        )
+
+        # Cliente autenticado com contrato ainda vigente administra a
+        # assinatura existente no hub; POST da landing nunca troca seu tier.
+        if subscription.status in (
+            PublicWorkoutSubscriptionStatus.ACTIVE,
+            PublicWorkoutSubscriptionStatus.PAST_DUE,
+            PublicWorkoutSubscriptionStatus.SUSPENDED,
+        ):
+            response = JsonResponse({
+                'checkout_url': request.build_absolute_uri(reverse('public-workout-account')),
+            })
+            attach_acquisition_cookie(response, acquisition_session)
+            return response
+
+        contract_versions = current_contract_versions()
+        for field_name, value in contract_versions.items():
+            setattr(subscription, field_name, value)
+        subscription.guarantee_model = PublicWorkoutGuaranteeModel.REFUND_GUARANTEE
+        subscription.contract_accepted_at = timezone.now()
+        if not subscription.requires_login:
+            subscription.requires_login = True
+        subscription.save(update_fields=[
+            'requires_login', *contract_versions.keys(), 'guarantee_model',
+            'contract_accepted_at', 'updated_at',
+        ])
 
         login_url = request.build_absolute_uri(reverse('public-workout-login'))
         # Achado real (usuario): a landing PROMETE a anamnese "antes do
@@ -265,17 +443,23 @@ class PublicWorkoutColdSignupView(View):
         # AQUI embaixo, antes de ir pro Stripe (SameSite=Lax sobrevive o
         # redirect de volta, e' navegacao top-level) — entao mandar direto
         # pra anamnese funciona sem round-trip nenhum de login.
-        anamnese_url = request.build_absolute_uri(reverse('public-workout-training-intake'))
+        account_url = request.build_absolute_uri(f"{reverse('public-workout-account')}?checkout=retorno")
         try:
             checkout_url = start_subscription_checkout(
                 subscription=subscription,
-                success_url=anamnese_url,
-                cancel_url=f'{login_url}?assinatura=cancelada',
+                success_url=account_url,
+                cancel_url=f"{request.build_absolute_uri(reverse('public-workout-account'))}?checkout=cancelado",
+                acquisition_session_id=(acquisition_session.pk if acquisition_session else None),
             )
         except PublicWorkoutStripeNotConfiguredError as exc:
             return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
 
+        record_funnel_event(
+            'checkout_started', acquisition_session=acquisition_session,
+            account=account, subscription=subscription, tier=tier,
+        )
         response = JsonResponse({'checkout_url': checkout_url})
+        attach_acquisition_cookie(response, acquisition_session)
         # Ja loga o visitante (attach_public_workout_session_cookie, B1) —
         # sem isso ele precisaria de um segundo round-trip de e-mail/token
         # so pra ver a propria fila de status depois do pagamento, e o
@@ -316,7 +500,7 @@ class PublicWorkoutBillingPortalView(View):
         if subscription is None or not subscription.stripe_customer_id:
             return JsonResponse({'error': 'sem_assinatura_com_checkout_concluido'}, status=404)
 
-        return_url = request.build_absolute_uri(reverse('public-workout-login'))
+        return_url = request.build_absolute_uri(reverse('public-workout-account'))
         try:
             portal_url = start_customer_portal_session(
                 customer_id=subscription.stripe_customer_id, return_url=return_url
@@ -387,6 +571,145 @@ class PublicWorkoutTrainingIntakeView(View):
             context['error'] = str(exc)
             return render(request, self.template_name, context, status=400)
 
-        context = self._form_context(account_id)
-        context['saved'] = True
-        return render(request, self.template_name, context)
+        from public_workouts.operations import ensure_required_work_items
+        account = PublicWorkoutAccount.objects.get(pk=account_id)
+        subscription = getattr(account, 'subscription', None)
+        # Compatibilidade B0: contas legadas podiam preencher anamnese antes
+        # de existir assinatura. Persistir o perfil continua valido; a fila
+        # operacional nasce quando uma assinatura ativa for reconciliada.
+        if subscription is not None:
+            ensure_required_work_items(subscription.pk)
+            record_funnel_event(
+                'training_intake_completed', account=subscription.account,
+                subscription=subscription, tier=subscription.tier,
+            )
+
+        return redirect(f"{reverse('public-workout-account')}?anamnese=salva")
+
+
+class PublicWorkoutAccountView(View):
+    """Hub autenticado que traduz o estado tecnico em proximo passo."""
+
+    template_name = 'treinos/minha_conta.html'
+
+    def get(self, request, *args, **kwargs):
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return redirect(f"{reverse('public-workout-login')}?next=/treinos/minha-conta")
+        try:
+            account = PublicWorkoutAccount.objects.select_related(
+                'subscription', 'training_profile', 'nutrition_profile'
+            ).get(pk=account_id)
+        except PublicWorkoutAccount.DoesNotExist:
+            response = redirect('public-workout-login')
+            return clear_public_workout_session_cookie(response)
+
+        journey = get_customer_journey(account)
+        checkout_canceled = request.GET.get('checkout') == 'cancelado'
+        if checkout_canceled:
+            subscription = getattr(account, 'subscription', None)
+            acquisition_session = get_acquisition_session(request)
+            if not PublicWorkoutFunnelEvent.objects.filter(
+                event_type='checkout_canceled', acquisition_session=acquisition_session,
+                subscription=subscription,
+            ).exists():
+                record_funnel_event(
+                    'checkout_canceled', account=account, subscription=subscription,
+                    tier=getattr(subscription, 'tier', ''),
+                    acquisition_session=acquisition_session,
+                )
+        from public_workouts.refunds import get_refund_eligibility
+        refund = get_refund_eligibility(account.subscription) if hasattr(account, 'subscription') else None
+        if request.GET.get('format') == 'json':
+            return JsonResponse(journey.as_dict())
+        return render(request, self.template_name, {
+            'account': account,
+            'journey': journey,
+            'checkout_returned': request.GET.get('checkout') == 'retorno',
+            'checkout_canceled': checkout_canceled,
+            'intake_saved': request.GET.get('anamnese') == 'salva',
+            'refund': refund,
+            'refund_requested': request.GET.get('garantia') == 'solicitada',
+        })
+
+
+class PublicWorkoutRefundRequestView(View):
+    def post(self, request, *args, **kwargs):
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return redirect(f"{reverse('public-workout-login')}?next=/treinos/minha-conta")
+        try:
+            account = PublicWorkoutAccount.objects.select_related('subscription').get(pk=account_id)
+        except PublicWorkoutAccount.DoesNotExist:
+            return redirect('public-workout-login')
+        from public_workouts.refunds import RefundNotEligibleError, submit_refund_request
+        try:
+            submit_refund_request(
+                subscription=account.subscription,
+                reason=(request.POST.get('reason') or '').strip(),
+            )
+        except RefundNotEligibleError as exc:
+            return JsonResponse({'error': 'garantia_indisponivel', 'detail': str(exc)}, status=409)
+        return redirect(f"{reverse('public-workout-account')}?garantia=solicitada")
+
+
+class PublicWorkoutNutritionIntakeView(View):
+    template_name = 'treinos/anamnese_nutricional.html'
+
+    def _resolve_account(self, request):
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return None
+        try:
+            account = PublicWorkoutAccount.objects.select_related('subscription', 'nutrition_profile').get(pk=account_id)
+        except PublicWorkoutAccount.DoesNotExist:
+            return None
+        subscription = getattr(account, 'subscription', None)
+        if (
+            subscription is None
+            or subscription.status != PublicWorkoutSubscriptionStatus.ACTIVE
+            or not require_nutrition_tier(subscription)
+        ):
+            return None
+        return account
+
+    def get(self, request, *args, **kwargs):
+        account = self._resolve_account(request)
+        if account is None:
+            return redirect(f"{reverse('public-workout-account')}")
+        return render(request, self.template_name, {'profile': getattr(account, 'nutrition_profile', None)})
+
+    def post(self, request, *args, **kwargs):
+        account = self._resolve_account(request)
+        if account is None:
+            return redirect(reverse('public-workout-account'))
+        try:
+            save_nutrition_profile(
+                account_id=account.pk,
+                comorbidades=request.POST.get('comorbidades') or '',
+                alergias_restricoes=request.POST.get('alergias_restricoes') or '',
+                rotina_alimentar=request.POST.get('rotina_alimentar') or '',
+                preferencias=request.POST.get('preferencias') or '',
+                objetivo=request.POST.get('objetivo') or '',
+                medicamentos=request.POST.get('medicamentos') or '',
+                historico=request.POST.get('historico') or '',
+                consent_given=request.POST.get('consent') == 'on',
+            )
+        except NutritionIntakeValidationError as exc:
+            return render(request, self.template_name, {
+                'profile': getattr(account, 'nutrition_profile', None), 'error': str(exc),
+            }, status=400)
+
+        from public_workouts.operations import ensure_required_work_items
+        ensure_required_work_items(account.subscription.pk)
+        record_funnel_event(
+            'nutrition_intake_completed', account=account,
+            subscription=account.subscription, tier=account.subscription.tier,
+        )
+        return redirect(f"{reverse('public-workout-account')}?anamnese=salva")
+
+
+class PublicWorkoutAccountSignOutView(View):
+    def post(self, request, *args, **kwargs):
+        response = redirect('public-workout-landing')
+        return clear_public_workout_session_cookie(response)

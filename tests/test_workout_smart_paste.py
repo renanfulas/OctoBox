@@ -1081,6 +1081,36 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
         self.assertIn(response.status_code, [200, 302])
         mock_resolver.assert_called_once()
 
+    def test_structured_smartplan_also_calls_llm_resolver(self):
+        """Saída estruturada não pode pular a correção automática do Haiku."""
+        smartplan_payload = {
+            'week_label': None,
+            'parse_warnings': [],
+            'source_format': 'smartplan_json',
+            'days': [{
+                'weekday': 0,
+                'weekday_label': 'Segunda',
+                'blocks': [{
+                    'kind': 'metcon',
+                    'movements': [{'movement_label_raw': 'agachamnto', 'movement_slug': None}],
+                }],
+            }],
+        }
+        with patch(
+            'operations.workout_board_views.detect_and_convert_smartplan_weekly',
+            return_value=smartplan_payload,
+        ), patch('operations.workout_board_views.apply_llm_slug_resolution') as mock_resolver:
+            response = self.client.post(reverse('workout-smart-paste'), {
+                'action': 'parse_text',
+                'week_start': '28/04/2026',
+                'label': 'Semana estruturada',
+                'source_text': '=== JSON ESTRUTURADO ===\n{}',
+            })
+
+        self.assertIn(response.status_code, [200, 302])
+        mock_resolver.assert_called_once()
+        self.assertIs(mock_resolver.call_args.args[0], smartplan_payload)
+
     def test_source_text_over_500_lines_is_rejected(self):
         from operations.forms import WeeklyWodSmartPasteForm
 

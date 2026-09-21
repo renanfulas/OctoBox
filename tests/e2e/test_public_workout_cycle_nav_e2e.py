@@ -35,6 +35,20 @@ from django.test import override_settings
 from playwright.sync_api import Page, expect
 
 
+@pytest.fixture(autouse=True)
+def _cleanup_published_programs_after_e2e(django_db_blocker):
+    """O schema public nao era limpo pelo teardown tenant deste E2E.
+
+    Sem a remocao explicita, uma execucao com --reuse-db fazia os testes
+    unitarios seguintes comecarem em v3/v4, produzindo falso negativo.
+    """
+    yield
+    with django_db_blocker.unblock():
+        from public_workouts.models import PublicWorkoutProgram
+
+        PublicWorkoutProgram.objects.filter(slug='bruno').delete()
+
+
 def _publish_program_with_cardio_and_periodization(slug: str) -> None:
     from public_workouts.services import publish_program
 

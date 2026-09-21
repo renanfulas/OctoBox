@@ -4,8 +4,8 @@ docs/plans/public-workouts-escala-e-nutricao-corda.md, D.6).
 
 POR QUE ELE EXISTE:
 - e' o item de maior incerteza de esforco da Fase 4 (proprio plano):
-  formulario aceita o payload como JSON estruturado (nao um formset por
-  refeicao/item) mas precisa continuar rejeitando payload malformado —
+  formulario visual monta o payload estruturado por refeicao/item sem
+  expor JSON a nutricionista, mas o servidor continua rejeitando payload malformado —
   e nunca pode permitir UPDATE de uma versao ja publicada (D.6).
 """
 
@@ -33,7 +33,12 @@ class PublicWorkoutMealPlanAdminTests(TestCase):
         )
         self.client.force_login(self.superuser)
         self.account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.nutricionista = PublicWorkoutProfessional.objects.get(role=PublicWorkoutProfessionalRole.NUTRICAO)
+        self.nutricionista = PublicWorkoutProfessional.objects.create(
+            name='Nutricionista de teste',
+            role=PublicWorkoutProfessionalRole.NUTRICAO,
+            registration_council='CRN',
+            registration_number='TESTE-1',
+        )
 
     def _add_url(self):
         return reverse('admin:public_workouts_publicworkoutmealplan_add')
@@ -45,6 +50,14 @@ class PublicWorkoutMealPlanAdminTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'aluno@example.com')
+
+    def test_add_form_uses_structured_editor_not_a_json_textarea(self):
+        response = self.client.get(self._add_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-nutrition-editor')
+        self.assertContains(response, 'nutrition_editor.js')
+        self.assertNotContains(response, '<textarea name="payload"')
 
     def test_valid_payload_publishes_version_1_active(self):
         response = self.client.post(self._add_url(), data={
@@ -95,7 +108,12 @@ class PublicWorkoutMealPlanAdminTests(TestCase):
         self.assertEqual(PublicWorkoutMealPlan.objects.count(), 0)
 
     def test_authored_by_choices_are_restricted_to_nutrition_professionals(self):
-        treino = PublicWorkoutProfessional.objects.get(role=PublicWorkoutProfessionalRole.TREINO)
+        treino = PublicWorkoutProfessional.objects.create(
+            name='Treinador de teste',
+            role=PublicWorkoutProfessionalRole.TREINO,
+            registration_council='CREF',
+            registration_number='TESTE-2',
+        )
 
         response = self.client.post(self._add_url(), data={
             'account': self.account.pk,
