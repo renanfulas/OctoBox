@@ -8,12 +8,14 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
-from django.db.models import Count, Sum
+from django.db.models import Count, Min, Subquery, Sum
 from django.utils import timezone
 
 from .capacity import get_capacity_projection, get_tier_capacity
+from .funnel_analytics import build_acquisition_report
 from .models import (
     PublicWorkoutFunnelEvent,
+    PublicWorkoutAcquisitionSession,
     PublicWorkoutCampaignSpend,
     PublicWorkoutLoadLog,
     PublicWorkoutMetricSnapshot,
@@ -55,10 +57,12 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
     ).values('event_type').annotate(total=Count('id'))
     funnel = {step: 0 for step in FUNNEL_STEPS}
     funnel.update({row['event_type']: row['total'] for row in funnel_rows})
+    acquisition = build_acquisition_report(at=at, window_days=window_days)
+    acquisition_steps = acquisition['steps']
     funnel_rates = {
-        'landing_to_tier': _ratio(funnel['tier_selected'], funnel['landing_viewed']),
-        'checkout_to_paid': _ratio(funnel['invoice_paid'], funnel['checkout_started']),
-        'paid_to_program_opened': _ratio(funnel['program_opened'], funnel['invoice_paid']),
+        'landing_to_tier': _ratio(acquisition_steps[1]['visitors'], acquisition['visitors']),
+        'checkout_to_paid': _ratio(acquisition['paid'], acquisition_steps[2]['visitors']),
+        'visitor_to_paid': _ratio(acquisition['paid'], acquisition['visitors']),
     }
 
     active = PublicWorkoutSubscription.objects.filter(status=PublicWorkoutSubscriptionStatus.ACTIVE)
@@ -140,22 +144,38 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
     )
     paid_event_count = paid_events.count()
     attributed_paid_event_count = paid_events.exclude(source='').count()
-    sources = list(paid_events.values('source').annotate(paid=Count('id')).order_by('-paid')[:10])
+    first_payers = PublicWorkoutPayment.objects.filter(
+        status__in=(PublicWorkoutPaymentStatus.PAID, PublicWorkoutPaymentStatus.REFUNDED),
+        paid_at__lte=at, gross_amount__gt=0,
+    ).values('subscription__account_id').annotate(first_paid=Min('paid_at')).filter(first_paid__gte=since)
+    acquired = PublicWorkoutAcquisitionSession.objects.filter(
+        account_id__in=Subquery(first_payers.values('subscription__account_id')),
+    )
+    sources = [
+        {'source': row['first_source'], 'paid': row['paid']}
+        for row in acquired.values('first_source').annotate(paid=Count('account_id', distinct=True)).order_by('-paid')[:10]
+    ]
     paid_campaigns = {
-        (row['source'], row['campaign']): row['paid']
-        for row in PublicWorkoutFunnelEvent.objects.filter(
-            occurred_at__gte=since, event_type='invoice_paid',
-        ).values('source', 'campaign').annotate(paid=Count('id'))
+        (row['first_source'], row['first_campaign']): row['paid']
+        for row in acquired.values('first_source', 'first_campaign').annotate(paid=Count('account_id', distinct=True))
     }
-    campaign_economics = []
+    campaign_spend = {}
     for spend in PublicWorkoutCampaignSpend.objects.filter(
         starts_on__lte=at.date(), ends_on__gte=since.date(), currency='brl',
     ):
-        paid = paid_campaigns.get((spend.source, spend.campaign), 0)
+        item = campaign_spend.setdefault((spend.source, spend.campaign), {
+            'amount': Decimal('0'), 'window_complete': True,
+        })
+        item['amount'] += spend.amount
+        item['window_complete'] &= spend.starts_on >= since.date() and spend.ends_on <= at.date()
+    campaign_economics = []
+    for (source, campaign), spend in campaign_spend.items():
+        paid = paid_campaigns.get((source, campaign), 0)
         campaign_economics.append({
-            'source': spend.source, 'campaign': spend.campaign,
-            'spend': str(spend.amount), 'paid_customers': paid,
-            'cac': str((spend.amount / paid).quantize(Decimal('0.01'))) if paid else None,
+            'source': source, 'campaign': campaign,
+            'spend': str(spend['amount']), 'paid_customers': paid,
+            'spend_window_complete': spend['window_complete'],
+            'cac': str((spend['amount'] / paid).quantize(Decimal('0.01'))) if paid and spend['window_complete'] else None,
         })
     latest_paid_by_subscription = {}
     for payment in PublicWorkoutPayment.objects.filter(
@@ -187,10 +207,12 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
         growth_warnings.append('insufficient_funnel_sample')
     growth_status = 'red' if growth_blockers else ('yellow' if growth_warnings else 'green')
     return {
-        'schema_version': 1,
+        'schema_version': 2,
         'generated_at': at.isoformat(),
         'window_days': window_days,
-        'funnel': {'counts': funnel, 'rates': funnel_rates},
+        'funnel': {'counts': funnel, 'counts_unit': 'raw_events', 'rates': funnel_rates,
+                   'rates_unit': 'unique_visitors_7_day_cohort'},
+        'acquisition': acquisition,
         'commercial': {
             'active_by_tier': active_by_tier,
             'gross_revenue': str(revenue['gross'] or Decimal('0')),

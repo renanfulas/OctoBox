@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Curva — Seu esforço merece direção. Treino &amp; Nutrição.</title>
+<title>Curva — Treino feito para você. Consultoria online a partir de R$97/mês.</title>
 <meta name="description" content="Saia do treino no automático. Consultoria online com treino periodizado, progresso acompanhado e nutrição individual nos planos Completo e Premium. A partir de R$97/mês.">
 <meta name="theme-color" content="#0a0e1a">
 <link rel="preload" href="{% static 'fonts/manrope/manrope-latin-variable.woff2' %}" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="{% static 'css/public_workouts/landing.css' %}?v={{ static_asset_version }}-curva2">
+<link rel="stylesheet" href="{% static 'css/public_workouts/landing.css' %}?v={{ static_asset_version }}-curva4">
 </head>
-<body class="curva-landing" id="topo">
+<body class="curva-landing" id="topo" data-funnel-enabled="{{ funnel_tracking_enabled|yesno:'true,false' }}" data-funnel-url="{% url 'public-workout-funnel-event' %}">
 <a class="curva-skip" href="#conteudo">Pular para o conteúdo</a>
 <header class="curva-nav">
   <nav class="curva-page curva-nav-inner" aria-label="Navegação principal">
@@ -23,10 +23,11 @@
   <div class="curva-page curva-hero-grid">
     <div class="curva-hero-copy">
       <p class="curva-eyebrow"><span class="curva-signal" aria-hidden="true"></span> Consultoria online. Acompanhamento humano.</p>
-      <h1 id="curva-title">Seu esforço<br>merece <em>direção.</em></h1>
-      <p class="curva-hero-lead">Você entra com a vontade.<br>A gente entra com o método.</p>
-      <p class="curva-hero-description">Treino que evolui com você, progresso registrado e profissionais que acompanham de perto. Nutrição individual a partir do plano Completo.</p>
-      <div class="curva-hero-actions"><a class="curva-button" href="#curva-precos">Encontrar meu plano <span aria-hidden="true">↗</span></a><a class="curva-text-link" href="#curva-diferencial">Conhecer o método <span aria-hidden="true">↓</span></a></div>
+      <h1 id="curva-title">Um treino<br>feito para <em>você.</em></h1>
+      <p class="curva-hero-lead">Pare de repetir uma ficha.<br>Comece a treinar com um plano para você.</p>
+      <p class="curva-hero-description">Consultoria de treino online com revisão profissional. Seu objetivo, sua rotina e seus equipamentos orientam o plano. Você registra as cargas; o profissional orienta os próximos ajustes.</p>
+      <p class="curva-hero-includes">Quer cuidar da alimentação também? Nutrição individual nos planos Completo e Premium.</p>
+      <div class="curva-hero-actions"><a class="curva-button" href="#curva-precos">Escolher meu plano <span aria-hidden="true">↗</span></a><a class="curva-text-link" href="#curva-comecar">Como vou começar <span aria-hidden="true">↓</span></a></div>
       <p class="curva-hero-note">A partir de <strong>R$97/mês</strong><span aria-hidden="true">·</span> Garantia de 7 dias</p>
     </div>
     <div class="curva-hero-art" aria-label="O método Curva conecta seu treino, seus registros e a revisão profissional.">
@@ -85,23 +86,30 @@
 <section class="curva-section curva-testimonials" id="curva-prova-social" aria-labelledby="curva-proof-title"><div class="curva-page"><p class="curva-eyebrow">Quem vive o método</p><h2 id="curva-proof-title">Trajetórias reais.<br>Nas palavras de quem treina.</h2><div class="curva-testimonial-grid">{% for testimonial in testimonials %}<blockquote class="curva-testimonial"><p>“{{ testimonial.quote }}”</p><footer>{{ testimonial.display_name }}{% if testimonial.result_summary %}<span>{{ testimonial.result_summary }}</span>{% endif %}</footer></blockquote>{% endfor %}</div></div></section>
 {% endif %}
 
+<section class="curva-section curva-start" id="curva-comecar" aria-labelledby="curva-start-title"><div class="curva-page"><p class="curva-eyebrow">DO PRIMEIRO CLIQUE AO PRIMEIRO TREINO</p><h2 id="curva-start-title">Você conta sua rotina.<br>A gente prepara o caminho.</h2><ol class="curva-start-steps"><li><span>01</span><h3>Escolha seu plano</h3><p>Informe seu e-mail e conclua a assinatura no ambiente seguro de pagamento.</p></li><li><span>02</span><h3>Conte sobre você</h3><p>Preencha a anamnese com sua rotina, objetivos e informações importantes.</p></li><li><span>03</span><h3>Receba sua direção</h3><p>Seu plano é preparado e revisado pelo profissional. Você acompanha as próximas etapas na sua conta.</p></li></ol><a class="curva-text-link" href="#curva-precos">Já sei como funciona. Quero escolher meu plano <span aria-hidden="true">↗</span></a></div></section>
+
 <section class="curva-section curva-pricing" id="curva-precos" aria-labelledby="curva-pricing-title">
   <div class="curva-page">
-    <div class="curva-pricing-heading"><p class="curva-eyebrow">O PRÓXIMO PASSO É SEU</p><h2 id="curva-pricing-title">Escolha seu plano.<br><span>Encontre o seu ritmo.</span></h2><p class="curva-section-lead">Três níveis de acompanhamento. Um objetivo: dar direção ao seu esforço.<br>Sem letra miúda. Cancele quando quiser.</p></div>
+    <div class="curva-pricing-heading"><p class="curva-eyebrow">O PRÓXIMO PASSO É SEU</p><h2 id="curva-pricing-title">De quanto acompanhamento<br><span>você precisa hoje?</span></h2><p class="curva-section-lead">Comece pelo cuidado que faz sentido para a sua rotina.<br>Assinatura mensal. Cancele quando quiser. Garantia de 7 dias.</p></div>
+    <nav class="curva-plan-guide" aria-label="Encontre o acompanhamento para você">
+      <a href="#plano-essencial"><span>Quero organizar meu treino</span><strong>Essencial <span aria-hidden="true">↓</span></strong></a>
+      <a href="#plano-completo"><span>Quero treino e alimentação</span><strong>Completo <span aria-hidden="true">↓</span></strong></a>
+      <a href="#plano-premium"><span>Quero revisão toda semana</span><strong>Premium <span aria-hidden="true">↓</span></strong></a>
+    </nav>
     <div class="curva-pricing-grid">
-      <article class="curva-price-card" aria-labelledby="tier-essencial">
+      <article class="curva-price-card" id="plano-essencial" aria-labelledby="tier-essencial">
         <p class="curva-plan-kicker">DIREÇÃO PARA O SEU TREINO</p><h3 class="curva-price-tier" id="tier-essencial">Essencial</h3><p class="curva-price-desc">Para quem quer treinar com estrutura e acompanhar o próprio progresso.</p>
         <p class="curva-price-value"><span>R$</span> 97<small>/mês</small></p><p class="curva-plan-scope">Treino periodizado</p>
         <ul class="curva-price-features"><li>Treino ajustado a cada ciclo</li><li>Registro de carga e progresso</li><li>Avaliação física periódica</li></ul><p class="curva-plan-detail">Não inclui acompanhamento nutricional.</p>
         {% include 'public_workouts/_landing_signup_form.html' with tier='essencial' cta='Assinar Essencial' capacity=capacity_essencial %}
       </article>
-      <article class="curva-price-card curva-price-card--highlight" aria-labelledby="tier-completo">
+      <article class="curva-price-card curva-price-card--highlight" id="plano-completo" aria-labelledby="tier-completo">
         <p class="curva-price-badge">TREINO + NUTRIÇÃO <span aria-hidden="true">↗</span></p><p class="curva-plan-kicker">CUIDADO NAS DUAS FRENTES</p><h3 class="curva-price-tier" id="tier-completo">Completo</h3><p class="curva-price-desc">Para alinhar seu treino e sua alimentação com acompanhamento profissional.</p>
         <p class="curva-price-value"><span>R$</span> 267<small>/mês</small></p><p class="curva-plan-scope">Treino + nutrição individual</p>
         <ul class="curva-price-features"><li>Tudo do Essencial</li><li>Plano alimentar individual</li><li>Revisão nutricional pela nutricionista</li></ul><p class="curva-plan-detail">Dois profissionais acompanhando sua rotina.</p>
         {% include 'public_workouts/_landing_signup_form.html' with tier='completo' cta='Assinar Completo' capacity=capacity_completo %}
       </article>
-      <article class="curva-price-card" aria-labelledby="tier-premium">
+      <article class="curva-price-card" id="plano-premium" aria-labelledby="tier-premium">
         <p class="curva-plan-kicker">MAIS PROXIMIDADE, TODA SEMANA</p><h3 class="curva-price-tier" id="tier-premium">Premium</h3><p class="curva-price-desc">Para quem busca revisões mais frequentes e prioridade no acompanhamento.</p>
         <p class="curva-price-value"><span>R$</span> 397<small>/mês</small></p><p class="curva-plan-scope">Treino + nutrição + prioridade</p>
         <ul class="curva-price-features"><li>Tudo do Completo</li><li>Revisão semanal (treino + nutrição)</li><li>Prioridade nas respostas</li></ul><p class="curva-plan-detail">Revisão semanal dos dois profissionais.</p>
@@ -109,11 +117,12 @@
       </article>
     </div>
     <p class="curva-checkout-note">Pagamento seguro pela Stripe · Assinatura mensal recorrente · Cobrança na contratação</p>
+    <p class="curva-checkout-next">Depois do pagamento, você preenche a anamnese. O profissional prepara e revisa seu plano antes da liberação. Acompanhe as próximas etapas na sua conta.</p>
     <div class="curva-guarantee"><div class="curva-guarantee-seal"><strong>7</strong><span>DIAS</span></div><div><h3>Comece com tranquilidade.</h3><p>Se nos primeiros 7 dias sentir que não é pra você, solicite o cancelamento e o reembolso integral da primeira cobrança.</p></div><a href="{% url 'public-workout-terms' %}">Conhecer a garantia <span aria-hidden="true">↗</span></a></div>
   </div>
 </section>
 
-<section class="curva-section curva-start" aria-labelledby="curva-start-title"><div class="curva-page"><p class="curva-eyebrow">DO PRIMEIRO CLIQUE AO PRIMEIRO TREINO</p><h2 id="curva-start-title">Começar é simples.</h2><ol class="curva-start-steps"><li><span>01</span><h3>Escolha seu plano</h3><p>Informe seu e-mail e conclua a assinatura no ambiente seguro de pagamento.</p></li><li><span>02</span><h3>Conte sobre você</h3><p>Preencha a anamnese com sua rotina, objetivos e informações importantes.</p></li><li><span>03</span><h3>Receba sua direção</h3><p>Seu plano é preparado e revisado pelo profissional. Você acompanha as próximas etapas na sua conta.</p></li></ol></div></section>
+
 
 <section class="curva-section" id="curva-faq" aria-labelledby="curva-faq-title"><div class="curva-page curva-split"><div><p class="curva-eyebrow">ANTES DE DAR O PRIMEIRO PASSO</p><h2 id="curva-faq-title">Ainda pensando?<br><span>Vamos esclarecer.</span></h2></div><div class="curva-faq">
   <details><summary>Funciona para quem está começando?</summary><div class="curva-faq-answer">Sim. Seu nível de experiência entra na anamnese e orienta a preparação do treino. Você não precisa chegar pronto: o ponto de partida é o seu momento atual.</div></details>
@@ -122,12 +131,13 @@
   <details><summary>Qual é a diferença entre os três planos?</summary><div class="curva-faq-answer">O Essencial inclui treino periodizado, registro de cargas e avaliação física. O Completo soma plano alimentar individual e revisão nutricional. O Premium acrescenta revisão semanal de treino e nutrição, além de prioridade nas respostas.</div></details>
   <details><summary>O plano alimentar é individual?</summary><div class="curva-faq-answer">Sim, nos planos Completo e Premium. A nutricionista considera sua anamnese nutricional, rotina alimentar, preferências e restrições para preparar o plano.</div></details>
   <details><summary>Como o treino é revisado?</summary><div class="curva-faq-answer">Seus registros de carga e avaliações ajudam o profissional a entender o ciclo atual e orientar o próximo. No Premium, a revisão de treino e nutrição é semanal.</div></details>
+  <details><summary>Recebo meu treino assim que pago?</summary><div class="curva-faq-answer">O pagamento inicia sua contratação. Depois, você preenche a anamnese para que o profissional possa preparar e revisar seu plano. A liberação acontece após essa etapa; você acompanha o andamento na sua conta.</div></details>
   <details><summary>Quando sou cobrado? Posso cancelar?</summary><div class="curva-faq-answer">A cobrança acontece na contratação e a assinatura é renovada mensalmente. Você pode gerenciar o cancelamento na sua conta. Nos primeiros 7 dias da contratação, pode solicitar o reembolso integral da primeira cobrança, conforme os <a href="{% url 'public-workout-terms' %}">Termos do serviço</a>.</div></details>
 </div></div></section>
 
 <section class="curva-final-cta" aria-labelledby="curva-final-title"><div class="curva-page"><p class="curva-eyebrow">SUA PRÓXIMA FASE COMEÇA COM UMA ESCOLHA</p><h2 id="curva-final-title">Mude a direção.<br><em>Construa sua curva.</em></h2><p>Um plano para o seu momento.<br>Gente de verdade para acompanhar o caminho.</p><a class="curva-button" href="#curva-precos">Escolher meu acompanhamento <span aria-hidden="true">↗</span></a><span class="curva-final-note">A partir de R$97/mês · Garantia de 7 dias</span></div></section>
 </main>
 <footer class="curva-footer"><div class="curva-page curva-footer-inner"><a class="curva-brand" href="#topo">curva<span aria-hidden="true">↗</span><small>Treino &amp; Nutrição</small></a><p>O seu esforço. A nossa direção.</p><nav aria-label="Links do rodapé"><a href="{% url 'public-workout-login' %}">Entrar</a><a href="{% url 'public-workout-terms' %}">Termos</a><a href="{% url 'public-workout-privacy' %}">Privacidade</a></nav></div></footer>
-<script src="{% static 'js/public_workouts/landing.js' %}?v={{ static_asset_version }}-curva2" defer></script>
+<script src="{% static 'js/public_workouts/landing.js' %}?v={{ static_asset_version }}-curva4" defer></script>
 </body>
 </html>

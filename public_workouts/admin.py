@@ -3,6 +3,10 @@ import json
 from django import forms
 from django.contrib import admin, messages
 from django.db import IntegrityError, models
+from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse
+from django.template.response import TemplateResponse
+from django.urls import path
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
@@ -54,6 +58,26 @@ from .services import (
 
 @admin.register(PublicWorkoutAcquisitionSession)
 class PublicWorkoutAcquisitionSessionAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/public_workouts/acquisition_change_list.html'
+
+    def get_urls(self):
+        return [path('analytics/', self.admin_site.admin_view(self.analytics_view),
+                     name='public_workouts_funnel_analytics')] + super().get_urls()
+
+    def analytics_view(self, request):
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        from .funnel_analytics import build_acquisition_report
+        raw_days = request.GET.get('days', '30')
+        days = int(raw_days) if raw_days in ('7', '30', '90') else 30
+        report = build_acquisition_report(window_days=days)
+        if request.GET.get('format') == 'json':
+            return JsonResponse(report)
+        return TemplateResponse(request, 'admin/public_workouts/funnel_analytics.html', {
+            **self.admin_site.each_context(request), 'title': 'Funil de aquisição · Curva',
+            'report': report, 'opts': self.model._meta,
+        })
+
     list_display = (
         'id', 'first_source', 'first_medium', 'last_source', 'last_medium',
         'account', 'subscription', 'first_seen_at', 'last_seen_at',

@@ -1,0 +1,39 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/public_workouts/analytics.css' %}">{% endblock %}
+{% block content %}
+<div class="curva-analytics">
+  <form method="get" class="curva-analytics-filters">
+    <label for="cohort-days">Primeira visita nos últimos</label>
+    <select name="days" id="cohort-days"><option value="7" {% if report.window_days == 7 %}selected{% endif %}>7 dias</option><option value="30" {% if report.window_days == 30 %}selected{% endif %}>30 dias</option><option value="90" {% if report.window_days == 90 %}selected{% endif %}>90 dias</option></select>
+    <button type="submit" class="button">Aplicar</button>
+    <a href="?days={{ report.window_days }}&amp;format=json">Exportar dados agregados (JSON)</a>
+  </form>
+  {% if not report.tracking_enabled %}<p class="errornote">Coleta desativada. Ative PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED no ambiente para registrar novas visitas. O painel mostra apenas o histórico disponível.</p>{% endif %}
+  <p>Conversão = visitantes que fizeram o primeiro pagamento positivo em até <strong>{{ report.conversion_days }} dias da primeira visita</strong> ÷ visitantes da mesma coorte. Cada navegador é identificado por um cookie de 90 dias; visitas repetidas não somam novos visitantes.</p>
+  <div class="curva-analytics-kpis">
+    <article><span>Visitantes da coorte</span><strong>{{ report.visitors }}</strong><small>{{ report.excluded_existing_customers }} clientes anteriores excluídos</small></article>
+    <article><span>Primeiros pagantes</span><strong>{{ report.paid }}</strong><small>Pagamento confirmado no servidor</small></article>
+    <article><span>Conversão até agora</span><strong>{{ report.conversion_percent|floatformat:2|default:'—' }}{% if report.conversion_percent != None %}%{% endif %}</strong><small>{{ report.pending_visitors }} visitantes ainda dentro da janela</small></article>
+    <article><span>Conversão com janela encerrada</span><strong>{{ report.mature_conversion_percent|floatformat:2|default:'—' }}{% if report.mature_conversion_percent != None %}%{% endif %}</strong><small>{{ report.mature_paid }} pagantes / {{ report.mature_visitors }} visitantes · referência: 10%</small></article>
+  </div>
+  {% if not report.visitors %}<p class="curva-analytics-note">Ainda não há visitantes medidos neste período. Acesse a landing com a coleta ativa para iniciar a observação.</p>{% elif report.mature_visitors < 100 %}<p class="curva-analytics-note">Amostra com janela encerrada abaixo de 100 visitantes. Use os números como sinal inicial, não como comprovação de que a meta foi atingida.</p>{% endif %}
+  <h2>Funil comercial</h2>
+  <p>As etapas comerciais usam fatos do servidor. Um pagamento implica checkout e cadastro anteriores, mesmo se algum evento se perdeu. “Não avançou” considera somente visitantes com os {{ report.conversion_days }} dias completos.</p>
+  <div class="curva-analytics-table"><table><thead><tr><th>Etapa</th><th>Visitantes</th><th>% da visita</th><th>% da etapa anterior</th><th>Não avançou em {{ report.conversion_days }} dias</th></tr></thead><tbody>
+  {% for step in report.steps %}<tr><th>{{ step.label }}</th><td>{{ step.visitors }}</td><td>{{ step.visitor_percent|floatformat:2|default:'—' }}{% if step.visitor_percent != None %}%{% endif %}</td><td>{{ step.previous_percent|floatformat:2|default:'—' }}{% if step.previous_percent != None %}%{% endif %}</td><td>{% if step.not_advanced != None %}{{ step.not_advanced }} ({{ step.not_advanced_percent|floatformat:2|default:'—' }}{% if step.not_advanced_percent != None %}%{% endif %}){% else %}—{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  <h2>Onde a experiência perde visitantes</h2>
+  <p>Sinais do navegador podem faltar por bloqueadores ou conexão. Ausência de avanço não comprova desistência. Quem chegou ao checkout ou pagou não entra como abandono do formulário.</p>
+  <div class="curva-analytics-table"><table><thead><tr><th>Transição observada</th><th>Iniciaram · janela encerrada</th><th>Sem próximo sinal ou checkout</th><th>% sem avanço</th></tr></thead><tbody>{% for row in report.friction %}<tr><th>{{ row.label }}</th><td>{{ row.visitors }}</td><td>{{ row.not_advanced }}</td><td>{{ row.not_advanced_percent|floatformat:2|default:'—' }}{% if row.not_advanced_percent != None %}%{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  <h2>Interações e bloqueios</h2>
+  <p>Visitantes únicos por sinal, dentro da janela de conversão. As linhas podem se sobrepor: uma pessoa pode encontrar um erro, tentar novamente e pagar.</p>
+  <div class="curva-analytics-table"><table><thead><tr><th>Sinal</th><th>Visitantes</th><th>% da coorte</th></tr></thead><tbody>{% for signal in report.signals %}<tr><th>{{ signal.label }}</th><td>{{ signal.visitors }}</td><td>{{ signal.visitor_percent|floatformat:2|default:'—' }}{% if signal.visitor_percent != None %}%{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  <h2>Origem e campanha · primeiro contato</h2>
+  <div class="curva-analytics-table"><table><thead><tr><th>Origem / mídia</th><th>Campanha / versão</th><th>Visitantes</th><th>Pagantes</th><th>Conversão até agora</th><th>Conversão · janela encerrada</th></tr></thead><tbody>{% for row in report.channels %}<tr><th>{{ row.source }}<small>{{ row.medium|default:'—' }}</small></th><td>{{ row.campaign|default:'—' }}<small>{{ row.variant|default:'—' }}</small></td><td>{{ row.visitors }}</td><td>{{ row.paid }}</td><td>{{ row.conversion_percent|floatformat:2 }}%</td><td>{{ row.mature_conversion_percent|floatformat:2|default:'—' }}{% if row.mature_conversion_percent != None %}%{% endif %}</td></tr>{% empty %}<tr><td colspan="6">Sem dados de aquisição no período.</td></tr>{% endfor %}</tbody></table></div>
+  <h2>Qualidade da medição</h2>
+  <p>Dos {{ report.coverage.new_payers_in_period }} novos pagantes de todo o negócio no período, {{ report.coverage.linked_new_payers }} têm uma visita atribuída ({{ report.coverage.linked_percent|floatformat:2|default:'—' }}{% if report.coverage.linked_percent != None %}%{% endif %}). Essa cobertura inclui outras coortes; ela não é a taxa de conversão acima.</p>
+  <p>{{ report.refunded_first_payments }} primeiros pagamentos desta coorte foram reembolsados. Eles continuam contando como aquisição, para que o histórico não esconda vendas depois de um reembolso. Renovações e cobranças de valor zero não contam como novos pagantes.</p>
+  <p>Cookies apagados, troca de aparelho e acessos automatizados podem afetar os totais. Não há identificação entre dispositivos nem gravação de tela. Atualizado em {{ report.generated_at }}.</p>
+</div>
+{% endblock %}

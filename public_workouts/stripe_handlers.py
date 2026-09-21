@@ -229,7 +229,7 @@ def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
     acquisition_session_id = metadata.get('acquisition_session_id')
     if acquisition_session_id:
         acquisition_session = PublicWorkoutAcquisitionSession.objects.filter(pk=acquisition_session_id).first()
-        bind_acquisition_session(
+        acquisition_session = bind_acquisition_session(
             acquisition_session, account=subscription.account, subscription=subscription,
         )
     if acquisition_session is None:
@@ -296,6 +296,13 @@ def _handle_invoice_payment_failed(event: PaymentWebhookEvent) -> None:
         stripe_invoice_id=invoice.get('id') or '',
         gross_amount=_cents_to_decimal(invoice.get('amount_due')),
         due_date=_unix_to_date(invoice.get('due_date') or invoice.get('period_end')),
+    )
+    from public_workouts.acquisition import record_funnel_event
+    from public_workouts.models import PublicWorkoutAcquisitionSession
+    record_funnel_event(
+        'payment_failed',
+        acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(subscription=subscription).first(),
+        account=subscription.account, subscription=subscription,
     )
 
 

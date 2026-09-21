@@ -20,19 +20,30 @@ ACQUISITION_COOKIE_NAME = 'curva_acquisition'
 ACQUISITION_COOKIE_MAX_AGE = 60 * 60 * 24 * 90
 _COOKIE_SALT = 'public-workouts-acquisition-v1'
 _SAFE_VALUE = re.compile(r'[^a-zA-Z0-9._:@+\-/ ]')
+_KNOWN_BOT = re.compile(r'bot\b|spider|crawler|facebookexternalhit|headlesschrome', re.I)
 SERVER_EVENT_TYPES = frozenset({
     'landing_viewed', 'tier_selected', 'checkout_started', 'checkout_authorized',
     'invoice_paid', 'checkout_canceled', 'training_intake_completed',
     'nutrition_intake_completed', 'program_published', 'meal_plan_published',
     'program_opened', 'meal_plan_opened', 'subscription_canceled',
     'waitlist_joined',
-    'cta_clicked', 'faq_opened',
+    'cta_clicked', 'faq_opened', 'pricing_viewed', 'signup_started',
+    'signup_submitted', 'signup_invalid', 'signup_failed', 'checkout_redirected',
+    'login_required', 'checkout_failed', 'payment_failed',
 })
 logger = logging.getLogger(__name__)
 
 
 def tracking_enabled() -> bool:
     return bool(getattr(settings, 'PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED', False))
+
+
+def request_tracking_enabled(request) -> bool:
+    return (
+        tracking_enabled()
+        and not getattr(getattr(request, 'user', None), 'is_staff', False)
+        and not _KNOWN_BOT.search(request.META.get('HTTP_USER_AGENT', ''))
+    )
 
 
 def _clean(value: str | None, max_length: int) -> str:
@@ -45,9 +56,12 @@ def _safe_referrer(request) -> str:
     if not raw:
         return ''
     parsed = urlparse(raw)
-    if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+    if parsed.scheme not in ('http', 'https') or not parsed.hostname:
         return ''
-    return _clean(f'{parsed.scheme}://{parsed.netloc}{parsed.path}', 180)
+    if parsed.hostname == request.get_host().split(':')[0]:
+        return ''
+    # Only the external host: paths and query strings may contain personal data.
+    return _clean(f'{parsed.scheme}://{parsed.hostname}', 180)
 
 
 def _touch_from_request(request) -> dict[str, str]:
@@ -72,7 +86,7 @@ def _decode_cookie(request) -> uuid.UUID | None:
 
 
 def get_acquisition_session(request) -> PublicWorkoutAcquisitionSession | None:
-    if not tracking_enabled():
+    if not request_tracking_enabled(request):
         return None
     session_id = _decode_cookie(request)
     if session_id is None:
@@ -81,7 +95,7 @@ def get_acquisition_session(request) -> PublicWorkoutAcquisitionSession | None:
 
 
 def ensure_acquisition_session(request) -> tuple[PublicWorkoutAcquisitionSession | None, bool]:
-    if not tracking_enabled():
+    if not request_tracking_enabled(request):
         return None, False
     now = timezone.now()
     touch = _touch_from_request(request)
@@ -93,7 +107,7 @@ def ensure_acquisition_session(request) -> tuple[PublicWorkoutAcquisitionSession
             first_campaign=touch['campaign'], first_referrer=touch['referrer'],
             last_source=touch['source'], last_medium=touch['medium'],
             last_campaign=touch['campaign'], last_referrer=touch['referrer'],
-            landing_variant='control',
+            landing_variant='curva3-tracking-v1',
             offer_version=current_contract_versions()['offer_version'],
             first_seen_at=now, last_seen_at=now,
         )
@@ -124,13 +138,21 @@ def attach_acquisition_cookie(response, session: PublicWorkoutAcquisitionSession
     )
 
 
-def bind_acquisition_session(session, *, account, subscription) -> None:
+@transaction.atomic
+def bind_acquisition_session(session, *, account, subscription):
     if session is None:
-        return
+        return None
+    # Preserve the original acquisition on returns from another browser.
+    # The subscription is OneToOne; blindly rebinding used to raise IntegrityError.
+    type(subscription).objects.select_for_update().get(pk=subscription.pk)
+    original = PublicWorkoutAcquisitionSession.objects.filter(subscription=subscription).first()
+    if original is not None and original.pk != session.pk:
+        return original
     session.account = account
     session.subscription = subscription
     session.last_seen_at = timezone.now()
     session.save(update_fields=['account', 'subscription', 'last_seen_at'])
+    return session
 
 
 def record_funnel_event(
