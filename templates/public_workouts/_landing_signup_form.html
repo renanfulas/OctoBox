@@ -1,13 +1,14 @@
 {% load static %}<form class="curva-signup-form" data-curva-signup-form data-tier="{{ tier }}" action="{% url 'public-workout-cold-signup' %}" method="post">
   {% csrf_token %}
   {% if invite_token %}<input type="hidden" name="invite_token" value="{{ invite_token }}">{% endif %}
-  {% if capacity.mode == 'enforce' and not capacity.checkout_allowed %}<p class="curva-capacity-status">Agenda cheia agora · entre na lista de prioridade</p>{% elif capacity.mode == 'warn' and capacity.configured and not capacity.raw_available %}<p class="curva-capacity-status">Últimas vagas desta janela</p>{% endif %}
+  {% if capacity.mode == 'enforce' and not capacity.checkout_allowed %}<p class="curva-capacity-status">Agenda cheia agora · entre na lista de prioridade</p>{% elif capacity.mode == 'warn' and capacity.configured and not capacity.raw_available %}<p class="curva-capacity-status">Alta demanda nesta janela de atendimento</p>{% endif %}
   <label class="curva-signup-label" for="curva-email-{{ tier }}">Seu e-mail para começar</label>
-  <input id="curva-email-{{ tier }}" type="email" name="email" placeholder="seu@email.com" required autocomplete="email" aria-describedby="curva-status-{{ tier }}">
+  <input id="curva-email-{{ tier }}" type="email" name="email" placeholder="seu@email.com" required autocomplete="email" autocapitalize="none" spellcheck="false" aria-describedby="curva-status-{{ tier }}">
   <label class="curva-signup-consent">
     <input type="checkbox" name="accept_contract" value="1" required>
     <span>Li e aceito os <a href="{% url 'public-workout-terms' %}" target="_blank" rel="noopener">Termos</a> e a <a href="{% url 'public-workout-privacy' %}" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
   </label>
   <button type="submit" class="curva-signup-submit">{% if capacity.mode == 'enforce' and not capacity.checkout_allowed %}Entrar na lista de prioridade{% else %}{{ cta }}{% endif %}</button>
+  <p class="curva-signup-next">{% if capacity.mode == 'enforce' and not capacity.checkout_allowed %}Sem cobrança para entrar na lista.{% else %}Próxima etapa: pagamento seguro.{% endif %}</p>
   <p id="curva-status-{{ tier }}" class="curva-signup-status" data-curva-signup-status aria-live="polite"></p>
 </form>

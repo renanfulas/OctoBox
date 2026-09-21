@@ -51,6 +51,7 @@ from public_workouts.acquisition import (
     ensure_acquisition_session,
     get_acquisition_session,
     record_funnel_event,
+    request_tracking_enabled,
 )
 from public_workouts.contracts import current_contract_versions
 from public_workouts.capacity import get_tier_capacity
@@ -170,6 +171,7 @@ class PublicWorkoutLandingView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['funnel_tracking_enabled'] = bool(request_tracking_enabled(self.request))
         context['testimonials'] = PublicWorkoutTestimonial.objects.filter(
             approved_at__isnull=False, published_at__isnull=False,
         )[:6]
@@ -188,7 +190,8 @@ class PublicWorkoutLandingView(TemplateView):
     def get(self, request, *args, **kwargs):
         acquisition_session, _created = ensure_acquisition_session(request)
         response = super().get(request, *args, **kwargs)
-        record_funnel_event('landing_viewed', acquisition_session=acquisition_session)
+        if acquisition_session is not None:
+            record_funnel_event('landing_viewed', acquisition_session=acquisition_session)
         attach_acquisition_cookie(response, acquisition_session)
         return response
 
@@ -196,19 +199,24 @@ class PublicWorkoutLandingView(TemplateView):
 class PublicWorkoutFunnelEventView(View):
     """Eventos de interação allowlisted; nunca aceita payload comercial/PII."""
 
-    CLIENT_EVENTS = {'cta_clicked', 'faq_opened'}
+    CLIENT_EVENTS = {
+        'cta_clicked', 'faq_opened', 'pricing_viewed', 'signup_started',
+        'signup_submitted', 'signup_invalid', 'signup_failed', 'checkout_redirected',
+    }
 
     def post(self, request, *args, **kwargs):
+        if len(request.body) > 1024:
+            return JsonResponse({'error': 'payload_invalido'}, status=400)
         try:
             payload = json.loads(request.body.decode('utf-8'))
         except (UnicodeDecodeError, json.JSONDecodeError):
             logger.warning('curva_funnel_client_event_rejected reason=invalid_json')
             return JsonResponse({'error': 'payload_invalido'}, status=400)
-        if not isinstance(payload, dict) or set(payload) - {'event_type', 'client_event_id'}:
+        if not isinstance(payload, dict) or set(payload) - {'event_type', 'client_event_id', 'tier'}:
             logger.warning('curva_funnel_client_event_rejected reason=invalid_shape')
             return JsonResponse({'error': 'payload_invalido'}, status=400)
         event_type = payload.get('event_type')
-        if event_type not in self.CLIENT_EVENTS:
+        if not isinstance(event_type, str) or event_type not in self.CLIENT_EVENTS:
             logger.warning('curva_funnel_client_event_rejected reason=not_allowlisted')
             return JsonResponse({'error': 'evento_invalido'}, status=400)
         try:
@@ -217,8 +225,20 @@ class PublicWorkoutFunnelEventView(View):
             logger.warning('curva_funnel_client_event_rejected reason=invalid_client_event_id')
             return JsonResponse({'error': 'client_event_id_invalido'}, status=400)
         session = get_acquisition_session(request)
+        tier = payload.get('tier', '')
+        if not isinstance(tier, str) or tier not in ('', *PublicWorkoutTier.values):
+            return JsonResponse({'error': 'tier_invalido'}, status=400)
+        if session is None:
+            return JsonResponse({'accepted': False}, status=202)
+        from shared_support.platform_cache import platform_cache
+        key = f'curva:funnel:rate:{session.pk}:{int(timezone.now().timestamp()) // 60}'
+        try:
+            if not platform_cache.add(key, 1, timeout=120) and platform_cache.incr(key) > 60:
+                return JsonResponse({'accepted': False}, status=429)
+        except Exception:
+            logger.warning('curva_funnel_rate_cache_unavailable')
         event = record_funnel_event(
-            event_type, acquisition_session=session, client_event_id=client_event_id,
+            event_type, acquisition_session=session, client_event_id=client_event_id, tier=tier,
         )
         return JsonResponse({'accepted': event is not None}, status=202)
 
@@ -339,6 +359,7 @@ class PublicWorkoutColdSignupView(View):
         session_account_id = get_public_workout_account_id_from_request(request)
         owns_existing_account = account is not None and session_account_id == account.pk
         if account is not None and not owns_existing_account:
+            record_funnel_event('login_required', acquisition_session=acquisition_session, tier=tier)
             response = JsonResponse({
                 'checkout_url': request.build_absolute_uri(reverse('public-workout-login')),
                 'login_required': True,
@@ -393,6 +414,7 @@ class PublicWorkoutColdSignupView(View):
         else:
             account_created = False
         if not account_created and not owns_existing_account:
+            record_funnel_event('login_required', acquisition_session=acquisition_session, tier=tier)
             # Outra requisicao pode ter criado a conta entre a leitura acima
             # e este ponto. Mantem a mesma fronteira de posse mesmo sob race.
             response = JsonResponse({
@@ -402,7 +424,7 @@ class PublicWorkoutColdSignupView(View):
             attach_acquisition_cookie(response, acquisition_session)
             return response
         subscription = get_or_create_subscription(account=account, tier=tier)
-        bind_acquisition_session(
+        acquisition_session = bind_acquisition_session(
             acquisition_session, account=account, subscription=subscription,
         )
         record_funnel_event(
@@ -452,6 +474,7 @@ class PublicWorkoutColdSignupView(View):
                 acquisition_session_id=(acquisition_session.pk if acquisition_session else None),
             )
         except PublicWorkoutStripeNotConfiguredError as exc:
+            record_funnel_event('checkout_failed', acquisition_session=acquisition_session, tier=tier)
             return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
 
         record_funnel_event(
