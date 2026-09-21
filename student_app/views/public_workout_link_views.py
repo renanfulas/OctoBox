@@ -31,7 +31,7 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.views.generic import View
 
 from .base import StudentIdentityRequiredMixin
@@ -50,15 +50,17 @@ class StudentPublicWorkoutLinkView(StudentIdentityRequiredMixin, View):
             defaults={'student_identity_id': identity.id},
         )
 
-        subscription = getattr(account, 'subscription', None)
-        if subscription is None or not subscription.plan_slug:
-            return HttpResponse(
-                '<p>Você ainda não tem uma consultoria ativa no corredor de treinos. '
-                'Fale com seu personal para assinar.</p>',
-                content_type='text/html; charset=utf-8',
-            )
-
         from student_identity.public_workout_session import attach_public_workout_session_cookie
+        from public_workouts.models import PublicWorkoutSubscriptionStatus
 
-        response = HttpResponseRedirect(f'/renan/{subscription.plan_slug}')
+        subscription = getattr(account, 'subscription', None)
+        if (
+            subscription is not None
+            and subscription.status == PublicWorkoutSubscriptionStatus.ACTIVE
+            and subscription.plan_slug
+        ):
+            destination = f'/renan/{subscription.plan_slug}'
+        else:
+            destination = '/treinos/minha-conta'
+        response = HttpResponseRedirect(destination)
         return attach_public_workout_session_cookie(response, account_id=account.pk)

@@ -374,6 +374,13 @@ TENANT_APPS = [
     # django.contrib.contenttypes duplicado em TENANT para FK per-tenant funcionar
     'django.contrib.contenttypes',
 
+    # O admin tambem precisa de django_admin_log no schema do tenant. Sem
+    # isso, uma acao feita com search_path=box_xxx resolve o ContentType
+    # local, mas tenta grava-lo no django_admin_log de public, cujo FK aponta
+    # para public.django_content_type. IDs divergentes viram IntegrityError e
+    # a propria publicacao do admin responde 500 no COMMIT.
+    'django.contrib.admin',
+
     # Âncora histórica de TODAS as migrations de domínio
     'boxcore.apps.BoxcoreConfig',
 
@@ -612,6 +619,20 @@ PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_
 PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO', '')
 PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM', '')
 PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET = env_str('PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET', '')
+# Aceleracao operacional do Curva: rollout seguro e contrato versionado.
+PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED = env_bool('PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED', False)
+PUBLIC_WORKOUT_OPERATIONS_ENABLED = env_bool('PUBLIC_WORKOUT_OPERATIONS_ENABLED', False)
+PUBLIC_WORKOUT_CAPACITY_MODE = env_str('PUBLIC_WORKOUT_CAPACITY_MODE', 'observe')
+PUBLIC_WORKOUT_CAPACITY_MAX_UTILIZATION = float(env_str('PUBLIC_WORKOUT_CAPACITY_MAX_UTILIZATION', '0.85'))
+PUBLIC_WORKOUT_GROWTH_MIN_SLO_RATE = float(env_str('PUBLIC_WORKOUT_GROWTH_MIN_SLO_RATE', '0.95'))
+PUBLIC_WORKOUT_GROWTH_MIN_ATTRIBUTION_RATE = float(env_str('PUBLIC_WORKOUT_GROWTH_MIN_ATTRIBUTION_RATE', '0.70'))
+PUBLIC_WORKOUT_OFFER_VERSION = env_str('PUBLIC_WORKOUT_OFFER_VERSION', 'curva-2026-09-v1')
+PUBLIC_WORKOUT_SERVICE_POLICY_VERSION = env_str(
+    'PUBLIC_WORKOUT_SERVICE_POLICY_VERSION', 'curva-service-2026-09-v1'
+)
+PUBLIC_WORKOUT_TERMS_VERSION = env_str('PUBLIC_WORKOUT_TERMS_VERSION', '2026-09-20')
+PUBLIC_WORKOUT_PRIVACY_VERSION = env_str('PUBLIC_WORKOUT_PRIVACY_VERSION', '2026-09-20')
+PUBLIC_WORKOUT_PUBLIC_BASE_URL = env_str('PUBLIC_WORKOUT_PUBLIC_BASE_URL', '')
 # Entrega 4 (corte pra workout.html, docs/plans/public-workouts-produtizacao-corda.md):
 # escape hatch de rollout canario/kill switch. Slug listado aqui continua
 # servindo o template legado por-cliente (bruno.html etc.) mesmo com

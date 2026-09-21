@@ -1,0 +1,17 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Anamnese nutricional — Curva</title><link rel="stylesheet" href="{% static 'css/public_workouts/account.css' %}"></head>
+<body class="curva-account"><main class="curva-form-shell"><a class="curva-back-link" href="{% url 'public-workout-account' %}">← Minha conta</a><section class="curva-form-card">
+  <div class="curva-journey-card__eyebrow">Nutrição individual</div><h1>Anamnese nutricional</h1><p class="curva-form-lead">Conte sua rotina com tranquilidade. As respostas são usadas pela nutricionista para preparar e revisar seu plano.</p>
+  {% if error %}<p class="curva-form-error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" class="curva-form">{% csrf_token %}
+    <label>Qual é seu objetivo com a alimentação?<textarea name="objetivo" required>{% if profile %}{{ profile.objetivo }}{% endif %}</textarea></label>
+    <label>Como é sua rotina alimentar hoje?<textarea name="rotina_alimentar" required>{% if profile %}{{ profile.rotina_alimentar }}{% endif %}</textarea></label>
+    <label>Comorbidades ou condições de saúde<textarea name="comorbidades" placeholder="Se não houver, escreva nenhuma">{% if profile %}{{ profile.comorbidades }}{% endif %}</textarea></label>
+    <label>Alergias, intolerâncias ou restrições<textarea name="alergias_restricoes" placeholder="Se não houver, escreva nenhuma">{% if profile %}{{ profile.alergias_restricoes }}{% endif %}</textarea></label>
+    <label>Medicamentos em uso<textarea name="medicamentos" placeholder="Se não houver, escreva nenhum">{% if profile %}{{ profile.medicamentos }}{% endif %}</textarea></label>
+    <label>Preferências e alimentos que não gosta<textarea name="preferencias">{% if profile %}{{ profile.preferencias }}{% endif %}</textarea></label>
+    <label>Histórico de dietas ou dificuldades anteriores<textarea name="historico">{% if profile %}{{ profile.historico }}{% endif %}</textarea></label>
+    <label class="curva-consent"><input type="checkbox" name="consent" required {% if profile and profile.consent_health_processing_at %}checked{% endif %}><span>Autorizo o tratamento destas informações de saúde para elaboração e acompanhamento do meu plano nutricional pela profissional responsável.</span></label>
+    <button class="curva-primary-action" type="submit">Salvar e continuar</button>
+  </form>
+</section></main></body></html>

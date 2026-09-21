@@ -772,11 +772,15 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         load_history = list_load_history(account_id=account_id)
         subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
         nutrition_unlocked = bool(subscription and require_nutrition_tier(subscription))
+        customer_portal_url = '/treinos/minha-conta' if subscription else None
+        account_email = subscription.account.email if subscription else None
     else:
         weekly_review = {'trends_by_movement': {}}
         package = {'one_rep_max_by_movement': {}}
         load_history = []
         nutrition_unlocked = False
+        customer_portal_url = None
+        account_email = None
 
     return render_to_string('public_workouts/workout.html', {
         'plan_slug': plan.slug,
@@ -788,8 +792,8 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'trends_by_movement': weekly_review['trends_by_movement'],
         'student_name': plan.short_name,
         'student_photo_url': None,
-        'customer_portal_url': None,
-        'account_email': None,
+        'customer_portal_url': customer_portal_url,
+        'account_email': account_email,
         'nutrition_unlocked': nutrition_unlocked,
     })
 
@@ -811,6 +815,23 @@ def _render_payment_blocked_html(plan: PublicWorkoutPlan) -> str:
 class PublicWorkoutDetailView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
+        from django.utils import timezone
+        from public_workouts.acquisition import record_funnel_event
+        from public_workouts.models import (
+            PublicWorkoutAcquisitionSession,
+            PublicWorkoutMealPlan,
+            PublicWorkoutMealPlanDelivery,
+            PublicWorkoutProgram,
+            PublicWorkoutProgramDelivery,
+            PublicWorkoutSubscription,
+        )
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        protected_subscription = PublicWorkoutSubscription.objects.filter(
+            plan_slug=plan.slug, requires_login=True
+        ).first()
+        if protected_subscription is not None and get_public_workout_account_id_from_request(request) is None:
+            return redirect(f'/treinos/login?next=/renan/{plan.slug}')
         _confirm_ownership_or_404(request, plan.slug)
         # get_token() marca o cookie CSRF pra ser enviado na resposta —
         # sem isso, o cookie nunca nasce aqui (nenhum template desta pagina
@@ -863,6 +884,26 @@ class PublicWorkoutDetailView(View):
             return response
 
         response = HttpResponse(_render_public_workout_html(plan_slug, account_id=account_id))
+        opened_subscription = PublicWorkoutSubscription.objects.select_related('account').filter(
+            plan_slug=plan.slug, account_id=account_id,
+        ).first()
+        if opened_subscription is not None:
+            active_program = PublicWorkoutProgram.objects.filter(
+                slug=plan.slug, is_active=True,
+            ).first()
+            if active_program is not None:
+                PublicWorkoutProgramDelivery.objects.filter(
+                    program=active_program, opened_at__isnull=True,
+                ).update(opened_at=timezone.now())
+            record_funnel_event(
+                'program_opened',
+                acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
+                    subscription=opened_subscription,
+                ).first(),
+                account=opened_subscription.account,
+                subscription=opened_subscription,
+                tier=opened_subscription.tier,
+            )
         if account_id is not None and not had_session:
             attach_public_workout_session_cookie(response, account_id=account_id)
         # B0: quem abre a pagina prova posse do link — e o que autoriza a
@@ -1182,13 +1223,32 @@ class PublicWorkoutMealPlanView(View):
 
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
 
-        from public_workouts.models import PublicWorkoutSubscription
+        from public_workouts.acquisition import record_funnel_event
+        from public_workouts.models import (
+            PublicWorkoutAcquisitionSession,
+            PublicWorkoutMealPlan,
+            PublicWorkoutMealPlanDelivery,
+            PublicWorkoutSubscription,
+        )
         from public_workouts.services import get_active_meal_plan, require_nutrition_tier
+        from django.utils import timezone
 
         subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
         if subscription is None or not require_nutrition_tier(subscription):
             raise Http404('Nutricao nao disponivel pra este plano.')
 
+        meal_plan = PublicWorkoutMealPlan.objects.filter(account_id=account_id, is_active=True).first()
+        if meal_plan is not None:
+            PublicWorkoutMealPlanDelivery.objects.filter(
+                meal_plan=meal_plan, opened_at__isnull=True,
+            ).update(opened_at=timezone.now())
+            record_funnel_event(
+                'meal_plan_opened',
+                acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
+                    subscription=subscription,
+                ).first(),
+                account=subscription.account, subscription=subscription, tier=subscription.tier,
+            )
         return JsonResponse({'meal_plan': get_active_meal_plan(account_id=account_id)}, status=200)
 
 

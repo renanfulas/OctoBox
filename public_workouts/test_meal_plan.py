@@ -31,6 +31,13 @@ def _payload(**overrides) -> dict:
     return payload
 
 
+def _nutritionist():
+    return PublicWorkoutProfessional.objects.create(
+        name='Nutricionista de teste', role=PublicWorkoutProfessionalRole.NUTRICAO,
+        registration_council='CRN', registration_number='TESTE',
+    )
+
+
 class RequireNutritionTierTests(TestCase):
     def _subscription(self, tier):
         account = PublicWorkoutAccount.objects.create(email=f'{tier}@example.com')
@@ -49,7 +56,7 @@ class RequireNutritionTierTests(TestCase):
 class GetActiveMealPlanTests(TestCase):
     def setUp(self):
         self.account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.nutricionista = PublicWorkoutProfessional.objects.get(role=PublicWorkoutProfessionalRole.NUTRICAO)
+        self.nutricionista = _nutritionist()
 
     def test_returns_none_when_no_plan_exists(self):
         self.assertIsNone(get_active_meal_plan(account_id=self.account.pk))
@@ -82,7 +89,7 @@ class GetActiveMealPlanTests(TestCase):
 class PublishMealPlanTests(TestCase):
     def setUp(self):
         self.account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.nutricionista = PublicWorkoutProfessional.objects.get(role=PublicWorkoutProfessionalRole.NUTRICAO)
+        self.nutricionista = _nutritionist()
 
     def test_first_publish_creates_version_1_active(self):
         plan = publish_meal_plan(account_id=self.account.pk, payload=_payload(), authored_by=self.nutricionista)

@@ -1,0 +1,42 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Minha conta — Curva</title><link rel="stylesheet" href="{% static 'css/public_workouts/account.css' %}"></head>
+<body class="curva-account" data-journey-state="{{ journey.state }}"><main class="curva-account-shell">
+  <header class="curva-account-topbar"><a href="{% url 'public-workout-landing' %}" class="curva-account-brand">Cur<span>va</span></a><span class="curva-account-email">{{ account.email }}</span></header>
+  {% if checkout_returned %}<div class="curva-account-notice" role="status">Recebemos seu retorno da Stripe. Estamos confirmando a assinatura.</div>
+  {% elif checkout_canceled %}<div class="curva-account-notice curva-account-notice--warning" role="status">O pagamento não foi concluído. Você pode retomar quando quiser.</div>
+  {% elif intake_saved %}<div class="curva-account-notice" role="status">Respostas salvas com segurança.</div>{% endif %}
+  {% if refund_requested %}<div class="curva-account-notice" role="status">Pedido de garantia recebido. A equipe fará a conferência e o estorno pelo mesmo meio de pagamento.</div>{% endif %}
+  <section class="curva-journey-card" aria-labelledby="journey-title">
+    <div class="curva-journey-card__eyebrow">{{ journey.eyebrow }}</div><h1 id="journey-title">{{ journey.title }}</h1><p>{{ journey.description }}</p>
+    <div class="curva-progress" aria-label="Progresso da sua jornada: {{ journey.progress }}%"><span style="width:{{ journey.progress }}%"></span></div>
+    <div class="curva-journey-actions">
+      {% if journey.action == 'choose_plan' %}<a class="curva-primary-action" href="{% url 'public-workout-landing' %}#curva-precos">Escolher plano</a>
+      {% elif journey.action == 'training_intake' %}<a class="curva-primary-action" href="{% url 'public-workout-training-intake' %}">Preencher anamnese de treino</a>
+      {% elif journey.action == 'nutrition_intake' %}<a class="curva-primary-action" href="{% url 'public-workout-nutrition-intake' %}">Preencher anamnese nutricional</a>
+      {% elif journey.action == 'open_program' %}<a class="curva-primary-action" href="/renan/{{ journey.plan_slug }}">Abrir meu programa</a>
+      {% elif journey.action == 'manage_billing' and journey.can_manage_billing %}<button class="curva-primary-action" type="button" data-billing-portal>Atualizar pagamento</button>
+      {% elif journey.action == 'refresh' %}<button class="curva-primary-action" type="button" data-refresh-status>Atualizar status</button>{% endif %}
+    </div><p class="curva-action-status" data-action-status aria-live="polite"></p>
+  </section>
+  {% if refund %}<section class="curva-account-card" aria-labelledby="guarantee-title">
+    <span>Garantia</span><strong id="guarantee-title">7 dias</strong>
+    {% if refund.request %}<p>Pedido: {{ refund.request.get_status_display }}.</p>
+    {% elif refund.eligible %}<p>Você pode solicitar reembolso integral até {{ refund.deadline|date:"d/m/Y H:i" }}.</p>
+    <form class="curva-refund-form" method="post" action="{% url 'public-workout-refund-request' %}" onsubmit="return window.confirm('Confirmar o pedido de reembolso e cancelamento da assinatura?');">{% csrf_token %}
+      <label for="refund-reason">Conte brevemente o motivo (opcional)</label><textarea id="refund-reason" name="reason" rows="2" maxlength="2000"></textarea>
+      <button type="submit" class="curva-text-action">Solicitar reembolso</button>
+    </form>
+    {% else %}<p>O prazo de solicitação da garantia foi encerrado.</p>{% endif %}
+  </section>{% endif %}
+  <section class="curva-account-grid" aria-label="Resumo da conta">
+    <article class="curva-account-card"><span>Plano</span><strong>{% if journey.tier %}{{ journey.tier|title }} · {{ journey.monthly_price }}{% else %}Ainda não escolhido{% endif %}</strong>{% if journey.next_charge %}<p>Próximo ciclo: {{ journey.next_charge }}</p>{% endif %}{% if journey.can_manage_billing %}<button type="button" class="curva-text-action" data-billing-portal>Gerenciar assinatura</button>{% endif %}</article>
+    <article class="curva-account-card"><span>Atendimento</span><strong>Revisão humana</strong><p>Seu programa só é publicado depois da conferência profissional.</p></article>
+  </section>
+  <nav class="curva-account-links" aria-label="Ações da conta">
+    {% if journey.state != 'training_intake_pending' %}<a href="{% url 'public-workout-training-intake' %}">Revisar anamnese de treino</a>{% endif %}
+    {% if journey.needs_nutrition and journey.state != 'nutrition_intake_pending' %}<a href="{% url 'public-workout-nutrition-intake' %}">Revisar anamnese nutricional</a>{% endif %}
+    {% if journey.has_meal_plan and journey.plan_slug %}<a href="/renan/{{ journey.plan_slug }}#nutricao">Abrir plano alimentar</a>{% endif %}
+    <a href="mailto:suporte@octoboxfit.com.br">Preciso de ajuda</a><form method="post" action="{% url 'public-workout-account-signout' %}">{% csrf_token %}<button type="submit">Sair</button></form>
+  </nav>
+</main><script src="{% static 'js/public_workouts/account.js' %}" defer></script></body></html>

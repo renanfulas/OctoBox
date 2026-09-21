@@ -112,6 +112,10 @@
           button.disabled = false;
         });
     });
+
+    if (window.location.hash === '#nutricao') {
+      window.setTimeout(function () { button.click(); }, 0);
+    }
   }
 
   function init() {

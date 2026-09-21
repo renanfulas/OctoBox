@@ -1,0 +1,10 @@
+[Unit]
+Description=Capture Curva metrics daily
+
+[Timer]
+OnCalendar=*-*-* 00:15:00
+Persistent=true
+Unit=octobox-public-workout-metrics.service
+
+[Install]
+WantedBy=timers.target

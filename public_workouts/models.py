@@ -158,6 +158,13 @@ class PublicWorkoutProfessional(TimeStampedModel):
     registration_number = models.CharField(max_length=32)
     bio = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+    # Zero = ainda nao configurado. Capacidade e medida em minutos de
+    # trabalho profissional, nao em "numero de alunos" (tiers consomem
+    # esforcos diferentes e a fila de work items ja conhece esse custo).
+    weekly_capacity_minutes = models.PositiveIntegerField(default=0)
+    internal_hourly_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)],
+    )
 
     def __str__(self) -> str:
         return f'{self.name} ({self.registration_council} {self.registration_number})'
@@ -205,6 +212,59 @@ class PublicWorkoutProgram(models.Model):
 
     def __str__(self) -> str:
         return f'{self.slug} v{self.version} [{"ativo" if self.is_active else "inativo"}]'
+
+
+class PublicWorkoutProgramDelivery(models.Model):
+    """Entrega idempotente do aviso de programa publicado."""
+
+    program = models.OneToOneField(PublicWorkoutProgram, on_delete=models.CASCADE, related_name='delivery')
+    attempted_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    opened_at = models.DateTimeField(null=True, blank=True)
+    attempt_count = models.PositiveSmallIntegerField(default=0)
+    last_error = models.CharField(max_length=255, blank=True)
+
+    def __str__(self) -> str:
+        return f'entrega {self.program} [{"enviada" if self.sent_at else "pendente"}]'
+
+
+class PublicWorkoutMealPlanDelivery(models.Model):
+    meal_plan = models.OneToOneField('PublicWorkoutMealPlan', on_delete=models.CASCADE, related_name='delivery')
+    attempted_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    opened_at = models.DateTimeField(null=True, blank=True)
+    attempt_count = models.PositiveSmallIntegerField(default=0)
+    last_error = models.CharField(max_length=255, blank=True)
+
+
+class PublicWorkoutOutboxStatus(models.TextChoices):
+    PENDING = 'pending', 'Pendente'
+    PROCESSING = 'processing', 'Processando'
+    SENT = 'sent', 'Enviada'
+    DEAD = 'dead', 'Falha definitiva'
+
+
+class PublicWorkoutOutboxMessage(models.Model):
+    topic = models.CharField(max_length=48, db_index=True)
+    aggregate_type = models.CharField(max_length=32)
+    aggregate_id = models.CharField(max_length=64)
+    version = models.PositiveIntegerField(default=1)
+    idempotency_key = models.CharField(max_length=160, unique=True)
+    payload = models.JSONField(default=dict, blank=True)
+    status = models.CharField(
+        max_length=16, choices=PublicWorkoutOutboxStatus.choices,
+        default=PublicWorkoutOutboxStatus.PENDING, db_index=True,
+    )
+    attempt_count = models.PositiveSmallIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(default=timezone.now, db_index=True)
+    last_error = models.CharField(max_length=255, blank=True)
+    processing_started_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['next_attempt_at', 'created_at']
 
 
 class PublicWorkoutProgramDraftSource(models.TextChoices):
@@ -399,6 +459,12 @@ class PublicWorkoutTier(models.TextChoices):
     PREMIUM = 'premium', 'Premium'
 
 
+class PublicWorkoutGuaranteeModel(models.TextChoices):
+    REFUND_GUARANTEE = 'refund_guarantee', 'Cobranca imediata com garantia de reembolso'
+    LIMITED_TRIAL = 'limited_trial', 'Trial com entrega limitada'
+    FULL_TRIAL = 'full_trial', 'Trial completo'
+
+
 class PublicWorkoutSubscription(models.Model):
     """Assinatura recorrente do aluno ao corredor de treinos.
 
@@ -436,6 +502,22 @@ class PublicWorkoutSubscription(models.Model):
     stripe_connected_account_id = models.CharField(max_length=255, blank=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True, db_index=True)
     stripe_subscription_id = models.CharField(max_length=255, blank=True, db_index=True)
+    # Novas contratacoes exigem magic link; legados continuam na ponte B0
+    # ate a migracao explicita, sem hard cut nos clientes atuais.
+    requires_login = models.BooleanField(default=False)
+    # Contrato comercial aceito na contratacao. Defaults preservam linhas
+    # legadas; novas contratacoes gravam explicitamente as versoes vigentes.
+    offer_version = models.CharField(max_length=40, blank=True)
+    service_policy_version = models.CharField(max_length=40, blank=True)
+    terms_version = models.CharField(max_length=24, blank=True)
+    privacy_version = models.CharField(max_length=24, blank=True)
+    guarantee_model = models.CharField(
+        max_length=24,
+        choices=PublicWorkoutGuaranteeModel.choices,
+        default=PublicWorkoutGuaranteeModel.REFUND_GUARANTEE,
+    )
+    contract_accepted_at = models.DateTimeField(null=True, blank=True)
+    contracted_price_id = models.CharField(max_length=255, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
     suspended_at = models.DateTimeField(null=True, blank=True)
     canceled_at = models.DateTimeField(null=True, blank=True)
@@ -473,6 +555,213 @@ class PublicWorkoutSubscriptionEvent(models.Model):
 
     def __str__(self) -> str:
         return f'{self.subscription_id}: {self.from_status} -> {self.to_status} ({self.reason})'
+
+
+class PublicWorkoutAcquisitionSession(models.Model):
+    """Envelope first-party da origem comercial, sem PII sensivel."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    first_source = models.CharField(max_length=80, blank=True)
+    first_medium = models.CharField(max_length=80, blank=True)
+    first_campaign = models.CharField(max_length=120, blank=True)
+    first_referrer = models.CharField(max_length=180, blank=True)
+    last_source = models.CharField(max_length=80, blank=True)
+    last_medium = models.CharField(max_length=80, blank=True)
+    last_campaign = models.CharField(max_length=120, blank=True)
+    last_referrer = models.CharField(max_length=180, blank=True)
+    landing_variant = models.CharField(max_length=40, blank=True)
+    offer_version = models.CharField(max_length=40, blank=True)
+    account = models.ForeignKey(
+        PublicWorkoutAccount, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    )
+    subscription = models.OneToOneField(
+        PublicWorkoutSubscription, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='acquisition_session',
+    )
+    first_seen_at = models.DateTimeField(default=timezone.now)
+    last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+
+class PublicWorkoutFunnelEvent(models.Model):
+    """Fato analitico append-only; nunca comanda estado de negocio."""
+
+    event_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    event_type = models.CharField(max_length=48, db_index=True)
+    acquisition_session = models.ForeignKey(
+        PublicWorkoutAcquisitionSession, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='events',
+    )
+    account = models.ForeignKey(
+        PublicWorkoutAccount, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    )
+    subscription = models.ForeignKey(
+        PublicWorkoutSubscription, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    )
+    tier = models.CharField(max_length=16, blank=True)
+    channel = models.CharField(max_length=32, blank=True, db_index=True)
+    source = models.CharField(max_length=80, blank=True)
+    medium = models.CharField(max_length=80, blank=True)
+    campaign = models.CharField(max_length=120, blank=True)
+    schema_version = models.PositiveSmallIntegerField(default=1)
+    client_event_id = models.UUIDField(null=True, blank=True, unique=True)
+    correlation_id = models.UUIDField(null=True, blank=True, db_index=True)
+    occurred_at = models.DateTimeField(default=timezone.now, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-occurred_at']
+
+
+class PublicWorkoutWaitlistStatus(models.TextChoices):
+    WAITING = 'waiting', 'Aguardando vaga'
+    INVITED = 'invited', 'Convidado'
+    CONVERTED = 'converted', 'Convertido'
+    EXPIRED = 'expired', 'Expirado'
+    CANCELED = 'canceled', 'Cancelado'
+
+
+class PublicWorkoutWaitlistEntry(models.Model):
+    """Demanda capturada quando o limite operacional impede novo checkout."""
+
+    email = models.EmailField(db_index=True)
+    tier = models.CharField(max_length=16, choices=PublicWorkoutTier.choices, db_index=True)
+    status = models.CharField(
+        max_length=16, choices=PublicWorkoutWaitlistStatus.choices,
+        default=PublicWorkoutWaitlistStatus.WAITING, db_index=True,
+    )
+    acquisition_session = models.ForeignKey(
+        PublicWorkoutAcquisitionSession, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='waitlist_entries',
+    )
+    invite_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    consented_at = models.DateTimeField(default=timezone.now)
+    invited_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    converted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['email', 'tier'],
+                condition=models.Q(status=PublicWorkoutWaitlistStatus.WAITING),
+                name='unique_waiting_public_workout_email_tier',
+            ),
+        ]
+
+
+class PublicWorkoutTestimonial(models.Model):
+    """Prova social publicavel somente com consentimento e aprovacao."""
+
+    account = models.ForeignKey(
+        PublicWorkoutAccount, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    )
+    display_name = models.CharField(max_length=80)
+    quote = models.TextField(max_length=600)
+    result_summary = models.CharField(max_length=180, blank=True)
+    consented_at = models.DateTimeField()
+    consent_version = models.CharField(max_length=24)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    published_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-published_at', '-created_at']
+
+
+class PublicWorkoutMetricSnapshot(models.Model):
+    """Snapshot diário reproduzível; fatos continuam nas tabelas de origem."""
+
+    metric_date = models.DateField(db_index=True)
+    schema_version = models.PositiveSmallIntegerField(default=1)
+    payload = models.JSONField(default=dict)
+    captured_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-metric_date', '-captured_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['metric_date', 'schema_version'],
+                name='unique_public_workout_metric_snapshot_day_version',
+            ),
+        ]
+
+
+class PublicWorkoutCampaignSpend(models.Model):
+    source = models.CharField(max_length=80)
+    campaign = models.CharField(max_length=120)
+    starts_on = models.DateField()
+    ends_on = models.DateField()
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+    currency = models.CharField(max_length=3, default='brl')
+    notes = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-starts_on', 'source', 'campaign']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['source', 'campaign', 'starts_on', 'ends_on'],
+                name='unique_public_workout_campaign_spend_period',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(ends_on__gte=models.F('starts_on')),
+                name='public_workout_campaign_spend_valid_period',
+            ),
+        ]
+
+
+class PublicWorkoutWorkItemType(models.TextChoices):
+    TRAINING_PROGRAM = 'training_program', 'Montar treino'
+    NUTRITION_PLAN = 'nutrition_plan', 'Montar plano nutricional'
+    TRAINING_REVIEW = 'training_review', 'Revisao de treino'
+    NUTRITION_REVIEW = 'nutrition_review', 'Revisao nutricional'
+    CUSTOMER_SUCCESS_CONTACT = 'customer_success_contact', 'Contato de acompanhamento'
+
+
+class PublicWorkoutWorkItemStatus(models.TextChoices):
+    OPEN = 'open', 'Aberto'
+    IN_PROGRESS = 'in_progress', 'Em andamento'
+    BLOCKED = 'blocked', 'Bloqueado'
+    DONE = 'done', 'Concluido'
+    CANCELED = 'canceled', 'Cancelado'
+
+
+class PublicWorkoutWorkItem(models.Model):
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='work_items')
+    subscription = models.ForeignKey(
+        PublicWorkoutSubscription, on_delete=models.CASCADE, related_name='work_items'
+    )
+    item_type = models.CharField(max_length=32, choices=PublicWorkoutWorkItemType.choices)
+    cycle_key = models.CharField(max_length=64)
+    status = models.CharField(
+        max_length=16, choices=PublicWorkoutWorkItemStatus.choices,
+        default=PublicWorkoutWorkItemStatus.OPEN, db_index=True,
+    )
+    priority = models.PositiveSmallIntegerField(default=100, db_index=True)
+    estimated_effort_minutes = models.PositiveSmallIntegerField(default=30)
+    actual_effort_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    assigned_to = models.ForeignKey(
+        PublicWorkoutProfessional, null=True, blank=True, on_delete=models.PROTECT,
+        related_name='work_items',
+    )
+    due_at = models.DateTimeField(db_index=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    blocked_reason = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['priority', 'due_at', 'created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['subscription', 'item_type', 'cycle_key'],
+                name='unique_public_workout_work_item_cycle',
+            ),
+        ]
 
 
 # ---------------------------------------------------------------------------
@@ -574,6 +863,11 @@ class PublicWorkoutNutritionProfile(TimeStampedModel):
     alergias_restricoes = models.TextField(blank=True)
     rotina_alimentar = models.TextField(blank=True)
     preferencias = models.TextField(blank=True)
+    objetivo = models.TextField(blank=True)
+    medicamentos = models.TextField(blank=True)
+    historico = models.TextField(blank=True)
+    consent_health_processing_at = models.DateTimeField(null=True, blank=True)
+    consent_version = models.CharField(max_length=24, blank=True)
 
     def __str__(self) -> str:
         return f'Anamnese nutricional — {self.account.email}'
@@ -655,6 +949,33 @@ class PublicWorkoutPayment(models.Model):
 
     def __str__(self) -> str:
         return f'{self.subscription.plan_slug} - {self.gross_amount} ({self.status})'
+
+
+class PublicWorkoutRefundRequestStatus(models.TextChoices):
+    REQUESTED = 'requested', 'Solicitado'
+    PROCESSING = 'processing', 'Processando'
+    REFUNDED = 'refunded', 'Reembolsado'
+    REJECTED = 'rejected', 'Rejeitado'
+    FAILED = 'failed', 'Falhou'
+
+
+class PublicWorkoutRefundRequest(models.Model):
+    subscription = models.OneToOneField(
+        PublicWorkoutSubscription, on_delete=models.CASCADE, related_name='refund_request',
+    )
+    payment = models.ForeignKey(
+        PublicWorkoutPayment, on_delete=models.PROTECT, related_name='refund_requests',
+    )
+    status = models.CharField(
+        max_length=16, choices=PublicWorkoutRefundRequestStatus.choices,
+        default=PublicWorkoutRefundRequestStatus.REQUESTED, db_index=True,
+    )
+    reason = models.TextField(blank=True)
+    stripe_refund_id = models.CharField(max_length=255, blank=True)
+    last_error = models.CharField(max_length=255, blank=True)
+    requested_at = models.DateTimeField(default=timezone.now)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class PublicWorkoutPaymentNotice(models.Model):

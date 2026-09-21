@@ -151,6 +151,8 @@ def _suspend_if_still_unpaid(payment: PublicWorkoutPayment) -> bool:
             to_status=subscription.status,
             reason=f'D+2 sem confirmacao de pagamento (payment_id={fresh_payment.id})',
         )
+        from public_workouts.operations import cancel_open_work_items
+        cancel_open_work_items(subscription.pk)
         return True
 
 
@@ -192,6 +194,7 @@ def reactivate_subscription(subscription, *, reason: str) -> bool:
     handler e pela reconciliacao (Onda B2, Slice B) quando o pagamento
     confirma. Idempotente: so muda estado se nao estava ja ACTIVE."""
     if subscription.status not in (
+        PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
         PublicWorkoutSubscriptionStatus.SUSPENDED,
         PublicWorkoutSubscriptionStatus.PAST_DUE,
     ):
@@ -207,6 +210,8 @@ def reactivate_subscription(subscription, *, reason: str) -> bool:
         to_status=subscription.status,
         reason=reason,
     )
+    from public_workouts.operations import ensure_required_work_items
+    ensure_required_work_items(subscription.pk)
     return True
 
 
@@ -226,25 +231,70 @@ def get_or_create_subscription(
     `account` e OneToOne com PublicWorkoutSubscription — chamar de novo pra
     mesma conta sempre devolve a mesma linha, nunca cria duas (P6 do CORDA:
     duplo clique em "assinar" nao pode duplicar assinatura). Se a
-    assinatura ja existe, os valores de `defaults` sao ignorados —
-    comportamento preexistente, nao uma regressao desta fase.
+    assinatura ja existe, o estado decide o comportamento: checkout ainda
+    pendente aceita a escolha mais recente; cancelada pode recontratar;
+    assinatura vigente nunca troca de tier por um POST da landing.
 
     `tier` e obrigatorio (nunca confia em default do model pra isso — ADR-1).
     `plan_slug` e opcional a partir da Entrega 5/Fase 2 (D.2): cadastro a
     frio cria a assinatura ANTES de existir slug/PublicWorkoutProgram.
     `status` nasce sempre PENDING_PAYMENT, nunca o default ACTIVE do model
-    (RT7/D.2b/ADR-7) — so o webhook do corredor (stripe_handlers.py,
-    apos confirmar tier/price real na Stripe) promove pra ACTIVE.
+    (RT7/D.2b/ADR-7) — so uma fatura paga, processada pelo webhook do
+    corredor (stripe_handlers.py), promove pra ACTIVE.
     """
-    subscription, _ = PublicWorkoutSubscription.objects.get_or_create(
-        account=account,
-        defaults={
-            'plan_slug': plan_slug,
-            'tier': tier,
-            'status': PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
-        },
-    )
-    return subscription
+    with transaction.atomic():
+        subscription, created = PublicWorkoutSubscription.objects.select_for_update().get_or_create(
+            account=account,
+            defaults={
+                'plan_slug': plan_slug,
+                'tier': tier,
+                'status': PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
+            },
+        )
+        if created:
+            return subscription
+
+        # Um checkout abandonado nao congela a primeira escolha do cliente.
+        # Enquanto nenhum pagamento foi confirmado, a selecao mais recente da
+        # landing e a fonte de verdade e precisa chegar ao Price ID da Stripe.
+        if subscription.status == PublicWorkoutSubscriptionStatus.PENDING_PAYMENT:
+            changed_fields = []
+            if subscription.tier != tier:
+                subscription.tier = tier
+                changed_fields.append('tier')
+            if plan_slug and not subscription.plan_slug:
+                subscription.plan_slug = plan_slug
+                changed_fields.append('plan_slug')
+            if changed_fields:
+                subscription.save(update_fields=[*changed_fields, 'updated_at'])
+            return subscription
+
+        # Cancelamento definitivo pode ser recontratado na mesma conta, sem
+        # perder historico nem criar uma identidade duplicada. O novo checkout
+        # volta a ser a unica autoridade capaz de promover a assinatura.
+        if subscription.status == PublicWorkoutSubscriptionStatus.CANCELED:
+            previous_status = subscription.status
+            subscription.status = PublicWorkoutSubscriptionStatus.PENDING_PAYMENT
+            subscription.tier = tier
+            subscription.canceled_at = None
+            if plan_slug and not subscription.plan_slug:
+                subscription.plan_slug = plan_slug
+            subscription.stripe_subscription_id = ''
+            subscription.save(update_fields=[
+                'status', 'tier', 'plan_slug', 'canceled_at',
+                'stripe_subscription_id', 'updated_at',
+            ])
+            PublicWorkoutSubscriptionEvent.objects.create(
+                subscription=subscription,
+                from_status=previous_status,
+                to_status=subscription.status,
+                reason='recontratacao iniciada pelo cliente',
+            )
+
+        # ACTIVE/PAST_DUE/SUSPENDED nunca trocam de tier por um POST da
+        # landing. Upgrade/downgrade de assinatura vigente pertence ao Portal
+        # Stripe e aos respectivos webhooks.
+        return subscription
 
 
 def link_stripe_ids(subscription, *, customer_id: str, stripe_subscription_id: str) -> None:
@@ -310,10 +360,8 @@ def handle_failed_invoice_payment(
     Idempotente por (subscription, stripe_invoice_id) — reenvio do mesmo
     evento nao cria uma segunda regua pro mesmo ciclo.
 
-    Decisao do Renan (trial de 2 dias, PUBLIC_WORKOUT_TRIAL_PERIOD_DAYS em
-    stripe_checkout.py): quando esta e' a PRIMEIRA cobranca que a assinatura
-    ja tentou (nenhum PublicWorkoutPayment anterior, de qualquer status),
-    e' a cobranca de conversao do trial falhando — nao cria a regua de
+    Quando esta e' a PRIMEIRA cobranca que a assinatura ja tentou (nenhum
+    PublicWorkoutPayment anterior, de qualquer status), nao cria a regua de
     avisos de 9 dias (D-7..D+2, pensada pra lembrar quem ja paga
     regularmente que o cartao precisa de atencao antes da renovacao). O
     acesso ja bloqueia na hora mesmo assim: `status` sai de ACTIVE aqui
@@ -347,7 +395,7 @@ def handle_failed_invoice_payment(
         subscription.status = PublicWorkoutSubscriptionStatus.PAST_DUE
         subscription.save(update_fields=['status', 'updated_at'])
         reason = (
-            f'trial nao convertido - invoice {stripe_invoice_id} falhou'
+            f'primeira cobranca - invoice {stripe_invoice_id} falhou'
             if is_first_payment_ever
             else f'invoice {stripe_invoice_id} falhou'
         )
@@ -380,5 +428,19 @@ def mark_subscription_canceled(subscription, *, reason: str) -> bool:
         from_status=previous_status,
         to_status=subscription.status,
         reason=reason,
+    )
+    from public_workouts.operations import cancel_open_work_items
+
+    cancel_open_work_items(subscription.pk)
+    from public_workouts.acquisition import record_funnel_event
+    from public_workouts.models import PublicWorkoutAcquisitionSession
+    record_funnel_event(
+        'subscription_canceled',
+        acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
+            subscription=subscription,
+        ).first(),
+        account=subscription.account,
+        subscription=subscription,
+        tier=subscription.tier,
     )
     return True

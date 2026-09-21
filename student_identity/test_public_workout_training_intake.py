@@ -73,7 +73,7 @@ class PublicWorkoutTrainingIntakeViewTests(TestCase):
 
         response = self.client.post(reverse('public-workout-training-intake'), _VALID_POST_DATA)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, '/treinos/minha-conta?anamnese=salva', fetch_redirect_response=False)
         profile = PublicWorkoutTrainingProfile.objects.get(account=self.account)
         self.assertEqual(profile.goal, 'hypertrophy')
         self.assertEqual(profile.physical_restrictions, ['joelho'])

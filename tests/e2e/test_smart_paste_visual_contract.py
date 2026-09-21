@@ -133,6 +133,29 @@ def test_week_start_field_never_clips_the_year(
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
+def test_calendar_selection_keeps_year_and_snaps_to_monday(page: Page, live_server, e2e_owner_credentials):
+    """QA do calendário: a seleção nativa preserva o ano e sempre grava a segunda da semana."""
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.set_viewport_size(VIEWPORTS["mobile"])
+    page.goto(f"{live_server.url}/operacao/wod/paste/")
+    page.wait_for_load_state("networkidle")
+
+    # 30/09/2026 é quarta-feira. O evento é o mesmo emitido pelo picker
+    # nativo após o coach escolher o dia; não dependemos da UI do SO.
+    page.locator("#smart-paste-week-start-picker").evaluate(
+        """picker => {
+            picker.value = '2026-09-30';
+            picker.dispatchEvent(new Event('change', { bubbles: true }));
+        }"""
+    )
+
+    field = page.locator("input[data-smart-date-input]").first
+    expect(field).to_have_value("28/09/2026")
+    expect(page.locator("#smart-paste-week-start-picker")).to_have_value("2026-09-28")
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize("viewport_name,viewport", VIEWPORTS.items())
 @pytest.mark.parametrize("theme", THEMES)
 def test_smart_paste_visual_baseline_contract(
@@ -184,6 +207,12 @@ def test_smart_paste_visual_baseline_contract(
         expect(detail).to_be_visible(timeout=5_000)
         expect(detail.locator(".smart-paste-movement-list li").first).to_be_visible()
 
+        # Evidência visual do estado que historicamente virava uma superfície
+        # branca no celular: dialog aberto + card de pendência expandido.
+        screenshot_dir = Path("tmp") / "visual_contract" / "smart_paste"
+        screenshot_dir.mkdir(parents=True, exist_ok=True)
+        page.screenshot(path=screenshot_dir / f"smart-paste-dialog-{viewport_name}-{theme}.png")
+
         back_button = dialog.locator("[data-action='unfocus-block']").first
         back_button.click()
         expect(detail).to_be_hidden(timeout=5_000)
@@ -192,8 +221,6 @@ def test_smart_paste_visual_baseline_contract(
         close_button.click()
         expect(dialog).to_have_count(0, timeout=5_000)
 
-        screenshot_dir = Path("tmp") / "visual_contract" / "smart_paste"
-        screenshot_dir.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=screenshot_dir / f"smart-paste-{viewport_name}-{theme}.png")
     finally:
         context.close()
