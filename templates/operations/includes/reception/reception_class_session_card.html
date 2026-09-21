@@ -11,10 +11,20 @@
             <span class="operation-mini-label">Presencas</span>
             <strong>{{ session.attendance_count }}</strong>
         </div>
-        <div class="finance-alert-stat">
-            <span class="operation-mini-label">Uso no balcao</span>
-            <strong>Orientacao rapida</strong>
+    </div>
+    <div class="reception-attendance-list">
+        {% for attendance in session.attendances %}
+        <div class="reception-attendance-row">
+            <span class="reception-attendance-name">{{ attendance.student_full_name }}</span>
+            <span class="pill info">{{ attendance.status_label }}</span>
+            <form method="post" action="{{ attendance.check_in_url }}">
+                {% csrf_token %}
+                <button class="button button-sm" type="submit">Check-in</button>
+            </form>
         </div>
+        {% empty %}
+        <p class="meta-text-sm">Nenhuma reserva para esta aula ainda.</p>
+        {% endfor %}
     </div>
     <div class="actions actions-tight reception-class-session-actions">
         <a class="button secondary button-sm" href="{{ class_grid_url }}">Abrir grade completa</a>

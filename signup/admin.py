@@ -28,11 +28,12 @@ class PendingSignupAdmin(admin.ModelAdmin):
         'email',
         'box_name',
         'plan',
+        'promo_code',
         'phone',
         'activated_at',
     )
-    list_filter = ('status', 'plan', 'created_at')
-    search_fields = ('email', 'full_name', 'box_name', 'phone', 'stripe_session_id')
+    list_filter = ('status', 'plan', 'promo_code', 'created_at')
+    search_fields = ('email', 'full_name', 'box_name', 'phone', 'stripe_session_id', 'promo_code')
     readonly_fields = (
         'created_at',
         'updated_at',
@@ -44,6 +45,7 @@ class PendingSignupAdmin(admin.ModelAdmin):
         'activated_at',
         'activated_user',
         'landing_referer',
+        'promo_code',
     )
     fieldsets = (
         ('Identificacao', {
@@ -61,7 +63,7 @@ class PendingSignupAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
         ('Auditoria', {
-            'fields': ('landing_referer', 'created_at', 'updated_at'),
+            'fields': ('landing_referer', 'promo_code', 'created_at', 'updated_at'),
             'classes': ('collapse',),
         }),
     )

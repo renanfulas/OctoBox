@@ -17,6 +17,7 @@ PONTOS CRITICOS:
 from datetime import timedelta
 from urllib.parse import quote
 
+from django.db.models import Prefetch
 from django.urls import reverse
 from django.utils import timezone
 
@@ -25,7 +26,7 @@ from communications.model_definitions.whatsapp import MessageDirection, WhatsApp
 from finance.models import Payment, PaymentMethod, PaymentStatus
 from finance.overdue_metrics import get_overdue_payments_queryset
 from onboarding.queries import get_pending_intakes
-from operations.models import ClassSession
+from operations.models import Attendance, ClassSession
 from shared_support.operational_contact_memory import (
     CONTACT_OWNERSHIP_MANAGER_OWNER,
     FINANCE_CONTACT_ACTIONS,
@@ -133,14 +134,25 @@ def _serialize_reception_intake(intake):
     }
 
 
+def _serialize_reception_checkin_attendance(attendance):
+    return {
+        'id': attendance.id,
+        'student_full_name': attendance.student.full_name,
+        'status': attendance.status,
+        'status_label': attendance.get_status_display(),
+        'check_in_url': reverse('attendance-action', args=[attendance.id, 'check-in']),
+    }
+
+
 def _serialize_reception_session(session):
-    attendance_count = len(list(session.attendances.all()))
+    attendances = list(session.attendances.all())
     return {
         'id': session.id,
         'title': session.title,
         'scheduled_at': session.scheduled_at,
         'notes': session.notes,
-        'attendance_count': attendance_count,
+        'attendance_count': len(attendances),
+        'attendances': [_serialize_reception_checkin_attendance(attendance) for attendance in attendances],
     }
 
 
@@ -173,7 +185,7 @@ def _build_reception_workspace_core(*, today):
     overdue_payments_queryset = get_overdue_payments_queryset(Payment.objects.all(), today=today)
     next_sessions = list(
         ClassSession.objects.filter(scheduled_at__date__gte=today)
-        .prefetch_related('attendances')
+        .prefetch_related(Prefetch('attendances', queryset=Attendance.objects.select_related('student')))
         .order_by('scheduled_at')[:6]
     )
     active_students = Student.objects.count()

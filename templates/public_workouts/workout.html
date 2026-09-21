@@ -1,0 +1,816 @@
+{% load static l10n public_workouts_extras %}<!DOCTYPE html>
+<!--
+ARQUIVO: prototipo do "template unico" (Onda B3 do CORDA — fundacao visual).
+
+POR QUE ELE EXISTE:
+- renderiza QUALQUER payload valido pelo contrato de public_workouts/schema.py
+  usando os primitives compartilhados do design system (.student-card,
+  .student-status-badge, tables.css, interactive-tabs.css) em vez dos 8 CSS
+  por-plano que a Onda B3 real vai apagar. Nao depende de dado publicado de
+  verdade (Onda A2) pra existir: os testes renderizam contra o payload de
+  exemplo (public_workouts/schema.py::build_example_payload).
+- Estrutura de 5 telas (Inicio/Avaliacao/Treino/Cargas/Perfil) pedida pelo
+  Renan pra aproximar o layout do app do aluno de box -- REIMPLEMENTADA do
+  zero aqui (topbar, semana, nav), nunca importando os templates/CSS do
+  student_app (ver PONTOS CRITICOS). So os TOKENS de cor (--theme-*, ja
+  usados no resto deste arquivo) sao compartilhados.
+
+PONTOS CRITICOS:
+- NAO esta ligado a nenhuma URL/view ainda — a Onda B3 real ainda precisa
+  decidir fase de acesso, hard reset e o sw.js novo antes de qualquer corte
+  de producao. Isto e so a base de renderizacao.
+- NAO estende templates/public_workouts/_base.html (a base legada, com o
+  sistema --accent por-plano e o bootstrap de PWA que a propria Onda B3
+  manda matar) nem templates/student_app/layout.html (acopla tenant via
+  {% load student_shell %} no sidebar/topbar — D.3 diz que
+  templates/student_app/** e so leitura pra este produto).
+- Resumo do programa (tela Inicio) e TEXTO DETERMINISTICO
+  (dashboard.py::build_program_summary), sem chamada de IA — decisao do
+  Renan: monta o espaco pronto pra plugar Haiku depois sem custo de API
+  nem decisao de cache nesta entrega.
+- "Sua semana" usa `day_id` como abreviacao real do dia (seg/ter/qua/...) —
+  e assim que o parser da Onda A2 sempre gerou os 10 programas reais,
+  nao precisa de selecao manual de dia da semana.
+- Avaliacao/Cargas/Perfil sao paineis de NIVEL SUPERIOR (bottom nav), Treino
+  mantem os sub-tabs de dia por dentro (dois `.interactive-tab-container`
+  aninhados — CSS existente ja escopa por filho direto, script de tabs foi
+  generalizado pra nao cruzar os dois niveis, ver <script> no fim).
+- `customer_portal_url`/`student_name` sao contexto OPCIONAL (None-safe) —
+  nenhuma view real os alimenta ainda, mesmo estagio de "fundacao, nao
+  ligado a URL" do resto deste arquivo. Avaliacao NAO usa contexto Django
+  nenhum -- e' 100% client-side via assessments.js (fetch de
+  avaliacoes.json), igual aos 10 templates legados.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{{ program.program_label }}</title>
+<link rel="stylesheet" href="{% static 'css/student_app/app.css' %}">
+<link rel="stylesheet" href="{% static 'css/design-system/components/tables.css' %}">
+<link rel="stylesheet" href="{% static 'css/design-system/components/interactive-tabs.css' %}">
+<link rel="stylesheet" href="{% static 'css/design-system/neon.css' %}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/assessments.css' %}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-shell.css' %}">
+</head>
+<body data-plan-slug="{{ plan_slug }}"{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
+<main class="workout-shell">
+
+  <header class="workout-topbar">
+    <div class="workout-topbar-main">
+      <span class="workout-avatar" aria-hidden="true">{% if student_photo_url %}<img src="{{ student_photo_url }}" alt="" width="42" height="42" loading="lazy">{% else %}{{ student_name|initial }}{% endif %}</span>
+      <strong class="workout-topbar-greeting">{% workout_greeting student_name %}</strong>
+    </div>
+    <span class="workout-topbar-bell" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 5a2 2 0 0 1 4 0 7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6"/>
+        <path d="M9 17v1a3 3 0 0 0 6 0v-1"/>
+      </svg>
+    </span>
+  </header>
+
+  <div class="interactive-tab-container" data-default-panel="workout-panel-inicio">
+
+    <section id="workout-panel-inicio" class="is-tab-active" data-workout-tab-panel>
+      {% program_summary program as summary %}
+      <article class="student-card card-decor-topstripe workout-summary-card">
+        <h2>{{ summary.headline }}</h2>
+        <p>{{ summary.body }}</p>
+      </article>
+
+      {% week_overview program load_history as week_days %}
+      <section class="workout-week-strip" aria-label="Sua semana">
+        <div class="workout-week-strip__head">
+          <span class="workout-week-strip__title">
+            <svg class="workout-week-strip__flame" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2c.4 3.2-1.6 4.8-3 6.2C7.4 9.8 6 11.4 6 14a6 6 0 0 0 12 0c0-2.2-1-3.8-2-5-.4 1-1 1.6-1.8 1.8.6-2.2-.4-4.6-2.2-5.8z"/>
+            </svg>
+            Sua semana
+          </span>
+          {% week_streak_label week_days as streak %}
+          {% if streak %}<span class="workout-week-strip__score">{{ streak }}</span>{% endif %}
+        </div>
+        <div class="workout-week-strip__track">
+          {% for day in week_days %}
+          {% if day.has_program %}
+          <button
+            type="button"
+            class="workout-week-day{% if day.is_today %} is-today{% endif %}{% if day.is_complete %} is-complete{% endif %}"
+            data-workout-jump-panel="workout-panel-treino"
+            data-workout-jump-day="workout-tab-{{ day.day_id }}"
+            title="Ver treino de {{ day.label }}{% if day.is_complete %} · carga registrada{% endif %}"
+          >{{ day.label }}</button>
+          {% else %}
+          <span class="workout-week-day is-rest" title="Descanso">{{ day.label }}</span>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+    </section>
+
+    <section id="workout-panel-avaliacao" data-workout-tab-panel>
+      <!-- Conteudo 100% montado por assessments.js (silhueta SVG, gauges de
+           IMC/RCQ/%gordura com bola+gradiente, grafico de peso, timeline,
+           formulario de lancamento) -- mesmo script/CSS ja usado nos 10
+           templates legados (student_app/tests.py ja cobre o comportamento
+           deles). mountPanel() detecta este id e monta aqui em vez de criar
+           um `.tabs`-based #tab-avaliacoes novo (ver assessments.js). -->
+    </section>
+
+    <section id="workout-panel-treino" data-workout-tab-panel>
+      {% current_period_phase program as current_phase %}
+      {% periodization_phase_banner program as phase_banner %}
+      {% if phase_banner.visible %}
+      <article class="student-card card-decor-topstripe workout-phase-banner">
+        <strong>Semana {{ phase_banner.week_number }} de {{ phase_banner.total_weeks }} · {{ phase_banner.phase_label }}</strong>
+        <span class="workout-phase-banner__meta">alvo {{ phase_banner.reps_min }}-{{ phase_banner.reps_max }} reps · RIR {{ phase_banner.rir_target }} · ~{{ phase_banner.pct_mid }}% RM</span>
+      </article>
+      {% endif %}
+      <nav class="workout-day-nav" role="tablist" aria-label="Dias do programa" data-workout-tab-nav>
+        {% for day in program.days %}
+        <button
+          type="button"
+          class="workout-day-tab{% if forloop.first %} is-active{% endif %}"
+          data-workout-tab-target="workout-day-{{ day.day_id }}"
+          role="tab"
+          id="workout-tab-{{ day.day_id }}"
+          aria-controls="workout-day-{{ day.day_id }}"
+          aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+        >
+          <span class="workout-day-tab__day">{{ day.day_id|day_short }}</span>
+          <span class="workout-day-tab__keyword">{% day_workout_keyword day %}</span>
+        </button>
+        {% endfor %}
+      </nav>
+
+      <div class="interactive-tab-container" data-default-panel="workout-day-{{ program.days.0.day_id }}">
+        {% for day in program.days %}
+        <section
+          class="workout-day-panel{% if forloop.first %} is-tab-active{% endif %}"
+          id="workout-day-{{ day.day_id }}"
+          role="tabpanel"
+          aria-labelledby="workout-tab-{{ day.day_id }}"
+          data-workout-tab-panel
+        >
+          {% for block in day.blocks %}
+          <div class="workout-movement-list">
+            {% for movement in block.movements %}
+            <article
+              class="student-card card-decor-topstripe workout-movement-card"
+              data-workout-load-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar registro de carga de hoje em {{ movement|movement_display_name }}"
+            >
+              {% movement_load_display movement program current_phase one_rep_max_by_movement load_history as load %}
+              <div class="workout-movement-copy">
+                {% if movement.reference_url %}
+                <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_display_name }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
+                {% else %}
+                <strong>{{ movement|movement_display_name }}</strong>
+                {% endif %}
+                {% if movement.variations %}
+                <span class="workout-movement-variation-toggle" data-workout-variation-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar variação de {{ movement|movement_display_name }}">Ver variação</span>
+                <span class="workout-movement-variation" data-workout-variation hidden>Variação:
+                  {% for variation in movement.variations %}<a href="{{ variation.reference_url }}" target="_blank" rel="noopener">{{ variation.label }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+                </span>
+                {% endif %}
+                {% with phases=movement.reps_spec|reps_phases:load.value_kg %}
+                {% if phases %}
+                <div class="workout-phase-row">
+                  {% for phase in phases %}
+                  <span class="workout-phase-chip workout-phase-chip--{{ phase.phase }}">{{ phase.text }}</span>
+                  {% endfor %}
+                </div>
+                {% if movement.rir_spec %}<span class="workout-phase-note">{{ movement.rir_spec|glossary_highlight }}</span>{% endif %}
+                {% else %}
+                <span>
+                  {{ movement.reps_spec|glossary_highlight }}{% if movement.rir_spec %} · {{ movement.rir_spec|glossary_highlight }}{% endif %}
+                </span>
+                {% endif %}
+                {% endwith %}
+                {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
+              </div>
+              <div class="workout-movement-load">
+                {% if load.kind == 'fixed_kg' %}{{ load.value_kg }} kg
+                {% elif load.kind == 'percentage' %}
+                  {% if load.value_kg %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong> <span class="workout-movement-load__pct">{{ load.percentage }}% RM</span>
+                  {% else %}{{ load.percentage }}% RM{% endif %}
+                {% elif load.kind == 'phase_progressive' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong> <span class="workout-movement-load__pct">{{ load.percentage }}% RM</span>
+                {% elif load.kind == 'rir_estimate' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong>
+                {% else %}Livre{% endif %}
+                {% if load.show_registration_hint %}<span class="workout-movement-load-hint">Registre sua carga para controlar a kilagem.</span>{% endif %}
+              </div>
+            </article>
+            <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}" hidden>
+              {% with siblings=movement.movement_slug|sibling_variations %}
+              {% if siblings %}
+              <div class="workout-load-input__substitutes" data-workout-substitute-pills>
+                <button type="button" class="workout-load-input__substitute-pill is-active" data-substitute-slug="{{ movement.movement_slug }}">{{ movement|movement_display_name }}</button>
+                {% for sibling in siblings %}
+                <button type="button" class="workout-load-input__substitute-pill" data-substitute-slug="{{ sibling.slug }}">{{ sibling.label_pt }}</button>
+                {% endfor %}
+              </div>
+              {% endif %}
+              {% endwith %}
+              {% todays_logged_weight load_history movement.movement_slug as today_weight %}
+              <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+              <div class="workout-load-input__row">
+                <input
+                  type="number"
+                  inputmode="decimal"
+                  step="2.5"
+                  min="0"
+                  placeholder="kg"
+                  class="workout-load-input__field"
+                  data-workout-load-field
+                  {% if today_weight is not None %}value="{{ today_weight|unlocalize }}"{% endif %}
+                  aria-label="Carga de hoje em {{ movement|movement_display_name }}, em quilos"
+                >
+                <button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
+              </div>
+              <span class="workout-load-input__status" data-workout-load-status aria-live="polite">{% if today_weight is not None %}Já registrado hoje: {{ today_weight|unlocalize }} kg{% endif %}</span>
+            </div>
+            {% empty %}
+            <p class="table-empty-cell">Nenhum movimento neste bloco.</p>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </section>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Cardio/Periodizacao (Onda A2, fatia cardio/periodizacao) -- so'
+         existem se o HTML legado original tinha essas abas (parser.py::
+         parse_cardio_tab/parse_periodization_tab, formato de aba dedicada,
+         nao o cardio embutido por dia). Alcancadas so' pelo ciclo do botao
+         "Treino" do bottom nav (item pedido pelo Renan), nunca tem icone
+         proprio fixo -- por isso NAO tem <button> correspondente na nav
+         logo abaixo, so' esta section. -->
+    <section id="workout-panel-cardio" data-workout-tab-panel>
+      {% if program.cardio %}
+      <div class="workout-movement-list">
+        {% for session in program.cardio.sessions %}
+        <article class="student-card card-decor-topstripe workout-cardio-card">
+          <div class="workout-cardio-card__head">
+            <strong>{{ session.title }}</strong>
+            {% if session.badge %}<span class="student-status-badge workout-cardio-badge">{{ session.badge }}</span>{% endif %}
+          </div>
+          {% if session.details %}
+          <dl class="workout-cardio-details">
+            {% for detail in session.details %}
+            <div class="workout-cardio-detail"><dt>{{ detail.label }}</dt><dd>{{ detail.value }}</dd></div>
+            {% endfor %}
+          </dl>
+          {% endif %}
+          {% if session.note %}<p class="workout-cardio-note">{{ session.note }}</p>{% endif %}
+        </article>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    <section id="workout-panel-periodizacao" data-workout-tab-panel>
+      {% if program.periodization %}
+      {% with chart_points=program.periodization|periodization_chart_points current_week=program|current_period_week_number %}
+      {% if chart_points %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Progressão do mesociclo</h2>
+        <div class="workout-period-chart">
+          {% for point in chart_points %}
+          <div class="workout-period-chart__col{% if point.week_number and point.week_number == current_week %} workout-period-chart__col--current{% endif %}">
+            <div class="workout-period-chart__bar-wrap">
+              <span class="workout-period-chart__reps" style="color:{{ point.fg }}">{{ point.reps }}</span>
+              <div class="workout-period-chart__bar" style="height:{{ point.h }}%;background:{{ point.color }}"></div>
+            </div>
+            <span class="workout-period-chart__focus" style="background:{{ point.bg }};color:{{ point.fg }}">{{ point.focus }}</span>
+            <span class="workout-period-chart__label">{{ point.label }}{% if point.week_number and point.week_number == current_week %} · agora{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </article>
+      {% endif %}
+      {% endwith %}
+
+      {% if program.periodization.weeks_table %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Semana a semana</h2>
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Semana</th><th scope="col">Foco</th><th scope="col">Reps</th><th scope="col">Diretriz de carga</th></tr>
+            </thead>
+            <tbody>
+              {% for row in program.periodization.weeks_table %}
+              <tr><td>{{ row.week }}</td><td>{{ row.focus }}</td><td>{{ row.reps }}</td><td>{{ row.guidance }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      {% endif %}
+      {% if program.periodization.note %}<p class="workout-period-note">{{ program.periodization.note }}</p>{% endif %}
+
+      {% if program.periodization.volume_table %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Volume por grupo muscular</h2>
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Grupo muscular</th><th scope="col">Séries/sem</th><th scope="col">Frequência</th><th scope="col">Onde</th></tr>
+            </thead>
+            <tbody>
+              {% for row in program.periodization.volume_table %}
+              <tr><td>{{ row.muscle_group }}</td><td>{{ row.sets_per_week }}</td><td>{{ row.frequency }}</td><td>{{ row.where }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      {% endif %}
+      {% endif %}
+    </section>
+
+    <section id="workout-panel-cargas" data-workout-tab-panel>
+      <article
+        class="student-card card-decor-topstripe workout-block-card"
+        data-workout-weekly-review
+        data-weekly-review-url="{% url 'public-workout-weekly-review' plan_slug=plan_slug %}"
+      >
+        <h2>Revisão semanal</h2>
+        <p class="workout-weekly-review__text" data-workout-weekly-review-text hidden></p>
+        <button type="button" class="workout-load-input__save" data-workout-weekly-review-generate>Gerar revisão</button>
+        <span class="workout-weekly-review__status" data-workout-weekly-review-status aria-live="polite"></span>
+      </article>
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Evolução de carga</h2>
+        {% regroup load_history by movement_slug as load_history_by_movement %}
+        {% for group in load_history_by_movement %}
+          {% with chart=group.list|load_chart_points %}
+          <div class="workout-load-chart{% if chart.has_data %} has-data{% endif %}">
+            <div class="workout-load-chart-head">
+              <h3>{{ group.grouper|humanize_movement_slug }}</h3>
+              {% if chart.has_data %}
+              <span class="workout-load-chart-current">
+                <strong>{{ chart.latest_weight_kg }} kg</strong>
+                <span class="workout-load-chart-trend workout-load-chart-trend--{{ chart.trend }}">
+                  {% if chart.trend == 'up' %}▲{% elif chart.trend == 'down' %}▼{% else %}—{% endif %}
+                  {{ chart.delta_weight_kg }} kg
+                </span>
+              </span>
+              {% endif %}
+              {% with estimate=one_rep_max_by_movement|dict_get:group.grouper %}
+              {% if estimate %}
+              <span class="workout-load-chart-1rm" title="1RM estimado — confiança {{ estimate.confidence }} ({{ estimate.effective_reps }} reps efetivas, {{ estimate.formula }})">
+                1RM est. <strong>{{ estimate.value_kg }} kg</strong>
+              </span>
+              {% endif %}
+              {% endwith %}
+              {% with movement_trend=trends_by_movement|dict_get:group.grouper %}
+              {% if movement_trend %}
+              <span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--{{ movement_trend.label }}">
+                {% if movement_trend.label == 'plateau' %}Platô{% elif movement_trend.label == 'declining' %}Em queda{% else %}Em evolução{% endif %}
+              </span>
+              {% endif %}
+              {% endwith %}
+            </div>
+            {% if chart.has_data %}
+            <svg
+              class="workout-load-chart-svg"
+              viewBox="{{ chart.viewbox }}"
+              preserveAspectRatio="none"
+              role="img"
+              aria-label="Evolução de carga em {{ group.grouper|humanize_movement_slug }}: {{ chart.latest_weight_kg }} kg, {{ chart.trend }}"
+            >
+              <defs>
+                <linearGradient id="workout-load-fill-{{ forloop.counter }}" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.32" />
+                  <stop offset="100%" style="stop-color:var(--brand);stop-opacity:0" />
+                </linearGradient>
+                <linearGradient id="workout-load-stroke-{{ forloop.counter }}" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.55" />
+                  <stop offset="100%" style="stop-color:var(--brand);stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              {% localize off %}
+              <polygon class="workout-load-chart-area" points="{{ chart.area_points_attr }}" fill="url(#workout-load-fill-{{ forloop.counter }})"></polygon>
+              <polyline class="workout-load-chart-line" points="{{ chart.points_attr }}" pathLength="1" stroke="url(#workout-load-stroke-{{ forloop.counter }})"></polyline>
+              {% for point in chart.points %}
+              {% if point.is_program_change %}
+              <line
+                class="workout-load-chart-version-line"
+                x1="{{ point.x }}" y1="0"
+                x2="{{ point.x }}" y2="{{ chart.baseline_y }}"
+              ></line>
+              {% endif %}
+              <circle class="workout-load-chart-halo" cx="{{ point.x }}" cy="{{ point.y }}" r="7"></circle>
+              <circle class="workout-load-chart-dot{% if point.is_program_change %} workout-load-chart-dot--version{% endif %}" cx="{{ point.x }}" cy="{{ point.y }}" r="3">
+                {% if point.is_program_change %}<title>Novo programa a partir daqui: {{ point.program_id }}{% if point.week_in_program %} (semana {{ point.week_in_program }}){% endif %}</title>{% endif %}
+              </circle>
+              <text class="workout-load-chart-label" x="{{ point.x }}" y="{{ chart.label_y }}">{{ point.label }}</text>
+              {% endfor %}
+              {% endlocalize %}
+            </svg>
+            {% else %}
+            <p>Ainda não há carga suficiente registrada para montar o gráfico.</p>
+            {% endif %}
+            {% with siblings=group.grouper|sibling_variations %}
+            {% if siblings %}
+            <p class="workout-load-chart-siblings">Variação: {% for sibling in siblings %}{% if sibling.reference_url %}<a href="{{ sibling.reference_url }}" target="_blank" rel="noopener">{{ sibling.label_pt }}</a>{% else %}{{ sibling.label_pt }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+            {% endif %}
+            {% endwith %}
+          </div>
+          {% endwith %}
+        {% empty %}
+        <p>Nenhuma carga registrada ainda.</p>
+        {% endfor %}
+      </article>
+    </section>
+
+    <section id="workout-panel-perfil" data-workout-tab-panel>
+      <div class="workout-profile-header">
+        <span class="workout-avatar workout-avatar--lg" aria-hidden="true">{% if student_photo_url %}<img src="{{ student_photo_url }}" alt="" width="72" height="72" loading="lazy">{% else %}{{ student_name|initial }}{% endif %}</span>
+        {% if student_name %}<strong class="workout-profile-header__name">{{ student_name }}</strong>{% endif %}
+        {% if account_email %}<span class="workout-profile-header__email">{{ account_email }}</span>{% endif %}
+      </div>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Conta</h2>
+        <div class="workout-profile-list">
+          <span class="workout-profile-row">
+            <span class="workout-profile-row__label">Dados pessoais</span>
+            <span>{{ account_email|default:"—" }}</span>
+          </span>
+          {% if customer_portal_url %}
+          <a class="workout-profile-row" href="{{ customer_portal_url }}">
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span aria-hidden="true">→</span>
+          </a>
+          {% else %}
+          <span class="workout-profile-row">
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span class="student-status-badge">indisponível</span>
+          </span>
+          {% endif %}
+          <button type="button" class="workout-profile-row" data-ui="theme-toggle">
+            <span class="workout-profile-row__label theme-toggle-label">Tema</span>
+            <span class="theme-toggle-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </article>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Nutrição</h2>
+        {% if nutrition_unlocked %}
+        <div
+          data-workout-nutrition
+          data-nutrition-url="{% url 'public-workout-meal-plan' plan_slug=plan_slug %}"
+        >
+          <button type="button" class="workout-load-input__save" data-workout-nutrition-generate>Ver plano alimentar</button>
+          <div class="workout-nutrition__content" data-workout-nutrition-content hidden></div>
+          <span class="workout-nutrition__status" data-workout-nutrition-status aria-live="polite"></span>
+        </div>
+        {% else %}
+        <p>Disponível nos planos Completo e Premium. Fale com o Renan para fazer upgrade.</p>
+        {% endif %}
+      </article>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Versões do programa</h2>
+        {% if program_versions %}
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Versão</th>
+                <th scope="col">Programa</th>
+                <th scope="col">Início</th>
+                <th scope="col">Semanas</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for version in program_versions %}
+              <tr class="workout-version-row">
+                <td>v{{ version.version }}</td>
+                <td>{{ version.program_label }}</td>
+                <td>{{ version.started_on }}</td>
+                <td>{{ version.weeks }}</td>
+                <td>
+                  {% if version.is_active %}<span class="student-status-badge">ativa</span>
+                  {% else %}<span class="student-status-badge">inativa</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p>Nenhuma versão publicada ainda.</p>
+        {% endif %}
+      </article>
+
+      <button type="button" class="workout-signout-button" data-workout-signout data-signout-url="{% url 'public-workout-signout' plan_slug=plan_slug %}">Sair da conta</button>
+    </section>
+
+  </div>
+
+</main>
+
+<nav class="workout-mobile-nav" aria-label="Navegação" data-workout-tab-nav>
+  <button type="button" class="workout-mobile-nav-link is-active" data-workout-tab-target="workout-panel-inicio">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-5.5h5V20"/></svg>
+    Início
+  </button>
+  <button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-avaliacao">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c4-3 7-6.5 7-10a7 7 0 0 0-14 0c0 3.5 3 7 7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>
+    Avaliação
+  </button>
+  <button
+    type="button"
+    class="workout-mobile-nav-link"
+    data-workout-cycle-nav
+    data-cycle-targets="workout-panel-treino{% if program.cardio %}|workout-panel-cardio{% endif %}{% if program.periodization %}|workout-panel-periodizacao{% endif %}"
+  >
+    <span data-cycle-icon aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg></span>
+    <span data-cycle-label>Treino</span>
+  </button>
+  <button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-cargas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11 13 15 21 7"/><path d="M15 7h6v6"/></svg>
+    Cargas
+  </button>
+  <button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-perfil">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+    Perfil
+  </button>
+</nav>
+
+<script>
+/* Troca de aba em DOIS niveis independentes (paineis de nivel superior +
+   sub-abas de dia dentro de Treino) sem um nivel derrubar o outro:
+   - "quem fica destacado" e' escopado ao NAV mais proximo
+     ([data-workout-tab-nav]) — clicar um dia da semana nao apaga o
+     destaque de "Treino" no bottom nav, e vice-versa.
+   - "qual painel aparece" e' escopado ao CONTAINER do painel-alvo (so os
+     irmaos [data-workout-tab-panel] daquele MESMO nivel), reusando o
+     mesmo mecanismo de interactive-tabs.css (>*:not(.is-tab-active){display:none}),
+     que ja e por filho direto — dois .interactive-tab-container aninhados
+     nao brigam entre si. */
+(function () {
+  // Escopo de "quem fica destacado" cobre TANTO os botoes de alvo fixo
+  // ([data-workout-tab-target]) QUANTO o botao de ciclo do Treino
+  // ([data-workout-cycle-nav], ver mais abaixo) -- os dois vivem no MESMO
+  // nav ([data-workout-tab-nav]), clicar um precisa apagar o destaque do
+  // outro.
+  function clearNavActive(navGroup) {
+    navGroup.querySelectorAll('[data-workout-tab-target], [data-workout-cycle-nav]').forEach(function (t) {
+      t.classList.remove('is-active');
+      t.setAttribute('aria-selected', 'false');
+    });
+  }
+
+  function showPanel(targetId) {
+    var targetPanel = document.getElementById(targetId);
+    if (!targetPanel || !targetPanel.parentElement) return;
+    Array.prototype.forEach.call(targetPanel.parentElement.children, function (panel) {
+      if (panel.hasAttribute && panel.hasAttribute('data-workout-tab-panel')) {
+        panel.classList.toggle('is-tab-active', panel.id === targetId);
+      }
+    });
+  }
+
+  var tabs = document.querySelectorAll('[data-workout-tab-target]');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var targetId = tab.getAttribute('data-workout-tab-target');
+      var navGroup = tab.closest('[data-workout-tab-nav]') || document;
+      clearNavActive(navGroup);
+      tab.classList.add('is-active');
+      tab.setAttribute('aria-selected', 'true');
+      showPanel(targetId);
+    });
+  });
+
+  // Botao de ciclo "Treino" do bottom nav (item pedido pelo Renan): um SO'
+  // slot da nav alterna Treino -> Cardio -> Periodizacao -> Treino a cada
+  // toque, em vez de 3 botoes fixos (nav so' tem espaco pros 5 de sempre).
+  // Cardio/Periodizacao saem da lista de alvos quando o programa nao tem
+  // esse dado (data-cycle-targets vem filtrado pelo template, ver acima).
+  // Chegar de OUTRO botao sempre reseta pro primeiro estado (Treino) --
+  // so' avanca no ciclo quando o proprio botao JA esta ativo.
+  var cycleNav = document.querySelector('[data-workout-cycle-nav]');
+  var resetCycleToTreino = function () {}; // no-op se nao houver cycleNav (nunca deveria faltar)
+  if (cycleNav) {
+    var CYCLE_ICONS = {
+      treino: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg>',
+      cardio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="14.5" cy="4.5" r="1.7"/><path d="M10 9.5 12.5 8l2 3 3.5 1.5"/><path d="M12.5 8 9 10l-1.5 4"/><path d="M14.5 11 17 12.5l1 4.5"/><path d="M9 17.5l3-3"/></svg>',
+      periodizacao: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20v-7"/><path d="M9.5 20V8"/><path d="M15 20v-9"/><path d="M20 20V5"/></svg>',
+    };
+    var CYCLE_LABELS = { treino: 'Treino', cardio: 'Cardio', periodizacao: 'Periodização' };
+    var cycleTargets = cycleNav.getAttribute('data-cycle-targets').split('|');
+    var cycleIndex = 0;
+
+    function cycleKeyOf(targetId) {
+      return targetId.replace('workout-panel-', '');
+    }
+
+    function showCycleState(index) {
+      cycleIndex = index;
+      var targetId = cycleTargets[cycleIndex];
+      var key = cycleKeyOf(targetId);
+      cycleNav.querySelector('[data-cycle-icon]').innerHTML = CYCLE_ICONS[key];
+      cycleNav.querySelector('[data-cycle-label]').textContent = CYCLE_LABELS[key];
+
+      var navGroup = cycleNav.closest('[data-workout-tab-nav]') || document;
+      clearNavActive(navGroup);
+      cycleNav.classList.add('is-active');
+      cycleNav.setAttribute('aria-selected', 'true');
+      showPanel(targetId);
+    }
+
+    cycleNav.addEventListener('click', function () {
+      var isActive = cycleNav.classList.contains('is-active');
+      showCycleState(isActive ? (cycleIndex + 1) % cycleTargets.length : 0);
+    });
+
+    // Treino e' sempre cycleTargets[0] (garantido pelo template) -- usado
+    // pelo atalho de "dia da semana" do Início abaixo, que precisa
+    // ATERRISSAR em Treino especificamente, nunca so' "avancar o ciclo"
+    // (diferente de um clique de verdade no botao).
+    resetCycleToTreino = function () {
+      showCycleState(0);
+    };
+  }
+
+  // Atalhos que pulam telas (ex.: dia da semana em Início -> Treino + o
+  // sub-dia certo). Deliberadamente FORA do NodeList `tabs` acima: um
+  // atalho nao tem estado proprio de "aba ativa" (nao aparece nem no
+  // bottom nav nem nos sub-tabs de dia) — so aciona os botoes REAIS via
+  // .click(), reusando a logica de cima sem duplicar nem interferir na
+  // marcacao is-active deles.
+  document.querySelectorAll('[data-workout-jump-panel]').forEach(function (jumpButton) {
+    jumpButton.addEventListener('click', function () {
+      var panelTarget = jumpButton.getAttribute('data-workout-jump-panel');
+      var dayTarget = jumpButton.getAttribute('data-workout-jump-day');
+      if (panelTarget === 'workout-panel-treino') {
+        // Treino nao tem mais [data-workout-tab-target] fixo (virou o
+        // botao de ciclo acima) -- reseta pro primeiro estado do ciclo em
+        // vez de simular clique (que AVANÇARIA o ciclo se ja estivesse em
+        // Cardio/Periodizacao).
+        resetCycleToTreino();
+      } else {
+        var navButton = document.querySelector('.workout-mobile-nav [data-workout-tab-target="' + panelTarget + '"]');
+        if (navButton) navButton.click();
+      }
+      if (dayTarget) {
+        var dayButton = document.getElementById(dayTarget);
+        if (dayButton) dayButton.click();
+      }
+    });
+  });
+
+  // Card de movimento rastreado: clique alterna o "registrar carga de
+  // hoje" (colapsado por padrao, item 4 do pedido do Renan). O widget e'
+  // o IRMAO seguinte do card no HTML (nunca aninhado dentro dele — ver
+  // markup acima), entao usa nextElementSibling em vez de querySelector.
+  document.querySelectorAll('[data-workout-load-toggle]').forEach(function (card) {
+    function toggle() {
+      var widget = card.nextElementSibling;
+      if (!widget || !widget.hasAttribute('data-workout-load-input')) return;
+      widget.hidden = !widget.hidden;
+      card.setAttribute('aria-expanded', widget.hidden ? 'false' : 'true');
+    }
+    card.addEventListener('click', function (event) {
+      if (event.target.closest('a')) return; // link do MuscleWiki abre normal, nao alterna
+      if (event.target.closest('[data-workout-glossary]')) return; // bolinha de jargao so mostra definicao
+      if (event.target.closest('[data-workout-variation-toggle]')) return; // toggle proprio, ver abaixo
+      toggle();
+    });
+    card.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      if (event.target.closest('a')) return;
+      if (event.target.closest('[data-workout-glossary]')) return;
+      if (event.target.closest('[data-workout-variation-toggle]')) return;
+      event.preventDefault();
+      toggle();
+    });
+  });
+
+  // "Ver variação": mesmo padrao de clique-expande do registro de carga
+  // acima (oculto por padrao, colado ao card, nunca disputa clique com o
+  // toggle de carga — excluido explicitamente nos handlers do card acima).
+  // Pedido do Renan: disponivel em TODO exercicio que tiver variacao
+  // sugerida pelo treinador (`.ex-var` do HTML legado), nao so' os
+  // rastreados — mesmo espirito do item de carga.
+  document.querySelectorAll('[data-workout-variation-toggle]').forEach(function (trigger) {
+    function toggle() {
+      var panel = trigger.nextElementSibling;
+      if (!panel || !panel.hasAttribute('data-workout-variation')) return;
+      panel.hidden = !panel.hidden;
+      trigger.setAttribute('aria-expanded', panel.hidden ? 'false' : 'true');
+    }
+    trigger.addEventListener('click', toggle);
+    trigger.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      toggle();
+    });
+  });
+
+  // Bolinha de jargao de treino (RIR, AMRAP, Feeder, Top, Prep — ver
+  // glossary_highlight em public_workouts_extras.py): clique alterna a
+  // definicao, so uma aberta por vez, clique fora fecha. Delegado no
+  // document (nao querySelectorAll na carga da pagina) porque os termos
+  // vivem dentro de texto renderizado por movimento, que pode repetir
+  // varias vezes por dia/bloco.
+  //
+  // .workout-glossary-tip e' position:fixed (CSS) — cardo/student-card tem
+  // overflow:hidden pro decor-topstripe, um position:absolute cortaria o
+  // tooltip. Por isso a posicao e' calculada aqui via getBoundingClientRect
+  // do TERMO (nao do tooltip, que comeca com display:none e mediria 0x0) e
+  // aplicada como inline style antes de abrir.
+  function positionGlossaryTip(term) {
+    var tip = term.querySelector('.workout-glossary-tip');
+    if (!tip) return;
+    var termRect = term.getBoundingClientRect();
+    var margin = 8;
+    var maxWidth = 240;
+    var left = Math.min(termRect.left, window.innerWidth - maxWidth - margin);
+    left = Math.max(margin, left);
+    var top = termRect.bottom + margin;
+    // Sem altura real ainda medida (tip escondido) -- usa uma altura
+    // estimada generosa pra decidir se cabe embaixo antes de abrir acima.
+    var estimatedHeight = 90;
+    if (top + estimatedHeight > window.innerHeight - margin) {
+      top = termRect.top - estimatedHeight - margin;
+    }
+    tip.style.left = left + 'px';
+    tip.style.top = Math.max(margin, top) + 'px';
+  }
+
+  function closeGlossaryTerm(term) {
+    term.classList.remove('is-open');
+    term.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleGlossaryTerm(term) {
+    document.querySelectorAll('[data-workout-glossary].is-open').forEach(function (open) {
+      if (open !== term) closeGlossaryTerm(open);
+    });
+    var willOpen = !term.classList.contains('is-open');
+    if (willOpen) positionGlossaryTip(term);
+    term.classList.toggle('is-open', willOpen);
+    term.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  }
+
+  document.addEventListener('click', function (event) {
+    var term = event.target.closest('[data-workout-glossary]');
+    if (!term) {
+      document.querySelectorAll('[data-workout-glossary].is-open').forEach(closeGlossaryTerm);
+      return;
+    }
+    event.stopPropagation();
+    toggleGlossaryTerm(term);
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    var term = event.target.closest('[data-workout-glossary]');
+    if (!term) return;
+    event.preventDefault();
+    toggleGlossaryTerm(term);
+  });
+  window.addEventListener('scroll', function () {
+    document.querySelectorAll('[data-workout-glossary].is-open').forEach(closeGlossaryTerm);
+  }, true);
+
+  // "Sair da conta" (Perfil) -- mesmo padrao de getCookie de
+  // load_tracker.js/assessments.js, nao importado direto (abas
+  // independentes, ver comentario la).
+  function getCookie(name) {
+    var parts = (document.cookie || '').split(';');
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (part.indexOf(name + '=') === 0) return decodeURIComponent(part.slice(name.length + 1));
+    }
+    return '';
+  }
+  var signOutButton = document.querySelector('[data-workout-signout]');
+  if (signOutButton) {
+    signOutButton.addEventListener('click', function () {
+      if (!window.confirm('Sair da conta?')) return;
+      window.fetch(signOutButton.getAttribute('data-signout-url'), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      }).then(function () {
+        window.location.href = '/renan/offline/';
+      });
+    });
+  }
+})();
+</script>
+<script src="{% static 'js/core/shell.js' %}" defer></script>
+<script src="{% static 'js/public_workouts/load_tracker.js' %}" defer></script>
+<script src="{% static 'js/public_workouts/weekly_review.js' %}" defer></script>
+<script src="{% static 'js/public_workouts/nutrition.js' %}" defer></script>
+<script src="{% static 'js/public_workouts/assessments.js' %}" defer></script>
+</body>
+</html>

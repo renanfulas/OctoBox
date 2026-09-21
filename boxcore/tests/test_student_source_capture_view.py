@@ -39,3 +39,26 @@ class StudentSourceCaptureViewTests(TestCase):
         self.assertEqual(declaration.declared_source_channel, 'secure_link')
         self.assertTrue(student.source_conflict_flag)
         self.assertEqual(student.source_resolution_reason, 'operational_declared_conflict')
+
+    def test_missing_token_shows_specific_message_instead_of_generic_404(self):
+        # Onda 4 (docs/plans/student-login-magic-link-bugs-corda.md): antes desta
+        # onda, token ausente/invalido/aluno-nao-encontrado caiam todos no Http404
+        # generico do site (templates/404.html), sem dizer o motivo.
+        response = self.client.get(reverse('student-source-capture'))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, 'Esse link está incompleto.', status_code=404)
+
+    def test_invalid_token_shows_specific_message_instead_of_generic_404(self):
+        response = self.client.get(reverse('student-source-capture'), {'token': 'nao-e-um-token-valido'})
+
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, 'Não conseguimos validar esse link.', status_code=404)
+
+    def test_student_not_found_shows_specific_message_instead_of_generic_404(self):
+        token = build_student_source_capture_token(student_id=999999999)
+
+        response = self.client.get(reverse('student-source-capture'), {'token': token})
+
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, 'Não encontramos seu cadastro.', status_code=404)

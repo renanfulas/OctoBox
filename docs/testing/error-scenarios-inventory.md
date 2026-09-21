@@ -53,12 +53,14 @@ Rota privada (LoginRequired). Congela aluno por N dias, empurrando vencimentos.
 
 ### 4. `attendance-action` — `/operacao/presenca/<id>/<action>/`
 
-Rota privada (LoginRequired + COACH). Aplica check-in / check-out / absent.
+Rota privada (LoginRequired + COACH/RECEPCAO/OWNER). Aplica check-in / check-out / absent.
 
 | Cenário | Status | Testado? |
 |---|---|---|
 | Usuário anônimo | 302 → `/login/` | ✅ |
-| Papel errado (MANAGER em rota exclusiva de COACH) | 403 | ✅ |
+| Papel errado (MANAGER, fora do conjunto permitido) | 403 | ✅ |
+| RECEPCAO confirma check-in | 302 | ✅ |
+| OWNER confirma check-in | 302 | ✅ |
 | `attendance_id` inexistente | 404 | ✅ |
 | `action` fora do conjunto permitido | 302 + flash error | 🔲 |
 

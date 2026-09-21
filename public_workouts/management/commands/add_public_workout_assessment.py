@@ -2,9 +2,15 @@
 ARQUIVO: comando pra lancar uma avaliacao fisica de um treino publico.
 
 POR QUE ELE EXISTE:
-- a aba Avaliacoes nao tem formulario publico de escrita (decisao de
-  produto: quem mede e o treinador, nao o aluno pela pagina). Este comando
-  e o unico jeito de gravar um registro novo — roda localmente ou na VPS.
+- e o unico jeito de gravar uma avaliacao PRESENCIAL (Jackson-Pollock,
+  com o treinador e o adipometro, ou bioimpedancia) — roda localmente ou
+  na VPS. A partir da Onda A3/B4, a pagina TEM formulario publico de
+  escrita (PublicWorkoutRecordAssessmentView, POST /renan/<slug>/avaliacoes):
+  US Navy (so fita) sempre; dobras cutaneas de 7 pontos tambem, mas so
+  depois que este comando lancar a primeira avaliacao por dobra do plano
+  (`has_presencial_skinfold_assessment` — decisao do Renan: so confia na
+  tecnica do aluno pinçando a dobra sozinho apos ele ja ter sido
+  calibrado ao vivo pelo menos uma vez).
 
 FONTE DO %GORDURA (prioridade, da mais pra menos precisa):
 1. --bodyfat: numero ja pronto (ex.: leitura de bioimpedancia — use com

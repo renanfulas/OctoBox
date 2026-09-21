@@ -614,6 +614,107 @@ class B7StudentRecordsWithSameIdentityIsolatedTest(TestCase):
 
 
 # ---------------------------------------------------------------------------
+# B7b — Student.app_identity nao vaza foto/identidade de outro box quando o
+# student_id (IntegerField sem FK, Sprint 2) colide numericamente entre tenants
+# ---------------------------------------------------------------------------
+
+@tag('tenant', 'isolation', 'requires-postgres')
+class B7bAppIdentityCrossTenantPhotoLeakTest(TestCase):
+    """B7b: reproduz o bug relatado — "as vezes aparece foto de outro aluno".
+
+    Student.app_identity (students/model_definitions.py) resolvia a
+    StudentIdentity so por `student_id=self.id`, sem escopo de box. Como cada
+    tenant tem sua propria sequence de Student.id comecando do 1, colisao
+    numerica entre boxes e comum (nao uma excecao rara) — e a query pegava
+    "a StudentIdentity ACTIVE mais recente com esse numero em QUALQUER box",
+    trazendo nome e foto de um aluno completamente diferente.
+    """
+
+    def test_app_identity_does_not_leak_photo_across_boxes_with_colliding_student_id(self):
+        """Student#900001 em box_a e Student#900001 em box_b tem fotos isoladas."""
+        from django.db import connection as _conn
+        if _conn.vendor != 'postgresql':
+            self.skipTest('Requer PostgreSQL com django-tenants (rodando SQLite)')
+        try:
+            from datetime import timedelta
+            from django.utils import timezone
+            from django_tenants.utils import schema_context
+            from students.models import Student
+            from student_identity.models import StudentIdentity, StudentIdentityStatus
+        except ImportError:
+            self.skipTest('django-tenants ou modelos nao disponiveis')
+
+        colliding_student_id = 900001
+        try:
+            # Box A: identity autenticada ha mais tempo.
+            StudentIdentity.objects.create(
+                student_id=colliding_student_id,
+                student_name='Maria Box A',
+                box_root_slug='box_test_a',
+                primary_box_root_slug='box_test_a',
+                provider='test',
+                provider_subject='test:cross-tenant-photo-a',
+                email='maria.boundary.a@test.com',
+                status=StudentIdentityStatus.ACTIVE,
+                photo_url='https://example.com/maria-a.jpg',
+                last_authenticated_at=timezone.now() - timedelta(hours=1),
+            )
+            # Box B: aluno DIFERENTE com o MESMO numero de student_id (sequences
+            # independentes por schema) e login MAIS RECENTE — sem escopo por
+            # box, e ele quem "vence" no order_by('-last_authenticated_at').
+            StudentIdentity.objects.create(
+                student_id=colliding_student_id,
+                student_name='Carlos Box B',
+                box_root_slug='box_test_b',
+                primary_box_root_slug='box_test_b',
+                provider='test',
+                provider_subject='test:cross-tenant-photo-b',
+                email='carlos.boundary.b@test.com',
+                status=StudentIdentityStatus.ACTIVE,
+                photo_url='https://example.com/carlos-b.jpg',
+                last_authenticated_at=timezone.now(),
+            )
+
+            with schema_context('box_test_a'):
+                student_a = Student.objects.create(
+                    id=colliding_student_id,
+                    full_name='Maria Box A',
+                    status='active',
+                )
+                resolved_a = student_a.app_identity
+                self.assertIsNotNone(resolved_a, 'app_identity nao resolveu nenhuma identity em box_a.')
+                self.assertEqual(
+                    resolved_a.photo_url, 'https://example.com/maria-a.jpg',
+                    'app_identity trouxe a foto de outro box (vazamento cross-tenant).',
+                )
+                self.assertEqual(resolved_a.box_root_slug, 'box_test_a')
+                Student.objects.filter(pk=student_a.pk).delete()
+
+            with schema_context('box_test_b'):
+                student_b = Student.objects.create(
+                    id=colliding_student_id,
+                    full_name='Carlos Box B',
+                    status='active',
+                )
+                resolved_b = student_b.app_identity
+                self.assertIsNotNone(resolved_b, 'app_identity nao resolveu nenhuma identity em box_b.')
+                self.assertEqual(resolved_b.photo_url, 'https://example.com/carlos-b.jpg')
+                self.assertEqual(resolved_b.box_root_slug, 'box_test_b')
+                Student.objects.filter(pk=student_b.pk).delete()
+
+            # Limpa (so alcancado no caminho feliz — um finally aqui rodaria
+            # mesmo apos schema ausente e mascararia o skip com
+            # TransactionManagementError, ja que a atomic block do TestCase
+            # fica poisoned apos a excecao original).
+            StudentIdentity.objects.filter(student_id=colliding_student_id).delete()
+
+        except Exception as exc:
+            if _is_missing_schema_error(exc):
+                self.skipTest(f'Schema nao existe: {exc}')
+            raise
+
+
+# ---------------------------------------------------------------------------
 # B10 — OAuth callback resolve identity em public (sem entrar em tenant)
 # ---------------------------------------------------------------------------
 
@@ -995,3 +1096,57 @@ class B13TenantSweepTest(TestCase):
                 self.assertIsNotNone(match, f'sem sumario de varredura em: {output!r}')
                 self.assertGreaterEqual(int(match.group(1)), 1, output)
                 self.assertNotIn('com falha', output)
+
+
+# ---------------------------------------------------------------------------
+# B14 — /renan/ (corredor publico de treinos) nunca toca TENANT_APPS
+# ---------------------------------------------------------------------------
+
+@tag('tenant', 'public-workouts')
+@pytest.mark.public_schema
+class B14PublicWorkoutViewsNeverTouchTenantAppsTest(TestCase):
+    """R2 do CORDA (docs/plans/public-workouts-produtizacao-corda.md,
+    secao R.T): 'uma view de /renan/ que toque modelo de TENANT_APPS passa
+    em CI (o schema_context autouse forca box_test, onde as tabelas de
+    tenant existem por definicao) e so falha em producao (schema public de
+    verdade, sem essas tabelas)'. O proprio plano ja pedia este teste desde
+    antes da Onda A1 ("A1 deve adicionar um irmao especifico para /renan/"
+    em R.T, Categoria 4) — nunca tinha nascido.
+
+    @pytest.mark.public_schema tira o schema_context autouse: a connection
+    fica de fato no schema public, sem nenhum tenant provisionado — a UNICA
+    forma de reproduzir a topologia real (SHARED_APPS existem, TENANT_APPS
+    nao). Se uma destas views importar/consultar um modelo tenant (facil de
+    acontecer por engano: o ARQUIVO destas views mora dentro do pacote
+    student_app, que E' TENANT_APP — Student, SessionWorkout etc. estao a
+    um `from .models import` de distancia), o teste falha com
+    ProgrammingError ("relation ... does not exist"), nao silenciosamente.
+
+    Cobre os caminhos de leitura mais expostos (B0, sem sessao de login):
+    a propria pagina e avaliacoes.json — o endpoint que originou o vazamento
+    A1 que a Onda B0 fechou. Nao cobre todo endpoint do corredor; e o
+    detector de regressao pedido pelo plano, nao uma suite de contrato.
+    """
+
+    def test_detail_page_renders_without_touching_tenant_apps(self):
+        response = self.client.get('/renan/giovanna')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_assessments_json_renders_without_touching_tenant_apps(self):
+        self.client.get('/renan/giovanna')  # seta o cookie de posse do B0
+
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_pdf_download_reads_active_program_without_touching_tenant_apps(self):
+        from public_workouts.schema import build_example_payload
+        from public_workouts.services import publish_program
+
+        publish_program(slug='giovanna', payload=build_example_payload())
+        self.client.get('/renan/giovanna')  # seta o cookie de posse do B0
+
+        response = self.client.get('/renan/giovanna/treino.pdf')
+
+        self.assertEqual(response.status_code, 200)

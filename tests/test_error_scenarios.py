@@ -221,12 +221,32 @@ class ErrorScenarioTests(TestCase):
         self.assertIn('/login/', response['Location'])
 
     def test_attendance_action_returns_403_for_non_coach(self):
-        """AttendanceActionView só permite COACH — MANAGER recebe 403 (PermissionDenied)."""
+        """AttendanceActionView permite COACH, RECEPCAO e OWNER — MANAGER recebe 403 (PermissionDenied)."""
         self.client.force_login(self.manager)
         response = self.client.post(
             reverse('attendance-action', args=[self.attendance.pk, 'check-in'])
         )
         self.assertEqual(response.status_code, 403)
+
+    def test_attendance_action_allows_reception_check_in(self):
+        """Recepção também pode confirmar chegada do aluno na porta, não só o Coach."""
+        self.client.force_login(self.reception)
+        response = self.client.post(
+            reverse('attendance-action', args=[self.attendance.pk, 'check-in'])
+        )
+        self.assertEqual(response.status_code, 302)
+        self.attendance.refresh_from_db()
+        self.assertEqual(self.attendance.status, 'checked_in')
+
+    def test_attendance_action_allows_owner_check_in(self):
+        """Owner também pode confirmar chegada do aluno na porta."""
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse('attendance-action', args=[self.attendance.pk, 'check-in'])
+        )
+        self.assertEqual(response.status_code, 302)
+        self.attendance.refresh_from_db()
+        self.assertEqual(self.attendance.status, 'checked_in')
 
     def test_attendance_action_returns_404_for_nonexistent_attendance(self):
         """attendance_id inexistente resulta em get_object_or_404 → 404."""

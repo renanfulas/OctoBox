@@ -268,6 +268,17 @@ STRIPE_WEBHOOK_SECRET = env_str('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_PRICE_EARLY_MONTHLY = env_str('STRIPE_PRICE_EARLY_MONTHLY', '')
 STRIPE_PRICE_EARLY_ANNUAL = env_str('STRIPE_PRICE_EARLY_ANNUAL', '')
 
+# Campanha de divulgacao — 1o mes gratis via link com ?promo=CODIGO.
+# STRIPE_LAUNCH_PROMO_CODE e o codigo humano comparado contra a querystring
+# (case-insensitive). STRIPE_LAUNCH_PROMOTION_CODE_ID e o ID real "promo_..."
+# de uma Stripe Promotion Code (criada com scripts/create_launch_promo_coupon.py
+# ou manualmente no Dashboard: Product catalog -> Coupons -> Promotion codes).
+# So aplicavel ao plano MENSAL de proposito — um cupom "100% off, duration=once"
+# no plano ANUAL zeraria a fatura do ANO inteiro, nao so o primeiro mes.
+# Vazio em qualquer um dos dois = campanha desligada, checkout cobra preco cheio.
+STRIPE_LAUNCH_PROMO_CODE = env_str('STRIPE_LAUNCH_PROMO_CODE', '')
+STRIPE_LAUNCH_PROMOTION_CODE_ID = env_str('STRIPE_LAUNCH_PROMOTION_CODE_ID', '')
+
 # Superdev — conta unica de suporte anexada a TODO box provisionado.
 # Vive em public (auth e SHARED_APP), entao um so usuario serve a todos os boxes.
 # Anexado como Membership OWNER (is_primary_box=False) em control.services.provision_box.
@@ -571,8 +582,41 @@ SECURITY_TRUSTED_PROXY_IPS = env_list('SECURITY_TRUSTED_PROXY_IPS')
 SECURITY_BLOCKED_IPS = env_list('SECURITY_BLOCKED_IPS')
 SECURITY_BLOCKED_IP_RANGES = env_list('SECURITY_BLOCKED_IP_RANGES')
 SECURITY_LOG_LEVEL = env_str('SECURITY_LOG_LEVEL', 'WARNING')
+# Sessao do corredor de treinos: PUBLIC_WORKOUT_SESSION_COOKIE_AGE, abaixo.
+# Esta (STUDENT_APP_SESSION_COOKIE_AGE) governa so o app do aluno de box.
 STUDENT_APP_SESSION_COOKIE_NAME = env_str('STUDENT_APP_SESSION_COOKIE_NAME', 'octobox_student_session')
 STUDENT_APP_SESSION_COOKIE_AGE = env_int('STUDENT_APP_SESSION_COOKIE_AGE', 604800)
+# Onda B1 do CORDA (docs/plans/public-workouts-produtizacao-corda.md, S2):
+# cookie proprio do corredor de treinos (/treinos/), nome/path/validade
+# independentes do app do aluno de box — mudar um nao afeta o outro.
+PUBLIC_WORKOUT_SESSION_COOKIE_AGE = env_int('PUBLIC_WORKOUT_SESSION_COOKIE_AGE', 2592000)
+# Onda B2 do CORDA (P8): guardrail de valor de cobranca no SERVICO, nao so
+# no form. Rede de seguranca ampla, nao o preco real (isso e decisao de
+# produto fora deste arquivo).
+PUBLIC_WORKOUT_PAYMENT_MIN_AMOUNT = env_str('PUBLIC_WORKOUT_PAYMENT_MIN_AMOUNT', '1.00')
+PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT = env_str('PUBLIC_WORKOUT_PAYMENT_MAX_AMOUNT', '2000.00')
+# Onda B2 do CORDA, Fatia B — checkout proprio do corredor (S3/D.000).
+# Reusa STRIPE_SECRET_KEY (mesma conta do box, decisao do Renan: sem
+# Connect Express enquanto for um personal so — C5). O price ID e o
+# webhook secret sao PROPRIOS: price porque e um produto Stripe diferente
+# (assinatura de consultoria, nao Early Adopter do box); secret porque e
+# um SEGUNDO endpoint no dashboard da Stripe (/treinos/stripe/webhook/),
+# e cada endpoint tem sua propria assinatura HMAC — nunca o mesmo valor
+# de STRIPE_WEBHOOK_SECRET (esse e do endpoint do box).
+PUBLIC_WORKOUT_STRIPE_PRICE_ID = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID', '')
+# Entrega 5 (Escala, tier plumbing): um Price ID por tier. ESSENCIAL cai de
+# volta pro price antigo (PUBLIC_WORKOUT_STRIPE_PRICE_ID) quando a variavel
+# especifica nao esta setada — os 10 legados continuam usando exatamente o
+# mesmo Price ID de sempre, sem precisar reconfigurar nada no primeiro deploy.
+PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL', '') or PUBLIC_WORKOUT_STRIPE_PRICE_ID
+PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO', '')
+PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM', '')
+PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET = env_str('PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET', '')
+# Entrega 4 (corte pra workout.html, docs/plans/public-workouts-produtizacao-corda.md):
+# escape hatch de rollout canario/kill switch. Slug listado aqui continua
+# servindo o template legado por-cliente (bruno.html etc.) mesmo com
+# PublicWorkoutProgram ativo — reverte por env var + restart, sem deploy.
+PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS = frozenset(filter(None, env_str('PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS', '').split(',')))
 STUDENT_OAUTH_PUBLIC_BASE_URL = env_str('STUDENT_OAUTH_PUBLIC_BASE_URL')
 STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY')
 STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY')
@@ -592,6 +636,18 @@ STUDENT_RESEND_WEBHOOK_SECRET = env_str('STUDENT_RESEND_WEBHOOK_SECRET')
 # nao) para sempre. A confirmacao de pagamento e o onboarding do Early
 # Adopter passam por aqui (finance/payment_notifications.py, signup/services.py).
 EMAIL_TIMEOUT = env_int('EMAIL_TIMEOUT', 10)
+# EMAIL_HOST/PORT/USER/PASSWORD nunca eram lidos do .env — o backend SMTP do
+# Django caia sempre nos defaults hardcoded (localhost:25, sem credenciais),
+# que nao existem em nenhum ambiente real. So apareceu quando o primeiro
+# email de onboarding de verdade tentou sair em producao (2026-09-10):
+# "Connection refused". EMAIL_USE_SSL=True e o default porque o provedor
+# atual (Titan Email) so documenta porta 465/SSL, sem STARTTLS na 587.
+EMAIL_HOST = env_str('EMAIL_HOST', 'localhost')
+EMAIL_PORT = env_int('EMAIL_PORT', 25)
+EMAIL_HOST_USER = env_str('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env_str('EMAIL_HOST_PASSWORD')
+EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', False)
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', False)
 STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS = env_int('STUDENT_INVITE_LANDING_RATE_LIMIT_WINDOW_SECONDS', 300)
 STUDENT_INVITE_LANDING_RATE_LIMIT_MAX_REQUESTS = env_int('STUDENT_INVITE_LANDING_RATE_LIMIT_MAX_REQUESTS', 20)
 STUDENT_OAUTH_CALLBACK_RATE_LIMIT_WINDOW_SECONDS = env_int('STUDENT_OAUTH_CALLBACK_RATE_LIMIT_WINDOW_SECONDS', 300)

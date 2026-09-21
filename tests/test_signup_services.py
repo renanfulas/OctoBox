@@ -37,11 +37,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core import signing
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 from freezegun import freeze_time
 
 from integrations.stripe.models import PaymentWebhookEvent, PaymentWebhookStatus
 from integrations.stripe.router import route_payment_webhook_event
+from signup.forms import OnboardingForm
 from signup.models import PendingSignup, PendingSignupPlan, PendingSignupStatus
 from signup.services import (
     InvalidMagicTokenError,
@@ -52,6 +54,7 @@ from signup.services import (
     activate_pending_signup,
     create_checkout_session,
     generate_magic_token,
+    is_launch_promo_code,
     mark_pending_signup_paid,
     query_stripe_session_status,
     verify_magic_token,
@@ -64,6 +67,20 @@ User = get_user_model()
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _fake_stripe_session(data):
+    """Constroi um stripe.StripeObject real a partir de um dict.
+
+    Achado em produção (2026-09-10): mockar `stripe.checkout.Session.retrieve`
+    com um dict puro (como os testes abaixo faziam antes) mascara um bug real
+    — stripe-python >= ~13 nao suporta mais `.get()` estilo dict em
+    StripeObject (AttributeError: 'get' is a dict method...). Usar o objeto
+    real aqui garante que o teste falha se `query_stripe_session_status`
+    voltar a usar `.get()` direto na Session sem converter para dict antes.
+    """
+    from stripe._stripe_object import StripeObject
+
+    return StripeObject.construct_from(data, 'sk_test_xxx')
 
 def _make_pending(
     *,
@@ -171,6 +188,95 @@ class VerifyMagicTokenTest(TestCase):
 
         self.assertEqual(result.pk, pending.pk)
         self.assertEqual(result.status, PendingSignupStatus.PAID)
+
+
+# ===========================================================================
+# OnboardingWizardView — Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md):
+# cobre as causas orfas de token_error que caiam todas no else generico, e o
+# guardrail de seguranca de nao ecoar pending.status cru pro usuario.
+# ===========================================================================
+
+class OnboardingWizardViewTokenErrorTest(TestCase):
+    def test_status_invalido_shows_generic_message_never_raw_status(self):
+        pending = _make_pending(status=PendingSignupStatus.CANCELED)
+        token = generate_magic_token(pending)
+
+        response = self.client.get(reverse('signup-onboarding', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Esse link ainda não está pronto para uso.')
+        # Guardrail: o valor bruto do enum interno nunca pode vazar pra tela.
+        self.assertNotContains(response, PendingSignupStatus.CANCELED)
+        self.assertNotContains(response, 'status-invalido')
+
+    def test_pending_nao_encontrado_shows_specific_message(self):
+        token = signing.dumps({'pk': 99999}, salt=_MAGIC_TOKEN_SALT)
+
+        response = self.client.get(reverse('signup-onboarding', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Não encontramos o seu cadastro para esse link.')
+
+    def test_token_invalido_shows_specific_message(self):
+        response = self.client.get(
+            reverse('signup-onboarding', kwargs={'token': 'nao-e-um-token-valido'}),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Não conseguimos validar esse link.')
+
+
+# ===========================================================================
+# OnboardingForm — Onda 6 (docs/plans/student-login-magic-link-bugs-corda.md):
+# antes desta onda, a senha do Owner (a conta mais privilegiada do box) so
+# validava tamanho minimo — nenhuma das AUTH_PASSWORD_VALIDATORS (a mesma suite
+# que StaffSetPasswordForm ja usa pra troca de senha de staff) se aplicava.
+# ===========================================================================
+
+class OnboardingFormPasswordValidationTest(TestCase):
+    def _post_onboarding(self, *, token, username, password):
+        return self.client.post(
+            reverse('signup-onboarding', kwargs={'token': token}),
+            data={'username': username, 'password': password, 'password_confirm': password},
+        )
+
+    def test_all_numeric_password_is_rejected(self):
+        pending = _make_pending(email='numeric-pwd@example.test')
+        token = generate_magic_token(pending)
+
+        response = self._post_onboarding(token=token, username='numeric.owner', password='9876543210')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['form'].errors.get('password'))
+        self.assertFalse(get_user_model().objects.filter(username='numeric.owner').exists())
+
+    def test_common_password_is_rejected(self):
+        # 'qwertyuiop' esta na lista de senhas comuns do Django, tem 10+ caracteres
+        # (passa o min_length do CharField) e nao e so numeros — isola especificamente
+        # o CommonPasswordValidator, que antes desta onda nao rodava aqui.
+        pending = _make_pending(email='common-pwd@example.test')
+        token = generate_magic_token(pending)
+
+        response = self._post_onboarding(token=token, username='common.owner', password='qwertyuiop')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['form'].errors.get('password'))
+        self.assertFalse(get_user_model().objects.filter(username='common.owner').exists())
+
+    def test_strong_password_is_accepted(self):
+        # Teste de form isolado (nao via view completa): activate_and_provision cria
+        # schema novo via DDL (CREATE SCHEMA) — chamar isso dentro do atomic() implicito
+        # de um TestCase e exatamente o padrao que corrompeu workers do pytest-xdist em
+        # CI antes (ver docstring de tests/test_source_capture_multibox.py). Validar o
+        # form isoladamente prova a mesma coisa (validate_password aceita senha forte)
+        # sem esse risco.
+        form = OnboardingForm(data={
+            'username': 'forte.owner',
+            'password': 'Xk9$mQ2vLp7zebra',
+            'password_confirm': 'Xk9$mQ2vLp7zebra',
+        })
+
+        self.assertTrue(form.is_valid(), form.errors)
 
 
 # ===========================================================================
@@ -382,6 +488,113 @@ class CreateCheckoutSessionTest(TestCase):
         self.assertEqual(call_kwargs['client_reference_id'], str(self.pending.pk))
         # Idempotency key contém pk e plano para evitar sessions duplicadas
         self.assertIn(str(self.pending.pk), call_kwargs['idempotency_key'])
+        # Sem cupom de campanha ativo: mantém o campo manual desligado.
+        self.assertFalse(call_kwargs['allow_promotion_codes'])
+        self.assertNotIn('discounts', call_kwargs)
+
+    # Campanha "1o mes gratis" — aplicada automaticamente via link (?promo=...)
+    @override_settings(
+        STRIPE_PRICE_EARLY_MONTHLY='price_monthly_test',
+        STRIPE_SECRET_KEY='sk_test_xxx',
+        STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES',
+        STRIPE_LAUNCH_PROMOTION_CODE_ID='promo_test_123',
+    )
+    def test_applies_launch_discount_on_monthly_plan_with_matching_promo(self):
+        self.pending.plan = PendingSignupPlan.MONTHLY
+        self.pending.promo_code = 'PRIMEIROMES'
+        self.pending.save(update_fields=['plan', 'promo_code'])
+
+        fake_session = MagicMock(id='cs_test_promo', url='https://checkout.stripe.com/cs_test_promo')
+        with patch('stripe.checkout.Session.create', return_value=fake_session) as mock_create:
+            create_checkout_session(self.pending, self.request)
+
+        call_kwargs = mock_create.call_args.kwargs
+        self.assertEqual(call_kwargs['discounts'], [{'promotion_code': 'promo_test_123'}])
+        self.assertNotIn('allow_promotion_codes', call_kwargs)
+
+    @override_settings(
+        STRIPE_PRICE_EARLY_ANNUAL='price_annual_test',
+        STRIPE_SECRET_KEY='sk_test_xxx',
+        STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES',
+        STRIPE_LAUNCH_PROMOTION_CODE_ID='promo_test_123',
+    )
+    def test_does_not_apply_launch_discount_on_annual_plan_even_with_matching_promo(self):
+        """Campanha 'primeiro mes gratis' nunca vale no anual: zeraria a fatura do ano inteiro."""
+        self.pending.plan = PendingSignupPlan.ANNUAL
+        self.pending.promo_code = 'PRIMEIROMES'
+        self.pending.save(update_fields=['plan', 'promo_code'])
+
+        fake_session = MagicMock(id='cs_test_no_promo', url='https://checkout.stripe.com/cs_test_no_promo')
+        with patch('stripe.checkout.Session.create', return_value=fake_session) as mock_create:
+            create_checkout_session(self.pending, self.request)
+
+        call_kwargs = mock_create.call_args.kwargs
+        self.assertNotIn('discounts', call_kwargs)
+        self.assertFalse(call_kwargs['allow_promotion_codes'])
+
+    @override_settings(
+        STRIPE_PRICE_EARLY_MONTHLY='price_monthly_test',
+        STRIPE_SECRET_KEY='sk_test_xxx',
+        STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES',
+        STRIPE_LAUNCH_PROMOTION_CODE_ID='promo_test_123',
+    )
+    def test_does_not_apply_discount_when_promo_code_does_not_match(self):
+        self.pending.plan = PendingSignupPlan.MONTHLY
+        self.pending.promo_code = 'CODIGOERRADO'
+        self.pending.save(update_fields=['plan', 'promo_code'])
+
+        fake_session = MagicMock(id='cs_test_wrong_promo', url='https://checkout.stripe.com/cs_test_wrong_promo')
+        with patch('stripe.checkout.Session.create', return_value=fake_session) as mock_create:
+            create_checkout_session(self.pending, self.request)
+
+        call_kwargs = mock_create.call_args.kwargs
+        self.assertNotIn('discounts', call_kwargs)
+        self.assertFalse(call_kwargs['allow_promotion_codes'])
+
+    @override_settings(
+        STRIPE_PRICE_EARLY_MONTHLY='price_monthly_test',
+        STRIPE_SECRET_KEY='sk_test_xxx',
+        STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES',
+        STRIPE_LAUNCH_PROMOTION_CODE_ID='',
+    )
+    def test_does_not_apply_discount_when_promotion_code_id_not_configured(self):
+        """Codigo humano bate, mas o ID real da Stripe ainda nao foi colado no .env."""
+        self.pending.plan = PendingSignupPlan.MONTHLY
+        self.pending.promo_code = 'PRIMEIROMES'
+        self.pending.save(update_fields=['plan', 'promo_code'])
+
+        fake_session = MagicMock(id='cs_test_no_id', url='https://checkout.stripe.com/cs_test_no_id')
+        with patch('stripe.checkout.Session.create', return_value=fake_session) as mock_create:
+            create_checkout_session(self.pending, self.request)
+
+        call_kwargs = mock_create.call_args.kwargs
+        self.assertNotIn('discounts', call_kwargs)
+        self.assertFalse(call_kwargs['allow_promotion_codes'])
+
+
+# ===========================================================================
+# is_launch_promo_code — comparacao contra STRIPE_LAUNCH_PROMO_CODE
+# ===========================================================================
+
+class IsLaunchPromoCodeTest(SimpleTestCase):
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_matches_case_insensitively(self):
+        self.assertTrue(is_launch_promo_code('primeiromes'))
+        self.assertTrue(is_launch_promo_code('PRIMEIROMES'))
+        self.assertTrue(is_launch_promo_code('  PrimeiroMes  '))
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_does_not_match_different_code(self):
+        self.assertFalse(is_launch_promo_code('OUTROCODIGO'))
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='')
+    def test_always_false_when_campaign_not_configured(self):
+        self.assertFalse(is_launch_promo_code('PRIMEIROMES'))
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_false_for_empty_or_none_code(self):
+        self.assertFalse(is_launch_promo_code(''))
+        self.assertFalse(is_launch_promo_code(None))
 
 
 # ===========================================================================
@@ -613,13 +826,13 @@ class EarlyAdopterWebhookAsyncEmailTests(TestCase):
     # Success path
     @override_settings(STRIPE_SECRET_KEY='sk_test_xxx')
     def test_returns_dict_with_payment_details_on_success(self):
-        fake_session = {
+        fake_session = _fake_stripe_session({
             'payment_status': 'paid',
             'amount_total': 9700,
             'customer_email': 'owner@academia.test',
             'subscription': 'sub_test_xyz',
             'customer': 'cus_test_xyz',
-        }
+        })
         with patch('stripe.checkout.Session.retrieve', return_value=fake_session):
             result = query_stripe_session_status('cs_test_success')
 
@@ -633,10 +846,10 @@ class EarlyAdopterWebhookAsyncEmailTests(TestCase):
 
     @override_settings(STRIPE_SECRET_KEY='sk_test_xxx')
     def test_paid_is_false_when_payment_status_is_unpaid(self):
-        fake_session = {
+        fake_session = _fake_stripe_session({
             'payment_status': 'unpaid',
             'amount_total': 9700,
-        }
+        })
         with patch('stripe.checkout.Session.retrieve', return_value=fake_session):
             result = query_stripe_session_status('cs_test_unpaid')
 
@@ -648,6 +861,85 @@ class EarlyAdopterWebhookAsyncEmailTests(TestCase):
     def test_secret_key_is_stripped_before_comparison(self):
         """secret_key com espaços é considerado válido após strip()."""
         with patch('stripe.checkout.Session.retrieve') as mock_retrieve:
-            mock_retrieve.return_value = {'payment_status': 'paid'}
+            mock_retrieve.return_value = _fake_stripe_session({'payment_status': 'paid'})
             result = query_stripe_session_status('cs_test_strip')
             self.assertIsNotNone(result)
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_xxx')
+    def test_customer_email_falls_back_to_nested_customer_details(self):
+        """customer_email ausente no topo cai para customer_details.email (StripeObject aninhado)."""
+        fake_session = _fake_stripe_session({
+            'payment_status': 'paid',
+            'customer_details': {'email': 'nested@academia.test'},
+        })
+        with patch('stripe.checkout.Session.retrieve', return_value=fake_session):
+            result = query_stripe_session_status('cs_test_nested')
+
+        self.assertEqual(result['customer_email'], 'nested@academia.test')
+
+
+# ===========================================================================
+# CheckoutFormView — leitura/persistencia do ?promo=... da campanha
+# ===========================================================================
+
+class CheckoutFormViewPromoTest(TestCase):
+    """View publica: banner de campanha (GET) e persistencia do promo_code (POST).
+
+    STRIPE_PRICE_EARLY_MONTHLY deliberadamente ausente nestes testes — o
+    caminho de erro (StripeNotConfiguredError) ja e coberto em outro lugar
+    e aqui so nos interessa que o PendingSignup guarde o promo_code correto
+    antes da chamada a Stripe, nao o resultado dela.
+    """
+
+    def _post_data(self, **overrides):
+        data = {
+            'email': 'dono@academia.test',
+            'full_name': 'Maria Silva',
+            'box_name': 'Academia Forte',
+            'phone': '(11) 99999-9999',
+            'plan': 'monthly',
+        }
+        data.update(overrides)
+        return data
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_promo_banner_context_true_for_matching_code_on_monthly_plan(self):
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'monthly', 'promo': 'primeiromes'})
+        self.assertTrue(response.context['promo_valid'])
+        self.assertEqual(response.context['promo'], 'PRIMEIROMES')
+        self.assertContains(response, 'Cupom')
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_promo_banner_context_false_on_annual_plan_even_with_matching_code(self):
+        """Confirma na camada de view a mesma restricao de signup/services.py: sem cupom no anual."""
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'annual', 'promo': 'primeiromes'})
+        self.assertFalse(response.context['promo_valid'])
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_promo_banner_context_false_for_mismatched_code(self):
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'monthly', 'promo': 'codigoerrado'})
+        self.assertFalse(response.context['promo_valid'])
+
+    def test_promo_banner_context_false_when_campaign_not_configured(self):
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'monthly', 'promo': 'qualquercoisa'})
+        self.assertFalse(response.context['promo_valid'])
+
+    def test_promo_query_param_is_sanitized_to_safe_charset(self):
+        """Caracteres fora de [A-Z0-9-] (incluindo tentativa de quebrar o atributo HTML) são removidos."""
+        response = self.client.get(reverse('signup-checkout'), {'plan': 'monthly', 'promo': '"><script>x</script>'})
+        self.assertEqual(response.context['promo'], 'SCRIPTXSCRIPT')
+
+    @override_settings(STRIPE_LAUNCH_PROMO_CODE='PRIMEIROMES')
+    def test_post_persists_normalized_promo_code_on_pending_signup(self):
+        self.client.post(
+            reverse('signup-checkout') + '?plan=monthly&promo=primeiromes',
+            self._post_data(promo='primeiromes'),
+        )
+        pending = PendingSignup.objects.get(email='dono@academia.test')
+        self.assertEqual(pending.promo_code, 'PRIMEIROMES')
+        self.assertEqual(pending.plan, PendingSignupPlan.MONTHLY)
+
+    def test_post_persists_empty_promo_code_when_absent(self):
+        self.client.post(reverse('signup-checkout') + '?plan=monthly', self._post_data())
+        pending = PendingSignup.objects.get(email='dono@academia.test')
+        self.assertEqual(pending.promo_code, '')

@@ -5,7 +5,7 @@ POR QUE ELE EXISTE:
 - isola a leitura de aulas para manter a tela principal escaneável.
 -->
 <section class="table-card operation-table-card reception-grid-board reception-support-card" id="reception-class-grid-board" aria-label="Grade de aulas da recepção" data-panel="reception-class-grid-board">
-    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Agenda em leitura" title="Próximas aulas para orientar no balcão" copy="Horário, coach e contexto para responder rápido no atendimento." pill_label="Leitura apenas" pill_class="info" %}
+    {% include "includes/ui/layout/operation_card_head.html" with eyebrow="Agenda em leitura" title="Próximas aulas para orientar no balcão" copy="Horário, presença e check-in de chegada sem abrir a gestão completa da agenda." pill_label="Check-in liberado" pill_class="success" %}
     <div class="reception-grade-grid">
         {% for session in page.data.reception_sessions %}
         {% include "operations/includes/reception/reception_class_session_card.html" with session=session %}

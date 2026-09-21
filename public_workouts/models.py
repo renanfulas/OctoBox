@@ -1,9 +1,17 @@
 """
-ARQUIVO: modelo de avaliacao fisica do corredor publico de treinos (/renan/).
+ARQUIVO: modelos do corredor publico de treinos (/renan/): avaliacao fisica,
+catalogo de movimentos (Onda A0), snapshot de programa (Onda A1) e, a partir
+da Onda B2, cobranca (assinatura, pagamento, regua de avisos).
 
 POR QUE ELE EXISTE:
 - a aba "Avaliacoes" precisa persistir historico de peso/medidas em banco
   (nao localStorage) para sobreviver a troca de aparelho/navegador.
+- Onda A0: o corredor precisa de um vocabulario de movimentos com link de
+  referencia (MuscleWiki) para os 10 programas migrarem (Onda A2) sem
+  perder o "Ver no MuscleWiki" que cada exercicio ja tem hoje.
+- Onda B2: o corredor cobra o aluno diretamente (consultoria online),
+  nunca atraves de finance.Payment (V3 do CORDA — misturaria a receita de
+  consultoria com o financeiro do box).
 
 PONTOS CRITICOS:
 - este app vive em SHARED_APPS (schema public) de proposito: as views do
@@ -13,11 +21,39 @@ PONTOS CRITICOS:
   producao. `plan_slug` e uma referencia "soft" a PUBLIC_WORKOUT_LIBRARY
   (dict Python em public_workout_views.py) — nao ha FK porque o outro lado
   nao e uma tabela.
+- PublicWorkoutMovement e um catalogo PROPRIO do corredor (V1 do CORDA,
+  secao D.00) — nunca estende `student_app.MovementLibrary` (tabela por
+  box). Pode ser SEMEADO a partir dela (copia read-only dos movimentos de
+  CrossFit ja curados), nunca escreve nela: um movimento de musculacao do
+  corredor gravado em MovementLibrary apareceria no picker de WOD do coach
+  de um box que nao tem nada a ver com isso.
+- `movement_pattern` fica em branco no seed automatico de proposito. O
+  proprio CORDA (R.N) cita a classificacao de movement_pattern como
+  decisao que exige "saber treinar" — nao e algo pra um script advinhar
+  silenciosamente. Fica como campo livre (nao TextChoices) esperando
+  revisao humana; `status='pending'` sinaliza isso no extraido do HTML.
+- auditing.AuditEvent (log_audit_event) e TENANT_APPS — vive por schema de
+  box. Chama-lo daqui quebraria do mesmo jeito que R2 do CORDA documenta
+  (relation nao existe fora de um schema de box). PublicWorkoutSubscriptionEvent
+  abaixo e o equivalente do corredor: mesmo proposito (quem, o que, por
+  que), no schema onde o corredor de fato roda.
+- Propriedade de diretorio (D.4 do CORDA): este arquivo e migrations/ sao
+  da Frente A. PublicWorkoutSubscription/PublicWorkoutPayment/
+  PublicWorkoutPaymentNotice sao pedidos pela Frente B (Onda B2) mas
+  criados aqui por instrucao explicita do proprio CORDA ("O que entra"
+  da Onda B2) — a excecao documentada a regra, nao uma violacao dela.
 """
 
 from __future__ import annotations
 
+import uuid
+
+from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
+
+from model_support.base import TimeStampedModel
 
 
 class PublicWorkoutAssessment(models.Model):
@@ -38,6 +74,10 @@ class PublicWorkoutAssessment(models.Model):
     measurements = models.JSONField(default=dict, blank=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Referencia fraca (N5 do CORDA): so preenchido quando a pessoa tambem
+    # e aluno de box com StudentIdentity. Nunca ressincronizado — trocar de
+    # identidade de um lado nao apaga nem altera avaliacoes ja lancadas.
+    student_identity_id = models.IntegerField(null=True, blank=True, db_index=True)
 
     class Meta:
         db_table = 'public_workout_assessments'
@@ -46,3 +86,637 @@ class PublicWorkoutAssessment(models.Model):
 
     def __str__(self) -> str:
         return f'{self.plan_slug} @ {self.measured_at}'
+
+
+class PublicWorkoutMovementModality(models.TextChoices):
+    CROSSFIT = 'crossfit', 'CrossFit'
+    STRENGTH = 'strength', 'Musculacao'
+    BOTH = 'both', 'Ambos'
+
+
+class PublicWorkoutMovementStatus(models.TextChoices):
+    # Curado (semeado da lista de essenciais de CrossFit, ja revisada) ou
+    # promovido manualmente depois de revisao.
+    ACTIVE = 'active', 'Ativo'
+    # Default do extrator automatico (extract_movements_from_html): nasceu
+    # de HTML sem revisao humana, nao deve aparecer como sugestao "oficial"
+    # ate alguem confirmar nome/pattern.
+    PENDING = 'pending', 'Pendente de revisao'
+
+
+class PublicWorkoutMovement(models.Model):
+    """Catalogo de movimentos do corredor — nunca `student_app.MovementLibrary`.
+
+    Semeado por `extract_movements_from_html` (management command): dos 10
+    HTMLs legados (modality=STRENGTH, status=PENDING) e de uma copia
+    read-only da lista de essenciais de CrossFit que ja existe em
+    `student_app/management/commands/seed_movement_library.py`
+    (modality=CROSSFIT, status=ACTIVE — lista ja curada, nao extraida).
+    """
+
+    slug = models.SlugField(max_length=80, unique=True)
+    label_pt = models.CharField(max_length=160)
+    label_en = models.CharField(max_length=160, blank=True)
+    reference_url = models.URLField(max_length=255, blank=True)
+    modality = models.CharField(max_length=16, choices=PublicWorkoutMovementModality.choices, db_index=True)
+    # Texto livre de proposito (ver docstring do modulo): taxonomia ainda
+    # nao revisada por quem treina. Ex.: 'squat', 'hinge', 'push', 'pull'.
+    movement_pattern = models.CharField(max_length=32, blank=True, db_index=True)
+    status = models.CharField(
+        max_length=16,
+        choices=PublicWorkoutMovementStatus.choices,
+        default=PublicWorkoutMovementStatus.PENDING,
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['slug']
+
+    def __str__(self) -> str:
+        return f'{self.slug} — {self.label_pt}'
+
+
+class PublicWorkoutProfessionalRole(models.TextChoices):
+    TREINO = 'treino', 'Treino'
+    NUTRICAO = 'nutricao', 'Nutrição'
+
+
+class PublicWorkoutProfessional(TimeStampedModel):
+    """Profissional de conteudo do corredor (Entrega 5, Fase 4 — D.5/ADR-3).
+
+    NAO e' o multi-personal completo (Connect Express, contas conectadas —
+    C5 do CORDA original continua fora de escopo). Resolve exatamente um
+    problema: atribuir autoria e credencial (CREF/CRN) a um conteudo, sem
+    hardcodar nome/registro em template solto.
+    """
+
+    name = models.CharField(max_length=120)
+    role = models.CharField(max_length=16, choices=PublicWorkoutProfessionalRole.choices)
+    registration_council = models.CharField(max_length=16)  # 'CREF' ou 'CRN'
+    registration_number = models.CharField(max_length=32)
+    bio = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self) -> str:
+        return f'{self.name} ({self.registration_council} {self.registration_number})'
+
+
+class PublicWorkoutProgram(models.Model):
+    """Snapshot publicado e imutavel de um programa (Onda A1 do CORDA).
+
+    `payload` e o contrato de public_workouts/schema.py, ja validado
+    (D.2, frase 2: e a PRESCRICAO publicada, nunca o que o aluno produz
+    depois — carga fica em PublicWorkoutLoadLog, fora deste payload).
+    `program_label`/`started_on`/`weeks` sao denormalizados do payload
+    pra dar pra consultar sem parsear JSON.
+
+    "Publicar v2" e so mais uma linha (version=2), nunca UPDATE em v1 —
+    reverter e trocar qual linha tem is_active=True (Pronto quando #1 da
+    Onda A1). O banco garante no maximo uma linha ativa por slug (Pronto
+    quando #2) via UniqueConstraint parcial.
+    """
+
+    slug = models.CharField(max_length=50, db_index=True)
+    program_id = models.CharField(max_length=80, db_index=True)
+    program_label = models.CharField(max_length=160)
+    started_on = models.DateField()
+    weeks = models.PositiveSmallIntegerField()
+    version = models.PositiveIntegerField()
+    is_active = models.BooleanField(default=False, db_index=True)
+    payload = models.JSONField()
+    # Nullable (D.5): nao quebra os programas legados ja publicados antes
+    # da Fase 4 existir. Migracao de dado povoa retroativamente com a
+    # linha do Renan — decisao de conteudo, nao automatica (ADR-3).
+    authored_by = models.ForeignKey(PublicWorkoutProfessional, null=True, blank=True, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-version']
+        constraints = [
+            models.UniqueConstraint(fields=['program_id', 'version'], name='unique_public_workout_program_version'),
+            models.UniqueConstraint(
+                fields=['slug'],
+                condition=models.Q(is_active=True),
+                name='unique_active_public_workout_program_per_slug',
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.slug} v{self.version} [{"ativo" if self.is_active else "inativo"}]'
+
+
+class PublicWorkoutProgramDraftSource(models.TextChoices):
+    AI_GENERATED = 'ai_generated', 'Gerado por IA'
+    MANUAL = 'manual', 'Manual'
+
+
+class PublicWorkoutProgramDraftStatus(models.TextChoices):
+    PENDING_REVIEW = 'pending_review', 'Aguardando revisão'
+    APPROVED = 'approved', 'Aprovado'
+    REJECTED = 'rejected', 'Rejeitado'
+
+
+class PublicWorkoutProgramDraft(models.Model):
+    """Rascunho de programa pendente de revisão humana — NUNCA visível ao
+    aluno (isso é PublicWorkoutProgram, tabela irmã, imutável).
+
+    Existe porque `publish_program()`/PublicWorkoutProgram nao tem — e nunca
+    tiveram — um estado "ainda nao publicado": toda linha nasce com
+    `is_active=True` no mesmo transaction.atomic() que a cria (ver
+    services.py). Em vez de adicionar um status "pendente" na tabela imutavel
+    (arriscando algum leitor esquecer de filtrar por is_active/exp0r conteudo
+    nao revisado), este e' o padrao ja usado no app pra "conteudo aceito
+    passar por revisao antes de virar snapshot real": staging table +
+    aprovacao chama a funcao de publicacao existente sem modifica-la — mesmo
+    espirito de PublicWorkoutMealPlanAdmin (admin.py), so que aqui o rascunho
+    E' mutavel ate ser aprovado (nao ha versao publicada ainda pra proteger).
+
+    `training_profile_snapshot` e' copia congelada (nao FK) do que a IA viu
+    no momento da geracao — PublicWorkoutTrainingProfile e' mutavel (E12,
+    revalidacao), entao so' um snapshot responde "o que a IA realmente leu"
+    de forma estavel depois que o aluno editar a propria anamnese.
+    """
+
+    # String reference (nao a classe direto): PublicWorkoutAccount so' e'
+    # definida mais abaixo neste mesmo arquivo (secao "Corredor de treinos —
+    # conta, login e backup") — PublicWorkoutProgramDraft fica perto de
+    # PublicWorkoutProgram de proposito (tabelas irmas), nao perto de Account.
+    account = models.ForeignKey('PublicWorkoutAccount', on_delete=models.CASCADE, related_name='program_drafts')
+    slug = models.CharField(max_length=50, db_index=True)
+    payload = models.JSONField()
+    source = models.CharField(max_length=20, choices=PublicWorkoutProgramDraftSource.choices)
+    status = models.CharField(
+        max_length=16,
+        choices=PublicWorkoutProgramDraftStatus.choices,
+        default=PublicWorkoutProgramDraftStatus.PENDING_REVIEW,
+        db_index=True,
+    )
+    training_profile_snapshot = models.JSONField(default=dict, blank=True)
+    ai_model = models.CharField(max_length=64, blank=True)
+    generation_error = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='+'
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            # So' um rascunho PENDENTE por vez por (aluno, slug) — clique
+            # duplo em "Gerar rascunho com IA" nao cria dois; revisar/rejeitar
+            # o existente libera gerar outro (a constraint e' parcial, so'
+            # trava enquanto status='pending_review').
+            models.UniqueConstraint(
+                fields=['account', 'slug'],
+                condition=models.Q(status=PublicWorkoutProgramDraftStatus.PENDING_REVIEW),
+                name='unique_pending_review_draft_per_account_slug',
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.slug} draft [{self.status}] ({self.source})'
+
+
+# ---------------------------------------------------------------------------
+# Corredor de treinos — conta, login e backup (Onda B1 do CORDA).
+#
+# Moram AQUI, e nao em student_identity/, porque D.000 e D.00 do CORDA
+# (docs/plans/public-workouts-produtizacao-corda.md) proibem o corredor de
+# adicionar modelo ou migration ao app principal: o produto consome servicos
+# do OctoBox, nunca estende modelos dele.
+#
+# A tensao com D.4 (que da public_workouts/ a Frente A) se resolve por
+# sequenciamento, nao por endereco: a onda que precisa do modelo cria a
+# migration e avisa a outra frente. Colisao de migration e inconveniencia de
+# processo; modelo de um produto na tabela do outro e dano permanente.
+# ---------------------------------------------------------------------------
+
+
+class PublicWorkoutAccount(TimeStampedModel):
+    """Conta do corredor de treinos — so e-mail, sem senha (S1 do CORDA).
+
+    Vinculo com StudentIdentity e por referencia FRACA
+    (student_identity_id, sem FK) e so quando a pessoa TAMBEM for aluno de
+    box, resolvido por e-mail no momento da criacao da conta — nunca
+    ressincronizado depois. E informativo, nunca autoritativo (N5): trocar
+    o e-mail de um lado nao altera o outro, e nenhum dos dois quebra.
+    """
+
+    email = models.EmailField(unique=True, db_index=True)
+    student_identity_id = models.IntegerField(null=True, blank=True, db_index=True)
+    last_login_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return self.email
+
+
+class PublicWorkoutLoginToken(TimeStampedModel):
+    """Token de login por e-mail do corredor de treinos.
+
+    Molde de StudentAppInvitation (D.00 — copia o padrao de token de uso
+    unico, nunca a tabela: convite de box e login de treino sao coisas
+    diferentes dividindo o mesmo campo, exatamente o que V5 do CORDA
+    proibe).
+    """
+
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='login_tokens')
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    expires_at = models.DateTimeField(db_index=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @property
+    def is_expired(self) -> bool:
+        return self.expires_at <= timezone.now()
+
+    @property
+    def is_valid(self) -> bool:
+        return self.used_at is None and not self.is_expired
+
+    def mark_used(self) -> None:
+        self.used_at = timezone.now()
+
+    def __str__(self) -> str:
+        state = 'usado' if self.used_at else ('expirado' if self.is_expired else 'pendente')
+        return f'Login token {self.account.email} [{state}]'
+
+
+class PublicWorkoutLocalStorageBackup(TimeStampedModel):
+    """Copia bruta do `localStorage` do aluno, subida ANTES do hard reset (Onda B3).
+
+    F-B do plano de produto (docs/plans/public-workouts-produtizacao-plan.md):
+    o upload subiu de 3.5 para 1.7 porque, entre o hard reset e a
+    normalizacao (mais tarde), qualquer aluno que limpasse o navegador
+    perderia o historico sem backup — e o `localStorage` e a UNICA copia
+    que existe, nunca esteve no servidor. Salva primeiro, entende depois:
+    sem parsing nem validacao de estrutura interna, so o blob como o
+    navegador mandou.
+    """
+
+    plan_slug = models.CharField(max_length=50, db_index=True)
+    store_key = models.CharField(max_length=100, blank=True)
+    raw_blob = models.JSONField(default=dict)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['plan_slug', '-created_at'])]
+
+    def __str__(self) -> str:
+        return f'{self.plan_slug} backup @ {self.created_at:%Y-%m-%d %H:%M}'
+
+
+# ---------------------------------------------------------------------------
+# Cobranca do corredor (Onda B2 do CORDA). NUNCA finance.Payment (V3): essa
+# receita e de consultoria online, nao de mensalidade de box — misturar
+# alimentaria overdue_metrics e o financeiro errado (N3 do CORDA documenta
+# essa lacuna como escopo futuro, nao bug desta entrega).
+# ---------------------------------------------------------------------------
+
+
+class PublicWorkoutSubscriptionStatus(models.TextChoices):
+    ACTIVE = 'active', 'Ativa'
+    PAST_DUE = 'past_due', 'Em atraso'
+    SUSPENDED = 'suspended', 'Suspensa'
+    CANCELED = 'canceled', 'Cancelada'
+    # Preparado pro cadastro a frio (Entrega 5, Fase 2) — ainda sem nenhum
+    # caminho de codigo que cria assinatura com este valor (ADR-7).
+    PENDING_PAYMENT = 'pending_payment', 'Aguardando pagamento'
+
+
+class PublicWorkoutTier(models.TextChoices):
+    ESSENCIAL = 'essencial', 'Essencial'
+    COMPLETO = 'completo', 'Completo'
+    PREMIUM = 'premium', 'Premium'
+
+
+class PublicWorkoutSubscription(models.Model):
+    """Assinatura recorrente do aluno ao corredor de treinos.
+
+    NAO e StudentBoxMembership (D.0 do CORDA): o aluno de consultoria nao
+    frequenta aula, nao tem Attendance. A trava do /renan/ consulta este
+    model, nunca o do box.
+    """
+
+    account = models.OneToOneField(
+        PublicWorkoutAccount,
+        on_delete=models.CASCADE,
+        related_name='subscription',
+    )
+    # Nullable a partir da Entrega 5/Fase 2 (D.2, ADR-2): cadastro a frio
+    # cria a assinatura ANTES de existir slug/PublicWorkoutProgram — a fila
+    # de ativacao e a query `status=ACTIVE, plan_slug__isnull=True`, nunca
+    # uma tabela propria. A unicidade de assinatura por conta continua
+    # vindo do OneToOneField acima, nunca deste campo (P6 do CORDA).
+    plan_slug = models.CharField(max_length=50, null=True, blank=True)
+    tier = models.CharField(
+        max_length=16,
+        choices=PublicWorkoutTier.choices,
+        default=PublicWorkoutTier.ESSENCIAL,
+        db_index=True,
+    )
+    status = models.CharField(
+        max_length=16,
+        choices=PublicWorkoutSubscriptionStatus.choices,
+        default=PublicWorkoutSubscriptionStatus.ACTIVE,
+        db_index=True,
+    )
+    # Connect Express (R.C do CORDA): conta do personal que recebe o
+    # repasse. Resolvida no checkout (stripe_checkout.py), nunca herdada
+    # de stripe.api_key global (C1 — race condition com mais de uma conta).
+    stripe_connected_account_id = models.CharField(max_length=255, blank=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, db_index=True)
+    current_period_end = models.DateTimeField(null=True, blank=True)
+    suspended_at = models.DateTimeField(null=True, blank=True)
+    canceled_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            # Parcial: linhas em fila (D.2) tem plan_slug vazio e nao
+            # precisam entrar num indice de busca por slug.
+            models.Index(
+                fields=['plan_slug'],
+                name='pw_sub_plan_slug_not_null_idx',
+                condition=models.Q(plan_slug__isnull=False),
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.plan_slug} [{self.status}]'
+
+
+class PublicWorkoutSubscriptionEvent(models.Model):
+    """Trilha de auditoria de mudanca de estado da assinatura — equivalente
+    do corredor a log_audit_event (ver nota no topo do arquivo)."""
+
+    subscription = models.ForeignKey(PublicWorkoutSubscription, on_delete=models.CASCADE, related_name='events')
+    from_status = models.CharField(max_length=16, blank=True)
+    to_status = models.CharField(max_length=16)
+    reason = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f'{self.subscription_id}: {self.from_status} -> {self.to_status} ({self.reason})'
+
+
+# ---------------------------------------------------------------------------
+# Anamnese de treino (D4 do plano de produto: "tudo que alimenta a IA comeca
+# a coletar antes da IA existir" — docs/plans/public-workouts-produtizacao-plan.md,
+# secao 1.5). Os 7 campos ja' estavam documentados ali havia tempo; este e' o
+# primeiro codigo que os persiste. D.00: modelo proprio do corredor, nenhuma
+# FK pra fora de public_workouts/ — mesma fronteira do resto do app.
+# ---------------------------------------------------------------------------
+
+
+class PublicWorkoutTrainingGoal(models.TextChoices):
+    HYPERTROPHY = 'hypertrophy', 'Hipertrofia'
+    STRENGTH = 'strength', 'Força'
+    FAT_LOSS = 'fat_loss', 'Emagrecimento'
+    GENERAL_HEALTH = 'general_health', 'Saúde geral'
+    ATHLETIC_PERFORMANCE = 'athletic_performance', 'Performance esportiva'
+
+
+class PublicWorkoutTrainingExperience(models.TextChoices):
+    NEVER_TRAINED = 'never_trained', 'Nunca treinou'
+    LESS_THAN_6_MONTHS = 'less_than_6_months', 'Menos de 6 meses'
+    SIX_MONTHS_TO_2_YEARS = '6_months_to_2_years', 'De 6 meses a 2 anos'
+    MORE_THAN_2_YEARS = 'more_than_2_years', 'Mais de 2 anos'
+
+
+class PublicWorkoutTrainingLocation(models.TextChoices):
+    FULL_GYM = 'full_gym', 'Academia completa'
+    HOME_BASIC_EQUIPMENT = 'home_basic_equipment', 'Casa, com equipamento básico'
+    HOME_BODYWEIGHT_ONLY = 'home_bodyweight_only', 'Casa, só peso do corpo'
+    OUTDOOR_OR_TRAVEL = 'outdoor_or_travel', 'Ao ar livre / viajando'
+
+
+class PublicWorkoutPhysicalRestrictionTag(models.TextChoices):
+    JOELHO = 'joelho', 'Joelho'
+    OMBRO = 'ombro', 'Ombro'
+    LOMBAR = 'lombar', 'Lombar'
+    QUADRIL = 'quadril', 'Quadril'
+    PUNHO_COTOVELO = 'punho_cotovelo', 'Punho/cotovelo'
+    TORNOZELO = 'tornozelo', 'Tornozelo'
+    CARDIOVASCULAR = 'cardiovascular', 'Cardiovascular'
+    OUTRA = 'outra', 'Outra'
+    NENHUMA = 'nenhuma', 'Nenhuma'
+
+
+class PublicWorkoutTrainingProfile(TimeStampedModel):
+    """Anamnese de treino — os 7 campos de 1.5 do plano de produto.
+
+    Campos 1-5 (goal/physical_restrictions/training_experience/
+    days_per_week/training_location) sao estruturados — alimentam selecao
+    de exercicio, volume, complexidade e substituicao. Campos 6-7
+    (motivation/biggest_difficulty) sao texto livre curto — a resposta
+    literal importa mais que uma categoria, e vao pro prompt da IA quase
+    verbatim (ver program_generation_ai.py).
+
+    `consent_ai_processing_at`: consentimento EXPLICITO e SEPARADO do
+    consentimento generico de cadastro (N4/D2 do plano — campos 6/7 podem
+    conter dado de saude sensivel indo pra API da Anthropic). Nulo = sem
+    consentimento — `save_training_profile` (services.py) recusa persistir
+    sem isso, entao nenhuma linha deste modelo existe sem consentimento
+    dado (nao adianta um staff tentar criar uma direto pelo Django admin:
+    nenhum admin e' registrado pra este model de proposito, exatamente pra
+    nao abrir um caminho que contorne essa regra).
+
+    `revalidated_at`: gancho pra E12 (plano de produto) — reperguntar "mudou
+    algo desde a ultima vez?" em vez do formulario inteiro a cada programa
+    novo. Nao usado ainda nesta fatia.
+    """
+
+    account = models.OneToOneField(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='training_profile')
+    goal = models.CharField(max_length=32, choices=PublicWorkoutTrainingGoal.choices)
+    physical_restrictions = models.JSONField(default=list, blank=True)
+    physical_restrictions_detail = models.TextField(blank=True)
+    training_experience = models.CharField(max_length=24, choices=PublicWorkoutTrainingExperience.choices)
+    days_per_week = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(7)])
+    training_location = models.CharField(max_length=24, choices=PublicWorkoutTrainingLocation.choices)
+    motivation = models.TextField(blank=True)
+    biggest_difficulty = models.TextField(blank=True)
+    consent_ai_processing_at = models.DateTimeField(null=True, blank=True)
+    revalidated_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f'Anamnese de treino — {self.account.email}'
+
+
+# ---------------------------------------------------------------------------
+# Nutricao (Entrega 6, Fase 4 do CORDA de escala/nutricao). D.00: modelos
+# proprios do corredor, nenhuma FK pra fora de public_workouts/ — mesma
+# fronteira que ja vale pro resto deste app.
+# ---------------------------------------------------------------------------
+
+
+class PublicWorkoutNutritionProfile(TimeStampedModel):
+    """Anamnese nutricional — NAO reusa os 7 campos da anamnese de treino
+    (comorbidade e rotina alimentar nao tem equivalente la)."""
+
+    account = models.OneToOneField(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='nutrition_profile')
+    comorbidades = models.TextField(blank=True)
+    alergias_restricoes = models.TextField(blank=True)
+    rotina_alimentar = models.TextField(blank=True)
+    preferencias = models.TextField(blank=True)
+
+    def __str__(self) -> str:
+        return f'Anamnese nutricional — {self.account.email}'
+
+
+class PublicWorkoutMealPlan(models.Model):
+    """Snapshot publicado do plano alimentar — mesmo padrao de
+    PublicWorkoutProgram (D-1 do CORDA): nunca UPDATE, nova versao e' nova
+    linha, is_active decide qual serve. `payload` validado por
+    nutrition_schema.assert_valid_payload() antes de save() (D.6) — nunca
+    so' documentado.
+
+    Por `account`, nunca `slug` (D.6): o plano alimentar nao tem — e nao
+    deveria ganhar — o conceito de link publico compartilhavel que o
+    treino tem. Sempre privado, sempre atras de login.
+    """
+
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='meal_plans')
+    version = models.PositiveIntegerField()
+    is_active = models.BooleanField(default=False, db_index=True)
+    authored_by = models.ForeignKey(PublicWorkoutProfessional, on_delete=models.PROTECT)
+    payload = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-version']
+        constraints = [
+            models.UniqueConstraint(fields=['account', 'version'], name='unique_meal_plan_version'),
+            models.UniqueConstraint(
+                fields=['account'],
+                condition=models.Q(is_active=True),
+                name='unique_active_meal_plan_per_account',
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.account.email} v{self.version} [{"ativo" if self.is_active else "inativo"}]'
+
+
+class PublicWorkoutPaymentStatus(models.TextChoices):
+    PENDING = 'pending', 'Pendente'
+    PAID = 'paid', 'Pago'
+    OVERDUE = 'overdue', 'Atrasado'
+    CANCELED = 'canceled', 'Cancelado'
+    REFUNDED = 'refunded', 'Estornado'
+
+
+class PublicWorkoutPayment(models.Model):
+    """Cobranca do corredor — molde de finance.Payment (D.00), nunca a mesma tabela.
+
+    Tres valores em vez de um (C3 do CORDA): com application_fee do Connect,
+    gross != net. Sem os tres, a tela financeira do personal (Entrega 5)
+    mostraria numero que nao bate com o extrato da Stripe.
+    """
+
+    subscription = models.ForeignKey(PublicWorkoutSubscription, on_delete=models.CASCADE, related_name='payments')
+    due_date = models.DateField(db_index=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    gross_amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    # Preenchidos na reconciliacao do webhook (invoice.payment_succeeded /
+    # balance_transaction) — None ate o pagamento ser confirmado.
+    application_fee_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    net_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    status = models.CharField(
+        max_length=16,
+        choices=PublicWorkoutPaymentStatus.choices,
+        default=PublicWorkoutPaymentStatus.PENDING,
+        db_index=True,
+    )
+    currency = models.CharField(max_length=3, default='brl')
+    stripe_invoice_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_charge_id = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['due_date']
+
+    def __str__(self) -> str:
+        return f'{self.subscription.plan_slug} - {self.gross_amount} ({self.status})'
+
+
+class PublicWorkoutPaymentNotice(models.Model):
+    """Uma linha da regua de avisos (D-7, D-3, D-1, D0, D+2) de um PublicWorkoutPayment.
+
+    unique (payment, offset_days): o banco e a garantia contra duplicata,
+    nao o codigo que cria as 5 linhas.
+    """
+
+    payment = models.ForeignKey(PublicWorkoutPayment, on_delete=models.CASCADE, related_name='notices')
+    offset_days = models.SmallIntegerField()
+    scheduled_for = models.DateField(db_index=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['scheduled_for']
+        constraints = [
+            models.UniqueConstraint(fields=['payment', 'offset_days'], name='unique_public_workout_notice_payment_offset'),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.payment_id} D{self.offset_days:+d} [{"enviado" if self.sent_at else "pendente"}]'
+
+
+class PublicWorkoutLoadLog(models.Model):
+    """Registro de carga por (conta, movimento, data) — S3 do CORDA (Onda A1, Fatia B).
+
+    Chave de identidade e `account` (PublicWorkoutAccount), NUNCA
+    StudentIdentity: decisao escrita entre as duas frentes (D.5) trocando
+    a assinatura originalmente congelada na Onda S0 (`student_identity_id:
+    int` obrigatorio) — a maioria dos clientes de consultoria nunca pisou
+    num box e nao tem StudentIdentity nenhuma. Quem TAMBEM for aluno de
+    box ja carrega essa referencia fraca em `account.student_identity_id`
+    (Onda B1) — nao duplicada aqui.
+    """
+
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='load_logs')
+    movement_slug = models.SlugField(max_length=80, db_index=True)
+    # None e valido: movimento de peso corporal / carga livre (load_type
+    # 'free' no schema do programa) as vezes so registra reps.
+    weight_kg = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)]
+    )
+    reps = models.PositiveIntegerField(null=True, blank=True)
+    # RIR aceita meio-ponto (ex.: "RIR 1.5") — mesmo vocabulario livre do
+    # rir_spec no schema do programa (public_workouts/schema.py).
+    rir = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True, validators=[MinValueValidator(0)])
+    performed_on = models.DateField(db_index=True)
+    # Referencia solta (D.2 — carga nunca entra no snapshot imutavel do
+    # programa, R7): so denormaliza de onde veio, sem FK pra
+    # PublicWorkoutProgram (o registro sobrevive a uma nova versao publicada).
+    program_id = models.CharField(max_length=80, blank=True)
+    week_in_program = models.PositiveIntegerField(null=True, blank=True)
+    # Garantia de idempotencia do S3 (D.5): reenvio da outbox (Onda B3) com a
+    # mesma chave nunca duplica linha — o banco e a trava, nao o codigo.
+    idempotency_key = models.CharField(max_length=128, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-performed_on', '-created_at']
+        indexes = [models.Index(fields=['account', 'movement_slug', 'performed_on'])]
+
+    def __str__(self) -> str:
+        return f'{self.account_id} · {self.movement_slug} @ {self.performed_on}'

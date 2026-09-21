@@ -78,6 +78,11 @@ class PendingSignup(models.Model):
 
     # Origem e contexto comercial
     landing_referer = models.CharField(max_length=255, blank=True)
+    promo_code = models.CharField(
+        max_length=32,
+        blank=True,
+        help_text='Codigo de campanha vindo do link de divulgacao (?promo=...), normalizado em maiusculas.',
+    )
     notes = models.TextField(blank=True, help_text='Anotacoes manuais do operador (WhatsApp, follow-up, etc).')
 
     # Auditoria

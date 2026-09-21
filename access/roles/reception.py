@@ -24,7 +24,7 @@ RECEPTION_ROLE = RoleDefinition(
     summary='Perfil de balcão para orientar chegada, localizar aluno, ler a grade e resolver cobrança curta.',
     capabilities=(
         'Localizar, cadastrar e atualizar aluno no contexto de atendimento rápido.',
-        'Ler a grade de aulas sem ganhar gestão administrativa da agenda.',
+        'Ler a grade de aulas e registrar check-in de chegada, sem ganhar gestão administrativa da agenda.',
         'Resolver cobrança curta e confirmar pagamento sem abrir o financeiro completo.',
     ),
 )
@@ -35,7 +35,7 @@ RECEPTION_PERMISSIONS = {
     'membershipplan': {'view'},
     'enrollment': {'add', 'change', 'view'},
     'classsession': {'view'},
-    'attendance': {'view'},
+    'attendance': {'view', 'change'},
     'payment': {'add', 'change', 'view'},
     'whatsappcontact': {'view'},
 }

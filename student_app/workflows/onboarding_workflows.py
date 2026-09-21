@@ -16,10 +16,12 @@ from dataclasses import dataclass
 
 from django.db import transaction
 
+from student_identity.application.results import IdentitySaveConflictError
 from student_identity.funnel_events import record_student_onboarding_event
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
-from student_identity.models import StudentIdentity, StudentOnboardingJourney
+from student_identity.models import StudentIdentity, StudentIdentityProvider, StudentOnboardingJourney
 from finance.models import Enrollment, EnrollmentStatus
+from student_app.forms import find_claimable_lead_by_phone
 from students.models import Student, StudentStatus
 
 
@@ -43,6 +45,10 @@ def ensure_pending_enrollment(*, student, plan, source_note: str):
         status=EnrollmentStatus.PENDING,
         notes=source_note,
     )
+
+
+def _describe_provider(provider: str) -> str:
+    return dict(StudentIdentityProvider.choices).get(provider, provider or 'outro provedor')
 
 
 @dataclass(frozen=True)
@@ -84,21 +90,94 @@ class OnboardingWorkflow:
     @transaction.atomic
     def complete_mass_onboarding(self, *, pending_onboarding, cleaned_data) -> OnboardingCompletionResult:
         email = self.get_pending_email(pending_onboarding=pending_onboarding)
-        student = Student.objects.create(
-            full_name=cleaned_data['full_name'],
-            phone=cleaned_data['phone'],
-            email=email,
-            birth_date=cleaned_data.get('birth_date'),
-            status=StudentStatus.ACTIVE,
-        )
-        identity = self.identity_repository.save_identity(
-            student=student,
-            box_root_slug=pending_onboarding['box_root_slug'],
-            provider=pending_onboarding['provider'],
-            provider_subject=pending_onboarding['provider_subject'],
-            email=email,
-            invitation=None,
-        )
+        provider_subject = pending_onboarding['provider_subject']
+        # Onda 1 (docs/plans/student-login-magic-link-bugs-corda.md): este wizard so deveria
+        # ser alcancado por aluno realmente novo (oauth_journeys.py ja filtra o caso de
+        # provider_subject de outro box antes de chegar aqui). Esta checagem e defesa
+        # adicional — se algum outro caminho futuro cair aqui com um provider_subject ja
+        # usado, falha limpo em vez de criar um Student orfao e estourar IntegrityError.
+        if self.identity_repository.find_by_provider_subject(provider_subject=provider_subject) is not None:
+            return OnboardingCompletionResult(
+                student=None,
+                identity=None,
+                status='duplicate_provider_subject',
+                error_message='Essa conta já tem acesso em outro box. Peça pro seu box atual gerar um convite novo.',
+            )
+        try:
+            with transaction.atomic():
+                # Reaproveita a ficha (Student) se a recepcao ja cadastrou essa pessoa
+                # como lead com esse telefone, mas ela nunca completou o login do app —
+                # em vez de bloquear como "telefone duplicado" (o form ja fez a mesma
+                # checagem em clean_phone; refazer aqui e o ponto real de escrita, no
+                # mesmo espirito de "checagem antecipada + fonte da verdade" das Ondas
+                # 1 e 3). Sem isso, ela nunca conseguiria completar o cadastro.
+                claimable_student = find_claimable_lead_by_phone(
+                    normalized_phone=cleaned_data['phone'],
+                    box_root_slug=pending_onboarding['box_root_slug'],
+                )
+                if claimable_student is not None:
+                    student = claimable_student
+                    student.full_name = cleaned_data['full_name']
+                    student.phone = cleaned_data['phone']
+                    if cleaned_data.get('birth_date'):
+                        student.birth_date = cleaned_data['birth_date']
+                    if not student.email:
+                        student.email = email
+                    student.status = StudentStatus.ACTIVE
+                    student.save()
+                else:
+                    student = Student.objects.create(
+                        full_name=cleaned_data['full_name'],
+                        phone=cleaned_data['phone'],
+                        email=email,
+                        birth_date=cleaned_data.get('birth_date'),
+                        status=StudentStatus.ACTIVE,
+                    )
+                identity = self.identity_repository.save_identity(
+                    student=student,
+                    box_root_slug=pending_onboarding['box_root_slug'],
+                    provider=pending_onboarding['provider'],
+                    provider_subject=provider_subject,
+                    email=email,
+                    invitation=None,
+                    # Bug: essa jornada desvia para o wizard antes do callback
+                    # aplicar a foto do Google (oauth_actions._maybe_update_photo_url).
+                    # Sem repassar aqui, o photo_url capturado no OAuth se perdia.
+                    photo_url=pending_onboarding.get('photo_url', ''),
+                )
+        except IdentitySaveConflictError as exc:
+            # Onda 3: 'email-conflict' e deterministico e comum (o e-mail do Google/Apple
+            # ja tem cadastro ativo neste box) — save_identity checa e levanta ANTES de
+            # tentar o .save(), entao o Student criado acima e revertido pelo savepoint
+            # (inner atomic) sem deixar registro orfao. 'provider-subject-conflict' e
+            # 'unique-constraint-conflict' so alcancaveis por corrida real, ja que a
+            # checagem de provider_subject no topo deste metodo cobre o caso comum.
+            if exc.reason == 'email-conflict':
+                # Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md): "acao
+                # inteligente" pra duplicata — em vez de so bloquear, usa um dado que
+                # ja temos (qual provider a conta existente usa) pra guiar a pessoa
+                # certa pro caminho certo. NAO funde as duas contas automaticamente
+                # (ver decisao registrada no CORDA) — so aponta o proximo passo manual.
+                provider_label = _describe_provider(exc.provider) if exc.provider else ''
+                if provider_label:
+                    error_message = (
+                        f'Esse e-mail já tem cadastro neste box, feito com {provider_label}. '
+                        f'Entre com {provider_label} em vez de criar um cadastro novo.'
+                    )
+                else:
+                    error_message = 'Esse e-mail já tem cadastro neste box. Tente entrar em vez de se cadastrar de novo.'
+                return OnboardingCompletionResult(
+                    student=None,
+                    identity=None,
+                    status='duplicate_email',
+                    error_message=error_message,
+                )
+            return OnboardingCompletionResult(
+                student=None,
+                identity=None,
+                status='duplicate_provider_subject',
+                error_message='Essa conta já tem acesso em outro box. Peça pro seu box atual gerar um convite novo.',
+            )
         ensure_pending_enrollment(
             student=student,
             plan=cleaned_data.get('selected_plan'),
@@ -165,9 +244,20 @@ class OnboardingWorkflow:
         if student.status == StudentStatus.LEAD:
             student.status = StudentStatus.ACTIVE
         student.save()
+        identity_update_fields = []
         if identity.email != student.email and student.email:
             identity.email = student.email
-            identity.save(update_fields=['email', 'updated_at'])
+            identity_update_fields.append('email')
+        # Bug: essa jornada tambem desvia para o wizard antes do callback
+        # aplicar a foto do Google (oauth_actions._maybe_update_photo_url), e
+        # a identity ja existe (criada no convite) — nao passa por save_identity.
+        # So sobrescreve com um valor novo, nunca apaga uma foto ja salva.
+        pending_photo_url = (pending_onboarding.get('photo_url') or '').strip()
+        if pending_photo_url and identity.photo_url != pending_photo_url:
+            identity.photo_url = pending_photo_url
+            identity_update_fields.append('photo_url')
+        if identity_update_fields:
+            identity.save(update_fields=[*identity_update_fields, 'updated_at'])
         ensure_pending_enrollment(
             student=student,
             plan=cleaned_data.get('selected_plan'),

@@ -10,6 +10,20 @@
  *   de marca.
  */
 
+/* Tema escuro (so' o template unico/workout.html tem toggle de tema —
+   as paginas legadas que tambem carregam este CSS nunca setam
+   body[data-theme="dark"], entao este bloco fica inerte la, sem risco de
+   regressao). --white/--dark/--border/--muted nunca tiveram valor de tema
+   nenhum antes (_base.html so' define --accent/--accent-bg/--accent-dark
+   por plano) -- os cards do relatorio ficavam brancos fixos com o resto da
+   pagina escuro. */
+body[data-theme="dark"] {
+  --white: var(--theme-surface-strong);
+  --dark: var(--theme-text-primary);
+  --border: var(--theme-border-soft);
+  --muted: var(--theme-text-muted);
+}
+
 .assess-wrap{display:flex;flex-direction:column;gap:16px}
 
 .assess-empty{
@@ -26,6 +40,9 @@
 .assess-card-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#888);font-weight:700}
 .assess-card-value{font-size:21px;font-weight:700;color:var(--dark,#1a1a1a)}
 .assess-card-note{font-size:10px;color:var(--muted,#888)}
+.assess-card-delta{font-size:10.5px;font-weight:700}
+.assess-card-delta--up{color:#B91C1C}
+.assess-card-delta--down{color:#3A6F10}
 
 .assess-badge{display:inline-flex;align-self:flex-start;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px}
 .assess-badge--good{background:#EAF3DE;color:#3A6F10}
@@ -115,8 +132,61 @@
 
 .assess-source-note{font-size:10px;color:var(--muted,#888);font-style:italic}
 
+/* ══ FORMULARIO DE AUTOAVALIACAO (escrita — POST /renan/<slug>/avaliacoes) ══
+ * Mesma logica de toque de tracker.css (.wk-input): 16px de fonte evita o
+ * zoom automatico do Safari iOS em foco, min-height 44px e alvo de toque.
+ */
+.assess-form-card{
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:16px;
+  padding:1.1rem 1rem;display:flex;flex-direction:column;gap:.9rem;
+}
+.assess-form-title{font-size:14px;font-weight:800;color:var(--dark,#1a1a1a)}
+.assess-form-sub{font-size:11.5px;color:var(--muted,#888);margin-top:2px;line-height:1.5}
+
+.assess-form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.6rem}
+.assess-form-grid--secondary{margin-top:.6rem}
+
+.assess-field{display:flex;flex-direction:column;gap:4px}
+.assess-field-label{font-size:10px;font-weight:700;color:var(--muted,#888);text-transform:uppercase;letter-spacing:.05em}
+.assess-field-input-wrap{position:relative;display:flex;align-items:center}
+.assess-field-suffix{position:absolute;right:10px;font-size:11px;color:var(--muted,#888);pointer-events:none}
+
+.assess-field input,
+.assess-field textarea{
+  width:100%;border:1px solid var(--border,#e8e8e5);border-radius:9px;
+  padding:9px 10px;font-size:16px;
+  font-family:inherit;color:var(--dark,#1a1a1a);background:var(--white,#fff);
+  outline:none;-webkit-appearance:none;appearance:none;min-height:44px;
+}
+.assess-field-input-wrap input{padding-right:30px}
+.assess-field input:focus,
+.assess-field textarea:focus{border-color:var(--accent,#0891B2);box-shadow:0 0 0 2px var(--accent-bg,rgba(8,145,178,.18))}
+.assess-field textarea{min-height:60px;resize:vertical}
+.assess-field--notes{grid-column:1/-1}
+
+.assess-form-more{border-top:1px dashed var(--border,#e8e8e5);padding-top:.7rem}
+.assess-form-more summary{font-size:11.5px;font-weight:700;color:var(--accent,#0891B2);cursor:pointer;list-style:none}
+.assess-form-more summary::-webkit-details-marker{display:none}
+.assess-form-more summary::marker{content:''}
+
+.assess-form-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.assess-form-submit{
+  padding:10px 20px;min-height:44px;border-radius:9px;border:none;
+  background:var(--accent,#0891B2);color:var(--white,#fff);
+  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+  -webkit-appearance:none;appearance:none;transition:background .12s,opacity .12s;
+}
+.assess-form-submit:active{background:var(--accent-dark,#0E7490)}
+.assess-form-submit:disabled{opacity:.6;cursor:default}
+
+.assess-form-feedback{font-size:12px;font-weight:600}
+.assess-form-feedback--success{color:#3A6F10}
+.assess-form-feedback--error{color:#B91C1C}
+.assess-form-feedback a{color:inherit;text-decoration:underline}
+
 @media(max-width:600px){
   .assess-summary{grid-template-columns:1fr}
+  .assess-form-grid{grid-template-columns:repeat(2,1fr)}
   /* O SVG escala junto com a largura da tela, entao no celular o texto do
      rotulo cairia pra ~6px. Como o tamanho e em unidades do viewBox, subir
      a fonte aqui devolve legibilidade sem quebrar o layout — "PANTURRILHA"

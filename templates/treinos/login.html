@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Entrar — Treinos</title>
+<style>
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:#f5efe4;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;box-sizing:border-box;}
+  .card{max-width:360px;width:100%;background:#11203b;border-radius:18px;padding:28px;box-shadow:0 16px 34px rgba(15,23,42,.4);}
+  h1{font-size:1.25rem;margin:0 0 16px;}
+  p{font-size:.9rem;line-height:1.5;color:#cbd5e1;margin:0 0 16px;}
+  input[type=email]{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#f5efe4;font-size:1rem;margin-bottom:12px;}
+  button{width:100%;padding:12px 14px;border-radius:12px;border:0;background:#f5efe4;color:#11203b;font-weight:700;font-size:1rem;cursor:pointer;}
+  .error{color:#fca5a5;}
+  .success{color:#86efac;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Entrar no seu treino</h1>
+  {% if logged_in_as %}
+    {% if awaiting_plan %}
+    <p class="success">Login feito com {{ logged_in_as }}. Seu treino está sendo preparado — assim que estiver pronto, a gente avisa por e-mail com o link de acesso.</p>
+    {% else %}
+    <p class="success">Login feito com {{ logged_in_as }}.</p>
+    {% endif %}
+  {% elif sent_to %}
+    <p class="success">Link enviado para {{ sent_to }}. Confira seu e-mail (vale por 15 minutos).</p>
+  {% else %}
+    {% if error == 'link_invalido' %}
+      <p class="error">Esse link expirou ou já foi usado. Peça um novo abaixo.</p>
+    {% elif error == 'email_invalido' %}
+      <p class="error">Digite um e-mail válido.</p>
+    {% elif error == 'muitos_pedidos' %}
+      <p class="error">Muitos pedidos seguidos. Espere alguns minutos e tente de novo.</p>
+    {% endif %}
+    <p>Digite seu e-mail e enviamos um link de acesso — sem senha.</p>
+    <form method="post">
+      {% csrf_token %}
+      {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+      <input type="email" name="email" placeholder="seu@email.com" required>
+      <button type="submit">Enviar link</button>
+    </form>
+  {% endif %}
+</div>
+</body>
+</html>

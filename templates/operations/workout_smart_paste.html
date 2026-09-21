@@ -33,6 +33,11 @@
                     <span class="pill {% if weekly_plan.status == 'confirmed' %}success{% else %}info{% endif %}">{{ weekly_plan.get_status_display }}</span>
                     <span class="pill accent">{{ weekly_plan.week_start|date:"d/m/Y" }}</span>
                     {% endif %}
+                    {% if wod_generation_credit_summary %}
+                    <span class="pill {% if wod_generation_credit_summary.credits_remaining %}info{% else %}warning{% endif %}" title="Geracao automatica de treino via Haiku — em breve. Cota reseta todo mes.">
+                        🎯 {{ wod_generation_credit_summary.credits_remaining }}/{{ wod_generation_credit_summary.free_credits_total }} créditos de geração
+                    </span>
+                    {% endif %}
                 </div>
             </div>
 

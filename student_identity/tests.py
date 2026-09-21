@@ -19,6 +19,7 @@ from auditing.models import AuditEvent
 from operations.models import Attendance, AttendanceStatus, ClassSession
 from shared_support.box_runtime import get_box_runtime_slug
 from student_identity.application.commands import CreateStudentInvitationCommand, TransferStudentToBoxCommand
+from student_identity.application.results import IdentitySaveConflictError
 from student_identity.application.use_cases import CreateStudentInvitation, TransferStudentToBox
 from student_identity.infrastructure.repositories import DjangoStudentIdentityRepository
 from student_identity.infrastructure.session import read_student_session_value
@@ -256,6 +257,7 @@ class StudentIdentityFlowTests(TestCase):
             provider='google',
             email='novo.aluno@example.com',
             provider_subject='google-mass-box-subject',
+            photo_url='',
         )
         build_provider_mock.return_value = provider
 
@@ -299,6 +301,7 @@ class StudentIdentityFlowTests(TestCase):
             provider='google',
             email='aluno@example.com',
             provider_subject='google-imported-lead-subject',
+            photo_url='',
         )
         build_provider_mock.return_value = provider
 
@@ -1662,6 +1665,316 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(membership.cleared_at, first_cleared_at)
         messages = list(response.context['messages'])
         self.assertTrue(any('não está em espera' in str(message) for message in messages))
+
+    def test_create_box_link_action_persists_link_via_real_repository(self):
+        # Onda 0 (docs/plans/student-login-magic-link-bugs-corda.md): antes desta
+        # onda, o unico teste de create-box-link mocava CreateStudentBoxInviteLink
+        # inteiro (tests/test_student_identity_invite_actions.py). Este teste bate
+        # de verdade no banco pra garantir que o handler continua persistindo.
+        owner = get_user_model().objects.create_superuser(
+            username='owner-create-box-link',
+            email='owner-create-box-link@example.com',
+            password='Senha@123456',
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse('student-invitation-operations'),
+            {'action': 'create-box-link'},
+            follow=True,
+        )
+
+        link = StudentBoxInviteLink.objects.filter(box_root_slug=get_box_runtime_slug()).first()
+        self.assertIsNotNone(link)
+        self.assertIsNone(link.revoked_at)
+        messages = list(response.context['messages'])
+        self.assertTrue(any('Link em massa' in str(message) for message in messages))
+
+    def test_create_box_link_action_revokes_previous_active_link(self):
+        owner = get_user_model().objects.create_superuser(
+            username='owner-create-box-link-twice',
+            email='owner-create-box-link-twice@example.com',
+            password='Senha@123456',
+        )
+        self.client.force_login(owner)
+
+        self.client.post(reverse('student-invitation-operations'), {'action': 'create-box-link'})
+        first_link = (
+            StudentBoxInviteLink.objects
+            .filter(box_root_slug=get_box_runtime_slug())
+            .order_by('created_at')
+            .first()
+        )
+        self.assertIsNotNone(first_link)
+
+        self.client.post(reverse('student-invitation-operations'), {'action': 'create-box-link'})
+        first_link.refresh_from_db()
+
+        self.assertIsNotNone(first_link.revoked_at)
+        active_links = StudentBoxInviteLink.objects.filter(
+            box_root_slug=get_box_runtime_slug(), revoked_at__isnull=True,
+        )
+        self.assertEqual(active_links.count(), 1)
+
+    def test_dispatcher_shows_friendly_error_instead_of_crashing(self):
+        # Onda 0: qualquer excecao dentro de uma action do dispatcher deve virar
+        # mensagem amigavel + redirect, nunca 500 cru.
+        owner = get_user_model().objects.create_superuser(
+            username='owner-dispatcher-error',
+            email='owner-dispatcher-error@example.com',
+            password='Senha@123456',
+        )
+        self.client.force_login(owner)
+
+        with patch(
+            'student_identity.staff_invite_actions.CreateStudentBoxInviteLink.execute',
+            side_effect=RuntimeError('boom'),
+        ):
+            response = self.client.post(
+                reverse('student-invitation-operations'),
+                {'action': 'create-box-link'},
+                follow=True,
+            )
+
+        self.assertEqual(response.status_code, 200)
+        messages = list(response.context['messages'])
+        self.assertTrue(any('Não conseguimos concluir essa ação' in str(message) for message in messages))
+
+    def test_save_identity_raises_conflict_for_duplicate_email_same_box(self):
+        # Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md): antes desta
+        # checagem, isso estourava IntegrityError cru (constraint condicional do banco,
+        # invisivel pra validacao de formulario).
+        box_root_slug = get_box_runtime_slug()
+        existing_student = Student.objects.create(
+            full_name='Aluno Original', phone='5511911111111', email='duplicado@example.com',
+        )
+        StudentIdentity.objects.create(
+            student_id=existing_student.id,
+            student_name=existing_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-existing-email-owner',
+            email='duplicado@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        new_student = Student.objects.create(
+            full_name='Aluno Novo', phone='5511922222222', email='novo@example.com',
+        )
+        repository = DjangoStudentIdentityRepository()
+
+        with self.assertRaises(IdentitySaveConflictError) as ctx:
+            repository.save_identity(
+                student=new_student,
+                box_root_slug=box_root_slug,
+                provider=StudentIdentityProvider.GOOGLE,
+                provider_subject='google-new-subject-duplicate-email',
+                email='duplicado@example.com',
+                invitation=None,
+            )
+
+        self.assertEqual(ctx.exception.reason, 'email-conflict')
+        self.assertFalse(
+            StudentIdentity.objects.filter(provider_subject='google-new-subject-duplicate-email').exists()
+        )
+
+    def test_change_email_action_rejects_email_already_used_in_box(self):
+        box_root_slug = get_box_runtime_slug()
+        owner = get_user_model().objects.create_superuser(
+            username='owner-change-email-conflict',
+            email='owner-change-email-conflict@example.com',
+            password='Senha@123456',
+        )
+        other_student = Student.objects.create(
+            full_name='Outro Aluno', phone='5511933333333', email='ja-usado@example.com',
+        )
+        StudentIdentity.objects.create(
+            student_id=other_student.id,
+            student_name=other_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-other-student',
+            email='ja-usado@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=self.student.id,
+            student_name=self.student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-change-email-conflict',
+            email='atual@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        membership = StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=self.student.id,
+            box_root_slug=box_root_slug,
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        self.client.force_login(owner)
+
+        response = self.client.post(
+            reverse('student-invitation-operations'),
+            {
+                'action': 'change-email',
+                'membership_id': str(membership.id),
+                'new_email': 'ja-usado@example.com',
+            },
+            follow=True,
+        )
+
+        identity.refresh_from_db()
+        self.assertEqual(identity.email, 'atual@example.com')
+        messages = list(response.context['messages'])
+        self.assertTrue(any('já está em uso' in str(message) for message in messages))
+
+    def test_complete_mass_onboarding_enriches_email_conflict_with_provider(self):
+        # Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md): a "acao
+        # inteligente" pra duplicata — mensagem diz qual provider usar, sem fundir
+        # as contas automaticamente. Confirma tambem que o Student criado antes do
+        # conflito e revertido (savepoint) e nao fica orfao no banco.
+        from student_app.workflows.onboarding_workflows import OnboardingWorkflow
+
+        box_root_slug = get_box_runtime_slug()
+        existing_student = Student.objects.create(
+            full_name='Aluno Existente', phone='5511944444444', email='conflito-mass@example.com',
+        )
+        StudentIdentity.objects.create(
+            student_id=existing_student.id,
+            student_name=existing_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-existing-mass-onboarding',
+            email='conflito-mass@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+
+        workflow = OnboardingWorkflow()
+        result = workflow.complete_mass_onboarding(
+            pending_onboarding={
+                'box_root_slug': box_root_slug,
+                'provider': StudentIdentityProvider.GOOGLE,
+                'provider_subject': 'google-new-mass-onboarding',
+                'email': 'conflito-mass@example.com',
+            },
+            cleaned_data={
+                'full_name': 'Aluno Novo Mass',
+                'phone': '5511955555555',
+                'birth_date': None,
+                'selected_plan': None,
+            },
+        )
+
+        self.assertFalse(result.is_success)
+        self.assertEqual(result.status, 'duplicate_email')
+        self.assertIn('Google', result.error_message)
+        self.assertFalse(Student.objects.filter(phone='5511955555555').exists())
+        self.assertFalse(
+            StudentIdentity.objects.filter(provider_subject='google-new-mass-onboarding').exists()
+        )
+
+    def test_complete_mass_onboarding_claims_existing_lead_by_phone(self):
+        # Bug reportado: recepcao ja cadastra o aluno como lead (nome+telefone), mas
+        # ele nunca completa o login do app. Quando usa o link em massa depois, o
+        # telefone "ja existe" — mas e ele mesmo. Em vez de bloquear, reaproveita a
+        # ficha existente (sem StudentIdentity ainda) e so cria o login em cima dela.
+        from student_app.workflows.onboarding_workflows import OnboardingWorkflow
+
+        box_root_slug = get_box_runtime_slug()
+        lead = Student.objects.create(full_name='Lead Sem Login', phone='5511977777777')
+
+        workflow = OnboardingWorkflow()
+        result = workflow.complete_mass_onboarding(
+            pending_onboarding={
+                'box_root_slug': box_root_slug,
+                'provider': StudentIdentityProvider.GOOGLE,
+                'provider_subject': 'google-claim-lead',
+                'email': 'novo-login-claim@example.com',
+            },
+            cleaned_data={
+                'full_name': 'Lead Atualizado Nome',
+                'phone': '5511977777777',
+                'birth_date': None,
+                'selected_plan': None,
+            },
+        )
+
+        self.assertTrue(result.is_success, result.error_message)
+        self.assertEqual(result.student.id, lead.id)
+        self.assertEqual(Student.objects.filter(phone_lookup_index=lead.phone_lookup_index).count(), 1)
+        lead.refresh_from_db()
+        self.assertEqual(lead.full_name, 'Lead Atualizado Nome')
+        self.assertTrue(
+            StudentIdentity.objects.filter(student_id=lead.id, provider_subject='google-claim-lead').exists()
+        )
+
+    def test_mass_invite_form_allows_claimable_lead_phone(self):
+        from student_app.forms import MassInviteOnboardingForm
+
+        box_root_slug = get_box_runtime_slug()
+        Student.objects.create(full_name='Lead Sem Login Form', phone='5511966666666')
+
+        form = MassInviteOnboardingForm(
+            data={'full_name': 'Nome Completo Novo', 'phone': '5511966666666', 'birth_date': ''},
+            box_root_slug=box_root_slug,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_mass_invite_form_blocks_phone_with_existing_identity(self):
+        from student_app.forms import MassInviteOnboardingForm
+
+        box_root_slug = get_box_runtime_slug()
+        existing_student = Student.objects.create(full_name='Ja Tem Login Form', phone='5511900000000')
+        StudentIdentity.objects.create(
+            student_id=existing_student.id,
+            student_name=existing_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-form-block-test',
+            email='form-block@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+
+        form = MassInviteOnboardingForm(
+            data={'full_name': 'Outra Pessoa Form', 'phone': '5511900000000', 'birth_date': ''},
+            box_root_slug=box_root_slug,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('cadastrado com este WhatsApp', str(form.errors))
+
+    def test_find_claimable_lead_by_phone_returns_none_when_already_has_identity(self):
+        # Contraprova: se o Student encontrado JA tem identidade de app neste box,
+        # nao e mais "lead esperando login" — e duplicata real, entao nao e
+        # reaproveitavel. Quem bloqueia esse caso de verdade na UI e o form
+        # (clean_phone, via _student_phone_exists) — este teste garante que o
+        # detector de "lead reivindicavel" nao aponta esse Student como candidato,
+        # o que faria complete_mass_onboarding tentar reaproveitar indevidamente
+        # um cadastro que ja pertence a outra pessoa.
+        from student_app.forms import find_claimable_lead_by_phone
+
+        box_root_slug = get_box_runtime_slug()
+        existing_student = Student.objects.create(full_name='Ja Tem Login', phone='5511988888888')
+        StudentIdentity.objects.create(
+            student_id=existing_student.id,
+            student_name=existing_student.full_name,
+            box_root_slug=box_root_slug,
+            primary_box_root_slug=box_root_slug,
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='google-already-has-login',
+            email='ja-tem-login@example.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+
+        claimable = find_claimable_lead_by_phone(normalized_phone='5511988888888', box_root_slug=box_root_slug)
+
+        self.assertIsNone(claimable)
 
     def test_coach_cannot_clear_membership(self):
         coach = self._create_role_user(

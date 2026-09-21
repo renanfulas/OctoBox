@@ -70,6 +70,11 @@ PONTOS CRITICOS:
             </aside>
 
             <div class="checkout-form-card">
+                {% if promo_valid %}
+                    <div class="checkout-promo-banner" role="status">
+                        🎉 Cupom <strong>{{ promo }}</strong> aplicado — seu 1º mês sai grátis no cartão.
+                    </div>
+                {% endif %}
                 {% if messages %}
                     <div class="checkout-messages" role="status">
                         {% for message in messages %}
@@ -84,9 +89,10 @@ PONTOS CRITICOS:
                     Apenas 4 campos. Você confirma o pagamento na próxima tela.
                 </p>
 
-                <form method="post" novalidate class="checkout-form" action="{% url 'signup-checkout' %}?plan={{ plan }}">
+                <form method="post" novalidate class="checkout-form" action="{% url 'signup-checkout' %}?plan={{ plan }}{% if promo %}&promo={{ promo }}{% endif %}">
                     {% csrf_token %}
                     <input type="hidden" name="plan" value="{{ plan }}">
+                    <input type="hidden" name="promo" value="{{ promo }}">
 
                     {% for field in form %}
                         <div class="checkout-field {% if field.errors %}checkout-field--error{% endif %}">

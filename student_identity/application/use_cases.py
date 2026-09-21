@@ -12,7 +12,13 @@ from .commands import (
     TransferStudentToBoxCommand,
 )
 from .ports import StudentIdentityRepositoryPort
-from .results import StudentBoxInviteLinkRecord, StudentIdentityAuthResult, StudentInvitationResult, StudentTransferResult
+from .results import (
+    IdentitySaveConflictError,
+    StudentBoxInviteLinkRecord,
+    StudentIdentityAuthResult,
+    StudentInvitationResult,
+    StudentTransferResult,
+)
 
 
 class CreateStudentInvitation:
@@ -109,14 +115,23 @@ class AuthenticateStudentWithProvider:
         if existing_identity is not None and existing_identity.box_root_slug != command.box_root_slug:
             return StudentIdentityAuthResult(success=False, identity=None, failure_reason='student-box-mismatch')
 
-        saved = self.repository.save_identity(
-            student=student,
-            box_root_slug=command.box_root_slug,
-            provider=command.provider,
-            provider_subject=provider_subject,
-            email=command.email,
-            invitation=invitation,
-        )
+        try:
+            saved = self.repository.save_identity(
+                student=student,
+                box_root_slug=command.box_root_slug,
+                provider=command.provider,
+                provider_subject=provider_subject,
+                email=command.email,
+                invitation=invitation,
+            )
+        except IdentitySaveConflictError as exc:
+            # 'email-conflict' (Onda 3) e alcancavel de verdade aqui: o e-mail vindo do
+            # provider pode coincidir com o de outra identity ja ativa no mesmo box, mesmo
+            # quando o convite/candidato de e-mail aponta pra um student diferente.
+            # 'provider-subject-conflict'/'unique-constraint-conflict' so por corrida real,
+            # ja que find_by_provider_subject foi checado no topo deste metodo.
+            failure_reason = 'email-conflict' if exc.reason == 'email-conflict' else 'provider-subject-conflict'
+            return StudentIdentityAuthResult(success=False, identity=None, failure_reason=failure_reason)
         return StudentIdentityAuthResult(success=True, identity=saved)
 
 

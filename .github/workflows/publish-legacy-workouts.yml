@@ -1,0 +1,72 @@
+name: Publish Legacy Workouts (produção)
+
+# Disparo manual, escopo estreito: roda SÓ `manage.py migrate_legacy_workouts`
+# na VPS de produção -- nunca um comando arbitrário. Reusa os mesmos segredos
+# de SSH do deploy-vps.yml (VPS_HOST/VPS_USER/VPS_SSH_KEY/VPS_PORT); esta
+# sessão nunca ve a credencial, só o Action a usa. `dry_run` default `true`
+# -- disparo acidental sem trocar o campo nunca publica nada de verdade.
+#
+# POR QUE EXISTE:
+# - Onda A2 do CORDA (docs/plans/public-workouts-produtizacao-corda.md) --
+#   publicar os 10 programas legados como PublicWorkoutProgram de verdade e'
+#   decisao de negocio deliberada (dado de cliente pagante), nunca automatica
+#   no deploy de rotina (deploy-vps.yml so' roda `migrate`, nao comandos de
+#   dado). Isso da um botao auditavel pra essa decisao, sem expor credencial
+#   de banco a nenhuma sessao de IA nem exigir SSH manual toda vez que um
+#   programa precisar ser republicado (ex.: Renan edita o HTML de um aluno).
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Slug unico (vazio = todos os 10 legados)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'true = so imprime o relatorio; false = publica de verdade'
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vps-production-main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Rodar migrate_legacy_workouts na VPS
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          timeout: 2m
+          command_timeout: 10m
+          envs: INPUT_SLUG,INPUT_DRY_RUN
+          script: |
+            set -euo pipefail
+            APP=/srv/octobox/app
+            VENV=/srv/octobox/venv
+            ENV=/srv/octobox/shared/octobox.env
+            set -a && source "$ENV" && set +a
+
+            ARGS=()
+            if [ -n "${INPUT_SLUG:-}" ]; then
+              ARGS+=(--slug="$INPUT_SLUG")
+            fi
+            if [ "${INPUT_DRY_RUN:-true}" = "true" ]; then
+              ARGS+=(--dry-run)
+            fi
+
+            echo "==> python manage.py migrate_legacy_workouts ${ARGS[*]:-}"
+            "$VENV/bin/python" "$APP/manage.py" migrate_legacy_workouts "${ARGS[@]}"
+        env:
+          INPUT_SLUG: ${{ inputs.slug }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
