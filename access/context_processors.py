@@ -191,13 +191,6 @@ def _build_navigation(role_slug, current_view_name):
             'icon': 'FI',
         },
         {
-            'nav_key': 'curva-analytics',
-            'label': 'Curva Analytics',
-            'href': reverse('public-workout-funnel-analytics'),
-            'roles': (ROLE_OWNER, ROLE_DEV),
-            'icon': 'CV',
-        },
-        {
             'nav_key': 'entradas',
             'label': 'Entradas',
             'href': reverse('intake-center'),

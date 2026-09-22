@@ -54,8 +54,6 @@ from .services import (
 
 @admin.register(PublicWorkoutAcquisitionSession)
 class PublicWorkoutAcquisitionSessionAdmin(admin.ModelAdmin):
-    change_list_template = 'admin/public_workouts/acquisition_change_list.html'
-
     list_display = (
         'id', 'first_source', 'first_medium', 'last_source', 'last_medium',
         'account', 'subscription', 'first_seen_at', 'last_seen_at',

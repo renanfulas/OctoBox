@@ -1,0 +1,21 @@
+{% extends "public_workouts/analytics_base.html" %}
+
+{% block title %}Acesso ao Analytics · Curva{% endblock %}
+
+{% block content %}
+<section class="curva-analytics-login" aria-labelledby="analytics-login-title">
+  <div class="curva-analytics-login__intro">
+    <p class="curva-analytics-eyebrow">Área restrita · Curva</p>
+    <h1 id="analytics-login-title">Os números por trás<br>de cada decisão.</h1>
+    <p>Acesse o funil comercial para acompanhar aquisição, avanço e conversão em pagamento.</p>
+  </div>
+  <form method="post" class="curva-analytics-login__form" novalidate>
+    {% csrf_token %}
+    <div><label for="analytics-username">Usuário</label><input id="analytics-username" name="username" type="text" value="{{ username|default:'' }}" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></div>
+    <div><label for="analytics-password">Senha</label><input id="analytics-password" name="password" type="password" autocomplete="current-password" required></div>
+    {% if error %}<p class="curva-analytics-login__error" role="alert">{{ error }}</p>{% endif %}
+    <button type="submit">Entrar no Analytics <span aria-hidden="true">↗</span></button>
+    <small>Acesso exclusivo à equipe responsável pela operação Curva.</small>
+  </form>
+</section>
+{% endblock %}

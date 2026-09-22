@@ -2,11 +2,13 @@
 
 ## Acesso e ativação
 
-Acesse **Curva Analytics** na navegação do OctoBox ou abra
-`/treinos/analytics/`. A página usa o shell autenticado do produto e é restrita
-aos papéis **Owner** e **DEV**. Selecione coortes de 7, 30 ou 90 dias e exporte
-o JSON agregado pelo mesmo cockpit. O Django Admin continua disponível apenas
-para inspecionar os registros brutos de aquisição.
+Acesse `/treinos/analytics/`. O cockpit pertence ao produto Curva, possui
+layout e autenticação próprios e não usa usuários, papéis, tenant ou navegação
+do OctoBox. As credenciais autorizadas ficam em
+`PublicWorkoutAnalyticsCredential`, com senha armazenada somente como hash
+PBKDF2. A sessão expira em oito horas e o login limita tentativas por origem.
+Selecione coortes de 7, 30 ou 90 dias e exporte o JSON agregado pelo cockpit.
+O Django Admin serve apenas para inspecionar os registros brutos de aquisição.
 
 `PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED=True` é o novo padrão. Uma variável
 explícita `False` no ambiente continua desligando a coleta. O painel mostra

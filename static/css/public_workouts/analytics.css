@@ -1,3 +1,72 @@
+.curva-analytics-body {
+  --text-primary: #eef7ff;
+  --text-secondary: #91a4b5;
+  --surface-1: #0c151f;
+  --surface-2: #121e2a;
+  min-height: 100vh;
+  margin: 0;
+  background: #050a10;
+  color: var(--text-primary);
+  font-family: Manrope, system-ui, sans-serif;
+}
+
+.curva-analytics-body *,
+.curva-analytics-body *::before,
+.curva-analytics-body *::after { box-sizing: border-box; }
+
+.curva-analytics-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1600px;
+  min-height: 76px;
+  margin: 0 auto;
+  padding: 14px clamp(20px, 4vw, 56px);
+  border-bottom: 1px solid rgba(238, 247, 255, .1);
+}
+
+.curva-analytics-brand {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: start;
+  color: #f4fbff;
+  font-size: 22px;
+  font-weight: 780;
+  letter-spacing: -.05em;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.curva-analytics-brand > span { margin-left: 3px; color: #15d9ff; font-size: 13px; }
+.curva-analytics-brand > small { grid-column: 1 / -1; margin-top: 6px; color: #71889b; font-size: 8px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.curva-analytics-account { display: flex; align-items: center; gap: 16px; color: #91a4b5; font-size: 12px; }
+.curva-analytics-account form { margin: 0; }
+.curva-analytics-account button { min-height: 36px; padding: 0 14px; border: 1px solid rgba(238, 247, 255, .14); border-radius: 9px; background: transparent; color: #eef7ff; font: inherit; font-weight: 700; cursor: pointer; }
+.curva-analytics-account button:hover { border-color: #15d9ff; color: #15d9ff; }
+.curva-analytics-main { padding: clamp(22px, 4vw, 56px); }
+
+.curva-analytics-login {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+  gap: clamp(40px, 8vw, 120px);
+  align-items: center;
+  width: min(1120px, 100%);
+  min-height: calc(100vh - 188px);
+  margin: 0 auto;
+}
+
+.curva-analytics-login__intro h1 { max-width: 720px; margin: 0; font-size: clamp(42px, 6.2vw, 82px); font-weight: 680; letter-spacing: -.06em; line-height: .96; }
+.curva-analytics-login__intro > p:last-child { max-width: 560px; margin: 26px 0 0; color: #91a4b5; font-size: 16px; line-height: 1.7; }
+.curva-analytics-login__form { display: grid; gap: 18px; padding: clamp(24px, 4vw, 42px); border: 1px solid rgba(238, 247, 255, .12); border-radius: 20px; background: linear-gradient(145deg, rgba(18, 30, 42, .98), rgba(8, 17, 25, .98)); }
+.curva-analytics-login__form > div { display: grid; gap: 8px; }
+.curva-analytics-login__form label { color: #91a4b5; font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.curva-analytics-login__form input { width: 100%; min-height: 50px; border: 1px solid rgba(238, 247, 255, .14); border-radius: 10px; padding: 0 14px; outline: none; background: #07111a; color: #eef7ff; font: inherit; }
+.curva-analytics-login__form input:focus { border-color: #15d9ff; box-shadow: 0 0 0 3px rgba(21, 217, 255, .1); }
+.curva-analytics-login__form > button { display: flex; align-items: center; justify-content: space-between; min-height: 52px; border: 0; border-radius: 10px; padding: 0 18px; background: #15d9ff; color: #031016; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.curva-analytics-login__form > small { color: #64788a; font-size: 10px; line-height: 1.5; text-align: center; }
+.curva-analytics-login__error { margin: 0; padding: 12px; border-left: 2px solid #ff6b7a; background: rgba(255, 107, 122, .08); color: #ffabb4; font-size: 12px; }
+
 .curva-analytics {
   --ca-accent: #15d9ff;
   --ca-accent-soft: rgba(21, 217, 255, .12);
@@ -105,6 +174,9 @@
   .curva-analytics-lower-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
+  .curva-analytics-main { padding: 20px; }
+  .curva-analytics-login { grid-template-columns: 1fr; align-content: center; gap: 36px; min-height: calc(100vh - 116px); }
+  .curva-analytics-login__intro h1 { font-size: clamp(38px, 12vw, 58px); }
   .curva-analytics { gap: 16px; }
   .curva-analytics-hero { grid-template-columns: 1fr; align-items: start; min-height: auto; border-radius: 18px; }
   .curva-analytics-hero-status { min-width: 0; }

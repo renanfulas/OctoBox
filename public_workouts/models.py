@@ -56,6 +56,21 @@ from django.utils import timezone
 from model_support.base import TimeStampedModel
 
 
+class PublicWorkoutAnalyticsCredential(TimeStampedModel):
+    """Credencial isolada do cockpit Curva; não usa usuários ou papéis do OctoBox."""
+
+    username = models.CharField(max_length=80, unique=True)
+    password_hash = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+    last_login_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['username']
+
+    def __str__(self) -> str:
+        return self.username
+
+
 class PublicWorkoutAssessment(models.Model):
     plan_slug = models.CharField(max_length=50, db_index=True)
     measured_at = models.DateField()
