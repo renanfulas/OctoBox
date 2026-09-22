@@ -18,6 +18,7 @@ from public_workouts.models import PublicWorkoutMovement, PublicWorkoutProgram
 from public_workouts.schema import PayloadValidationError, build_example_payload
 from public_workouts.services import (
     activate_program_version,
+    build_movement_label_lookup,
     get_active_program,
     list_program_versions,
     publish_program,
@@ -244,3 +245,43 @@ class ListProgramVersionsTests(TestCase):
         versions = list_program_versions(slug='bruno')
 
         self.assertNotIn('payload', versions[0])
+
+
+class BuildMovementLabelLookupTests(TestCase):
+    # Onda B3 — nome de exercicio em PT-BR pro template unico (workout.html).
+
+    def test_empty_payload_returns_empty_dict(self):
+        self.assertEqual(build_movement_label_lookup({'days': []}), {})
+
+    def test_returns_auto_humanized_label_after_publish(self):
+        # publish_program -> _ensure_movements_exist ja cria a linha (palpite
+        # mecanico, na ausencia de revisao) pra todo movement_slug do payload
+        # — build_movement_label_lookup nunca fica "sem nada" pra um programa
+        # publicado de verdade.
+        payload = _payload(program_id='bruno-2026-q1')
+        publish_program(slug='bruno', payload=payload)
+
+        lookup = build_movement_label_lookup(payload)
+
+        self.assertEqual(lookup, {'agachamento-livre': 'Agachamento livre'})
+
+    def test_returns_curated_label_when_movement_was_reviewed(self):
+        payload = _payload(program_id='bruno-2026-q1')
+        publish_program(slug='bruno', payload=payload)
+        PublicWorkoutMovement.objects.filter(slug='agachamento-livre').update(label_pt='Agachamento Livre (revisado)')
+
+        lookup = build_movement_label_lookup(payload)
+
+        self.assertEqual(lookup, {'agachamento-livre': 'Agachamento Livre (revisado)'})
+
+    def test_one_query_covers_repeated_movement_slug_across_blocks(self):
+        payload = _payload(program_id='bruno-2026-q1')
+        second_day = copy.deepcopy(payload['days'][0])
+        second_day['day_id'] = 'qua'
+        payload['days'].append(second_day)  # mesmo movement_slug repetido
+        publish_program(slug='bruno', payload=payload)
+
+        with self.assertNumQueries(1):
+            lookup = build_movement_label_lookup(payload)
+
+        self.assertEqual(lookup, {'agachamento-livre': 'Agachamento livre'})
