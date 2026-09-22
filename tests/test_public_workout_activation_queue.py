@@ -168,12 +168,15 @@ class CurvaStaffLoginTests(TestCase):
         self.queue_url = reverse('public-workout-activation-queue')
         self.login_url = reverse('public-workout-staff-login')
         self.logout_url = reverse('public-workout-staff-logout')
-        self.credentials = {
-            username: PublicWorkoutStaffCredential.objects.create(
-                username=username, password_hash=make_password(password), is_active=True,
+        # update_or_create, nao create(): a migration de seed ja grava uma
+        # linha 'renan' nesta mesma tabela (compartilhada com o cockpit de
+        # analytics) -- create() bateria em unique constraint de username.
+        self.credentials = {}
+        for username, password in _TEST_PASSWORDS.items():
+            credential, _created = PublicWorkoutStaffCredential.objects.update_or_create(
+                username=username, defaults={'password_hash': make_password(password), 'is_active': True},
             )
-            for username, password in _TEST_PASSWORDS.items()
-        }
+            self.credentials[username] = credential
 
     def test_anonymous_visitor_is_redirected_to_login(self):
         response = self.client.get(self.queue_url)
