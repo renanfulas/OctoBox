@@ -80,6 +80,23 @@ def env_list_alias(names, default=''):
     return env_list(names[0], default)
 
 
+def env_credentials(name, default=''):
+    """'usuario:hash_pbkdf2,usuario2:hash_pbkdf2' -> {usuario: hash}.
+
+    Nunca guarda senha em texto puro — so o hash gerado com
+    django.contrib.auth.hashers.make_password. O username vira minusculo
+    pra comparacao case-insensitive no login.
+    """
+    credentials = {}
+    for entry in os.getenv(name, default).split(','):
+        username, _, password_hash = entry.strip().partition(':')
+        username = username.strip().lower()
+        password_hash = password_hash.strip()
+        if username and password_hash:
+            credentials[username] = password_hash
+    return credentials
+
+
 def build_https_trusted_origins(hosts):
     origins = []
     for host in hosts:
@@ -638,6 +655,18 @@ PUBLIC_WORKOUT_PUBLIC_BASE_URL = env_str('PUBLIC_WORKOUT_PUBLIC_BASE_URL', '')
 # servindo o template legado por-cliente (bruno.html etc.) mesmo com
 # PublicWorkoutProgram ativo — reverte por env var + restart, sem deploy.
 PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS = frozenset(filter(None, env_str('PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS', '').split(',')))
+# Quem recebe o aviso quando uma assinatura do corredor vira ACTIVE (venda
+# nova ou reativacao apos suspensao/atraso) — ver reactivate_subscription em
+# public_workouts/billing.py e notify_staff_new_subscription em notifications.py.
+PUBLIC_WORKOUT_STAFF_ALERT_EMAILS = env_list(
+    'PUBLIC_WORKOUT_STAFF_ALERT_EMAILS', 'renanfulas@outlook.com,giovannafontesrios@outlook.com'
+)
+# Login proprio da area interna do Curva (public_workouts/staff_auth.py) —
+# NAO e o login de staff do OctoBox (access/, Membership por Box): o
+# corredor de treinos e um produto a parte, sem tenant/box, entao suas
+# duas unicas contas de operacao (Renan, Giovanna) nao passam por
+# auth.User nem pelo sistema de papeis do OctoBox.
+PUBLIC_WORKOUT_STAFF_CREDENTIALS = env_credentials('PUBLIC_WORKOUT_STAFF_CREDENTIALS')
 STUDENT_OAUTH_PUBLIC_BASE_URL = env_str('STUDENT_OAUTH_PUBLIC_BASE_URL')
 STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY')
 STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY')

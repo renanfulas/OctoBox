@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import logging
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
@@ -70,6 +71,41 @@ def notify_payment_due(payment, offset_days: int) -> dict:
         )
         result['email'] = 'error'
 
+    return result
+
+
+def notify_staff_new_subscription(subscription, *, previous_status: str) -> dict:
+    """Avisa a equipe quando uma assinatura do corredor vira ACTIVE.
+
+    Cobre venda nova (PENDING_PAYMENT -> ACTIVE) e reativacao apos
+    suspensao/atraso (SUSPENDED/PAST_DUE -> ACTIVE) — quem chama
+    (reactivate_subscription) so aciona isto numa transicao de verdade,
+    nunca numa renovacao recorrente que ja estava ACTIVE.
+
+    Por destinatario, nunca propaga: um endereco mal configurado nao pode
+    impedir os demais de receber, nem derrubar o webhook que confirmou o
+    pagamento (mesma regra do resto deste modulo).
+    """
+    account = subscription.account
+    subject = f'Nova assinatura ativa — {account.email} ({subscription.get_tier_display()})'
+    body = (
+        f'Assinatura confirmada e ativa.\n\n'
+        f'Aluno: {account.email}\n'
+        f'Plano: {subscription.get_tier_display()}\n'
+        f'Slug: {subscription.plan_slug or "(ainda nao atribuido)"}\n'
+        f'Status anterior: {previous_status}\n'
+    )
+    result = {}
+    for staff_email in getattr(settings, 'PUBLIC_WORKOUT_STAFF_ALERT_EMAILS', []):
+        try:
+            get_student_email_gateway().send(subject=subject, body=body, to_email=staff_email)
+            result[staff_email] = 'sent'
+        except Exception:
+            logger.exception(
+                'notify_staff_new_subscription: falha no e-mail. subscription=%s staff_email=%s',
+                subscription.pk, staff_email,
+            )
+            result[staff_email] = 'error'
     return result
 
 
@@ -199,5 +235,5 @@ def notify_waitlist_invitation(entry, *, base_url: str) -> bool:
 
 __all__ = [
     'notify_meal_plan_ready', 'notify_payment_due', 'notify_program_ready',
-    'notify_waitlist_invitation',
+    'notify_staff_new_subscription', 'notify_waitlist_invitation',
 ]
