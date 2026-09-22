@@ -16,6 +16,7 @@ from public_workouts.models import (
 )
 from public_workouts.refunds import (
     RefundNotEligibleError,
+    get_refund_eligibility,
     process_refund_request,
     submit_refund_request,
 )
@@ -45,6 +46,21 @@ class PublicWorkoutRefundTests(TestCase):
 
         self.assertEqual(first.pk, second.pk)
         self.assertEqual(first.reason, 'Nao me adaptei')
+
+    def test_eligibility_before_payment_confirmed_is_not_reported_as_expired(self):
+        eligibility = get_refund_eligibility(self.subscription)
+
+        self.assertFalse(eligibility['payment_confirmed'])
+        self.assertFalse(eligibility['eligible'])
+        self.assertIsNone(eligibility['deadline'])
+
+    def test_eligibility_within_seven_days_of_confirmed_payment(self):
+        self._payment(days_ago=1)
+
+        eligibility = get_refund_eligibility(self.subscription)
+
+        self.assertTrue(eligibility['payment_confirmed'])
+        self.assertTrue(eligibility['eligible'])
 
     def test_request_after_deadline_is_rejected(self):
         self._payment(days_ago=8)

@@ -19,7 +19,8 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from django.test import TestCase
+from django.core import mail
+from django.test import TestCase, override_settings
 
 from public_workouts.billing import (
     get_or_create_subscription,
@@ -30,12 +31,15 @@ from public_workouts.billing import (
 )
 from public_workouts.models import (
     PublicWorkoutAccount,
+    PublicWorkoutOutboxMessage,
+    PublicWorkoutOutboxStatus,
     PublicWorkoutPaymentNotice,
     PublicWorkoutPaymentStatus,
     PublicWorkoutSubscription,
     PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
 )
+from public_workouts.outbox import TOPIC_STAFF_NEW_SUBSCRIPTION, drain_public_workout_outbox
 
 
 class GetOrCreateSubscriptionTests(TestCase):
@@ -167,6 +171,54 @@ class RecordSuccessfulInvoicePaymentTests(TestCase):
 
         self.subscription.refresh_from_db()
         self.assertEqual(self.subscription.status, PublicWorkoutSubscriptionStatus.ACTIVE)
+
+    @override_settings(PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com', 'giovanna@example.com'])
+    def test_activation_enqueues_a_staff_alert_without_sending_synchronously(self):
+        # Isto roda dentro do request/response do webhook da Stripe
+        # (stripe_handlers.py) — nao pode chamar o gateway de e-mail direto
+        # aqui, ou uma falha/lentidao do provedor atrasaria (ou arriscaria
+        # travar) a confirmacao do pagamento pra Stripe.
+        record_successful_invoice_payment(
+            self.subscription, stripe_invoice_id='in_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10)
+        )
+
+        self.assertEqual(len(mail.outbox), 0)
+        message = PublicWorkoutOutboxMessage.objects.get(topic=TOPIC_STAFF_NEW_SUBSCRIPTION)
+        self.assertEqual(message.status, PublicWorkoutOutboxStatus.PENDING)
+
+        drain_public_workout_outbox()
+
+        sent_to = [recipient for msg in mail.outbox for recipient in msg.to]
+        self.assertEqual(sent_to, ['renan@example.com', 'giovanna@example.com'])
+
+    @override_settings(PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com'])
+    def test_alerts_staff_again_on_reactivation_after_suspension(self):
+        self.subscription.status = PublicWorkoutSubscriptionStatus.SUSPENDED
+        self.subscription.save(update_fields=['status'])
+
+        record_successful_invoice_payment(
+            self.subscription, stripe_invoice_id='in_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10)
+        )
+        drain_public_workout_outbox()
+
+        self.assertEqual(len(mail.outbox), 1)
+
+    @override_settings(PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com'])
+    def test_does_not_alert_staff_again_on_a_recurring_renewal(self):
+        # So a transicao pra ACTIVE avisa a equipe — renovacao mensal normal
+        # (assinatura ja ACTIVE) nao pode inundar a caixa de entrada.
+        self.subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        self.subscription.save(update_fields=['status'])
+
+        record_successful_invoice_payment(
+            self.subscription, stripe_invoice_id='in_2', gross_amount=Decimal('97.00'), due_date=date(2026, 4, 10)
+        )
+
+        self.assertEqual(PublicWorkoutOutboxMessage.objects.filter(topic=TOPIC_STAFF_NEW_SUBSCRIPTION).count(), 0)
+        drain_public_workout_outbox()
+        self.assertEqual(len(mail.outbox), 0)
+
+        self.assertEqual(len(mail.outbox), 0)
 
 
 class HandleFailedInvoicePaymentTests(TestCase):

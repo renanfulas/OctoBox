@@ -1,0 +1,60 @@
+/*
+ * ARQUIVO: telas internas de operacao do Curva (fila de ativacao etc.).
+ *
+ * POR QUE ELE EXISTE:
+ * - Reusa os tokens --curve-* ja declarados em account.css (:root nao e
+ *   escopado por classe de body, entao carregar os dois arquivos juntos
+ *   basta) em vez de duplicar cor/fonte — mas o corredor de treinos nao
+ *   e o mesmo produto do OctoBox Control, entao estas telas NUNCA
+ *   carregam design-system.css nem o shell autenticado do OctoBox.
+ */
+
+body.curva-ops{min-height:100vh;margin:0;background:radial-gradient(circle at 82% 4%,rgba(74,144,226,.16),transparent 32rem),var(--curve-bg);color:var(--curve-text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+*{box-sizing:border-box}
+
+.curva-ops-shell{width:min(1100px,100%);margin:0 auto;padding:24px clamp(16px,4vw,32px) 48px}
+.curva-ops-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.curva-ops-brand{color:var(--curve-text);font-size:1.1rem;font-weight:850;text-decoration:none;letter-spacing:-.03em}
+.curva-ops-brand span{color:var(--curve-cyan)}
+.curva-ops-user{display:flex;align-items:center;gap:12px;color:var(--curve-muted);font-size:.85rem}
+.curva-ops-user form{margin:0}
+.curva-ops-user button{border:0;background:none;color:var(--curve-cyan);font:inherit;cursor:pointer;text-decoration:underline}
+
+.curva-ops-hero{margin-bottom:24px}
+.curva-ops-eyebrow{font-size:.74rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--curve-cyan);margin:0 0 8px}
+.curva-ops-hero h1{margin:0 0 8px;font-size:clamp(1.5rem,4vw,2.1rem);letter-spacing:-.03em}
+.curva-ops-hero p{margin:0;color:var(--curve-muted)}
+
+.curva-ops-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:24px}
+.curva-ops-stat{border:1px solid var(--curve-border);border-radius:16px;background:rgba(16,24,42,.82);padding:16px 18px}
+.curva-ops-stat span{display:block;color:var(--curve-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}
+.curva-ops-stat strong{display:block;margin-top:6px;font-size:1.6rem}
+.curva-ops-stat.is-danger strong{color:#fca5a5}
+
+.curva-ops-card{border:1px solid var(--curve-border);border-radius:18px;background:rgba(16,24,42,.7);padding:20px;overflow-x:auto}
+.curva-ops-table{width:100%;border-collapse:separate;border-spacing:0}
+.curva-ops-table th,.curva-ops-table td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--curve-border);font-size:.87rem}
+.curva-ops-table th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--curve-muted);font-weight:700}
+.curva-ops-table tbody tr:last-child td{border-bottom:0}
+.curva-ops-table tbody tr:hover{background:rgba(0,229,255,.03)}
+
+.curva-ops-empty{padding:24px;text-align:center;color:var(--curve-muted)}
+
+.curva-ops-pill{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:999px;font-size:.74rem;font-weight:700;white-space:nowrap;background:rgba(148,163,184,.14);color:var(--curve-muted)}
+.curva-ops-pill.is-success{background:rgba(52,211,153,.14);color:#6ee7b7}
+.curva-ops-pill.is-warning{background:rgba(251,191,36,.14);color:#fde68a}
+.curva-ops-pill.is-danger{background:rgba(248,113,113,.14);color:#fca5a5}
+.curva-ops-pill.is-info{background:rgba(0,229,255,.12);color:#67e8f9}
+
+.curva-ops-meta{margin:6px 0 0;font-size:.8rem;color:var(--curve-muted)}
+.curva-ops-footer{margin-top:20px;color:var(--curve-muted);font-size:.85rem}
+.curva-ops-footer a{color:var(--curve-cyan)}
+
+.curva-ops-pagination{display:flex;align-items:center;gap:12px;margin-top:16px;color:var(--curve-muted);font-size:.85rem}
+.curva-ops-pagination a{color:var(--curve-cyan);text-decoration:none;font-weight:700}
+
+@media (max-width:720px){
+  .curva-ops-stats{grid-template-columns:repeat(2,1fr)}
+  .curva-ops-topbar{align-items:flex-start}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}

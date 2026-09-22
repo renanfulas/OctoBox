@@ -96,6 +96,12 @@ PUBLIC_SCHEMA_PATHS = (
     # public_workout_login.py, Onda B1 do CORDA) — nao pertencem ao
     # namespace de um personal especifico, por isso ficam fora de /renan/.
     '/treinos/',
+    # Telas internas de operacao do corredor (fila de ativacao etc.,
+    # public_workouts/views.py) — login PROPRIO (staff_auth.py), sem
+    # Box/Membership: o corredor nao e' o produto multi-tenant do OctoBox,
+    # entao nao pode depender de TenantBySessionMiddleware resolver tenant
+    # nenhum pra essas duas contas (Renan, Giovanna) entrarem.
+    '/public-workouts/',
     '/static/',
     '/favicon.ico',
     '/__debug__/',            # django-debug-toolbar

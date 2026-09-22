@@ -204,7 +204,7 @@ def reactivate_subscription(subscription, *, reason: str) -> bool:
     subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
     subscription.suspended_at = None
     subscription.save(update_fields=['status', 'suspended_at', 'updated_at'])
-    PublicWorkoutSubscriptionEvent.objects.create(
+    event = PublicWorkoutSubscriptionEvent.objects.create(
         subscription=subscription,
         from_status=previous_status,
         to_status=subscription.status,
@@ -212,6 +212,21 @@ def reactivate_subscription(subscription, *, reason: str) -> bool:
     )
     from public_workouts.operations import ensure_required_work_items
     ensure_required_work_items(subscription.pk)
+
+    # Enfileirado no outbox (nao chamado direto): isto roda dentro do
+    # webhook da Stripe (stripe_handlers.py) — um envio de e-mail sincrono
+    # aqui arriscaria atrasar (ou, se o provedor cair, travar) a resposta
+    # ao webhook que estamos justamente tentando tornar mais confiavel.
+    # `event.pk` e' unico por transicao (nunca reaproveitado numa segunda
+    # chamada idempotente com subscription ja ACTIVE), entao serve de
+    # versao pra chave de idempotencia do outbox.
+    from public_workouts.outbox import TOPIC_STAFF_NEW_SUBSCRIPTION, enqueue_outbox
+    enqueue_outbox(
+        topic=TOPIC_STAFF_NEW_SUBSCRIPTION,
+        aggregate_type='subscription_event',
+        aggregate_id=event.pk,
+        version=1,
+    )
     return True
 
 

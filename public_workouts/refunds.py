@@ -37,7 +37,12 @@ def get_refund_eligibility(subscription) -> dict:
             PublicWorkoutRefundRequestStatus.FAILED,
         ))
     )
-    return {'eligible': eligible, 'deadline': deadline, 'request': existing}
+    return {
+        'eligible': eligible,
+        'deadline': deadline,
+        'request': existing,
+        'payment_confirmed': payment is not None,
+    }
 
 
 def submit_refund_request(*, subscription, reason: str = '') -> PublicWorkoutRefundRequest:
