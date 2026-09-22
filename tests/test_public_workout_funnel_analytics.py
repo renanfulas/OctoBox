@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from public_workouts.funnel_analytics import build_acquisition_report
 from public_workouts.models import (
-    PublicWorkoutAccount, PublicWorkoutAcquisitionSession, PublicWorkoutAnalyticsCredential,
+    PublicWorkoutAccount, PublicWorkoutAcquisitionSession, PublicWorkoutStaffCredential,
     PublicWorkoutFunnelEvent,
     PublicWorkoutPayment, PublicWorkoutPaymentStatus, PublicWorkoutSubscription,
 )
@@ -21,7 +21,7 @@ class FunnelAnalyticsTests(TestCase):
     def setUp(self):
         self.at = timezone.now()
         self.analytics_password = 'test-only-password'
-        self.analytics_user, _ = PublicWorkoutAnalyticsCredential.objects.update_or_create(
+        self.analytics_user, _ = PublicWorkoutStaffCredential.objects.update_or_create(
             username='analytics-test',
             defaults={'password_hash': make_password(self.analytics_password), 'is_active': True},
         )

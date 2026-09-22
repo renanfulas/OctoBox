@@ -5,8 +5,10 @@
 Acesse `/treinos/analytics/`. O cockpit pertence ao produto Curva, possui
 layout e autenticação próprios e não usa usuários, papéis, tenant ou navegação
 do OctoBox. As credenciais autorizadas ficam em
-`PublicWorkoutAnalyticsCredential`, com senha armazenada somente como hash
-PBKDF2. A sessão expira em oito horas e o login limita tentativas por origem.
+`PublicWorkoutStaffCredential` — a mesma tabela usada pelo login da fila de
+ativação (`public_workouts/staff_auth.py`), com senha armazenada somente como
+hash PBKDF2. A sessão expira em oito horas e o login limita tentativas por
+origem.
 Selecione coortes de 7, 30 ou 90 dias e exporte o JSON agregado pelo cockpit.
 O Django Admin serve apenas para inspecionar os registros brutos de aquisição.
 

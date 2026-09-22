@@ -95,6 +95,10 @@ class CurvaStaffLoginView(TemplateView):
             return self.render_to_response(self.get_context_data(error='Usuário ou senha inválidos.'))
         request.session.cycle_key()
         request.session[SESSION_KEY] = username
+        # SESSION_COOKIE_AGE global e' 30min (pensado pro admin do OctoBox
+        # B2B) — curto demais pra Renan/Giovanna deixarem a fila aberta
+        # trabalhando no dia. Mesmo prazo do cockpit de analytics (8h).
+        request.session.set_expiry(8 * 60 * 60)
         return redirect(_safe_next_url(request) or reverse('public-workout-activation-queue'))
 
 

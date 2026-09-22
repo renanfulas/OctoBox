@@ -6,10 +6,14 @@ POR QUE ELE EXISTE:
   Membership) — as duas unicas contas que precisam das telas internas do
   corredor nao cabem no sistema de papeis do OctoBox (access/roles/),
   entao nao usam auth.User nem RoleRequiredMixin. Credenciais vem de
-  PUBLIC_WORKOUT_STAFF_CREDENTIALS (config/settings/base.py).
+  PublicWorkoutStaffCredential (models.py) — a MESMA tabela usada pelo
+  cockpit de analytics (student_identity/public_workout_views.py), pra
+  Renan/Giovanna terem uma senha so' pras duas telas internas do corredor,
+  com um lugar so' pra revogar acesso (desativar a linha no Admin, sem
+  precisar de deploy).
 
 PONTOS CRITICOS:
-- Senha nunca em texto puro em lugar nenhum (config, log, sessao) — so' o
+- Senha nunca em texto puro em lugar nenhum (banco, log, sessao) — so' o
   hash gerado com django.contrib.auth.hashers.make_password.
 - Sessao guarda so' o username autenticado, nunca senha nem hash.
 - POST em /login/... ja' ganha rate limit automatico do
@@ -17,17 +21,17 @@ PONTOS CRITICOS:
   shared_support/security/__init__.py) — sem throttle proprio aqui.
 - authenticate_staff roda check_password mesmo pra usuario inexistente
   (contra um hash valido fixo) pra nao vazar por timing quais usernames
-  existem na config.
+  existem na tabela.
 """
 
 from __future__ import annotations
 
 from urllib.parse import urlencode
 
-from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
 
 SESSION_KEY = 'curva_staff_username'
 
@@ -38,22 +42,28 @@ _DUMMY_HASH = make_password('curva-staff-auth-timing-safety-dummy')
 
 def authenticate_staff(username: str, password: str) -> str | None:
     """Devolve o username normalizado se as credenciais baterem, senao None."""
-    credentials = getattr(settings, 'PUBLIC_WORKOUT_STAFF_CREDENTIALS', {}) or {}
+    from .models import PublicWorkoutStaffCredential
+
     normalized = (username or '').strip().lower()
-    password_hash = credentials.get(normalized, _DUMMY_HASH)
-    if check_password(password or '', password_hash) and normalized in credentials:
-        return normalized
-    return None
+    credential = PublicWorkoutStaffCredential.objects.filter(username=normalized, is_active=True).first()
+    password_hash = credential.password_hash if credential else _DUMMY_HASH
+    if not check_password(password or '', password_hash) or credential is None:
+        return None
+    PublicWorkoutStaffCredential.objects.filter(pk=credential.pk).update(
+        last_login_at=timezone.now(), updated_at=timezone.now(),
+    )
+    return normalized
 
 
 def is_staff_authenticated(request) -> bool:
     username = request.session.get(SESSION_KEY)
     if not username:
         return False
-    credentials = getattr(settings, 'PUBLIC_WORKOUT_STAFF_CREDENTIALS', {}) or {}
-    # Revalida contra a config atual: credencial removida/trocada depois
+    from .models import PublicWorkoutStaffCredential
+
+    # Revalida contra a tabela atual: credencial desativada/removida depois
     # do login invalida a sessao velha na proxima requisicao.
-    return username in credentials
+    return PublicWorkoutStaffCredential.objects.filter(username=username, is_active=True).exists()
 
 
 class CurvaStaffLoginRequiredMixin:
