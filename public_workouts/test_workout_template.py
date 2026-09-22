@@ -16,6 +16,7 @@ import re
 
 from django.template.loader import render_to_string
 from django.test import TestCase
+from django.utils import timezone
 
 from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementStatus
 from public_workouts.periodization import PHASE_PROFILES
@@ -29,8 +30,11 @@ from public_workouts.templatetags.public_workouts_extras import (
     movement_load_display,
     periodization_chart_points,
     periodization_phase_banner,
+    personal_record,
     reps_phases,
+    resolve_movement_display_name,
     sibling_variations,
+    todays_logged_weight,
 )
 
 
@@ -42,6 +46,7 @@ def _render(
     one_rep_max_by_movement=None,
     trends_by_movement=None,
     plan_slug='bruno',
+    movement_labels=None,
     student_name='',
     student_photo_url=None,
     customer_portal_url=None,
@@ -55,6 +60,7 @@ def _render(
         'one_rep_max_by_movement': one_rep_max_by_movement or {},
         'trends_by_movement': trends_by_movement or {},
         'plan_slug': plan_slug,
+        'movement_labels': movement_labels or {},
         'student_name': student_name,
         'student_photo_url': student_photo_url,
         'customer_portal_url': customer_portal_url,
@@ -198,6 +204,55 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(payload)
 
         self.assertIn('class="workout-wiki-link"', html)
+
+    def test_movement_label_lookup_shows_pt_br_name_instead_of_slug_guess(self):
+        payload = build_example_payload()
+        slug = payload['days'][0]['blocks'][0]['movements'][0]['movement_slug']
+
+        html = _render(payload, movement_labels={slug: 'Nome revisado pelo treinador'})
+
+        self.assertIn('Nome revisado pelo treinador', html)
+
+    def test_movement_label_lookup_missing_falls_back_to_humanized_slug(self):
+        html = _render(build_example_payload(), movement_labels={})
+
+        self.assertIn('Agachamento livre', html)  # mesmo palpite de sempre
+
+    def test_load_input_widget_has_stepper_and_hint(self):
+        html = _render(build_example_payload())  # is_tracked=True no exemplo
+
+        self.assertIn('data-workout-load-step="-2.5"', html)
+        self.assertIn('data-workout-load-step="2.5"', html)
+        self.assertIn('data-workout-load-hint', html)
+
+    def test_records_section_exists_inside_cargas_panel(self):
+        # "Suas Cargas" (recorde por movimento) mora dentro do painel de
+        # nivel superior "Cargas" (bottom nav) desde a reestruturacao de
+        # 5 telas — nao e mais uma aba propria dentro do dia.
+        html = _render(build_example_payload())
+
+        self.assertIn('id="workout-panel-cargas"', html)
+        self.assertIn('Seus recordes', html)
+
+    def test_records_tab_shows_empty_state_without_load_history(self):
+        html = _render(build_example_payload(), load_history=[])
+
+        self.assertIn('Nenhuma carga registrada ainda.', html)
+
+    def test_records_tab_shows_personal_record_card(self):
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 6, 'rir': 2.0, 'performed_on': '2026-02-01', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+            ],
+        )
+
+        self.assertIn('workout-record-card', html)
+        # o maior peso ja registrado (100.0), nao o mais recente (90.0 foi
+        # registrado antes, 100.0 depois — personal_record ignora ordem
+        # cronologica e pega so o maior valor).
+        self.assertIn('<strong class="workout-record-card__value">100,0', html)
 
     def test_block_with_no_movements_shows_empty_state_not_crash(self):
         payload = build_example_payload()
@@ -968,6 +1023,63 @@ class LoadChartPointsFilterTests(TestCase):
         self.assertEqual(result['area_points_attr'], '')
 
 
+class PersonalRecordFilterTests(TestCase):
+    def test_empty_list_has_no_data(self):
+        result = personal_record([])
+
+        self.assertFalse(result['has_data'])
+        self.assertIsNone(result['weight_kg'])
+
+    def test_entries_with_weight_kg_none_are_ignored(self):
+        result = personal_record([{'weight_kg': None, 'performed_on': '2026-01-01', 'reps': None}])
+
+        self.assertFalse(result['has_data'])
+
+    def test_picks_highest_weight_regardless_of_date_order(self):
+        result = personal_record([
+            {'weight_kg': 90.0, 'performed_on': '2026-02-01', 'reps': 8},  # mais recente, mas nao o maior
+            {'weight_kg': 100.0, 'performed_on': '2026-01-05', 'reps': 6},
+        ])
+
+        self.assertTrue(result['has_data'])
+        self.assertEqual(result['weight_kg'], 100.0)
+        self.assertEqual(result['performed_on'], '2026-01-05')
+        self.assertEqual(result['reps'], 6)
+
+    def test_single_entry_already_has_data(self):
+        # Diferente de load_chart_points (que exige 2+ pontos pra mostrar
+        # tendencia), um recorde so precisa de 1 registro.
+        result = personal_record([{'weight_kg': 60.0, 'performed_on': '2026-01-01', 'reps': 10}])
+
+        self.assertTrue(result['has_data'])
+        self.assertEqual(result['weight_kg'], 60.0)
+
+
+class ResolveMovementDisplayNameFilterTests(TestCase):
+    def test_uses_label_when_present_in_lookup(self):
+        result = resolve_movement_display_name('barbell-bench-press', {'barbell-bench-press': 'Supino reto com barra'})
+
+        self.assertEqual(result, 'Supino reto com barra')
+
+    def test_falls_back_to_humanized_slug_when_missing(self):
+        result = resolve_movement_display_name('barbell-bench-press', {})
+
+        self.assertEqual(result, 'Barbell bench press')
+
+    def test_falls_back_when_lookup_is_none(self):
+        result = resolve_movement_display_name('agachamento-livre', None)
+
+        self.assertEqual(result, 'Agachamento livre')
+
+    def test_does_not_mangle_label_with_internal_capitals(self):
+        # Regressao: encadear |default:slug|humanize_movement_slug no
+        # template faria .capitalize() derrubar maiusculas internas tipo
+        # "Wall Ball" -> "Wall ball". O filtro proprio nunca faz isso.
+        result = resolve_movement_display_name('wall-ball', {'wall-ball': 'Wall Ball'})
+
+        self.assertEqual(result, 'Wall Ball')
+
+
 class GlossaryHighlightFilterTests(TestCase):
     def test_wraps_known_term_with_glossary_bubble(self):
         html = glossary_highlight('3x8-10 · RIR 2')
@@ -1444,6 +1556,48 @@ class MovementLoadDisplayTagTests(TestCase):
 
         self.assertEqual(result['kind'], 'free')
         self.assertFalse(result['show_registration_hint'])
+
+
+class TodaysLoggedWeightTagTests(TestCase):
+    # Achado real (usuario/Juliana): o campo de carga sempre renderizava
+    # vazio, mesmo apos salvar com sucesso -- sem confirmacao visivel ao
+    # recarregar, ela achava que nao tinha salvo e registrava de novo
+    # (13 registros no mesmo dia, varios duplicados a poucos segundos de
+    # distancia). Esta tag preenche o campo com o que ja foi salvo hoje.
+
+    def _today_iso(self) -> str:
+        return timezone.localdate().isoformat()
+
+    def test_returns_todays_weight_for_the_movement(self):
+        load_history = [{'movement_slug': 'hack-squat', 'weight_kg': 42.5, 'performed_on': self._today_iso()}]
+
+        self.assertEqual(todays_logged_weight(load_history, 'hack-squat'), 42.5)
+
+    def test_ignores_entries_from_other_movements(self):
+        load_history = [{'movement_slug': 'leg-press', 'weight_kg': 100.0, 'performed_on': self._today_iso()}]
+
+        self.assertIsNone(todays_logged_weight(load_history, 'hack-squat'))
+
+    def test_ignores_entries_from_previous_days(self):
+        load_history = [{'movement_slug': 'hack-squat', 'weight_kg': 40.0, 'performed_on': '2020-01-01'}]
+
+        self.assertIsNone(todays_logged_weight(load_history, 'hack-squat'))
+
+    def test_returns_the_most_recent_entry_when_saved_more_than_once_today(self):
+        # Cenario exato do achado real: clique repetido no mesmo dia grava
+        # varias linhas (idempotency_key diferente a cada clique, de
+        # proposito -- ver load_tracker.js) -- o campo deve refletir a
+        # ULTIMA, nunca a primeira.
+        today = self._today_iso()
+        load_history = [
+            {'movement_slug': 'hack-squat', 'weight_kg': 40.0, 'performed_on': today},
+            {'movement_slug': 'hack-squat', 'weight_kg': 42.5, 'performed_on': today},
+        ]
+
+        self.assertEqual(todays_logged_weight(load_history, 'hack-squat'), 42.5)
+
+    def test_empty_history_returns_none(self):
+        self.assertIsNone(todays_logged_weight([], 'hack-squat'))
 
 
 class PeriodizationCanonicalTreinoRenderTests(TestCase):

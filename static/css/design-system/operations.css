@@ -1015,6 +1015,17 @@ body[data-theme="dark"] .smart-paste-native-picker {
     border-top: 1px solid var(--theme-border-soft);
 }
 
+/*
+ * O detalhe nasce fechado no HTML. A regra acima usa display:grid e tem
+ * especificidade maior que o [hidden] do user-agent; sem este contrato o
+ * conteúdo "fechado" aparece no mobile, alonga o dialog e pode deixar o
+ * card parecendo uma superfície branca vazia. Mantém a semântica de hidden
+ * e deixa o JS ser a única autoridade para abrir a revisão.
+ */
+.smart-paste-day-dialog__body .smart-paste-block-detail[hidden] {
+    display: none;
+}
+
 .smart-paste-day-dialog__body .smart-paste-block-detail > p {
     margin: 0;
     font-size: 0.82rem;

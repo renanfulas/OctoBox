@@ -13,7 +13,9 @@ POR QUE ELE EXISTE:
 from django.test import TestCase
 from django.urls import reverse
 
-from public_workouts.models import PublicWorkoutTier
+from public_workouts.models import (
+    PublicWorkoutProfessional, PublicWorkoutProfessionalRole, PublicWorkoutTier,
+)
 
 
 class PublicWorkoutLandingViewTests(TestCase):
@@ -35,11 +37,33 @@ class PublicWorkoutLandingViewTests(TestCase):
         for tier in (PublicWorkoutTier.ESSENCIAL, PublicWorkoutTier.COMPLETO, PublicWorkoutTier.PREMIUM):
             self.assertIn(f'data-tier="{tier}"', content)
         self.assertEqual(content.count(f'action="{cold_signup_url}"'), 3)
+        self.assertEqual(content.count('name="accept_contract"'), 3)
 
     def test_emits_csrf_cookie_for_the_signup_forms(self):
         response = self.client.get(reverse('public-workout-landing'))
 
         self.assertIn('csrfmiddlewaretoken', response.content.decode('utf-8'))
+
+    def test_shows_real_credentials_never_a_todo_placeholder(self):
+        # Regressao: um comentario Django multi-linha ja vazou como texto
+        # literal aqui uma vez (so {# #} de uma linha e' valido). Trava o
+        # conteudo real e garante que nenhum placeholder de TODO sobrevive.
+        PublicWorkoutProfessional.objects.create(
+            name='Renan Fulas', role=PublicWorkoutProfessionalRole.TREINO,
+            registration_council='CREF', registration_number='155070-G/SP',
+        )
+        PublicWorkoutProfessional.objects.create(
+            name='Giovanna Fontes', role=PublicWorkoutProfessionalRole.NUTRICAO,
+            registration_council='CRN-3', registration_number='67286',
+        )
+        response = self.client.get(reverse('public-workout-landing'))
+        content = response.content.decode('utf-8')
+
+        self.assertIn('Renan Fulas', content)
+        self.assertIn('CREF 155070-G/SP', content)
+        self.assertIn('Giovanna Fontes', content)
+        self.assertIn('CRN-3 67286', content)
+        self.assertNotIn('TODO', content)
 
     def test_does_not_register_a_service_worker_or_pwa_install_banner(self):
         # D.7 revisado: a landing NAO estende _base.html (banner de

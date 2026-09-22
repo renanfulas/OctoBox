@@ -104,6 +104,31 @@ class StartSubscriptionCheckoutTests(TestCase):
             self.assertEqual(kwargs['line_items'], [{'price': expected_price_id, 'quantity': 1}])
             self.assertEqual(kwargs['metadata']['tier'], tier)
 
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_subscription_charges_immediately_without_trial(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_123')
+
+        start_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+
+        _, kwargs = mock_create.call_args
+        self.assertNotIn('trial_period_days', kwargs['subscription_data'])
+        self.assertEqual(kwargs['metadata']['guarantee_model'], 'refund_guarantee')
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_persists_the_price_id_used_by_the_contract(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_123')
+
+        start_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+
+        self.subscription.refresh_from_db()
+        self.assertEqual(self.subscription.contracted_price_id, 'price_123')
+
     @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO='', STRIPE_SECRET_KEY='sk_test_x')
     def test_raises_a_clear_error_when_a_tiers_price_id_is_not_configured(self):
         self.subscription.tier = PublicWorkoutTier.COMPLETO

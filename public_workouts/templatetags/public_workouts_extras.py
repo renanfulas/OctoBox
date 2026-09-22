@@ -140,16 +140,21 @@ def humanize_movement_slug(movement_slug: str) -> str:
 
 
 @register.filter
-def movement_display_name(movement: dict) -> str:
-    """Nome pra exibir na tela: `name` (portugues, escrito pelo treinador —
-    aditivo, ver schema.py) quando presente; senao humaniza `movement_slug`
-    (movimento publicado ANTES desta fatia, sem `name` no payload ainda —
-    tambem cobre o fallback ja existente de slug sem wiki-btn, que usa
-    slugify(nome) e perderia acento/maiuscula mesmo tendo nome capturado)."""
-    name = (movement or {}).get('name')
+def movement_name(movement: dict, movement_labels: dict | None = None) -> str:
+    """Nome pra exibir na tela — uniao das DUAS fontes PT-BR que surgiram em
+    paralelo (duas sessoes, mesmo problema): `movement.name` (portugues,
+    escrito pelo treinador nesta VERSAO do payload — aditivo, ver
+    schema.py) tem prioridade quando presente; senao cai pro catalogo
+    retroativo (`movement_labels`, services.build_movement_label_lookup,
+    Onda A0 — cobre os 10 programas legados que ainda nao tem `name` no
+    payload); senao humaniza `movement_slug`. Delega a resolucao dos dois
+    ultimos casos pra resolve_movement_display_name (mesma logica, testada
+    a parte) em vez de duplicar."""
+    movement = movement or {}
+    name = movement.get('name')
     if name:
         return name
-    return humanize_movement_slug((movement or {}).get('movement_slug', ''))
+    return resolve_movement_display_name(movement.get('movement_slug', ''), movement_labels)
 
 
 @register.filter
@@ -298,6 +303,23 @@ def reps_phases(reps_spec: str, top_weight_kg=None):
 
 
 @register.filter
+def resolve_movement_display_name(movement_slug: str, movement_labels: dict | None) -> str:
+    """Onda B3 — nome de exercicio pra exibir: PT-BR de verdade quando
+    `movement_labels` (services.build_movement_label_lookup, uma query em
+    lote contra PublicWorkoutMovement) tem entrada pro slug, senao o
+    mesmo palpite mecanico de humanize_movement_slug. Filtro proprio (nao
+    `default` encadeado com humanize_movement_slug) de proposito: um rotulo
+    de verdade tipo "Wall Ball" ou "GHD Sit-up" passado por
+    humanize_movement_slug sairia errado (`.capitalize()` derruba as
+    maiusculas internas)."""
+    if movement_labels:
+        label = movement_labels.get(movement_slug)
+        if label:
+            return label
+    return humanize_movement_slug(movement_slug)
+
+
+@register.filter
 def dict_get(dictionary: dict | None, key: str):
     """Lookup generico por chave variavel — Django template so faz
     `dicionario.chave` (subscript literal). Devolve None se o dict for
@@ -416,6 +438,27 @@ def load_chart_points(entries: list[dict]) -> dict:
 
 
 @register.filter
+def personal_record(entries: list[dict]) -> dict:
+    """Onda B3 — aba "Suas Cargas": maior peso ja registrado de UM
+    movimento (mesmo shape de services.list_load_history, ja filtrado
+    pro movimento — mesmo uso de `{% regroup %}` que load_chart_points ja
+    faz na aba Historico). Diferente de load_chart_points (que mostra
+    EVOLUCAO), aqui so o recorde importa — 1 registro so ja e suficiente,
+    sem o corte de "2 pontos minimo" daquele filtro."""
+    weighted = [entry for entry in entries if entry.get('weight_kg') is not None]
+    if not weighted:
+        return {'has_data': False, 'weight_kg': None, 'performed_on': None, 'reps': None}
+
+    best = max(weighted, key=lambda entry: entry['weight_kg'])
+    return {
+        'has_data': True,
+        'weight_kg': best['weight_kg'],
+        'performed_on': best.get('performed_on'),
+        'reps': best.get('reps'),
+    }
+
+
+@register.filter
 def periodization_chart_points(periodization: dict | None) -> list[dict]:
     """Pontos do gráfico "Progressão do mesociclo" — de `periodization.weeks`
     (modelo canônico, `periodization.build_chart_points_from_weeks`) quando
@@ -483,6 +526,30 @@ def _last_log_for_movement(load_history: list[dict], movement_slug: str) -> dict
 
 def _round_to_nearest_load(value: float) -> float:
     return round(value / 2.5) * 2.5
+
+
+@register.simple_tag
+def todays_logged_weight(load_history: list, movement_slug: str):
+    """Peso ja registrado HOJE pra este movimento, se algum (achado real:
+    o campo de carga sempre renderizava vazio, mesmo depois de salvar com
+    sucesso -- sem nenhuma confirmacao visivel ao recarregar a pagina, o
+    aluno achava que nao tinha salvo e registrava de novo, gerando linhas
+    duplicadas no historico. Pre-preencher o campo com o que ja foi salvo
+    hoje fecha esse gap).
+
+    'Hoje' e' a data local do servidor (mesmo fuso de PublicWorkoutLoadLog.
+    performed_on, que o endpoint de gravacao grava a partir da data local
+    do PROPRIO APARELHO do aluno via JS todayIso() -- os dois so' divergem
+    perto da virada da meia-noite, caso raro e sem prejuizo: o pior
+    cenario e' o campo nao vir pre-preenchido, nunca um dado errado).
+
+    load_history ja vem carregado no contexto pra o grafico de evolucao
+    (load_chart_points) -- nenhuma consulta nova ao banco so' pra isto."""
+    today_iso = timezone.localdate().isoformat()
+    for entry in reversed(load_history or ()):
+        if entry.get('movement_slug') == movement_slug and entry.get('performed_on') == today_iso:
+            return entry.get('weight_kg')
+    return None
 
 
 @register.simple_tag

@@ -39,6 +39,18 @@
  *   (mesmo padrao de "sessao expirou, faca login novamente" de
  *   assessments.js, sem duplicar a logica de leitura de cookie daqui:
  *   so precisamos do redirect, nao do relatorio).
+ *
+ * PONTOS CRITICOS (dica de ultima carga + stepper):
+ * - GET /renan/<slug>/pacote.json (PublicWorkoutPackageView, ja existe)
+ *   devolve `last_load_by_movement` — usado so pra popular a dica "Última
+ *   vez: X kg" acima do campo. 401 aqui (sem sessao ainda) so deixa a
+ *   dica vazia, nunca bloqueia o registro em si (o aluno pode digitar e
+ *   salvar sem nunca ter visto a dica — ela e so um atalho, nao um
+ *   pre-requisito).
+ * - O stepper (+/-2,5kg) edita o MESMO campo que o clique/toque direto —
+ *   nao existe um segundo estado interno. Dispara o mesmo evento `input`
+ *   que marca `data-dirty`, entao o rascunho automatico em
+ *   visibilitychange cobre o stepper tambem, de graca.
  */
 
 (function () {
@@ -180,6 +192,35 @@
     });
   }
 
+  /* ══ DICA DE ULTIMA CARGA ═══════════════════════════════════════ */
+
+  function fetchLastLoadByMovement() {
+    var slug = planSlug();
+    if (!slug) { return Promise.resolve({}); }
+    return window.fetch('/renan/' + slug + '/pacote.json', { credentials: 'same-origin' })
+      .then(function (response) { return response.ok ? response.json() : {}; })
+      .then(function (data) { return data.last_load_by_movement || {}; })
+      .catch(function () { return {}; });
+  }
+
+  function paintHints(lastLoadByMovement) {
+    document.querySelectorAll('[data-workout-load-input]').forEach(function (widget) {
+      var slug = widget.getAttribute('data-movement-slug');
+      var entry = lastLoadByMovement[slug];
+      var hint = widget.querySelector('[data-workout-load-hint]');
+      var field = widget.querySelector('[data-workout-load-field]');
+      if (!entry || entry.weight_kg === null || entry.weight_kg === undefined || !hint) { return; }
+
+      var weight = entry.weight_kg;
+      hint.textContent = 'Última vez: ' + weight + ' kg — toque pra usar';
+      hint.addEventListener('click', function () {
+        if (!field) { return; }
+        field.value = weight;
+        markDirty(field);
+      });
+    });
+  }
+
   /* ══ UI POR MOVIMENTO ═══════════════════════════════════════════ */
 
   function setStatus(widget, text, isError) {
@@ -197,6 +238,11 @@
       weight_kg: weightKg,
       performed_on: todayIso(),
     };
+  }
+
+  function pulseSuccess(widget) {
+    widget.classList.add('workout-load-input--saved');
+    window.setTimeout(function () { widget.classList.remove('workout-load-input--saved'); }, 1200);
   }
 
   function saveWidget(widget) {
@@ -218,6 +264,7 @@
       .then(function (remaining) {
         var stillPending = remaining.some(function (e) { return e.idempotency_key === entry.idempotency_key; });
         setStatus(widget, stillPending ? 'Salvo — será enviado quando a conexão voltar.' : 'Salvo ✓', false);
+        pulseSuccess(widget);
       })
       .catch(function () {
         setStatus(widget, 'Não foi possível guardar o registro neste aparelho.', true);
@@ -226,6 +273,16 @@
 
   function markDirty(field) {
     field.setAttribute('data-dirty', '1');
+  }
+
+  // Steps do valor atual do campo (ou 0, se vazio) — nunca deixa negativo,
+  // mesmo padrao de min="0" do <input type=number>.
+  function stepField(field, delta) {
+    var current = field.value ? parseFloat(field.value.replace(',', '.')) : 0;
+    if (isNaN(current)) { current = 0; }
+    var next = Math.max(0, Math.round((current + delta) * 100) / 100);
+    field.value = next;
+    markDirty(field);
   }
 
   // Rascunho em visibilitychange (item 8): campo com valor digitado mas
@@ -272,6 +329,10 @@
       var saveBtn = widget.querySelector('[data-workout-load-save]');
       if (field) { field.addEventListener('input', function () { markDirty(field); }); }
       if (saveBtn) { saveBtn.addEventListener('click', function () { saveWidget(widget); }); }
+      widget.querySelectorAll('[data-workout-load-step]').forEach(function (stepBtn) {
+        var delta = parseFloat(stepBtn.getAttribute('data-workout-load-step'));
+        stepBtn.addEventListener('click', function () { stepField(field, delta); });
+      });
       wireSubstitutePills(widget);
     });
   }
@@ -282,6 +343,7 @@
     if (!planSlug()) { return; }
     wireWidgets();
     drainOutbox();
+    fetchLastLoadByMovement().then(paintHints);
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'hidden') { saveDirtyDrafts(); }
     });

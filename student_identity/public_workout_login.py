@@ -28,10 +28,15 @@ from django.utils import timezone
 
 from shared_support.platform_cache import platform_cache
 
-from .delivery_gateways import StudentEmailDeliveryError, get_student_email_gateway
+from .delivery_gateways import StudentEmailDeliveryError
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoginToken
 
 from .models import StudentIdentity
+from .public_workout_notifications import (
+    build_login_email_body,
+    build_login_email_html_body,
+    build_login_email_subject,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -109,10 +114,20 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
     login_url = f'{base_url.rstrip("/")}/treinos/login?token={token.token}'
     if next_url:
         login_url += f'&next={quote(next_url, safe="")}'
+
+    # Import tardio (nao no topo do arquivo): signup.email_sender importa
+    # de student_identity.delivery_gateways — um import no topo daqui
+    # criaria ciclo entre os dois apps (mesmo motivo ja documentado em
+    # signup/services.py::send_onboarding_email, que faz o mesmo import
+    # tardio pro mesmo modulo).
+    from signup.email_sender import send_html_email
+
+    expires_in_minutes = PUBLIC_WORKOUT_LOGIN_TOKEN_TTL_SECONDS // 60
     try:
-        get_student_email_gateway().send(
-            subject='Seu link de acesso — Treinos',
-            body=f'Toque para entrar no seu treino (valido por 15 minutos):\n\n{login_url}',
+        send_html_email(
+            subject=build_login_email_subject(),
+            text_body=build_login_email_body(login_url=login_url, expires_in_minutes=expires_in_minutes),
+            html_body=build_login_email_html_body(login_url=login_url, expires_in_minutes=expires_in_minutes),
             to_email=normalized_email,
         )
     except StudentEmailDeliveryError:

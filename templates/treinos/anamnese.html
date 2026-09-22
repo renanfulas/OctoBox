@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Anamnese de treino — Treinos</title>
+<style>
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:#f5efe4;min-height:100vh;margin:0;padding:24px;box-sizing:border-box;display:flex;justify-content:center;}
+  .card{max-width:520px;width:100%;background:#11203b;border-radius:18px;padding:28px;box-shadow:0 16px 34px rgba(15,23,42,.4);margin:16px 0;}
+  h1{font-size:1.25rem;margin:0 0 6px;}
+  .lead{font-size:.9rem;line-height:1.5;color:#cbd5e1;margin:0 0 20px;}
+  fieldset{border:0;padding:0;margin:0 0 18px;}
+  legend{font-size:.85rem;font-weight:700;margin-bottom:8px;padding:0;}
+  label.field-label{display:block;font-size:.85rem;font-weight:700;margin-bottom:6px;}
+  select,input[type=text],input[type=number],textarea{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#f5efe4;font-size:1rem;margin-bottom:16px;font-family:inherit;}
+  textarea{min-height:70px;resize:vertical;}
+  .checkbox-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .checkbox-grid label{font-size:.85rem;display:flex;align-items:center;gap:6px;color:#e2e8f0;font-weight:400;}
+  .consent{display:flex;align-items:flex-start;gap:10px;background:#0f172a;border:1px solid #334155;border-radius:12px;padding:14px;margin-bottom:20px;}
+  .consent input{margin-top:3px;flex-shrink:0;}
+  .consent span{font-size:.8rem;line-height:1.5;color:#cbd5e1;}
+  button{width:100%;padding:12px 14px;border-radius:12px;border:0;background:#f5efe4;color:#11203b;font-weight:700;font-size:1rem;cursor:pointer;}
+  .error{color:#fca5a5;font-size:.85rem;margin:0 0 16px;}
+  .success{color:#86efac;font-size:.9rem;margin:0 0 16px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Anamnese de treino</h1>
+  <p class="lead">Suas respostas montam a primeira versão do seu programa — sempre revisado por um profissional antes de publicar.</p>
+
+  {% if saved %}<p class="success">Respostas salvas. Seu treinador vai usá-las para montar seu programa.</p>{% endif %}
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <label class="field-label" for="id_goal">Objetivo principal</label>
+    <select name="goal" id="id_goal" required>
+      <option value="">Selecione…</option>
+      {% for value, label in goals %}
+        <option value="{{ value }}" {% if profile and profile.goal == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <fieldset>
+      <legend>Alguma restrição ou lesão física?</legend>
+      <div class="checkbox-grid">
+        {% for value, label in restriction_tags %}
+          <label>
+            <input type="checkbox" name="physical_restrictions" value="{{ value }}"
+              {% if profile and value in profile.physical_restrictions %}checked{% endif %}>
+            {{ label }}
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <label class="field-label" for="id_restriction_detail">Detalhe da restrição (opcional)</label>
+    <input type="text" name="physical_restrictions_detail" id="id_restriction_detail"
+      placeholder="ex.: dor no joelho direito ao agachar"
+      value="{% if profile %}{{ profile.physical_restrictions_detail }}{% endif %}">
+
+    <label class="field-label" for="id_experience">Há quanto tempo treina</label>
+    <select name="training_experience" id="id_experience" required>
+      <option value="">Selecione…</option>
+      {% for value, label in experiences %}
+        <option value="{{ value }}" {% if profile and profile.training_experience == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="field-label" for="id_days">Quantos dias por semana você consegue treinar</label>
+    <input type="number" name="days_per_week" id="id_days" min="1" max="7" required
+      value="{% if profile %}{{ profile.days_per_week }}{% endif %}">
+
+    <label class="field-label" for="id_location">Onde vai treinar</label>
+    <select name="training_location" id="id_location" required>
+      <option value="">Selecione…</option>
+      {% for value, label in locations %}
+        <option value="{{ value }}" {% if profile and profile.training_location == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="field-label" for="id_motivation">O que te motivou a começar agora?</label>
+    <textarea name="motivation" id="id_motivation">{% if profile %}{{ profile.motivation }}{% endif %}</textarea>
+
+    <label class="field-label" for="id_difficulty">Qual sua maior dificuldade no treino ou em manter a rotina?</label>
+    <textarea name="biggest_difficulty" id="id_difficulty">{% if profile %}{{ profile.biggest_difficulty }}{% endif %}</textarea>
+
+    <label class="consent">
+      <input type="checkbox" name="consent" required {% if profile and profile.consent_ai_processing_at %}checked{% endif %}>
+      <span>Autorizo o uso das minhas respostas acima — incluindo restrições físicas, motivação e maiores
+      dificuldades — para montar e ajustar meu treino, sempre com revisão humana antes de qualquer treino
+      ser publicado.</span>
+    </label>
+
+    <button type="submit">Salvar respostas</button>
+  </form>
+</div>
+</body>
+</html>

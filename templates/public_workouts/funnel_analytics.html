@@ -1,0 +1,71 @@
+{% extends "public_workouts/analytics_base.html" %}
+
+{% block title %}Funil comercial · Curva{% endblock %}
+
+{% block content %}
+<div class="curva-analytics" data-page="curva-analytics" data-screen="commercial-funnel">
+  <section class="curva-analytics-hero" aria-labelledby="curva-analytics-title">
+    <div>
+      <p class="curva-analytics-eyebrow">Curva · inteligência comercial</p>
+      <h1 id="curva-analytics-title">Da primeira visita<br>ao primeiro pagamento.</h1>
+      <p class="curva-analytics-lead">Enxergue onde o interesse cresce, onde a jornada perde força e quantos visitantes realmente se tornam clientes.</p>
+    </div>
+    <div class="curva-analytics-hero-status">
+      <span class="curva-analytics-status-dot" aria-hidden="true"></span>
+      <div><small>Coleta</small><strong>{% if report.tracking_enabled %}Ativa{% else %}Desativada{% endif %}</strong></div>
+      <div><small>Janela de conversão</small><strong>{{ report.conversion_days }} dias</strong></div>
+    </div>
+  </section>
+
+  <form method="get" class="curva-analytics-filters">
+    <div><label for="cohort-days">Coorte por primeira visita</label><select name="days" id="cohort-days"><option value="7" {% if report.window_days == 7 %}selected{% endif %}>Últimos 7 dias</option><option value="30" {% if report.window_days == 30 %}selected{% endif %}>Últimos 30 dias</option><option value="90" {% if report.window_days == 90 %}selected{% endif %}>Últimos 90 dias</option></select></div>
+    <button type="submit">Atualizar leitura</button>
+    <a href="?days={{ report.window_days }}&amp;format=json">Exportar JSON <span aria-hidden="true">↗</span></a>
+  </form>
+
+  {% if not report.tracking_enabled %}<div class="curva-analytics-alert">A coleta está desativada. O histórico continua disponível, mas novas visitas não serão registradas.</div>{% endif %}
+
+  <section class="curva-analytics-kpis" aria-label="Indicadores principais">
+    <article><span>Visitantes da coorte</span><strong>{{ report.visitors }}</strong><small>{{ report.excluded_existing_customers }} clientes anteriores excluídos</small></article>
+    <article><span>Primeiros pagantes</span><strong>{{ report.paid }}</strong><small>Pagamento confirmado pelo servidor</small></article>
+    <article><span>Conversão até agora</span><strong>{{ report.conversion_percent|floatformat:2|default:'—' }}{% if report.conversion_percent != None %}%{% endif %}</strong><small>{{ report.pending_visitors }} ainda dentro da janela</small></article>
+    <article class="curva-analytics-kpi-primary"><span>Conversão consolidada</span><strong>{{ report.mature_conversion_percent|floatformat:2|default:'—' }}{% if report.mature_conversion_percent != None %}%{% endif %}</strong><small>{{ report.mature_paid }} de {{ report.mature_visitors }} · meta de referência: 10%</small></article>
+  </section>
+
+  {% if not report.visitors %}<div class="curva-analytics-note">Ainda não há visitantes medidos neste período.</div>{% elif report.mature_visitors < 100 %}<div class="curva-analytics-note">A amostra consolidada ainda está abaixo de 100 visitantes. Leia como sinal inicial, não como confirmação da meta.</div>{% endif %}
+
+  <section class="curva-analytics-section" aria-labelledby="experiments-title">
+    <div class="curva-analytics-heading"><div><p>Otimização contínua</p><h2 id="experiments-title">Experimentos controlados</h2></div><span>A variante permanece estável por visitante. Um líder só aparece depois da amostra mínima e quando os intervalos de confiança deixam de se sobrepor.</span></div>
+    {% for experiment in report.experiments %}
+    <article class="curva-experiment">
+      <div class="curva-experiment__summary"><div><small>{{ experiment.key }}</small><h3>{{ experiment.name }}</h3><p>{{ experiment.hypothesis|default:'Hipótese ainda não documentada.' }}</p></div><div><span class="curva-experiment__status">{{ experiment.status }}</span><strong>{% if experiment.decision == 'leader' %}Líder: {{ experiment.candidate_variant }}{% elif experiment.decision == 'inconclusive' %}Sem vencedor confiável{% else %}Coletando amostra{% endif %}</strong><small>Mínimo: {{ experiment.minimum_sample_size }} maduros por variante · {{ experiment.excluded_existing_customers }} clientes anteriores excluídos</small></div></div>
+      <div class="curva-analytics-table"><table><thead><tr><th>Variante</th><th>Expostos</th><th>Maduros</th><th>Pagantes</th><th>Conversão madura</th><th>Intervalo 95%</th></tr></thead><tbody>{% for variant in experiment.variants %}<tr><th>{{ variant.name }}<small>{{ variant.key }}</small></th><td>{{ variant.assigned }}</td><td>{{ variant.mature_visitors }}</td><td>{{ variant.mature_paid }}</td><td>{{ variant.mature_conversion_percent|floatformat:2|default:'—' }}{% if variant.mature_conversion_percent != None %}%{% endif %}</td><td>{% if variant.confidence_low_percent != None %}{{ variant.confidence_low_percent|floatformat:2 }}%–{{ variant.confidence_high_percent|floatformat:2 }}%{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+    </article>
+    {% empty %}
+    <div class="curva-experiment-empty"><strong>Base pronta para o primeiro teste.</strong><p>Nenhum experimento foi configurado. A landing continua servindo a experiência atual para 100% dos visitantes.</p></div>
+    {% endfor %}
+  </section>
+
+  <section class="curva-analytics-section" aria-labelledby="funnel-title">
+    <div class="curva-analytics-heading"><div><p>Leitura principal</p><h2 id="funnel-title">Funil comercial</h2></div><span>“Não avançou” considera apenas janelas completas de {{ report.conversion_days }} dias.</span></div>
+    <div class="curva-funnel-rail">
+      {% for step in report.steps %}<article style="--step-share: {{ step.visitor_percent|default:0 }}%"><span>0{{ forloop.counter }}</span><div><small>{{ step.label }}</small><strong>{{ step.visitors }}</strong><em>{{ step.visitor_percent|floatformat:2|default:'—' }}{% if step.visitor_percent != None %}% da visita{% endif %}</em></div>{% if step.not_advanced != None %}<p>{{ step.not_advanced }} sem avanço <b>{{ step.not_advanced_percent|floatformat:2|default:'—' }}{% if step.not_advanced_percent != None %}%{% endif %}</b></p>{% endif %}</article>{% endfor %}
+    </div>
+  </section>
+
+  <section class="curva-analytics-section" aria-labelledby="friction-title">
+    <div class="curva-analytics-heading"><div><p>Diagnóstico</p><h2 id="friction-title">Onde a experiência perde força</h2></div><span>Sinais do navegador ajudam no diagnóstico, mas podem faltar por bloqueio ou conexão.</span></div>
+    <div class="curva-friction-grid">{% for row in report.friction %}<article><small>{{ row.label }}</small><strong>{{ row.not_advanced_percent|floatformat:2|default:'—' }}{% if row.not_advanced_percent != None %}%{% endif %}</strong><p>{{ row.not_advanced }} de {{ row.visitors }} não chegaram ao próximo sinal ou checkout.</p></article>{% endfor %}</div>
+  </section>
+
+  <section class="curva-analytics-section" aria-labelledby="channels-title">
+    <div class="curva-analytics-heading"><div><p>Aquisição</p><h2 id="channels-title">Origem e campanha</h2></div><span>Primeiro contato atribuído à coorte selecionada.</span></div>
+    <div class="curva-analytics-table"><table><thead><tr><th>Origem / mídia</th><th>Campanha / versão</th><th>Visitantes</th><th>Pagantes</th><th>Conversão</th><th>Consolidada</th></tr></thead><tbody>{% for row in report.channels %}<tr><th>{{ row.source }}<small>{{ row.medium|default:'—' }}</small></th><td>{{ row.campaign|default:'—' }}<small>{{ row.variant|default:'—' }}</small></td><td>{{ row.visitors }}</td><td>{{ row.paid }}</td><td>{{ row.conversion_percent|floatformat:2 }}%</td><td>{{ row.mature_conversion_percent|floatformat:2|default:'—' }}{% if row.mature_conversion_percent != None %}%{% endif %}</td></tr>{% empty %}<tr><td colspan="6">Sem dados de aquisição no período.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+
+  <div class="curva-analytics-lower-grid">
+    <section class="curva-analytics-section" aria-labelledby="signals-title"><div class="curva-analytics-heading"><div><p>Comportamento</p><h2 id="signals-title">Interações e bloqueios</h2></div></div><div class="curva-signal-list">{% for signal in report.signals %}<div><span>{{ signal.label }}</span><strong>{{ signal.visitors }}</strong><small>{{ signal.visitor_percent|floatformat:2|default:'—' }}{% if signal.visitor_percent != None %}%{% endif %}</small></div>{% endfor %}</div></section>
+    <section class="curva-analytics-section curva-measurement" aria-labelledby="quality-title"><div class="curva-analytics-heading"><div><p>Confiabilidade</p><h2 id="quality-title">Qualidade da medição</h2></div></div><strong>{{ report.coverage.linked_percent|floatformat:2|default:'—' }}{% if report.coverage.linked_percent != None %}%{% endif %}</strong><p>{{ report.coverage.linked_new_payers }} dos {{ report.coverage.new_payers_in_period }} novos pagantes do período têm visita atribuída.</p><dl><div><dt>Reembolsos</dt><dd>{{ report.refunded_first_payments }}</dd></div><div><dt>Atualizado</dt><dd>{{ report.generated_at|date:'d/m/Y H:i' }}</dd></div></dl><small>Cookies removidos e troca de aparelho podem afetar a atribuição. Renovações e cobranças de valor zero não contam como novos pagantes.</small></section>
+  </div>
+</div>
+{% endblock %}

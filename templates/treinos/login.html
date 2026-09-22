@@ -22,7 +22,11 @@
 <div class="card">
   <h1>Entrar no seu treino</h1>
   {% if logged_in_as %}
-    <p class="success">Login feito com {{ logged_in_as }}. Pode fechar esta aba e voltar pro link do seu treino.</p>
+    {% if awaiting_plan %}
+    <p class="success">Login feito com {{ logged_in_as }}. Seu treino está sendo preparado — assim que estiver pronto, a gente avisa por e-mail com o link de acesso.</p>
+    {% else %}
+    <p class="success">Login feito com {{ logged_in_as }}.</p>
+    {% endif %}
   {% elif sent_to %}
     <p class="success">Link enviado para {{ sent_to }}. Confira seu e-mail (vale por 15 minutos).</p>
   {% else %}
