@@ -34,6 +34,7 @@ from public_workouts.models import (
     PublicWorkoutPaymentStatus,
     PublicWorkoutSubscription,
     PublicWorkoutSubscriptionStatus,
+    PublicWorkoutTier,
 )
 
 
@@ -41,17 +42,79 @@ class GetOrCreateSubscriptionTests(TestCase):
     def test_second_call_returns_same_row_never_creates_a_second_one(self):
         account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
 
-        first = get_or_create_subscription(account=account, plan_slug='giovanna')
-        second = get_or_create_subscription(account=account, plan_slug='giovanna')
+        first = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
+        second = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
 
         self.assertEqual(first.pk, second.pk)
         self.assertEqual(PublicWorkoutSubscription.objects.filter(account=account).count(), 1)
+
+    def test_new_subscription_stores_the_given_tier(self):
+        account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
+
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.COMPLETO, plan_slug='giovanna')
+
+        self.assertEqual(subscription.tier, PublicWorkoutTier.COMPLETO)
+
+    def test_new_subscription_starts_pending_payment_never_active(self):
+        # RT7/D.2b/ADR-7 (Entrega 5, Fase 2): antes desta fase, nada setava
+        # status explicitamente — quem criava a linha ganhava o default
+        # ACTIVE do model mesmo sem pagar. O webhook (stripe_handlers.py,
+        # apos confirmar tier/price real na Stripe) e' o unico caminho que
+        # promove pra ACTIVE agora.
+        account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
+
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
+
+        self.assertEqual(subscription.status, PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
+
+    def test_plan_slug_is_optional(self):
+        # Cadastro a frio (D.2): a assinatura existe ANTES de ter slug —
+        # quem atribui e' Renan/esposa, manualmente, na fila de ativacao.
+        account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
+
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL)
+
+        self.assertIsNone(subscription.plan_slug)
+
+    def test_pending_checkout_uses_the_customers_latest_tier_choice(self):
+        account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
+        first = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
+
+        second = get_or_create_subscription(account=account, tier=PublicWorkoutTier.PREMIUM, plan_slug='outro-slug')
+
+        self.assertEqual(second.pk, first.pk)
+        self.assertEqual(second.tier, PublicWorkoutTier.PREMIUM)
+        self.assertEqual(second.plan_slug, 'giovanna')
+
+    def test_active_subscription_never_changes_tier_from_landing_selection(self):
+        account = PublicWorkoutAccount.objects.create(email='ativo@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL)
+        subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        subscription.save(update_fields=['status'])
+
+        same = get_or_create_subscription(account=account, tier=PublicWorkoutTier.PREMIUM)
+
+        self.assertEqual(same.tier, PublicWorkoutTier.ESSENCIAL)
+
+    def test_canceled_subscription_can_start_a_new_checkout_on_same_account(self):
+        account = PublicWorkoutAccount.objects.create(email='volta@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL)
+        subscription.status = PublicWorkoutSubscriptionStatus.CANCELED
+        subscription.stripe_subscription_id = 'sub_cancelada'
+        subscription.save(update_fields=['status', 'stripe_subscription_id'])
+
+        resumed = get_or_create_subscription(account=account, tier=PublicWorkoutTier.COMPLETO)
+
+        self.assertEqual(resumed.pk, subscription.pk)
+        self.assertEqual(resumed.status, PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
+        self.assertEqual(resumed.tier, PublicWorkoutTier.COMPLETO)
+        self.assertEqual(resumed.stripe_subscription_id, '')
 
 
 class LinkStripeIdsTests(TestCase):
     def test_sets_customer_and_subscription_id(self):
         account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        subscription = get_or_create_subscription(account=account, plan_slug='giovanna')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
 
         link_stripe_ids(subscription, customer_id='cus_123', stripe_subscription_id='sub_123')
 
@@ -63,7 +126,7 @@ class LinkStripeIdsTests(TestCase):
 class RecordSuccessfulInvoicePaymentTests(TestCase):
     def setUp(self):
         account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.subscription = get_or_create_subscription(account=account, plan_slug='giovanna')
+        self.subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
 
     def test_creates_paid_payment_with_zero_application_fee(self):
         payment = record_successful_invoice_payment(
@@ -109,9 +172,20 @@ class RecordSuccessfulInvoicePaymentTests(TestCase):
 class HandleFailedInvoicePaymentTests(TestCase):
     def setUp(self):
         account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.subscription = get_or_create_subscription(account=account, plan_slug='giovanna')
+        self.subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
 
-    def test_creates_payment_with_full_notice_schedule(self):
+    def _give_subscription_a_prior_successful_payment(self):
+        # Torna a proxima falha NAO ser a primeira cobranca de verdade da
+        # assinatura — precondicao pros testes de "renovacao recorrente
+        # falhou" abaixo, que precisam da regua de 9 dias (diferente da
+        # falha do trial, ver HandleFailedInvoicePaymentTrialTests).
+        record_successful_invoice_payment(
+            self.subscription, stripe_invoice_id='in_1_ok', gross_amount=Decimal('89.90'), due_date=date(2026, 2, 10)
+        )
+
+    def test_recurring_failure_creates_payment_with_full_notice_schedule(self):
+        self._give_subscription_a_prior_successful_payment()
+
         payment = handle_failed_invoice_payment(
             self.subscription, stripe_invoice_id='in_2', gross_amount=Decimal('89.90'), due_date=date(2026, 3, 10)
         )
@@ -120,6 +194,12 @@ class HandleFailedInvoicePaymentTests(TestCase):
         self.assertEqual(PublicWorkoutPaymentNotice.objects.filter(payment=payment).count(), 5)
 
     def test_marks_active_subscription_as_past_due(self):
+        # so' downgrade de ACTIVE (billing.py:323) — precondicao explicita
+        # desde a Fase 2 (D.2b), ja que get_or_create_subscription nao
+        # nasce mais ACTIVE por default.
+        self.subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        self.subscription.save(update_fields=['status'])
+
         handle_failed_invoice_payment(
             self.subscription, stripe_invoice_id='in_2', gross_amount=Decimal('89.90'), due_date=date(2026, 3, 10)
         )
@@ -128,6 +208,8 @@ class HandleFailedInvoicePaymentTests(TestCase):
         self.assertEqual(self.subscription.status, PublicWorkoutSubscriptionStatus.PAST_DUE)
 
     def test_is_idempotent_by_invoice_id(self):
+        self._give_subscription_a_prior_successful_payment()
+
         handle_failed_invoice_payment(
             self.subscription, stripe_invoice_id='in_2', gross_amount=Decimal('89.90'), due_date=date(2026, 3, 10)
         )
@@ -150,10 +232,66 @@ class HandleFailedInvoicePaymentTests(TestCase):
         self.assertEqual(self.subscription.status, PublicWorkoutSubscriptionStatus.SUSPENDED)
 
 
+class HandleFailedFirstInvoicePaymentTests(TestCase):
+    """Primeira cobranca imediata falhando NAO
+    passa pela regua de 9 dias pensada pra lembrar quem ja e' cliente de
+    verdade — bloqueia na hora (status sai de ACTIVE aqui, e o gate de
+    acesso em student_app/views/public_workout_views.py exige ACTIVE)."""
+
+    def setUp(self):
+        account = PublicWorkoutAccount.objects.create(email='first-charge@example.com')
+        self.subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='novoaluno')
+        self.subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        self.subscription.save(update_fields=['status'])
+
+    def test_first_ever_failure_creates_no_notice_ladder(self):
+        payment = handle_failed_invoice_payment(
+            self.subscription, stripe_invoice_id='in_trial_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10)
+        )
+
+        self.assertEqual(PublicWorkoutPaymentNotice.objects.filter(payment=payment).count(), 0)
+
+    def test_first_ever_failure_still_marks_past_due(self):
+        # Acesso ja bloqueia (gate exige ACTIVE) mesmo sem a regua de
+        # avisos — nao ha' "PAST_DUE mas ainda ve o treino" neste produto.
+        handle_failed_invoice_payment(
+            self.subscription, stripe_invoice_id='in_trial_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10)
+        )
+
+        self.subscription.refresh_from_db()
+        self.assertEqual(self.subscription.status, PublicWorkoutSubscriptionStatus.PAST_DUE)
+
+    def test_first_ever_failure_event_reason_mentions_first_charge(self):
+        from public_workouts.models import PublicWorkoutSubscriptionEvent
+
+        handle_failed_invoice_payment(
+            self.subscription, stripe_invoice_id='in_trial_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10)
+        )
+
+        event = PublicWorkoutSubscriptionEvent.objects.filter(subscription=self.subscription).latest('created_at')
+        self.assertIn('primeira cobranca', event.reason)
+
+    def test_second_failed_invoice_for_same_subscription_is_no_longer_first_payment(self):
+        # Depois que UM PublicWorkoutPayment ja existe (mesmo sem sucesso),
+        # a proxima falha de um invoice DIFERENTE ja conta como renovacao
+        # normal, com regua completa.
+        handle_failed_invoice_payment(
+            self.subscription, stripe_invoice_id='in_trial_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10)
+        )
+        self.subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        self.subscription.save(update_fields=['status'])
+
+        second_payment = handle_failed_invoice_payment(
+            self.subscription, stripe_invoice_id='in_trial_2', gross_amount=Decimal('97.00'), due_date=date(2026, 4, 10)
+        )
+
+        self.assertEqual(PublicWorkoutPaymentNotice.objects.filter(payment=second_payment).count(), 5)
+
+
 class MarkSubscriptionCanceledTests(TestCase):
     def setUp(self):
         account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.subscription = get_or_create_subscription(account=account, plan_slug='giovanna')
+        self.subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
 
     def test_sets_status_and_canceled_at(self):
         changed = mark_subscription_canceled(self.subscription, reason='teste')

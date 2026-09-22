@@ -32,21 +32,36 @@ from __future__ import annotations
 
 from django.conf import settings
 
+from .models import PublicWorkoutTier
+
+# Entrega 5 (Escala, tier plumbing, D.3): um Price ID Stripe por tier — nunca
+# um preco so decidido por dinheiro/intencao. Reusado por stripe_handlers.py
+# pro cross-check de RT3 (tier errado por falha de metadata).
+_TIER_PRICE_SETTINGS = {
+    PublicWorkoutTier.ESSENCIAL: 'PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL',
+    PublicWorkoutTier.COMPLETO: 'PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO',
+    PublicWorkoutTier.PREMIUM: 'PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM',
+}
 
 class PublicWorkoutStripeNotConfiguredError(RuntimeError):
-    """Levantada quando PUBLIC_WORKOUT_STRIPE_PRICE_ID nao esta configurado."""
+    """Levantada quando o Price ID do tier (ou PUBLIC_WORKOUT_STRIPE_PRICE_ID) nao esta configurado."""
 
 
-def _resolve_price_id() -> str:
-    price_id = (getattr(settings, 'PUBLIC_WORKOUT_STRIPE_PRICE_ID', '') or '').strip()
+def _resolve_price_id(tier: str) -> str:
+    setting_name = _TIER_PRICE_SETTINGS.get(tier)
+    if setting_name is None:
+        raise PublicWorkoutStripeNotConfiguredError(f'tier {tier!r} desconhecido — sem Price ID associado.')
+    price_id = (getattr(settings, setting_name, '') or '').strip()
     if not price_id:
         raise PublicWorkoutStripeNotConfiguredError(
-            'PUBLIC_WORKOUT_STRIPE_PRICE_ID nao configurado. Defina no .env e reinicie o servidor.'
+            f'{setting_name} nao configurado. Defina no .env e reinicie o servidor.'
         )
     return price_id
 
 
-def start_subscription_checkout(*, subscription, success_url: str, cancel_url: str) -> str:
+def start_subscription_checkout(
+    *, subscription, success_url: str, cancel_url: str, acquisition_session_id=None
+) -> str:
     """Cria stripe.checkout.Session(mode='subscription') pra assinatura do corredor.
 
     Devolve a URL hospedada da Stripe para redirect. `subscription` e a
@@ -63,8 +78,20 @@ def start_subscription_checkout(*, subscription, success_url: str, cancel_url: s
         raise PublicWorkoutStripeNotConfiguredError('STRIPE_SECRET_KEY nao definida.')
     stripe.api_key = secret_key
 
-    price_id = _resolve_price_id()
+    price_id = _resolve_price_id(subscription.tier)
     account = subscription.account
+    metadata = {
+        'product': 'coaching',
+        'public_workout_subscription_id': str(subscription.pk),
+        'plan_slug': subscription.plan_slug or '',
+        'tier': subscription.tier,
+        'offer_version': subscription.offer_version or '',
+        'service_policy_version': subscription.service_policy_version or '',
+        'terms_version': subscription.terms_version or '',
+        'privacy_version': subscription.privacy_version or '',
+        'guarantee_model': subscription.guarantee_model,
+        'acquisition_session_id': str(acquisition_session_id or ''),
+    }
 
     session = stripe.checkout.Session.create(
         mode='subscription',
@@ -76,21 +103,20 @@ def start_subscription_checkout(*, subscription, success_url: str, cancel_url: s
         cancel_url=cancel_url,
         # metadata.product='coaching' e o discriminador (D.0 do CORDA): o
         # webhook do corredor so processa eventos com esse valor — nunca
-        # resolve Box, nunca alcanca o roteador do box (S3).
-        metadata={
-            'product': 'coaching',
-            'public_workout_subscription_id': str(subscription.pk),
-            'plan_slug': subscription.plan_slug,
-        },
-        subscription_data={
-            'metadata': {
-                'product': 'coaching',
-                'public_workout_subscription_id': str(subscription.pk),
-                'plan_slug': subscription.plan_slug,
-            },
-        },
-        idempotency_key=f'public-workout-subscription-{subscription.pk}-{price_id[-8:]}',
+        # resolve Box, nunca alcanca o roteador do box (S3). metadata.tier
+        # e o que stripe_handlers.py cruza contra o Price ID real da
+        # assinatura Stripe. A autorizacao do checkout nao ativa acesso:
+        # apenas invoice.payment_succeeded pode fazer isso (D.3/RT3).
+        metadata=metadata,
+        subscription_data={'metadata': metadata},
+        idempotency_key=(
+            f'public-workout-subscription-{subscription.pk}-{price_id[-8:]}-'
+            f'{(subscription.offer_version or "legacy")[-12:]}'
+        ),
     )
+    if subscription.contracted_price_id != price_id:
+        subscription.contracted_price_id = price_id
+        subscription.save(update_fields=['contracted_price_id', 'updated_at'])
     return session.url
 
 

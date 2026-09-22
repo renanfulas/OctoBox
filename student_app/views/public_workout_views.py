@@ -64,7 +64,11 @@ PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 ano
 # devolve mudou de arquivo por-cliente pra template unico — sem isto, o
 # service worker ja instalado nos aparelhos dos 10 clientes continua
 # servindo a pagina legada em cache, offline, indefinidamente.
-PUBLIC_WORKOUT_CACHE_EPOCH = 3
+# Bump para 4 (botao de nutricao): novo asset (nutrition.js) entrou em
+# PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS abaixo — sem bump, PWA ja
+# instalado no aparelho do aluno nunca baixa o script novo (mesmo motivo
+# do bump anterior).
+PUBLIC_WORKOUT_CACHE_EPOCH = 4
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -314,6 +318,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/core/shell.js',
     '/static/js/public_workouts/load_tracker.js',
     '/static/js/public_workouts/weekly_review.js',
+    '/static/js/public_workouts/nutrition.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}
@@ -352,15 +357,94 @@ def public_workout_asset_version() -> str:
     return version
 
 
+def _synthesize_public_workout_plan(slug: str) -> PublicWorkoutPlan | None:
+    """Fallback pra slug que NAO esta em PUBLIC_WORKOUT_LIBRARY mas TEM
+    PublicWorkoutProgram ativo publicado (ex.: aprovado via
+    services.approve_and_publish_draft — pipeline de anamnese+IA). Sem
+    isto, um aluno novo aprovado por esse fluxo cairia em 404 em
+    /renan/<slug> ate alguem editar este dict a mao e fazer deploy — gap
+    real ja' documentado em
+    docs/plans/public-workouts-produtizacao-corda.md:155,158 ("trocar a
+    fonte dos slugs de dict para query em PublicWorkoutProgram").
+
+    So' sintetiza tema GENERICO (nunca uma das paletas artesanais dos 10
+    clientes legados) — branding fino por aluno continua sendo trabalho
+    editorial de quem, se/quando quiser, adicionar a entrada de verdade
+    neste dict depois. `template_file` fica vazio de proposito: so' e' lido
+    quando o slug esta' em `_legacy_template_slugs()` (kill switch por env
+    var), que nunca contem um slug que nao veio deste dict primeiro — um
+    slug sintetizado aqui sempre renderiza pelo template unico
+    (workout.html), nunca pelo caminho legado.
+
+    Retorna None (nunca levanta) quando nem o dict nem o banco conhecem o
+    slug — `_get_public_workout_entry` decide o 404, esta funcao so'
+    resolve a origem do dado."""
+    from public_workouts.services import get_active_program
+
+    if get_active_program(slug=slug) is None:
+        return None
+
+    return PublicWorkoutPlan(
+        slug=slug,
+        title=f'Treino {slug.capitalize()}',
+        theme_color='#0f172a',
+        background_color='#f5efe4',
+        template_file='',
+        accent=PublicWorkoutAccent('#2451C4', '#EAF0FD', '#BFDBFE', '#DBEAFE', '#1B3A96'),
+        tabs=(_TAB_TREINO, _TAB_AVALIACOES),
+        tracker_weeks=0,
+        store_key=f'{slug}_v1',
+    )
+
+
 def _get_public_workout_entry(plan_slug: str) -> PublicWorkoutPlan:
     normalized_slug = (plan_slug or '').strip().lower()
     plan = PUBLIC_WORKOUT_LIBRARY.get(normalized_slug)
+    if plan is None:
+        # Query extra (indexada por slug) so' acontece pro caso ausente do
+        # dict em memoria — custo aceito: corredor de baixo trafego, e o
+        # caminho comum (slug real, nos 10 legados ou ja' sintetizado antes)
+        # nunca chega aqui.
+        plan = _synthesize_public_workout_plan(normalized_slug)
     if plan is None:
         raise Http404('Treino publico nao encontrado.')
     return plan
 
 
-def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
+def _confirm_subscription_active_or_404(plan_slug: str) -> None:
+    """P0 do acesso pago pro fluxo de cadastro a frio + Stripe (achado
+    real: ate aqui NADA checava isto — uma assinatura SUSPENDED/PAST_DUE/
+    CANCELED continuava vendo o treino inteiro).
+
+    So' bloqueia quando EXISTE uma PublicWorkoutSubscription pra este slug
+    E ela nao esta ACTIVE — nunca quando nao existe assinatura nenhuma.
+    Isso e' deliberado, nao um buraco: os 10 clientes legados (seed_legacy_
+    workout_accounts) "sao clientes pagantes reais hoje, so que fora do
+    fluxo de checkout Stripe deste corredor" (docstring do proprio
+    comando) — pagam o Renan por fora, nunca tiveram (nem deveriam ter)
+    o acesso deles condicionado a um `PublicWorkoutSubscription.status`
+    que o fluxo Stripe deste corredor nem administra pra eles. O gate so'
+    se aplica a quem de fato passou pelo checkout Stripe (cadastro a frio
+    ou assinatura de legado) e tem uma linha de assinatura pra checar.
+    Nunca 404 vira 403 (mesma razao de sempre em todo este arquivo: 403
+    confirmaria que a conta existe).
+
+    Roda pra QUALQUER visita, com sessao de login ou so' com o cookie de
+    posse B0 — chamada de dentro de _confirm_login_session_owns_slug_or_404
+    (cobre a maioria dos endpoints) e direto por quem usa o cookie B0 em
+    vez de sessao (PublicWorkoutDownloadPdfView).
+
+    Import tardio pelo mesmo motivo de _confirm_login_session_owns_slug_or_404
+    logo abaixo (ciclo com public_workouts).
+    """
+    from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
+
+    subscription = PublicWorkoutSubscription.objects.filter(plan_slug=plan_slug).first()
+    if subscription is not None and subscription.status != PublicWorkoutSubscriptionStatus.ACTIVE:
+        raise Http404('Treino publico nao encontrado.')
+
+
+def _confirm_ownership_or_404(request, plan_slug: str) -> None:
     """B3 (CORDA) item 5 — "identidade da sessao dona do slug, senao 404".
 
     So entra em jogo quando ha sessao de LOGIN ativa (PublicWorkoutAccount,
@@ -369,6 +453,17 @@ def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
     B3 fases B/C). Com sessao ativa: aluno A logado abrindo o slug do
     aluno B tem que receber 404, nunca o treino nem 403 (403 confirmaria
     que o slug existe — mesma regra do cookie de posse do B0).
+
+    Separada de _confirm_subscription_active_or_404 de proposito (achado
+    real, feedback do Renan): posse errada continua 404 silencioso (nunca
+    revela que o slug de OUTRA pessoa existe), mas pagamento pendente do
+    PROPRIO dono nao devia ser silencioso — a pessoa que chega com o link
+    certo E' o dono (mesma logica de posse-prova-identidade de sempre
+    neste arquivo), entao PublicWorkoutDetailView mostra uma tela
+    explicando o bloqueio e como resolver, em vez de 404 (ver mais abaixo).
+    Os endpoints de API/sub-recurso continuam so' com
+    _confirm_login_session_owns_slug_or_404 (404 direto, sem tela — nao
+    fazem sentido pra visualizacao humana).
 
     Import tardio (nao no topo do arquivo): mesmo motivo de
     _validate_plan_slug em public_workouts/services.py — este modulo e
@@ -385,6 +480,15 @@ def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
     owns_slug = PublicWorkoutSubscription.objects.filter(account_id=account_id, plan_slug=plan_slug).exists()
     if not owns_slug:
         raise Http404('Treino publico nao encontrado.')
+
+
+def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
+    """Combina as duas checagens acima (status ACTIVE + posse) pros
+    endpoints de API/sub-recurso — 404 direto pras duas, sem tela (nao sao
+    paginas que um humano le, ver docstring de _confirm_ownership_or_404).
+    """
+    _confirm_subscription_active_or_404(plan_slug)
+    _confirm_ownership_or_404(request, plan_slug)
 
 
 def get_public_workout_owner_slug(request) -> str | None:
@@ -648,6 +752,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
     """
     plan = _get_public_workout_entry(plan_slug)
 
+    from public_workouts.models import PublicWorkoutSubscription
     from public_workouts.services import (
         build_movement_label_lookup,
         build_student_package,
@@ -655,6 +760,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         get_active_program,
         list_load_history,
         list_program_versions,
+        require_nutrition_tier,
     )
 
     program = get_active_program(slug=plan.slug)
@@ -665,10 +771,17 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         weekly_review = build_weekly_review(account_id=account_id)
         package = build_student_package(account_id=account_id, slug=plan.slug)
         load_history = list_load_history(account_id=account_id)
+        subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
+        nutrition_unlocked = bool(subscription and require_nutrition_tier(subscription))
+        customer_portal_url = '/treinos/minha-conta' if subscription else None
+        account_email = subscription.account.email if subscription else None
     else:
         weekly_review = {'trends_by_movement': {}}
         package = {'one_rep_max_by_movement': {}}
         load_history = []
+        nutrition_unlocked = False
+        customer_portal_url = None
+        account_email = None
 
     return render_to_string('public_workouts/workout.html', {
         'plan_slug': plan.slug,
@@ -681,15 +794,47 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'movement_labels': build_movement_label_lookup(program),
         'student_name': plan.short_name,
         'student_photo_url': None,
-        'customer_portal_url': None,
-        'account_email': None,
+        'customer_portal_url': customer_portal_url,
+        'account_email': account_email,
+        'nutrition_unlocked': nutrition_unlocked,
+    })
+
+
+def _render_payment_blocked_html(plan: PublicWorkoutPlan) -> str:
+    """Tela de "pagamento pendente" — achado real (feedback do Renan): 404
+    silencioso e' certo pra quem NAO e' dono (nunca revela que o slug de
+    outra pessoa existe), mas e' errado pro PROPRIO dono, que so' quer
+    saber por que parou de ver o treino e como resolver. Sem firula: um
+    botao que abre o Customer Portal da Stripe (PublicWorkoutBillingPortalView,
+    ja existente) — a pessoa atualiza o cartao/paga o que falta por conta
+    propria, o webhook de invoice.payment_succeeded (billing.py::
+    record_successful_invoice_payment) reativa a assinatura sozinho."""
+    return render_to_string('public_workouts/payment_blocked.html', {
+        'student_name': plan.short_name,
     })
 
 
 class PublicWorkoutDetailView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
-        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        from django.utils import timezone
+        from public_workouts.acquisition import record_funnel_event
+        from public_workouts.models import (
+            PublicWorkoutAcquisitionSession,
+            PublicWorkoutMealPlan,
+            PublicWorkoutMealPlanDelivery,
+            PublicWorkoutProgram,
+            PublicWorkoutProgramDelivery,
+            PublicWorkoutSubscription,
+        )
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        protected_subscription = PublicWorkoutSubscription.objects.filter(
+            plan_slug=plan.slug, requires_login=True
+        ).first()
+        if protected_subscription is not None and get_public_workout_account_id_from_request(request) is None:
+            return redirect(f'/treinos/login?next=/renan/{plan.slug}')
+        _confirm_ownership_or_404(request, plan.slug)
         # get_token() marca o cookie CSRF pra ser enviado na resposta —
         # sem isso, o cookie nunca nasce aqui (nenhum template desta pagina
         # usa {% csrf_token %}) e o JS de escrita (autoavaliacao online,
@@ -707,7 +852,7 @@ class PublicWorkoutDetailView(View):
         # sessao nesta mesma visita — mesmo modelo de confianca que o B0
         # ja usa hoje (posse do link prova identidade; fase B de login
         # obrigatorio ainda nao esta ligada, ver docstring do B0 acima).
-        from public_workouts.models import PublicWorkoutSubscription
+        from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
         from student_identity.public_workout_session import (
             attach_public_workout_session_cookie,
             get_public_workout_account_id_from_request,
@@ -723,7 +868,44 @@ class PublicWorkoutDetailView(View):
             )
             account_id = subscription
 
+        # Pagamento bloqueado: tela dedicada (nao 404) — ver docstring de
+        # _render_payment_blocked_html. So' se aplica quando EXISTE
+        # assinatura pra este slug e ela nao esta ACTIVE (mesma condicao
+        # de _confirm_subscription_active_or_404, so' que aqui vira tela
+        # em vez de excecao — os 10 clientes legados sem assinatura Stripe
+        # nenhuma nunca caem neste ramo).
+        blocking_subscription = (
+            PublicWorkoutSubscription.objects.filter(plan_slug=plan.slug)
+            .exclude(status=PublicWorkoutSubscriptionStatus.ACTIVE)
+            .exists()
+        )
+        if blocking_subscription:
+            response = HttpResponse(_render_payment_blocked_html(plan))
+            if account_id is not None and not had_session:
+                attach_public_workout_session_cookie(response, account_id=account_id)
+            return response
+
         response = HttpResponse(_render_public_workout_html(plan_slug, account_id=account_id))
+        opened_subscription = PublicWorkoutSubscription.objects.select_related('account').filter(
+            plan_slug=plan.slug, account_id=account_id,
+        ).first()
+        if opened_subscription is not None:
+            active_program = PublicWorkoutProgram.objects.filter(
+                slug=plan.slug, is_active=True,
+            ).first()
+            if active_program is not None:
+                PublicWorkoutProgramDelivery.objects.filter(
+                    program=active_program, opened_at__isnull=True,
+                ).update(opened_at=timezone.now())
+            record_funnel_event(
+                'program_opened',
+                acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
+                    subscription=opened_subscription,
+                ).first(),
+                account=opened_subscription.account,
+                subscription=opened_subscription,
+                tier=opened_subscription.tier,
+            )
         if account_id is not None and not had_session:
             attach_public_workout_session_cookie(response, account_id=account_id)
         # B0: quem abre a pagina prova posse do link — e o que autoriza a
@@ -960,26 +1142,38 @@ class PublicWorkoutTemplatePreviewView(View):
             'student_photo_url': None,
             'customer_portal_url': None,
             'account_email': None,
+            # Preview nunca tem sessao de aluno (ver docstring da view) —
+            # sem account_id nao ha' como resolver tier/assinatura, mesmo
+            # tratamento que account_email/student_photo_url acima.
+            'nutrition_unlocked': False,
         })
         return HttpResponse(html)
 
 
 class PublicWorkoutSignOutView(View):
-    """POST /renan/<slug>/sair — "Sair da conta" da tela Perfil (fundacao B3,
-    pedido do Renan pra fechar o paralelo com o app do aluno).
+    """POST /renan/<slug>/sair — "Sair da conta" da tela Perfil.
 
-    So apaga o cookie de posse (PUBLIC_WORKOUT_OWNER_COOKIE, B0) — o
-    corredor ainda nao tem login de sessao (fases B/C da Onda B3), entao
-    hoje isto e' groundwork visual/funcional pra quando essa fase ligar, nao
-    uma barreira de acesso de verdade: quem voltar a abrir /renan/<slug>
-    ganha o cookie de volta automaticamente (PublicWorkoutDetailView.get
-    sempre re-seta), so os endpoints de leitura/escrita que dependem dele
-    ficam temporariamente sem posse ate a proxima visita.
+    Apaga os DOIS cookies de identidade do corredor: o cookie de posse
+    (PUBLIC_WORKOUT_OWNER_COOKIE, B0 — quem abriu o link primeiro) e o
+    cookie de login por e-mail (octobox_treinos_session, Onda B1). A
+    docstring original desta view (escrita antes do B1 existir) dizia que
+    so' o B0 importava — ficou desatualizada: sem apagar tambem a sessao de
+    login, quem clicava "Sair da conta" continuava logado como o mesmo
+    PublicWorkoutAccount por baixo, e ao abrir o link de OUTRO aluno recebia
+    404 (_confirm_login_session_owns_slug_or_404 nunca deixa a sessao
+    logada ver o slug de outra conta) — parecendo "conta trocada" quando na
+    verdade nunca saiu de verdade. Achado ao vivo verificando o corredor,
+    corrigido aqui: agora quem voltar a abrir /renan/<slug> (qualquer slug)
+    ganha o cookie de posse de volta automaticamente, sem carregar
+    identidade de login nenhuma.
     """
 
     def post(self, request, plan_slug, *args, **kwargs):
+        from student_identity.public_workout_session import clear_public_workout_session_cookie
+
         response = redirect('public-workout-offline')
         response.delete_cookie(PUBLIC_WORKOUT_OWNER_COOKIE, samesite='Lax')
+        clear_public_workout_session_cookie(response)
         return response
 
 
@@ -1096,6 +1290,63 @@ class PublicWorkoutWeeklyReviewView(View):
         review = build_weekly_review(account_id=account_id)
         review_text = generate_weekly_review_text(review)
         return JsonResponse({'review_text': review_text}, status=200)
+
+
+class PublicWorkoutMealPlanView(View):
+    """GET /renan/<slug>/nutricao.json — le' o plano alimentar ATIVO da
+    conta logada (Entrega 6, Fase 4 — docs/plans/
+    public-workouts-escala-e-nutricao-corda.md, D.4/D.6).
+
+    PONTOS CRITICOS:
+    - Mesma regra de auth de PublicWorkoutPackageView: sessao de LOGIN
+      ativa, 401 sem sessao, 404 se a sessao nao e' dona deste slug.
+    - Gate de tier (D.4): so' Completo/Premium tem acesso. 404, nunca 403
+      -- 403 confirmaria que existe conteudo de nutricao pra aquela conta
+      (mesma regra do gate de posse B0/B3). Sem assinatura nenhuma
+      tambem cai em 404, nunca 500.
+    - `meal_plan: null` (tier qualifica mas ninguem publicou plano ainda)
+      e' resposta 200 valida, nunca 404 -- mesmo espirito de
+      PublicWorkoutWeeklyReviewView (`review_text: null`).
+    """
+
+    def get(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        from public_workouts.acquisition import record_funnel_event
+        from public_workouts.models import (
+            PublicWorkoutAcquisitionSession,
+            PublicWorkoutMealPlan,
+            PublicWorkoutMealPlanDelivery,
+            PublicWorkoutSubscription,
+        )
+        from public_workouts.services import get_active_meal_plan, require_nutrition_tier
+        from django.utils import timezone
+
+        subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
+        if subscription is None or not require_nutrition_tier(subscription):
+            raise Http404('Nutricao nao disponivel pra este plano.')
+
+        meal_plan = PublicWorkoutMealPlan.objects.filter(account_id=account_id, is_active=True).first()
+        if meal_plan is not None:
+            PublicWorkoutMealPlanDelivery.objects.filter(
+                meal_plan=meal_plan, opened_at__isnull=True,
+            ).update(opened_at=timezone.now())
+            record_funnel_event(
+                'meal_plan_opened',
+                acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
+                    subscription=subscription,
+                ).first(),
+                account=subscription.account, subscription=subscription, tier=subscription.tier,
+            )
+        return JsonResponse({'meal_plan': get_active_meal_plan(account_id=account_id)}, status=200)
 
 
 class PublicWorkoutExportDataView(View):
@@ -1340,6 +1591,7 @@ class PublicWorkoutDownloadPdfView(View):
 
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
+        _confirm_subscription_active_or_404(plan.slug)
         if get_public_workout_owner_slug(request) != plan.slug:
             raise Http404('Treino publico nao encontrado.')
 

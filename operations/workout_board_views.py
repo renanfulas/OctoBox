@@ -380,7 +380,13 @@ class WorkoutSmartPasteView(OperationBaseView):
                 parsed = parse_weekly_wod_text(source_text)
                 if _freeform_should_take_over(parsed):
                     parsed = parse_weekly_wod_freeform(source_text)
-                apply_llm_slug_resolution(parsed, load_wod_movement_dictionary())
+            # O SmartPlan estruturado também pode chegar com slug vazio (por
+            # exemplo, se a geração não reconheceu uma abreviação). Antes,
+            # este resolver rodava somente no parser livre, deixando esses
+            # itens presos em revisão manual mesmo com Haiku configurado.
+            # A resolução é segura para os dois formatos: ela só consulta
+            # movimentos que ainda não possuem slug.
+            apply_llm_slug_resolution(parsed, load_wod_movement_dictionary())
             plan.parsed_payload = parsed
         plan.created_by = plan.created_by or request.user
         plan.save()

@@ -218,6 +218,7 @@ PONTOS CRITICOS:
               </div>
               {% endif %}
               {% endwith %}
+              {% todays_logged_weight load_history movement.movement_slug as today_weight %}
               <div class="workout-load-input__head">
                 <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
                 <span class="workout-load-input__hint" data-workout-load-hint></span>
@@ -232,12 +233,13 @@ PONTOS CRITICOS:
                   placeholder="kg"
                   class="workout-load-input__field"
                   data-workout-load-field
+                  {% if today_weight is not None %}value="{{ today_weight|unlocalize }}"{% endif %}
                   aria-label="Carga de hoje em {{ movement|movement_name:movement_labels }}, em quilos"
                 >
                 <button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>
                 <button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
               </div>
-              <span class="workout-load-input__status" data-workout-load-status aria-live="polite"></span>
+              <span class="workout-load-input__status" data-workout-load-status aria-live="polite">{% if today_weight is not None %}Já registrado hoje: {{ today_weight|unlocalize }} kg{% endif %}</span>
             </div>
             {% empty %}
             <p class="table-empty-cell">Nenhum movimento neste bloco.</p>
@@ -488,6 +490,22 @@ PONTOS CRITICOS:
             <span class="theme-toggle-icon" aria-hidden="true"></span>
           </button>
         </div>
+      </article>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Nutrição</h2>
+        {% if nutrition_unlocked %}
+        <div
+          data-workout-nutrition
+          data-nutrition-url="{% url 'public-workout-meal-plan' plan_slug=plan_slug %}"
+        >
+          <button type="button" class="workout-load-input__save" data-workout-nutrition-generate>Ver plano alimentar</button>
+          <div class="workout-nutrition__content" data-workout-nutrition-content hidden></div>
+          <span class="workout-nutrition__status" data-workout-nutrition-status aria-live="polite"></span>
+        </div>
+        {% else %}
+        <p>Disponível nos planos Completo e Premium. Fale com o Renan para fazer upgrade.</p>
+        {% endif %}
       </article>
 
       <article class="student-card card-decor-topstripe workout-block-card">
@@ -827,6 +845,7 @@ PONTOS CRITICOS:
 <script src="{% static 'js/core/shell.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/load_tracker.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/weekly_review.js' %}" defer></script>
+<script src="{% static 'js/public_workouts/nutrition.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/assessments.js' %}" defer></script>
 </body>
 </html>

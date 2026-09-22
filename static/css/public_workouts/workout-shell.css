@@ -669,10 +669,22 @@ button.workout-week-day:focus-visible {
 
 /* Telas pequenas (~400px): a tabela de movimentos nunca deve forcar
    scroll horizontal da PAGINA — so o wrapper .operation-table-wrap rola,
-   a coluna de movimento quebra linha em vez de empurrar largura. */
+   a coluna de movimento quebra linha em vez de empurrar largura.
+
+   Achado ao vivo no celular: sem nenhuma pista visual, o corte da ultima
+   coluna (ex.: "Diretriz de carga" virando "Defer meno...") parece bug de
+   alinhamento, nao conteudo que da pra arrastar. O fade no fim resolve --
+   seguro aqui porque min-width:480px SEMPRE excede o viewport nesta media
+   query, entao a tabela sempre tem o que rolar (nunca teria mascara sobre
+   conteudo que nao existe). */
 @media (max-width: 480px) {
     .workout-block-card table {
         min-width: 480px;
+    }
+
+    .workout-block-card .operation-table-wrap {
+        -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
     }
 }
 

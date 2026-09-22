@@ -16,6 +16,7 @@ import re
 
 from django.template.loader import render_to_string
 from django.test import TestCase
+from django.utils import timezone
 
 from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementStatus
 from public_workouts.periodization import PHASE_PROFILES
@@ -33,6 +34,7 @@ from public_workouts.templatetags.public_workouts_extras import (
     reps_phases,
     resolve_movement_display_name,
     sibling_variations,
+    todays_logged_weight,
 )
 
 
@@ -1554,6 +1556,48 @@ class MovementLoadDisplayTagTests(TestCase):
 
         self.assertEqual(result['kind'], 'free')
         self.assertFalse(result['show_registration_hint'])
+
+
+class TodaysLoggedWeightTagTests(TestCase):
+    # Achado real (usuario/Juliana): o campo de carga sempre renderizava
+    # vazio, mesmo apos salvar com sucesso -- sem confirmacao visivel ao
+    # recarregar, ela achava que nao tinha salvo e registrava de novo
+    # (13 registros no mesmo dia, varios duplicados a poucos segundos de
+    # distancia). Esta tag preenche o campo com o que ja foi salvo hoje.
+
+    def _today_iso(self) -> str:
+        return timezone.localdate().isoformat()
+
+    def test_returns_todays_weight_for_the_movement(self):
+        load_history = [{'movement_slug': 'hack-squat', 'weight_kg': 42.5, 'performed_on': self._today_iso()}]
+
+        self.assertEqual(todays_logged_weight(load_history, 'hack-squat'), 42.5)
+
+    def test_ignores_entries_from_other_movements(self):
+        load_history = [{'movement_slug': 'leg-press', 'weight_kg': 100.0, 'performed_on': self._today_iso()}]
+
+        self.assertIsNone(todays_logged_weight(load_history, 'hack-squat'))
+
+    def test_ignores_entries_from_previous_days(self):
+        load_history = [{'movement_slug': 'hack-squat', 'weight_kg': 40.0, 'performed_on': '2020-01-01'}]
+
+        self.assertIsNone(todays_logged_weight(load_history, 'hack-squat'))
+
+    def test_returns_the_most_recent_entry_when_saved_more_than_once_today(self):
+        # Cenario exato do achado real: clique repetido no mesmo dia grava
+        # varias linhas (idempotency_key diferente a cada clique, de
+        # proposito -- ver load_tracker.js) -- o campo deve refletir a
+        # ULTIMA, nunca a primeira.
+        today = self._today_iso()
+        load_history = [
+            {'movement_slug': 'hack-squat', 'weight_kg': 40.0, 'performed_on': today},
+            {'movement_slug': 'hack-squat', 'weight_kg': 42.5, 'performed_on': today},
+        ]
+
+        self.assertEqual(todays_logged_weight(load_history, 'hack-squat'), 42.5)
+
+    def test_empty_history_returns_none(self):
+        self.assertIsNone(todays_logged_weight([], 'hack-squat'))
 
 
 class PeriodizationCanonicalTreinoRenderTests(TestCase):

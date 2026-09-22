@@ -16,7 +16,7 @@ POR QUE ELE EXISTE:
 ACAO MANUAL PENDENTE (nao e codigo): configurar um SEGUNDO endpoint no
 dashboard da Stripe apontando pra esta URL, assinando checkout.session.
 completed / invoice.payment_succeeded / invoice.payment_failed / customer.
-subscription.deleted. Gera um webhook secret PROPRIO — nunca o mesmo de
+subscription.updated / customer.subscription.deleted. Gera um webhook secret PROPRIO — nunca o mesmo de
 STRIPE_WEBHOOK_SECRET (esse e do endpoint do box).
 
 PONTOS CRITICOS:
@@ -44,6 +44,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import IntegrityError
 from django.http import HttpResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -51,7 +52,8 @@ from integrations.mesh import FAILURE_KIND_NON_RETRYABLE, FAILURE_KIND_RETRYABLE
 from integrations.stripe.models import PaymentWebhookEvent
 
 from . import billing
-from .models import PublicWorkoutSubscription
+from .models import PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
+from .stripe_checkout import _TIER_PRICE_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,100 @@ def _resolve_subscription_by_stripe_id(stripe_subscription_id: str) -> PublicWor
     return PublicWorkoutSubscription.objects.filter(stripe_subscription_id=stripe_subscription_id).first()
 
 
+def _resolve_subscription_from_invoice(invoice: dict) -> PublicWorkoutSubscription | None:
+    """Resolve inclusive quando a fatura chega antes do checkout webhook.
+
+    A Stripe nao garante ordem entre endpoints/eventos. O checkout grava a
+    identidade local em ``subscription_data.metadata``; nas faturas ela pode
+    aparecer em ``subscription_details.metadata`` (API anterior) ou em
+    ``parent.subscription_details.metadata`` (API Basil+). So aceitamos o
+    fallback quando o produto esta explicitamente marcado como coaching.
+    """
+    parent = invoice.get('parent') or {}
+    subscription_details = invoice.get('subscription_details') or parent.get('subscription_details') or {}
+    stripe_subscription_id = invoice.get('subscription') or subscription_details.get('subscription') or ''
+    subscription = _resolve_subscription_by_stripe_id(stripe_subscription_id)
+    if subscription is not None:
+        return subscription
+
+    metadata = subscription_details.get('metadata') or {}
+    if metadata.get('product') != 'coaching':
+        return None
+    tier = metadata.get('tier')
+    setting_name = _TIER_PRICE_SETTINGS.get(tier)
+    expected_price_id = (getattr(settings, setting_name, '') or '').strip() if setting_name else ''
+    line_items = (invoice.get('lines') or {}).get('data') or []
+    first_line = line_items[0] if line_items else {}
+    actual_price_id = ((first_line.get('pricing') or {}).get('price_details') or {}).get('price')
+    actual_price_id = actual_price_id or (first_line.get('price') or {}).get('id') or ''
+    if not expected_price_id or actual_price_id != expected_price_id:
+        logger.error(
+            'invoice do corredor fora de ordem com tier/price divergente; pagamento exige revisao manual. '
+            'invoice=%s tier_metadata=%r real_price_id=%r',
+            invoice.get('id'), tier, actual_price_id,
+        )
+        return None
+    local_id = metadata.get('public_workout_subscription_id')
+    try:
+        subscription = PublicWorkoutSubscription.objects.get(pk=int(local_id))
+    except (PublicWorkoutSubscription.DoesNotExist, TypeError, ValueError):
+        return None
+
+    if stripe_subscription_id:
+        billing.link_stripe_ids(
+            subscription,
+            customer_id=invoice.get('customer') or subscription.stripe_customer_id,
+            stripe_subscription_id=stripe_subscription_id,
+        )
+    return subscription
+
+
+def _confirm_tier_price(
+    subscription: PublicWorkoutSubscription, *, stripe_subscription_id: str, tier_from_metadata: str | None, event_id: str
+) -> None:
+    """Cross-check de D.3/RT3 sem conceder acesso antecipadamente.
+
+    O Price ID REAL da assinatura precisa bater com o tier da metadata.
+    Divergencia fica pendente para revisao manual. Este evento apenas liga
+    IDs e registra o periodo; `invoice.payment_succeeded` e a unica prova
+    financeira que promove a assinatura para ACTIVE.
+    """
+    if not stripe_subscription_id:
+        return
+
+    import stripe
+
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key:
+        logger.error('checkout.session.completed do corredor: STRIPE_SECRET_KEY ausente, nao foi possivel confirmar tier/price. event=%s', event_id)
+        return
+    stripe.api_key = secret_key
+
+    stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+    real_price_id = stripe_subscription['items']['data'][0]['price']['id']
+
+    setting_name = _TIER_PRICE_SETTINGS.get(tier_from_metadata)
+    configured_price_id = (getattr(settings, setting_name, '') or '').strip() if setting_name else ''
+
+    if not configured_price_id or real_price_id != configured_price_id:
+        logger.error(
+            'checkout.session.completed do corredor: tier/price nao confere, fica pendente pra revisao manual. '
+            'event=%s subscription_id=%s tier_metadata=%r real_price_id=%r',
+            event_id, subscription.pk, tier_from_metadata, real_price_id,
+        )
+        return
+
+    period_end = stripe_subscription.get('current_period_end')
+    if not period_end:
+        period_end = (stripe_subscription.get('items', {}).get('data') or [{}])[0].get('current_period_end')
+    update_fields = ['updated_at']
+    if period_end:
+        subscription.current_period_end = datetime.fromtimestamp(int(period_end), tz=dt_timezone.utc)
+        update_fields.append('current_period_end')
+    subscription.save(update_fields=update_fields)
+    return True
+
+
 def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
     session = event.payload.get('data', {}).get('object', {})
     metadata = session.get('metadata', {}) or {}
@@ -120,10 +216,37 @@ def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
             subscription, customer_id=stripe_customer_id, stripe_subscription_id=stripe_subscription_id
         )
 
+    _confirm_tier_price(
+        subscription,
+        stripe_subscription_id=stripe_subscription_id,
+        tier_from_metadata=metadata.get('tier'),
+        event_id=event.event_id,
+    )
+    from public_workouts.acquisition import bind_acquisition_session, record_funnel_event
+    from public_workouts.models import PublicWorkoutAcquisitionSession
+
+    acquisition_session = None
+    acquisition_session_id = metadata.get('acquisition_session_id')
+    if acquisition_session_id:
+        acquisition_session = PublicWorkoutAcquisitionSession.objects.filter(pk=acquisition_session_id).first()
+        acquisition_session = bind_acquisition_session(
+            acquisition_session, account=subscription.account, subscription=subscription,
+        )
+    if acquisition_session is None:
+        logger.warning(
+            'curva_checkout_without_attribution event_id=%s subscription_id=%s',
+            event.event_id, subscription.pk,
+        )
+    record_funnel_event(
+        'checkout_authorized', acquisition_session=acquisition_session,
+        account=subscription.account, subscription=subscription,
+        tier=subscription.tier,
+    )
+
 
 def _handle_invoice_payment_succeeded(event: PaymentWebhookEvent) -> None:
     invoice = event.payload.get('data', {}).get('object', {})
-    subscription = _resolve_subscription_by_stripe_id(invoice.get('subscription') or '')
+    subscription = _resolve_subscription_from_invoice(invoice)
     if subscription is None:
         return  # nao e uma assinatura do corredor — mesma conta Stripe, tabela diferente.
 
@@ -133,11 +256,38 @@ def _handle_invoice_payment_succeeded(event: PaymentWebhookEvent) -> None:
         gross_amount=_cents_to_decimal(invoice.get('amount_paid')),
         due_date=_unix_to_date(invoice.get('period_start')),
     )
+    from public_workouts.models import PublicWorkoutWaitlistEntry, PublicWorkoutWaitlistStatus
+    PublicWorkoutWaitlistEntry.objects.filter(
+        email__iexact=subscription.account.email,
+        tier=subscription.tier,
+        status__in=(PublicWorkoutWaitlistStatus.WAITING, PublicWorkoutWaitlistStatus.INVITED),
+    ).update(
+        status=PublicWorkoutWaitlistStatus.CONVERTED,
+        converted_at=timezone.now(),
+    )
+    from public_workouts.acquisition import record_funnel_event
+    from public_workouts.models import PublicWorkoutAcquisitionSession
+
+    acquisition_session = PublicWorkoutAcquisitionSession.objects.filter(
+        subscription=subscription,
+    ).first()
+    if acquisition_session is None:
+        logger.warning(
+            'curva_invoice_without_attribution event_id=%s subscription_id=%s',
+            event.event_id, subscription.pk,
+        )
+    record_funnel_event(
+        'invoice_paid',
+        acquisition_session=acquisition_session,
+        account=subscription.account,
+        subscription=subscription,
+        tier=subscription.tier,
+    )
 
 
 def _handle_invoice_payment_failed(event: PaymentWebhookEvent) -> None:
     invoice = event.payload.get('data', {}).get('object', {})
-    subscription = _resolve_subscription_by_stripe_id(invoice.get('subscription') or '')
+    subscription = _resolve_subscription_from_invoice(invoice)
     if subscription is None:
         return
 
@@ -146,6 +296,13 @@ def _handle_invoice_payment_failed(event: PaymentWebhookEvent) -> None:
         stripe_invoice_id=invoice.get('id') or '',
         gross_amount=_cents_to_decimal(invoice.get('amount_due')),
         due_date=_unix_to_date(invoice.get('due_date') or invoice.get('period_end')),
+    )
+    from public_workouts.acquisition import record_funnel_event
+    from public_workouts.models import PublicWorkoutAcquisitionSession
+    record_funnel_event(
+        'payment_failed',
+        acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(subscription=subscription).first(),
+        account=subscription.account, subscription=subscription,
     )
 
 
@@ -158,10 +315,77 @@ def _handle_subscription_deleted(event: PaymentWebhookEvent) -> None:
     billing.mark_subscription_canceled(subscription, reason=f'customer.subscription.deleted (event={event.event_id})')
 
 
+def _handle_subscription_updated(event: PaymentWebhookEvent) -> None:
+    """Reconcilia mudanca de tier/status feita no Customer Portal."""
+    stripe_subscription = event.payload.get('data', {}).get('object', {})
+    subscription = _resolve_subscription_by_stripe_id(stripe_subscription.get('id') or '')
+    if subscription is None:
+        return
+
+    items = stripe_subscription.get('items', {}).get('data') or []
+    price_id = ((items[0].get('price') or {}).get('id') if items else '') or ''
+    tier = next(
+        (
+            candidate_tier for candidate_tier, setting_name in _TIER_PRICE_SETTINGS.items()
+            if (getattr(settings, setting_name, '') or '').strip() == price_id
+        ),
+        None,
+    )
+    if tier is None:
+        logger.error(
+            'customer.subscription.updated com Price ID desconhecido. event=%s subscription=%s price=%r',
+            event.event_id, subscription.pk, price_id,
+        )
+        return
+
+    stripe_status = stripe_subscription.get('status') or ''
+    has_confirmed_payment = subscription.payments.filter(
+        status='paid', paid_at__isnull=False,
+    ).exists()
+    status_map = {
+        # Evento de assinatura pode chegar antes de invoice.payment_succeeded.
+        # Sem pagamento local confirmado, nao libera acesso nem trabalho.
+        'active': (
+            PublicWorkoutSubscriptionStatus.ACTIVE
+            if has_confirmed_payment or subscription.status == PublicWorkoutSubscriptionStatus.ACTIVE
+            else PublicWorkoutSubscriptionStatus.PENDING_PAYMENT
+        ),
+        'trialing': PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
+        'past_due': PublicWorkoutSubscriptionStatus.PAST_DUE,
+        'unpaid': PublicWorkoutSubscriptionStatus.PAST_DUE,
+        'paused': PublicWorkoutSubscriptionStatus.SUSPENDED,
+        'canceled': PublicWorkoutSubscriptionStatus.CANCELED,
+    }
+    new_status = status_map.get(stripe_status, subscription.status)
+    previous_status = subscription.status
+    update_fields = ['updated_at']
+    if subscription.tier != tier:
+        subscription.tier = tier
+        update_fields.append('tier')
+    if subscription.status != new_status:
+        subscription.status = new_status
+        update_fields.append('status')
+    period_end = stripe_subscription.get('current_period_end')
+    if period_end:
+        subscription.current_period_end = datetime.fromtimestamp(int(period_end), tz=dt_timezone.utc)
+        update_fields.append('current_period_end')
+    subscription.save(update_fields=update_fields)
+    if previous_status != new_status:
+        from .models import PublicWorkoutSubscriptionEvent
+
+        PublicWorkoutSubscriptionEvent.objects.create(
+            subscription=subscription,
+            from_status=previous_status,
+            to_status=new_status,
+            reason=f'customer.subscription.updated (event={event.event_id})',
+        )
+
+
 _HANDLERS = {
     'checkout.session.completed': _handle_checkout_session_completed,
     'invoice.payment_succeeded': _handle_invoice_payment_succeeded,
     'invoice.payment_failed': _handle_invoice_payment_failed,
+    'customer.subscription.updated': _handle_subscription_updated,
     'customer.subscription.deleted': _handle_subscription_deleted,
 }
 
