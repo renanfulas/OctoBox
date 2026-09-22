@@ -2,11 +2,11 @@
 
 ## Acesso e ativação
 
-No Django Admin, abra **Public workout acquisition sessions** e clique em
-**Analytics · Funil e conversão**. A rota nomeada é
-`admin:public_workouts_funnel_analytics`, sob o prefixo privado já configurado
-para o admin. Exige a permissão de visualizar o modelo de aquisição; não é uma
-rota pública. Selecione coortes de 7, 30 ou 90 dias e exporte o JSON agregado.
+Acesse **Curva Analytics** na navegação do OctoBox ou abra
+`/treinos/analytics/`. A página usa o shell autenticado do produto e é restrita
+aos papéis **Owner** e **DEV**. Selecione coortes de 7, 30 ou 90 dias e exporte
+o JSON agregado pelo mesmo cockpit. O Django Admin continua disponível apenas
+para inspecionar os registros brutos de aquisição.
 
 `PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED=True` é o novo padrão. Uma variável
 explícita `False` no ambiente continua desligando a coleta. O painel mostra
