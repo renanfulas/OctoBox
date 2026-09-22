@@ -453,6 +453,13 @@ class PublicWorkoutAccount(TimeStampedModel):
     email = models.EmailField(unique=True, db_index=True)
     student_identity_id = models.IntegerField(null=True, blank=True, db_index=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
+    # Preenchido so' pelo login por Google (identity.photo_url em
+    # oauth_providers.py) -- login por e-mail nunca tem foto pra oferecer,
+    # entao resolve_or_create_public_workout_account (public_workout_login.py)
+    # so' atualiza este campo quando um photo_url de verdade for passado,
+    # nunca limpa o que ja existe com string vazia (mesma pegadinha real ja
+    # corrigida pro /aluno/ — PR "corrige foto do Google perdida").
+    photo_url = models.URLField(blank=True, default='')
 
     class Meta:
         ordering = ['-created_at']
