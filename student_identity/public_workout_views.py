@@ -59,6 +59,11 @@ from public_workouts.acquisition import (
 )
 from public_workouts.contracts import current_contract_versions
 from public_workouts.funnel_analytics import build_acquisition_report
+from public_workouts.experiments import (
+    assign_active_experiments,
+    build_experiment_report,
+    serialize_assignments,
+)
 from public_workouts.capacity import get_tier_capacity
 from public_workouts.journey import get_customer_journey
 from public_workouts.models import (
@@ -179,6 +184,7 @@ class PublicWorkoutLandingView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['funnel_tracking_enabled'] = bool(request_tracking_enabled(self.request))
+        context['experiment_assignments'] = getattr(self, 'experiment_assignments', [])
         context['testimonials'] = PublicWorkoutTestimonial.objects.filter(
             approved_at__isnull=False, published_at__isnull=False,
         )[:6]
@@ -196,6 +202,8 @@ class PublicWorkoutLandingView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         acquisition_session, _created = ensure_acquisition_session(request)
+        assignments = assign_active_experiments(acquisition_session)
+        self.experiment_assignments = serialize_assignments(assignments)
         response = super().get(request, *args, **kwargs)
         if acquisition_session is not None:
             record_funnel_event('landing_viewed', acquisition_session=acquisition_session)
@@ -328,7 +336,9 @@ class PublicWorkoutFunnelAnalyticsView(PublicWorkoutAnalyticsAccessMixin, Templa
     def get_report(self):
         raw_days = self.request.GET.get('days', '30')
         days = int(raw_days) if raw_days in ('7', '30', '90') else 30
-        return build_acquisition_report(window_days=days)
+        report = build_acquisition_report(window_days=days)
+        report['experiments'] = build_experiment_report(window_days=days)['experiments']
+        return report
 
     def get(self, request, *args, **kwargs):
         report = self.get_report()

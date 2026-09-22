@@ -3,6 +3,7 @@ import json
 from django.core.management.base import BaseCommand
 
 from public_workouts.funnel_analytics import build_acquisition_report
+from public_workouts.experiments import build_experiment_report
 
 
 class Command(BaseCommand):
@@ -16,4 +17,5 @@ class Command(BaseCommand):
         report = build_acquisition_report(
             window_days=options['days'], conversion_days=options['conversion_days'],
         )
+        report['experiments'] = build_experiment_report(window_days=options['days'])['experiments']
         self.stdout.write(json.dumps(report, ensure_ascii=False, indent=2))

@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="{% static 'css/public_workouts/landing.css' %}?v={{ static_asset_version }}-curva4">
 </head>
 <body class="curva-landing" id="topo" data-funnel-enabled="{{ funnel_tracking_enabled|yesno:'true,false' }}" data-funnel-url="{% url 'public-workout-funnel-event' %}">
+{{ experiment_assignments|json_script:"curva-experiment-assignments" }}
 <a class="curva-skip" href="#conteudo">Pular para o conteúdo</a>
 <header class="curva-nav">
   <nav class="curva-page curva-nav-inner" aria-label="Navegação principal">

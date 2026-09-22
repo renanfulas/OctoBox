@@ -34,6 +34,18 @@
 
   {% if not report.visitors %}<div class="curva-analytics-note">Ainda não há visitantes medidos neste período.</div>{% elif report.mature_visitors < 100 %}<div class="curva-analytics-note">A amostra consolidada ainda está abaixo de 100 visitantes. Leia como sinal inicial, não como confirmação da meta.</div>{% endif %}
 
+  <section class="curva-analytics-section" aria-labelledby="experiments-title">
+    <div class="curva-analytics-heading"><div><p>Otimização contínua</p><h2 id="experiments-title">Experimentos controlados</h2></div><span>A variante permanece estável por visitante. Um líder só aparece depois da amostra mínima e quando os intervalos de confiança deixam de se sobrepor.</span></div>
+    {% for experiment in report.experiments %}
+    <article class="curva-experiment">
+      <div class="curva-experiment__summary"><div><small>{{ experiment.key }}</small><h3>{{ experiment.name }}</h3><p>{{ experiment.hypothesis|default:'Hipótese ainda não documentada.' }}</p></div><div><span class="curva-experiment__status">{{ experiment.status }}</span><strong>{% if experiment.decision == 'leader' %}Líder: {{ experiment.candidate_variant }}{% elif experiment.decision == 'inconclusive' %}Sem vencedor confiável{% else %}Coletando amostra{% endif %}</strong><small>Mínimo: {{ experiment.minimum_sample_size }} maduros por variante · {{ experiment.excluded_existing_customers }} clientes anteriores excluídos</small></div></div>
+      <div class="curva-analytics-table"><table><thead><tr><th>Variante</th><th>Expostos</th><th>Maduros</th><th>Pagantes</th><th>Conversão madura</th><th>Intervalo 95%</th></tr></thead><tbody>{% for variant in experiment.variants %}<tr><th>{{ variant.name }}<small>{{ variant.key }}</small></th><td>{{ variant.assigned }}</td><td>{{ variant.mature_visitors }}</td><td>{{ variant.mature_paid }}</td><td>{{ variant.mature_conversion_percent|floatformat:2|default:'—' }}{% if variant.mature_conversion_percent != None %}%{% endif %}</td><td>{% if variant.confidence_low_percent != None %}{{ variant.confidence_low_percent|floatformat:2 }}%–{{ variant.confidence_high_percent|floatformat:2 }}%{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+    </article>
+    {% empty %}
+    <div class="curva-experiment-empty"><strong>Base pronta para o primeiro teste.</strong><p>Nenhum experimento foi configurado. A landing continua servindo a experiência atual para 100% dos visitantes.</p></div>
+    {% endfor %}
+  </section>
+
   <section class="curva-analytics-section" aria-labelledby="funnel-title">
     <div class="curva-analytics-heading"><div><p>Leitura principal</p><h2 id="funnel-title">Funil comercial</h2></div><span>“Não avançou” considera apenas janelas completas de {{ report.conversion_days }} dias.</span></div>
     <div class="curva-funnel-rail">
