@@ -1,9 +1,6 @@
-{% extends "layouts/base.html" %}
-{% load static %}
+{% extends "public_workouts/analytics_base.html" %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/public_workouts/analytics.css' %}?v={{ static_asset_version }}">
-{% endblock %}
+{% block title %}Funil comercial · Curva{% endblock %}
 
 {% block content %}
 <div class="curva-analytics" data-page="curva-analytics" data-screen="commercial-funnel">

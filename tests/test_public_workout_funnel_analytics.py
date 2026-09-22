@@ -1,7 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.hashers import make_password
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.core.management import call_command
@@ -9,10 +8,10 @@ from io import StringIO
 import json
 from django.utils import timezone
 
-from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 from public_workouts.funnel_analytics import build_acquisition_report
 from public_workouts.models import (
-    PublicWorkoutAccount, PublicWorkoutAcquisitionSession, PublicWorkoutFunnelEvent,
+    PublicWorkoutAccount, PublicWorkoutAcquisitionSession, PublicWorkoutAnalyticsCredential,
+    PublicWorkoutFunnelEvent,
     PublicWorkoutPayment, PublicWorkoutPaymentStatus, PublicWorkoutSubscription,
 )
 
@@ -21,14 +20,17 @@ from public_workouts.models import (
 class FunnelAnalyticsTests(TestCase):
     def setUp(self):
         self.at = timezone.now()
-        call_command('bootstrap_roles')
-        user_model = get_user_model()
-        self.owner = user_model.objects.create_user(username='curva-owner', password='secret')
-        self.owner.groups.add(Group.objects.get(name=ROLE_OWNER))
-        self.dev = user_model.objects.create_user(username='curva-dev', password='secret')
-        self.dev.groups.add(Group.objects.get(name=ROLE_DEV))
-        self.manager = user_model.objects.create_user(username='curva-manager', password='secret')
-        self.manager.groups.add(Group.objects.get(name=ROLE_MANAGER))
+        self.analytics_password = 'test-only-password'
+        self.analytics_user, _ = PublicWorkoutAnalyticsCredential.objects.update_or_create(
+            username='analytics-test',
+            defaults={'password_hash': make_password(self.analytics_password), 'is_active': True},
+        )
+
+    def login_to_analytics(self):
+        return self.client.post(reverse('public-workout-funnel-analytics-login'), {
+            'username': self.analytics_user.username,
+            'password': self.analytics_password,
+        })
 
     def visitor(self, days=10, source='instagram'):
         session = PublicWorkoutAcquisitionSession.objects.create(
@@ -133,22 +135,37 @@ class FunnelAnalyticsTests(TestCase):
         self.assertEqual(report['visitors'], 0)
         self.assertEqual(report['coverage']['new_payers_in_period'], 1)
 
-    def test_cockpit_requires_login_and_commercial_role(self):
+    def test_cockpit_redirects_to_its_own_login(self):
         url = reverse('public-workout-funnel-analytics')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
-        self.client.force_login(self.manager)
-        self.assertEqual(self.client.get(url).status_code, 403)
+        self.assertEqual(response.url, reverse('public-workout-funnel-analytics-login'))
 
-    def test_owner_and_dev_can_open_dedicated_cockpit(self):
+    def test_dedicated_login_opens_standalone_cockpit(self):
         url = reverse('public-workout-funnel-analytics')
-        for user in (self.owner, self.dev):
-            self.client.force_login(user)
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, 200)
-            self.assertTemplateUsed(response, 'public_workouts/funnel_analytics.html')
-            self.assertContains(response, 'Da primeira visita')
-            self.assertContains(response, 'Curva Analytics')
+        login_response = self.login_to_analytics()
+        self.assertRedirects(login_response, url)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'public_workouts/funnel_analytics.html')
+        self.assertTemplateUsed(response, 'public_workouts/analytics_base.html')
+        self.assertContains(response, 'Da primeira visita')
+        self.assertNotContains(response, 'OctoBox Control')
+
+    def test_invalid_login_is_rejected_without_creating_session(self):
+        response = self.client.post(reverse('public-workout-funnel-analytics-login'), {
+            'username': self.analytics_user.username,
+            'password': 'wrong-password',
+        })
+        self.assertEqual(response.status_code, 401)
+        self.assertContains(response, 'Usuário ou senha inválidos', status_code=401)
+        self.assertNotIn('public_workout_analytics_username', self.client.session)
+
+    def test_logout_closes_analytics_session(self):
+        self.login_to_analytics()
+        response = self.client.post(reverse('public-workout-funnel-analytics-logout'))
+        self.assertRedirects(response, reverse('public-workout-funnel-analytics-login'))
+        self.assertNotIn('public_workout_analytics_username', self.client.session)
 
     def test_cli_exports_aggregate_report(self):
         self.pay(self.visitor())
@@ -180,7 +197,7 @@ class FunnelAnalyticsTests(TestCase):
         self.assertEqual(campaign['cac'], '300.00')
 
     def test_cockpit_renders_empty_and_populated_states(self):
-        self.client.force_login(self.owner)
+        self.login_to_analytics()
         url = reverse('public-workout-funnel-analytics')
         empty = self.client.get(url, {'days': '30'})
         self.assertContains(empty, 'Ainda não há visitantes')
@@ -190,11 +207,11 @@ class FunnelAnalyticsTests(TestCase):
         self.assertContains(rendered, 'instagram')
         self.assertContains(rendered, '100,00')
 
-    def test_json_export_uses_validated_window_and_same_permissions(self):
+    def test_json_export_uses_validated_window_and_same_session(self):
         url = reverse('public-workout-funnel-analytics')
-        self.client.force_login(self.owner)
+        self.login_to_analytics()
         response = self.client.get(url, {'days': 'invalid', 'format': 'json'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['window_days'], 30)
-        self.client.force_login(self.manager)
-        self.assertEqual(self.client.get(url, {'format': 'json'}).status_code, 403)
+        self.client.post(reverse('public-workout-funnel-analytics-logout'))
+        self.assertEqual(self.client.get(url, {'format': 'json'}).status_code, 302)

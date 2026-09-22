@@ -37,12 +37,15 @@ import re
 import json
 import uuid
 import logging
+import hashlib
 
+from django.contrib.auth.hashers import check_password
 from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.urls import reverse
+from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView, View
 
 from public_workouts.billing import get_or_create_subscription
@@ -60,6 +63,7 @@ from public_workouts.capacity import get_tier_capacity
 from public_workouts.journey import get_customer_journey
 from public_workouts.models import (
     PublicWorkoutAccount,
+    PublicWorkoutAnalyticsCredential,
     PublicWorkoutGuaranteeModel,
     PublicWorkoutFunnelEvent,
     PublicWorkoutNutritionProfile,
@@ -89,8 +93,7 @@ from public_workouts.stripe_checkout import (
     start_customer_portal_session,
     start_subscription_checkout,
 )
-from access.permissions import RoleRequiredMixin
-from access.roles import ROLE_DEV, ROLE_OWNER
+from shared_support.security import _consume_rate_limit, _get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -247,11 +250,80 @@ class PublicWorkoutFunnelEventView(View):
         return JsonResponse({'accepted': event is not None}, status=202)
 
 
-class PublicWorkoutFunnelAnalyticsView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
-    """Cockpit comercial dedicado; eventos brutos continuam no admin."""
+_ANALYTICS_SESSION_KEY = 'public_workout_analytics_username'
+_ANALYTICS_DUMMY_HASH = 'pbkdf2_sha256$1200000$F5I4VTGyxIQQ3XY0S75uRN$b3g9PSCUe6l4xRuAIPCfrXqcTw6t6M162uUDTD9ZZKU='
+
+
+class PublicWorkoutAnalyticsAccessMixin:
+    """Mantém o cockpit Curva fora da autenticação e dos papéis do OctoBox."""
+
+    def dispatch(self, request, *args, **kwargs):
+        username = request.session.get(_ANALYTICS_SESSION_KEY, '')
+        if not PublicWorkoutAnalyticsCredential.objects.filter(username=username, is_active=True).exists():
+            request.session.pop(_ANALYTICS_SESSION_KEY, None)
+            return redirect('public-workout-funnel-analytics-login')
+        request.analytics_username = username
+        return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator(never_cache, name='dispatch')
+class PublicWorkoutFunnelAnalyticsLoginView(View):
+    template_name = 'public_workouts/funnel_analytics_login.html'
+
+    def get(self, request, *args, **kwargs):
+        username = request.session.get(_ANALYTICS_SESSION_KEY, '')
+        if PublicWorkoutAnalyticsCredential.objects.filter(username=username, is_active=True).exists():
+            return redirect('public-workout-funnel-analytics')
+        return render(request, self.template_name)
+
+    def post(self, request, *args, **kwargs):
+        username = (request.POST.get('username') or '').strip().lower()
+        password = request.POST.get('password') or ''
+        ip_token = hashlib.sha256(_get_client_ip(request).encode()).hexdigest()[:24]
+        allowed, retry_after = _consume_rate_limit(
+            scope='curva-analytics-login', token=ip_token, limit=10, window_seconds=300,
+        )
+        if not allowed:
+            response = render(
+                request, self.template_name,
+                {'error': 'Muitas tentativas. Aguarde alguns minutos e tente novamente.',
+                 'username': username, 'retry_after': retry_after},
+                status=429,
+            )
+            response['Retry-After'] = str(retry_after)
+            return response
+
+        credential = PublicWorkoutAnalyticsCredential.objects.filter(username=username, is_active=True).first()
+        encoded_password = credential.password_hash if credential else _ANALYTICS_DUMMY_HASH
+        password_matches = check_password(password, encoded_password)
+        if credential is None or not password_matches:
+            return render(
+                request, self.template_name,
+                {'error': 'Usuário ou senha inválidos.', 'username': username},
+                status=401,
+            )
+
+        request.session.cycle_key()
+        request.session[_ANALYTICS_SESSION_KEY] = credential.username
+        request.session.set_expiry(8 * 60 * 60)
+        credential.last_login_at = timezone.now()
+        credential.save(update_fields=['last_login_at', 'updated_at'])
+        return redirect('public-workout-funnel-analytics')
+
+
+@method_decorator(never_cache, name='dispatch')
+class PublicWorkoutFunnelAnalyticsLogoutView(View):
+    def post(self, request, *args, **kwargs):
+        request.session.pop(_ANALYTICS_SESSION_KEY, None)
+        request.session.cycle_key()
+        return redirect('public-workout-funnel-analytics-login')
+
+
+@method_decorator(never_cache, name='dispatch')
+class PublicWorkoutFunnelAnalyticsView(PublicWorkoutAnalyticsAccessMixin, TemplateView):
+    """Cockpit comercial standalone do produto Curva."""
 
     template_name = 'public_workouts/funnel_analytics.html'
-    allowed_roles = (ROLE_OWNER, ROLE_DEV)
 
     def get_report(self):
         raw_days = self.request.GET.get('days', '30')
@@ -262,7 +334,9 @@ class PublicWorkoutFunnelAnalyticsView(LoginRequiredMixin, RoleRequiredMixin, Te
         report = self.get_report()
         if request.GET.get('format') == 'json':
             return JsonResponse(report)
-        return self.render_to_response(self.get_context_data(report=report))
+        return self.render_to_response(self.get_context_data(
+            report=report, analytics_username=request.analytics_username,
+        ))
 
 
 class PublicWorkoutTermsView(TemplateView):

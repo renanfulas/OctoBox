@@ -60,7 +60,6 @@ _NAV_CONTRACTS = {
     'student-quick-create': ('student-form', 'alunos'),
     'student-quick-update': ('student-form', 'alunos'),
     'finance-center': ('finance', 'financeiro'),
-    'public-workout-funnel-analytics': ('curva-analytics', 'curva-analytics'),
     'membership-plan-quick-update': ('finance-plan-form', 'financeiro'),
     'intake-center': ('intake', 'entradas'),
     'class-grid': ('class-grid', 'grade-aulas'),
