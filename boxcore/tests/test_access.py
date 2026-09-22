@@ -15,7 +15,7 @@ PONTOS CRITICOS:
 """
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -206,3 +206,11 @@ class BootstrapRolesCommandTests(TestCase):
         dev_group = Group.objects.get(name=ROLE_DEV)
 
         self.assertTrue(dev_group.permissions.filter(codename='view_studentappinvitation').exists())
+
+    def test_command_recreates_missing_default_permissions(self):
+        Permission.objects.filter(codename='view_auditevent').delete()
+
+        call_command('bootstrap_roles')
+
+        dev_group = Group.objects.get(name=ROLE_DEV)
+        self.assertTrue(dev_group.permissions.filter(codename='view_auditevent').exists())
