@@ -39,6 +39,7 @@ import uuid
 import logging
 
 from django.http import JsonResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.urls import reverse
@@ -54,6 +55,7 @@ from public_workouts.acquisition import (
     request_tracking_enabled,
 )
 from public_workouts.contracts import current_contract_versions
+from public_workouts.funnel_analytics import build_acquisition_report
 from public_workouts.capacity import get_tier_capacity
 from public_workouts.journey import get_customer_journey
 from public_workouts.models import (
@@ -87,6 +89,8 @@ from public_workouts.stripe_checkout import (
     start_customer_portal_session,
     start_subscription_checkout,
 )
+from access.permissions import RoleRequiredMixin
+from access.roles import ROLE_DEV, ROLE_OWNER
 
 logger = logging.getLogger(__name__)
 
@@ -241,6 +245,24 @@ class PublicWorkoutFunnelEventView(View):
             event_type, acquisition_session=session, client_event_id=client_event_id, tier=tier,
         )
         return JsonResponse({'accepted': event is not None}, status=202)
+
+
+class PublicWorkoutFunnelAnalyticsView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
+    """Cockpit comercial dedicado; eventos brutos continuam no admin."""
+
+    template_name = 'public_workouts/funnel_analytics.html'
+    allowed_roles = (ROLE_OWNER, ROLE_DEV)
+
+    def get_report(self):
+        raw_days = self.request.GET.get('days', '30')
+        days = int(raw_days) if raw_days in ('7', '30', '90') else 30
+        return build_acquisition_report(window_days=days)
+
+    def get(self, request, *args, **kwargs):
+        report = self.get_report()
+        if request.GET.get('format') == 'json':
+            return JsonResponse(report)
+        return self.render_to_response(self.get_context_data(report=report))
 
 
 class PublicWorkoutTermsView(TemplateView):

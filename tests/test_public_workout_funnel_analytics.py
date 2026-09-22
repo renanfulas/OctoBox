@@ -1,16 +1,15 @@
 from datetime import timedelta
 from decimal import Decimal
-from unittest.mock import Mock
-
-from django.contrib.admin import AdminSite
-from django.core.exceptions import PermissionDenied
-from django.test import RequestFactory, TestCase, override_settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.test import TestCase, override_settings
+from django.urls import reverse
 from django.core.management import call_command
 from io import StringIO
 import json
 from django.utils import timezone
 
-from public_workouts.admin import PublicWorkoutAcquisitionSessionAdmin
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 from public_workouts.funnel_analytics import build_acquisition_report
 from public_workouts.models import (
     PublicWorkoutAccount, PublicWorkoutAcquisitionSession, PublicWorkoutFunnelEvent,
@@ -22,6 +21,14 @@ from public_workouts.models import (
 class FunnelAnalyticsTests(TestCase):
     def setUp(self):
         self.at = timezone.now()
+        call_command('bootstrap_roles')
+        user_model = get_user_model()
+        self.owner = user_model.objects.create_user(username='curva-owner', password='secret')
+        self.owner.groups.add(Group.objects.get(name=ROLE_OWNER))
+        self.dev = user_model.objects.create_user(username='curva-dev', password='secret')
+        self.dev.groups.add(Group.objects.get(name=ROLE_DEV))
+        self.manager = user_model.objects.create_user(username='curva-manager', password='secret')
+        self.manager.groups.add(Group.objects.get(name=ROLE_MANAGER))
 
     def visitor(self, days=10, source='instagram'):
         session = PublicWorkoutAcquisitionSession.objects.create(
@@ -126,12 +133,22 @@ class FunnelAnalyticsTests(TestCase):
         self.assertEqual(report['visitors'], 0)
         self.assertEqual(report['coverage']['new_payers_in_period'], 1)
 
-    def test_dashboard_requires_model_view_permission(self):
-        request = RequestFactory().get('/analytics/')
-        request.user = Mock(has_perm=Mock(return_value=False))
-        model_admin = PublicWorkoutAcquisitionSessionAdmin(PublicWorkoutAcquisitionSession, AdminSite())
-        with self.assertRaises(PermissionDenied):
-            model_admin.analytics_view(request)
+    def test_cockpit_requires_login_and_commercial_role(self):
+        url = reverse('public-workout-funnel-analytics')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.client.force_login(self.manager)
+        self.assertEqual(self.client.get(url).status_code, 403)
+
+    def test_owner_and_dev_can_open_dedicated_cockpit(self):
+        url = reverse('public-workout-funnel-analytics')
+        for user in (self.owner, self.dev):
+            self.client.force_login(user)
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, 'public_workouts/funnel_analytics.html')
+            self.assertContains(response, 'Da primeira visita')
+            self.assertContains(response, 'Curva Analytics')
 
     def test_cli_exports_aggregate_report(self):
         self.pay(self.visitor())
@@ -162,14 +179,22 @@ class FunnelAnalyticsTests(TestCase):
         self.assertEqual(campaign['paid_customers'], 1)
         self.assertEqual(campaign['cac'], '300.00')
 
-    def test_dashboard_renders_empty_and_populated_states(self):
-        request = RequestFactory().get('/analytics/?days=30')
-        request.user = Mock(is_active=True, is_staff=True, has_perm=Mock(return_value=True))
-        model_admin = PublicWorkoutAcquisitionSessionAdmin(PublicWorkoutAcquisitionSession, AdminSite())
-        empty = model_admin.analytics_view(request).render()
+    def test_cockpit_renders_empty_and_populated_states(self):
+        self.client.force_login(self.owner)
+        url = reverse('public-workout-funnel-analytics')
+        empty = self.client.get(url, {'days': '30'})
         self.assertContains(empty, 'Ainda não há visitantes')
         self.pay(self.visitor())
-        rendered = model_admin.analytics_view(request).render()
+        rendered = self.client.get(url, {'days': '30'})
         self.assertContains(rendered, 'Primeiro pagamento')
         self.assertContains(rendered, 'instagram')
         self.assertContains(rendered, '100,00')
+
+    def test_json_export_uses_validated_window_and_same_permissions(self):
+        url = reverse('public-workout-funnel-analytics')
+        self.client.force_login(self.owner)
+        response = self.client.get(url, {'days': 'invalid', 'format': 'json'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['window_days'], 30)
+        self.client.force_login(self.manager)
+        self.assertEqual(self.client.get(url, {'format': 'json'}).status_code, 403)
