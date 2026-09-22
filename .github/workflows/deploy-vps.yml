@@ -151,17 +151,17 @@ jobs:
             "$VENV/bin/pip" install --quiet -r "$APP/requirements.txt"
 
             echo "==> Coletando static files..."
-            set -a && source "$ENV" && set +a
-            "$VENV/bin/python" "$APP/manage.py" collectstatic --noinput
+            RUN_WITH_ENV=("$VENV/bin/python" "$APP/scripts/linux/run_with_env_file.py" "$ENV" --)
+            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" collectstatic --noinput
 
             echo "==> Bootstrap control (resolve InconsistentMigrationHistory)..."
-            "$VENV/bin/python" "$APP/manage.py" bootstrap_control
+            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" bootstrap_control
 
             echo "==> Rodando migrations..."
-            "$VENV/bin/python" "$APP/manage.py" migrate --noinput
+            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" migrate --noinput
 
             echo "==> Sincronizando roles..."
-            "$VENV/bin/python" "$APP/manage.py" bootstrap_roles
+            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" bootstrap_roles
 
             echo "==> Reiniciando Gunicorn..."
             systemctl restart octobox-gunicorn
