@@ -61,6 +61,8 @@ def _real_payload(slug: str) -> dict:
 
 
 def _render(payload: dict, *, plan_slug: str, load_history=None, one_rep_max_by_movement=None) -> str:
+    from public_workouts.services import build_movement_label_lookup
+
     return render_to_string('public_workouts/workout.html', {
         'program': payload,
         'accent_variant': payload.get('accent_variant'),
@@ -69,6 +71,7 @@ def _render(payload: dict, *, plan_slug: str, load_history=None, one_rep_max_by_
         'one_rep_max_by_movement': one_rep_max_by_movement or {},
         'trends_by_movement': {},
         'plan_slug': plan_slug,
+        'movement_labels': build_movement_label_lookup(payload),
         'student_name': '',
         'student_photo_url': None,
         'customer_portal_url': None,
