@@ -20,7 +20,7 @@ from datetime import date, timedelta
 
 from django.contrib.auth.hashers import make_password
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.test import Client, RequestFactory, TestCase, override_settings
+from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -30,6 +30,7 @@ from public_workouts.models import (
     PublicWorkoutProgram,
     PublicWorkoutProgramDraft,
     PublicWorkoutProgramDraftSource,
+    PublicWorkoutStaffCredential,
     PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
     PublicWorkoutTrainingExperience,
@@ -43,7 +44,7 @@ from public_workouts.models import (
 from public_workouts.staff_auth import SESSION_KEY
 from public_workouts.views import PublicWorkoutActivationQueueView
 
-_TEST_CREDENTIALS = {'renan': make_password('senha-de-teste-1'), 'giovanna': make_password('senha-de-teste-2')}
+_TEST_PASSWORDS = {'renan': 'senha-de-teste-1', 'giovanna': 'senha-de-teste-2'}
 
 
 def _build_view():
@@ -152,14 +153,14 @@ class ActivationQueueContextTests(TestCase):
         self.assertEqual(context['summary']['overdue'], 1)
 
 
-@override_settings(PUBLIC_WORKOUT_STAFF_CREDENTIALS=_TEST_CREDENTIALS)
 class CurvaStaffLoginTests(TestCase):
     """Login proprio do Curva — NAO usa auth.User nem django.contrib.auth.
 
     public_workouts nao e' multi-tenant (sem Box/Membership): as unicas
     duas contas (Renan, Giovanna) sao validadas contra
-    PUBLIC_WORKOUT_STAFF_CREDENTIALS (hash pbkdf2, nunca texto puro) e a
-    sessao guarda so' o username — ver staff_auth.py.
+    PublicWorkoutStaffCredential (hash pbkdf2, nunca texto puro, mesma
+    tabela do cockpit de analytics) e a sessao guarda so' o username — ver
+    staff_auth.py.
     """
 
     def setUp(self):
@@ -167,6 +168,12 @@ class CurvaStaffLoginTests(TestCase):
         self.queue_url = reverse('public-workout-activation-queue')
         self.login_url = reverse('public-workout-staff-login')
         self.logout_url = reverse('public-workout-staff-logout')
+        self.credentials = {
+            username: PublicWorkoutStaffCredential.objects.create(
+                username=username, password_hash=make_password(password), is_active=True,
+            )
+            for username, password in _TEST_PASSWORDS.items()
+        }
 
     def test_anonymous_visitor_is_redirected_to_login(self):
         response = self.client.get(self.queue_url)
@@ -200,6 +207,14 @@ class CurvaStaffLoginTests(TestCase):
         self.assertEqual(queue_response.status_code, 200)
         self.assertContains(queue_response, 'logado@example.com')
 
+    def test_login_extends_session_beyond_the_global_30min_default(self):
+        # SESSION_COOKIE_AGE global e' 1800s (30min, pensado pro admin do
+        # OctoBox B2B) — sem set_expiry proprio, Renan/Giovanna cairiam da
+        # fila de ativacao a cada 30min de inatividade durante o dia.
+        self.client.post(self.login_url, {'username': 'renan', 'password': 'senha-de-teste-1'})
+
+        self.assertEqual(self.client.session.get_expiry_age(), 8 * 60 * 60)
+
     def test_username_is_case_insensitive(self):
         response = self.client.post(
             self.login_url, {'username': 'RENAN', 'password': 'senha-de-teste-1'},
@@ -232,9 +247,20 @@ class CurvaStaffLoginTests(TestCase):
         self.assertNotIn(SESSION_KEY, self.client.session)
         self.assertEqual(self.client.get(self.queue_url).status_code, 302)
 
-    def test_session_is_invalidated_if_credential_is_removed_from_settings(self):
+    def test_session_is_invalidated_if_credential_is_deactivated(self):
         self.client.post(self.login_url, {'username': 'renan', 'password': 'senha-de-teste-1'})
         self.assertEqual(self.client.get(self.queue_url).status_code, 200)
 
-        with override_settings(PUBLIC_WORKOUT_STAFF_CREDENTIALS={'giovanna': _TEST_CREDENTIALS['giovanna']}):
-            self.assertEqual(self.client.get(self.queue_url).status_code, 302)
+        self.credentials['renan'].is_active = False
+        self.credentials['renan'].save(update_fields=['is_active', 'updated_at'])
+
+        self.assertEqual(self.client.get(self.queue_url).status_code, 302)
+
+    def test_login_updates_last_login_at(self):
+        credential = self.credentials['renan']
+        self.assertIsNone(credential.last_login_at)
+
+        self.client.post(self.login_url, {'username': 'renan', 'password': 'senha-de-teste-1'})
+
+        credential.refresh_from_db()
+        self.assertIsNotNone(credential.last_login_at)

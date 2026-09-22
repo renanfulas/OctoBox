@@ -56,8 +56,9 @@ from django.utils import timezone
 from model_support.base import TimeStampedModel
 
 
-class PublicWorkoutAnalyticsCredential(TimeStampedModel):
-    """Credencial isolada do cockpit Curva; não usa usuários ou papéis do OctoBox."""
+class PublicWorkoutStaffCredential(TimeStampedModel):
+    """Credencial única da área interna do Curva (cockpit de analytics e fila de
+    ativação); não usa usuários ou papéis do OctoBox."""
 
     username = models.CharField(max_length=80, unique=True)
     password_hash = models.CharField(max_length=255)

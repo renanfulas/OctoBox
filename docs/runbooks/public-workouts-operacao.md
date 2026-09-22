@@ -97,6 +97,51 @@ em gate verde estável responde `NO_ACTION`.
 3. Reexecutar a ação somente no mesmo pedido: a chave idempotente evita estorno duplo.
 4. Confirmar o status `refunded` do pagamento e `canceled` da assinatura.
 
+### Assinatura ativa sem work item aberto
+
+1. Rodar `python manage.py reconcile_public_workout_operations --dry-run` para ver
+   quantas assinaturas seriam avaliadas.
+2. Se a suspeita for uma conta específica, checar se ela já preencheu a anamnese
+   (`training_profile`). `ensure_required_work_items` só abre trabalho depois que a
+   anamnese existe — conta paga sem anamnese ainda e sem work item é esperado, não é
+   incidente.
+3. Rodar `python manage.py reconcile_public_workout_operations` (sem `--dry-run`) —
+   é idempotente, só cria o que realmente falta. Já roda a cada hora por cadência
+   normal; disparar manualmente só antecipa o ciclo.
+4. Se o gap persistir depois de reconciliar com anamnese confirmada, o defeito está
+   na chamada síncrona em `billing.py` (`ensure_required_work_items` no momento em
+   que a assinatura vira `ACTIVE`), não em dado ausente — tratar como bug de código,
+   não repetir a reconciliação esperando resultado diferente.
+
+### `customer.subscription.updated` com Price ID desconhecido
+
+1. Ler o log `customer.subscription.updated com Price ID desconhecido` — traz
+   `event`, `subscription` e o `price` recebido da Stripe.
+2. No Dashboard da Stripe, confirmar a qual produto/tier aquele Price ID pertence.
+3. Comparar com `PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL/COMPLETO/PREMIUM` do
+   ambiente — o evento é descartado sem atualizar nada quando nenhuma das três
+   variáveis bate com o price recebido (troca de plano feita pelo cliente no
+   Customer Portal fica sem efeito no produto).
+4. Corrigir a variável de ambiente e redeployar. A mudança não é reprocessada
+   automaticamente: reenviar o evento pela Stripe (Dashboard → Webhooks → Resend)
+   ou, como paliativo imediato, ajustar o tier manualmente no Admin.
+
+### Evento de funil não chegou
+
+1. Separar rejeitado de perdido antes de investigar. Rejeitado aparece no log como
+   `curva_funnel_client_event_rejected reason=...` (JSON inválido, formato fora do
+   esperado, tipo não-allowlisted ou `client_event_id` malformado) — é validação
+   funcionando, não perda silenciosa.
+2. `curva_funnel_event_duplicate` também não é perda: o mesmo `client_event_id` já
+   foi salvo: leitura correta é idempotência.
+3. Perda de verdade é do lado do cliente (bloqueador de anúncio, falha de rede antes
+   do POST) e não deixa rastro no servidor — só aparece como queda inesperada de
+   contagem no funil (ex.: `pricing_viewed` muito abaixo do esperado para o volume de
+   visitas na landing).
+4. Antes de investigar mais, confirmar que `PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED`
+   está ligado — com a flag desligada, `record_funnel_event` retorna `None` em
+   silêncio por design, e isso não é bug.
+
 ## Rollback
 
 - Tracking: desligar `PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED`.

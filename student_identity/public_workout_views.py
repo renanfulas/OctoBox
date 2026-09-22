@@ -68,13 +68,13 @@ from public_workouts.capacity import get_tier_capacity
 from public_workouts.journey import get_customer_journey
 from public_workouts.models import (
     PublicWorkoutAccount,
-    PublicWorkoutAnalyticsCredential,
     PublicWorkoutGuaranteeModel,
     PublicWorkoutFunnelEvent,
     PublicWorkoutNutritionProfile,
     PublicWorkoutPhysicalRestrictionTag,
     PublicWorkoutProfessional,
     PublicWorkoutProfessionalRole,
+    PublicWorkoutStaffCredential,
     PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
     PublicWorkoutTestimonial,
@@ -267,7 +267,7 @@ class PublicWorkoutAnalyticsAccessMixin:
 
     def dispatch(self, request, *args, **kwargs):
         username = request.session.get(_ANALYTICS_SESSION_KEY, '')
-        if not PublicWorkoutAnalyticsCredential.objects.filter(username=username, is_active=True).exists():
+        if not PublicWorkoutStaffCredential.objects.filter(username=username, is_active=True).exists():
             request.session.pop(_ANALYTICS_SESSION_KEY, None)
             return redirect('public-workout-funnel-analytics-login')
         request.analytics_username = username
@@ -280,7 +280,7 @@ class PublicWorkoutFunnelAnalyticsLoginView(View):
 
     def get(self, request, *args, **kwargs):
         username = request.session.get(_ANALYTICS_SESSION_KEY, '')
-        if PublicWorkoutAnalyticsCredential.objects.filter(username=username, is_active=True).exists():
+        if PublicWorkoutStaffCredential.objects.filter(username=username, is_active=True).exists():
             return redirect('public-workout-funnel-analytics')
         return render(request, self.template_name)
 
@@ -301,7 +301,7 @@ class PublicWorkoutFunnelAnalyticsLoginView(View):
             response['Retry-After'] = str(retry_after)
             return response
 
-        credential = PublicWorkoutAnalyticsCredential.objects.filter(username=username, is_active=True).first()
+        credential = PublicWorkoutStaffCredential.objects.filter(username=username, is_active=True).first()
         encoded_password = credential.password_hash if credential else _ANALYTICS_DUMMY_HASH
         password_matches = check_password(password, encoded_password)
         if credential is None or not password_matches:
