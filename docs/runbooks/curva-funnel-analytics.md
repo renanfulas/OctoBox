@@ -27,6 +27,45 @@ aquisição no snapshot diário, agora versão 2. Manter a execução diária j�
 prevista no runbook operacional; o painel consulta os dados atuais e não
 depende do agendamento para funcionar.
 
+## Experimentos e otimização contínua
+
+A fundação de experimentos usa a própria sessão anônima de aquisição como
+unidade de randomização. Cada visitante recebe uma variante de forma
+determinística e mantém essa variante durante todo o experimento. Iniciar um
+experimento não altera a landing sozinho: o payload atribuído fica disponível
+no elemento JSON `curva-experiment-assignments` para uma implementação visual
+posterior consumir explicitamente.
+
+Crie primeiro como rascunho:
+
+```powershell
+python manage.py configure_public_workout_experiment `
+  --key hero-promessa-v1 `
+  --name "Promessa principal do hero" `
+  --hypothesis "Uma promessa mais concreta aumenta o primeiro pagamento" `
+  --variant controle:50 `
+  --variant promessa-concreta:50 `
+  --minimum-sample-size 100
+```
+
+Revise as variantes e execute novamente com `--start` para iniciar. O relatório
+considera o primeiro pagamento positivo confirmado pelo servidor dentro da
+janela configurada, usa somente visitantes com janela encerrada para a decisão
+e mostra intervalo de Wilson de 95%. Um candidato aparece apenas quando todas
+as variantes atingem a amostra mínima e o intervalo do líder não se sobrepõe ao
+segundo colocado. Isso é recomendação: `winner_variant_key` nunca é preenchido
+e nenhuma experiência é promovida automaticamente.
+
+Regras operacionais:
+
+- não execute dois experimentos que alterem a mesma parte da landing;
+- não mude o significado de uma variante durante um experimento em execução;
+- pause antes de alterar pesos; atribuições existentes permanecem imutáveis;
+- avalie reembolso, falha de checkout e qualidade da atribuição antes de
+  publicar qualquer vencedor;
+- registre a hipótese antes de iniciar, para evitar escolher uma narrativa
+  depois de ver os números.
+
 ## Definição da conversão
 
 - Visitante: identificador assinado em cookie próprio, HttpOnly, SameSite=Lax,

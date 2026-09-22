@@ -129,6 +129,20 @@
 .curva-analytics-heading h2 { margin: 0; font-size: clamp(22px, 2.4vw, 32px); letter-spacing: -.035em; }
 .curva-analytics-heading > span { max-width: 440px; color: var(--text-secondary, #91a4b5); font-size: 12px; line-height: 1.5; text-align: right; }
 
+.curva-experiment { overflow: hidden; border: 1px solid var(--ca-line); border-radius: 14px; }
+.curva-experiment + .curva-experiment { margin-top: 16px; }
+.curva-experiment__summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; padding: 20px; border-bottom: 1px solid var(--ca-line); }
+.curva-experiment__summary h3 { margin: 5px 0 8px; font-size: 20px; }
+.curva-experiment__summary p { margin: 0; color: var(--text-secondary); font-size: 12px; }
+.curva-experiment__summary > div:last-child { display: grid; justify-items: end; gap: 6px; text-align: right; }
+.curva-experiment__summary strong { font-size: 13px; }
+.curva-experiment__summary small { color: var(--text-secondary); font-size: 10px; }
+.curva-experiment__status { padding: 5px 8px; border: 1px solid rgba(21, 217, 255, .25); border-radius: 999px; color: var(--ca-accent); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.curva-experiment .curva-analytics-table { margin: 0; padding: 0 12px 8px; }
+.curva-experiment-empty { padding: 24px; border: 1px dashed rgba(21, 217, 255, .28); border-radius: 14px; background: var(--ca-accent-soft); }
+.curva-experiment-empty strong { font-size: 15px; }
+.curva-experiment-empty p { margin: 8px 0 0; color: var(--text-secondary); font-size: 12px; }
+
 .curva-funnel-rail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .curva-funnel-rail article { position: relative; min-width: 0; padding: 22px 20px; border-top: 2px solid var(--ca-line); }
 .curva-funnel-rail article::before { content: ""; position: absolute; top: -2px; left: 0; width: var(--step-share); max-width: 100%; height: 2px; background: var(--ca-accent); }
@@ -186,6 +200,8 @@
   .curva-analytics-kpis, .curva-friction-grid, .curva-signal-list { grid-template-columns: 1fr; }
   .curva-analytics-heading { display: block; }
   .curva-analytics-heading > span { display: block; margin-top: 12px; text-align: left; }
+  .curva-experiment__summary { grid-template-columns: 1fr; }
+  .curva-experiment__summary > div:last-child { justify-items: start; text-align: left; }
 }
 @media (max-width: 520px) {
   .curva-analytics-kpis, .curva-funnel-rail { grid-template-columns: 1fr; }

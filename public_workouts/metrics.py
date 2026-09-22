@@ -13,6 +13,7 @@ from django.utils import timezone
 
 from .capacity import get_capacity_projection, get_tier_capacity
 from .funnel_analytics import build_acquisition_report
+from .experiments import build_experiment_report
 from .models import (
     PublicWorkoutFunnelEvent,
     PublicWorkoutAcquisitionSession,
@@ -58,6 +59,7 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
     funnel = {step: 0 for step in FUNNEL_STEPS}
     funnel.update({row['event_type']: row['total'] for row in funnel_rows})
     acquisition = build_acquisition_report(at=at, window_days=window_days)
+    experiments = build_experiment_report(at=at, window_days=window_days)
     acquisition_steps = acquisition['steps']
     funnel_rates = {
         'landing_to_tier': _ratio(acquisition_steps[1]['visitors'], acquisition['visitors']),
@@ -213,6 +215,7 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
         'funnel': {'counts': funnel, 'counts_unit': 'raw_events', 'rates': funnel_rates,
                    'rates_unit': 'unique_visitors_7_day_cohort'},
         'acquisition': acquisition,
+        'experiments': experiments,
         'commercial': {
             'active_by_tier': active_by_tier,
             'gross_revenue': str(revenue['gross'] or Decimal('0')),

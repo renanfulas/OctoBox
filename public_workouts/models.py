@@ -71,6 +71,73 @@ class PublicWorkoutAnalyticsCredential(TimeStampedModel):
         return self.username
 
 
+class PublicWorkoutExperimentStatus(models.TextChoices):
+    DRAFT = 'draft', 'Rascunho'
+    RUNNING = 'running', 'Em execução'
+    PAUSED = 'paused', 'Pausado'
+    COMPLETED = 'completed', 'Concluído'
+
+
+class PublicWorkoutExperiment(TimeStampedModel):
+    """Teste controlado da Curva; nunca promove uma variante automaticamente."""
+
+    key = models.SlugField(max_length=80, unique=True)
+    name = models.CharField(max_length=120)
+    hypothesis = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=12, choices=PublicWorkoutExperimentStatus.choices,
+        default=PublicWorkoutExperimentStatus.DRAFT, db_index=True,
+    )
+    primary_metric = models.CharField(max_length=40, default='first_payment')
+    conversion_days = models.PositiveSmallIntegerField(default=7)
+    minimum_sample_size = models.PositiveIntegerField(default=100)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    ends_at = models.DateTimeField(null=True, blank=True)
+    winner_variant_key = models.SlugField(max_length=80, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(conversion_days__gte=1, conversion_days__lte=30),
+                name='public_workout_experiment_conversion_days_range',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(minimum_sample_size__gte=1),
+                name='public_workout_experiment_minimum_sample_positive',
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class PublicWorkoutExperimentVariant(TimeStampedModel):
+    experiment = models.ForeignKey(
+        PublicWorkoutExperiment, on_delete=models.CASCADE, related_name='variants',
+    )
+    key = models.SlugField(max_length=80)
+    name = models.CharField(max_length=120)
+    allocation_weight = models.PositiveIntegerField(default=1)
+    payload = models.JSONField(default=dict, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['experiment_id', 'created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['experiment', 'key'], name='unique_public_workout_experiment_variant_key',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(allocation_weight__gte=1),
+                name='public_workout_experiment_variant_weight_positive',
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.experiment.key}:{self.key}'
+
+
 class PublicWorkoutAssessment(models.Model):
     plan_slug = models.CharField(max_length=50, db_index=True)
     measured_at = models.DateField()
@@ -595,6 +662,33 @@ class PublicWorkoutAcquisitionSession(models.Model):
     )
     first_seen_at = models.DateTimeField(default=timezone.now)
     last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+
+class PublicWorkoutExperimentAssignment(models.Model):
+    """Exposição estável de uma sessão a uma variante de experimento."""
+
+    experiment = models.ForeignKey(
+        PublicWorkoutExperiment, on_delete=models.PROTECT, related_name='assignments',
+    )
+    variant = models.ForeignKey(
+        PublicWorkoutExperimentVariant, on_delete=models.PROTECT, related_name='assignments',
+    )
+    acquisition_session = models.ForeignKey(
+        PublicWorkoutAcquisitionSession, on_delete=models.CASCADE, related_name='experiment_assignments',
+    )
+    assigned_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        ordering = ['-assigned_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['experiment', 'acquisition_session'],
+                name='unique_public_workout_experiment_session_assignment',
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.experiment.key}:{self.variant.key}:{self.acquisition_session_id}'
 
 
 class PublicWorkoutFunnelEvent(models.Model):
