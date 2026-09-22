@@ -15,6 +15,7 @@ from .models import PublicWorkoutOutboxMessage, PublicWorkoutOutboxStatus
 TOPIC_PROGRAM_READY = 'program_ready'
 TOPIC_MEAL_PLAN_READY = 'meal_plan_ready'
 TOPIC_WAITLIST_INVITE = 'waitlist_invite'
+TOPIC_STAFF_NEW_SUBSCRIPTION = 'staff_new_subscription'
 MAX_ATTEMPTS = 5
 PROCESSING_LEASE_MINUTES = 10
 logger = logging.getLogger(__name__)
@@ -34,6 +35,24 @@ def enqueue_outbox(*, topic: str, aggregate_type: str, aggregate_id, version: in
 
 
 def _dispatch(message) -> bool:
+    # TOPIC_STAFF_NEW_SUBSCRIPTION nao usa base_url (nao carrega link
+    # magico) — checar a variavel so' pros topicos que precisam dela, pra
+    # um alerta interno de staff nunca falhar por uma config que nao lhe
+    # diz respeito.
+    if message.topic == TOPIC_STAFF_NEW_SUBSCRIPTION:
+        from .models import PublicWorkoutSubscriptionEvent
+        from .notifications import notify_staff_new_subscription
+
+        event = PublicWorkoutSubscriptionEvent.objects.select_related('subscription__account').get(
+            pk=message.aggregate_id,
+        )
+        results = notify_staff_new_subscription(event.subscription, previous_status=event.from_status)
+        # Sem rastreio por destinatario (diferente de PublicWorkoutProgramDelivery):
+        # um sucesso parcial conta como entregue pra nao reenviar pra quem
+        # ja recebeu a cada retry — so falha total (ou lista vazia de nada
+        # a enviar, que tambem nao e falha) volta pra fila.
+        return (not results) or any(status == 'sent' for status in results.values())
+
     from .notifications import notify_meal_plan_ready, notify_program_ready, notify_waitlist_invitation
 
     base_url = str(getattr(settings, 'PUBLIC_WORKOUT_PUBLIC_BASE_URL', '') or '').strip()

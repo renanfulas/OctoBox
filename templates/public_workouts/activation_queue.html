@@ -1,0 +1,96 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Fila de ativação — Curva</title>
+<link rel="stylesheet" href="{% static 'css/public_workouts/account.css' %}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/staff_ops.css' %}">
+</head>
+<body class="curva-ops">
+<main class="curva-ops-shell">
+  <header class="curva-ops-topbar">
+    <a href="{% url 'public-workout-activation-queue' %}" class="curva-ops-brand">Cur<span>va</span> · operação</a>
+    <div class="curva-ops-user">
+      <span>{{ staff_username }}</span>
+      <form method="post" action="{% url 'public-workout-staff-logout' %}">{% csrf_token %}<button type="submit">Sair</button></form>
+    </div>
+  </header>
+
+  <section class="curva-ops-hero">
+    <p class="curva-ops-eyebrow">{{ hero.eyebrow }}</p>
+    <h1>{{ hero.title }}</h1>
+    <p>{{ hero.copy }}</p>
+  </section>
+
+  <section class="curva-ops-stats" aria-label="Resumo da fila">
+    <article class="curva-ops-stat"><span>Aguardando</span><strong>{{ summary.total }}</strong></article>
+    <article class="curva-ops-stat"><span>Sem treino</span><strong>{{ summary.missing_training }}</strong></article>
+    <article class="curva-ops-stat"><span>Sem nutrição</span><strong>{{ summary.missing_nutrition }}</strong></article>
+    <article class="curva-ops-stat is-danger"><span>Atrasados</span><strong>{{ summary.overdue }}</strong></article>
+  </section>
+
+  <section class="curva-ops-card" aria-label="Fila de ativação">
+    {% if rows %}
+    <table class="curva-ops-table">
+      <thead>
+        <tr><th>Aluno</th><th>Plano</th><th>Pagando desde</th><th>Treino</th><th>Nutrição</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>
+            <strong>{{ row.account.email }}</strong>
+            {% if not row.training_profile_filled %}<br><span class="curva-ops-pill is-info">sem anamnese de treino</span>{% endif %}
+          </td>
+          <td>
+            {{ row.get_tier_display }}
+            {% if row.plan_slug %}<br><code style="font-size:.82em;color:var(--curve-muted)">{{ row.plan_slug }}</code>
+            {% else %}<br><span class="curva-ops-pill is-warning">slug não atribuído</span>{% endif %}
+          </td>
+          <td>{{ row.created_at|date:"d/m/Y" }}</td>
+          <td>
+            {% if not row.missing_training %}
+              <span class="curva-ops-pill is-success">publicado</span>
+            {% elif row.pending_draft %}
+              <span class="curva-ops-pill is-info">rascunho aguardando revisão</span>
+            {% elif row.training_work_item %}
+              <span class="curva-ops-pill{% if row.training_overdue %} is-danger{% else %} is-info{% endif %}">{{ row.training_work_item.get_status_display }}</span>
+              <p class="curva-ops-meta">{{ row.training_work_item.assigned_to|default:"sem responsável" }} · prazo {{ row.training_work_item.due_at|date:"d/m H:i" }}{% if row.training_overdue %} · <strong style="color:#fca5a5">atrasado</strong>{% endif %}</p>
+            {% elif not row.training_profile_filled %}
+              <span class="curva-ops-pill">aguardando anamnese do aluno</span>
+            {% else %}
+              <span class="curva-ops-pill is-warning">sem work item — checar PUBLIC_WORKOUT_OPERATIONS_ENABLED</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.tier == 'essencial' %}
+              <span style="color:var(--curve-muted)">— não incluso no plano</span>
+            {% elif not row.missing_nutrition %}
+              <span class="curva-ops-pill is-success">publicado</span>
+            {% elif row.nutrition_work_item %}
+              <span class="curva-ops-pill{% if row.nutrition_overdue %} is-danger{% else %} is-info{% endif %}">{{ row.nutrition_work_item.get_status_display }}</span>
+              <p class="curva-ops-meta">{{ row.nutrition_work_item.assigned_to|default:"sem responsável" }} · prazo {{ row.nutrition_work_item.due_at|date:"d/m H:i" }}{% if row.nutrition_overdue %} · <strong style="color:#fca5a5">atrasado</strong>{% endif %}</p>
+            {% elif not row.nutrition_profile_filled %}
+              <span class="curva-ops-pill">aguardando anamnese nutricional</span>
+            {% else %}
+              <span class="curva-ops-pill is-warning">sem work item — checar PUBLIC_WORKOUT_OPERATIONS_ENABLED</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="curva-ops-empty">Ninguém aguardando — fila vazia. Toda assinatura ativa já tem treino (e nutrição, quando aplicável) publicado.</div>
+    {% endif %}
+  </section>
+
+  {% if is_paginated %}
+  <div class="curva-ops-pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">← Anterior</a>{% endif %}
+    <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Próxima →</a>{% endif %}
+  </div>
+  {% endif %}
+
+  <p class="curva-ops-footer">Editar prioridade, responsável ou status continua no admin: <a href="{% url 'admin:public_workouts_publicworkoutworkitem_changelist' %}">Work items</a> · <a href="{% url 'admin:public_workouts_publicworkoutprogramdraft_changelist' %}">Rascunhos de programa</a>.</p>
+</main>
+</body></html>

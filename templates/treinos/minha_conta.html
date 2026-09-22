@@ -21,7 +21,8 @@
   </section>
   {% if refund %}<section class="curva-account-card" aria-labelledby="guarantee-title">
     <span>Garantia</span><strong id="guarantee-title">7 dias</strong>
-    {% if refund.request %}<p>Pedido: {{ refund.request.get_status_display }}.</p>
+    {% if not refund.payment_confirmed %}<p>Sua garantia de 7 dias começa a contar assim que confirmarmos o pagamento. Isso costuma levar só alguns instantes.</p>
+    {% elif refund.request %}<p>Pedido: {{ refund.request.get_status_display }}.</p>
     {% elif refund.eligible %}<p>Você pode solicitar reembolso integral até {{ refund.deadline|date:"d/m/Y H:i" }}.</p>
     <form class="curva-refund-form" method="post" action="{% url 'public-workout-refund-request' %}" onsubmit="return window.confirm('Confirmar o pedido de reembolso e cancelamento da assinatura?');">{% csrf_token %}
       <label for="refund-reason">Conte brevemente o motivo (opcional)</label><textarea id="refund-reason" name="reason" rows="2" maxlength="2000"></textarea>
