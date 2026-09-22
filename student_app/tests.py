@@ -2411,6 +2411,40 @@ class PublicWorkoutTemplatePreviewViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(DEBUG=True)
+    def test_uses_real_account_photo_and_email_when_session_is_active(self):
+        # Renan: "usar a foto do Google... no avatar" -- unica forma de
+        # conferir isso antes do corte de producao real (rota ainda nao
+        # existe, ver docstring de PublicWorkoutTemplatePreviewView).
+        from public_workouts.models import PublicWorkoutAccount
+        from student_identity.public_workout_session import (
+            PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            build_public_workout_session_value,
+        )
+
+        self._publish()
+        account = PublicWorkoutAccount.objects.create(
+            email='comfoto@example.com', photo_url='https://lh3.googleusercontent.com/a/foto-preview',
+        )
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.id,
+        )
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        content = response.content.decode('utf-8')
+        self.assertIn('https://lh3.googleusercontent.com/a/foto-preview', content)
+        self.assertIn('comfoto@example.com', content)
+
+    @override_settings(DEBUG=True)
+    def test_falls_back_to_plan_name_without_photo_when_no_session(self):
+        self._publish()
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        content = response.content.decode('utf-8')
+        self.assertNotIn('googleusercontent', content)
+
 
 class PublicWorkoutDetailViewCutoverTests(TestCase):
     """GET /renan/<slug> — Entrega 4: corte pra workout.html quando o slug
