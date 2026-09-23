@@ -246,6 +246,15 @@
   }
 
   function saveWidget(widget) {
+    // Acha real, nao hipotetico: toque duplo (comum no celular, principalmente
+    // com qualquer engasgo de tela) gerava DOIS idempotency_key diferentes --
+    // a idempotencia protege reenvio da MESMA tentativa pela rede, nunca
+    // protegeu duas tentativas reais e distintas. Desabilitar o botao durante
+    // o salvamento fecha essa janela na origem, sem precisar de debounce nem
+    // de nada no backend.
+    var saveBtn = widget.querySelector('[data-workout-load-save]');
+    if (saveBtn && saveBtn.disabled) { return; }
+
     var field = widget.querySelector('[data-workout-load-field]');
     var raw = field && field.value ? parseFloat(field.value.replace(',', '.')) : null;
     if (raw === null || isNaN(raw) || raw < 0) {
@@ -253,6 +262,7 @@
       return;
     }
 
+    if (saveBtn) { saveBtn.disabled = true; }
     var entry = buildEntryFromWidget(widget, raw);
     setStatus(widget, 'Salvando…', false);
     queueEntry(entry)
@@ -268,6 +278,11 @@
       })
       .catch(function () {
         setStatus(widget, 'Não foi possível guardar o registro neste aparelho.', true);
+      })
+      .then(function () {
+        // Roda depois do catch tambem (mesmo efeito de .finally): reabilita
+        // sempre, sucesso ou falha -- nunca deixa o botao travado.
+        if (saveBtn) { saveBtn.disabled = false; }
       });
   }
 
