@@ -220,7 +220,15 @@ class TenantBySessionMiddleware:
     # ------------------------------------------------------------------
 
     def _is_public_path(self, path: str) -> bool:
-        if any(path.startswith(prefix) for prefix in PUBLIC_SCHEMA_PATHS):
+        # Toda entrada em PUBLIC_SCHEMA_PATHS termina em '/' -- sem o
+        # `path == prefix.rstrip('/')`, a versao sem barra final (ex.:
+        # '/treinos', que chega antes do APPEND_SLASH do Django decidir
+        # qualquer coisa) nunca batia no startswith e caia como privada,
+        # redirecionando pro login em vez de deixar o Django resolver o slash.
+        if any(
+            path.startswith(prefix) or path == prefix.rstrip('/')
+            for prefix in PUBLIC_SCHEMA_PATHS
+        ):
             return True
         return path in PUBLIC_SCHEMA_EXACT_PATHS
 

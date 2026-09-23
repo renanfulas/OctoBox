@@ -740,6 +740,38 @@ class B10OAuthCallbackRunsInPublicTest(SimpleTestCase):
 
 
 # ---------------------------------------------------------------------------
+# B13 — PUBLIC_SCHEMA_PATHS reconhece o path sem barra final (TenantBySessionMiddleware)
+# ---------------------------------------------------------------------------
+
+class B13PublicSchemaPathTrailingSlashTest(SimpleTestCase):
+    """B13: /treinos (sem barra) e publico igual a /treinos/.
+
+    Achado real: PUBLIC_SCHEMA_PATHS so tem prefixos terminados em '/', e
+    _is_public_path usava so startswith. '/treinos'.startswith('/treinos/')
+    e False, entao a versao sem barra caia como privada e o middleware
+    redirecionava pro login ANTES do APPEND_SLASH do Django rodar -- o
+    usuario nunca chegava a ser mandado pra '/treinos/'.
+    """
+
+    def test_bare_path_without_trailing_slash_is_public(self):
+        from control.middleware import TenantBySessionMiddleware
+        middleware = TenantBySessionMiddleware(get_response=lambda r: JsonResponse({}))
+
+        self.assertTrue(middleware._is_public_path('/treinos'))
+        self.assertTrue(middleware._is_public_path('/treinos/'))
+        self.assertTrue(middleware._is_public_path('/checkout'))
+        self.assertTrue(middleware._is_public_path('/login'))
+
+    def test_similarly_prefixed_private_path_stays_private(self):
+        """'/treinoscoisa' nao pode virar publico so por comecar com 'treinos'."""
+        from control.middleware import TenantBySessionMiddleware
+        middleware = TenantBySessionMiddleware(get_response=lambda r: JsonResponse({}))
+
+        self.assertFalse(middleware._is_public_path('/treinoscoisa'))
+        self.assertFalse(middleware._is_public_path('/checkoutzinho'))
+
+
+# ---------------------------------------------------------------------------
 # B11 — Invitation token cria membership em public (sem entrar no schema do tenant)
 # ---------------------------------------------------------------------------
 
