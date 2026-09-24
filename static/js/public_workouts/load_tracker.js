@@ -264,13 +264,22 @@
       return;
     }
 
+    var submittedValue = field.value;
     if (saveBtn) { saveBtn.disabled = true; }
+    // O visibilitychange pode disparar antes de o IndexedDB concluir o put.
+    // Marcar este valor como consumido agora evita enfileirá-lo de novo com
+    // outra chave. Uma edição feita durante o save volta a marcar dirty.
+    field.removeAttribute('data-dirty');
     var entry = buildEntryFromWidget(widget, raw);
     setStatus(widget, 'Salvando…', false);
     queueEntry(entry)
       .then(function () {
-        field.removeAttribute('data-dirty');
         return drainOutbox();
+      }, function (error) {
+        if (field.value === submittedValue && !field.hasAttribute('data-dirty')) {
+          markDirty(field);
+        }
+        throw error;
       })
       .then(function () { return listEntries(); })
       .then(function (remaining) {
@@ -314,8 +323,13 @@
       if (raw === null || isNaN(raw) || raw < 0) { return; }
       var widget = field.closest('[data-workout-load-input]');
       if (!widget) { return; }
-      queueEntry(buildEntryFromWidget(widget, raw));
+      var draftValue = field.value;
       field.removeAttribute('data-dirty');
+      queueEntry(buildEntryFromWidget(widget, raw)).catch(function () {
+        if (field.value === draftValue && !field.hasAttribute('data-dirty')) {
+          markDirty(field);
+        }
+      });
     });
   }
 
