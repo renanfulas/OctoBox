@@ -27,6 +27,10 @@ class Command(BaseCommand):
     help = 'Cria os grupos Owner, DEV, Manager, Recepcao e Coach com permissões iniciais do projeto.'
 
     def handle(self, *args, **options):
+        # O cache do ContentTypeManager sobrevive a rollbacks/flushes entre
+        # testes e pode apontar para IDs que já não existem no banco atual.
+        # O bootstrap precisa resolver os tipos a partir do estado real do DB.
+        ContentType.objects.clear_cache()
         model_index = {model._meta.model_name: model for model in apps.get_models()}
 
         for role_name, permission_map in ROLE_PERMISSION_MAP.items():
