@@ -225,6 +225,7 @@ class BootstrapRolesCommandTests(TestCase):
         from django_tenants.utils import get_public_schema_name, schema_context
         from auditing.models import AuditEvent
 
+        self.addCleanup(ContentType.objects.clear_cache)
         tenant_schema = connection.schema_name
         self.assertNotEqual(tenant_schema, get_public_schema_name())
         call_command('bootstrap_roles')
