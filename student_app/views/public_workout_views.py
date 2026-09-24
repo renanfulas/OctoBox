@@ -753,6 +753,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
     plan = _get_public_workout_entry(plan_slug)
 
     from public_workouts.models import PublicWorkoutSubscription
+    from public_workouts.progress_snapshot import build_progress_snapshots
     from public_workouts.services import (
         build_movement_label_lookup,
         build_student_package,
