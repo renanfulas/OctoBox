@@ -98,6 +98,13 @@ def _make_account(email='atleta@example.com') -> PublicWorkoutAccount:
 
 
 def _log(account, *, movement_slug, weight_kg, reps, performed_on, rir=Decimal('0'), set_role=PublicWorkoutLoadLogSetRole.TOP_SET):
+    # set_role=TOP_SET por padrao (plano curva-grafico-hierarquia-e-set-
+    # role.md): estes testes criam a linha direto via ORM, sem passar por
+    # record_load (cujo default de FUNCAO nao se aplica aqui) -- sem um
+    # valor explicito, set_role fica None e _weekly_best_estimates (que
+    # agora filtra set_role__in=_CURVE_AND_TREND_ROLES) exclui a linha
+    # inteira, quebrando os testes de tendencia por um motivo que nao tem
+    # nada a ver com o que eles testam.
     return PublicWorkoutLoadLog.objects.create(
         account=account,
         movement_slug=movement_slug,
@@ -105,8 +112,8 @@ def _log(account, *, movement_slug, weight_kg, reps, performed_on, rir=Decimal('
         reps=reps,
         rir=rir,
         performed_on=performed_on,
-        idempotency_key=f'{movement_slug}-{performed_on.isoformat()}-{weight_kg}',
         set_role=set_role,
+        idempotency_key=f'{movement_slug}-{performed_on.isoformat()}-{weight_kg}',
     )
 
 

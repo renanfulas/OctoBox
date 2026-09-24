@@ -23,6 +23,14 @@ PONTOS CRITICOS:
 - `legacy_points`/`curve_points` respeitam a janela de 90 dias do eixo;
   `has_legacy_history` NUNCA filtra por janela -- o aluno vê "seu
   histórico está salvo" mesmo que nada caiba visualmente na janela atual.
+- `is_active=True` em toda query (Fase 3 do plano
+  curva-carga-completa-reps-rir-recorde): registro corrigido nunca conta
+  como estado atual, mesma regra aplicada em `one_rep_max.py`/`services.py`.
+- Legado inclui `set_role=NULL` ALEM de `legacy_unknown` explicito: antes
+  do backfill (management command) rodar em produção, historico anterior
+  ao campo fica com set_role NULO, nao com o literal 'legacy_unknown' --
+  sem o `Q(set_role__isnull=True)`, essas linhas desapareceriam tanto da
+  curva quanto do grupo legado, sem aparecer em lugar nenhum.
 """
 
 from __future__ import annotations
@@ -103,15 +111,19 @@ def build_progress_snapshots(*, account_id: int, as_of: date | None = None) -> d
     as_of = as_of or timezone.localdate()
     window_start = as_of - timedelta(days=_WINDOW_DAYS)
 
-    # DUAS queries pra CONTA INTEIRA -- nunca uma por movimento.
+    # DUAS queries pra CONTA INTEIRA -- nunca uma por movimento. is_active=True
+    # (Fase 3 do plano curva-carga-completa-reps-rir-recorde): registro
+    # corrigido nunca conta como estado atual.
     curve_logs_by_movement: dict[str, list] = {}
     for log in PublicWorkoutLoadLog.objects.filter(
-        account_id=account_id, set_role__in=_CURVE_AND_TREND_ROLES,
+        account_id=account_id, set_role__in=_CURVE_AND_TREND_ROLES, is_active=True,
     ).order_by('movement_slug', 'performed_on', 'created_at'):
         curve_logs_by_movement.setdefault(log.movement_slug, []).append(log)
 
     legacy_logs_by_movement: dict[str, list] = {}
-    for log in PublicWorkoutLoadLog.objects.filter(account_id=account_id).filter(
+    # `set_role__isnull=True` ALEM do literal LEGACY_UNKNOWN: historico
+    # anterior ao backfill fica NULO, nao classificado -- ver docstring.
+    for log in PublicWorkoutLoadLog.objects.filter(account_id=account_id, is_active=True).filter(
         Q(set_role=SetRole.LEGACY_UNKNOWN) | Q(set_role__isnull=True)
     ).order_by('movement_slug', 'performed_on'):
         legacy_logs_by_movement.setdefault(log.movement_slug, []).append(log)

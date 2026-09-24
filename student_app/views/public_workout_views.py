@@ -67,7 +67,8 @@ PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 ano
 # Bump para 4 (botao de nutricao): novo asset (nutrition.js) entrou em
 # PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS abaixo — sem bump, PWA ja
 # instalado no aparelho do aluno nunca baixa o script novo (mesmo motivo
-# do bump anterior).
+# do bump anterior). Bump 4->5 (plano curva-grafico-hierarquia-e-set-
+# role.md, §7.10): load_tracker.js passa a enviar set_role sempre.
 PUBLIC_WORKOUT_CACHE_EPOCH = 5
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
@@ -769,10 +770,19 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         return _render_legacy_template_html(plan_slug)
 
     if account_id is not None:
-        load_history = list_load_history(account_id=account_id)
+        # only_active=True: esta lista alimenta o TEMPLATE (curva,
+        # recorde, eco de hoje) -- nunca deve mostrar um registro que ja
+        # foi corrigido (Fase 3 do plano curva-carga-completa-...).
+        load_history = list_load_history(account_id=account_id, only_active=True)
+        # UMA chamada por request (plano curva-grafico-hierarquia-e-set-
+        # role.md, §7.5) -- nunca uma por movimento. movement_load_display
+        # (sugestao de carga) le daqui em vez de escanear load_history
+        # bruto por conta propria.
         progress_snapshots = build_progress_snapshots(account_id=account_id)
         weekly_review = build_weekly_review(account_id=account_id, progress_snapshots=progress_snapshots)
-        package = build_student_package(account_id=account_id, slug=plan.slug, progress_snapshots=progress_snapshots)
+        package = build_student_package(
+            account_id=account_id, slug=plan.slug, progress_snapshots=progress_snapshots,
+        )
         subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
         nutrition_unlocked = bool(subscription and require_nutrition_tier(subscription))
         customer_portal_url = '/treinos/minha-conta' if subscription else None
@@ -991,10 +1001,19 @@ class PublicWorkoutPreviewView(View):
         trends_by_movement: dict = {}
         account_email = None
         if account_id is not None:
-            load_history = list_load_history(account_id=account_id)
+            # only_active=True: esta lista alimenta o TEMPLATE (curva,
+            # recorde, eco de hoje) -- nunca deve mostrar um registro que
+            # ja foi corrigido (Fase 3 do plano curva-carga-completa-...).
+            load_history = list_load_history(account_id=account_id, only_active=True)
+            # UMA chamada por request -- ver nota equivalente em
+            # PublicWorkoutDetailView.
             progress_snapshots = build_progress_snapshots(account_id=account_id)
-            one_rep_max_by_movement = build_student_package(account_id=account_id, slug=plan_slug, progress_snapshots=progress_snapshots)['one_rep_max_by_movement']
-            trends_by_movement = build_weekly_review(account_id=account_id, progress_snapshots=progress_snapshots)['trends_by_movement']
+            one_rep_max_by_movement = build_student_package(
+                account_id=account_id, slug=plan_slug, progress_snapshots=progress_snapshots,
+            )['one_rep_max_by_movement']
+            trends_by_movement = build_weekly_review(
+                account_id=account_id, progress_snapshots=progress_snapshots,
+            )['trends_by_movement']
 
             from public_workouts.models import PublicWorkoutAccount
 
@@ -1163,6 +1182,7 @@ class PublicWorkoutTemplatePreviewView(View):
             'program': program,
             'program_versions': list_program_versions(slug=plan.slug),
             'load_history': [],
+            'progress_snapshots': {},
             'one_rep_max_by_movement': {},
             'trends_by_movement': {},
             'movement_labels': build_movement_label_lookup(program),
@@ -1247,9 +1267,32 @@ def _decimal_or_none(value):
     from decimal import Decimal, InvalidOperation
 
     try:
-        return Decimal(str(value))
+        result = Decimal(str(value))
     except InvalidOperation as exc:
         raise ValueError(f'valor numerico invalido: {value!r}') from exc
+    # json.loads aceita os literais NaN/Infinity/-Infinity (extensao nao
+    # padrao) -- Decimal(str(float('inf'))) constroi sem erro, entao sem
+    # este cheque um payload assim passaria pra frente como Decimal nao
+    # finito (Decimal('NaN') < 0 levanta InvalidOperation mais na frente,
+    # virando 500 em vez de 400).
+    if not result.is_finite():
+        raise ValueError(f'valor numerico invalido: {value!r}')
+    return result
+
+
+def _reps_or_none(value):
+    if value is None:
+        return None
+    # bool e subclasse de int em Python -- isinstance(True, int) e True,
+    # entao o cheque de bool precisa vir antes, senao reps=true viraria
+    # reps=1 silenciosamente.
+    if isinstance(value, bool):
+        raise ValueError(f'reps precisa ser um numero inteiro: {value!r}')
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    raise ValueError(f'reps precisa ser um numero inteiro: {value!r}')
 
 
 class PublicWorkoutPackageView(View):
@@ -1445,23 +1488,63 @@ class PublicWorkoutRecordLoadView(View):
             return JsonResponse({'error': 'movement_slug, performed_on e idempotency_key sao obrigatorios'}, status=400)
 
         from public_workouts.models import PublicWorkoutLoadLogSetRole
-        from public_workouts.services import LoadValueError, record_load
+        from public_workouts.services import (
+            LoadCorrectionConflictError,
+            LoadCorrectionNotFoundError,
+            LoadValueError,
+            correct_load,
+            record_load,
+        )
+
+        # Fase 3 do plano curva-carga-completa-reps-rir-recorde (§4.1):
+        # MESMO endpoint, campo opcional novo -- supersedes_idempotency_key
+        # presente vira uma correcao (nao um registro novo). movement_slug/
+        # performed_on do payload sao ignorados nesse caminho de proposito
+        # (correct_load herda os dois do ALVO) -- so' continuam obrigatorios
+        # aqui em cima pra manter o contrato de payload simples pro cliente,
+        # que ja os manda de qualquer forma (mesmo widget, mesmo contexto).
+        supersedes_key = payload.get('supersedes_idempotency_key')
 
         try:
-            set_role = payload['set_role'] if 'set_role' in payload else PublicWorkoutLoadLogSetRole.LEGACY_UNKNOWN
-            result = record_load(
-                account_id=account_id,
-                movement_slug=movement_slug,
-                weight_kg=_decimal_or_none(payload.get('weight_kg')),
-                reps=payload.get('reps'),
-                rir=_decimal_or_none(payload.get('rir')),
-                performed_on=performed_on,
-                program_id=payload.get('program_id'),
-                week_in_program=payload.get('week_in_program'),
-                set_role=set_role,
-                idempotency_key=idempotency_key,
-            )
-        except (LoadValueError, ValueError) as exc:
+            if supersedes_key:
+                result = correct_load(
+                    account_id=account_id,
+                    supersedes_idempotency_key=supersedes_key,
+                    idempotency_key=idempotency_key,
+                    weight_kg=_decimal_or_none(payload.get('weight_kg')),
+                    reps=_reps_or_none(payload.get('reps')),
+                    rir=_decimal_or_none(payload.get('rir')),
+                )
+            else:
+                # Protocolo de payload (plano curva-grafico-hierarquia-e-
+                # set-role.md, §2.3.3): chave AUSENTE (cliente antigo, ou
+                # entrada que ja estava no outbox do IndexedDB antes do
+                # deploy) != chave enviada com um valor. `payload.get(...)`
+                # sozinho nao distingue os dois -- por isso o `in` explicito.
+                # A checagem fica na VIEW, nunca em record_load: o servico
+                # so recebe o valor ja resolvido, sem aplicar default por
+                # conta propria (fecha a janela em que uma entrada
+                # pendente da UI antiga seria confundida com uma escolha
+                # real de "serie principal" depois do deploy).
+                if 'set_role' in payload:
+                    set_role_kwargs = {'set_role': payload.get('set_role')}
+                else:
+                    set_role_kwargs = {'set_role': PublicWorkoutLoadLogSetRole.LEGACY_UNKNOWN}
+                result = record_load(
+                    account_id=account_id,
+                    movement_slug=movement_slug,
+                    weight_kg=_decimal_or_none(payload.get('weight_kg')),
+                    reps=_reps_or_none(payload.get('reps')),
+                    rir=_decimal_or_none(payload.get('rir')),
+                    performed_on=performed_on,
+                    program_id=payload.get('program_id'),
+                    week_in_program=payload.get('week_in_program'),
+                    idempotency_key=idempotency_key,
+                    **set_role_kwargs,
+                )
+        except LoadCorrectionConflictError as exc:
+            return JsonResponse({'error': str(exc)}, status=409)
+        except (LoadValueError, LoadCorrectionNotFoundError, ValueError) as exc:
             return JsonResponse({'error': str(exc)}, status=400)
 
         return JsonResponse(result, status=200)

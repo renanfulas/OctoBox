@@ -56,6 +56,7 @@ from .models import (
     PublicWorkoutAccount,
     PublicWorkoutAssessment,
     PublicWorkoutLoadLog,
+    PublicWorkoutLoadLogAchievementKind,
     PublicWorkoutLoadLogSetRole,
     PublicWorkoutMealPlan,
     PublicWorkoutMovement,
@@ -73,7 +74,8 @@ from .models import (
     PublicWorkoutTrainingProfile,
 )
 from .nutrition_schema import assert_valid_payload as assert_valid_nutrition_payload
-
+from .one_rep_max import estimate_one_rep_max
+from .progress_eligibility import _PERSONAL_RECORD_ROLES
 from .progress_snapshot import build_progress_snapshots
 from .schema import assert_valid_payload
 
@@ -824,25 +826,67 @@ def list_program_versions(*, slug: str) -> list[dict]:
 
 
 _DEFAULT_MAX_WEIGHT_KG = Decimal('1000')  # decisao do Renan — teto de 1 tonelada.
+_MAX_REPS = 999
+_MAX_RIR = Decimal('99.9')
 
 
 class LoadValueError(ValueError):
-    """Levantada quando weight_kg/rir esta fora da faixa aceita — erro de
-    digitacao ou dado absurdo, nao julgamento de treino. Deteccao
+    """Levantada quando weight_kg/reps/rir esta fora da faixa aceita — erro
+    de digitacao ou dado absurdo, nao julgamento de treino. Deteccao
     estatistica de outlier de verdade (comparar com o historico do proprio
     atleta) e trabalho da Onda A3 (mesmo escopo de
     estimate_one_rep_max/deteccao de plato), nao esta faixa ampla aqui."""
 
 
-def _validate_load_values(*, weight_kg, rir) -> None:
+class LoadCorrectionNotFoundError(ValueError):
+    """Levantada quando `supersedes_idempotency_key` nao aponta pra um
+    registro existente NESTA conta — nunca revela se o registro existe em
+    OUTRA conta (mesma postura de 404 do resto do S3: nao ha slug pra
+    esconder aqui, mas tambem nao ha por que confirmar existencia cruzada
+    de conta)."""
+
+
+class LoadCorrectionConflictError(Exception):
+    """Levantada quando o alvo da correcao ja foi corrigido por outra
+    operacao (is_active=False) — retentativa dupla, duas abas, ou duas
+    correcoes concorrentes. HTTP 409, nunca 400: o payload em si e'
+    valido, o que mudou foi o ESTADO do alvo entre o aluno abrir o
+    registro pra corrigir e confirmar."""
+
+
+def _validate_load_values(*, weight_kg, reps, rir) -> None:
+    # NAO exige weight_kg ou reps preenchido: o plano
+    # curva-carga-completa-reps-rir-recorde propos essa exigencia (§1.3),
+    # mas test_load_log.py::test_movement_without_reps_gets_no_one_rep_max_entry
+    # ja cobre um caso real de weight_kg=None + reps=None (movimento
+    # isometrico tipo prancha, sem peso nem repeticao quantificavel — so a
+    # existencia do registro na data importa). Implementar a exigencia
+    # quebraria esse caso já em produção; ver nota na PR/plano.
     if weight_kg is not None:
+        # .is_finite() fecha um gap real: json.loads aceita o literal
+        # `NaN` (extensao nao-padrao), e Decimal('NaN') comparado com < 0
+        # levanta InvalidOperation em vez de retornar False — sem este
+        # check, um payload com weight_kg=NaN vira 500, nao 400.
+        if not weight_kg.is_finite():
+            raise LoadValueError(f'weight_kg precisa ser um numero finito: {weight_kg!r}')
         if weight_kg < 0:
             raise LoadValueError(f'weight_kg nao pode ser negativo: {weight_kg!r}')
         max_weight_kg = Decimal(str(getattr(settings, 'PUBLIC_WORKOUT_MAX_WEIGHT_KG', _DEFAULT_MAX_WEIGHT_KG)))
         if weight_kg > max_weight_kg:
             raise LoadValueError(f'weight_kg {weight_kg!r} acima do teto aceito ({max_weight_kg} kg)')
-    if rir is not None and rir < 0:
-        raise LoadValueError(f'rir nao pode ser negativo: {rir!r}')
+    if reps is not None:
+        # bool e subclasse de int em Python — isinstance(True, int) e True,
+        # entao o cheque de bool precisa vir ANTES do cheque de int, senao
+        # reps=true passaria como reps=1 silenciosamente.
+        if isinstance(reps, bool) or not isinstance(reps, int):
+            raise LoadValueError(f'reps precisa ser um numero inteiro: {reps!r}')
+        if reps < 1 or reps > _MAX_REPS:
+            raise LoadValueError(f'reps precisa estar entre 1 e {_MAX_REPS}: {reps!r}')
+    if rir is not None:
+        if not rir.is_finite():
+            raise LoadValueError(f'rir precisa ser um numero finito: {rir!r}')
+        if rir < 0 or rir > _MAX_RIR:
+            raise LoadValueError(f'rir precisa estar entre 0 e {_MAX_RIR}: {rir!r}')
 
 
 def _serialize_load_log(log: PublicWorkoutLoadLog) -> dict:
@@ -855,7 +899,30 @@ def _serialize_load_log(log: PublicWorkoutLoadLog) -> dict:
         'program_id': log.program_id or None,
         'week_in_program': log.week_in_program,
         'idempotency_key': log.idempotency_key,
+        # Nao expoe supersedes/supersedes_id de proposito (evita N+1 --
+        # ver docstring de correct_load): quem precisa saber "isto foi
+        # corrigido" usa is_active, nunca precisa seguir o vinculo.
+        'is_active': log.is_active,
+        # set_role exposto so' pra tabela/historico completo mostrar
+        # contexto (plano curva-grafico-hierarquia-e-set-role.md §2.2,
+        # item 3 do mapa) -- nenhum consumidor de dict serializado toma
+        # decisao de elegibilidade sozinho a partir disso; quem decide
+        # "isso conta pra curva/tendencia/recorde" chama
+        # progress_eligibility.py, nunca compara essa string direto.
         'set_role': log.set_role,
+        # Fase 4 (§6.2): None ("sem evento") na maioria das linhas. Nunca
+        # recalculado aqui -- so' devolve o que _lock_and_resolve_achievement
+        # gravou na transacao de escrita (replay estavel num reenvio com a
+        # mesma idempotency_key). delta_kg deriva na hora, nunca persistido
+        # (evitaria os dois campos divergirem se algum dia um for editado).
+        'achievement': (
+            {
+                'kind': log.achievement_kind,
+                'previous_weight_kg': float(log.achievement_previous_weight_kg),
+                'delta_kg': float(log.weight_kg - log.achievement_previous_weight_kg),
+            }
+            if log.achievement_kind else None
+        ),
     }
 
 
@@ -884,7 +951,10 @@ def build_student_package(*, account_id: int, slug: str, progress_snapshots: dic
     `access_until` fica `None` ate a Onda B3 (fase B) ligar a trava de
     acesso de verdade.
     """
-    log_query = PublicWorkoutLoadLog.objects.filter(account_id=account_id).order_by(
+    # is_active=True: registro corrigido (Fase 3, §4.1) nunca alimenta
+    # "ultima carga"/1RM -- o valor errado deixou de existir pra qualquer
+    # leitura de estado atual assim que a correcao commitou.
+    log_query = PublicWorkoutLoadLog.objects.filter(account_id=account_id, is_active=True).order_by(
         'movement_slug', '-performed_on', '-created_at', '-pk',
     )
     if connection.features.can_distinct_on_fields:
@@ -953,6 +1023,48 @@ def build_weekly_review(*, account_id: int, progress_snapshots: dict | None = No
     }
 
 
+def _lock_and_resolve_achievement(
+    *, account_id: int, movement_slug: str, set_role: str, weight_kg, exclude_pk=None,
+):
+    """Fase 4 do plano curva-carga-completa-reps-rir-recorde (§6.1/§6.2):
+    `weight_kg` vira recorde quando fica ESTRITAMENTE acima da maior
+    carga ja ATIVA e elegivel (top_set/max_set, mesmo corte de
+    progress_eligibility.py::eligible_for_personal_record) deste
+    movimento -- empate, aquecimento, legado e ausencia de peso nunca
+    disparam (retornam None, None sem consultar nada).
+
+    `select_for_update()` serializa contra outro dispositivo escrevendo
+    pro MESMO movimento ao mesmo tempo: sem o lock, duas gravacoes
+    concorrentes poderiam ler o mesmo "melhor anterior" e as duas se
+    declararem recorde uma da outra. So' funciona quando ja existe ao
+    menos uma linha elegivel pra travar -- a PRIMEIRA gravacao de um
+    movimento nunca tem concorrente possivel (nada a comparar), entao a
+    ausencia de lock nesse caso nao abre brecha nenhuma.
+
+    `exclude_pk` (usado por correct_load): o ALVO sendo substituido nao
+    compete contra o proprio valor corrigido -- corrigir o UNICO registro
+    que existia (900 -> 90, um typo) nunca e' "recorde" so' porque o
+    numero mudou; so' o SEGUNDO valor legitimo mais alto conta."""
+    if weight_kg is None or set_role not in _PERSONAL_RECORD_ROLES:
+        return None, None
+
+    locked = PublicWorkoutLoadLog.objects.select_for_update().filter(
+        account_id=account_id, movement_slug=movement_slug,
+        set_role__in=_PERSONAL_RECORD_ROLES, is_active=True, weight_kg__isnull=False,
+    )
+    if exclude_pk is not None:
+        locked = locked.exclude(pk=exclude_pk)
+
+    previous_best = None
+    for row in locked:
+        if previous_best is None or row.weight_kg > previous_best:
+            previous_best = row.weight_kg
+
+    if previous_best is not None and weight_kg > previous_best:
+        return PublicWorkoutLoadLogAchievementKind.LOAD_RECORD, previous_best
+    return None, None
+
+
 def record_load(
     *,
     account_id: int,
@@ -996,7 +1108,7 @@ def record_load(
     linha realmente não existe (porque o INSERT foi rejeitado pela
     constraint, não por colisão de chave), `log` vem `None` e o `raise`
     relança o `IntegrityError` ORIGINAL intacto."""
-    _validate_load_values(weight_kg=weight_kg, rir=rir)
+    _validate_load_values(weight_kg=weight_kg, reps=reps, rir=rir)
     if set_role not in PublicWorkoutLoadLogSetRole.values:
         raise LoadValueError(f'set_role invalido: {set_role!r}')
 
@@ -1005,6 +1117,9 @@ def record_load(
 
     try:
         with transaction.atomic():
+            achievement_kind, achievement_previous_weight_kg = _lock_and_resolve_achievement(
+                account_id=account_id, movement_slug=movement_slug, set_role=set_role, weight_kg=weight_kg,
+            )
             log = PublicWorkoutLoadLog.objects.create(
                 account_id=account_id,
                 movement_slug=movement_slug,
@@ -1014,8 +1129,10 @@ def record_load(
                 performed_on=performed_on,
                 program_id=program_id or '',
                 week_in_program=week_in_program,
-                idempotency_key=idempotency_key,
                 set_role=set_role,
+                idempotency_key=idempotency_key,
+                achievement_kind=achievement_kind,
+                achievement_previous_weight_kg=achievement_previous_weight_kg,
             )
     except IntegrityError:
         log = PublicWorkoutLoadLog.objects.filter(idempotency_key=idempotency_key).first()
@@ -1025,7 +1142,104 @@ def record_load(
     return _serialize_load_log(log)
 
 
-def list_load_history(*, account_id: int, movement_slug: str | None = None) -> list[dict]:
+def correct_load(
+    *,
+    account_id: int,
+    supersedes_idempotency_key: str,
+    idempotency_key: str,
+    weight_kg,
+    reps=None,
+    rir=None,
+) -> dict:
+    """Fase 3 do plano curva-carga-completa-reps-rir-recorde (§4.1) —
+    corrige um registro existente (900 digitado por engano de 90) sem
+    fingir que e' um evento novo. `movement_slug`/`performed_on` NUNCA
+    vem do payload da correcao: sao herdados do ALVO, de proposito —
+    "mesma data e movimento nesta primeira fatia" (nao existe ainda rota
+    pra corrigir E mudar movimento/data ao mesmo tempo).
+
+    Idempotencia: se `idempotency_key` (da OPERACAO de correcao, nao do
+    alvo) ja existe, devolve o resultado existente sem tocar em nada —
+    uma retentativa de rede nunca reavalia `is_active` do alvo de novo
+    (ele so' pode ter sido marcado inativo pela primeira tentativa que
+    teve sucesso).
+
+    `select_for_update()` no alvo, dentro do MESMO `transaction.atomic()`
+    que cria o novo log e desativa o alvo: duas correcoes concorrentes pro
+    MESMO alvo serializam aqui — a segunda so' ve `is_active=False` depois
+    que a primeira commitar, e levanta `LoadCorrectionConflictError` (409)
+    em vez de criar uma segunda correcao pro mesmo registro."""
+    existing = PublicWorkoutLoadLog.objects.filter(idempotency_key=idempotency_key).first()
+    if existing is not None:
+        return _serialize_load_log(existing)
+
+    _validate_load_values(weight_kg=weight_kg, reps=reps, rir=rir)
+
+    with transaction.atomic():
+        try:
+            target = PublicWorkoutLoadLog.objects.select_for_update().get(
+                account_id=account_id, idempotency_key=supersedes_idempotency_key,
+            )
+        except PublicWorkoutLoadLog.DoesNotExist:
+            raise LoadCorrectionNotFoundError('registro original nao encontrado nesta conta') from None
+
+        if not target.is_active:
+            raise LoadCorrectionConflictError('este registro ja foi corrigido por outra operacao')
+
+        # Fase 4 (§6.2): "correcao compara estado ativo anterior e
+        # recalcula apos substituicao" -- exclude_pk=target.pk pra que o
+        # ALVO (ainda ativo aqui, so' vira is_active=False alguns passos
+        # abaixo) nao compita contra o proprio valor corrigido. Isso
+        # tambem e' o que faz "correcao para baixo nao criar celebracao
+        # compensatoria" sair de graca: sem o alvo na comparacao, corrigir
+        # o UNICO registro que existia pra baixo nunca acha um "anterior"
+        # pra superar.
+        achievement_kind, achievement_previous_weight_kg = _lock_and_resolve_achievement(
+            account_id=account_id, movement_slug=target.movement_slug, set_role=target.set_role,
+            weight_kg=weight_kg, exclude_pk=target.pk,
+        )
+
+        try:
+            new_log = PublicWorkoutLoadLog.objects.create(
+                account_id=account_id,
+                movement_slug=target.movement_slug,
+                weight_kg=weight_kg,
+                reps=reps,
+                rir=rir,
+                performed_on=target.performed_on,
+                program_id=target.program_id,
+                week_in_program=target.week_in_program,
+                # set_role tambem herdado do ALVO (mesmo espirito de
+                # movement_slug/performed_on, ver docstring): corrigir
+                # 900->90 nao reclassifica SE era aquecimento ou serie
+                # principal, so' corrige o VALOR digitado errado.
+                set_role=target.set_role,
+                idempotency_key=idempotency_key,
+                supersedes=target,
+                achievement_kind=achievement_kind,
+                achievement_previous_weight_kg=achievement_previous_weight_kg,
+            )
+        except IntegrityError:
+            # Corrida rara: outra request criou a MESMA idempotency_key
+            # entre o filter() do topo desta funcao e aqui -- devolve o
+            # que existe, nunca duplica (mesmo padrao de record_load).
+            # .filter().first(), nunca .get(): mesmo motivo de record_load
+            # -- se a linha nao existe de verdade (IntegrityError por outro
+            # motivo, nao colisao de chave), relanca o erro ORIGINAL em vez
+            # de mascara-lo com DoesNotExist.
+            new_log = PublicWorkoutLoadLog.objects.filter(idempotency_key=idempotency_key).first()
+            if new_log is None:
+                raise
+        else:
+            target.is_active = False
+            target.save(update_fields=['is_active'])
+
+    return _serialize_load_log(new_log)
+
+
+def list_load_history(
+    *, account_id: int, movement_slug: str | None = None, only_active: bool = False
+) -> list[dict]:
     """Historico completo de carga da conta (Onda B4, fatia adiantada) —
     build_student_package (S2) so devolve a ULTIMA carga por movimento;
     isto e' a serie inteira, pra grafico de evolucao.
@@ -1040,8 +1254,18 @@ def list_load_history(*, account_id: int, movement_slug: str | None = None) -> l
     e' continuidade do ATLETA, nao do programa ativo — republicar uma nova
     versao nao deveria "zerar" o historico de agachamento do aluno. Lista
     vazia (nunca None) quando a conta nao tem nenhum registro. Roda no
-    schema public, mesma regra do resto do modulo."""
+    schema public, mesma regra do resto do modulo.
+
+    `only_active` default False DE PROPOSITO: `export_account_data`
+    (Fase B4) chama esta funcao esperando o historico CRU, com registros
+    corrigidos inclusos (LGPD/auditoria — plano §4.1: "Auditoria pode
+    mostrar ambos com indicação Corrigido"). Os dois chamadores que
+    alimentam o TEMPLATE (curva, recorde, eco de hoje) passam
+    `only_active=True` explicitamente — nunca o inverso, senao a
+    exportacao perderia o registro original de toda correcao."""
     queryset = PublicWorkoutLoadLog.objects.filter(account_id=account_id)
+    if only_active:
+        queryset = queryset.filter(is_active=True)
     if movement_slug is not None:
         queryset = queryset.filter(movement_slug=movement_slug)
     return [_serialize_load_log(log) for log in queryset.order_by('movement_slug', 'performed_on', 'created_at')]

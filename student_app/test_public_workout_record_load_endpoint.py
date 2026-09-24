@@ -154,6 +154,106 @@ class PublicWorkoutRecordLoadEndpointTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(PublicWorkoutLoadLog.objects.count(), 0)
 
+    def test_boolean_reps_returns_400(self):
+        # bool e subclasse de int em Python -- sem o cheque explicito em
+        # _reps_or_none, reps=true viraria reps=1 no banco silenciosamente.
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100, 'reps': True, 'performed_on': '2026-01-05', 'idempotency_key': 'k-reps-bool'}
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 0)
+
+    def test_fractional_reps_returns_400(self):
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100, 'reps': 8.5, 'performed_on': '2026-01-05', 'idempotency_key': 'k-reps-fracao'}
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 0)
+
+    def test_whole_number_float_reps_is_accepted(self):
+        # 8.0 chega como float no JSON (sem ponto decimal na origem seria
+        # int, mas alguns clientes serializam numero inteiro como float) --
+        # nao e uma fracao de verdade, deve ser aceito como 8.
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100, 'reps': 8.0, 'performed_on': '2026-01-05', 'idempotency_key': 'k-reps-float-inteiro'}
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['reps'], 8)
+
+    def test_reps_above_ceiling_returns_400(self):
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100, 'reps': 1000, 'performed_on': '2026-01-05', 'idempotency_key': 'k-reps-teto'}
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 0)
+
+    def test_non_finite_weight_kg_returns_400(self):
+        # json.loads aceita o literal NaN (extensao nao-padrao) -- sem o
+        # cheque .is_finite() em _decimal_or_none, isso viraria 500 mais
+        # na frente (Decimal('NaN') < 0 levanta InvalidOperation).
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {'movement_slug': 'agachamento-livre', 'weight_kg': float('nan'), 'performed_on': '2026-01-05', 'idempotency_key': 'k-peso-nan'}
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 0)
+
+    def test_rir_half_point_is_accepted(self):
+        # rir_spec do schema do programa ja usa meio-ponto (ex. "RIR 1.5")
+        # -- confirma que a validacao nova nao regride essa precisao.
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100, 'rir': 1.5, 'performed_on': '2026-01-05', 'idempotency_key': 'k-rir-meio-ponto'}
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['rir'], 1.5)
+
     def test_missing_required_field_returns_400(self):
         account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
         _login(self.client, account.pk)
@@ -221,3 +321,176 @@ class PublicWorkoutRecordLoadEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.json()['weight_kg'])
+
+    def test_supersedes_key_corrects_the_target_record(self):
+        # Fase 3 do plano curva-carga-completa-reps-rir-recorde (§4.1) --
+        # MESMO endpoint, so' um campo opcional novo.
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+        self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 900, 'performed_on': '2026-01-05', 'idempotency_key': 'k-original'}
+            ),
+            content_type='application/json',
+        )
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {
+                    'movement_slug': 'agachamento-livre',
+                    'weight_kg': 90,
+                    'performed_on': '2026-01-05',
+                    'idempotency_key': 'k-correcao',
+                    'supersedes_idempotency_key': 'k-original',
+                }
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['weight_kg'], 90.0)
+        original = PublicWorkoutLoadLog.objects.get(idempotency_key='k-original')
+        self.assertFalse(original.is_active)
+
+    def test_correcting_someone_elses_record_returns_400(self):
+        account_a = _make_account_with_subscription(email='a@example.com', plan_slug='juliana')
+        account_b = _make_account_with_subscription(email='b@example.com', plan_slug='bruno')
+        _login(self.client, account_a.pk)
+        self.client.post(
+            self._url('juliana'),
+            data=json.dumps(
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 900, 'performed_on': '2026-01-05', 'idempotency_key': 'k-de-a'}
+            ),
+            content_type='application/json',
+        )
+
+        _login(self.client, account_b.pk)
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {
+                    'movement_slug': 'agachamento-livre',
+                    'weight_kg': 90,
+                    'performed_on': '2026-01-05',
+                    'idempotency_key': 'k-tentativa-b',
+                    'supersedes_idempotency_key': 'k-de-a',
+                }
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 1)
+
+    def test_correcting_an_already_corrected_record_returns_409(self):
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+        self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 900, 'performed_on': '2026-01-05', 'idempotency_key': 'k-original'}
+            ),
+            content_type='application/json',
+        )
+        self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {
+                    'movement_slug': 'agachamento-livre', 'weight_kg': 90, 'performed_on': '2026-01-05',
+                    'idempotency_key': 'k-correcao-1', 'supersedes_idempotency_key': 'k-original',
+                }
+            ),
+            content_type='application/json',
+        )
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps(
+                {
+                    'movement_slug': 'agachamento-livre', 'weight_kg': 91, 'performed_on': '2026-01-05',
+                    'idempotency_key': 'k-correcao-2', 'supersedes_idempotency_key': 'k-original',
+                }
+            ),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 409)
+
+
+class PublicWorkoutRecordLoadAchievementEndpointTests(TestCase):
+    # Fase 4 do plano curva-carga-completa-reps-rir-recorde (§6.2) --
+    # `achievement` chega pro cliente dentro do MESMO envelope JSON que
+    # os outros campos, nunca um envelope separado.
+
+    def _url(self, slug='bruno'):
+        return reverse('public-workout-record-load', kwargs={'plan_slug': slug})
+
+    def test_first_log_has_no_achievement_in_the_response(self):
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps({
+                'movement_slug': 'agachamento-livre', 'weight_kg': 90, 'performed_on': '2026-01-05',
+                'idempotency_key': 'k1', 'set_role': 'top_set',
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()['achievement'])
+
+    def test_higher_weight_returns_an_achievement_envelope(self):
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+        self.client.post(
+            self._url('bruno'),
+            data=json.dumps({
+                'movement_slug': 'agachamento-livre', 'weight_kg': 90, 'performed_on': '2026-01-05',
+                'idempotency_key': 'k1', 'set_role': 'top_set',
+            }),
+            content_type='application/json',
+        )
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps({
+                'movement_slug': 'agachamento-livre', 'weight_kg': 92.5, 'performed_on': '2026-01-12',
+                'idempotency_key': 'k2', 'set_role': 'top_set',
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()['achievement'],
+            {'kind': 'load_record', 'previous_weight_kg': 90.0, 'delta_kg': 2.5},
+        )
+
+    def test_warmup_set_role_never_gets_an_achievement(self):
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+        self.client.post(
+            self._url('bruno'),
+            data=json.dumps({
+                'movement_slug': 'agachamento-livre', 'weight_kg': 90, 'performed_on': '2026-01-05',
+                'idempotency_key': 'k1', 'set_role': 'top_set',
+            }),
+            content_type='application/json',
+        )
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps({
+                'movement_slug': 'agachamento-livre', 'weight_kg': 120, 'performed_on': '2026-01-12',
+                'idempotency_key': 'k2', 'set_role': 'warmup',
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()['achievement'])
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 2)

@@ -60,7 +60,9 @@ def _real_payload(slug: str) -> dict:
     return payload
 
 
-def _render(payload: dict, *, plan_slug: str, load_history=None, one_rep_max_by_movement=None) -> str:
+def _render(
+    payload: dict, *, plan_slug: str, load_history=None, one_rep_max_by_movement=None, progress_snapshots=None
+) -> str:
     from public_workouts.services import build_movement_label_lookup
 
     return render_to_string('public_workouts/workout.html', {
@@ -68,6 +70,7 @@ def _render(payload: dict, *, plan_slug: str, load_history=None, one_rep_max_by_
         'accent_variant': payload.get('accent_variant'),
         'program_versions': [],
         'load_history': load_history or [],
+        'progress_snapshots': progress_snapshots or {},
         'one_rep_max_by_movement': one_rep_max_by_movement or {},
         'trends_by_movement': {},
         'plan_slug': plan_slug,
@@ -77,6 +80,31 @@ def _render(payload: dict, *, plan_slug: str, load_history=None, one_rep_max_by_
         'customer_portal_url': None,
         'account_email': None,
     })
+
+
+def _snapshot_with_latest_top_set(*, weight_kg, performed_on, program_id):
+    # Plano curva-grafico-hierarquia-e-set-role.md (§7.5/§8.1 item 5):
+    # movement_load_display le progress_snapshots[slug].latest_top_set
+    # agora, nunca mais load_history bruto -- este helper substitui o que
+    # antes era so' um dict solto em `load_history`, pra estes testes
+    # continuarem exercitando de verdade o caminho de fase progressiva
+    # contra texto REAL dos 10 clientes (ver docstring do arquivo: e'
+    # exatamente esse tipo de "parou de exercitar sem ningum notar" que
+    # este arquivo existe pra pegar).
+    from datetime import date, datetime
+    from decimal import Decimal
+
+    from public_workouts.progress_snapshot import ProgressPoint, ProgressSnapshot
+
+    performed_on_date = date.fromisoformat(performed_on) if isinstance(performed_on, str) else performed_on
+    point = ProgressPoint(
+        performed_on=performed_on_date, weight_kg=Decimal(str(weight_kg)), reps=None, rir=None,
+        created_at=datetime.combine(performed_on_date, datetime.min.time()), program_id=program_id,
+    )
+    return ProgressSnapshot(
+        latest_top_set=point, curve_points=[point], legacy_points=[],
+        has_legacy_history=False, y_scale=None, trend_signal='insufficient_data', one_rep_max=None,
+    )
 
 
 def _first_movement_slug(payload: dict) -> str:
@@ -117,6 +145,11 @@ class AllRealClientsRenderWithoutErrorTests(TestCase):
                         'performed_on': payload['started_on'],
                         'program_id': payload['program_id'],
                     }],
+                    progress_snapshots={
+                        movement_slug: _snapshot_with_latest_top_set(
+                            weight_kg=80.0, performed_on=payload['started_on'], program_id=payload['program_id'],
+                        ),
+                    },
                 )
 
                 self.assertIn(payload['program_label'], html)
@@ -174,6 +207,11 @@ class CanonicalPeriodizationRealClientsRenderTests(TestCase):
                         'performed_on': payload['started_on'],
                         'program_id': payload['program_id'],
                     }],
+                    progress_snapshots={
+                        movement_slug: _snapshot_with_latest_top_set(
+                            weight_kg=80.0, performed_on=payload['started_on'], program_id=payload['program_id'],
+                        ),
+                    },
                 )
 
                 self.assertIn(payload['program_label'], html)

@@ -207,7 +207,8 @@ PONTOS CRITICOS:
                 {% if load.show_registration_hint %}<span class="workout-movement-load-hint">Registre sua carga para controlar a kilagem.</span>{% endif %}
               </div>
             </article>
-            <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}" hidden>
+            {% todays_logged_idempotency_key load_history movement.movement_slug as today_idempotency_key %}
+            <div class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}"{% if today_idempotency_key %} data-today-idempotency-key="{{ today_idempotency_key }}"{% endif %} hidden data-movement-label="{{ movement|movement_name:movement_labels }}">
               {% with siblings=movement.movement_slug|sibling_variations %}
               {% if siblings %}
               <div class="workout-load-input__substitutes" data-workout-substitute-pills>
@@ -220,6 +221,8 @@ PONTOS CRITICOS:
               {% endwith %}
               {% todays_logged_weight load_history movement.movement_slug as today_weight %}
               {% todays_top_set_weight load_history movement.movement_slug as today_top_weight %}
+              {% todays_logged_reps load_history movement.movement_slug as today_reps %}
+              {% todays_logged_rir load_history movement.movement_slug as today_rir %}
               <div class="workout-load-input__head">
                 <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
                 <span class="workout-load-input__hint" data-workout-load-hint></span>
@@ -244,7 +247,98 @@ PONTOS CRITICOS:
                 <input type="checkbox" data-workout-load-warmup-toggle>
                 Foi aquecimento (não entra na sua evolução)
               </label>
-              <span class="workout-load-input__status" data-workout-load-status aria-live="polite">{% if today_weight is not None %}Já registrado hoje: {{ today_weight|unlocalize }} kg{% endif %}</span>
+              <div class="workout-load-input__reps-row">
+                <span class="workout-load-input__mini-label">Repetições</span>
+                <button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="-1" aria-label="Diminuir uma repetição">−</button>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  step="1"
+                  min="1"
+                  max="999"
+                  placeholder="reps"
+                  class="workout-load-input__reps-field"
+                  data-workout-reps-field
+                  {% if today_reps is not None %}value="{{ today_reps }}"{% endif %}
+                  aria-label="Repetições feitas de {{ movement|movement_name:movement_labels }}"
+                >
+                <button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="1" aria-label="Aumentar uma repetição">+</button>
+              </div>
+              <details class="workout-load-input__effort" data-workout-effort{% if today_rir is not None %} open{% endif %}>
+                <summary class="workout-load-input__effort-summary">
+                  <span>Esforço · opcional</span>
+                  <span class="workout-load-input__effort-value" data-workout-effort-value></span>
+                </summary>
+                <div class="workout-load-input__effort-body">
+                  <p class="workout-load-input__effort-question">Quantas repetições ainda conseguiria fazer?</p>
+                  <p class="workout-load-input__effort-help">Uma estimativa de quantas faltavam para chegar ao seu limite. Também chamado RIR.</p>
+                  <div
+                    class="workout-load-input__rir-pills"
+                    data-workout-rir-picker
+                    {% if today_rir is not None %}data-today-rir="{{ today_rir|unlocalize }}"{% endif %}
+                    role="radiogroup"
+                    aria-label="Repetições em reserva"
+                  >
+                    {% for value in "01234" %}
+                    <button type="button" class="workout-load-input__rir-pill" data-rir-value="{{ value }}" role="radio" aria-checked="false">{{ value }}{% if value == "4" %}+{% endif %}</button>
+                    {% endfor %}
+                  </div>
+                  <button type="button" class="workout-load-input__rir-other-toggle" data-workout-rir-other-toggle>Outro valor</button>
+                  <input
+                    type="number"
+                    inputmode="decimal"
+                    step="0.5"
+                    min="0"
+                    max="99.9"
+                    placeholder="RIR"
+                    class="workout-load-input__rir-other-field"
+                    data-workout-rir-other-field
+                    hidden
+                    aria-label="Outro valor de esforço (RIR)"
+                  >
+                  <button type="button" class="workout-load-input__rir-clear" data-workout-rir-clear>Não informar</button>
+                </div>
+              </details>
+              {% if movement.movement_slug|movement_shows_plate_calculator %}
+              <details class="workout-load-input__calculator" data-workout-plate-calculator>
+                <summary class="workout-load-input__effort-summary"><span>Montar anilhas</span></summary>
+                <div class="workout-load-input__effort-body">
+                  <div class="workout-load-input__row">
+                    <button type="button" class="workout-load-input__step workout-load-input__step--mini" data-plate-target-step="-2.5" aria-label="Diminuir 2,5 kg no alvo da calculadora">−</button>
+                    <span class="workout-load-input__mini-num" data-plate-target-display>0</span>
+                    <span class="workout-load-input__mini-label">kg (alvo)</span>
+                    <button type="button" class="workout-load-input__step workout-load-input__step--mini" data-plate-target-step="2.5" aria-label="Aumentar 2,5 kg no alvo da calculadora">+</button>
+                  </div>
+                  <div class="workout-load-input__reps-row">
+                    <span class="workout-load-input__mini-label">Barra</span>
+                    <div class="workout-load-input__rir-pills" data-plate-bar-options>
+                      <button type="button" class="workout-load-input__rir-pill" data-bar-value="20">20</button>
+                      <button type="button" class="workout-load-input__rir-pill" data-bar-value="15">15</button>
+                      <button type="button" class="workout-load-input__rir-pill" data-bar-value="10">10</button>
+                    </div>
+                    <button type="button" class="workout-load-input__rir-other-toggle" data-plate-bar-other-toggle>Outro</button>
+                  </div>
+                  <input
+                    type="number"
+                    inputmode="decimal"
+                    step="0.5"
+                    min="0"
+                    placeholder="peso da barra"
+                    class="workout-load-input__rir-other-field"
+                    data-plate-bar-other-field
+                    hidden
+                    aria-label="Outro peso de barra"
+                  >
+                  <p class="workout-load-input__effort-help">Anilhas disponíveis por lado (pares):</p>
+                  <div class="workout-load-input__plate-inventory" data-plate-inventory></div>
+                  <p class="workout-load-input__effort-question" data-plate-result></p>
+                  <p class="workout-load-input__effort-help" data-plate-check></p>
+                  <button type="button" class="workout-load-input__save" data-plate-use-total hidden>Usar esse peso</button>
+                </div>
+              </details>
+              {% endif %}
+              <span class="workout-load-input__status" data-workout-load-status aria-live="polite">{% if today_weight is not None or today_reps is not None %}Já registrado hoje{% if today_weight is not None %}: {{ today_weight|unlocalize }} kg{% endif %}{% if today_reps is not None %} · {{ today_reps }} reps{% endif %}{% endif %}</span>
+              <p class="workout-load-input__achievement" data-workout-load-achievement aria-live="polite" hidden></p>
             </div>
             {% empty %}
             <p class="table-empty-cell">Nenhum movimento neste bloco.</p>
@@ -369,6 +463,7 @@ PONTOS CRITICOS:
           <div class="workout-record-card" data-workout-record-card>
             <span class="workout-record-card__label">{{ group.grouper|resolve_movement_display_name:movement_labels }}</span>
             <strong class="workout-record-card__value">{{ record.weight_kg }} <span class="workout-record-card__unit">kg</span></strong>
+            {% if record.reps %}<span class="workout-record-card__reps">{{ record.reps }} reps</span>{% endif %}
             <span class="workout-record-card__date">{{ record.performed_on }}</span>
           </div>
           {% endif %}
@@ -377,6 +472,28 @@ PONTOS CRITICOS:
         </div>
         {% else %}
         <p>Nenhuma carga registrada ainda.</p>
+        {% endif %}
+      </article>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Resumo do ciclo</h2>
+        {% cycle_summary_rows progress_snapshots movement_labels as cycle_rows %}
+        {% if cycle_rows %}
+        <div class="workout-records-grid">
+          {% for row in cycle_rows %}
+          <div class="workout-record-card">
+            <span class="workout-record-card__label">{{ row.label }}</span>
+            <strong class="workout-record-card__value">{{ row.weight_kg }} <span class="workout-record-card__unit">kg</span></strong>
+            {% if row.reps %}<span class="workout-record-card__reps">{{ row.reps }} reps</span>{% endif %}
+            <div class="workout-record-card__meta">
+              {% if row.trend_signal != 'insufficient_data' %}<span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--{{ row.trend_signal }}">{% if row.trend_signal == 'plateau' %}Platô{% elif row.trend_signal == 'declining' %}Em queda{% else %}Em evolução{% endif %}</span>{% endif %}
+              {% if row.one_rep_max %}<span class="workout-record-card__date">1RM {{ row.one_rep_max.value_kg }} kg</span>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p>Registre suas cargas pra ver o resumo deste ciclo.</p>
         {% endif %}
       </article>
 
@@ -469,6 +586,13 @@ PONTOS CRITICOS:
             <details class="workout-load-chart-siblings"><summary>Ver variações</summary><p>Variação: {% for sibling in siblings %}{% if sibling.reference_url %}<a href="{{ sibling.reference_url }}" target="_blank" rel="noopener">{{ sibling.label_pt }}</a>{% else %}{{ sibling.label_pt }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p></details>
             {% endif %}
             {% endwith %}
+            {% share_content_for_chart chart group.grouper|resolve_movement_display_name:movement_labels as share %}
+            {% if share.text %}
+            <div class="workout-load-chart-share">
+              <button type="button" class="workout-load-chart-share-button" data-workout-share data-share-title="{{ share.title }}" data-share-text="{{ share.text }}">Compartilhar</button>
+              <span class="workout-load-chart-share-status" data-workout-share-status aria-live="polite"></span>
+            </div>
+            {% endif %}
           </div>
         {% empty %}
         <p>Nenhuma carga registrada ainda.</p>
