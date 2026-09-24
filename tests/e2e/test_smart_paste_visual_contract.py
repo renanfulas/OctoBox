@@ -260,6 +260,35 @@ def test_smart_paste_golden_path_end_to_end(page: Page, live_server, e2e_owner_c
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
+def test_unresolved_movement_has_visible_mobile_review_form(page: Page, live_server, e2e_owner_credentials, monkeypatch):
+    """A pendencia permanece corrigivel no mobile sem depender do dialog oculto."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.set_viewport_size(VIEWPORTS["mobile"])
+    page.goto(f"{live_server.url}/operacao/wod/paste/")
+    page.wait_for_load_state("networkidle")
+
+    page.locator("textarea[name=source_text]").fill("Segunda\nWOD\n10 movimento inventado xyz")
+    page.locator("form.smart-paste-form button[type=submit]").click()
+    page.wait_for_load_state("networkidle")
+
+    queue = page.locator(".smart-paste-review-queue")
+    expect(queue).to_be_visible()
+    expect(page.get_by_text("Revisão automática indisponível")).to_be_visible()
+    expect(queue.locator("input[name=movement_slug]")).to_be_visible()
+    assert page.locator(".topbar").evaluate("el => getComputedStyle(el).position") == "static"
+    assert page.locator("#smart-paste-preview-panel").bounding_box()["y"] < page.locator(".smart-paste-form-card").bounding_box()["y"]
+
+    queue.locator("input[name=movement_slug]").fill("front_squat")
+    queue.locator("button[type=submit]").click()
+    page.wait_for_load_state("networkidle")
+    expect(page.locator(".smart-paste-review-queue")).to_have_count(0)
+    expect(page.locator(".smart-paste-resolution-notice")).to_have_count(0)
+    expect(page.locator(".smart-paste-confirm-form button[type=submit]")).to_be_enabled()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
 def test_smart_paste_rejects_source_text_over_line_limit(page: Page, live_server, e2e_owner_credentials):
     """
     Hardening anti-spam: texto colado acima de SMART_PASTE_MAX_LINES (500)

@@ -10,7 +10,7 @@ O QUE ESTE ARQUIVO FAZ:
 1. recebe lista de nomes de movimento nao reconhecidos.
 2. consulta primeiro a memoria aprendida (knowledge.WodMovementLearnedAlias, compartilhada
    entre boxes) — nome ja visto antes resolve na hora, sem chamar LLM.
-3. o que sobrar vai pro Anthropic (claude-haiku) ou OpenAI (gpt-4o-mini) com o dicionario completo.
+3. o que sobrar vai para Anthropic Haiku com o dicionario completo.
 4. toda resolucao nova do LLM e gravada na memoria, pra nao pagar de novo pelo mesmo erro comum.
 5. retorna dict {nome_raw: {"slug": slug_canonico, "note": nota_curta_pt_br}}.
 6. falha silenciosamente (retorna {}) quando LLM nao esta configurado ou falha; erro na
@@ -20,9 +20,7 @@ PONTOS CRITICOS:
 - nao lanca excecao: qualquer falha retorna {} e o comportamento original e preservado.
 - slugs retornados pelo LLM sao validados contra o dicionario antes de serem aplicados.
 - timeout curto (8s) para nao bloquear o render da pagina.
-- usa ANTHROPIC_API_KEY por padrao (provedor escolhido no design), fallback para OPENAI_API_KEY
-  quando so essa estiver configurada. Nao inverter: OPENAI_API_KEY costuma estar setada em
-  producao so por causa do RAG (knowledge/embeddings.py), o que faria o Haiku nunca rodar.
+- usa somente ANTHROPIC_API_KEY: a correcao automatica de movimentos e feita pelo Haiku.
 - a "note" e so um resumo em linguagem natural da troca feita (ex.: "Troquei 'agachamnto'
   por Back Squat") para exibir no preview do Smart Paste — nunca usada para alterar dado
   numerico (reps/carga), so texto de UI.
@@ -47,11 +45,9 @@ from django.db import models
 
 logger = logging.getLogger(__name__)
 
-_OPENAI_CHAT_URL = 'https://api.openai.com/v1/chat/completions'
 _ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages'
 _ANTHROPIC_API_VERSION = '2023-06-01'
 _TIMEOUT_SECONDS = 8
-_OPENAI_MODEL = 'gpt-4o-mini'
 _ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
 
 # Um treino real de uma semana tem no maximo ~60-80 movimentos ao todo; mais que
@@ -155,48 +151,80 @@ def resolve_unknown_slugs(
         Dicionario {nome_raw: {"slug": slug_canonico, "note": nota_curta}}.
         Pode ser vazio se LLM nao estiver disponivel e nada estiver na memoria.
     """
+    resolved, _status = _resolve_unknown_slugs_with_status(
+        unrecognized_names=unrecognized_names,
+        slug_dictionary=slug_dictionary,
+    )
+    return resolved
+
+
+def _resolve_unknown_slugs_with_status(
+    *,
+    unrecognized_names: list[str],
+    slug_dictionary: list[tuple[str, tuple[str, ...]]],
+) -> tuple[dict[str, dict[str, str]], dict[str, object]]:
+    """Resolve with Haiku and return safe, user-displayable outcome metadata."""
+    status: dict[str, object] = {
+        'provider': 'haiku',
+        'state': 'not_needed',
+        'candidate_count': len(unrecognized_names),
+        'resolved_count': 0,
+    }
     if not unrecognized_names:
-        return {}
+        return {}, status
 
     valid_slugs = {slug for slug, _ in slug_dictionary}
     if not valid_slugs:
-        return {}
+        status['state'] = 'dictionary_unavailable'
+        return {}, status
 
     learned = _lookup_learned_aliases(unrecognized_names)
     still_unknown = [name for name in unrecognized_names if name not in learned]
+    status['memory_resolved_count'] = len(unrecognized_names) - len(still_unknown)
+    status['resolved_count'] = len(unrecognized_names) - len(still_unknown)
     if not still_unknown:
-        return learned
+        status['state'] = 'memory_resolved'
+        return learned, status
 
     if len(still_unknown) > _MAX_NAMES_PER_CALL:
+        status['state'] = 'limit_exceeded'
+        status['haiku_candidate_count'] = len(still_unknown)
         logger.warning(
-            'wod_slug_resolver: %d nomes nao reconhecidos (limite %d) — '
-            'provavel texto fora do escopo de treino, pulando chamada LLM.',
+            'wod_slug_resolver: %d nomes nao reconhecidos (limite %d); pulando chamada Haiku.',
             len(still_unknown), _MAX_NAMES_PER_CALL,
         )
-        return learned
+        return learned, status
 
     all_slugs_text = ', '.join(sorted(valid_slugs))
     names_text = '\n'.join(f'- {name}' for name in still_unknown)
     static_block = f'{_STATIC_INSTRUCTIONS}\n\nSlugs validos:\n{all_slugs_text}'
     dynamic_block = f'Movimentos para resolver:\n{names_text}'
 
-    openai_key = os.getenv('OPENAI_API_KEY', '').strip()
     anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
 
-    # Anthropic (Haiku) tem prioridade: e o provedor escolhido no design (docs/plans/wod-smart-paste-corda.md).
-    # OPENAI_API_KEY costuma estar setada em producao por causa do RAG (knowledge/embeddings.py exige),
-    # entao nao pode ser o desempate — senao o Haiku nunca roda mesmo quando configurado.
-    raw_text = None
-    if anthropic_key:
-        raw_text = _call_anthropic(static_block=static_block, dynamic_block=dynamic_block, api_key=anthropic_key)
-    elif openai_key:
-        raw_text = _call_openai(prompt=f'{static_block}\n\n{dynamic_block}', api_key=openai_key)
-    else:
-        logger.debug('wod_slug_resolver: nenhuma chave LLM configurada, usando so a memoria.')
-        return learned
+    if not anthropic_key:
+        status['state'] = 'provider_unavailable'
+        status['haiku_candidate_count'] = len(still_unknown)
+        logger.warning(
+            'wod_slug_resolver: Haiku unavailable (ANTHROPIC_API_KEY missing); '
+            '%d item(s) require manual review.',
+            len(still_unknown),
+        )
+        return learned, status
 
-    if not raw_text:
-        return learned
+    status['haiku_attempted'] = True
+    status['haiku_candidate_count'] = len(still_unknown)
+    raw_text = _call_anthropic(
+        static_block=static_block,
+        dynamic_block=dynamic_block,
+        api_key=anthropic_key,
+    )
+    if raw_text is None:
+        status['state'] = 'provider_error'
+        return learned, status
+    if not raw_text.strip():
+        status['state'] = 'empty_response'
+        return learned, status
 
     from_llm = _parse_and_validate(
         raw_text=raw_text,
@@ -204,7 +232,13 @@ def resolve_unknown_slugs(
         unrecognized_names=still_unknown,
     )
     _remember_resolved_aliases(from_llm)
-    return {**learned, **from_llm}
+    status['resolved_count'] = len(learned) + len(from_llm)
+    status['state'] = (
+        'haiku_resolved' if len(from_llm) == len(still_unknown)
+        else 'haiku_partial' if from_llm
+        else 'haiku_no_match'
+    )
+    return {**learned, **from_llm}, status
 
 
 def apply_llm_slug_resolution(parsed_payload: dict, slug_dictionary: list[tuple[str, tuple[str, ...]]]) -> None:
@@ -229,13 +263,12 @@ def apply_llm_slug_resolution(parsed_payload: dict, slug_dictionary: list[tuple[
         return
 
     unrecognized_names = list({name for _, _, _, name in unresolved})
-    resolved = resolve_unknown_slugs(
+    resolved, resolution_status = _resolve_unknown_slugs_with_status(
         unrecognized_names=unrecognized_names,
         slug_dictionary=slug_dictionary,
     )
 
-    if not resolved:
-        return
+    parsed_payload['movement_resolution'] = resolution_status
 
     for day_idx, block_idx, mov_idx, raw_name in unresolved:
         entry = resolved.get(raw_name) or {}
@@ -245,39 +278,18 @@ def apply_llm_slug_resolution(parsed_payload: dict, slug_dictionary: list[tuple[
             movement['movement_slug'] = slug
             movement['llm_resolved'] = True
             movement['llm_fix_note'] = entry.get('note') or f'Ajustado automaticamente para "{slug}".'
-            logger.info('wod_slug_resolver: "%s" → "%s"', raw_name, slug)
+    # Keep logs aggregate and privacy-safe: pasted workouts may contain user data.
+    logger.info(
+        'wod_slug_resolver: state=%s candidates=%s resolved=%s',
+        resolution_status.get('state'),
+        resolution_status.get('candidate_count'),
+        resolution_status.get('resolved_count'),
+    )
 
 
 # ---------------------------------------------------------------------------
 # Providers
 # ---------------------------------------------------------------------------
-
-def _call_openai(*, prompt: str, api_key: str) -> str | None:
-    try:
-        response = requests.post(
-            _OPENAI_CHAT_URL,
-            headers={
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json',
-            },
-            json={
-                'model': _OPENAI_MODEL,
-                'messages': [{'role': 'user', 'content': prompt}],
-                'response_format': {'type': 'json_object'},
-                'temperature': 0,
-                'max_tokens': 512,
-            },
-            timeout=_TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
-        data = response.json()
-        choices = data.get('choices', [])
-        if choices:
-            return choices[0].get('message', {}).get('content', '')
-    except Exception as exc:
-        logger.warning('wod_slug_resolver: chamada OpenAI falhou: %s', exc)
-    return None
-
 
 def _call_anthropic(*, static_block: str, dynamic_block: str, api_key: str) -> str | None:
     # static_block (instrucoes + dicionario de slugs) e identico entre chamadas na mesma

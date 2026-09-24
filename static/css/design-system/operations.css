@@ -50,6 +50,16 @@ ORDEM DA CASCADE:
     align-items: start;
 }
 
+.smart-paste-layout--review-first > #smart-paste-preview-panel {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.smart-paste-layout--review-first > .smart-paste-form-card {
+    grid-column: 1;
+    grid-row: 1;
+}
+
 .smart-paste-card {
     display: flex;
     flex-direction: column;
@@ -1057,12 +1067,26 @@ body[data-theme="dark"] .smart-paste-native-picker {
     gap: 0.55rem;
 }
 
-/*
- * ONDA 1: revisão movida para o fluxo via dialog (chips → dialog).
- * Seção inline ocultada — reversível removendo display:none.
- */
 .smart-paste-review-queue {
-    display: none;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.smart-paste-review-queue h3 {
+    margin: 0 0 0.55rem;
+}
+
+.smart-paste-resolution-notice {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--theme-warning, #c8871a) 42%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-warning, #c8871a) 10%, var(--theme-surface-panel));
+}
+
+.smart-paste-resolution-notice p {
+    margin: 0;
 }
 
 .smart-paste-review-queue-head {
@@ -1343,6 +1367,12 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
     .smart-paste-layout {
         grid-template-columns: 1fr;
     }
+
+    .smart-paste-layout--review-first > #smart-paste-preview-panel,
+    .smart-paste-layout--review-first > .smart-paste-form-card {
+        grid-column: 1;
+        grid-row: auto;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1353,6 +1383,34 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
 }
 
 @media (max-width: 720px) {
+    /* Keep the WOD correction flow in the viewport on mobile Safari. The
+       global sticky, blurred topbar otherwise consumes a large share of the
+       short viewport while the coach is reviewing a long pasted week. */
+    body:has(.smart-paste-shell) .topbar {
+        position: static;
+        top: auto;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .smart-paste-review-queue .smart-paste-inline-review-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .smart-paste-review-queue .smart-paste-inline-review-form label,
+    .smart-paste-review-queue .smart-paste-inline-review-form .actions {
+        grid-column: 1;
+    }
+
+    .smart-paste-review-queue input,
+    .smart-paste-review-queue button {
+        min-height: 44px;
+    }
+
+    .smart-paste-review-queue input {
+        height: 44px;
+    }
+
     .smart-paste-date-input-wrap {
         grid-template-columns: minmax(7rem, 7.5rem) minmax(0, 1fr);
         justify-content: stretch;
