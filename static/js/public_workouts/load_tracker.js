@@ -231,11 +231,13 @@
   }
 
   function buildEntryFromWidget(widget, weightKg) {
+    var warmupToggle = widget.querySelector('[data-workout-load-warmup-toggle]');
     return {
       idempotency_key: uuid(),
       movement_slug: widget.getAttribute('data-movement-slug'),
       program_id: widget.getAttribute('data-program-id') || '',
       weight_kg: weightKg,
+      set_role: (warmupToggle && warmupToggle.checked) ? 'warmup' : 'top_set',
       performed_on: todayIso(),
     };
   }

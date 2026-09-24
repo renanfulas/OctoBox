@@ -13,6 +13,9 @@ POR QUE ELE EXISTE:
 
 import copy
 import re
+from datetime import date, datetime, timedelta
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+from types import SimpleNamespace
 
 from django.template.loader import render_to_string
 from django.test import TestCase
@@ -45,6 +48,7 @@ def _render(
     load_history=None,
     one_rep_max_by_movement=None,
     trends_by_movement=None,
+    progress_snapshots=None,
     plan_slug='bruno',
     movement_labels=None,
     student_name='',
@@ -52,6 +56,59 @@ def _render(
     customer_portal_url=None,
     account_email=None,
 ) -> str:
+    if progress_snapshots is None:
+        # Template fixtures now follow the production contract: the graph
+        # reads a prepared snapshot, while load_history remains the complete
+        # visible log. Build the smallest deterministic snapshot from these
+        # dict fixtures so legacy render assertions keep testing the real
+        # presentation path without querying the database.
+        grouped = {}
+        for index, entry in enumerate(load_history or []):
+            grouped.setdefault(entry.get('movement_slug'), []).append((index, entry))
+        progress_snapshots = {}
+        for movement_slug, indexed_entries in grouped.items():
+            top_by_day = {}
+            legacy_points = []
+            for index, entry in indexed_entries:
+                role = entry.get('set_role')
+                performed_on = entry.get('performed_on')
+                day = performed_on if isinstance(performed_on, date) else date.fromisoformat(str(performed_on))
+                point = SimpleNamespace(
+                    performed_on=day,
+                    weight_kg=Decimal(str(entry['weight_kg'])) if entry.get('weight_kg') is not None else None,
+                    reps=entry.get('reps'), rir=entry.get('rir'),
+                    created_at=datetime.combine(day, datetime.min.time()) + timedelta(microseconds=index),
+                    program_id=entry.get('program_id') or '',
+                    week_in_program=entry.get('week_in_program'),
+                )
+                if role == 'top_set':
+                    if day not in top_by_day or point.created_at > top_by_day[day].created_at:
+                        top_by_day[day] = point
+                elif role == 'legacy_unknown':
+                    legacy_points.append(point)
+            curve_points = sorted(top_by_day.values(), key=lambda point: point.performed_on)
+            legacy_points.sort(key=lambda point: (point.performed_on, point.created_at))
+            all_weights = [point.weight_kg for point in [*curve_points, *legacy_points] if point.weight_kg is not None]
+            y_scale = None
+            if all_weights:
+                low, high = min(all_weights), max(all_weights)
+                if low == high:
+                    low, high = max(Decimal('0'), low - Decimal('2.5')), high + Decimal('2.5')
+                increment = Decimal('2.5')
+                y_scale = {
+                    'min_kg': (low / increment).to_integral_value(rounding=ROUND_FLOOR) * increment,
+                    'max_kg': (high / increment).to_integral_value(rounding=ROUND_CEILING) * increment,
+                }
+            trend = (trends_by_movement or {}).get(movement_slug, {})
+            progress_snapshots[movement_slug] = SimpleNamespace(
+                latest_top_set=curve_points[-1] if curve_points else None,
+                curve_points=curve_points,
+                legacy_points=legacy_points,
+                has_legacy_history=any(entry.get('set_role') == 'legacy_unknown' for _, entry in indexed_entries),
+                y_scale=y_scale,
+                trend_signal=trend.get('label', 'insufficient_data'),
+                one_rep_max=(one_rep_max_by_movement or {}).get(movement_slug),
+            )
     return render_to_string('public_workouts/workout.html', {
         'program': payload,
         'accent_variant': accent_variant,
@@ -59,6 +116,7 @@ def _render(
         'load_history': load_history or [],
         'one_rep_max_by_movement': one_rep_max_by_movement or {},
         'trends_by_movement': trends_by_movement or {},
+        'progress_snapshots': progress_snapshots,
         'plan_slug': plan_slug,
         'movement_labels': movement_labels or {},
         'student_name': student_name,
@@ -243,8 +301,8 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 6, 'rir': 2.0, 'performed_on': '2026-02-01', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 6, 'rir': 2.0, 'performed_on': '2026-02-01', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
             ],
         )
 
@@ -354,8 +412,8 @@ class WorkoutTemplateRenderTests(TestCase):
 
     def test_history_tab_renders_load_chart_with_two_or_more_points(self):
         html = _render(build_example_payload(), load_history=[
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
         ])
 
         self.assertIn('Agachamento livre', html)
@@ -365,15 +423,15 @@ class WorkoutTemplateRenderTests(TestCase):
         # convencao de "75,0% RM" ja testada acima); coordenadas do SVG
         # abaixo tem que ficar de FORA disso (SVG so aceita ponto).
         self.assertIn('100,0 kg', html)
-        self.assertIn('cx="10.0" cy="90.0"', html)
+        self.assertIn('cx="46.0" cy="90.0"', html)
         self.assertNotIn('Ainda não há carga suficiente', html)
 
     def test_history_tab_shows_fallback_with_fewer_than_two_points(self):
         html = _render(build_example_payload(), load_history=[
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
         ])
 
-        self.assertIn('Ainda não há carga suficiente registrada para montar o gráfico.', html)
+        self.assertIn('Registre duas séries principais para iniciar sua curva de evolução.', html)
         self.assertNotIn('workout-load-chart-line', html)
 
     def test_history_tab_shows_sibling_variation_as_labeled_reference(self):
@@ -392,7 +450,7 @@ class WorkoutTemplateRenderTests(TestCase):
         )
 
         html = _render(build_example_payload(), load_history=[
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
         ])
 
         self.assertIn('workout-load-chart-siblings', html)
@@ -404,7 +462,7 @@ class WorkoutTemplateRenderTests(TestCase):
         # Sem PublicWorkoutMovement classificado (catalogo nao tem o slug,
         # ou nao tem movement_pattern) -- nao aparece nada, nunca quebra.
         html = _render(build_example_payload(), load_history=[
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
         ])
 
         self.assertNotIn('workout-load-chart-siblings', html)
@@ -413,8 +471,8 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
             ],
             one_rep_max_by_movement={
                 'agachamento-livre': {'value_kg': 128.6, 'formula': 'brzycki', 'confidence': 'high', 'effective_reps': 10},
@@ -429,8 +487,8 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
             ],
             one_rep_max_by_movement={'outro-movimento': {'value_kg': 50.0, 'formula': 'epley', 'confidence': 'low', 'effective_reps': 14}},
         )
@@ -441,8 +499,8 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
             ],
             trends_by_movement={'agachamento-livre': {'label': 'declining', 'weekly_estimates_kg': [130.0, 125.0, 118.0]}},
         )
@@ -454,8 +512,8 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
             ],
             trends_by_movement={'agachamento-livre': {'label': 'plateau', 'weekly_estimates_kg': [128.0, 129.0, 127.5]}},
         )
@@ -467,8 +525,8 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
             ],
             trends_by_movement={'agachamento-livre': {'label': 'improving', 'weekly_estimates_kg': [118.0, 124.0, 130.0]}},
         )
@@ -480,8 +538,8 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'week_in_program': 4, 'idempotency_key': 'k1'},
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-04-01', 'program_id': 'bruno-2026-q2', 'week_in_program': 1, 'idempotency_key': 'k2'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'week_in_program': 4, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-04-01', 'program_id': 'bruno-2026-q2', 'week_in_program': 1, 'idempotency_key': 'k2', 'set_role': 'top_set'},
             ],
         )
 
@@ -494,8 +552,8 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'week_in_program': 1, 'idempotency_key': 'k1'},
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': 'bruno-2026-q1', 'week_in_program': 2, 'idempotency_key': 'k2'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'week_in_program': 1, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': 'bruno-2026-q1', 'week_in_program': 2, 'idempotency_key': 'k2', 'set_role': 'top_set'},
             ],
         )
 
@@ -588,7 +646,7 @@ class WorkoutTopbarAndNavTests(TestCase):
         today = datetime.date.today()
         monday = today - datetime.timedelta(days=today.weekday())
         html = _render(payload, load_history=[
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': monday.isoformat(), 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': monday.isoformat(), 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
         ])
 
         self.assertIn('carga registrada', html)
@@ -839,7 +897,7 @@ class LoadChartPointsFilterTests(TestCase):
     def test_single_point_has_no_data(self):
         # Mesma supressao de assessments.js::buildWeightChart — 1 ponto so
         # nao mostra tendencia nenhuma.
-        entries = [{'weight_kg': 100.0, 'performed_on': '2026-01-05'}]
+        entries = [{'weight_kg': 100.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'}]
 
         result = load_chart_points(entries)
 
@@ -849,8 +907,8 @@ class LoadChartPointsFilterTests(TestCase):
         # Movimento so de peso corporal (weight_kg=None) nunca deveria
         # contar como ponto de grafico de carga.
         entries = [
-            {'weight_kg': None, 'performed_on': '2026-01-01'},
-            {'weight_kg': None, 'performed_on': '2026-01-02'},
+            {'weight_kg': None, 'performed_on': '2026-01-01', 'set_role': 'top_set'},
+            {'weight_kg': None, 'performed_on': '2026-01-02', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -859,8 +917,8 @@ class LoadChartPointsFilterTests(TestCase):
 
     def test_two_points_normalizes_between_pad_and_width_minus_pad(self):
         entries = [
-            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
-            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -877,8 +935,8 @@ class LoadChartPointsFilterTests(TestCase):
         # min == max -> span seria 0; a funcao usa `span or 1` pra nao
         # levantar ZeroDivisionError.
         entries = [
-            {'weight_kg': 100.0, 'performed_on': '2026-01-05'},
-            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -888,8 +946,8 @@ class LoadChartPointsFilterTests(TestCase):
 
     def test_labels_are_short_dates(self):
         entries = [
-            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
-            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -901,8 +959,8 @@ class LoadChartPointsFilterTests(TestCase):
         # Nao ha "antes" pra contrastar no primeiro ponto da serie, mesmo
         # com program_id preenchido.
         entries = [
-            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1'},
-            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'program_id': 'bruno-2026-q1'},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'program_id': 'bruno-2026-q1', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -912,8 +970,8 @@ class LoadChartPointsFilterTests(TestCase):
 
     def test_marks_program_change_when_program_id_differs_from_previous_point(self):
         entries = [
-            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'week_in_program': 4},
-            {'weight_kg': 100.0, 'performed_on': '2026-04-01', 'program_id': 'bruno-2026-q2', 'week_in_program': 1},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'week_in_program': 4, 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-04-01', 'program_id': 'bruno-2026-q2', 'week_in_program': 1, 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -927,9 +985,9 @@ class LoadChartPointsFilterTests(TestCase):
         # Carga sem programa associado (registrada fora de qualquer versao
         # publicada) nunca conta como "troca" — so ruido, nao sinal.
         entries = [
-            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1'},
-            {'weight_kg': 95.0, 'performed_on': '2026-01-08', 'program_id': ''},
-            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'program_id': ''},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'set_role': 'top_set'},
+            {'weight_kg': 95.0, 'performed_on': '2026-01-08', 'program_id': '', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'program_id': '', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -940,9 +998,9 @@ class LoadChartPointsFilterTests(TestCase):
         # Um ponto no meio sem program_id nao apaga o contexto: a troca
         # ainda e' detectada contra o ultimo program_id conhecido.
         entries = [
-            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1'},
-            {'weight_kg': 95.0, 'performed_on': '2026-01-08', 'program_id': ''},
-            {'weight_kg': 100.0, 'performed_on': '2026-04-01', 'program_id': 'bruno-2026-q2'},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'program_id': 'bruno-2026-q1', 'set_role': 'top_set'},
+            {'weight_kg': 95.0, 'performed_on': '2026-01-08', 'program_id': '', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-04-01', 'program_id': 'bruno-2026-q2', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -955,8 +1013,8 @@ class LoadChartPointsFilterTests(TestCase):
         # list_load_history sempre inclui program_id, mas o filtro nao deve
         # quebrar se um chamador futuro omitir a chave.
         entries = [
-            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
-            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -966,8 +1024,8 @@ class LoadChartPointsFilterTests(TestCase):
 
     def test_upward_trend_reports_positive_delta(self):
         entries = [
-            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
-            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -978,8 +1036,8 @@ class LoadChartPointsFilterTests(TestCase):
 
     def test_downward_trend_reports_negative_delta(self):
         entries = [
-            {'weight_kg': 100.0, 'performed_on': '2026-01-05'},
-            {'weight_kg': 90.0, 'performed_on': '2026-01-12'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-12', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -989,8 +1047,8 @@ class LoadChartPointsFilterTests(TestCase):
 
     def test_flat_trend_reports_zero_delta(self):
         entries = [
-            {'weight_kg': 100.0, 'performed_on': '2026-01-05'},
-            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -1000,8 +1058,8 @@ class LoadChartPointsFilterTests(TestCase):
 
     def test_area_points_closes_polygon_at_baseline(self):
         entries = [
-            {'weight_kg': 90.0, 'performed_on': '2026-01-05'},
-            {'weight_kg': 100.0, 'performed_on': '2026-01-12'},
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'set_role': 'top_set'},
         ]
 
         result = load_chart_points(entries)
@@ -1031,14 +1089,14 @@ class PersonalRecordFilterTests(TestCase):
         self.assertIsNone(result['weight_kg'])
 
     def test_entries_with_weight_kg_none_are_ignored(self):
-        result = personal_record([{'weight_kg': None, 'performed_on': '2026-01-01', 'reps': None}])
+        result = personal_record([{'weight_kg': None, 'performed_on': '2026-01-01', 'reps': None, 'set_role': 'top_set'}])
 
         self.assertFalse(result['has_data'])
 
     def test_picks_highest_weight_regardless_of_date_order(self):
         result = personal_record([
-            {'weight_kg': 90.0, 'performed_on': '2026-02-01', 'reps': 8},  # mais recente, mas nao o maior
-            {'weight_kg': 100.0, 'performed_on': '2026-01-05', 'reps': 6},
+            {'weight_kg': 90.0, 'performed_on': '2026-02-01', 'reps': 8, 'set_role': 'top_set'},  # mais recente, mas nao o maior
+            {'weight_kg': 100.0, 'performed_on': '2026-01-05', 'reps': 6, 'set_role': 'top_set'},
         ])
 
         self.assertTrue(result['has_data'])
@@ -1046,10 +1104,22 @@ class PersonalRecordFilterTests(TestCase):
         self.assertEqual(result['performed_on'], '2026-01-05')
         self.assertEqual(result['reps'], 6)
 
+
+    def test_warmup_and_legacy_never_become_personal_records(self):
+        result = personal_record([
+            {'weight_kg': 150.0, 'performed_on': '2026-01-01', 'set_role': 'warmup'},
+            {'weight_kg': 130.0, 'performed_on': '2026-01-02', 'set_role': 'legacy_unknown'},
+            {'weight_kg': 120.0, 'performed_on': '2026-01-03', 'set_role': 'top_set'},
+            {'weight_kg': 125.0, 'performed_on': '2026-01-04', 'set_role': 'max_set'},
+        ])
+        self.assertTrue(result['has_data'])
+        self.assertEqual(result['weight_kg'], 125.0)
+        self.assertEqual(result['performed_on'], '2026-01-04')
+
     def test_single_entry_already_has_data(self):
         # Diferente de load_chart_points (que exige 2+ pontos pra mostrar
         # tendencia), um recorde so precisa de 1 registro.
-        result = personal_record([{'weight_kg': 60.0, 'performed_on': '2026-01-01', 'reps': 10}])
+        result = personal_record([{'weight_kg': 60.0, 'performed_on': '2026-01-01', 'reps': 10, 'set_role': 'top_set'}])
 
         self.assertTrue(result['has_data'])
         self.assertEqual(result['weight_kg'], 60.0)
@@ -1497,17 +1567,31 @@ class MovementLoadDisplayTagTests(TestCase):
         self.assertFalse(result['show_registration_hint'])
 
     def test_canonical_phase_with_prior_log_uses_progressive_ratio(self):
+        # Plano curva-grafico-hierarquia-e-set-role.md (§7.5/§8.1 item 5):
+        # o "ultimo log" agora vem de progress_snapshots[slug].latest_top_set
+        # (ja' elegivel -- nunca mais escaneia load_history bruto).
+        from datetime import date, datetime
+        from decimal import Decimal
+
+        from public_workouts.progress_snapshot import ProgressPoint, ProgressSnapshot
+
         movement = self._movement()
         payload = {
             'program_id': 'juliana-2026-q1', 'started_on': '2026-01-05',
             'periodization': _canonical_periodization(_SIX_CANONICAL_WEEKS),
         }
-        load_history = [{
-            'movement_slug': 'hack-squat', 'weight_kg': 80.0,
-            'performed_on': '2026-01-05', 'program_id': 'juliana-2026-q1',
-        }]
+        latest_top_set = ProgressPoint(
+            performed_on=date(2026, 1, 5), weight_kg=Decimal('80.0'), reps=None, rir=None,
+            created_at=datetime(2026, 1, 5, 12, 0), program_id='juliana-2026-q1',
+        )
+        progress_snapshots = {
+            'hack-squat': ProgressSnapshot(
+                latest_top_set=latest_top_set, curve_points=[], legacy_points=[],
+                has_legacy_history=False, y_scale=None, trend_signal='insufficient_data', one_rep_max=None,
+            ),
+        }
 
-        result = movement_load_display(movement, payload, PHASE_PROFILES['volume'], {}, load_history)
+        result = movement_load_display(movement, payload, PHASE_PROFILES['volume'], {}, progress_snapshots)
 
         self.assertEqual(result['kind'], 'phase_progressive')
         self.assertGreater(result['value_kg'], 80.0)
@@ -1569,17 +1653,17 @@ class TodaysLoggedWeightTagTests(TestCase):
         return timezone.localdate().isoformat()
 
     def test_returns_todays_weight_for_the_movement(self):
-        load_history = [{'movement_slug': 'hack-squat', 'weight_kg': 42.5, 'performed_on': self._today_iso()}]
+        load_history = [{'movement_slug': 'hack-squat', 'weight_kg': 42.5, 'performed_on': self._today_iso(), 'set_role': 'top_set'}]
 
         self.assertEqual(todays_logged_weight(load_history, 'hack-squat'), 42.5)
 
     def test_ignores_entries_from_other_movements(self):
-        load_history = [{'movement_slug': 'leg-press', 'weight_kg': 100.0, 'performed_on': self._today_iso()}]
+        load_history = [{'movement_slug': 'leg-press', 'weight_kg': 100.0, 'performed_on': self._today_iso(), 'set_role': 'top_set'}]
 
         self.assertIsNone(todays_logged_weight(load_history, 'hack-squat'))
 
     def test_ignores_entries_from_previous_days(self):
-        load_history = [{'movement_slug': 'hack-squat', 'weight_kg': 40.0, 'performed_on': '2020-01-01'}]
+        load_history = [{'movement_slug': 'hack-squat', 'weight_kg': 40.0, 'performed_on': '2020-01-01', 'set_role': 'top_set'}]
 
         self.assertIsNone(todays_logged_weight(load_history, 'hack-squat'))
 
@@ -1590,8 +1674,8 @@ class TodaysLoggedWeightTagTests(TestCase):
         # ULTIMA, nunca a primeira.
         today = self._today_iso()
         load_history = [
-            {'movement_slug': 'hack-squat', 'weight_kg': 40.0, 'performed_on': today},
-            {'movement_slug': 'hack-squat', 'weight_kg': 42.5, 'performed_on': today},
+            {'movement_slug': 'hack-squat', 'weight_kg': 40.0, 'performed_on': today, 'set_role': 'top_set'},
+            {'movement_slug': 'hack-squat', 'weight_kg': 42.5, 'performed_on': today, 'set_role': 'top_set'},
         ]
 
         self.assertEqual(todays_logged_weight(load_history, 'hack-squat'), 42.5)

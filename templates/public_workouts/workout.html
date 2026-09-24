@@ -167,7 +167,7 @@ PONTOS CRITICOS:
               class="student-card card-decor-topstripe workout-movement-card"
               data-workout-load-toggle tabindex="0" role="button" aria-expanded="false" aria-label="Mostrar registro de carga de hoje em {{ movement|movement_name:movement_labels }}"
             >
-              {% movement_load_display movement program current_phase one_rep_max_by_movement load_history as load %}
+              {% movement_load_display movement program current_phase one_rep_max_by_movement progress_snapshots as load %}
               <div class="workout-movement-copy">
                 {% if movement.reference_url %}
                 <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_name:movement_labels }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
@@ -239,6 +239,10 @@ PONTOS CRITICOS:
                 <button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>
                 <button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
               </div>
+              <label class="workout-load-input__warmup-toggle">
+                <input type="checkbox" data-workout-load-warmup-toggle>
+                Foi aquecimento (não entra na sua evolução)
+              </label>
               <span class="workout-load-input__status" data-workout-load-status aria-live="polite">{% if today_weight is not None %}Já registrado hoje: {{ today_weight|unlocalize }} kg{% endif %}</span>
             </div>
             {% empty %}
@@ -379,35 +383,34 @@ PONTOS CRITICOS:
         <h2>Evolução de carga</h2>
         {% regroup load_history by movement_slug as load_history_by_movement %}
         {% for group in load_history_by_movement %}
-          {% with chart=group.list|load_chart_points %}
+          {% progress_chart_for_movement group.grouper progress_snapshots as chart %}
           <div class="workout-load-chart{% if chart.has_data %} has-data{% endif %}">
             <div class="workout-load-chart-head">
               <h3>{{ group.grouper|resolve_movement_display_name:movement_labels }}</h3>
-              {% if chart.has_data %}
+              {% if chart.latest_weight_kg is not None %}
               <span class="workout-load-chart-current">
-                <strong>{{ chart.latest_weight_kg }} kg</strong>
-                <span class="workout-load-chart-trend workout-load-chart-trend--{{ chart.trend }}">
-                  {% if chart.trend == 'up' %}▲{% elif chart.trend == 'down' %}▼{% else %}—{% endif %}
-                  {{ chart.delta_weight_kg }} kg
-                </span>
+                <strong>{{ chart.latest_weight_kg }}</strong><span class="workout-load-chart-unit">kg</span>
               </span>
               {% endif %}
-              {% with estimate=one_rep_max_by_movement|dict_get:group.grouper %}
-              {% if estimate %}
-              <span class="workout-load-chart-1rm" title="1RM estimado — confiança {{ estimate.confidence }} ({{ estimate.effective_reps }} reps efetivas, {{ estimate.formula }})">
-                1RM est. <strong>{{ estimate.value_kg }} kg</strong>
-              </span>
+              {% if chart.trend_signal != 'insufficient_data' %}
+              <p class="workout-load-chart-statement">
+                {% if chart.trend_signal == 'improving' %}Sua série principal está evoluindo com consistência.{% elif chart.trend_signal == 'plateau' %}Sua série principal está estável nas últimas semanas.{% elif chart.trend_signal == 'declining' %}Sua série principal pede atenção nas últimas semanas.{% endif %}
+              </p>
               {% endif %}
-              {% endwith %}
-              {% with movement_trend=trends_by_movement|dict_get:group.grouper %}
-              {% if movement_trend %}
-              <span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--{{ movement_trend.label }}">
-                {% if movement_trend.label == 'plateau' %}Platô{% elif movement_trend.label == 'declining' %}Em queda{% else %}Em evolução{% endif %}
-              </span>
+              {% with estimate=chart.one_rep_max %}
+              {% if estimate or chart.trend_signal != 'insufficient_data' %}
+              <details class="workout-load-chart-context">
+                <summary>Ver detalhes</summary>
+                {% if estimate %}<span class="workout-load-chart-1rm" title="1RM estimado — confiança {{ estimate.confidence }} ({{ estimate.effective_reps }} reps efetivas, {{ estimate.formula }})">1RM estimado: <strong>{{ estimate.value_kg }} kg</strong></span>{% endif %}
+                {% if chart.trend_signal != 'insufficient_data' %}<span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--{{ chart.trend_signal }}">{% if chart.trend_signal == 'plateau' %}Platô{% elif chart.trend_signal == 'declining' %}Em queda{% else %}Em evolução{% endif %}</span>{% endif %}
+              </details>
               {% endif %}
               {% endwith %}
             </div>
             {% if chart.has_data %}
+            <span class="workout-load-chart-trend workout-load-chart-trend--{{ chart.trend }}">Variação na janela: {{ chart.delta_weight_kg }} kg</span>
+            {% endif %}
+            {% if chart.has_chart %}
             <svg
               class="workout-load-chart-svg"
               viewBox="{{ chart.viewbox }}"
@@ -426,8 +429,8 @@ PONTOS CRITICOS:
                 </linearGradient>
               </defs>
               {% localize off %}
-              <polygon class="workout-load-chart-area" points="{{ chart.area_points_attr }}" fill="url(#workout-load-fill-{{ forloop.counter }})"></polygon>
-              <polyline class="workout-load-chart-line" points="{{ chart.points_attr }}" pathLength="1" stroke="url(#workout-load-stroke-{{ forloop.counter }})"></polyline>
+              {% if chart.has_data %}<polygon class="workout-load-chart-area" points="{{ chart.area_points_attr }}" fill="url(#workout-load-fill-{{ forloop.counter }})"></polygon>
+              <polyline class="workout-load-chart-line" points="{{ chart.points_attr }}" pathLength="1" stroke="url(#workout-load-stroke-{{ forloop.counter }})"></polyline>{% endif %}
               {% for point in chart.points %}
               {% if point.is_program_change %}
               <line
@@ -440,20 +443,32 @@ PONTOS CRITICOS:
               <circle class="workout-load-chart-dot{% if point.is_program_change %} workout-load-chart-dot--version{% endif %}" cx="{{ point.x }}" cy="{{ point.y }}" r="3">
                 {% if point.is_program_change %}<title>Novo programa a partir daqui: {{ point.program_id }}{% if point.week_in_program %} (semana {{ point.week_in_program }}){% endif %}</title>{% endif %}
               </circle>
-              <text class="workout-load-chart-label" x="{{ point.x }}" y="{{ chart.label_y }}">{{ point.label }}</text>
               {% endfor %}
+              {% for point in chart.legacy_points %}
+              <circle class="workout-load-chart-dot--legacy" cx="{{ point.x }}" cy="{{ point.y }}" r="3"><title>Registro anterior: {{ point.weight_kg }} kg em {{ point.label }}</title></circle>
+              {% endfor %}
+              {% for tick in chart.timeline_ticks %}<text class="workout-load-chart-label" text-anchor="{{ tick.anchor }}" x="{{ tick.x }}" y="{{ chart.label_y }}">{{ tick.label }}</text>{% endfor %}
+              <text class="workout-load-chart-scale-label" text-anchor="end" x="43" y="10">{{ chart.scale_max }} kg</text>
+              <text class="workout-load-chart-scale-label" text-anchor="end" x="43" y="{{ chart.baseline_y }}">{{ chart.scale_min }} kg</text>
               {% endlocalize %}
             </svg>
+            {% if chart.has_legacy_points %}<p class="workout-load-chart-legacy-label"><span aria-hidden="true">●</span> Registros anteriores, sem classificação</p>{% endif %}
+            {% if not chart.has_data %}
+              {% if chart.has_legacy_history %}<p class="workout-load-chart-empty">Seu histórico está salvo. Registre sua próxima série principal para iniciar uma curva de evolução precisa.</p>{% else %}<p class="workout-load-chart-empty">Registre duas séries principais para iniciar sua curva de evolução.</p>{% endif %}
+            {% endif %}
             {% else %}
-            <p>Ainda não há carga suficiente registrada para montar o gráfico.</p>
+              {% if chart.has_legacy_history %}
+              <p class="workout-load-chart-empty">Seu histórico está salvo. Registre sua próxima série principal para iniciar uma curva de evolução precisa.</p>
+              {% else %}
+              <p class="workout-load-chart-empty">Registre duas séries principais para iniciar sua curva de evolução.</p>
+              {% endif %}
             {% endif %}
             {% with siblings=group.grouper|sibling_variations %}
             {% if siblings %}
-            <p class="workout-load-chart-siblings">Variação: {% for sibling in siblings %}{% if sibling.reference_url %}<a href="{{ sibling.reference_url }}" target="_blank" rel="noopener">{{ sibling.label_pt }}</a>{% else %}{{ sibling.label_pt }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+            <details class="workout-load-chart-siblings"><summary>Ver variações</summary><p>Variação: {% for sibling in siblings %}{% if sibling.reference_url %}<a href="{{ sibling.reference_url }}" target="_blank" rel="noopener">{{ sibling.label_pt }}</a>{% else %}{{ sibling.label_pt }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p></details>
             {% endif %}
             {% endwith %}
           </div>
-          {% endwith %}
         {% empty %}
         <p>Nenhuma carga registrada ainda.</p>
         {% endfor %}

@@ -14,7 +14,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutLoadLogSetRole
 from public_workouts.services import build_weekly_review
 
 
@@ -30,6 +30,7 @@ def _log(account, *, movement_slug, weight_kg, reps, performed_on):
         reps=reps,
         performed_on=performed_on,
         idempotency_key=f'{movement_slug}-{performed_on.isoformat()}-{weight_kg}',
+        set_role=PublicWorkoutLoadLogSetRole.TOP_SET,
     )
 
 
@@ -37,7 +38,7 @@ class BuildWeeklyReviewTests(TestCase):
     def test_empty_when_no_load_logged_yet(self):
         account = _make_account()
 
-        review = build_weekly_review(account_id=account.pk)
+        review = build_weekly_review(account_id=account.pk, as_of=date(2026, 1, 19))
 
         self.assertEqual(review, {'trends_by_movement': {}, 'declining_movements': [], 'plateaued_movements': []})
 
@@ -48,7 +49,7 @@ class BuildWeeklyReviewTests(TestCase):
         account = _make_account()
         _log(account, movement_slug='agachamento-livre', weight_kg=100, reps=5, performed_on=date(2026, 1, 5))
 
-        review = build_weekly_review(account_id=account.pk)
+        review = build_weekly_review(account_id=account.pk, as_of=date(2026, 1, 19))
 
         self.assertEqual(review['trends_by_movement'], {})
 
@@ -63,7 +64,7 @@ class BuildWeeklyReviewTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        review = build_weekly_review(account_id=account.pk)
+        review = build_weekly_review(account_id=account.pk, as_of=date(2026, 1, 19))
 
         self.assertEqual(review['declining_movements'], ['agachamento-livre'])
         self.assertEqual(review['plateaued_movements'], [])
@@ -80,7 +81,7 @@ class BuildWeeklyReviewTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        review = build_weekly_review(account_id=account.pk)
+        review = build_weekly_review(account_id=account.pk, as_of=date(2026, 1, 19))
 
         self.assertEqual(review['plateaued_movements'], ['supino-reto'])
         self.assertEqual(review['declining_movements'], [])
@@ -96,7 +97,7 @@ class BuildWeeklyReviewTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        review = build_weekly_review(account_id=account.pk)
+        review = build_weekly_review(account_id=account.pk, as_of=date(2026, 1, 19))
 
         self.assertEqual(review['trends_by_movement']['agachamento-livre']['label'], 'improving')
         self.assertEqual(review['declining_movements'], [])
@@ -120,7 +121,7 @@ class BuildWeeklyReviewTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        review = build_weekly_review(account_id=account.pk)
+        review = build_weekly_review(account_id=account.pk, as_of=date(2026, 1, 19))
 
         self.assertEqual(set(review['trends_by_movement']), {'agachamento-livre', 'supino-reto'})
 
@@ -136,7 +137,7 @@ class BuildWeeklyReviewTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        review_b = build_weekly_review(account_id=account_b.pk)
+        review_b = build_weekly_review(account_id=account_b.pk, as_of=date(2026, 1, 19))
 
         self.assertEqual(review_b['trends_by_movement'], {})
 

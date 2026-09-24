@@ -36,7 +36,7 @@ from datetime import date
 from decimal import Decimal
 
 from django.conf import settings
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.db import models as django_models
 from django.db import transaction
 from django.utils import timezone
@@ -56,6 +56,7 @@ from .models import (
     PublicWorkoutAccount,
     PublicWorkoutAssessment,
     PublicWorkoutLoadLog,
+    PublicWorkoutLoadLogSetRole,
     PublicWorkoutMealPlan,
     PublicWorkoutMovement,
     PublicWorkoutMovementModality,
@@ -72,7 +73,8 @@ from .models import (
     PublicWorkoutTrainingProfile,
 )
 from .nutrition_schema import assert_valid_payload as assert_valid_nutrition_payload
-from .one_rep_max import detect_one_rep_max_trend, estimate_one_rep_max
+
+from .progress_snapshot import build_progress_snapshots
 from .schema import assert_valid_payload
 
 
@@ -853,6 +855,7 @@ def _serialize_load_log(log: PublicWorkoutLoadLog) -> dict:
         'program_id': log.program_id or None,
         'week_in_program': log.week_in_program,
         'idempotency_key': log.idempotency_key,
+        'set_role': log.set_role,
     }
 
 
@@ -865,7 +868,7 @@ def _serialize_one_rep_max_estimate(estimate) -> dict:
     }
 
 
-def build_student_package(*, account_id: int, slug: str) -> dict:
+def build_student_package(*, account_id: int, slug: str, progress_snapshots: dict | None = None) -> dict:
     """S2 — ultima carga por movimento + 1RM + substituicoes + access_until.
     Sem HTTP, sem request.
 
@@ -881,19 +884,30 @@ def build_student_package(*, account_id: int, slug: str) -> dict:
     `access_until` fica `None` ate a Onda B3 (fase B) ligar a trava de
     acesso de verdade.
     """
-    logs = list(
-        PublicWorkoutLoadLog.objects.filter(account_id=account_id)
-        .order_by('movement_slug', '-performed_on', '-created_at')
-        .distinct('movement_slug')
+    log_query = PublicWorkoutLoadLog.objects.filter(account_id=account_id).order_by(
+        'movement_slug', '-performed_on', '-created_at', '-pk',
     )
+    if connection.features.can_distinct_on_fields:
+        logs = list(log_query.distinct('movement_slug'))
+        last_load_by_movement = {log.movement_slug: _serialize_load_log(log) for log in logs}
+    else:
+        # Portable fallback for SQLite diagnostics and backends without DISTINCT ON.
+        last_load_by_movement = {}
+        for log in log_query.iterator(chunk_size=500):
+            last_load_by_movement.setdefault(log.movement_slug, _serialize_load_log(log))
 
-    last_load_by_movement = {log.movement_slug: _serialize_load_log(log) for log in logs}
-
-    one_rep_max_by_movement = {}
-    for log in logs:
-        estimate = estimate_one_rep_max(weight_kg=log.weight_kg, reps=log.reps, rir=log.rir)
-        if estimate is not None:
-            one_rep_max_by_movement[log.movement_slug] = _serialize_one_rep_max_estimate(estimate)
+    # Plano curva-grafico-hierarquia-e-set-role.md (§7.5/§8.1 item 3): 1RM
+    # vem do snapshot de progresso (so' top_set elegivel), nao do ULTIMO
+    # log bruto de cada movimento -- o ultimo log podia ser aquecimento,
+    # contaminando a estimativa que alimenta o badge "1RM est." de
+    # workout.html. build_progress_snapshots ja roda EM LOTE (uma
+    # chamada, nao uma por movimento).
+    snapshots = progress_snapshots if progress_snapshots is not None else build_progress_snapshots(account_id=account_id)
+    one_rep_max_by_movement = {
+        movement_slug: _serialize_one_rep_max_estimate(snapshot.one_rep_max)
+        for movement_slug, snapshot in snapshots.items()
+        if snapshot.one_rep_max is not None
+    }
 
     return {
         'last_load_by_movement': last_load_by_movement,
@@ -903,7 +917,7 @@ def build_student_package(*, account_id: int, slug: str) -> dict:
     }
 
 
-def build_weekly_review(*, account_id: int) -> dict:
+def build_weekly_review(*, account_id: int, progress_snapshots: dict | None = None, as_of: date | None = None) -> dict:
     """Onda A3 — agrega os SINAIS calculados (tendencia de 1RM por
     movimento) pra alimentar o review semanal (Onda 4.5 do plano de
     produto). So a parte deterministica: NAO chama IA, NAO gera texto,
@@ -913,21 +927,14 @@ def build_weekly_review(*, account_id: int) -> dict:
     sugerida fica pra quando esses dados existirem — aqui so preparamos o
     sinal, no formato "platô de 3 semanas", nao a tabela crua de sets.
     """
-    movement_slugs = (
-        PublicWorkoutLoadLog.objects.filter(account_id=account_id)
-        .order_by('movement_slug')
-        .values_list('movement_slug', flat=True)
-        .distinct()
-    )
-
+    snapshots = progress_snapshots if progress_snapshots is not None else build_progress_snapshots(account_id=account_id, as_of=as_of)
     trends = {}
-    for movement_slug in movement_slugs:
-        trend = detect_one_rep_max_trend(account_id=account_id, movement_slug=movement_slug)
-        if trend.label == 'insufficient_data':
+    for movement_slug, snapshot in snapshots.items():
+        if snapshot.trend_signal == 'insufficient_data':
             continue
         trends[movement_slug] = {
-            'label': trend.label,
-            'weekly_estimates_kg': list(trend.weekly_estimates_kg),
+            'label': snapshot.trend_signal,
+            'weekly_estimates_kg': list(snapshot.weekly_estimates_kg),
         }
 
     declining = sorted(slug for slug, t in trends.items() if t['label'] == 'declining')
@@ -950,6 +957,15 @@ def record_load(
     performed_on,
     program_id=None,
     week_in_program=None,
+    # Default SO' aqui, nunca no model nem na view (plano
+    # curva-grafico-hierarquia-e-set-role.md, §7.6): ~30 chamadas diretas
+    # de teste existentes (test_load_log.py e outros) nao tem nada a ver
+    # com set_role -- exigir o parametro sem default quebraria todas por
+    # um motivo alheio ao que estao testando. A view SEMPRE passa um
+    # valor explicito de qualquer forma (protocolo de payload, ver
+    # PublicWorkoutRecordLoadView), entao este default nunca e' exercido
+    # em produção.
+    set_role: str = PublicWorkoutLoadLogSetRole.TOP_SET,
     idempotency_key: str,
 ) -> dict:
     """S3 — registra uma carga. Idempotente por `idempotency_key`: reenvio
@@ -964,8 +980,19 @@ def record_load(
     TransactionManagementError em vez de achar a linha (mesma pegadinha
     que o dedup do webhook em stripe_handlers.py evita nunca re-consultando
     na mesma transacao; aqui precisamos do valor de volta, entao isolamos
-    o INSERT em vez disso)."""
+    o INSERT em vez disso).
+
+    `.filter().first()` na recuperação, NUNCA `.get()` direto: depois da
+    Migration B (CheckConstraint em set_role), um `set_role` inválido
+    também levanta `IntegrityError` — se a recuperação fosse `.get()`, ela
+    levantaria `DoesNotExist` (mascarando o erro real de validação atrás
+    de uma mensagem sobre idempotência). Com `.filter().first()`, se a
+    linha realmente não existe (porque o INSERT foi rejeitado pela
+    constraint, não por colisão de chave), `log` vem `None` e o `raise`
+    relança o `IntegrityError` ORIGINAL intacto."""
     _validate_load_values(weight_kg=weight_kg, rir=rir)
+    if set_role not in PublicWorkoutLoadLogSetRole.values:
+        raise LoadValueError(f'set_role invalido: {set_role!r}')
 
     if isinstance(performed_on, str):
         performed_on = date.fromisoformat(performed_on)
@@ -982,9 +1009,12 @@ def record_load(
                 program_id=program_id or '',
                 week_in_program=week_in_program,
                 idempotency_key=idempotency_key,
+                set_role=set_role,
             )
     except IntegrityError:
-        log = PublicWorkoutLoadLog.objects.get(idempotency_key=idempotency_key)
+        log = PublicWorkoutLoadLog.objects.filter(idempotency_key=idempotency_key).first()
+        if log is None:
+            raise
 
     return _serialize_load_log(log)
 
