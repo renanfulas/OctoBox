@@ -3,7 +3,7 @@
 
 {% block extra_head %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}-smartpaste-20260505-mobile">
+<link rel="stylesheet" href="{% static 'css/design-system/operations.css' %}?v={{ static_asset_version }}-smartpaste-review-20260924">
 {% endblock %}
 
 {% block content %}
@@ -12,8 +12,11 @@
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
 
-    <section class="smart-paste-layout" aria-label="Fluxo do Smart Paste semanal">
-        <article class="table-card smart-paste-card">
+    <section class="smart-paste-layout{% if smart_paste_days %} smart-paste-layout--review-first{% endif %}" aria-label="Fluxo do Smart Paste semanal">
+        {% if smart_paste_days and not weekly_plan_is_confirmed %}
+        {% include "operations/includes/wod_smart_paste_preview.html" %}
+        {% endif %}
+        <article class="table-card smart-paste-card smart-paste-form-card">
             <div class="coach-wod-editor-head">
                 <div>
                     <p class="eyebrow">Semana</p>
@@ -62,7 +65,7 @@
 
         {% if weekly_plan_is_confirmed and weekly_plan and smart_paste_days %}
         {% include "operations/includes/wod_smart_paste_projection.html" %}
-        {% else %}
+        {% elif not smart_paste_days %}
         {% include "operations/includes/wod_smart_paste_preview.html" %}
         {% endif %}
     </section>

@@ -518,6 +518,14 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
                                         'notes': None,
                                         'sort_order': 1,
                                     },
+                                    {
+                                        'movement_slug': None,
+                                        'movement_label_raw': 'row',
+                                        'reps_spec': None,
+                                        'load_spec': '',
+                                        'notes': None,
+                                        'sort_order': 2,
+                                    },
                                 ],
                             }
                         ],
@@ -546,6 +554,27 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-smart-paste-auto-open-target="review-item-0-0-1"')
+
+        queue_response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'action': 'update_review_item',
+                'review_source': 'queue',
+                'plan_id': plan.id,
+                'day_index': 0,
+                'block_index': 0,
+                'movement_index': 1,
+                'movement_label_raw': 'jum',
+                'movement_slug': 'box_jump',
+                'reps_spec': '',
+                'load_spec': '',
+                'notes': '',
+            },
+            HTTP_HX_REQUEST='true',
+        )
+        self.assertEqual(queue_response.status_code, 200)
+        self.assertNotContains(queue_response, 'data-smart-paste-auto-open-target=')
+        self.assertContains(queue_response, 'row')
 
     def test_unresolved_items_block_weekly_confirmation(self):
         today = timezone.localdate()
@@ -1035,7 +1064,10 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
         slug_dict = self._make_slug_dict()
 
         mock_resolved = {'PullUp': {'slug': 'pull_up', 'note': 'Troquei "PullUp" por Pull-up'}}
-        with patch('operations.services.wod_slug_resolver.resolve_unknown_slugs', return_value=mock_resolved):
+        with patch(
+            'operations.services.wod_slug_resolver._resolve_unknown_slugs_with_status',
+            return_value=(mock_resolved, {'provider': 'haiku', 'state': 'haiku_resolved', 'candidate_count': 1, 'resolved_count': 1}),
+        ):
             apply_llm_slug_resolution(parsed_payload, slug_dict)
 
         movements = parsed_payload['days'][0]['blocks'][0]['movements']
@@ -1063,11 +1095,29 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
                 }
             ]
         }
-        with patch('operations.services.wod_slug_resolver.resolve_unknown_slugs', return_value={}):
+        with patch(
+            'operations.services.wod_slug_resolver._resolve_unknown_slugs_with_status',
+            return_value=({}, {'provider': 'haiku', 'state': 'provider_unavailable', 'candidate_count': 1, 'resolved_count': 0}),
+        ):
             apply_llm_slug_resolution(parsed_payload, self._make_slug_dict())
 
         # Slug permanece None — comportamento original preservado
         self.assertIsNone(parsed_payload['days'][0]['blocks'][0]['movements'][0]['movement_slug'])
+        self.assertEqual(parsed_payload['movement_resolution']['state'], 'provider_unavailable')
+
+    def test_no_openai_key_fallback_and_reports_missing_haiku(self):
+        from operations.services.wod_slug_resolver import _resolve_unknown_slugs_with_status
+
+        with patch.dict('os.environ', {'OPENAI_API_KEY': 'openai-test-only'}, clear=True):
+            with patch('operations.services.wod_slug_resolver._call_anthropic') as call_haiku:
+                resolved, status = _resolve_unknown_slugs_with_status(
+                    unrecognized_names=['Pistol Squat'],
+                    slug_dictionary=self._make_slug_dict(),
+                )
+
+        call_haiku.assert_not_called()
+        self.assertEqual(resolved, {})
+        self.assertEqual(status['state'], 'provider_unavailable')
 
     def test_parse_text_action_calls_llm_resolver(self):
         """Garante que a view chama apply_llm_slug_resolution após parsear o texto."""

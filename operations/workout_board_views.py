@@ -197,6 +197,9 @@ class WorkoutSmartPasteView(OperationBaseView):
         movement['reps_spec'] = (cleaned_data.get('reps_spec') or '').strip() or None
         movement['load_spec'] = (cleaned_data.get('load_spec') or '').strip() or None
         movement['notes'] = (cleaned_data.get('notes') or '').strip() or None
+        resolution_status = payload.get('movement_resolution')
+        if resolution_status and not count_unresolved_smart_paste_movements(payload):
+            resolution_status['state'] = 'manual_resolved'
         plan.parsed_payload = payload
         plan.save(update_fields=['parsed_payload', 'updated_at'])
         return plan
@@ -232,6 +235,9 @@ class WorkoutSmartPasteView(OperationBaseView):
                         break
                 if next_target:
                     break
+            # The queue form is already visible in the preview. Keep advancing
+            # that form inline instead of opening a second, nested dialog.
+            next_target = next_target if request.POST.get('review_source') != 'queue' else ''
             context = self._build_context(
                 plan=plan,
                 parsed_payload=plan.parsed_payload,
