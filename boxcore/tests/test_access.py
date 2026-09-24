@@ -223,6 +223,7 @@ class BootstrapRolesCommandTests(TestCase):
             self.skipTest('Requer PostgreSQL com django-tenants')
 
         from django_tenants.utils import get_public_schema_name, schema_context
+        from auditing.models import AuditEvent
 
         tenant_schema = connection.schema_name
         self.assertNotEqual(tenant_schema, get_public_schema_name())
@@ -230,7 +231,12 @@ class BootstrapRolesCommandTests(TestCase):
         self.assertEqual(connection.schema_name, tenant_schema)
 
         with schema_context(get_public_schema_name()):
-            permission = Permission.objects.get(codename='view_auditevent', content_type__app_label='auditing')
+            content_type = ContentType.objects.get_for_model(AuditEvent)
+            permission = Permission.objects.get(codename='view_auditevent', content_type=content_type)
             self.assertTrue(
-                ContentType.objects.filter(pk=permission.content_type_id, app_label='auditing', model='auditevent').exists()
+                ContentType.objects.filter(
+                    pk=permission.content_type_id,
+                    app_label=AuditEvent._meta.app_label,
+                    model=AuditEvent._meta.model_name,
+                ).exists()
             )
