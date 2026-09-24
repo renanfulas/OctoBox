@@ -908,9 +908,15 @@ def build_student_package(*, account_id: int, slug: str, progress_snapshots: dic
         for movement_slug, snapshot in snapshots.items()
         if snapshot.one_rep_max is not None
     }
+    last_top_set_by_movement = {
+        movement_slug: {'weight_kg': float(snapshot.latest_top_set.weight_kg)}
+        for movement_slug, snapshot in snapshots.items()
+        if snapshot.latest_top_set is not None and snapshot.latest_top_set.weight_kg is not None
+    }
 
     return {
         'last_load_by_movement': last_load_by_movement,
+        'last_top_set_by_movement': last_top_set_by_movement,
         'one_rep_max_by_movement': one_rep_max_by_movement,
         'substitutions': {},
         'access_until': None,

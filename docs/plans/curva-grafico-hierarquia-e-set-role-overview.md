@@ -2,7 +2,7 @@
 
 **Plano de referência:** [curva-grafico-hierarquia-e-set-role.md](curva-grafico-hierarquia-e-set-role.md)
 **Branch de implementação:** `codex/curva-set-role-pr`
-**Base verificada:** `dc72b6fb` (`main`)
+**Base verificada:** `d2378d26` (`main`, incluindo os PRs #288 e #289)
 **Atualizado em:** 2026-09-24
 
 Este documento preserva o contexto desta entrega para revisões e continuação em outra sessão. O plano de referência define o resultado de produto; aqui estão o estado implementado, as decisões de engenharia, os efeitos esperados, a validação e a sequência operacional.
@@ -43,6 +43,7 @@ flowchart LR
 - `build_progress_snapshots(account_id, as_of)` prepara todos os movimentos em lote com duas consultas, preserva `NULL` temporariamente como legado e entrega última série principal, pontos dos últimos 90 dias, presença de legado, escala, tendência e 1RM.
 - A view principal e a prévia compartilham o mesmo snapshot com pacote, revisão semanal, sugestão e tag do gráfico. A revisão semanal isolada também pode receber `as_of` para testes determinísticos.
 - `personal_record` filtra a série elegível antes de escolher o maior peso. `movement_load_display` recebe a última série principal do snapshot; não busca o histórico bruto por conta própria.
+- O pacote preserva `last_load_by_movement` como último evento bruto para compatibilidade e oferece `last_top_set_by_movement` para a dica “Última vez” do campo de carga. Assim um aquecimento recente não substitui a referência de série principal.
 - O histórico serializado inclui `set_role`. A tabela continua preservando aquecimentos e histórico antigo.
 
 ## Persistência e deploy
@@ -74,6 +75,7 @@ A coluna **permanece nullable nesta entrega**. A migration que a tornará `NOT N
 4. Offline, dados novos carregam a escolha de papel no outbox. Payloads antigos sem campo são preservados como desconhecidos.
 5. O banco PostgreSQL local não estava acessível na avaliação anterior. Os testes desta implementação foram executados usando o fallback SQLite de diagnóstico; isso verifica os fluxos Django e constraint neste backend, mas não substitui a validação final de PostgreSQL no CI/ambiente que o tenha disponível.
 6. A inspeção visual em navegador real, especialmente largura 360 px e temas claro/escuro, ainda deve ser feita no ambiente com a aplicação e seus dados disponíveis.
+7. A página lê o histórico completo para a tabela e faz duas leituras adicionais de logs para o snapshot. O número de consultas não cresce por movimento, mas o volume de linhas e a memória crescem com o histórico da conta. Se a telemetria indicar custo alto, o próximo corte é compartilhar a leitura ou limitar as projeções à janela visual mantendo uma busca separada da última série principal; não há medição que justifique essa refatoração neste PR.
 
 Antes de ativar os leitores em produção, alinhar com Renan/Giovanna a mudança temporária na personalização dos registros antigos. Não executar backfill automaticamente no deploy e não avançar para `NOT NULL` sem consulta de confirmação.
 
@@ -85,7 +87,9 @@ Antes de ativar os leitores em produção, alinhar com Renan/Giovanna a mudança
 - 243 testes direcionados de 1RM/tendência, serviço de gravação/histórico, revisão semanal, snapshots, renderização do template e endpoint: passaram no SQLite de diagnóstico.
 - Incluídos testes para exclusão de aquecimento na tendência, elegibilidade do recorde, compatibilidade `NULL`/legado, deduplicação diária, janela de 90 dias, backfill idempotente, constraint de papel, protocolo HTTP ausente/presente/inválido.
 - A execução dos testes de `build_student_package` em SQLite motivou um fallback portátil: PostgreSQL mantém `DISTINCT ON`; backends sem suporte usam iterator ordenado, sem carregar todos os objetos simultaneamente. O conjunto direcionado final passou.
-- Ainda pendentes: suíte de PostgreSQL, verificação visual em navegador móvel/temas e gates normais do PR.
+- A primeira execução da suíte completa no CI de PostgreSQL teve 1 falha entre 2.615 testes aprovados: `NameError` em `_render_public_workout_html` por ausência do import de `build_progress_snapshots`. O import foi corrigido no PR; a próxima execução do gate precisa confirmar o resultado.
+- A varredura dos PRs recentes detectou falhas de ordem independentes deste PR: `bootstrap_roles` podia usar IDs de `ContentType` em cache após rollback/flush da suíte. A correção foi separada no [PR #291](https://github.com/renanfulas/OctoBox/pull/291).
+- Ainda pendentes: nova suíte de PostgreSQL após as correções, verificação visual em navegador móvel/temas e gates normais do PR.
 
 ## Arquivos de referência
 
@@ -95,4 +99,4 @@ Antes de ativar os leitores em produção, alinhar com Renan/Giovanna a mudança
 - Apresentação: `templates/public_workouts/workout.html`, `static/css/public_workouts/workout-shell.css`.
 - Testes: `public_workouts/test_progress_snapshot.py`, `public_workouts/test_one_rep_max.py`, `public_workouts/test_load_log.py`, `public_workouts/test_weekly_review.py`, `public_workouts/test_workout_template.py`, `student_app/test_public_workout_record_load_endpoint.py`.
 
-**Estado do PR:** [#290](https://github.com/renanfulas/OctoBox/pull/290), aberto em 2026-09-24. Commit de implementação: `71083a9a`. Verificar checks PostgreSQL e QA visual no próprio PR.
+**Estado do PR:** [#290](https://github.com/renanfulas/OctoBox/pull/290), aberto em 2026-09-24. Commit de implementação: `71083a9a`; correções de auditoria posteriores. Verificar checks PostgreSQL e QA visual no próprio PR.
