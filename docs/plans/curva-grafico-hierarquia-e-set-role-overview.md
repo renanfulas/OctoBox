@@ -44,6 +44,7 @@ flowchart LR
 - A view principal e a prévia compartilham o mesmo snapshot com pacote, revisão semanal, sugestão e tag do gráfico. A revisão semanal isolada também pode receber `as_of` para testes determinísticos.
 - `personal_record` filtra a série elegível antes de escolher o maior peso. `movement_load_display` recebe a última série principal do snapshot; não busca o histórico bruto por conta própria.
 - O pacote preserva `last_load_by_movement` como último evento bruto para compatibilidade e oferece `last_top_set_by_movement` para a dica “Última vez” do campo de carga. Assim um aquecimento recente não substitui a referência de série principal.
+- Ao reabrir o treino no mesmo dia, o aviso de registro continua mostrando o último evento, enquanto o valor pré-preenchido no campo vem somente da última série principal de hoje. Um aquecimento isolado não preenche o campo que salva `top_set` por padrão.
 - A revisão do PR #288 identificou uma janela entre o toque em “Salvar” e a confirmação do IndexedDB: `visibilitychange` podia guardar o mesmo valor novamente com outra chave. O tracker agora consome a marca de rascunho antes da operação assíncrona e a restaura se a gravação local falhar. Edições novas durante o salvamento continuam marcadas para guarda posterior.
 - O histórico serializado inclui `set_role`. A tabela continua preservando aquecimentos e histórico antigo.
 

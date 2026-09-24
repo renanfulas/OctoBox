@@ -219,6 +219,7 @@ PONTOS CRITICOS:
               {% endif %}
               {% endwith %}
               {% todays_logged_weight load_history movement.movement_slug as today_weight %}
+              {% todays_top_set_weight load_history movement.movement_slug as today_top_weight %}
               <div class="workout-load-input__head">
                 <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
                 <span class="workout-load-input__hint" data-workout-load-hint></span>
@@ -233,7 +234,7 @@ PONTOS CRITICOS:
                   placeholder="kg"
                   class="workout-load-input__field"
                   data-workout-load-field
-                  {% if today_weight is not None %}value="{{ today_weight|unlocalize }}"{% endif %}
+                  {% if today_top_weight is not None %}value="{{ today_top_weight|unlocalize }}"{% endif %}
                   aria-label="Carga de hoje em {{ movement|movement_name:movement_labels }}, em quilos"
                 >
                 <button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>

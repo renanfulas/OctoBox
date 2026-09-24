@@ -38,6 +38,7 @@ from public_workouts.templatetags.public_workouts_extras import (
     resolve_movement_display_name,
     sibling_variations,
     todays_logged_weight,
+    todays_top_set_weight,
 )
 
 
@@ -1647,7 +1648,8 @@ class TodaysLoggedWeightTagTests(TestCase):
     # vazio, mesmo apos salvar com sucesso -- sem confirmacao visivel ao
     # recarregar, ela achava que nao tinha salvo e registrava de novo
     # (13 registros no mesmo dia, varios duplicados a poucos segundos de
-    # distancia). Esta tag preenche o campo com o que ja foi salvo hoje.
+    # distancia). O aviso mostra o último registro de hoje; o campo usa
+    # somente a última série principal para não sugerir um aquecimento.
 
     def _today_iso(self) -> str:
         return timezone.localdate().isoformat()
@@ -1656,6 +1658,18 @@ class TodaysLoggedWeightTagTests(TestCase):
         load_history = [{'movement_slug': 'hack-squat', 'weight_kg': 42.5, 'performed_on': self._today_iso(), 'set_role': 'top_set'}]
 
         self.assertEqual(todays_logged_weight(load_history, 'hack-squat'), 42.5)
+        self.assertEqual(todays_top_set_weight(load_history, 'hack-squat'), 42.5)
+
+    def test_today_status_keeps_warmup_but_input_uses_last_top_set(self):
+        today = self._today_iso()
+        history = [
+            {'movement_slug': 'hack-squat', 'weight_kg': 80.0, 'performed_on': today, 'set_role': 'top_set'},
+            {'movement_slug': 'hack-squat', 'weight_kg': 30.0, 'performed_on': today, 'set_role': 'warmup'},
+        ]
+
+        self.assertEqual(todays_logged_weight(history, 'hack-squat'), 30.0)
+        self.assertEqual(todays_top_set_weight(history, 'hack-squat'), 80.0)
+        self.assertIsNone(todays_top_set_weight(history[1:], 'hack-squat'))
 
     def test_ignores_entries_from_other_movements(self):
         load_history = [{'movement_slug': 'leg-press', 'weight_kg': 100.0, 'performed_on': self._today_iso(), 'set_role': 'top_set'}]

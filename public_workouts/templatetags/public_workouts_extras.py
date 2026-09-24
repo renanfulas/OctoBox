@@ -651,25 +651,24 @@ def _round_to_nearest_load(value: float) -> float:
 
 @register.simple_tag
 def todays_logged_weight(load_history: list, movement_slug: str):
-    """Peso ja registrado HOJE pra este movimento, se algum (achado real:
-    o campo de carga sempre renderizava vazio, mesmo depois de salvar com
-    sucesso -- sem nenhuma confirmacao visivel ao recarregar a pagina, o
-    aluno achava que nao tinha salvo e registrava de novo, gerando linhas
-    duplicadas no historico. Pre-preencher o campo com o que ja foi salvo
-    hoje fecha esse gap).
+    """Último peso registrado hoje, de qualquer papel, para o aviso de salvamento."""
+    return _todays_weight(load_history, movement_slug, top_set_only=False)
 
-    'Hoje' e' a data local do servidor (mesmo fuso de PublicWorkoutLoadLog.
-    performed_on, que o endpoint de gravacao grava a partir da data local
-    do PROPRIO APARELHO do aluno via JS todayIso() -- os dois so' divergem
-    perto da virada da meia-noite, caso raro e sem prejuizo: o pior
-    cenario e' o campo nao vir pre-preenchido, nunca um dado errado).
 
-    load_history ja vem carregado no contexto pra o grafico de evolucao
-    (load_chart_points) -- nenhuma consulta nova ao banco so' pra isto."""
+@register.simple_tag
+def todays_top_set_weight(load_history: list, movement_slug: str):
+    """Série principal de hoje para preencher o campo cujo papel padrão é top_set."""
+    return _todays_weight(load_history, movement_slug, top_set_only=True)
+
+
+def _todays_weight(load_history: list, movement_slug: str, *, top_set_only: bool):
     today_iso = timezone.localdate().isoformat()
     for entry in reversed(load_history or ()):
-        if entry.get('movement_slug') == movement_slug and entry.get('performed_on') == today_iso:
-            return entry.get('weight_kg')
+        if entry.get('movement_slug') != movement_slug or entry.get('performed_on') != today_iso:
+            continue
+        if top_set_only and not eligible_for_progress_curve(entry):
+            continue
+        return entry.get('weight_kg')
     return None
 
 
