@@ -95,4 +95,4 @@ Antes de ativar os leitores em produção, alinhar com Renan/Giovanna a mudança
 - Apresentação: `templates/public_workouts/workout.html`, `static/css/public_workouts/workout-shell.css`.
 - Testes: `public_workouts/test_progress_snapshot.py`, `public_workouts/test_one_rep_max.py`, `public_workouts/test_load_log.py`, `public_workouts/test_weekly_review.py`, `public_workouts/test_workout_template.py`, `student_app/test_public_workout_record_load_endpoint.py`.
 
-**Estado do PR:** ainda não criado. Atualizar esta linha com a URL e o estado dos checks após abrir o pull request.
+**Estado do PR:** [#290](https://github.com/renanfulas/OctoBox/pull/290), aberto em 2026-09-24. Commit de implementação: `71083a9a`. Verificar checks PostgreSQL e QA visual no próprio PR.
