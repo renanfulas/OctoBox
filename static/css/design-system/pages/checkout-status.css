@@ -16,6 +16,7 @@ POR QUE ELE EXISTE:
 
 body[data-page="checkout-status"] {
     min-height: 100vh;
+    min-height: 100dvh;
     margin: 0;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     color: rgba(255, 255, 255, 0.92);
@@ -136,6 +137,27 @@ body[data-screen="cancel"] .checkout-status-eyebrow {
 @media (min-width: 520px) {
     .checkout-status-actions {
         grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    body[data-page="checkout-status"] {
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-right: max(16px, env(safe-area-inset-right));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        padding-left: max(16px, env(safe-area-inset-left));
+    }
+
+    .checkout-status-panel {
+        padding: 24px 20px;
+        border-radius: 22px;
+        background: rgba(11, 18, 32, 0.96);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .checkout-status-button {
+        min-height: 48px;
     }
 }
 

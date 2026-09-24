@@ -286,6 +286,7 @@ def build_weekly_wod_smart_paste_context(
         'smart_paste_review_days': [day for day in parsed_payload.get('days', []) if day.get('has_unresolved')],
         'smart_paste_warnings': parsed_payload.get('parse_warnings', []),
         'smart_paste_summary': parsed_payload.get('summary', {}),
+        'smart_paste_movement_resolution': parsed_payload.get('movement_resolution', {}),
         'smart_paste_step': 3 if projection_preview else (2 if parsed_payload.get('days') else 1),
         'smart_paste_auto_open_review_target': auto_open_review_target or '',
         'projection_form': projection_form,

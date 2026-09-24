@@ -12,6 +12,22 @@
             {% if smart_paste_summary.unresolved_count %}{{ smart_paste_summary.unresolved_count }} para revisar{% else %}Leitura pronta{% endif %}
         </span>
     </div>
+    {% if smart_paste_movement_resolution.state == 'provider_unavailable' or smart_paste_movement_resolution.state == 'provider_error' or smart_paste_movement_resolution.state == 'empty_response' %}
+    <div class="smart-paste-resolution-notice" role="status">
+        <strong>Revisão automática indisponível</strong>
+        <p>Não foi possível concluir a correção automática agora. Revise os itens abaixo para continuar; seu treino continua salvo.</p>
+    </div>
+    {% elif smart_paste_movement_resolution.state == 'haiku_no_match' or smart_paste_movement_resolution.state == 'haiku_partial' %}
+    <div class="smart-paste-resolution-notice" role="status">
+        <strong>Alguns movimentos precisam da sua revisão</strong>
+        <p>O dicionário e a revisão automática não encontraram correspondência segura para todos os itens.</p>
+    </div>
+    {% elif smart_paste_summary.unresolved_count %}
+    <div class="smart-paste-resolution-notice" role="status">
+        <strong>Precisamos da sua ajuda para identificar alguns movimentos</strong>
+        <p>Revise os itens abaixo. O rascunho fica salvo e só poderá ser confirmado depois das correções.</p>
+    </div>
+    {% endif %}
     {% if smart_paste_summary.auto_fixed_items %}
     <details class="smart-paste-inline-review-disclosure smart-paste-autofix-summary">
         <summary>Ver o que o Haiku ajustou sozinho</summary>
@@ -24,8 +40,9 @@
     {% endif %}
 
     {% if smart_paste_summary.current_unresolved_item %}
-    <section class="smart-paste-review-queue" aria-label="Item pendente de revisao">
+    <section class="smart-paste-review-queue" aria-label="Revisar primeiro item pendente">
         <article class="smart-paste-warning-card smart-paste-warning-card--focus">
+            <h3>Revise o primeiro movimento pendente</h3>
             <div class="smart-paste-review-queue-head">
                 <strong>{{ smart_paste_summary.current_unresolved_item.movement_label_raw }}</strong>
                 <span class="pill warning">{{ smart_paste_summary.unresolved_count }} pendência{% if smart_paste_summary.unresolved_count != 1 %}s{% endif %}</span>
@@ -40,6 +57,7 @@
             >
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_review_item">
+                <input type="hidden" name="review_source" value="queue">
                 <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
                 <input type="hidden" name="day_index" value="{{ smart_paste_summary.current_unresolved_item.day_index }}">
                 <input type="hidden" name="block_index" value="{{ smart_paste_summary.current_unresolved_item.block_index }}">
