@@ -92,6 +92,7 @@ def _decorate_preview_payload(parsed_payload):
     for day_index, day in enumerate(parsed_payload.get('days', [])):
         day_has_unresolved = False
         day_unresolved_count = 0
+        day_preview_movements = []
         day['day_index'] = day_index
         for block_index, block in enumerate(day.get('blocks', [])):
             total_blocks += 1
@@ -101,6 +102,8 @@ def _decorate_preview_payload(parsed_payload):
             for movement_index, movement in enumerate(block.get('movements', [])):
                 movement['display_label'] = _smart_paste_display_label(movement)
                 movement['review_target_id'] = f'review-item-{day_index}-{block_index}-{movement_index}'
+                if len(day_preview_movements) < 3:
+                    day_preview_movements.append(movement['display_label'])
                 total_movements += 1
                 if movement.get('llm_resolved'):
                     auto_fixed_items.append(
@@ -138,6 +141,7 @@ def _decorate_preview_payload(parsed_payload):
             block['is_clean'] = block_unresolved_count == 0
         day['has_unresolved'] = day_has_unresolved
         day['unresolved_count'] = day_unresolved_count
+        day['preview_movements'] = day_preview_movements
     parsed_payload['summary'] = {
         'days_count': len(parsed_payload.get('days', [])),
         'blocks_count': total_blocks,
@@ -170,8 +174,21 @@ def _load_wod_generation_credit_summary(today):
 def load_surface_weekly_wod_plan_for_user(*, user, today):
     if not getattr(user, 'is_authenticated', False):
         return None
-    return (
+    current_week_plan = (
         WeeklyWodPlan.objects.filter(created_by=user, week_start=_default_week_start(today))
+        .order_by('-updated_at', '-id')
+        .first()
+    )
+    if current_week_plan:
+        return current_week_plan
+    # A coach may paste next week's WOD and reopen the page later. Recover the
+    # latest unfinished draft so its automatic resolution can resume.
+    return (
+        WeeklyWodPlan.objects.filter(
+            created_by=user,
+            status=WeeklyWodPlanStatus.DRAFT,
+            week_start__gte=today,
+        )
         .order_by('-updated_at', '-id')
         .first()
     )
@@ -231,7 +248,7 @@ def build_weekly_wod_smart_paste_context(
     form = form or WeeklyWodSmartPasteForm(
         initial={
             'plan_id': getattr(weekly_plan, 'id', None),
-            'week_start': week_start.strftime('%d/%m/%Y'),
+            'week_start': (getattr(weekly_plan, 'week_start', None) or week_start).strftime('%d/%m/%Y'),
             'label': getattr(weekly_plan, 'label', ''),
             'source_text': getattr(weekly_plan, 'source_text', ''),
         }
@@ -284,6 +301,12 @@ def build_weekly_wod_smart_paste_context(
         'smart_paste_preview': parsed_payload,
         'smart_paste_days': parsed_payload.get('days', []),
         'smart_paste_review_days': [day for day in parsed_payload.get('days', []) if day.get('has_unresolved')],
+        'smart_paste_should_auto_retry': bool(
+            weekly_plan
+            and weekly_plan.status == WeeklyWodPlanStatus.DRAFT
+            and parsed_payload.get('summary', {}).get('unresolved_count')
+            and not parsed_payload.get('movement_resolution', {}).get('state')
+        ),
         'smart_paste_warnings': parsed_payload.get('parse_warnings', []),
         'smart_paste_summary': parsed_payload.get('summary', {}),
         'smart_paste_movement_resolution': parsed_payload.get('movement_resolution', {}),
