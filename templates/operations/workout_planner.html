@@ -5,6 +5,26 @@
 <div class="operation-shell coach-scene workspace-shell wod-planner-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
+    {% with wod_journey_step='planner' %}{% include "operations/includes/wod_journey.html" %}{% endwith %}
+
+    <section class="wod-week-overview" aria-label="Situação dos WODs na semana">
+        <div class="wod-week-overview__intro">
+            <p class="eyebrow">Visão da semana</p>
+            <h2>O que falta para os alunos verem os treinos?</h2>
+            <p>{% if planner_week.total_sessions %}Acompanhe cada aula até a publicação.{% else %}Ainda não há aulas nesta semana. Cadastre a grade para distribuir os WODs.{% endif %}</p>
+        </div>
+        <div class="wod-week-overview__states">
+            <div><strong>{{ planner_week.empty_count }}</strong><span>sem treino</span></div>
+            <div><strong>{{ planner_week.draft_count }}</strong><span>rascunhos</span></div>
+            <div><strong>{{ planner_week.pending_count }}</strong><span>para aprovar</span></div>
+            <div class="is-published"><strong>{{ planner_week.published_count }}</strong><span>visíveis aos alunos</span></div>
+        </div>
+        {% if current_role.slug == 'Manager' or current_role.slug == 'Owner' %}
+            {% if planner_week.pending_count %}<a class="button" href="{% url 'workout-approval-board' %}">Revisar {{ planner_week.pending_count }} pendente{% if planner_week.pending_count != 1 %}s{% endif %}</a>{% endif %}
+        {% elif planner_week.pending_count %}
+            <p class="wod-week-overview__footnote">O Manager ou Owner precisa aprovar os treinos pendentes.</p>
+        {% endif %}
+    </section>
 
     <section class="wod-planner" data-wod-planner data-template-picker-telemetry-url="{% url 'workout-planner-template-picker-telemetry' %}" aria-label="Planner semanal de WOD">
         <header class="wod-planner__toolbar">
@@ -19,8 +39,8 @@
                     <a class="button tertiary" href="{{ planner_next_week_href }}">Próxima →</a>
                 </nav>
                 <div class="wod-planner__toolbar-actions">
-                    {% if current_role.slug == 'owner' or current_role.slug == 'manager' or current_role.slug == 'coach' %}
-                    <button type="button" class="button tertiary wod-planner__btn-danger" onclick="document.getElementById('planner-clear-week-dialog').showModal()">Remover todos os WODs</button>
+                    {% if current_role.slug == 'Owner' or current_role.slug == 'Manager' or current_role.slug == 'Coach' %}
+                    <button type="button" class="button tertiary danger wod-planner__btn-danger" onclick="document.getElementById('planner-clear-week-dialog').showModal()">Remover todos os WODs</button>
                     {% endif %}
                 </div>
             </div>
@@ -296,7 +316,7 @@
         <dialog id="planner-clear-week-dialog" class="wod-planner__confirm-dialog" aria-label="Confirmar remoção de todos os WODs">
             <p class="eyebrow">Atenção</p>
             <h3>Deseja excluir os WODs da semana? <kbd>D</kbd></h3>
-            {% if current_role.slug == 'coach' %}
+            {% if current_role.slug == 'Coach' %}
             <p>Esta ação remove os WODs das <strong>suas aulas</strong> em <strong>{{ planner_week.label }}</strong>. Rascunhos, pendentes e publicados serão excluídos. Não é possível desfazer.</p>
             {% else %}
             <p>Esta ação remove os WODs de <strong>todas as aulas</strong> de <strong>{{ planner_week.label }}</strong>. Rascunhos, pendentes e publicados serão excluídos. Não é possível desfazer.</p>

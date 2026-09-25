@@ -4,7 +4,7 @@ INCLUDE: zona de arquivamento em lote — "Arquivar todos os templates".
 Inserido ao final de workout_template_management.html.
 Visível apenas para OWNER. JS exige digitação de "ARQUIVAR" antes de habilitar o botão.
 {% endcomment %}
-{% if current_role.slug == 'owner' and template_management_summary.total %}
+{% if current_role.slug == 'Owner' and template_management_summary.total %}
 <section class="wod-tmpl-archive-zone" aria-label="Zona de arquivamento em lote">
     <div class="wod-tmpl-archive-zone__head">
         <div>
@@ -41,7 +41,7 @@ Visível apenas para OWNER. JS exige digitação de "ARQUIVAR" antes de habilita
             </label>
             <div class="wod-tmpl-archive-zone__actions">
                 <button
-                    class="button wod-tmpl-archive-zone__submit-btn"
+                    class="button danger wod-tmpl-archive-zone__submit-btn"
                     type="submit"
                     disabled
                     data-wod-archive-submit

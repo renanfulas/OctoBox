@@ -274,8 +274,8 @@ textarea::placeholder {
 
 body[data-theme="dark"] input::placeholder,
 body[data-theme="dark"] textarea::placeholder {
-    color: var(--ink);
-    opacity: 0.85;
+    color: var(--theme-text-muted);
+    opacity: 1;
 }
 
 * {

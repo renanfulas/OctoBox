@@ -14,12 +14,8 @@ O QUE FAZ:
   if (window.__octoboxWodDayApplyBound) return;
   window.__octoboxWodDayApplyBound = true;
 
-  var APPLY_URL = document.querySelector('[data-wod-day-apply-toast]')
-    ? document.querySelector('[data-wod-day-apply-toast] [data-wod-day-apply-undo-btn]')?.dataset.undoUrl
-    : null;
-
-  var applyUrl = '/operacao/wod/planner/dia/aplicar/';
   var dialog = document.querySelector('[data-wod-day-apply-dialog]');
+  var applyUrl = dialog ? dialog.dataset.applyUrl : null;
   var toast = document.querySelector('[data-wod-day-apply-toast]');
   var toastMsg = toast ? toast.querySelector('[data-wod-day-apply-toast-msg]') : null;
   var countdownEl = toast ? toast.querySelector('[data-wod-day-apply-countdown]') : null;
@@ -91,7 +87,7 @@ O QUE FAZ:
     var templateId = btn.dataset.templateId;
     var templateLabel = btn.dataset.templateLabel;
     var mode = getSelectedMode();
-    if (!activeDate || !templateId) return;
+    if (!activeDate || !templateId || !applyUrl) return;
 
     btn.disabled = true;
     btn.textContent = 'Aplicando...';

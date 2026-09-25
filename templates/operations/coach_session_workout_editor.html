@@ -11,6 +11,17 @@
 <div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
+    {% with wod_journey_step='planner' %}{% include "operations/includes/wod_journey.html" %}{% endwith %}
+
+    <section class="wod-step-intro" aria-live="polite">
+        <span class="wod-step-intro__mark" aria-hidden="true">{% if workout.status == 'published' %}✓{% else %}2{% endif %}</span>
+        <div>
+            <p class="eyebrow">Estado desta aula</p>
+            <h2>{% if workout.status == 'published' %}WOD visível aos alunos{% elif workout.status == 'pending_approval' %}Aguardando aprovação{% elif workout.status == 'rejected' %}Ajustes solicitados{% elif workout %}Rascunho em edição{% else %}Aula sem WOD{% endif %}</h2>
+            <p>{% if workout.status == 'published' %}Este treino está publicado no app dos alunos.{% elif workout.status == 'pending_approval' %}O Manager ou Owner precisa aprovar antes da publicação.{% elif workout.status == 'rejected' %}Confira o motivo abaixo, faça os ajustes e envie novamente.{% elif workout %}Salve os blocos e envie o treino para aprovação quando estiver pronto.{% else %}Crie o treino aqui ou cole a semana inteira no Smart Paste.{% endif %}</p>
+        </div>
+        {% if not workout %}<a class="button secondary" href="{% url 'workout-smart-paste' %}">Colar semana</a>{% endif %}
+    </section>
 
     {% include "operations/includes/wod_smartplan_card.html" %}
 
@@ -62,7 +73,7 @@
                 <div class="actions">
                     <button class="button" type="submit">{{ submission_action.label }}</button>
                     <p class="operation-session-meta">{{ submission_action.helper_copy }}</p>
-                    {% if current_role.slug == 'owner' %}
+                    {% if current_role.slug == 'Owner' %}
                     <a class="button secondary" href="{% url 'workout-approval-board' %}">Ver fila de aprovacao</a>
                     {% else %}
                     <a class="button secondary" href="{% url 'workout-publication-history' %}">Ver historico do corredor</a>

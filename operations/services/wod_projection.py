@@ -21,6 +21,7 @@ from student_app.models import (
     SessionWorkoutStatus,
     WorkoutLoadType,
 )
+from operations.workout_support import route_workout_submission
 
 
 CLASS_TYPE_COMPATIBILITY = {
@@ -68,6 +69,15 @@ CLASS_TYPE_COMPATIBILITY = {
         PlanBlockKind.CUSTOM,
     },
 }
+
+
+_WEEKDAY_TITLES = ('Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo')
+
+
+def _session_workout_title(*, weekly_plan, session):
+    weekday = _WEEKDAY_TITLES[timezone.localtime(session.scheduled_at).weekday()]
+    label = (weekly_plan.label or '').strip()
+    return (f'{weekday} · {label}' if label else f'WOD de {weekday}')[:140]
 
 
 def _expand_projection_class_types(class_types):
@@ -312,6 +322,8 @@ def project_plan_to_sessions(*, weekly_plan, target_week_start, class_types, act
         sessions_created=0,
     )
     created_count = 0
+    pending_approval_count = 0
+    published_count = 0
     session_ids = [entry['session_id'] for entry in preview['entries'] if entry['status'] == 'ready']
     sessions_by_id = {
         session.id: session
@@ -324,7 +336,7 @@ def project_plan_to_sessions(*, weekly_plan, target_week_start, class_types, act
         workout = SessionWorkout.objects.create(
             session=session,
             replication_batch=batch,
-            title=weekly_plan.label or session.title,
+            title=_session_workout_title(weekly_plan=weekly_plan, session=session),
             coach_notes=f'Gerado pelo Smart Paste semanal ({weekly_plan.week_start:%d/%m/%Y}).',
             status=SessionWorkoutStatus.DRAFT,
             created_by=actor,
@@ -350,9 +362,19 @@ def project_plan_to_sessions(*, weekly_plan, target_week_start, class_types, act
                     'sort_order': movement_index,
                 }
                 SessionWorkoutMovement.objects.create(block=workout_block, **payload)
+        # Smart Paste never bypasses the box approval policy. Coach-created
+        # WODs enter the approval queue; trusted-author policies may publish
+        # directly only when the normal submission router permits it.
+        submission = route_workout_submission(actor=actor, workout=workout, source='smart_paste')
+        if submission['status'] == 'pending_approval':
+            pending_approval_count += 1
+        elif submission['status'] == 'published':
+            published_count += 1
         created_count += 1
     batch.sessions_created = created_count
     batch.save(update_fields=['sessions_created', 'updated_at'])
+    preview['totals']['sessions_pending_approval'] = pending_approval_count
+    preview['totals']['sessions_published'] = published_count
     return batch, preview
 
 

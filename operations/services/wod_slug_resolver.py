@@ -172,6 +172,7 @@ def _resolve_unknown_slugs_with_status(
     unrecognized_names: list[str],
     slug_dictionary: list[tuple[str, tuple[str, ...]]],
     contexts: dict[str, str] | None = None,
+    retry: bool = False,
 ) -> tuple[dict[str, dict[str, str]], dict[str, object]]:
     """Resolve with Haiku and return safe, user-displayable outcome metadata."""
     status: dict[str, object] = {
@@ -212,6 +213,13 @@ def _resolve_unknown_slugs_with_status(
         f'{slug}: {", ".join(aliases)}' for slug, aliases in slug_dictionary
     )
     static_block = f'{_STATIC_INSTRUCTIONS}\n\nDicionario canonico:\n{dictionary_text}'
+    retry_guidance = (
+        'Esta e uma segunda tentativa depois de uma correspondencia incerta. '
+        'Reavalie cada nome usando contexto de CrossFit, erros de digitacao e sinonimos. '
+        'Use somente um slug canonico da lista quando a correspondencia for segura; '
+        'se o nome for um movimento proprio ou continuar ambiguo, devolva slug vazio.\n\n'
+        if retry else ''
+    )
 
     anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
 
@@ -237,7 +245,7 @@ def _resolve_unknown_slugs_with_status(
         ]
         raw_text = _call_anthropic(
             static_block=static_block,
-            dynamic_block='Identifique os itens por id:\n' + json.dumps(items, ensure_ascii=False),
+            dynamic_block=retry_guidance + 'Identifique os itens por id:\n' + json.dumps(items, ensure_ascii=False),
             api_key=anthropic_key,
         )
         if not raw_text or not raw_text.strip():
@@ -262,7 +270,12 @@ def _resolve_unknown_slugs_with_status(
     return {**learned, **from_llm}, status
 
 
-def apply_llm_slug_resolution(parsed_payload: dict, slug_dictionary: list[tuple[str, tuple[str, ...]]]) -> None:
+def apply_llm_slug_resolution(
+    parsed_payload: dict,
+    slug_dictionary: list[tuple[str, tuple[str, ...]]],
+    *,
+    retry: bool = False,
+) -> None:
     """Aplica resolucao LLM de slugs diretamente no parsed_payload (in-place).
 
     Coleta todos os movimentos sem slug, chama o LLM e preenche os slugs resolvidos.
@@ -296,7 +309,11 @@ def apply_llm_slug_resolution(parsed_payload: dict, slug_dictionary: list[tuple[
         unrecognized_names=unrecognized_names,
         slug_dictionary=slug_dictionary,
         contexts=contexts,
+        retry=retry,
     )
+
+    if retry:
+        resolution_status['retry_attempted'] = True
 
     parsed_payload['movement_resolution'] = resolution_status
 

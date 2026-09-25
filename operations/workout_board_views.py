@@ -53,6 +53,13 @@ from .base_views import OperationBaseView
 
 
 SMARTPLAN_CHATGPT_FALLBACK_URL = 'https://chatgpt.com/'
+SMART_PASTE_AUTO_CLASS_TYPES = (
+    ClassType.CROSS,
+    ClassType.MOBILITY,
+    ClassType.OLY,
+    ClassType.STRENGTH,
+    ClassType.OPEN_GYM,
+)
 
 
 def _first_form_error(form, fallback_message):
@@ -84,6 +91,18 @@ def _projection_guard_error(preview, cleaned_projection):
             f'Ajuste os tipos de aula ou cadastre aulas desse tipo na Grade de aulas ({grade_path}).'
         )
     return None
+
+
+def _clear_unknown_review_slugs(parsed_payload, slug_dictionary):
+    """Reabre slugs legados digitados fora do catálogo para Haiku ou revisão manual."""
+    valid_slugs = {slug for slug, _aliases in slug_dictionary}
+    valid_slugs.add('custom')
+    for day in parsed_payload.get('days', []):
+        for block in day.get('blocks', []):
+            for movement in block.get('movements', []):
+                slug = (movement.get('movement_slug') or '').strip()
+                if slug and slug not in valid_slugs:
+                    movement['movement_slug'] = ''
 
 
 class WorkoutApprovalBoardView(OperationBaseView):
@@ -137,7 +156,7 @@ class WorkoutPublicationHistoryView(OperationBaseView):
 
 
 class WorkoutSmartPasteView(OperationBaseView):
-    allowed_roles = (ROLE_COACH, ROLE_OWNER)
+    allowed_roles = (ROLE_COACH, ROLE_MANAGER, ROLE_OWNER)
     template_name = 'operations/workout_smart_paste.html'
     page_title = 'Smart Paste semanal'
     page_subtitle = 'Cole a semana, confira a leitura e feche um rascunho organizado.'
@@ -145,7 +164,7 @@ class WorkoutSmartPasteView(OperationBaseView):
     def _load_plan(self, plan_id):
         if not plan_id:
             return None
-        return get_object_or_404(WeeklyWodPlan, pk=plan_id)
+        return get_object_or_404(WeeklyWodPlan, pk=plan_id, created_by=self.request.user)
 
     def _is_hx_request(self):
         return self.request.headers.get('HX-Request') == 'true'
@@ -213,18 +232,25 @@ class WorkoutSmartPasteView(OperationBaseView):
         action = request.POST.get('action')
         plan = self._load_plan(request.POST.get('plan_id'))
 
-        if action == 'retry_auto_resolution':
-            if plan is None or plan.status != WeeklyWodPlanStatus.DRAFT:
-                messages.error(request, 'Abra um rascunho para corrigir os movimentos automaticamente.')
+        if action in {'retry_auto_resolution', 'retry_resolution'}:
+            if plan is None or plan.status != WeeklyWodPlanStatus.DRAFT or not (plan.parsed_payload or {}).get('days'):
+                messages.error(request, 'Cole e organize a semana antes de tentar outra correção.')
                 return redirect('workout-smart-paste')
             payload = plan.parsed_payload or {}
-            if count_unresolved_smart_paste_movements(payload):
-                if smart_paste_rate_limit_exceeded(request):
-                    payload['movement_resolution'] = {'provider': 'haiku', 'state': 'rate_limited'}
+            if smart_paste_rate_limit_exceeded(request):
+                payload['movement_resolution'] = {'provider': 'haiku', 'state': 'rate_limited'}
+                messages.error(request, 'Aguarde alguns minutos antes de tentar novamente.')
+            else:
+                slug_dictionary = load_wod_movement_dictionary()
+                _clear_unknown_review_slugs(payload, slug_dictionary)
+                apply_llm_slug_resolution(payload, slug_dictionary, retry=True)
+                remaining = count_unresolved_smart_paste_movements(payload)
+                if remaining:
+                    messages.warning(request, f'{remaining} movimento(s) ainda precisam de revisão. Use o catálogo ou mantenha o nome original.')
                 else:
-                    apply_llm_slug_resolution(payload, load_wod_movement_dictionary())
-                plan.parsed_payload = payload
-                plan.save(update_fields=['parsed_payload', 'updated_at'])
+                    messages.success(request, 'Movimentos corrigidos. A semana está pronta para enviar ao Planner.')
+            plan.parsed_payload = payload
+            plan.save(update_fields=['parsed_payload', 'updated_at'])
             context = self._build_context(plan=plan, parsed_payload=payload)
             if self._is_hx_request():
                 return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
@@ -232,7 +258,8 @@ class WorkoutSmartPasteView(OperationBaseView):
 
         if action == 'update_review_item':
             review_form = WeeklyWodReviewMovementForm(
-                request.POST, slug_choices=load_wod_movement_dictionary(),
+                request.POST,
+                slug_choices=load_wod_movement_dictionary(),
             )
             if not review_form.is_valid():
                 messages.error(request, _first_form_error(review_form, 'Revise o item antes de salvar a correção.'))
@@ -328,7 +355,9 @@ class WorkoutSmartPasteView(OperationBaseView):
                 )
                 messages.success(
                     request,
-                    f"{batch.sessions_created} WOD(s) criado(s) em DRAFT. Politica de colisao: pular aulas com WOD existente.",
+                    f"{batch.sessions_created} WOD(s) criados: "
+                    f"{preview['totals'].get('sessions_pending_approval', 0)} aguardando aprovacao e "
+                    f"{preview['totals'].get('sessions_published', 0)} publicados conforme a politica do box.",
                 )
             else:
                 messages.success(request, 'Preview de replicacao montado sem criar WODs ainda.')
@@ -355,7 +384,7 @@ class WorkoutSmartPasteView(OperationBaseView):
             messages.success(request, f'Template salvo "{template.name}" criado a partir do Smart Paste.')
             return redirect('workout-template-management')
 
-        if action != 'confirm_plan' and smart_paste_rate_limit_exceeded(request):
+        if action not in {'confirm_plan', 'confirm_and_project'} and smart_paste_rate_limit_exceeded(request):
             messages.error(
                 request,
                 'Muitas submissoes em pouco tempo. Espere alguns minutos antes de organizar outro texto.',
@@ -379,19 +408,45 @@ class WorkoutSmartPasteView(OperationBaseView):
         plan.week_start = cleaned['week_start']
         plan.label = cleaned['label']
         plan.source_text = cleaned['source_text']
-        if action == 'confirm_plan':
+        if action in {'confirm_plan', 'confirm_and_project'}:
             # Guarda server-side: o botao "Confirmar rascunho semanal" fica
             # disabled no template quando ha pendencia, mas isso e so client-side
             # (atributo HTML inspecionavel/removivel). Sem esta checagem, um
             # plano com movimento nao resolvido confirmado e depois replicado
             # grava o texto cru digitado pelo coach como rotulo do exercicio no
             # WOD real do aluno (slug generico 'custom' em wod_projection.py).
+            retry_payload = plan.parsed_payload or {}
+            slug_dictionary = load_wod_movement_dictionary()
+            _clear_unknown_review_slugs(retry_payload, slug_dictionary)
+            if action == 'confirm_and_project':
+                apply_llm_slug_resolution(
+                    retry_payload,
+                    slug_dictionary,
+                    retry=True,
+                )
+            plan.parsed_payload = retry_payload
             unresolved_count = count_unresolved_smart_paste_movements(plan.parsed_payload or {})
             if unresolved_count:
+                resolution_state = (plan.parsed_payload or {}).get('movement_resolution', {}).get('state')
+                haiku_unavailable = resolution_state in {
+                    'provider_unavailable', 'provider_error', 'empty_response', 'dictionary_unavailable',
+                }
+                if action == 'confirm_and_project':
+                    retry_summary = (
+                        'Nao foi possivel concluir a nova tentativa automatica.'
+                        if haiku_unavailable else 'O Haiku revisou novamente.'
+                    )
+                    error_message = (
+                        f'{retry_summary} Ainda ha {unresolved_count} pendencia(s); '
+                        'escolha um movimento do catalogo ou mantenha o nome original como personalizado.'
+                    )
+                else:
+                    error_message = f'Feche as {unresolved_count} pendencia(s) de revisao antes de confirmar a semana.'
                 messages.error(
                     request,
-                    f'Feche as {unresolved_count} pendencia(s) de revisao antes de confirmar a semana.',
+                    error_message,
                 )
+                plan.save(update_fields=['parsed_payload', 'updated_at'])
                 context = self._build_context(plan=plan, parsed_payload=plan.parsed_payload)
                 if self._is_hx_request():
                     return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
@@ -418,7 +473,41 @@ class WorkoutSmartPasteView(OperationBaseView):
         plan.save()
 
         if action == 'confirm_plan':
-            messages.success(request, 'Plano semanal confirmado. A replicacao entra na proxima onda.')
+            messages.success(request, 'Plano semanal confirmado. Revise a semana alvo para enviar ao Planner.')
+        elif action == 'confirm_and_project':
+            preview = build_projection_preview(
+                weekly_plan=plan,
+                target_week_start=plan.week_start,
+                class_types=SMART_PASTE_AUTO_CLASS_TYPES,
+            )
+            if preview['totals']['sessions_creatable']:
+                batch, preview = project_plan_to_sessions(
+                    weekly_plan=plan,
+                    target_week_start=plan.week_start,
+                    class_types=SMART_PASTE_AUTO_CLASS_TYPES,
+                    actor=request.user,
+                )
+                created_count = batch.sessions_created
+                pending_count = preview['totals'].get('sessions_pending_approval', 0)
+                published_count = preview['totals'].get('sessions_published', 0)
+                messages.success(
+                    request,
+                    f'{created_count} WOD(s) enviados ao Planner: {pending_count} aguardando aprovacao '
+                    f'e {published_count} publicado(s) conforme a politica do box.',
+                )
+            else:
+                messages.warning(
+                    request,
+                    'Semana organizada, mas nenhuma aula pode receber estes WODs. '
+                    'Confira a grade de aulas ou os treinos que ja existem antes de enviar.',
+                )
+                context = self._build_context(
+                    plan=plan,
+                    parsed_payload=plan.parsed_payload,
+                    projection_preview=preview,
+                )
+                return self.render_to_response(context)
+            return redirect(f"{reverse('workout-planner')}?week={plan.week_start.isoformat()}")
         else:
             messages.success(request, 'Texto organizado em rascunho semanal.')
 

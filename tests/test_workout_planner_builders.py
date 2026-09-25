@@ -193,7 +193,7 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         )
         self.assertEqual(
             [tab['key'] for tab in manager_tabs],
-            ['planner', 'approval'],
+            ['planner', 'smart_paste', 'approval'],
         )
 
     def test_planner_renders_week_grid_for_coach(self):
@@ -207,7 +207,8 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-planner'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Semana de WOD em uma so grade.')
+        self.assertContains(response, 'Planeje a semana. Publique com confiança.')
+        self.assertContains(response, 'visíveis aos alunos')
         self.assertContains(response, self.session.title)
         self.assertContains(response, reverse('coach-session-workout-editor', args=[self.session.id]))
         self.assertContains(response, 'Criar WOD')
@@ -223,6 +224,16 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Resumo da aula em foco')
         self.assertContains(response, 'data-planner-spotlight-session')
         self.assertContains(response, 'tabindex="0"')
+
+    def test_manager_sees_approval_step_and_can_start_weekly_paste(self):
+        self.login_as_manager()
+
+        response = self.client.get(reverse('workout-planner'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Revisar aprovações')
+        self.assertContains(response, 'Colar WOD da semana')
+        self.assertContains(response, 'Libera para os alunos')
 
     def test_owner_planner_renders_template_picker_when_trusted_templates_exist(self):
         WorkoutTemplate.objects.create(

@@ -562,7 +562,7 @@ class WeeklyWodReviewMovementForm(forms.Form):
         valid_slugs = {choice[0] for choice in self.slug_choices}
         if slug not in valid_slugs and slug != 'custom':
             raise forms.ValidationError(
-                'Escolha um movimento da lista ou use custom para manter o texto original.'
+                'Escolha um movimento sugerido ou use “Manter nome original como personalizado”.'
             )
         return slug
 
@@ -573,10 +573,9 @@ class WeeklyWodReviewMovementForm(forms.Form):
             if not resolve_movement_slug(cleaned['movement_label_raw']):
                 self.add_error(
                     'movement_slug',
-                    'Selecione um movimento ou use custom para manter o texto original.',
+                    'Selecione um movimento ou use “Manter nome original como personalizado”.',
                 )
         return cleaned
-
 
 class WeeklyWodUndoReplicationForm(forms.Form):
     batch_id = forms.IntegerField(min_value=1)

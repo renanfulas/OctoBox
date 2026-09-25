@@ -89,14 +89,41 @@
     box-shadow: var(--theme-shadow-soft);
 }
 
-.student-month-calendar__toggle {
-    min-height: 48px;
-    padding: 14px 16px;
+.student-month-calendar__navigation {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 12px 4px;
+    text-align: center;
     color: var(--theme-text-primary);
-    font-weight: 900;
-    cursor: pointer;
-    user-select: none;
 }
+
+.student-month-calendar__navigation strong { font-size: .95rem; }
+.student-month-calendar__navigation a {
+    display: grid;
+    place-items: center;
+    min-height: 44px;
+    border-radius: 11px;
+    border: 1px solid var(--theme-border-soft);
+    color: var(--theme-text-primary);
+    text-decoration: none;
+    font-size: 1.25rem;
+}
+.student-month-calendar__navigation a:hover,
+.student-month-calendar__navigation a:focus-visible {
+    border-color: var(--theme-accent-primary);
+    background: var(--theme-surface-secondary);
+}
+.student-month-calendar__today {
+    display: block;
+    width: fit-content;
+    margin: 0 auto 10px;
+    color: var(--theme-accent-primary);
+    font-size: .78rem;
+    font-weight: 700;
+}
+.student-month-calendar__empty { margin: 0 12px 14px; color: var(--theme-text-secondary); font-size: .82rem; line-height: 1.4; }
 
 /* Cabeçalho dos dias da semana */
 .student-month-calendar__weekdays {
@@ -158,20 +185,33 @@ button.student-month-day:active {
     transform: scale(0.96);
 }
 
-/* Hoje */
-.student-month-day.is-today {
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 50%, transparent) !important;
-    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, var(--theme-surface-strong) 78%) !important;
-}
-
 /* Com aulas */
 button.student-month-day.has-sessions {
     border-color: color-mix(in srgb, var(--theme-accent-success) 30%, var(--theme-border-soft) 70%);
 }
 
+button.student-month-day.has-wod {
+    border-color: var(--theme-accent-primary);
+}
+
+.student-month-day__wod {
+    color: var(--theme-accent-primary);
+    font-size: .53rem;
+    font-weight: 900;
+    letter-spacing: .03em;
+    line-height: 1;
+}
+
 /* Feriado */
 .student-month-day.is-holiday {
     border-color: color-mix(in srgb, var(--theme-accent-warning) 28%, var(--theme-border-soft) 72%);
+}
+
+/* Hoje prevalece sobre os estados de aula e feriado sem !important. */
+.student-month-day.is-today,
+button.student-month-day.is-today {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 50%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary-alpha) 22%, var(--theme-surface-strong) 78%);
 }
 
 /* Célula vazia (padding do grid) */
@@ -497,6 +537,15 @@ button.student-month-day .student-month-day__num {
     color: var(--theme-text-primary);
     font-size: 0.98rem;
     line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.student-agenda-card__wod {
+    color: var(--theme-accent-primary);
+    font-size: .72rem;
+    font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

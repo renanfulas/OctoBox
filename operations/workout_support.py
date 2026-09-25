@@ -311,6 +311,11 @@ def week_start_for(date_value):
 
 
 def should_require_workout_approval(*, workout, coach, source, source_template=None):
+    # Text pasted into Smart Paste can be AI-cleaned but is not canonical or
+    # trusted-template content. Keep the existing human approval gate even
+    # when a box enables coach autonomy for other WOD creation flows.
+    if source == 'smart_paste':
+        return True
     policy = resolve_workout_approval_policy(actor=coach, session=getattr(workout, 'session', None))
     if policy == 'strict':
         return True

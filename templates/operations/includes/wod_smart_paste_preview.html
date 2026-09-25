@@ -38,9 +38,15 @@
         {% csrf_token %}
         <input type="hidden" name="action" value="retry_auto_resolution">
         <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
-        <button class="button secondary" type="submit">Corrigir automaticamente com Haiku</button>
+        <button class="button secondary" type="submit">Tentar correção automática</button>
         <span class="smart-paste-auto-retry__progress" role="status">Analisando movimentos…</span>
     </form>
+    {% endif %}
+    {% if review_form.errors %}
+    <div class="smart-paste-resolution-notice" role="alert">
+        <strong>O movimento informado não está no catálogo</strong>
+        <p>{{ review_form.movement_slug.errors.0|default:'Escolha uma sugestão ou mantenha o nome original como personalizado.' }}</p>
+    </div>
     {% endif %}
     {% if smart_paste_summary.auto_fixed_items %}
     <details class="smart-paste-inline-review-disclosure smart-paste-autofix-summary">
@@ -77,7 +83,8 @@
                 <input type="hidden" name="block_index" value="{{ smart_paste_summary.current_unresolved_item.block_index }}">
                 <input type="hidden" name="movement_index" value="{{ smart_paste_summary.current_unresolved_item.movement_index }}">
                 <label><span>Texto</span><input type="text" name="movement_label_raw" value="{{ review_form.movement_label_raw.value|default_if_none:'' }}"></label>
-                <label><span>Movimento</span><input type="text" name="movement_slug" value="{{ review_form.movement_slug.value|default_if_none:'' }}" list="smart-paste-movement-slugs" autocomplete="off"><small>Escolha uma opção da lista. Se não existir, use <code>custom</code> para preservar o texto.</small>{% if review_form.movement_slug.errors %}<small class="smart-paste-field-error">{{ review_form.movement_slug.errors.0 }}</small>{% endif %}</label>
+                <label><span>Movimento do catálogo</span><input type="text" name="movement_slug" value="{{ review_form.movement_slug.value|default_if_none:'' }}" list="smart-paste-movement-slugs" autocomplete="off" placeholder="Escolha uma sugestão ou mantenha o nome original"><small>Escolha uma opção da lista ou mantenha o nome original como personalizado.</small>{% if review_form.movement_slug.errors %}<small class="smart-paste-field-error">{{ review_form.movement_slug.errors.0 }}</small>{% endif %}</label>
+                <button class="button tertiary smart-paste-custom-movement" type="button" data-action="use-custom-movement">Manter nome original como personalizado</button>
                 <label><span>Reps</span><input type="text" name="reps_spec" value="{{ review_form.reps_spec.value|default_if_none:'' }}"></label>
                 <label><span>Carga</span><input type="text" name="load_spec" value="{{ review_form.load_spec.value|default_if_none:'' }}"></label>
                 <label><span>Nota</span><input type="text" name="notes" value="{{ review_form.notes.value|default_if_none:'' }}"></label>
@@ -180,7 +187,8 @@
                                             <input type="hidden" name="block_index" value="{{ block.block_index }}">
                                             <input type="hidden" name="movement_index" value="{{ forloop.counter0 }}">
                                             <label><span>Texto</span><input type="text" name="movement_label_raw" value="{{ movement.movement_label_raw }}"></label>
-                                            <label><span>Slug</span><input type="text" name="movement_slug" value="{{ movement.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs"></label>
+                                            <label><span>Movimento do catálogo</span><input type="text" name="movement_slug" value="{{ movement.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs" placeholder="Escolha uma sugestão ou mantenha o nome original"></label>
+                                            <button class="button tertiary smart-paste-custom-movement" type="button" data-action="use-custom-movement">Manter nome original como personalizado</button>
                                             <label><span>Reps</span><input type="text" name="reps_spec" value="{{ movement.reps_spec|default_if_none:'' }}"></label>
                                             <label><span>Carga</span><input type="text" name="load_spec" value="{{ movement.load_spec|default_if_none:'' }}"></label>
                                             <label><span>Nota</span><input type="text" name="notes" value="{{ movement.notes|default_if_none:'' }}"></label>
@@ -214,15 +222,15 @@
         <input type="hidden" name="week_start" value="{{ weekly_plan.week_start|date:'d/m' }}">
         <input type="hidden" name="label" value="{{ weekly_plan.label }}">
         <input type="hidden" name="source_text" value="{{ weekly_plan.source_text }}">
-        <input type="hidden" name="action" value="confirm_plan">
         <div class="actions">
-            <button class="button secondary" type="submit" {% if smart_paste_summary.unresolved_count %}disabled aria-disabled="true"{% endif %}>
-                Confirmar rascunho semanal
+            <button class="button" type="submit" name="action" value="confirm_and_project">
+                {% if smart_paste_summary.unresolved_count %}Corrigir pendências e enviar às aulas{% else %}Enviar WODs às aulas{% endif %}
             </button>
-            {% if smart_paste_summary.unresolved_count %}
-            <p class="operation-session-meta">Feche as pendências antes de confirmar.</p>
-            {% endif %}
+            <button class="button secondary" type="submit" name="action" value="confirm_plan" {% if smart_paste_summary.unresolved_count %}disabled aria-disabled="true"{% endif %}>
+                Confirmar sem enviar ao Planner
+            </button>
         </div>
+        <p class="operation-session-meta">O Haiku tentará novamente os itens pendentes. Os blocos compatíveis vão para as aulas da semana escolhida e aguardam aprovação do owner ou manager antes de chegar aos alunos.</p>
     </form>
 
     {% if weekly_plan_is_confirmed %}
@@ -259,7 +267,7 @@
     <div class="smart-paste-empty-state">
         <div class="smart-paste-empty-state__icon" aria-hidden="true">📋</div>
         <h3 class="smart-paste-empty-state__title">Preview da semana</h3>
-        <p class="smart-paste-empty-state__body">Cole o texto da semana ao lado e clique em <strong>Organizar texto</strong>. O preview dos dias, blocos e movimentos aparece aqui.</p>
+        <p class="smart-paste-empty-state__body">Cole o texto da semana no campo acima e clique em <strong>Organizar semana automaticamente</strong>. A prévia dos dias, blocos e movimentos aparece aqui.</p>
         <p class="smart-paste-empty-state__hint">Formato sugerido: cada dia com cabeçalho (ex: <code>Segunda:</code>) seguido dos blocos (<code>WOD:</code>, <code>Strength:</code>) e movimentos.</p>
     </div>
     {% endif %}

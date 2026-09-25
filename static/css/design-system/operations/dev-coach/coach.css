@@ -16,7 +16,7 @@ ARQUIVO: superfície operacional do coach.
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, transparent), transparent 30%),
         radial-gradient(circle at bottom left, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 42%),
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 94%, transparent));
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface) 94%, transparent));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.82),
         0 18px 34px rgba(19, 33, 50, 0.08);
@@ -191,7 +191,7 @@ ARQUIVO: superfície operacional do coach.
     border-color: color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, var(--card-border) 84%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 30%),
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 94%, transparent));
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface) 94%, transparent));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.82),
         0 18px 34px rgba(19, 33, 50, 0.08);
@@ -225,7 +225,7 @@ ARQUIVO: superfície operacional do coach.
     border-color: color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, var(--card-border) 84%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 30%),
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 94%, transparent));
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface) 94%, transparent));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.82),
         0 18px 34px rgba(19, 33, 50, 0.08);
@@ -270,7 +270,7 @@ ARQUIVO: superfície operacional do coach.
     padding: 14px 16px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 16px;
-    background: color-mix(in srgb, var(--theme-surface-panel) 76%, white 24%);
+    background: var(--theme-surface-secondary);
 }
 
 .coach-session-card .operation-inline-actions {
@@ -326,7 +326,7 @@ ARQUIVO: superfície operacional do coach.
     padding: 14px 16px;
     border-radius: 18px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
+    background: var(--theme-surface-secondary);
 }
 
 .coach-wod-filter-form {
@@ -363,7 +363,7 @@ ARQUIVO: superfície operacional do coach.
     padding: 12px 14px;
     border-radius: 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 68%, white 32%);
+    background: var(--theme-surface-secondary);
 }
 
 .coach-wod-filter-toggle input {
@@ -396,25 +396,6 @@ ARQUIVO: superfície operacional do coach.
 
 .coach-wod-filter-actions .button {
     min-height: 40px;
-}
-
-.coach-wod-queue-summary-card,
-.coach-wod-decision-strip {
-    padding: 14px 16px;
-    border-radius: 18px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
-}
-
-.coach-wod-queue-summary-card h2,
-.coach-wod-decision-strip strong {
-    margin: 0;
-    color: var(--theme-text-primary);
-}
-
-.coach-wod-queue-summary-card p,
-.coach-wod-decision-strip p {
-    margin: 0;
 }
 
 .coach-wod-publication-history {
@@ -478,7 +459,7 @@ ARQUIVO: superfície operacional do coach.
     padding: 14px 16px;
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
+    background: var(--theme-surface-secondary);
     display: grid;
     gap: 6px;
 }
@@ -496,20 +477,18 @@ ARQUIVO: superfície operacional do coach.
     padding: 14px 16px;
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
+    background: var(--theme-surface-secondary);
     display: grid;
     gap: 8px;
 }
 
 .coach-wod-publication-action-card strong,
-.coach-wod-publication-alert-card strong,
-.coach-wod-queue-summary-card h2 {
+.coach-wod-publication-alert-card strong {
     color: var(--theme-text-primary);
 }
 
 .coach-wod-publication-action-card p,
 .coach-wod-publication-alert-card p,
-.coach-wod-queue-summary-card p,
 .coach-wod-detail-card p,
 .coach-wod-filter-form span,
 .coach-wod-filter-form label {
@@ -561,7 +540,7 @@ ARQUIVO: superfície operacional do coach.
     padding: 10px 12px;
     border-radius: 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 72%, white 28%);
+    background: var(--theme-surface-strong);
 }
 
 .coach-wod-publication-result.tone-success {
@@ -597,16 +576,14 @@ ARQUIVO: superfície operacional do coach.
     border-color: color-mix(in srgb, var(--info) 32%, transparent);
 }
 
-.coach-wod-publication-alert-card.tone-danger,
-.coach-wod-publication-card.has-alert-danger {
+.coach-wod-publication-alert-card.tone-danger {
     border-color: color-mix(in srgb, var(--danger) 32%, transparent);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--danger) 10%, transparent), transparent 34%),
-        color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
+        var(--theme-surface-secondary);
 }
 
-.coach-wod-publication-alert-card.tone-warning,
-.coach-wod-publication-card.has-alert-warning {
+.coach-wod-publication-alert-card.tone-warning {
     border-color: color-mix(in srgb, var(--warning) 32%, transparent);
 }
 
@@ -616,7 +593,7 @@ ARQUIVO: superfície operacional do coach.
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 34%),
-        color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
+        var(--theme-surface-secondary);
     box-shadow: var(--shadow-soft);
     display: grid;
     gap: 12px;
@@ -647,29 +624,6 @@ ARQUIVO: superfície operacional do coach.
     gap: 8px;
 }
 
-.coach-wod-decision-strip {
-    display: flex;
-    justify-content: space-between;
-    gap: 14px;
-    align-items: flex-start;
-    margin-top: 14px;
-}
-
-.coach-wod-decision-strip.tone-danger {
-    border-color: color-mix(in srgb, var(--danger) 32%, transparent);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--danger) 10%, transparent), transparent 34%),
-        color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
-}
-
-.coach-wod-decision-strip.tone-warning {
-    border-color: color-mix(in srgb, var(--warning) 32%, transparent);
-}
-
-.coach-wod-decision-strip.tone-success {
-    border-color: color-mix(in srgb, var(--success) 32%, transparent);
-}
-
 .coach-wod-approve-form {
     display: flex;
     flex-wrap: wrap;
@@ -686,7 +640,7 @@ ARQUIVO: superfície operacional do coach.
     border-color: color-mix(in srgb, var(--theme-accent-premium-alpha) 16%, var(--card-border) 84%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 10%, transparent), transparent 28%),
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 94%, transparent));
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface) 94%, transparent));
 }
 
 .coach-wod-editor-head,
@@ -751,15 +705,6 @@ ARQUIVO: superfície operacional do coach.
     width: 100%;
 }
 
-.coach-wod-checkbox {
-    align-content: center;
-    justify-items: start;
-}
-
-.coach-wod-checkbox input {
-    width: auto;
-}
-
 .coach-wod-block-list {
     display: grid;
     gap: 14px;
@@ -770,7 +715,7 @@ ARQUIVO: superfície operacional do coach.
     padding: 16px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 16px;
-    background: color-mix(in srgb, var(--theme-surface-panel) 72%, white 28%);
+    background: var(--theme-surface-secondary);
 }
 
 .coach-wod-inline-form {
@@ -802,14 +747,14 @@ ARQUIVO: superfície operacional do coach.
     justify-content: space-between;
     padding: 12px 14px;
     border-radius: 14px;
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 68%, white 32%);
+    background: var(--theme-surface-strong);
 }
 
 .coach-wod-empty-state {
     padding: 16px;
     border: 1px dashed color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 16px;
-    background: color-mix(in srgb, var(--theme-surface-panel) 64%, white 36%);
+    background: var(--theme-surface-secondary);
 }
 
 .coach-wod-approval-actions {
@@ -841,7 +786,7 @@ ARQUIVO: superfície operacional do coach.
     padding: 12px 14px;
     border-radius: 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 72%, white 28%);
+    background: var(--theme-surface-secondary);
 }
 
 .coach-wod-review-signal-card strong {
@@ -873,7 +818,7 @@ ARQUIVO: superfície operacional do coach.
     padding: 14px 16px;
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 68%, white 32%);
+    background: var(--theme-surface-strong);
 }
 
 .coach-wod-review-digest p {
@@ -884,12 +829,11 @@ ARQUIVO: superfície operacional do coach.
     margin-top: 6px;
 }
 
-.coach-wod-review-digest.is-sensitive,
 .coach-wod-sensitive-banner {
     border-color: color-mix(in srgb, var(--warning) 34%, transparent);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--warning) 10%, transparent), transparent 34%),
-        color-mix(in srgb, var(--theme-surface-panel-strong) 68%, white 32%);
+        var(--theme-surface-strong);
 }
 
 .coach-wod-sensitive-banner {
@@ -898,28 +842,20 @@ ARQUIVO: superfície operacional do coach.
     border-radius: 14px;
 }
 
-.coach-wod-risk-list,
 .coach-wod-detail-list {
     display: grid;
     gap: 10px;
     margin-top: 12px;
 }
 
-.coach-wod-risk-list {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.coach-wod-detail-card,
-.coach-wod-compare-card {
+.coach-wod-detail-card {
     padding: 14px 16px;
     border-radius: 16px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 74%, white 26%);
+    background: var(--theme-surface-secondary);
 }
 
 .coach-wod-detail-card strong,
-.coach-wod-compare-card strong,
 .coach-wod-timeline-body strong {
     color: var(--theme-text-primary);
 }
@@ -934,42 +870,8 @@ ARQUIVO: superfície operacional do coach.
     margin-top: 6px;
 }
 
-.coach-wod-compare-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    margin-top: 12px;
-}
-
-.coach-wod-compare-card.is-current {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 28%, transparent);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 32%),
-        color-mix(in srgb, var(--theme-surface-panel) 74%, white 26%);
-}
-
-.coach-wod-compare-head p,
-.coach-wod-compare-body p,
 .coach-wod-timeline-body p {
     margin: 0;
-}
-
-.coach-wod-compare-body {
-    display: grid;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.coach-wod-compare-list {
-    display: grid;
-    gap: 10px;
-}
-
-.coach-wod-compare-item {
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 76%, white 24%);
 }
 
 .coach-wod-timeline {
@@ -1013,7 +915,7 @@ ARQUIVO: superfície operacional do coach.
     padding: 10px 12px;
     border-radius: 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 74%, white 26%);
+    background: var(--theme-surface-secondary);
 }
 
 .coach-student-preview-card {
@@ -1023,7 +925,7 @@ ARQUIVO: superfície operacional do coach.
     border: 1px solid color-mix(in srgb, var(--theme-accent-support) 18%, var(--theme-border-soft) 82%);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 34%),
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface-panel) 92%, transparent));
+        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 98%, transparent), color-mix(in srgb, var(--theme-surface) 92%, transparent));
 }
 
 .coach-student-preview-compare-grid {
@@ -1037,8 +939,7 @@ ARQUIVO: superfície operacional do coach.
     border-color: color-mix(in srgb, var(--theme-accent-support) 28%, transparent);
 }
 
-.coach-student-preview-head,
-.coach-student-preview-movement-card {
+.coach-student-preview-head {
     display: flex;
     justify-content: space-between;
     gap: 14px;
@@ -1048,50 +949,12 @@ ARQUIVO: superfície operacional do coach.
     align-items: flex-start;
 }
 
-.coach-student-preview-head p,
-.coach-student-preview-movement-copy p,
-.coach-student-preview-movement-copy span,
-.coach-student-preview-movement-metrics small,
-.coach-student-preview-movement-metrics span {
+.coach-student-preview-head p {
     margin: 0;
     color: var(--theme-text-secondary);
 }
 
-.coach-student-preview-block-list,
-.coach-student-preview-movement-list {
-    display: grid;
-    gap: 12px;
-}
-
-.coach-student-preview-block-list {
-    margin-top: 16px;
-}
-
-.coach-student-preview-block {
-    padding: 14px;
-    border-radius: 16px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
-}
-
-.coach-student-preview-movement-card {
-    align-items: center;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-border-soft) 74%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 82%, white 18%);
-}
-
-.coach-student-preview-movement-copy,
-.coach-student-preview-movement-metrics {
-    display: grid;
-    gap: 4px;
-}
-
-.coach-student-preview-movement-copy strong,
-.coach-student-preview-movement-metrics strong,
-.coach-student-preview-head h3,
-.coach-student-preview-block h4 {
+.coach-student-preview-head h3 {
     margin: 0;
     color: var(--theme-text-primary);
 }
@@ -1140,11 +1003,9 @@ ARQUIVO: superfície operacional do coach.
     .coach-wod-editor-head,
     .coach-wod-block-head,
     .coach-wod-movement-card,
-    .coach-wod-decision-strip,
     .coach-wod-publication-history-head,
     .coach-wod-publication-card-head,
-    .coach-student-preview-head,
-    .coach-student-preview-movement-card {
+    .coach-student-preview-head {
         flex-direction: column;
         align-items: stretch;
     }
@@ -1156,10 +1017,6 @@ ARQUIVO: superfície operacional do coach.
     .coach-wod-approval-actions,
     .coach-wod-rejection-inline {
         flex-direction: column;
-    }
-
-    .coach-wod-compare-grid {
-        grid-template-columns: 1fr;
     }
 
     .coach-student-preview-compare-grid {
@@ -1267,7 +1124,6 @@ body[data-theme="dark"] .coach-wod-movement-card,
 body[data-theme="dark"] .coach-wod-empty-state,
 body[data-theme="dark"] .coach-wod-editor-card,
 body[data-theme="dark"] .coach-wod-filter-bar,
-body[data-theme="dark"] .coach-wod-queue-summary-card,
 body[data-theme="dark"] .coach-wod-publication-alert-card,
 body[data-theme="dark"] .coach-wod-publication-action-card,
 body[data-theme="dark"] .coach-wod-publication-action-inline,
@@ -1276,14 +1132,9 @@ body[data-theme="dark"] .coach-wod-publication-card,
 body[data-theme="dark"] .coach-wod-review-signal-card,
 body[data-theme="dark"] .coach-wod-review-digest,
 body[data-theme="dark"] .coach-wod-detail-card,
-body[data-theme="dark"] .coach-wod-compare-card,
-body[data-theme="dark"] .coach-wod-compare-item,
 body[data-theme="dark"] .coach-wod-timeline-body,
 body[data-theme="dark"] .coach-wod-sensitive-banner,
-body[data-theme="dark"] .coach-student-preview-card,
-body[data-theme="dark"] .coach-student-preview-block,
-body[data-theme="dark"] .coach-student-preview-movement-card,
-body[data-theme="dark"] .coach-wod-decision-strip {
+body[data-theme="dark"] .coach-student-preview-card {
     border-color: rgba(92, 146, 214, 0.16);
     background:
         linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
@@ -1292,25 +1143,11 @@ body[data-theme="dark"] .coach-wod-decision-strip {
         0 18px 30px rgba(0, 0, 0, 0.18);
 }
 
-body[data-theme="dark"] .coach-wod-decision-strip.tone-danger {
+body[data-theme="dark"] .coach-wod-publication-alert-card.tone-danger {
     border-color: color-mix(in srgb, var(--danger) 36%, rgba(92, 146, 214, 0.16) 64%);
 }
 
-body[data-theme="dark"] .coach-wod-decision-strip.tone-warning {
-    border-color: color-mix(in srgb, var(--warning) 36%, rgba(92, 146, 214, 0.16) 64%);
-}
-
-body[data-theme="dark"] .coach-wod-decision-strip.tone-success {
-    border-color: color-mix(in srgb, var(--success) 36%, rgba(92, 146, 214, 0.16) 64%);
-}
-
-body[data-theme="dark"] .coach-wod-publication-alert-card.tone-danger,
-body[data-theme="dark"] .coach-wod-publication-card.has-alert-danger {
-    border-color: color-mix(in srgb, var(--danger) 36%, rgba(92, 146, 214, 0.16) 64%);
-}
-
-body[data-theme="dark"] .coach-wod-publication-alert-card.tone-warning,
-body[data-theme="dark"] .coach-wod-publication-card.has-alert-warning {
+body[data-theme="dark"] .coach-wod-publication-alert-card.tone-warning {
     border-color: color-mix(in srgb, var(--warning) 36%, rgba(92, 146, 214, 0.16) 64%);
 }
 
@@ -1330,12 +1167,10 @@ body[data-theme="dark"] .coach-wod-publication-action-inline.tone-info {
 }
 
 body[data-theme="dark"] .coach-wod-filter-bar,
-body[data-theme="dark"] .coach-wod-queue-summary-card,
 body[data-theme="dark"] .coach-wod-publication-alert-card,
 body[data-theme="dark"] .coach-wod-publication-action-card,
 body[data-theme="dark"] .coach-wod-publication-action-inline,
-body[data-theme="dark"] .coach-wod-detail-card,
-body[data-theme="dark"] .coach-wod-decision-strip {
+body[data-theme="dark"] .coach-wod-detail-card {
     border-color: rgba(92, 146, 214, 0.18);
     background:
         radial-gradient(circle at top right, rgba(92, 146, 214, 0.09), transparent 32%),
@@ -1346,8 +1181,7 @@ body[data-theme="dark"] .coach-wod-filter-form > label span,
 body[data-theme="dark"] .coach-wod-follow-up-form > label span,
 body[data-theme="dark"] .coach-wod-publication-alert-card p,
 body[data-theme="dark"] .coach-wod-publication-action-card p,
-body[data-theme="dark"] .coach-wod-detail-card p,
-body[data-theme="dark"] .coach-wod-queue-summary-card p {
+body[data-theme="dark"] .coach-wod-detail-card p {
     color: var(--theme-text-secondary);
 }
 
@@ -1399,16 +1233,8 @@ body[data-theme="dark"] .coach-student-preview-card.is-current {
     border-color: color-mix(in srgb, var(--theme-accent-support) 32%, rgba(92, 146, 214, 0.16) 68%);
 }
 
-body[data-theme="dark"] .coach-wod-review-digest.is-sensitive,
 body[data-theme="dark"] .coach-wod-sensitive-banner {
     border-color: color-mix(in srgb, var(--warning) 36%, rgba(92, 146, 214, 0.16) 64%);
-}
-
-body[data-theme="dark"] .coach-wod-compare-card.is-current {
-    border-color: color-mix(in srgb, var(--theme-accent-support) 32%, rgba(92, 146, 214, 0.16) 68%);
-    background:
-        radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 16%, transparent), transparent 34%),
-        linear-gradient(145deg, rgba(8, 15, 29, 0.98), rgba(6, 12, 24, 0.98) 58%, rgba(4, 10, 20, 0.96));
 }
 
 body[data-theme="dark"] .coach-wod-timeline::before {
@@ -1526,7 +1352,7 @@ body[data-theme="dark"] .coach-sessions-board > .operation-empty-card .state-emp
     padding: 0 16px;
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
+    background: var(--theme-surface-secondary);
     color: var(--theme-text-secondary);
     text-decoration: none;
     transition:
@@ -1545,7 +1371,7 @@ body[data-theme="dark"] .coach-sessions-board > .operation-empty-card .state-emp
     border-color: color-mix(in srgb, var(--theme-accent-support) 34%, transparent);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent), transparent 34%),
-        color-mix(in srgb, var(--theme-surface-panel-strong) 82%, white 18%);
+        var(--theme-surface-strong);
     color: var(--theme-text-primary);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent);
 }
@@ -1576,7 +1402,7 @@ body[data-theme="dark"] .coach-sessions-board > .operation-empty-card .state-emp
     padding: 10px 12px;
     border-radius: 12px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 94%, black 6%);
+    background: color-mix(in srgb, var(--theme-surface-strong) 94%, black 6%);
     color: var(--theme-text-primary);
     box-shadow: var(--shadow-md);
     content: attr(aria-label);
@@ -1661,6 +1487,7 @@ body[data-theme="dark"] .coach-wod-corridor-tab:focus-visible {
 /* Unifica o corredor de WOD com o pill CTA do hero, sem reintroduzir CTA neon pesado. */
 .coach-wod-editor-shell .button,
 .wod-planner-shell .button {
+    font-family: inherit;
     min-height: 38px;
     padding: 8px 14px;
     border-radius: 999px;
@@ -1669,26 +1496,26 @@ body[data-theme="dark"] .coach-wod-corridor-tab:focus-visible {
     box-shadow: none;
 }
 
-.coach-wod-editor-shell .button:not(.secondary):not(.ghost),
-.wod-planner-shell .button:not(.secondary):not(.ghost) {
-    background: color-mix(in srgb, var(--theme-surface-panel) 70%, transparent);
+.coach-wod-editor-shell .button:not(.secondary):not(.ghost):not(.danger),
+.wod-planner-shell .button:not(.secondary):not(.ghost):not(.danger) {
+    background: color-mix(in srgb, var(--theme-surface) 70%, transparent);
     border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
     color: color-mix(in srgb, var(--ink) 84%, var(--theme-text-secondary) 16%);
 }
 
-.coach-wod-editor-shell .button.secondary,
-.coach-wod-editor-shell .button.tertiary,
-.wod-planner-shell .button.secondary,
-.wod-planner-shell .button.tertiary {
+.coach-wod-editor-shell .button.secondary:not(.danger),
+.coach-wod-editor-shell .button.tertiary:not(.danger),
+.wod-planner-shell .button.secondary:not(.danger),
+.wod-planner-shell .button.tertiary:not(.danger) {
     background: color-mix(in srgb, var(--theme-surface-strong) 52%, transparent);
     border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
     color: color-mix(in srgb, var(--theme-text-secondary) 84%, var(--ink) 16%);
 }
 
-.coach-wod-editor-shell .button:hover,
-.coach-wod-editor-shell .button:focus-visible,
-.wod-planner-shell .button:hover,
-.wod-planner-shell .button:focus-visible {
+.coach-wod-editor-shell .button:not(.danger):hover,
+.coach-wod-editor-shell .button:not(.danger):focus-visible,
+.wod-planner-shell .button:not(.danger):hover,
+.wod-planner-shell .button:not(.danger):focus-visible {
     background: color-mix(in srgb, var(--theme-surface-strong) 74%, transparent);
     border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--theme-border-soft) 72%);
     color: var(--theme-text-primary);
@@ -1701,28 +1528,28 @@ body[data-theme="dark"] .wod-planner-shell .button {
     box-shadow: none;
 }
 
-body[data-theme="dark"] .coach-wod-editor-shell .button:not(.secondary):not(.ghost),
-body[data-theme="dark"] .wod-planner-shell .button:not(.secondary):not(.ghost) {
+body[data-theme="dark"] .coach-wod-editor-shell .button:not(.secondary):not(.ghost):not(.danger),
+body[data-theme="dark"] .wod-planner-shell .button:not(.secondary):not(.ghost):not(.danger) {
     background:
         linear-gradient(180deg, rgba(14, 24, 42, 0.94), rgba(9, 18, 34, 0.96));
     border-color: rgba(148, 163, 184, 0.18);
     color: var(--theme-text-primary);
 }
 
-body[data-theme="dark"] .coach-wod-editor-shell .button.secondary,
-body[data-theme="dark"] .coach-wod-editor-shell .button.tertiary,
-body[data-theme="dark"] .wod-planner-shell .button.secondary,
-body[data-theme="dark"] .wod-planner-shell .button.tertiary {
+body[data-theme="dark"] .coach-wod-editor-shell .button.secondary:not(.danger),
+body[data-theme="dark"] .coach-wod-editor-shell .button.tertiary:not(.danger),
+body[data-theme="dark"] .wod-planner-shell .button.secondary:not(.danger),
+body[data-theme="dark"] .wod-planner-shell .button.tertiary:not(.danger) {
     background:
         linear-gradient(180deg, rgba(11, 21, 38, 0.9), rgba(7, 15, 29, 0.94));
     border-color: rgba(148, 163, 184, 0.18);
     color: var(--theme-text-secondary);
 }
 
-body[data-theme="dark"] .coach-wod-editor-shell .button:hover,
-body[data-theme="dark"] .coach-wod-editor-shell .button:focus-visible,
-body[data-theme="dark"] .wod-planner-shell .button:hover,
-body[data-theme="dark"] .wod-planner-shell .button:focus-visible {
+body[data-theme="dark"] .coach-wod-editor-shell .button:not(.danger):hover,
+body[data-theme="dark"] .coach-wod-editor-shell .button:not(.danger):focus-visible,
+body[data-theme="dark"] .wod-planner-shell .button:not(.danger):hover,
+body[data-theme="dark"] .wod-planner-shell .button:not(.danger):focus-visible {
     background:
         radial-gradient(circle at top right, rgba(0, 229, 255, 0.1), transparent 38%),
         linear-gradient(180deg, rgba(16, 29, 50, 0.95), rgba(10, 20, 37, 0.98));
@@ -1744,19 +1571,17 @@ body[data-theme="dark"] .wod-planner-shell .button:focus-visible {
 .coach-wod-editor-shell .coach-wod-page-intro,
 .coach-wod-editor-shell .coach-wod-summary-card,
 .coach-wod-editor-shell .coach-wod-overview-card,
-.coach-wod-editor-shell .coach-wod-queue-summary-card,
 .coach-wod-editor-shell .coach-wod-detail-card,
 .coach-wod-editor-shell .coach-wod-publication-alert-card,
 .coach-wod-editor-shell .coach-wod-publication-action-card,
 .coach-wod-editor-shell .coach-wod-publication-action-inline,
-.coach-wod-editor-shell .coach-wod-publication-card,
-.coach-wod-editor-shell .coach-wod-decision-strip {
+.coach-wod-editor-shell .coach-wod-publication-card {
     border-radius: 20px;
-    border-color: color-mix(in srgb, var(--theme-border-soft) 86%, transparent);
+    border-color: var(--theme-card-border);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 8%, transparent), transparent 34%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 247, 252, 0.94));
-    box-shadow: 0 14px 30px rgba(22, 35, 68, 0.08);
+        var(--theme-card-surface);
+    box-shadow: var(--theme-card-shadow);
 }
 
 .coach-wod-editor-shell .coach-wod-publication-card,
@@ -1773,9 +1598,8 @@ body[data-theme="dark"] .wod-planner-shell .button:focus-visible {
 
 .coach-wod-editor-shell .coach-wod-filter-toggle {
     border-radius: 16px;
-    border-color: color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
-    background:
-        linear-gradient(180deg, rgba(250, 252, 255, 0.96), rgba(241, 246, 252, 0.92));
+    border-color: var(--theme-border-soft);
+    background: var(--theme-surface-secondary);
 }
 
 .coach-wod-editor-shell .coach-wod-filter-form select,
@@ -1786,9 +1610,9 @@ body[data-theme="dark"] .wod-planner-shell .button:focus-visible {
     min-height: 44px;
     border-radius: 14px;
     border-color: color-mix(in srgb, var(--theme-border-soft) 84%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-strong) 92%, white 8%);
+    background: var(--theme-surface-strong);
     color: var(--theme-text-primary);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    box-shadow: none;
 }
 
 .coach-wod-editor-shell .coach-wod-filter-form select:focus,
@@ -1797,9 +1621,7 @@ body[data-theme="dark"] .wod-planner-shell .button:focus-visible {
 .coach-wod-editor-shell .coach-wod-follow-up-form select:focus,
 .coach-wod-editor-shell .coach-wod-follow-up-form input[type="text"]:focus {
     border-color: color-mix(in srgb, var(--theme-accent-support) 34%, transparent);
-    box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--theme-accent-support-alpha) 18%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    box-shadow: 0 0 0 3px var(--theme-focus-ring);
     outline: none;
 }
 
@@ -1837,8 +1659,7 @@ body[data-theme="dark"] .wod-planner-shell .button:focus-visible {
 
 .coach-wod-editor-shell .coach-wod-publication-result {
     border-radius: 16px;
-    background:
-        linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(239, 245, 251, 0.94));
+    background: var(--theme-surface-secondary);
 }
 
 .coach-wod-editor-shell .coach-wod-publication-history {
@@ -1894,8 +1715,7 @@ body[data-theme="dark"] .wod-planner-shell .button:focus-visible {
 .coach-wod-editor-shell .coach-wod-publication-card,
 .coach-wod-editor-shell .coach-wod-publication-alert-card,
 .coach-wod-editor-shell .coach-wod-publication-action-card,
-.coach-wod-editor-shell .coach-wod-detail-card,
-.coach-wod-editor-shell .coach-wod-decision-strip {
+.coach-wod-editor-shell .coach-wod-detail-card {
     padding: 18px 18px 20px;
 }
 
@@ -1950,49 +1770,6 @@ body[data-theme="dark"] .wod-planner-shell .pill {
     box-shadow: none;
 }
 
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-filter-bar,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-page-intro,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-summary-card,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-overview-card,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-queue-summary-card,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-detail-card,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-alert-card,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-action-card,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-action-inline,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-card,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-decision-strip {
-    border-color: rgba(148, 163, 184, 0.16);
-    background:
-        radial-gradient(circle at top right, rgba(0, 229, 255, 0.08), transparent 34%),
-        linear-gradient(160deg, rgba(10, 18, 31, 0.98), rgba(7, 14, 26, 0.98) 58%, rgba(5, 10, 20, 0.96));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        0 18px 34px rgba(0, 0, 0, 0.2);
-}
-
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-filter-toggle {
-    border-color: rgba(148, 163, 184, 0.16);
-    background:
-        linear-gradient(180deg, rgba(12, 22, 38, 0.92), rgba(8, 16, 30, 0.94));
-}
-
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-filter-form select,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-filter-form input[type="text"],
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-filter-form input[type="search"],
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-follow-up-form select,
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-follow-up-form input[type="text"] {
-    border-color: rgba(148, 163, 184, 0.18);
-    background:
-        linear-gradient(180deg, rgba(10, 18, 32, 0.9), rgba(7, 14, 27, 0.94));
-    color: var(--theme-text-primary);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-result {
-    background:
-        linear-gradient(180deg, rgba(14, 24, 42, 0.92), rgba(9, 18, 34, 0.94));
-}
-
 body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-page-intro h2,
 body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-queue-summary-head h2,
 body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-history-head h2,
@@ -2043,7 +1820,7 @@ body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-action-in
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 34%),
-        color-mix(in srgb, var(--theme-surface-panel) 76%, white 24%);
+        var(--theme-surface-secondary);
 }
 
 .coach-wod-page-intro h2 {
@@ -2058,7 +1835,7 @@ body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-action-in
 .coach-wod-page-intro--executive {
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-premium-alpha) 12%, transparent), transparent 38%),
-        color-mix(in srgb, var(--theme-surface-panel) 74%, white 26%);
+        var(--theme-surface-secondary);
 }
 
 .coach-wod-queue-summary {
@@ -2091,7 +1868,7 @@ body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-action-in
     border-radius: 18px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 92%, white 8%), color-mix(in srgb, var(--theme-surface-panel) 88%, white 12%));
+        linear-gradient(180deg, var(--theme-surface-strong), var(--theme-surface-secondary));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.56),
         0 16px 28px rgba(19, 33, 50, 0.08);
@@ -2125,7 +1902,7 @@ body[data-theme="dark"] .coach-wod-editor-shell .coach-wod-publication-action-in
     border-radius: 18px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     background:
-        linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-panel-strong) 92%, white 8%), color-mix(in srgb, var(--theme-surface-panel) 88%, white 12%));
+        linear-gradient(180deg, var(--theme-surface-strong), var(--theme-surface-secondary));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.56),
         0 16px 28px rgba(19, 33, 50, 0.08);
