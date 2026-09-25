@@ -53,6 +53,7 @@ from shared_support.box_runtime import get_box_runtime_slug
 
 VIEWPORTS = {
     "mobile": {"width": 390, "height": 844},
+    "iphone15": {"width": 393, "height": 852},
     "desktop": {"width": 1440, "height": 1100},
 }
 
@@ -206,6 +207,9 @@ def test_wod_template_archive_dialog_has_readable_colors(page: Page, live_server
     page.locator('[data-wod-archive-all-open]').click()
     dialog = page.locator('[data-wod-archive-all-dialog]')
     expect(dialog).to_be_visible()
+    bounds = dialog.bounding_box()
+    assert bounds and 0 <= bounds['y'] < VIEWPORTS['mobile']['height']
+    assert bounds['y'] + bounds['height'] <= VIEWPORTS['mobile']['height'] + 1
     dialog.locator('[data-wod-archive-confirm-input]').fill('ARQUIVAR')
     button = dialog.locator('[data-wod-archive-submit]')
     expect(button).to_be_enabled()
@@ -338,6 +342,16 @@ def test_smart_paste_visual_baseline_contract(
 
         dialog = page.locator("dialog.smart-paste-day-dialog[open]")
         expect(dialog).to_be_visible(timeout=5_000)
+        assert dialog.evaluate('el => el.parentElement === document.body'), "dialog deve sair do card com blur no Safari"
+        dialog_bounds = dialog.bounding_box()
+        header_bounds = dialog.locator('.smart-paste-day-dialog__head').bounding_box()
+        assert dialog_bounds and header_bounds
+        assert 0 <= dialog_bounds['x'] < viewport['width']
+        assert 0 <= dialog_bounds['y'] < viewport['height']
+        assert dialog_bounds['x'] + dialog_bounds['width'] <= viewport['width'] + 1
+        assert dialog_bounds['y'] + dialog_bounds['height'] <= viewport['height'] + 1
+        assert header_bounds['y'] >= 0 and header_bounds['y'] < viewport['height']
+        assert dialog.locator('.smart-paste-day-dialog__head h3').is_visible()
         assert _horizontal_overflow(page) <= 1, "overflow horizontal com o dialog de dia aberto"
 
         block_surface = dialog.locator("[data-action='focus-block']").first
@@ -362,6 +376,7 @@ def test_smart_paste_visual_baseline_contract(
         close_button = dialog.locator("[data-action='close-dialog']").first
         close_button.click()
         expect(dialog).to_have_count(0, timeout=5_000)
+        expect(page.locator('#smart-paste-preview-panel dialog.smart-paste-day-dialog').first).to_be_attached()
 
         page.screenshot(path=screenshot_dir / f"smart-paste-{viewport_name}-{theme}.png")
         if theme == "dark":
@@ -370,6 +385,40 @@ def test_smart_paste_visual_baseline_contract(
             )
             channels = [int(value) for value in heading_color.removeprefix("rgb(").rstrip(")").split(", ")]
             assert min(channels) >= 170, f"heading da pendência sem contraste no tema escuro: {heading_color}"
+    finally:
+        context.close()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+def test_iphone_dialog_review_survives_htmx_swap(browser: Browser, live_server, e2e_owner_credentials):
+    """A revisão feita no modal portado volta ao preview antes do swap HTMX."""
+    context = browser.new_context(
+        viewport=VIEWPORTS['iphone15'],
+        device_scale_factor=3,
+        is_mobile=True,
+        has_touch=True,
+    )
+    page = context.new_page()
+    try:
+        _login(page, live_server.url, e2e_owner_credentials)
+        page.goto(f'{live_server.url}/operacao/wod/paste/')
+        page.locator('textarea[name="source_text"]').fill(
+            'Segunda:\nAquecimento\n3 rounds\n10 movimento inventado xyz\n8 push up\n'
+        )
+        page.locator('form.smart-paste-form button[type="submit"]').click()
+        page.wait_for_load_state('networkidle')
+        page.locator('[data-action="open-day-dialog"]').first.click()
+        dialog = page.locator('dialog.smart-paste-day-dialog[open]')
+        dialog.locator('[data-action="focus-block"]').first.click()
+        dialog.locator('details[data-smart-paste-review-target]').first.locator(':scope > summary').click()
+        form = dialog.locator('form.smart-paste-inline-review-form').first
+        form.locator('[data-action="use-custom-movement"]').click()
+        expect(form.locator('[name="movement_slug"]')).to_have_value('custom')
+        form.locator('button[type="submit"]').click()
+        expect(page.locator('#smart-paste-preview-panel')).to_be_visible()
+        expect(page.locator('body > dialog.smart-paste-day-dialog')).to_have_count(0)
+        expect(page.locator('#smart-paste-preview-panel .smart-paste-day-chip__status').first).to_contain_text('Leitura pronta')
     finally:
         context.close()
 
@@ -455,6 +504,10 @@ def test_smart_paste_auto_send_reaches_planner_and_keeps_approval_gate(
     page.set_viewport_size(VIEWPORTS['mobile'])
     _set_theme(page, 'dark')
     assert _horizontal_overflow(page) <= 1
+    assert page.locator('.wod-planner__grid').evaluate(
+        'el => getComputedStyle(el).gridTemplateColumns.split(" ").length'
+    ) == 1
+    expect(projected_cell.locator('.wod-planner__cell-state')).to_be_visible()
     page.screenshot(path=screenshot_dir / 'planner-pending-mobile-dark.png', full_page=True)
 
     workout = SessionWorkout.objects.get(session=session)

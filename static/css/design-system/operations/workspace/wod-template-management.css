@@ -54,13 +54,32 @@ CONVENÇÕES:
 /* ── Archive All Dialog ───────────────────────────────────────────── */
 
 .wod-tmpl-archive-zone__dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     border: 1px solid var(--theme-border-soft);
     border-radius: 16px;
     padding: 32px;
     max-width: 480px;
     width: 100%;
     background: var(--theme-surface-panel-strong);
+    color: var(--theme-text-primary);
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
     box-shadow: var(--theme-shadow-xl);
+}
+
+@media (max-width: 640px) {
+    .wod-tmpl-archive-zone__dialog {
+        inset: auto 0 0;
+        margin: 0;
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - env(safe-area-inset-top) - 0.75rem);
+        border-radius: 20px 20px 0 0;
+        border-bottom: 0;
+        padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+    }
 }
 
 .wod-tmpl-archive-zone__dialog::backdrop {

@@ -45,12 +45,13 @@ CONVENÇÕES:
     inset: 0;
     margin: auto;
     width: min(540px, 96vw);
-    max-height: 88vh;
+    max-height: min(88vh, calc(100dvh - 2rem));
     overflow-y: auto;
     padding: 0;
     border: 1px solid var(--theme-border-soft);
     border-radius: 20px;
     background: var(--theme-surface-panel);
+    color: var(--theme-text-primary);
     box-shadow: var(--theme-shadow-xl);
     display: none;
     flex-direction: column;
@@ -64,6 +65,19 @@ CONVENÇÕES:
 .wod-day-apply__dialog::backdrop {
     background: rgba(4, 12, 25, 0.72);
     backdrop-filter: blur(4px);
+}
+
+@media (max-width: 640px) {
+    .wod-day-apply__dialog {
+        inset: auto 0 0;
+        margin: 0;
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - env(safe-area-inset-top) - 0.75rem);
+        border-radius: 20px 20px 0 0;
+        border-bottom: 0;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
 }
 
 .wod-day-apply__dialog-head {

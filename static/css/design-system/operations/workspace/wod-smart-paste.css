@@ -532,13 +532,17 @@ body[data-theme="dark"] .smart-paste-native-picker {
  * Light + dark resolvidos automaticamente via tokens.css.
  */
 .smart-paste-day-dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     background: var(--theme-surface-strong);
+    color: var(--theme-text-primary);
     border: 1px solid var(--theme-border-soft);
     border-radius: 20px;
     padding: 0;
     max-width: 540px;
     width: calc(100vw - 2rem);
-    max-height: 82vh;
+    max-height: min(82vh, calc(100dvh - 2rem));
     overflow: hidden;
     box-shadow: var(--theme-shadow-xl);
 }
@@ -1004,6 +1008,12 @@ body[data-theme="dark"] .smart-paste-native-picker {
     margin: 0;
 }
 
+.smart-paste-day-chip__hint {
+    color: var(--theme-accent-support);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
 .smart-paste-auto-retry {
     display: flex;
     flex-wrap: wrap;
@@ -1077,12 +1087,7 @@ body[data-theme="dark"] .smart-paste-native-picker {
     color: var(--theme-accent-primary);
 }
 
-/* ── Inline review form — override do global input para caber no card ── */
-/*
- * Grid 2 colunas: Reps + Carga ficam lado a lado.
- * Texto, Slug e Nota: span 2 (largura total).
- * Inputs com override do global (min-height:48px → 34px, radius:18px → 8px).
- */
+/* ── Inline review form — core choice first, optional corrections below ── */
 .smart-paste-inline-review-form {
     margin-top: 0.6rem;
     padding-top: 0.65rem;
@@ -1098,14 +1103,51 @@ body[data-theme="dark"] .smart-paste-native-picker {
     gap: 0.25rem;
 }
 
-/* Texto (1º), Slug (2º) e Nota (5º): largura total */
-.smart-paste-inline-review-form label:nth-of-type(1),
-.smart-paste-inline-review-form label:nth-of-type(2),
-.smart-paste-inline-review-form label:nth-of-type(5) {
-    grid-column: span 2;
+.smart-paste-inline-review-form > label {
+    grid-column: 1 / -1;
 }
 
-/* Reps (3º) e Carga (4º): meia largura — ficam lado a lado */
+.smart-paste-inline-review-form label > small {
+    color: var(--theme-text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.smart-paste-review-extras {
+    grid-column: 1 / -1;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 12px;
+    background: var(--theme-surface-muted);
+    padding: 0.6rem 0.75rem;
+}
+
+.smart-paste-review-extras summary {
+    cursor: pointer;
+    color: var(--theme-text-secondary);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.smart-paste-review-extras__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 0.75rem;
+}
+
+.smart-paste-review-extras__fields label:last-child {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 520px) {
+    .smart-paste-review-extras__fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .smart-paste-review-extras__fields label:last-child {
+        grid-column: 1;
+    }
+}
 
 .smart-paste-inline-review-form label > span {
     font-size: 0.7rem;
@@ -1404,9 +1446,19 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
     }
 
     .smart-paste-day-dialog {
-        width: min(calc(100vw - 1rem), 540px);
-        max-height: 88vh;
-        border-radius: 16px;
+        inset: auto 0 0;
+        margin: 0;
+        width: 100%;
+        max-width: none;
+        height: min(88vh, calc(100dvh - env(safe-area-inset-top) - 0.75rem));
+        max-height: calc(100dvh - env(safe-area-inset-top) - 0.75rem);
+        border-radius: 20px 20px 0 0;
+        border-bottom: 0;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .smart-paste-day-dialog__body {
+        padding-bottom: 2rem;
     }
 
     .smart-paste-day-dialog__head {
