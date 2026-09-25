@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Validate the live Haiku response contract
         uses: appleboy/ssh-action@v1.2.5
+        env:
+          ANTHROPIC_WORKSPACE_ID: ${{ secrets.ANTHROPIC_WORKSPACE_ID }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -20,10 +22,37 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           timeout: 2m
           command_timeout: 2m
+          envs: ANTHROPIC_WORKSPACE_ID
           script: |
-            set -euo pipefail
+            set -eo pipefail
             cd /srv/octobox/app
+            /srv/octobox/venv/bin/python - <<'PY'
+            import os
+            import re
+            from pathlib import Path
+
+            workspace_id = os.environ.get('ANTHROPIC_WORKSPACE_ID', '').strip()
+            if not re.fullmatch(r'wrkspc_[A-Za-z0-9]+', workspace_id):
+                raise SystemExit('smartpaste_workspace_id=invalid_or_missing')
+            env_path = Path('/srv/octobox/shared/octobox.env')
+            lines = env_path.read_text(encoding='utf-8').splitlines()
+            output = []
+            found = False
+            for line in lines:
+                if line.startswith('ANTHROPIC_WORKSPACE_ID='):
+                    if not found:
+                        output.append(f'ANTHROPIC_WORKSPACE_ID={workspace_id}')
+                        found = True
+                    continue
+                output.append(line)
+            if not found:
+                output.append(f'ANTHROPIC_WORKSPACE_ID={workspace_id}')
+            env_path.write_text('\n'.join(output) + '\n', encoding='utf-8')
+            print('smartpaste_workspace_id=configured')
+            PY
             set -a
             source /srv/octobox/shared/octobox.env
             set +a
+            systemctl restart octobox-gunicorn
+            systemctl is-active --quiet octobox-gunicorn
             /srv/octobox/venv/bin/python scripts/smoke_smartpaste_haiku.py
