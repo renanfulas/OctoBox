@@ -26,4 +26,53 @@ jobs:
             set -a
             source /srv/octobox/shared/octobox.env
             set +a
-            /srv/octobox/venv/bin/python scripts/smoke_smartpaste_haiku.py
+            /srv/octobox/venv/bin/python - <<'PY'
+            import os
+            import sys
+            import requests
+            from operations.services.wod_paste_parser import load_wod_movement_dictionary
+            from operations.services.wod_slug_resolver import (
+                _ANTHROPIC_API_VERSION,
+                _ANTHROPIC_MESSAGES_URL,
+                _ANTHROPIC_MODEL,
+                _MAX_OUTPUT_TOKENS,
+                _OUTPUT_SCHEMA,
+                _STATIC_INSTRUCTIONS,
+                _parse_and_validate,
+            )
+
+            dictionary = load_wod_movement_dictionary()
+            static_block = _STATIC_INSTRUCTIONS + '\n\nDicionario canonico:\n' + '\n'.join(
+                f'{slug}: {", ".join(aliases)}' for slug, aliases in dictionary
+            )
+            response = requests.post(
+                _ANTHROPIC_MESSAGES_URL,
+                headers={
+                    'x-api-key': os.environ['ANTHROPIC_API_KEY'],
+                    'anthropic-version': _ANTHROPIC_API_VERSION,
+                    'Content-Type': 'application/json',
+                },
+                json={
+                    'model': _ANTHROPIC_MODEL,
+                    'max_tokens': _MAX_OUTPUT_TOKENS,
+                    'output_config': {'format': {'type': 'json_schema', 'schema': _OUTPUT_SCHEMA}},
+                    'system': [{'type': 'text', 'text': static_block}],
+                    'messages': [{'role': 'user', 'content': 'Identifique por id: [{"id":0,"texto":"10 wall waks","contexto":"WOD"}]'}],
+                },
+                timeout=20,
+            )
+            if response.status_code >= 400:
+                error = response.json().get('error', {})
+                print(f"anthropic_smoke_error status={response.status_code} type={error.get('type', 'unknown')} message={str(error.get('message', ''))[:400]}")
+                sys.exit(1)
+            parts = [block.get('text', '') for block in response.json().get('content', []) if block.get('type') == 'text']
+            result = _parse_and_validate(
+                raw_text='\n'.join(parts),
+                valid_slugs={slug for slug, _aliases in dictionary},
+                unrecognized_names=['10 wall waks'],
+            )
+            if result.get('10 wall waks', {}).get('slug') != 'wall_walk':
+                print('smartpaste_haiku_smoke=invalid_or_unresolved')
+                sys.exit(1)
+            print('smartpaste_haiku_smoke=pass resolved=1')
+            PY
