@@ -555,6 +555,28 @@ class WeeklyWodReviewMovementForm(forms.Form):
             maxlength=255,
         )
 
+    def clean_movement_slug(self):
+        slug = (self.cleaned_data.get('movement_slug') or '').strip().lower()
+        if not slug:
+            return ''
+        valid_slugs = {choice[0] for choice in self.slug_choices}
+        if slug not in valid_slugs and slug != 'custom':
+            raise forms.ValidationError(
+                'Escolha um movimento da lista ou use custom para manter o texto original.'
+            )
+        return slug
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get('movement_slug') and cleaned.get('movement_label_raw'):
+            from operations.services.wod_paste_parser import resolve_movement_slug
+            if not resolve_movement_slug(cleaned['movement_label_raw']):
+                self.add_error(
+                    'movement_slug',
+                    'Selecione um movimento ou use custom para manter o texto original.',
+                )
+        return cleaned
+
 
 class WeeklyWodUndoReplicationForm(forms.Form):
     batch_id = forms.IntegerField(min_value=1)
