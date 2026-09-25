@@ -14,7 +14,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutLoadLogSetRole
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog
 from public_workouts.services import build_weekly_review
 
 
@@ -22,15 +22,19 @@ def _make_account(email='atleta@example.com') -> PublicWorkoutAccount:
     return PublicWorkoutAccount.objects.create(email=email)
 
 
-def _log(account, *, movement_slug, weight_kg, reps, performed_on):
+def _log(account, *, movement_slug, weight_kg, reps, performed_on, set_role='top_set'):
+    # set_role='top_set' por padrao -- mesma correcao de test_one_rep_max.py::_log
+    # (plano curva-grafico-hierarquia-e-set-role.md): sem isso, a linha
+    # fica com set_role=None e nunca entra na tendencia que
+    # build_weekly_review agrega.
     return PublicWorkoutLoadLog.objects.create(
         account=account,
         movement_slug=movement_slug,
         weight_kg=Decimal(str(weight_kg)),
         reps=reps,
         performed_on=performed_on,
+        set_role=set_role,
         idempotency_key=f'{movement_slug}-{performed_on.isoformat()}-{weight_kg}',
-        set_role=PublicWorkoutLoadLogSetRole.TOP_SET,
     )
 
 

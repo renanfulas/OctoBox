@@ -166,14 +166,20 @@ def _weekly_best_estimates(*, account_id: int, movement_slug: str) -> list[tuple
     Plano curva-grafico-hierarquia-e-set-role.md (Revisao 8, §7.7): filtra
     `set_role__in=_CURVE_AND_TREND_ROLES` no banco (nunca em Python) e
     aplica `effective_top_sets_by_day` — a MESMA dedup por dia que a curva
-    principal usa. Isso mantém gráfico e tendência coerentes quando há
-    mais de um registro no mesmo dia."""
+    principal usa (progress_snapshot.py). Antes desta correcao, uma
+    correcao no mesmo dia (100kg errado -> 90kg certo) deixava os DOIS
+    elegiveis aqui, e esta funcao pegava a MAIOR estimativa (a do erro),
+    divergindo da curva (que ja usava o mais recente) -- bug real."""
     from .models import PublicWorkoutLoadLog
     from .progress_eligibility import _CURVE_AND_TREND_ROLES, effective_top_sets_by_day
 
+    # is_active=True (Fase 3 do plano curva-carga-completa-reps-rir-
+    # recorde): registro corrigido nunca entra na tendencia, mesma regra
+    # de build_student_package/build_weekly_review em services.py --
+    # aplicada JUNTO com o filtro de set_role, nao em substituicao a ele.
     logs = PublicWorkoutLoadLog.objects.filter(
         account_id=account_id, movement_slug=movement_slug,
-        set_role__in=_CURVE_AND_TREND_ROLES,
+        set_role__in=_CURVE_AND_TREND_ROLES, is_active=True,
     ).order_by('performed_on')
 
     return _weekly_best_estimates_from_logs(movement_slug=movement_slug, logs=list(logs))

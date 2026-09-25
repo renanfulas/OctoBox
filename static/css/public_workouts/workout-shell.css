@@ -712,10 +712,14 @@ button.workout-week-day:focus-visible {
 
 .workout-load-chart-head {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px 14px;
     flex-wrap: wrap;
+}
+
+.workout-load-chart-head h3 {
+    flex-basis: 100%;
 }
 
 .workout-load-chart h3 {
@@ -735,9 +739,67 @@ button.workout-week-day:focus-visible {
 }
 
 .workout-load-chart-current strong {
-    font-size: 1.05rem;
+    font-size: clamp(2rem, 8vw, 2.6rem);
+    line-height: 1;
+    font-weight: 800;
     color: var(--brand);
     text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
+}
+
+.workout-load-chart-unit {
+    font-size: 0.85rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-load-chart-statement {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--theme-text-secondary, var(--theme-text-muted));
+    font-size: 0.9rem;
+}
+
+.workout-load-chart-context {
+    flex-basis: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8125rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-load-chart-context summary,
+.workout-load-chart-siblings summary {
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.workout-load-chart-scale-label {
+    font-size: 9px;
+    fill: var(--theme-text-muted);
+}
+
+.workout-load-chart-dot--legacy {
+    fill: var(--theme-text-muted);
+    stroke: var(--theme-surface-secondary);
+    stroke-width: 1.5;
+}
+
+.workout-load-chart-empty {
+    margin: 0.75rem 0;
+    color: var(--theme-text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.workout-load-chart-legacy-label {
+    margin: 0.25rem 0 0;
+    color: var(--theme-text-muted);
+    font-size: 0.8125rem;
+}
+
+.workout-load-chart-legacy-label span {
+    color: var(--theme-text-muted);
 }
 
 .workout-load-chart-trend {
@@ -859,6 +921,10 @@ button.workout-week-day:focus-visible {
     margin: 0.5rem 0 0;
     font-size: 0.72rem;
     color: var(--theme-text-muted);
+}
+
+.workout-load-chart-siblings p {
+    margin: 0.35rem 0 0;
 }
 
 .workout-load-chart-siblings a {
@@ -1023,6 +1089,44 @@ button.workout-week-day:focus-visible {
     color: var(--theme-accent-danger);
 }
 
+/* Selo de recorde (Fase 4, §6.3) -- "no maximo uma transicao curta",
+   nunca confete/loop. [hidden] some completamente; a classe --visible e'
+   quem revela (JS troca as duas juntas, load_tracker.js::updateAchievementBadge). */
+.workout-load-input__achievement {
+    flex-basis: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--theme-accent-success-alpha);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-success) 45%, transparent);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--theme-text-primary, inherit);
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.workout-load-input__achievement[hidden] {
+    display: none;
+}
+
+.workout-load-input__achievement--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.workout-load-input__achievement strong {
+    display: block;
+    color: var(--theme-accent-success);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workout-load-input__achievement {
+        transition: none;
+    }
+}
+
 /* Dica de ultima carga ("Última vez: 80 kg — toque pra usar") — clicavel,
    preenche o campo sem exigir digitar de novo o mesmo numero de sempre. */
 .workout-load-input__head {
@@ -1120,6 +1224,52 @@ button.workout-week-day:focus-visible {
     color: var(--theme-text-muted);
 }
 
+.workout-record-card__reps {
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+}
+
+/* "Resumo do ciclo" (visão consolidada por movimento) reusa o mesmo
+   card de "Seus recordes" acima, mas soma tendência + 1RM -- __meta
+   agrupa os dois numa linha própria pra não competir com __reps. */
+.workout-record-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+/* Card compartilhável -- fundação (ver templatetags::share_content_for_chart):
+   hoje só texto pro Web Share API, botão discreto no mesmo tom das
+   ações secundárias do card (Ver variações). */
+.workout-load-chart-share {
+    flex-basis: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.workout-load-chart-share-button {
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--theme-border-soft);
+    background: transparent;
+    color: var(--theme-text-muted);
+    font-size: 0.74rem;
+    cursor: pointer;
+}
+
+.workout-load-chart-share-button:active {
+    background: color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
+.workout-load-chart-share-status {
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+}
+
 /* Troca de exercicio (Entrega 4) -- pills das variacoes irma dentro do
    proprio widget de registro de carga. A pill ativa mostra qual
    movement_slug o clique em "Salvar" vai gravar (ver
@@ -1147,6 +1297,177 @@ button.workout-week-day:focus-visible {
     border-color: var(--brand);
     background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
     color: var(--theme-text-primary, inherit);
+}
+
+/* Toggle de aquecimento -- plano curva-grafico-hierarquia-e-set-role.md,
+   §2.3.6/§7.10. Desmarcado por padrao (serie principal); "feeder"/
+   "max_set" nunca aparecem como jargao pro aluno, so' este binario. */
+.workout-load-input__warmup-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-basis: 100%;
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+    cursor: pointer;
+}
+
+/* Reps + esforco (RIR) -- plano curva-carga-completa-reps-rir-recorde,
+   Fase 1. Mesmos tokens do resto do widget, sem cor nova: --brand pro
+   acento, --theme-surface-strong/--theme-border-soft pra superficie. */
+.workout-load-input__reps-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-basis: 100%;
+}
+
+.workout-load-input__mini-label {
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+    white-space: nowrap;
+}
+
+.workout-load-input__reps-field {
+    width: 64px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary, inherit);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Alvo de toque um pouco menor que o stepper de peso (36px): controle
+   secundario, ajustado com menos frequencia que o peso -- ver nota no
+   plano sobre hierarquia de alvo de toque por importancia, nao um valor
+   arbitrario. Ainda dentro da faixa confortavel de toque. */
+.workout-load-input__step--mini {
+    width: 30px;
+    height: 30px;
+    font-size: 0.95rem;
+}
+
+.workout-load-input__effort {
+    flex-basis: 100%;
+}
+
+.workout-load-input__effort-summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+    list-style: none;
+}
+
+.workout-load-input__effort-summary::-webkit-details-marker {
+    display: none;
+}
+
+.workout-load-input__effort-value {
+    color: var(--brand);
+    font-weight: 600;
+}
+
+.workout-load-input__effort-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 8px;
+}
+
+.workout-load-input__effort-question {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--theme-text-primary, inherit);
+    font-weight: 600;
+}
+
+.workout-load-input__effort-help {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-load-input__rir-pills {
+    display: flex;
+    gap: 6px;
+}
+
+.workout-load-input__rir-pill {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-input__rir-pill.is-selected {
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
+    color: var(--theme-text-primary, inherit);
+}
+
+.workout-load-input__rir-other-toggle,
+.workout-load-input__rir-clear {
+    align-self: flex-start;
+    padding: 4px 2px;
+    border: none;
+    background: none;
+    color: var(--theme-text-muted);
+    font-size: 0.74rem;
+    text-decoration: underline dotted;
+    cursor: pointer;
+}
+
+.workout-load-input__rir-other-field {
+    width: 84px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary, inherit);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-input__rir-other-field[hidden] {
+    display: none;
+}
+
+.workout-load-input__calculator {
+    flex-basis: 100%;
+}
+
+.workout-load-input__plate-inventory {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 6px;
+}
+
+.workout-load-input__plate-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .workout-load-input__effort[open] .workout-load-input__effort-body,
+    .workout-load-input__calculator[open] .workout-load-input__effort-body {
+        animation: workout-load-input-effort-open 0.18s ease;
+    }
+}
+
+@keyframes workout-load-input-effort-open {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* Revisao semanal (Entrega 4) -- texto sob demanda (botao "Gerar

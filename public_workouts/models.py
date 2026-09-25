@@ -187,6 +187,20 @@ class PublicWorkoutMovementStatus(models.TextChoices):
     PENDING = 'pending', 'Pendente de revisao'
 
 
+class PublicWorkoutMovementEquipment(models.TextChoices):
+    # Plano curva-carga-completa-reps-rir-recorde, Fase 3 (§5.1): curado a
+    # mao, NUNCA inferido de movement_pattern/nome — 'push' cobre tanto
+    # supino com barra quanto desenvolvimento com halteres quanto
+    # crucifixo na maquina, e uma heuristica automatica erraria uma fracao
+    # real dos movimentos silenciosamente.
+    BARBELL = 'barbell', 'Barra'
+    DUMBBELL = 'dumbbell', 'Halteres'
+    MACHINE = 'machine', 'Maquina'
+    BODYWEIGHT = 'bodyweight', 'Peso corporal'
+    CABLE = 'cable', 'Cabo/polia'
+    OTHER = 'other', 'Outro'
+
+
 class PublicWorkoutMovement(models.Model):
     """Catalogo de movimentos do corredor — nunca `student_app.MovementLibrary`.
 
@@ -211,6 +225,21 @@ class PublicWorkoutMovement(models.Model):
         default=PublicWorkoutMovementStatus.PENDING,
         db_index=True,
     )
+    # default=OTHER e' seguro aqui (diferente do default fabricado que
+    # este mesmo projeto evita pra set_role): OTHER so' significa "nao
+    # mostra a calculadora de anilhas ainda" — nunca alimenta 1RM,
+    # progresso ou recorde. Curadoria incremental, sem backfill obrigatorio.
+    equipment_type = models.CharField(
+        max_length=16,
+        choices=PublicWorkoutMovementEquipment.choices,
+        default=PublicWorkoutMovementEquipment.OTHER,
+        db_index=True,
+    )
+    # Metadado SEPARADO de equipment_type de proposito (plano §5.1):
+    # equipment_type=barbell sozinho nao prova que o peso registrado pelo
+    # aluno JA inclui a barra (alguns treinadores podem pedir so' o peso
+    # das anilhas) — a calculadora so' aparece com os dois confirmados.
+    logged_weight_includes_bar = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1118,7 +1147,22 @@ class PublicWorkoutPaymentNotice(models.Model):
         return f'{self.payment_id} D{self.offset_days:+d} [{"enviado" if self.sent_at else "pendente"}]'
 
 
+class PublicWorkoutLoadLogAchievementKind(models.TextChoices):
+    # Plano curva-carga-completa-reps-rir-recorde (Fase 4, §6.1) -- so' um
+    # valor por enquanto (maior carga do movimento), mas TextChoices desde
+    # ja (mesmo padrao de SetRole abaixo) pra nao reformar o campo se um
+    # segundo tipo de conquista aparecer depois.
+    LOAD_RECORD = 'load_record', 'Nova maior carga'
+
+
 class PublicWorkoutLoadLogSetRole(models.TextChoices):
+    # Plano curva-grafico-hierarquia-e-set-role.md (Revisao 8), §7.2 —
+    # separa aquecimento/aproximacao de serie principal pra a curva de
+    # progresso/recorde nunca misturar registros nao-comparaveis.
+    # `LEGACY_UNKNOWN` e' obrigatorio no enum (nao so' um valor usado sem
+    # declarar): historico anterior a este campo precisa de um estado que
+    # o proprio model reconheça, nunca inventando `top_set` sobre dado que
+    # nunca teve essa classificacao.
     WARMUP = 'warmup', 'Aquecimento'
     FEEDER = 'feeder', 'Aproximação'
     TOP_SET = 'top_set', 'Série principal'
@@ -1158,7 +1202,58 @@ class PublicWorkoutLoadLog(models.Model):
     # Garantia de idempotencia do S3 (D.5): reenvio da outbox (Onda B3) com a
     # mesma chave nunca duplica linha — o banco e a trava, nao o codigo.
     idempotency_key = models.CharField(max_length=128, unique=True)
-    set_role = models.CharField(max_length=16, choices=PublicWorkoutLoadLogSetRole.choices, null=True)
+    # Correcao real (plano curva-carga-completa-reps-rir-recorde, Fase 3,
+    # §4.1): `supersedes` aponta pro registro que ESTE substitui. FK vive
+    # no registro NOVO, nunca no antigo -- o antigo nao sabe de antemao
+    # que vai ser corrigido. on_delete=SET_NULL: nao ha rota de delecao
+    # destes logs hoje, mas se algum dia houver, perder o VINCULO de
+    # correcao e' aceitavel; cascatear a delecao da correcao NAO seria.
+    supersedes = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL, related_name='corrections',
+    )
+    # Denormalizado de proposito (nao e' so' "nao tem correcao apontando
+    # pra mim", calculado por subquery): toda consulta de ESTADO ATUAL
+    # (curva, recorde, sugestao, eco de hoje) filtra por is_active=True
+    # antes de qualquer outra coisa -- um indice direto e' muito mais
+    # barato que reavaliar NOT EXISTS em cada leitura. Vira False na MESMA
+    # transacao que cria a correcao (services.py::correct_load), nunca
+    # calculado a posteriori.
+    is_active = models.BooleanField(default=True, db_index=True)
+    # Nullable de proposito (Migrations A/B, 0028/0029) -- NUNCA
+    # default='top_set' no field, fabricaria precisao sobre o historico
+    # existente. Vira NOT NULL so' na Migration C, que fica FORA da pasta
+    # migrations/ de proposito (ver docs/plans/
+    # pending-migration-set-role-not-null.py) -- achado real via CI: um
+    # `migrate` sem alvo aplica TODAS as migrations pendentes, e um banco
+    # de teste recem-criado (CI, `--create-db`) passaria qualquer cheque
+    # de "zero linha NULL" trivialmente (banco vazio), tornando a coluna
+    # NOT NULL cedo demais e quebrando testes que criam
+    # PublicWorkoutLoadLog sem set_role explicito. So' vira uma migration
+    # de verdade (e so' entao este campo perde o `null=True`) quando o
+    # backfill em produção for confirmado -- ver checkpoint no plano,
+    # §7.12.
+    set_role = models.CharField(
+        max_length=16, choices=PublicWorkoutLoadLogSetRole.choices, null=True,
+    )
+    # Fase 4 do plano curva-carga-completa-reps-rir-recorde (§6.2):
+    # resultado da conquista CALCULADO E GRAVADO na mesma transacao que
+    # cria esta linha (services.py::_lock_and_resolve_achievement) --
+    # nunca recalculado numa leitura posterior. E' o que garante replay
+    # estavel depois de uma resposta perdida (retry com a mesma
+    # idempotency_key devolve esta MESMA linha, com o MESMO resultado, em
+    # vez de comparar contra um "estado atual" que pode ja ter mudado).
+    # NULL == "sem evento" (a maioria das linhas), nunca um valor
+    # fabricado depois do fato.
+    achievement_kind = models.CharField(
+        max_length=16, choices=PublicWorkoutLoadLogAchievementKind.choices, null=True, blank=True,
+    )
+    # Peso anterior que este registro superou -- o cliente deriva
+    # delta_kg subtraindo (weight_kg - achievement_previous_weight_kg) na
+    # serializacao, nunca grava o delta em si (evita um segundo campo que
+    # poderia divergir do peso se algum dia um dos dois for editado).
+    achievement_previous_weight_kg = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1168,10 +1263,31 @@ class PublicWorkoutLoadLog(models.Model):
             models.Index(fields=['account', 'set_role', 'movement_slug', 'performed_on'], name='pwll_acct_role_move_day_idx'),
         ]
         constraints = [
+            # Migration B (§7.2): defesa em profundidade contra qualquer
+            # escrita que nao passe por record_load/correct_load (edicao
+            # direta no Admin, por exemplo). Aceita NULL de proposito --
+            # nao depende do backfill ter completado; so' quando a
+            # Migration C (pendente, fora de migrations/) for aplicada de
+            # verdade essa coluna vira NOT NULL e este constraint troca de
+            # forma junto.
             models.CheckConstraint(
-                condition=models.Q(set_role__in=PublicWorkoutLoadLogSetRole.values)
-                | models.Q(set_role__isnull=True),
+                condition=(
+                    models.Q(set_role__in=PublicWorkoutLoadLogSetRole.values)
+                    | models.Q(set_role__isnull=True)
+                ),
                 name='public_workouts_loadlog_set_role_valid_or_null',
+            ),
+            # Fase 4 (§6.2): os dois campos de conquista nascem juntos ou
+            # nao nascem -- defesa em profundidade contra uma escrita
+            # parcial (fora de record_load/correct_load) que gravasse
+            # achievement_kind sem o peso anterior, deixando delta_kg
+            # impossivel de calcular na serializacao.
+            models.CheckConstraint(
+                condition=(
+                    models.Q(achievement_kind__isnull=True, achievement_previous_weight_kg__isnull=True)
+                    | models.Q(achievement_kind__isnull=False, achievement_previous_weight_kg__isnull=False)
+                ),
+                name='public_workouts_loadlog_achievement_kind_and_previous_weight_together',
             ),
         ]
 

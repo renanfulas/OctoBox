@@ -49,6 +49,8 @@ from public_workouts.periodization import (
     current_week_number,
     suggest_progressive_load_kg,
 )
+from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementEquipment
+from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.substitutions import suggest_substitutes
 from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
 
@@ -172,6 +174,22 @@ def sibling_variations(movement_slug: str) -> list[dict]:
     faltava. Lista vazia (nunca quebra o template) quando o movimento
     não está classificado ou não tem irmã ativa no catálogo."""
     return suggest_substitutes(movement_slug=movement_slug, limit=3)
+
+
+@register.filter
+def movement_shows_plate_calculator(movement_slug: str) -> bool:
+    """Plano curva-carga-completa-reps-rir-recorde, Fase 3 (§5.1): a
+    calculadora de anilhas só aparece quando os DOIS metadados curados
+    batem — `equipment_type='barbell'` E `logged_weight_includes_bar`.
+    equipment_type sozinho não prova a convenção de registro (um
+    treinador pode pedir só o peso das anilhas, sem a barra); os dois
+    juntos exigem curadoria humana explícita, nunca inferência automática
+    de `movement_pattern`/nome (mesmo cuidado de `suggest_substitutes`).
+    `False` (nunca quebra o template) quando o slug não está no catálogo."""
+    movement = PublicWorkoutMovement.objects.filter(slug=movement_slug).first()
+    if movement is None:
+        return False
+    return movement.equipment_type == PublicWorkoutMovementEquipment.BARBELL and movement.logged_weight_includes_bar
 
 
 _GLOSSARY_TERMS = {
@@ -377,7 +395,10 @@ def load_chart_points(entries: list[dict]) -> dict:
     # Plano curva-grafico-hierarquia-e-set-role.md, §2.1/§2.2: a linha so'
     # pode conectar series COMPARAVEIS -- so' top_set (eligible_for_
     # progress_curve) entra na curva principal. O template de produção usa
-    # o snapshot para mostrar legado como pontos neutros e sem conexão.
+    # o snapshot (progress_chart_for_movement) para mostrar legado como
+    # pontos neutros e sem conexão -- este filtro/função permanece so'
+    # pro caminho de teste direto (test_workout_template.py), nao esta'
+    # mais no caminho real de renderização.
     weighted = [
         entry for entry in entries
         if entry.get('weight_kg') is not None and eligible_for_progress_curve(entry)
@@ -550,6 +571,104 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
         'scale_max': scale['max_kg'] if scale else None,
     }
 
+@register.simple_tag
+def cycle_summary_rows(progress_snapshots: dict, movement_labels: dict | None) -> list[dict]:
+    """Visão consolidada do ciclo (1ª das "3 frentes seguintes" citadas em
+    curva-grafico-hierarquia-e-set-role.md §0, junto de celebração de PR
+    -- já entregue -- e card compartilhável) -- resumo por movimento pra
+    não precisar abrir cada card de Evolução de carga pra saber "como
+    estou indo neste ciclo".
+
+    NUNCA recalcula nada: cada linha vem do MESMO `ProgressSnapshot` que
+    os cards de Evolução/1RM/tendência já usam (`build_progress_snapshots`,
+    uma chamada em lote por conta, threada pela view) -- zero query nova,
+    zero risco de um número aqui divergir do card detalhado do mesmo
+    movimento. Movimento sem nenhum top_set ativo (nunca registrado, ou
+    só aquecimento/legado) não aparece -- um resumo com linha vazia não
+    ajuda ninguém."""
+    rows = []
+    for movement_slug, snapshot in (progress_snapshots or {}).items():
+        latest = snapshot.latest_top_set
+        if latest is None:
+            continue
+        rows.append({
+            'movement_slug': movement_slug,
+            'label': resolve_movement_display_name(movement_slug, movement_labels),
+            'weight_kg': latest.weight_kg,
+            'reps': latest.reps,
+            'performed_on': latest.performed_on,
+            'trend_signal': snapshot.trend_signal,
+            'one_rep_max': snapshot.one_rep_max,
+        })
+    rows.sort(key=lambda row: row['label'])
+    return rows
+
+
+def _fmt_kg_for_share(value) -> str:
+    # Mesmo comportamento de fmtNumber (load_tracker.js): sem zero decimal
+    # falso (100 -> "100", nunca "100,0"), vírgula pt-BR. Texto puro (nao
+    # passa por {% localize %}) porque share_content_for_chart devolve
+    # STRING pronta pro Web Share API, nunca um numero pro template
+    # formatar depois.
+    return f'{float(value):g}'.replace('.', ',')
+
+
+@register.simple_tag
+def share_content_for_chart(chart: dict, movement_label: str) -> dict:
+    """Card compartilhável (3ª frente, ver docstring de cycle_summary_rows)
+    -- FUNDAÇÃO decidida com o Renan em 24/09/2026: por agora só texto
+    pro Web Share API (`navigator.share`), nunca imagem gerada. Devolve
+    `{'title': '', 'text': ''}` (o template some o botão) quando não há
+    nada pra compartilhar ainda.
+
+    Por que este formato faz a versão com imagem ficar fácil depois: o
+    `chart` recebido aqui é o MESMO dict de `progress_chart_for_movement`
+    que já alimenta a tela (nunca uma segunda leitura/cálculo) -- quando
+    a versão com imagem existir, ela consome o MESMO `chart`/
+    `movement_label` e só ACRESCENTA uma chave nova a este dict (ex.:
+    `image_url`), sem mudar a assinatura desta tag. Do lado do JS,
+    `wireShareButtons` (load_tracker.js) já lê `data-share-title`/
+    `data-share-text` do jeito que vai continuar lendo depois -- só
+    ganharia um `data-share-image-url` opcional pra chamar
+    `navigator.share({files: [...]})` quando o arquivo existir."""
+    weight_kg = chart.get('latest_weight_kg') if chart else None
+    if weight_kg is None:
+        return {'title': '', 'text': ''}
+
+    parts = [f'{_fmt_kg_for_share(weight_kg)} kg']
+
+    trend_signal = chart.get('trend_signal')
+    if trend_signal == 'improving':
+        parts.append('em evolução')
+    elif trend_signal == 'plateau':
+        parts.append('estável')
+    elif trend_signal == 'declining':
+        parts.append('recuperando de um platô')
+
+    # So' menciona a variacao quando e' GANHO -- "card compartilhavel" e'
+    # uma superficie de celebracao (mesmo espirito da Fase 4), nao um
+    # extrato neutro. Uma queda no periodo ja aparece via trend_signal
+    # ("recuperando de um platô") sem precisar do numero negativo.
+    delta = chart.get('delta_weight_kg')
+    if delta and delta > 0:
+        parts.append(f'+{_fmt_kg_for_share(delta)} kg no período')
+
+    one_rep_max = chart.get('one_rep_max')
+    if one_rep_max is not None:
+        # Mesmo motivo de progress_eligibility.py::_role_of -- `chart` vem
+        # de progress_chart_for_movement, que so' repassa snapshot.one_rep_max
+        # como veio: OneRepMaxEstimate (dataclass, producao) OU dict puro
+        # (fixture de teste do template, ver test_workout_template.py::_render).
+        # Acessar so' por atributo quebraria com AttributeError no segundo caso.
+        value_kg = one_rep_max.get('value_kg') if isinstance(one_rep_max, dict) else one_rep_max.value_kg
+        parts.append(f'1RM estimado {_fmt_kg_for_share(value_kg)} kg')
+
+    return {
+        'title': f'Minha evolução em {movement_label}',
+        'text': f'💪 {movement_label}: ' + ' · '.join(parts),
+    }
+
+
 @register.filter
 def personal_record(entries: list[dict]) -> dict:
     """Onda B3 — aba "Suas Cargas": maior peso ja registrado de UM
@@ -633,18 +752,6 @@ def periodization_phase_banner(payload: dict) -> dict:
     }
 
 
-def _last_log_for_movement(load_history: list[dict], movement_slug: str) -> dict | None:
-    """Último registro de carga pra ESTE movimento — `load_history` já vem
-    ordenado (movement_slug, performed_on) ascendente (services.
-    list_load_history), então o último match ao percorrer de trás pra
-    frente é sempre o mais recente pra esse movimento especificamente,
-    mesmo com vários movimentos intercalados na lista inteira."""
-    for entry in reversed(load_history or ()):
-        if entry.get('movement_slug') == movement_slug:
-            return entry
-    return None
-
-
 def _round_to_nearest_load(value: float) -> float:
     return round(value / 2.5) * 2.5
 
@@ -669,6 +776,44 @@ def _todays_weight(load_history: list, movement_slug: str, *, top_set_only: bool
         if top_set_only and not eligible_for_progress_curve(entry):
             continue
         return entry.get('weight_kg')
+    return None
+
+
+@register.simple_tag
+def todays_logged_reps(load_history: list, movement_slug: str):
+    """Mesma busca de `todays_logged_weight`, só que devolvendo `reps` —
+    par pra pré-preencher o novo campo de repetições com o que já foi
+    salvo hoje (plano curva-carga-completa-reps-rir-recorde, Fase 1)."""
+    today_iso = timezone.localdate().isoformat()
+    for entry in reversed(load_history or ()):
+        if entry.get('movement_slug') == movement_slug and entry.get('performed_on') == today_iso:
+            return entry.get('reps')
+    return None
+
+
+@register.simple_tag
+def todays_logged_rir(load_history: list, movement_slug: str):
+    """Mesma busca de `todays_logged_weight`, só que devolvendo `rir`."""
+    today_iso = timezone.localdate().isoformat()
+    for entry in reversed(load_history or ()):
+        if entry.get('movement_slug') == movement_slug and entry.get('performed_on') == today_iso:
+            return entry.get('rir')
+    return None
+
+
+@register.simple_tag
+def todays_logged_idempotency_key(load_history: list, movement_slug: str):
+    """Chave do registro ATIVO de hoje pra este movimento — usada pelo
+    cliente como `supersedes_idempotency_key` quando o aluno edita e salva
+    de novo (Fase 3 do plano curva-carga-completa-reps-rir-recorde, §4.2):
+    "Salvar" sobre um valor já registrado hoje corrige aquele registro, em
+    vez de criar uma segunda linha pro mesmo dia. `load_history` já chega
+    aqui filtrado por `only_active=True` (ver views), então nunca aponta
+    pra um registro já corrigido por outra operação."""
+    today_iso = timezone.localdate().isoformat()
+    for entry in reversed(load_history or ()):
+        if entry.get('movement_slug') == movement_slug and entry.get('performed_on') == today_iso:
+            return entry.get('idempotency_key')
     return None
 
 

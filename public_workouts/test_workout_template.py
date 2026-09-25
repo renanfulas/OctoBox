@@ -21,11 +21,16 @@ from django.template.loader import render_to_string
 from django.test import TestCase
 from django.utils import timezone
 
-from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementStatus
+from public_workouts.models import (
+    PublicWorkoutMovement,
+    PublicWorkoutMovementEquipment,
+    PublicWorkoutMovementStatus,
+)
 from public_workouts.periodization import PHASE_PROFILES
 from public_workouts.schema import build_example_payload
 from public_workouts.templatetags.public_workouts_extras import (
     current_period_week_number,
+    cycle_summary_rows,
     dict_get,
     glossary_highlight,
     humanize_movement_slug,
@@ -35,8 +40,13 @@ from public_workouts.templatetags.public_workouts_extras import (
     periodization_phase_banner,
     personal_record,
     reps_phases,
+    movement_shows_plate_calculator,
     resolve_movement_display_name,
+    share_content_for_chart,
     sibling_variations,
+    todays_logged_idempotency_key,
+    todays_logged_reps,
+    todays_logged_rir,
     todays_logged_weight,
     todays_top_set_weight,
 )
@@ -284,6 +294,88 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-step="2.5"', html)
         self.assertIn('data-workout-load-hint', html)
 
+    def test_load_input_widget_has_warmup_toggle_unchecked_by_default(self):
+        # Plano curva-grafico-hierarquia-e-set-role.md, §2.3.6/§7.10.
+        html = _render(build_example_payload())
+
+        self.assertIn('data-workout-load-warmup-toggle', html)
+        self.assertNotIn('data-workout-load-warmup-toggle checked', html)
+
+    def test_load_input_widget_has_reps_and_effort_controls(self):
+        # Plano curva-carga-completa-reps-rir-recorde, Fase 1 (§1.3/§1.4).
+        html = _render(build_example_payload())
+
+        self.assertIn('data-workout-reps-field', html)
+        self.assertIn('data-workout-reps-step="-1"', html)
+        self.assertIn('data-workout-reps-step="1"', html)
+        self.assertIn('data-workout-rir-picker', html)
+        self.assertIn('data-rir-value="0"', html)
+        self.assertIn('data-rir-value="4"', html)
+        self.assertIn('data-workout-rir-other-toggle', html)
+        self.assertIn('data-workout-rir-other-field', html)
+        self.assertIn('data-workout-rir-clear', html)
+        self.assertIn('Esforço · opcional', html)
+
+    def test_load_input_widget_prefills_todays_reps(self):
+        today = timezone.localdate().isoformat()
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+            ],
+        )
+
+        self.assertIn('data-workout-reps-field', html)
+        self.assertIn('value="8"', html)
+
+    def test_load_input_widget_hides_plate_calculator_by_default(self):
+        # Sem nenhum PublicWorkoutMovement curado no catalogo (fixture
+        # limpa), a calculadora nunca aparece -- nunca inferida.
+        html = _render(build_example_payload())
+
+        self.assertNotIn('data-workout-plate-calculator', html)
+
+    def test_load_input_widget_shows_plate_calculator_when_curated(self):
+        PublicWorkoutMovement.objects.create(
+            slug='agachamento-livre', label_pt='Agachamento livre',
+            equipment_type=PublicWorkoutMovementEquipment.BARBELL, logged_weight_includes_bar=True,
+        )
+        html = _render(build_example_payload())
+
+        self.assertIn('data-workout-plate-calculator', html)
+        self.assertIn('data-plate-inventory', html)
+        self.assertIn('Montar anilhas', html)
+
+    def test_load_input_widget_exposes_todays_idempotency_key_for_correction(self):
+        today = timezone.localdate().isoformat()
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k-hoje'},
+            ],
+        )
+
+        self.assertIn('data-today-idempotency-key="k-hoje"', html)
+
+    def test_load_input_widget_omits_idempotency_key_without_todays_entry(self):
+        html = _render(build_example_payload(), load_history=[])
+
+        self.assertNotIn('data-today-idempotency-key', html)
+
+    def test_load_input_widget_prefills_todays_rir_as_data_attribute(self):
+        # RIR nunca vira um `value=""` de input comum (a selecao mora no
+        # picker) -- o servidor so expoe o dado via data-today-rir, e o
+        # JS decide se cai num atalho exato ou em "outro valor".
+        today = timezone.localdate().isoformat()
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+            ],
+        )
+
+        self.assertIn('data-today-rir="2.0"', html)
+
     def test_records_section_exists_inside_cargas_panel(self):
         # "Suas Cargas" (recorde por movimento) mora dentro do painel de
         # nivel superior "Cargas" (bottom nav) desde a reestruturacao de
@@ -312,6 +404,25 @@ class WorkoutTemplateRenderTests(TestCase):
         # registrado antes, 100.0 depois — personal_record ignora ordem
         # cronologica e pega so o maior valor).
         self.assertIn('<strong class="workout-record-card__value">100,0', html)
+        # personal_record ja devolve `reps` do mesmo log de maior peso
+        # (6, nao 8 -- o log de 100kg, nao o de 90kg) — achado real: o
+        # template ignorava esse valor mesmo com o dado pronto no dict.
+        self.assertIn('workout-record-card__reps">6 reps', html)
+
+    def test_records_tab_omits_reps_when_none(self):
+        # Registro anterior a esta fase (ou movimento sem reps
+        # quantificavel) tem reps=None -- o card nao pode renderizar
+        # "None reps", so omitir o span inteiro.
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': None, 'rir': None, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+            ],
+        )
+
+        self.assertIn('workout-record-card', html)
+        self.assertNotIn('None reps', html)
+        self.assertNotIn('workout-record-card__reps', html)
 
     def test_block_with_no_movements_shows_empty_state_not_crash(self):
         payload = build_example_payload()
@@ -412,9 +523,11 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('inativa', html)
 
     def test_history_tab_renders_load_chart_with_two_or_more_points(self):
+        second_day = timezone.localdate() - timedelta(days=10)
+        first_day = second_day - timedelta(days=20)
         html = _render(build_example_payload(), load_history=[
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': first_day.isoformat(), 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': second_day.isoformat(), 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
         ])
 
         self.assertIn('Agachamento livre', html)
@@ -424,7 +537,11 @@ class WorkoutTemplateRenderTests(TestCase):
         # convencao de "75,0% RM" ja testada acima); coordenadas do SVG
         # abaixo tem que ficar de FORA disso (SVG so aceita ponto).
         self.assertIn('100,0 kg', html)
-        self.assertIn('cx="46.0" cy="90.0"', html)
+        expected_first_x = round(46 + (600 - 10 - 46) * 60 / 90, 2)
+        expected_last_x = round(46 + (600 - 10 - 46) * 80 / 90, 2)
+        self.assertIn(f'cx="{expected_first_x}" cy="90.0"', html)
+        self.assertIn(f'cx="{expected_last_x}" cy="10.0"', html)
+        self.assertIn('text-anchor="middle"', html)
         self.assertNotIn('Ainda não há carga suficiente', html)
 
     def test_history_tab_shows_fallback_with_fewer_than_two_points(self):
@@ -560,6 +677,61 @@ class WorkoutTemplateRenderTests(TestCase):
 
         self.assertNotIn('workout-load-chart-version-line', html)
         self.assertNotIn('workout-load-chart-dot--version', html)
+
+    def test_cycle_summary_renders_a_row_per_movement_with_data(self):
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+            ],
+            trends_by_movement={'agachamento-livre': {'label': 'improving', 'weekly_estimates_kg': [90.0, 95.0, 100.0]}},
+        )
+
+        self.assertIn('Resumo do ciclo', html)
+        self.assertIn('Agachamento livre', html)
+        self.assertIn('Em evolução', html)
+        self.assertNotIn('Registre suas cargas pra ver o resumo deste ciclo.', html)
+
+    def test_cycle_summary_shows_empty_state_without_any_active_top_set(self):
+        html = _render(build_example_payload(), load_history=[])
+
+        self.assertIn('Registre suas cargas pra ver o resumo deste ciclo.', html)
+
+    def test_share_button_renders_with_server_computed_content(self):
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+        ])
+
+        self.assertIn('data-workout-share', html)
+        self.assertIn('data-share-title="Minha evolução em Agachamento livre"', html)
+        self.assertIn('data-share-text="💪 Agachamento livre: 100 kg"', html)
+
+    def test_share_button_is_absent_without_any_weight_to_share(self):
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'prancha', 'weight_kg': None, 'reps': 40, 'performed_on': '2026-01-12', 'idempotency_key': 'k1', 'set_role': 'top_set'},
+        ])
+
+        self.assertNotIn('data-workout-share', html)
+
+    def test_share_button_survives_a_movement_with_a_one_rep_max_estimate(self):
+        # Regressao real pega nesta rodada: one_rep_max_by_movement chega
+        # como DICT puro no fixture de teste do template (nunca
+        # OneRepMaxEstimate) -- sem o isinstance() guard em
+        # share_content_for_chart, isto levantava AttributeError e
+        # quebrava a renderizacao inteira da pagina pra qualquer aluno
+        # com 1RM estimado.
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-12', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k2', 'set_role': 'top_set'},
+            ],
+            one_rep_max_by_movement={
+                'agachamento-livre': {'value_kg': 128.6, 'formula': 'brzycki', 'confidence': 'high', 'effective_reps': 10},
+            },
+        )
+
+        self.assertIn('1RM estimado 128,6 kg', html)
 
 
 class WorkoutTopbarAndNavTests(TestCase):
@@ -873,6 +1045,40 @@ class SiblingVariationsFilterTests(TestCase):
         self.assertEqual(sibling_variations('nao-existe-no-catalogo'), [])
 
 
+class MovementShowsPlateCalculatorFilterTests(TestCase):
+    # Plano curva-carga-completa-reps-rir-recorde, Fase 3 (§5.1) -- os
+    # DOIS metadados curados precisam bater; nenhum sozinho basta.
+
+    def test_barbell_with_convention_confirmed_shows_calculator(self):
+        PublicWorkoutMovement.objects.create(
+            slug='agachamento-livre', label_pt='Agachamento livre',
+            equipment_type=PublicWorkoutMovementEquipment.BARBELL, logged_weight_includes_bar=True,
+        )
+
+        self.assertTrue(movement_shows_plate_calculator('agachamento-livre'))
+
+    def test_barbell_without_convention_confirmed_hides_calculator(self):
+        # equipment_type=barbell sozinho nao basta -- o treinador pode
+        # registrar so' o peso das anilhas, sem a barra.
+        PublicWorkoutMovement.objects.create(
+            slug='agachamento-livre', label_pt='Agachamento livre',
+            equipment_type=PublicWorkoutMovementEquipment.BARBELL, logged_weight_includes_bar=False,
+        )
+
+        self.assertFalse(movement_shows_plate_calculator('agachamento-livre'))
+
+    def test_non_barbell_hides_calculator_even_with_convention_flag(self):
+        PublicWorkoutMovement.objects.create(
+            slug='desenvolvimento-halteres', label_pt='Desenvolvimento com halteres',
+            equipment_type=PublicWorkoutMovementEquipment.DUMBBELL, logged_weight_includes_bar=True,
+        )
+
+        self.assertFalse(movement_shows_plate_calculator('desenvolvimento-halteres'))
+
+    def test_unclassified_movement_returns_false(self):
+        self.assertFalse(movement_shows_plate_calculator('nao-existe-no-catalogo'))
+
+
 class DictGetFilterTests(TestCase):
     def test_returns_value_for_existing_key(self):
         self.assertEqual(dict_get({'a': 1, 'b': 2}, 'b'), 2)
@@ -888,6 +1094,14 @@ class DictGetFilterTests(TestCase):
 
 
 class LoadChartPointsFilterTests(TestCase):
+    # set_role='top_set' em toda entry de proposito (plano
+    # curva-grafico-hierarquia-e-set-role.md, §2.1/§2.2): load_chart_points
+    # so' conecta series ELEGIVEIS na curva agora -- uma entry sem
+    # set_role (ou com warmup/legacy_unknown) e' filtrada fora antes de
+    # chegar no `len(weighted) < 2`, entao os testes deste arquivo (que
+    # nao sao sobre elegibilidade, e sim sobre geometria/trend/label)
+    # precisam do papel elegivel pra nao virar has_data=False por engano.
+
     def test_no_entries_has_no_data(self):
         result = load_chart_points([])
 
@@ -915,6 +1129,18 @@ class LoadChartPointsFilterTests(TestCase):
         result = load_chart_points(entries)
 
         self.assertFalse(result['has_data'])
+
+    def test_non_eligible_role_is_ignored_even_with_weight(self):
+        # Achado real do plano: sem este filtro, aquecimento contaminava a
+        # mesma linha da serie principal.
+        entries = [
+            {'weight_kg': 90.0, 'performed_on': '2026-01-05', 'set_role': 'top_set'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'set_role': 'warmup'},
+        ]
+
+        result = load_chart_points(entries)
+
+        self.assertFalse(result['has_data'])  # so' 1 top_set -> abaixo do minimo de 2
 
     def test_two_points_normalizes_between_pad_and_width_minus_pad(self):
         entries = [
@@ -1124,6 +1350,160 @@ class PersonalRecordFilterTests(TestCase):
 
         self.assertTrue(result['has_data'])
         self.assertEqual(result['weight_kg'], 60.0)
+
+    def test_warmup_never_becomes_the_record(self):
+        # Achado real do plano curva-grafico-hierarquia-e-set-role.md
+        # (§7.5/§8.1 item 4): max(weighted, key=peso) sem filtro deixava
+        # uma serie de aquecimento pesada virar "recorde" por engano.
+        result = personal_record([
+            {'weight_kg': 150.0, 'performed_on': '2026-01-01', 'reps': 5, 'set_role': 'warmup'},
+            {'weight_kg': 100.0, 'performed_on': '2026-01-01', 'reps': 5, 'set_role': 'top_set'},
+        ])
+
+        self.assertTrue(result['has_data'])
+        self.assertEqual(result['weight_kg'], 100.0)
+
+    def test_legacy_unknown_never_becomes_the_record(self):
+        result = personal_record([{'weight_kg': 200.0, 'performed_on': '2026-01-01', 'reps': 5, 'set_role': 'legacy_unknown'}])
+
+        self.assertFalse(result['has_data'])
+
+    def test_max_set_is_eligible_for_the_record(self):
+        result = personal_record([{'weight_kg': 100.0, 'performed_on': '2026-01-01', 'reps': 1, 'set_role': 'max_set'}])
+
+        self.assertTrue(result['has_data'])
+
+
+class CycleSummaryRowsTagTests(TestCase):
+    # "Visão consolidada do ciclo" -- 1ª das 3 frentes seguintes citadas em
+    # curva-grafico-hierarquia-e-set-role.md §0 (junto de celebração de PR,
+    # já entregue, e card compartilhável, abaixo).
+
+    def test_no_snapshots_returns_empty_list(self):
+        self.assertEqual(cycle_summary_rows({}, {}), [])
+
+    def test_movement_without_a_latest_top_set_is_skipped(self):
+        # Sem nenhum top_set ativo (nunca registrado, ou so' aquecimento/
+        # legado) -- uma linha vazia no resumo nao ajuda ninguem.
+        snapshots = {
+            'prancha': SimpleNamespace(latest_top_set=None, trend_signal='insufficient_data', one_rep_max=None),
+        }
+
+        self.assertEqual(cycle_summary_rows(snapshots, {}), [])
+
+    def test_builds_one_row_per_movement_sorted_by_label(self):
+        point_squat = SimpleNamespace(weight_kg=Decimal('100'), reps=8, performed_on=date(2026, 1, 12))
+        point_bench = SimpleNamespace(weight_kg=Decimal('60'), reps=10, performed_on=date(2026, 1, 12))
+        snapshots = {
+            'supino-reto': SimpleNamespace(latest_top_set=point_bench, trend_signal='plateau', one_rep_max=None),
+            'agachamento-livre': SimpleNamespace(latest_top_set=point_squat, trend_signal='improving', one_rep_max=None),
+        }
+
+        rows = cycle_summary_rows(snapshots, {})
+
+        self.assertEqual([row['movement_slug'] for row in rows], ['agachamento-livre', 'supino-reto'])
+        self.assertEqual(rows[0]['weight_kg'], Decimal('100'))
+        self.assertEqual(rows[0]['reps'], 8)
+        self.assertEqual(rows[0]['trend_signal'], 'improving')
+
+    def test_uses_movement_labels_when_available(self):
+        point = SimpleNamespace(weight_kg=Decimal('100'), reps=8, performed_on=date(2026, 1, 12))
+        snapshots = {'agachamento-livre': SimpleNamespace(latest_top_set=point, trend_signal='improving', one_rep_max=None)}
+
+        rows = cycle_summary_rows(snapshots, {'agachamento-livre': 'Back Squat'})
+
+        self.assertEqual(rows[0]['label'], 'Back Squat')
+
+    def test_never_recomputes_never_queries_the_database(self):
+        # NUNCA reconsulta o banco -- cada linha vem so' do snapshot ja
+        # calculado em lote (build_progress_snapshots), nunca de uma
+        # query nova por movimento.
+        point = SimpleNamespace(weight_kg=Decimal('100'), reps=8, performed_on=date(2026, 1, 12))
+        snapshots = {'agachamento-livre': SimpleNamespace(latest_top_set=point, trend_signal='declining', one_rep_max=None)}
+
+        with self.assertNumQueries(0):
+            cycle_summary_rows(snapshots, {})
+
+
+class ShareContentForChartTagTests(TestCase):
+    # Card compartilhável -- fundação decidida com o Renan em 24/09/2026:
+    # so' texto pro Web Share API por agora (ver docstring da tag).
+
+    def test_without_weight_returns_empty_content(self):
+        result = share_content_for_chart({'latest_weight_kg': None}, 'Agachamento livre')
+
+        self.assertEqual(result, {'title': '', 'text': ''})
+
+    def test_weight_only(self):
+        result = share_content_for_chart(
+            {
+                'latest_weight_kg': Decimal('100.00'), 'trend_signal': 'insufficient_data',
+                'delta_weight_kg': None, 'one_rep_max': None,
+            },
+            'Agachamento livre',
+        )
+
+        self.assertEqual(result['title'], 'Minha evolução em Agachamento livre')
+        self.assertEqual(result['text'], '💪 Agachamento livre: 100 kg')
+
+    def test_improving_trend_and_positive_delta_are_both_mentioned(self):
+        result = share_content_for_chart(
+            {
+                'latest_weight_kg': Decimal('102.5'), 'trend_signal': 'improving',
+                'delta_weight_kg': 2.5, 'one_rep_max': None,
+            },
+            'Agachamento livre',
+        )
+
+        self.assertEqual(result['text'], '💪 Agachamento livre: 102,5 kg · em evolução · +2,5 kg no período')
+
+    def test_negative_delta_is_never_mentioned(self):
+        # Card compartilhavel e' superficie de celebracao (mesmo espirito
+        # da Fase 4) -- uma queda no periodo nunca aparece como numero
+        # negativo, so' o trend_signal (de forma neutra) se houver.
+        result = share_content_for_chart(
+            {
+                'latest_weight_kg': Decimal('90'), 'trend_signal': 'declining',
+                'delta_weight_kg': -10.0, 'one_rep_max': None,
+            },
+            'Agachamento livre',
+        )
+
+        self.assertNotIn('-10', result['text'])
+        self.assertNotIn('kg no período', result['text'])
+        self.assertIn('recuperando de um platô', result['text'])
+
+    def test_includes_one_rep_max_when_present_as_a_dataclass(self):
+        # Formato de PRODUCAO: OneRepMaxEstimate (progress_snapshot.py),
+        # acessado por ATRIBUTO.
+        estimate = SimpleNamespace(value_kg=128.6, formula='brzycki', confidence='high', effective_reps=5)
+        result = share_content_for_chart(
+            {
+                'latest_weight_kg': Decimal('100'), 'trend_signal': 'insufficient_data',
+                'delta_weight_kg': None, 'one_rep_max': estimate,
+            },
+            'Agachamento livre',
+        )
+
+        self.assertIn('1RM estimado 128,6 kg', result['text'])
+
+    def test_includes_one_rep_max_when_present_as_a_plain_dict(self):
+        # Formato de FIXTURE DE TESTE DE TEMPLATE (test_workout_template.py
+        # ::_render, one_rep_max_by_movement) -- acessado por CHAVE, nunca
+        # por atributo. Sem o isinstance() guard em share_content_for_chart,
+        # isto levantava AttributeError (bug real pego nesta mesma rodada:
+        # test_history_tab_shows_one_rep_max_estimate_when_provided combina
+        # load_history+one_rep_max_by_movement e quebraria a suite inteira).
+        estimate = {'value_kg': 128.6, 'formula': 'brzycki', 'confidence': 'high', 'effective_reps': 5}
+        result = share_content_for_chart(
+            {
+                'latest_weight_kg': Decimal('100'), 'trend_signal': 'insufficient_data',
+                'delta_weight_kg': None, 'one_rep_max': estimate,
+            },
+            'Agachamento livre',
+        )
+
+        self.assertIn('1RM estimado 128,6 kg', result['text'])
 
 
 class ResolveMovementDisplayNameFilterTests(TestCase):
@@ -1696,6 +2076,48 @@ class TodaysLoggedWeightTagTests(TestCase):
 
     def test_empty_history_returns_none(self):
         self.assertIsNone(todays_logged_weight([], 'hack-squat'))
+
+
+class TodaysLoggedRepsAndRirTagTests(TestCase):
+    # Mesma busca de TodaysLoggedWeightTagTests, so que pros dois campos
+    # novos (plano curva-carga-completa-reps-rir-recorde, Fase 1).
+
+    def _today_iso(self) -> str:
+        return timezone.localdate().isoformat()
+
+    def test_todays_logged_reps_returns_reps_for_the_movement(self):
+        load_history = [{'movement_slug': 'hack-squat', 'reps': 8, 'performed_on': self._today_iso()}]
+
+        self.assertEqual(todays_logged_reps(load_history, 'hack-squat'), 8)
+
+    def test_todays_logged_reps_ignores_other_movements(self):
+        load_history = [{'movement_slug': 'leg-press', 'reps': 10, 'performed_on': self._today_iso()}]
+
+        self.assertIsNone(todays_logged_reps(load_history, 'hack-squat'))
+
+    def test_todays_logged_reps_ignores_previous_days(self):
+        load_history = [{'movement_slug': 'hack-squat', 'reps': 8, 'performed_on': '2020-01-01'}]
+
+        self.assertIsNone(todays_logged_reps(load_history, 'hack-squat'))
+
+    def test_todays_logged_rir_returns_rir_for_the_movement(self):
+        load_history = [{'movement_slug': 'hack-squat', 'rir': 1.5, 'performed_on': self._today_iso()}]
+
+        self.assertEqual(todays_logged_rir(load_history, 'hack-squat'), 1.5)
+
+    def test_todays_logged_rir_empty_history_returns_none(self):
+        self.assertIsNone(todays_logged_rir([], 'hack-squat'))
+
+    def test_todays_logged_idempotency_key_returns_key_for_the_movement(self):
+        # Fase 3 do plano curva-carga-completa-reps-rir-recorde (§4.2) --
+        # esta chave e' o que o cliente manda como supersedes_idempotency_key
+        # quando o aluno edita e salva de novo no mesmo dia.
+        load_history = [{'movement_slug': 'hack-squat', 'idempotency_key': 'k1', 'performed_on': self._today_iso()}]
+
+        self.assertEqual(todays_logged_idempotency_key(load_history, 'hack-squat'), 'k1')
+
+    def test_todays_logged_idempotency_key_empty_history_returns_none(self):
+        self.assertIsNone(todays_logged_idempotency_key([], 'hack-squat'))
 
 
 class PeriodizationCanonicalTreinoRenderTests(TestCase):
