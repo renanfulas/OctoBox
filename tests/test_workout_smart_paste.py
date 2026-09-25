@@ -456,7 +456,9 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'pendência')
         self.assertContains(response, 'rum')
         self.assertContains(response, 'bike')
-        self.assertContains(response, 'Salvar e revisar proximo')
+        self.assertContains(response, 'hx-trigger="load, submit"')
+        self.assertContains(response, 'Corrigir automaticamente com Haiku')
+        self.assertNotContains(response, 'class="smart-paste-review-queue"')
 
     def test_preview_payload_exposes_block_level_review_state(self):
         today = timezone.localdate()
