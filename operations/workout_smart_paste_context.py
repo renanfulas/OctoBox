@@ -50,7 +50,7 @@ def _max_week_start(today, fallback_weeks: int = 52):
     if last_session is not None:
         last_date = last_session.date() if hasattr(last_session, 'date') else last_session
         # Monday of that week
-        return last_date - timedelta(days=last_date.weekday())
+        return max(_default_week_start(today), last_date - timedelta(days=last_date.weekday()))
     return today + timedelta(weeks=fallback_weeks)
 
 
@@ -206,8 +206,8 @@ def _build_page_payload(*, current_role_slug):
         data={
             'hero': build_page_hero(
                 eyebrow='Smart Paste',
-                title='Cole o WOD semanal e revise antes de replicar.',
-                copy='Esta etapa organiza o texto em dias, blocos e movimentos sem mexer ainda nas aulas reais.',
+                title='Cole a semana. Nós organizamos os treinos.',
+                copy='Revise somente o que precisar. Depois, os WODs entram nas aulas e aguardam aprovação para aparecer aos alunos.',
                 actions=[
                     {'label': 'Abrir editor', 'href': reverse('workout-editor-home'), 'kind': 'secondary'},
                 ],
@@ -222,7 +222,10 @@ def _build_page_payload(*, current_role_slug):
             'scope': 'operations-approval',
         },
         assets=build_page_assets(
-            css=['css/design-system/operations.css'],
+            css=[
+                'css/design-system/operations.css',
+                'css/design-system/operations/workspace/wod-smart-paste.css',
+            ],
             js=['js/core/forms.js', 'js/operations/wod_smart_paste.js', 'js/operations/smart_paste_week_monday.js'],
         ),
     )

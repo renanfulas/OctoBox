@@ -91,6 +91,7 @@ class StudentMonthDay:
     day_label: str
     is_today: bool
     sessions: tuple[StudentSessionCard, ...] = ()
+    has_published_wod: bool = False
     holiday_name: str = ''
     is_holiday: bool = False
     student_checkin_label: str = ''

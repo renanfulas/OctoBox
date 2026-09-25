@@ -3,11 +3,15 @@ ARQUIVO: day-apply — aplicação de template por dia no Planner.
 
 CONVENÇÕES:
 - BEM: .wod-day-apply__<element>--<modifier>
-- zero cores hardcoded; apenas tokens canônicos de tokens.css
-- zero !important
+- cores de superfície e foco vêm dos tokens de tema; o backdrop usa uma cor fixa
 */
 
 /* ── Botão no header do dia ───────────────────────────────────────── */
+
+.wod-planner-shell {
+    --wod-action-ink: color-mix(in srgb, var(--theme-accent-support) 65%, var(--theme-text-primary));
+    --wod-warning-ink: color-mix(in srgb, var(--theme-accent-warning) 50%, var(--theme-text-primary));
+}
 
 .wod-day-apply__trigger {
     display: inline-flex;
@@ -16,10 +20,10 @@ CONVENÇÕES:
     min-height: 24px;
     gap: 3px;
     padding: 0 8px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent) 36%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support) 36%, transparent);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--theme-accent) 8%, transparent);
-    color: var(--theme-accent);
+    background: color-mix(in srgb, var(--theme-accent-support) 8%, transparent);
+    color: var(--wod-action-ink);
     font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0;
@@ -30,8 +34,8 @@ CONVENÇÕES:
 }
 
 .wod-day-apply__trigger:hover {
-    background: color-mix(in srgb, var(--theme-accent) 16%, transparent);
-    border-color: var(--theme-accent);
+    background: color-mix(in srgb, var(--theme-accent-support) 16%, transparent);
+    border-color: var(--theme-accent-support);
 }
 
 /* ── Dialog / popover ─────────────────────────────────────────────── */
@@ -47,7 +51,7 @@ CONVENÇÕES:
     border: 1px solid var(--theme-border-soft);
     border-radius: 20px;
     background: var(--theme-surface-panel);
-    box-shadow: 0 24px 64px color-mix(in srgb, var(--theme-shadow) 32%, transparent);
+    box-shadow: var(--theme-shadow-xl);
     display: none;
     flex-direction: column;
     gap: 0;
@@ -58,7 +62,7 @@ CONVENÇÕES:
 }
 
 .wod-day-apply__dialog::backdrop {
-    background: color-mix(in srgb, var(--theme-shadow) 48%, transparent);
+    background: rgba(4, 12, 25, 0.72);
     backdrop-filter: blur(4px);
 }
 
@@ -94,6 +98,7 @@ CONVENÇÕES:
 }
 
 .wod-day-apply__mode-option {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -105,12 +110,24 @@ CONVENÇÕES:
 }
 
 .wod-day-apply__mode-option:has(input:checked) {
-    border-color: var(--theme-accent);
-    background: color-mix(in srgb, var(--theme-accent) 6%, transparent);
+    border-color: var(--theme-accent-primary);
+    background: color-mix(in srgb, var(--theme-accent-primary) 6%, transparent);
 }
 
 .wod-day-apply__mode-option input {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    clip-path: inset(50%);
+}
+
+.wod-day-apply__mode-option:focus-within {
+    outline: 2px solid var(--theme-accent-primary);
+    outline-offset: 2px;
 }
 
 .wod-day-apply__mode-option span {
@@ -123,8 +140,8 @@ CONVENÇÕES:
     color: var(--theme-text-muted);
 }
 
-.wod-day-apply__mode-warning {
-    color: var(--theme-warning) !important;
+.wod-day-apply__mode-option small.wod-day-apply__mode-warning {
+    color: var(--wod-warning-ink);
 }
 
 /* ── Lista de templates ───────────────────────────────────────────── */
@@ -141,14 +158,14 @@ CONVENÇÕES:
     padding: 8px 12px;
     border: 1px solid var(--theme-border-soft);
     border-radius: 10px;
-    background: var(--theme-surface-input);
-    color: var(--theme-text);
+    background: var(--theme-surface-secondary);
+    color: var(--theme-text-primary);
     font-size: 0.88rem;
 }
 
 .wod-day-apply__search:focus {
     outline: none;
-    border-color: var(--theme-accent);
+    border-color: var(--theme-accent-primary);
 }
 
 .wod-day-apply__cards {
@@ -161,7 +178,7 @@ CONVENÇÕES:
     padding: 14px 16px;
     border: 1px solid var(--theme-border-soft);
     border-radius: 12px;
-    background: var(--theme-surface-card);
+    background: var(--theme-surface-strong);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -169,7 +186,7 @@ CONVENÇÕES:
 }
 
 .wod-day-apply__card:hover {
-    border-color: color-mix(in srgb, var(--theme-accent) 50%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 50%, transparent);
 }
 
 .wod-day-apply__card[hidden] {
@@ -210,8 +227,8 @@ CONVENÇÕES:
 .wod-day-apply__block-tag {
     padding: 2px 8px;
     border-radius: 6px;
-    background: color-mix(in srgb, var(--theme-accent) 10%, transparent);
-    color: var(--theme-accent);
+    background: color-mix(in srgb, var(--theme-accent-primary) 10%, transparent);
+    color: var(--wod-action-ink);
     font-size: 0.72rem;
     font-weight: 600;
 }
@@ -239,9 +256,9 @@ CONVENÇÕES:
     gap: 12px;
     padding: 12px 18px;
     border-radius: 14px;
-    background: var(--theme-surface-elevated);
+    background: var(--theme-surface-strong);
     border: 1px solid var(--theme-border-soft);
-    box-shadow: 0 8px 32px color-mix(in srgb, var(--theme-shadow) 28%, transparent);
+    box-shadow: var(--theme-shadow-soft);
     z-index: 9999;
     max-width: min(480px, 92vw);
     animation: wod-toast-in 0.2s ease;
@@ -268,9 +285,9 @@ CONVENÇÕES:
     gap: 4px;
     padding: 5px 12px;
     border-radius: 8px;
-    border: 1px solid var(--theme-accent);
+    border: 1px solid var(--theme-accent-primary);
     background: transparent;
-    color: var(--theme-accent);
+    color: var(--wod-action-ink);
     font-size: 0.82rem;
     font-weight: 700;
     cursor: pointer;
@@ -279,7 +296,7 @@ CONVENÇÕES:
 }
 
 .wod-day-apply__toast-undo:hover {
-    background: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-primary) 10%, transparent);
 }
 
 .wod-day-apply__toast-countdown {

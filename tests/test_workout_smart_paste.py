@@ -3,9 +3,10 @@ from datetime import date, datetime, timedelta
 from django import forms
 from django.urls import reverse
 from django.utils import timezone
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from operations.forms import WeeklyWodProjectionForm, WeeklyWodSmartPasteForm
+from operations.workout_smart_paste_context import _default_week_start, _max_week_start
 from operations.models import ClassSession, ClassType, WorkoutTemplate
 from student_app.models import (
     ReplicationBatch,
@@ -31,19 +32,93 @@ Aquecimento
 
 
 class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
+    def test_calendar_limit_never_precedes_suggested_week(self):
+        today = timezone.localdate()
+        self.assertGreaterEqual(_max_week_start(today), _default_week_start(today))
+
     def test_coach_can_open_smart_paste_surface(self):
         response = self.client.get(reverse('workout-smart-paste'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Smart Paste')
-        self.assertContains(response, 'Cole o WOD semanal e revise antes de replicar.')
+        self.assertContains(response, 'Cole a semana. Nós organizamos os treinos.')
+        self.assertContains(response, 'Aguardando aprovação')
 
-    def test_surface_keeps_chatgpt_button_without_custom_gpt_url(self):
+    def test_smart_paste_loads_page_stylesheet_once(self):
         response = self.client.get(reverse('workout-smart-paste'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Abrir no ChatGPT')
-        self.assertContains(response, 'href="https://chatgpt.com/"')
+        self.assertEqual(
+            response.content.decode().count('css/design-system/operations/workspace/wod-smart-paste.css?v='),
+            1,
+        )
+        self.assertNotContains(response, 'css/design-system/operations.css?v=')
+
+    def test_surface_does_not_send_user_to_chatgpt_when_no_custom_gpt_is_configured(self):
+        response = self.client.get(reverse('workout-smart-paste'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Abrir no ChatGPT')
+        self.assertContains(response, 'Organizar semana automaticamente')
+
+    def test_manager_can_open_smart_paste_and_sees_approval_step(self):
+        self.login_as_manager()
+
+        response = self.client.get(reverse('workout-smart-paste'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Colar e organizar')
+        self.assertContains(response, 'Libera para os alunos')
+
+    def test_cannot_open_another_users_plan_by_id(self):
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2027-04-19',
+            label='Plano de outro coach',
+            source_text=SMART_PASTE_SAMPLE,
+            parsed_payload={'days': []},
+            created_by=self.coach,
+            status=WeeklyWodPlanStatus.DRAFT,
+        )
+        self.login_as_manager()
+
+        response = self.client.post(reverse('workout-smart-paste'), {'action': 'confirm_plan', 'plan_id': plan.id})
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_manager_can_organize_week_without_publishing_to_students(self):
+        self.login_as_manager()
+        monday = timezone.localdate() + timedelta(days=(7 - timezone.localdate().weekday()) % 7)
+
+        response = self.client.post(reverse('workout-smart-paste'), {
+            'action': 'parse_text',
+            'week_start': monday.strftime('%d/%m/%Y'),
+            'label': 'Semana Manager',
+            'source_text': SMART_PASTE_SAMPLE,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        plan = WeeklyWodPlan.objects.get(created_by=self.manager)
+        self.assertEqual(plan.status, WeeklyWodPlanStatus.DRAFT)
+        self.assertContains(response, 'Colar e organizar')
+
+    def test_retry_resolution_keeps_unresolved_items_editable(self):
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2027-04-19',
+            label='Semana com pendência',
+            source_text='Segunda\nWOD\n10 movimento incerto',
+            parsed_payload={'days': [{'blocks': [{'movements': [{'movement_label_raw': 'movimento incerto', 'movement_slug': ''}]}]}]},
+            created_by=self.coach,
+            status=WeeklyWodPlanStatus.DRAFT,
+        )
+
+        with patch('operations.workout_board_views.apply_llm_slug_resolution') as resolver:
+            response = self.client.post(reverse('workout-smart-paste'), {
+                'action': 'retry_resolution', 'plan_id': plan.id,
+            })
+
+        self.assertEqual(response.status_code, 200)
+        resolver.assert_called_once()
+        self.assertContains(response, 'Manter nome original como personalizado')
 
     def test_surface_does_not_auto_bind_latest_plan_from_another_week(self):
         WeeklyWodPlan.objects.create(
@@ -237,8 +312,244 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         plan.refresh_from_db()
         self.assertEqual(plan.status, WeeklyWodPlanStatus.DRAFT)
         self.assertContains(response, 'pendencia')
+        self.assertContains(response, 'Manter nome original como personalizado')
         self.assertNotContains(response, 'Plano semanal confirmado.')
         self.assertNotContains(response, 'id="smart-paste-projection-panel"')
+
+    def test_haiku_retry_sends_resolved_week_to_planner_pending_approval(self):
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2026-04-20',
+            label='Semana via Haiku',
+            source_text='Segunda\\nWOD\\n10 run',
+            parsed_payload={
+                'days': [{
+                    'weekday': 0,
+                    'weekday_label': 'Segunda',
+                    'blocks': [{
+                        'kind': 'warmup',
+                        'title': 'Aquecimento',
+                        'notes': '',
+                        'movements': [{
+                            'movement_slug': 'slug_fora_do_catalogo',
+                            'movement_label_raw': '10 run',
+                            'reps_spec': '10',
+                            'load_spec': '',
+                            'notes': '',
+                        }],
+                    }, {
+                        'kind': 'metcon',
+                        'title': 'WOD',
+                        'notes': '',
+                        'movements': [{
+                            'movement_slug': 'wall_ball',
+                            'movement_label_raw': '10 wall ball',
+                            'reps_spec': '10',
+                            'load_spec': '',
+                            'notes': '',
+                        }],
+                    }],
+                }],
+            },
+            created_by=self.coach,
+        )
+        self.session.class_type = ClassType.CROSS
+        self.session.scheduled_at = timezone.make_aware(datetime(2026, 4, 20, 12, 0))
+        self.session.save(update_fields=['class_type', 'scheduled_at'])
+        mobility_session = ClassSession.objects.create(
+            title='Mobilidade 12h',
+            class_type=ClassType.MOBILITY,
+            coach=self.coach,
+            scheduled_at=timezone.make_aware(datetime(2026, 4, 20, 12, 0)),
+            duration_minutes=60,
+            capacity=16,
+        )
+
+        def resolve_with_haiku(payload, slug_dictionary, *, retry=False):
+            self.assertTrue(retry)
+            payload['days'][0]['blocks'][0]['movements'][0]['movement_slug'] = 'run'
+
+        with patch('operations.workout_board_views.apply_llm_slug_resolution', side_effect=resolve_with_haiku):
+            response = self.client.post(
+                reverse('workout-smart-paste'),
+                data={
+                    'action': 'confirm_and_project',
+                    'plan_id': plan.id,
+                    'week_start': '20/04',
+                    'label': plan.label,
+                    'source_text': plan.source_text,
+                },
+                follow=True,
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('/operacao/wod/planner/?week=2026-04-20', response.redirect_chain[0][0])
+        plan.refresh_from_db()
+        self.assertEqual(plan.status, WeeklyWodPlanStatus.CONFIRMED)
+        workout = SessionWorkout.objects.get(session=self.session)
+        mobility_workout = SessionWorkout.objects.get(session=mobility_session)
+        self.assertTrue(workout.title.startswith('Segunda · '))
+        self.assertEqual(workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        self.assertEqual(mobility_workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        self.assertEqual(workout.submitted_by, self.coach)
+        self.assertEqual(workout.blocks.first().movements.first().movement_slug, 'run')
+        self.assertEqual(workout.blocks.count(), 2)
+        self.assertEqual(mobility_workout.blocks.count(), 1)
+        self.assertContains(response, '2 WOD(s) enviados ao Planner')
+
+        with patch('operations.workout_board_views.apply_llm_slug_resolution', side_effect=resolve_with_haiku):
+            duplicate_response = self.client.post(
+                reverse('workout-smart-paste'),
+                data={
+                    'action': 'confirm_and_project',
+                    'plan_id': plan.id,
+                    'week_start': '20/04',
+                    'label': plan.label,
+                    'source_text': plan.source_text,
+                },
+            )
+        self.assertEqual(duplicate_response.status_code, 200)
+        self.assertContains(duplicate_response, 'A semana está pronta, mas ainda não há aula disponível')
+        self.assertEqual(SessionWorkout.objects.filter(replication_batch__weekly_plan=plan).count(), 2)
+
+    def test_auto_send_without_sessions_explains_next_action_on_same_page(self):
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2026-04-20',
+            label='Semana sem grade',
+            source_text='Segunda\nWOD\n10 wall ball',
+            parsed_payload={'days': [{
+                'weekday': 0,
+                'weekday_label': 'Segunda',
+                'blocks': [{
+                    'kind': 'metcon', 'title': 'WOD',
+                    'movements': [{'movement_slug': 'wall_ball', 'movement_label_raw': '10 wall ball', 'reps_spec': '10'}],
+                }],
+            }]},
+            created_by=self.coach,
+        )
+
+        response = self.client.post(reverse('workout-smart-paste'), {
+            'action': 'confirm_and_project',
+            'plan_id': plan.id,
+            'week_start': '20/04',
+            'label': plan.label,
+            'source_text': plan.source_text,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A semana está pronta, mas ainda não há aula disponível')
+        self.assertContains(response, 'Abrir Grade de aulas')
+        self.assertFalse(SessionWorkout.objects.exists())
+
+    def test_unknown_manual_movement_can_be_kept_as_custom_and_sent_to_planner(self):
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2026-04-20',
+            label='Semana movimento próprio',
+            source_text='Segunda\\nWOD\\n10 ski erg lateral',
+            parsed_payload={
+                'days': [{
+                    'weekday': 0,
+                    'weekday_label': 'Segunda',
+                    'blocks': [{
+                        'kind': 'metcon',
+                        'title': 'WOD',
+                        'notes': '',
+                        'movements': [{
+                            'movement_slug': '',
+                            'movement_label_raw': '10 ski erg lateral',
+                            'reps_spec': '10',
+                            'load_spec': '',
+                            'notes': '',
+                        }],
+                    }],
+                }],
+            },
+            created_by=self.coach,
+        )
+        self.session.class_type = ClassType.CROSS
+        self.session.scheduled_at = timezone.make_aware(datetime(2026, 4, 20, 12, 0))
+        self.session.save(update_fields=['class_type', 'scheduled_at'])
+
+        review_response = self.client.post(
+            reverse('workout-smart-paste'),
+            data={
+                'action': 'update_review_item',
+                'plan_id': plan.id,
+                'day_index': 0,
+                'block_index': 0,
+                'movement_index': 0,
+                'movement_label_raw': '10 ski erg lateral',
+                'movement_slug': 'custom',
+                'reps_spec': '10',
+                'load_spec': '',
+                'notes': '',
+            },
+            HTTP_HX_REQUEST='true',
+        )
+        self.assertEqual(review_response.status_code, 200)
+
+        with patch('operations.workout_board_views.apply_llm_slug_resolution') as retry_haiku:
+            response = self.client.post(
+                reverse('workout-smart-paste'),
+                data={
+                    'action': 'confirm_and_project',
+                    'plan_id': plan.id,
+                    'week_start': '20/04',
+                    'label': plan.label,
+                    'source_text': plan.source_text,
+                },
+                follow=True,
+            )
+
+        retry_haiku.assert_called_once()
+        self.assertEqual(response.status_code, 200)
+        workout = SessionWorkout.objects.get(session=self.session)
+        projected_movement = workout.blocks.first().movements.first()
+        self.assertEqual(projected_movement.movement_slug, 'custom')
+        self.assertEqual(projected_movement.movement_label, '10 ski erg lateral')
+        self.assertEqual(workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+
+    def test_haiku_retry_that_stays_uncertain_keeps_plan_in_manual_review(self):
+        plan = WeeklyWodPlan.objects.create(
+            week_start='2026-04-20',
+            label='Semana ambígua',
+            source_text='Segunda\\nWOD\\nmovimento próprio',
+            parsed_payload={
+                'days': [{
+                    'weekday': 0,
+                    'weekday_label': 'Segunda',
+                    'blocks': [{
+                        'kind': 'metcon',
+                        'title': 'WOD',
+                        'movements': [{
+                            'movement_slug': '',
+                            'movement_label_raw': 'movimento próprio',
+                            'reps_spec': '10',
+                        }],
+                    }],
+                }],
+            },
+            created_by=self.coach,
+        )
+
+        with patch('operations.workout_board_views.apply_llm_slug_resolution') as retry_haiku:
+            response = self.client.post(
+                reverse('workout-smart-paste'),
+                data={
+                    'action': 'confirm_and_project',
+                    'plan_id': plan.id,
+                    'week_start': '20/04',
+                    'label': plan.label,
+                    'source_text': plan.source_text,
+                },
+            )
+
+        retry_haiku.assert_called_once()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ainda ha 1 pendencia')
+        self.assertContains(response, 'Manter nome original como personalizado')
+        plan.refresh_from_db()
+        self.assertEqual(plan.status, WeeklyWodPlanStatus.DRAFT)
+        self.assertFalse(SessionWorkout.objects.filter(replication_batch__weekly_plan=plan).exists())
 
     def test_confirmed_week_shows_projection_panel_in_layout_instead_of_preview_card(self):
         today = timezone.localdate()
@@ -454,10 +765,11 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'pendência')
+        self.assertContains(response, 'Manter nome original como personalizado')
         self.assertContains(response, 'rum')
         self.assertContains(response, 'bike')
         self.assertContains(response, 'hx-trigger="load, submit"')
-        self.assertContains(response, 'Corrigir automaticamente com Haiku')
+        self.assertContains(response, 'Tentar correção automática')
         self.assertNotContains(response, 'class="smart-paste-review-queue"')
 
     def test_preview_payload_exposes_block_level_review_state(self):
@@ -663,7 +975,8 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-smart-paste'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Feche as pendências antes de confirmar.')
+        self.assertContains(response, 'Corrigir pendências e enviar às aulas')
+        self.assertContains(response, 'Manter nome original como personalizado')
         self.assertContains(response, 'disabled aria-disabled="true"')
 
     def test_coach_can_preview_and_create_projection_as_drafts(self):
@@ -785,11 +1098,12 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(create_response.status_code, 200)
         workout = SessionWorkout.objects.get(session=self.session)
-        self.assertEqual(workout.status, SessionWorkoutStatus.DRAFT)
+        self.assertEqual(workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        self.assertEqual(workout.submitted_by, self.coach)
         self.assertIsNotNone(workout.replication_batch)
         self.assertEqual(workout.replication_batch.sessions_created, 1)
         self.assertEqual(workout.blocks.count(), 2)
-        self.assertContains(create_response, '1 WOD(s) criado(s) em DRAFT.')
+        self.assertContains(create_response, '1 WOD(s) criados: 1 aguardando aprovacao')
 
         undo_response = self.client.post(
             reverse('workout-smart-paste'),
@@ -802,11 +1116,11 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         )
 
         self.assertEqual(undo_response.status_code, 200)
-        self.assertFalse(SessionWorkout.objects.filter(session=self.session).exists())
+        self.assertTrue(SessionWorkout.objects.filter(session=self.session).exists())
+        self.assertContains(undo_response, 'desfazer foi bloqueado')
         plan.refresh_from_db()
         latest_batch = plan.replication_batches.order_by('-created_at', '-id').first()
-        self.assertIsNotNone(latest_batch.undone_at)
-        self.assertContains(undo_response, 'registro(s) relacionados ao lote foram desfeitos.')
+        self.assertIsNone(latest_batch.undone_at)
 
     def test_projection_preview_can_render_partial_panel_with_htmx(self):
         plan = WeeklyWodPlan.objects.create(
@@ -977,6 +1291,18 @@ class WodSlugResolverTests(WorkoutFlowBaseTestCase):
             ('run', ('corrida', 'run')),
             ('box_jump', ('box jump', 'salto na caixa')),
         ]
+
+    def test_anthropic_request_includes_configured_workspace(self):
+        from operations.services.wod_slug_resolver import _call_anthropic
+
+        response = Mock()
+        response.json.return_value = {'content': [{'type': 'text', 'text': '{}'}]}
+        with patch.dict('os.environ', {'ANTHROPIC_WORKSPACE_ID': 'wrkspc_example'}):
+            with patch('operations.services.wod_slug_resolver.requests.post', return_value=response) as post:
+                result = _call_anthropic(static_block='instructions', dynamic_block='movement', api_key='test-key')
+
+        self.assertEqual(result, '{}')
+        self.assertEqual(post.call_args.kwargs['headers']['anthropic-workspace-id'], 'wrkspc_example')
 
     def test_resolve_unknown_slugs_returns_empty_when_no_api_key(self):
         from operations.services.wod_slug_resolver import resolve_unknown_slugs

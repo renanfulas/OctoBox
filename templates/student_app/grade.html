@@ -13,16 +13,16 @@
 {% include "student_app/_partials/_cancellation_banner.html" %}
 <div class="student-agenda-top">
     <h1 class="student-agenda-title">Agenda</h1>
-    <button type="button" class="student-agenda-vermes" data-month-toggle aria-expanded="false" aria-controls="studentMonthCalendar">
+    <button type="button" class="student-agenda-vermes" data-month-toggle aria-expanded="{% if student_month_is_current %}false{% else %}true{% endif %}" aria-controls="studentMonthCalendar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 10h18"/></svg>
-        Ver mês
+        <span class="visually-hidden">Ver mês: </span>{{ student_visible_month|date:'F Y'|capfirst }}
     </button>
 </div>
 
 <nav class="student-week-strip" aria-label="Dias da semana">
     {% for day in student_week_days %}
     <a
-        href="?date={{ day.date|date:'Y-m-d' }}"
+        href="?month={{ day.date|date:'Y-m' }}&amp;date={{ day.date|date:'Y-m-d' }}"
         class="student-week-day{% if day.is_today %} is-today{% endif %}{% if day.is_selected %} is-selected{% endif %}"
         {% if day.is_selected %}aria-current="date"{% endif %}
         aria-label="{{ day.label }} {{ day.date_label }}"
@@ -38,8 +38,14 @@
     Cancele até 2h antes sem perder crédito.
 </p>
 
-<details class="student-month-calendar" id="studentMonthCalendar">
+<details class="student-month-calendar" id="studentMonthCalendar"{% if not student_month_is_current %} open{% endif %}>
     <summary class="visually-hidden">Calendário do mês</summary>
+    <nav class="student-month-calendar__navigation" aria-label="Navegar entre meses">
+        {% if student_previous_month_param %}<a href="?month={{ student_previous_month_param }}" aria-label="Mês anterior">←</a>{% else %}<span aria-hidden="true"></span>{% endif %}
+        <strong>{{ student_visible_month|date:'F Y'|capfirst }}</strong>
+        {% if student_next_month_param %}<a href="?month={{ student_next_month_param }}" aria-label="Próximo mês">→</a>{% else %}<span aria-hidden="true"></span>{% endif %}
+    </nav>
+    {% if not student_month_is_current %}<a class="student-month-calendar__today" href="{% url 'student-app-grade' %}">Voltar ao mês atual</a>{% endif %}
     <div class="student-month-calendar__weekdays" aria-hidden="true">
         <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
     </div>
@@ -49,12 +55,13 @@
             {% if day.sessions %}
             <button
                 type="button"
-                class="student-month-day has-sessions{% if day.is_today %} is-today{% endif %}{% if day.is_holiday %} is-holiday{% endif %}"
+                class="student-month-day has-sessions{% if day.has_published_wod %} has-wod{% endif %}{% if day.is_today %} is-today{% endif %}{% if day.is_holiday %} is-holiday{% endif %}"
                 {% if day.sessions|length == 1 %}data-wod-href="{% url 'student-app-wod' %}?session_id={{ day.sessions.0.session_id }}"{% else %}data-day-picker="{{ day.date|date:'Y-m-d' }}"{% endif %}
-                aria-label="{{ day.date|date:'d M' }} — {{ day.sessions|length }} aula(s)"
+                aria-label="{{ day.date|date:'d M' }} — {{ day.sessions|length }} aula(s){% if day.has_published_wod %}, WOD disponível{% endif %}"
             >
                 <span class="student-month-day__num">{{ day.date_label }}</span>
                 <span class="student-month-day__dot" data-status="{{ day.sessions.0.attendance_status }}"></span>
+                {% if day.has_published_wod %}<span class="student-month-day__wod" aria-hidden="true">WOD</span>{% endif %}
                 {% if day.sessions|length > 1 %}<span class="student-month-day__count">{{ day.sessions|length }}x</span>{% endif %}
                 {% if day.sessions|length > 1 %}
                 <span class="student-month-day__sessions-data" hidden aria-hidden="true">{% for session in day.sessions %}<span data-session-id="{{ session.session_id }}" data-session-time="{{ session.scheduled_at|date:'H:i' }}" data-session-title="{{ session.title }}" data-session-status="{{ session.attendance_status }}" data-session-runtime-status="{{ session.runtime_status_label }}"></span>{% endfor %}</span>
@@ -71,9 +78,10 @@
         {% endif %}
         {% endfor %}
     </div>
+    {% if not student_month_has_sessions %}<p class="student-month-calendar__empty">Ainda não há aulas publicadas neste mês. Você pode consultar outro mês pelas setas acima.</p>{% endif %}
 </details>
 
-<div class="student-month-picker" id="studentMonthPicker" hidden role="dialog" aria-modal="true" aria-label="Escolha uma aula">
+<div class="student-month-picker" id="studentMonthPicker" data-wod-base="{% url 'student-app-wod' %}" hidden role="dialog" aria-modal="true" aria-label="Escolha uma aula">
     <div class="student-month-picker__backdrop" id="studentMonthPickerBackdrop"></div>
     <div class="student-month-picker__sheet">
         <p class="student-month-picker__title">Escolha uma aula</p>

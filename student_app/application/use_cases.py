@@ -739,6 +739,7 @@ class GetStudentMonthSchedule:
                     day_label=WEEKDAY_LABELS[day.weekday()],
                     is_today=day == today,
                     sessions=day_sessions,
+                    has_published_wod=any(session.workout_titles for session in day_sessions),
                     holiday_name=holiday_name or '',
                     is_holiday=bool(holiday_name),
                     student_checkin_label=student_checkin_label,

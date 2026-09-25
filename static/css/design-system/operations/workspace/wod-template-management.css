@@ -3,8 +3,7 @@ ARQUIVO: wod-template-management — archive zone e lista de arquivados.
 
 CONVENÇÕES:
 - BEM: .wod-tmpl-archive-zone__<element>--<modifier>
-- zero cores hardcoded; apenas tokens canônicos de tokens.css
-- zero !important
+- superfícies e estados usam tokens de tema
 */
 
 /* ── Archive Zone (danger zone) ───────────────────────────────────── */
@@ -15,9 +14,9 @@ CONVENÇÕES:
     justify-content: space-between;
     gap: 24px;
     padding: 20px 24px;
-    border: 1px solid color-mix(in srgb, var(--theme-danger, #e53e3e) 35%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-danger) 35%, transparent);
     border-radius: 12px;
-    background: color-mix(in srgb, var(--theme-danger, #e53e3e) 5%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-danger) 5%, transparent);
     margin-block: 32px;
     flex-wrap: wrap;
 }
@@ -44,28 +43,28 @@ CONVENÇÕES:
 .wod-tmpl-archive-zone__open-btn {
     white-space: nowrap;
     flex-shrink: 0;
-    border-color: color-mix(in srgb, var(--theme-danger, #e53e3e) 50%, transparent);
-    color: var(--theme-danger, #e53e3e);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 50%, transparent);
+    color: var(--theme-accent-danger);
 }
 
 .wod-tmpl-archive-zone__open-btn:hover {
-    background: color-mix(in srgb, var(--theme-danger, #e53e3e) 10%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-danger) 10%, transparent);
 }
 
 /* ── Archive All Dialog ───────────────────────────────────────────── */
 
 .wod-tmpl-archive-zone__dialog {
-    border: 1px solid var(--theme-border);
+    border: 1px solid var(--theme-border-soft);
     border-radius: 16px;
     padding: 32px;
     max-width: 480px;
     width: 100%;
-    background: var(--theme-surface);
-    box-shadow: 0 16px 48px color-mix(in srgb, var(--theme-text-primary) 16%, transparent);
+    background: var(--theme-surface-panel-strong);
+    box-shadow: var(--theme-shadow-xl);
 }
 
 .wod-tmpl-archive-zone__dialog::backdrop {
-    background: color-mix(in srgb, var(--theme-text-primary) 40%, transparent);
+    background: rgba(4, 12, 25, 0.72);
     backdrop-filter: blur(2px);
 }
 
@@ -92,9 +91,9 @@ CONVENÇÕES:
 
 .wod-tmpl-archive-zone__confirm-input {
     padding: 8px 12px;
-    border: 1px solid var(--theme-border);
+    border: 1px solid var(--theme-border-soft);
     border-radius: 8px;
-    background: var(--theme-surface-raised, var(--theme-surface));
+    background: var(--theme-surface-strong);
     color: var(--theme-text-primary);
     font-size: 0.9rem;
     font-family: monospace;
@@ -104,9 +103,14 @@ CONVENÇÕES:
     transition: border-color 0.15s;
 }
 
+.coach-wod-editor-shell .wod-tmpl-archive-zone__confirm-input::placeholder {
+    color: var(--theme-text-secondary);
+    opacity: 1;
+}
+
 .wod-tmpl-archive-zone__confirm-input:focus {
     outline: none;
-    border-color: var(--theme-accent);
+    border-color: var(--theme-accent-primary);
 }
 
 .wod-tmpl-archive-zone__actions {
@@ -115,18 +119,29 @@ CONVENÇÕES:
     flex-wrap: wrap;
 }
 
-.wod-tmpl-archive-zone__submit-btn {
-    background: var(--theme-danger, #e53e3e);
-    border-color: var(--theme-danger, #e53e3e);
-    color: #fff;
+.coach-wod-editor-shell .button.wod-tmpl-archive-zone__submit-btn {
+    background: var(--theme-accent-danger);
+    border-color: var(--theme-accent-danger);
+    color: var(--theme-text-primary);
 }
 
-.wod-tmpl-archive-zone__submit-btn:not(:disabled):hover {
-    background: color-mix(in srgb, var(--theme-danger, #e53e3e) 85%, #000);
-    border-color: color-mix(in srgb, var(--theme-danger, #e53e3e) 85%, #000);
+body[data-theme="dark"] .coach-wod-editor-shell .button.wod-tmpl-archive-zone__submit-btn {
+    background: var(--theme-accent-danger);
+    border-color: var(--theme-accent-danger);
+    color: var(--theme-surface-muted);
 }
 
-.wod-tmpl-archive-zone__submit-btn:disabled {
+.coach-wod-editor-shell .button.wod-tmpl-archive-zone__submit-btn:not(:disabled):hover {
+    background: color-mix(in srgb, var(--theme-accent-danger) 85%, var(--theme-text-primary));
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 85%, var(--theme-text-primary));
+}
+
+body[data-theme="dark"] .coach-wod-editor-shell .button.wod-tmpl-archive-zone__submit-btn:not(:disabled):hover {
+    background: color-mix(in srgb, var(--theme-accent-danger) 85%, var(--theme-text-primary));
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 85%, var(--theme-text-primary));
+}
+
+.coach-wod-editor-shell .button.wod-tmpl-archive-zone__submit-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
@@ -164,15 +179,15 @@ CONVENÇÕES:
     align-items: center;
     gap: 16px;
     padding: 14px 18px;
-    border: 1px solid var(--theme-border);
+    border: 1px solid var(--theme-border-soft);
     border-radius: 10px;
-    background: var(--theme-surface);
+    background: var(--theme-surface-strong);
     flex-wrap: wrap;
 }
 
 .wod-tmpl-archived__card--expiring {
-    border-color: color-mix(in srgb, var(--theme-danger, #e53e3e) 40%, transparent);
-    background: color-mix(in srgb, var(--theme-danger, #e53e3e) 4%, transparent);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 40%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-danger) 4%, transparent);
 }
 
 .wod-tmpl-archived__card-info {

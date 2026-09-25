@@ -422,7 +422,7 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Preview anterior')
         self.assertContains(response, 'Preview após aprovação')
         self.assertContains(response, 'Alto impacto')
-        self.assertContains(response, 'Radar da fila')
+        self.assertContains(response, 'Fila de revisão')
 
     def test_approval_board_renders_decision_trail_in_timeline(self):
         workout = SessionWorkout.objects.create(

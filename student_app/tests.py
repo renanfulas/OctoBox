@@ -833,6 +833,44 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'class="student-session-actions"', html=False)
         self.assertContains(response, 'Cancele até 2h antes sem perder crédito.')
 
+    def test_student_can_open_next_month_and_find_published_wod(self):
+        today = timezone.localdate()
+        next_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1)
+        session_date = next_month + timedelta(days=7)
+        session = ClassSession.objects.create(
+            title='Cross do próximo mês',
+            scheduled_at=timezone.make_aware(datetime.combine(session_date, datetime.min.time().replace(hour=10))),
+            status=SessionStatus.SCHEDULED,
+        )
+        SessionWorkout.objects.create(
+            session=session,
+            title='Treino publicado da próxima semana',
+            status=SessionWorkoutStatus.PUBLISHED,
+        )
+
+        month_response = self.client.get(reverse('student-app-grade'), {
+            'month': next_month.strftime('%Y-%m'),
+        })
+        self.assertEqual(month_response.status_code, 200)
+        self.assertEqual(month_response.context['student_visible_month'], next_month)
+        self.assertContains(month_response, 'Próximo mês')
+        self.assertContains(month_response, 'WOD disponível')
+        self.assertContains(month_response, f'?session_id={session.id}')
+
+        day_response = self.client.get(reverse('student-app-grade'), {
+            'month': next_month.strftime('%Y-%m'),
+            'date': session_date.isoformat(),
+        })
+        self.assertEqual(day_response.status_code, 200)
+        self.assertEqual(day_response.context['student_selected_date'], session_date)
+        self.assertContains(day_response, 'Treino publicado da próxima semana')
+
+    def test_invalid_student_month_falls_back_to_current_month(self):
+        response = self.client.get(reverse('student-app-grade'), {'month': 'not-a-month'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['student_visible_month'], timezone.localdate().replace(day=1))
+
     def test_cancel_attendance_sets_booking_as_canceled_until_one_hour_before_class(self):
         session = ClassSession.objects.create(
             title='Aula com cancelamento',

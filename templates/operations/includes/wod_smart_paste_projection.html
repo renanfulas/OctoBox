@@ -4,7 +4,7 @@
         <div>
             <p class="eyebrow">Replicar</p>
             <h2>Escolha a semana e monte a replicacao</h2>
-            <p class="operation-session-meta">Depois do rascunho confirmado, escolha a semana alvo e veja o impacto antes de criar os WODs em DRAFT.</p>
+            <p class="operation-session-meta">Depois do rascunho confirmado, escolha a semana alvo e confira as aulas antes de enviar os WODs ao Planner e à fila de aprovação.</p>
         </div>
     </div>
 
@@ -41,7 +41,6 @@
                         id="smart-paste-target-week-picker"
                         class="smart-paste-native-picker"
                         value="{{ target_week_picker }}"
-                        style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;"
                         tabindex="-1"
                         aria-hidden="true"
                     >
@@ -69,7 +68,6 @@
                         id="smart-paste-target-week-picker"
                         class="smart-paste-native-picker"
                         value="{{ weekly_plan.week_start|date:'Y-m-d' }}"
-                        style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;"
                         tabindex="-1"
                         aria-hidden="true"
                     >
@@ -86,12 +84,24 @@
     </form>
 
     {% if projection_preview %}
+    {% if not projection_preview.totals.sessions_creatable %}
+    <div class="smart-paste-projection-blocker" role="status">
+        <strong>A semana está pronta, mas ainda não há aula disponível para receber o WOD.</strong>
+        <p>{% if not projection_preview.sessions_in_week_total %}Cadastre as aulas dessa semana na Grade de aulas e volte aqui para enviar os treinos.{% else %}As aulas encontradas já têm treino ou não aceitam os blocos desta colagem. Confira os detalhes abaixo e ajuste a grade ou o WOD da aula.{% endif %}</p>
+        <div class="actions">
+            <a class="button" href="{% url 'class-grid' %}">Abrir Grade de aulas</a>
+            <a class="button secondary" href="{% url 'workout-planner' %}?week={{ projection_preview.target_week_start|date:'Y-m-d' }}">Ver semana no Planner</a>
+        </div>
+    </div>
+    {% endif %}
     <div class="smart-paste-projection-summary">
         <span class="pill success">{{ projection_preview.totals.sessions_creatable }} aula(s) pronta(s) para criar</span>
         <span class="pill info">{{ projection_preview.totals.sessions_found }} aula(s) encontrada(s)</span>
         <span class="pill warning">{{ projection_preview.totals.discarded_blocks }} bloco(s) descartado(s)</span>
         <span class="pill danger">{{ projection_preview.totals.sessions_with_existing_workout }} aula(s) com colisao</span>
         <span class="pill accent">{{ projection_preview.totals.sessions_skipped }} aula(s) puladas</span>
+        {% if projection_preview.totals.sessions_pending_approval %}<span class="pill warning">{{ projection_preview.totals.sessions_pending_approval }} aguardando aprovação</span>{% endif %}
+        {% if projection_preview.totals.sessions_published %}<span class="pill success">{{ projection_preview.totals.sessions_published }} publicados pela política do box</span>{% endif %}
     </div>
 
     <div class="smart-paste-projection-list">
@@ -150,7 +160,7 @@
         {% endfor %}
         <input type="hidden" name="action" value="create_projection">
         <div class="actions">
-            <button class="button secondary" type="submit">Criar WODs em DRAFT</button>
+            <button class="button secondary" type="submit" {% if not projection_preview.totals.sessions_creatable %}disabled aria-disabled="true"{% endif %}>Enviar WODs ao Planner e para aprovação</button>
         </div>
     </form>
     {% endif %}

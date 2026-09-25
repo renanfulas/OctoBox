@@ -211,7 +211,7 @@ body[data-theme="dark"] .operation-hero {
 }
 
 .operation-hero-action-rail .button:not(.secondary) {
-    background: color-mix(in srgb, var(--theme-surface-panel) 64%, transparent);
+    background: color-mix(in srgb, var(--theme-surface) 64%, transparent);
     border-color: color-mix(in srgb, var(--theme-border-soft) 88%, transparent);
     color: color-mix(in srgb, var(--ink) 82%, var(--theme-text-secondary) 18%);
 }

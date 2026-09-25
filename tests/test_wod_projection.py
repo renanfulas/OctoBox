@@ -117,7 +117,7 @@ class WodProjectionTests(TestCase):
         self.assertEqual(len(mobility_entry['discarded_blocks']), 1)
         self.assertIn('metcon', mobility_entry['discarded_blocks'][0]['kind'])
 
-    def test_projection_creates_batch_and_draft_workout(self):
+    def test_projection_creates_batch_and_submits_workout_for_approval(self):
         preview = build_projection_preview(
             weekly_plan=self.plan,
             target_week_start=date(2026, 4, 20),
@@ -134,13 +134,15 @@ class WodProjectionTests(TestCase):
 
         self.assertEqual(batch.sessions_created, 1)
         workout = SessionWorkout.objects.get(session=self.cross_session)
-        self.assertEqual(workout.status, SessionWorkoutStatus.DRAFT)
+        self.assertEqual(workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        self.assertEqual(workout.submitted_by, self.user)
         self.assertEqual(workout.replication_batch, batch)
         self.assertEqual(workout.blocks.count(), 2)
         projected_movement = workout.blocks.order_by('sort_order').last().movements.first()
         self.assertEqual(projected_movement.load_type, 'free')
         self.assertEqual(projected_movement.notes, '40/25')
         self.assertEqual(created_preview['collision_policy'], 'skip_existing_workout')
+        self.assertEqual(created_preview['totals']['sessions_pending_approval'], 1)
 
     def test_cross_filter_includes_legacy_other_sessions(self):
         self.cross_session.class_type = ClassType.OTHER

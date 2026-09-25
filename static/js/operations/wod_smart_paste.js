@@ -240,16 +240,6 @@ POR QUE ELE EXISTE:
 
   function bindReviewQueue(scope) {
     if (!scope) return;
-    scope.querySelectorAll('[data-smart-paste-review-jump]').forEach(function (link) {
-      if (link.dataset.smartPasteReviewJumpBound === 'true') return;
-      link.dataset.smartPasteReviewJumpBound = 'true';
-      link.addEventListener('click', function (event) {
-        var href = link.getAttribute('href') || '';
-        if (!href.startsWith('#')) return;
-        event.preventDefault();
-        openReviewTarget(href);
-      });
-    });
     var previewPanel = scope.matches('[data-smart-paste-preview-panel]') ? scope : scope.querySelector('[data-smart-paste-preview-panel]');
     if (previewPanel) {
       var autoOpenTarget = previewPanel.dataset.smartPasteAutoOpenTarget || '';
@@ -324,6 +314,18 @@ POR QUE ELE EXISTE:
     bindReviewQueue(scope);
     bindDayDialogs(scope);
   }
+
+  root.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-action="use-custom-movement"]');
+    if (!button || !root.contains(button)) return;
+    var form = button.closest('form');
+    var slugField = form && form.querySelector('[name="movement_slug"]');
+    if (!slugField) return;
+    slugField.value = 'custom';
+    slugField.dispatchEvent(new Event('input', { bubbles: true }));
+    button.textContent = 'Nome original será mantido';
+    button.setAttribute('aria-pressed', 'true');
+  });
 
   initializeScope(root);
 

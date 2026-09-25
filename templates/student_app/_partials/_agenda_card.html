@@ -17,6 +17,7 @@ Espera `session` (StudentSessionCard).
         </div>
         <div class="student-agenda-card__main">
             <strong>{{ session.title }}</strong>
+            {% if session.workout_titles %}<span class="student-agenda-card__wod">WOD disponível · {{ session.workout_titles.0 }}</span>{% endif %}
             <span class="student-session-row__meta">
                 {% if session.coach_name %}{{ session.coach_name }} · {% endif %}<a
                     href="{% url 'student-app-session-attendees' session.session_id %}"
