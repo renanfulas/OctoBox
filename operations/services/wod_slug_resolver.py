@@ -20,7 +20,7 @@ PONTOS CRITICOS:
 - nao lanca excecao: qualquer falha retorna {} e o comportamento original e preservado.
 - slugs retornados pelo LLM sao validados contra o dicionario antes de serem aplicados.
 - timeout limitado a 20s, abaixo do limite padrao do worker web.
-- usa somente ANTHROPIC_API_KEY: a correcao automatica de movimentos e feita pelo Haiku.
+- usa ANTHROPIC_API_KEY e, para chaves multi-workspace, ANTHROPIC_WORKSPACE_ID.
 - a "note" e so um resumo em linguagem natural da troca feita (ex.: "Troquei 'agachamnto'
   por Back Squat") para exibir no preview do Smart Paste — nunca usada para alterar dado
   numerico (reps/carga), so texto de UI.
@@ -324,13 +324,17 @@ def apply_llm_slug_resolution(parsed_payload: dict, slug_dictionary: list[tuple[
 def _call_anthropic(*, static_block: str, dynamic_block: str, api_key: str) -> str | None:
     # The dictionary is static and the indexed candidate list changes per paste.
     try:
+        headers = {
+            'x-api-key': api_key,
+            'anthropic-version': _ANTHROPIC_API_VERSION,
+            'Content-Type': 'application/json',
+        }
+        workspace_id = os.getenv('ANTHROPIC_WORKSPACE_ID', '').strip()
+        if workspace_id:
+            headers['anthropic-workspace-id'] = workspace_id
         response = requests.post(
             _ANTHROPIC_MESSAGES_URL,
-            headers={
-                'x-api-key': api_key,
-                'anthropic-version': _ANTHROPIC_API_VERSION,
-                'Content-Type': 'application/json',
-            },
+            headers=headers,
             json={
                 'model': _ANTHROPIC_MODEL,
                 'max_tokens': _MAX_OUTPUT_TOKENS,

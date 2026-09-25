@@ -104,8 +104,12 @@ def test_truncated_haiku_response_cannot_be_treated_as_a_valid_mapping():
         def json(self):
             return {'stop_reason': 'max_tokens', 'content': [{'type': 'text', 'text': '{"items": ['}]}
 
-    with patch('operations.services.wod_slug_resolver.requests.post', return_value=Response()) as request:
+    with (
+        patch.dict('os.environ', {'ANTHROPIC_WORKSPACE_ID': 'wrkspc_test'}, clear=False),
+        patch('operations.services.wod_slug_resolver.requests.post', return_value=Response()) as request,
+    ):
         assert _call_anthropic(static_block='dictionary', dynamic_block='items', api_key='test-only') is None
+    assert request.call_args.kwargs['headers']['anthropic-workspace-id'] == 'wrkspc_test'
     body = request.call_args.kwargs['json']
     assert body['max_tokens'] >= 1024
     assert body['output_config']['format']['type'] == 'json_schema'

@@ -45,11 +45,35 @@ jobs:
             static_block = _STATIC_INSTRUCTIONS + '\n\nDicionario canonico:\n' + '\n'.join(
                 f'{slug}: {", ".join(aliases)}' for slug, aliases in dictionary
             )
+            workspace_id = os.environ.get('ANTHROPIC_WORKSPACE_ID', '').strip()
+            if not workspace_id:
+                workspaces_response = requests.get(
+                    'https://api.anthropic.com/v1/organizations/workspaces',
+                    headers={
+                        'x-api-key': os.environ['ANTHROPIC_API_KEY'],
+                        'anthropic-version': _ANTHROPIC_API_VERSION,
+                    },
+                    timeout=20,
+                )
+                if workspaces_response.status_code >= 400:
+                    error = workspaces_response.json().get('error', {})
+                    print(f"workspace_lookup_error status={workspaces_response.status_code} type={error.get('type', 'unknown')}")
+                    sys.exit(1)
+                available_workspaces = workspaces_response.json().get('data', [])
+                production_workspaces = [
+                    workspace for workspace in available_workspaces
+                    if 'prod' in workspace.get('name', '').casefold()
+                ]
+                if len(production_workspaces) != 1:
+                    print(f'workspace_selection_required candidates={len(available_workspaces)} production_matches={len(production_workspaces)}')
+                    sys.exit(1)
+                workspace_id = production_workspaces[0]['id']
             response = requests.post(
                 _ANTHROPIC_MESSAGES_URL,
                 headers={
                     'x-api-key': os.environ['ANTHROPIC_API_KEY'],
                     'anthropic-version': _ANTHROPIC_API_VERSION,
+                    'anthropic-workspace-id': workspace_id,
                     'Content-Type': 'application/json',
                 },
                 json={
