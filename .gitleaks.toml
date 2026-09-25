@@ -23,4 +23,11 @@ paths = [
   # test_subscription_admin.py) pra cobrir qualquer test_*_admin.py futuro
   # do mesmo padrao, sem precisar editar este arquivo de novo a cada PR.
   '''(^|[\\/])public_workouts[\\/]test_.*_admin\.py$''',
+  # idempotency_key de fixture (ex.: 'key-de-a', 'key-tentativa') — a regra
+  # generic-api-key confunde o rotulo curto+entropia com uma chave real.
+  # public_workouts nao organiza testes em tests/ (ficam test_*.py soltos
+  # na propria pasta do app), entao a mesma logica do allowlist de tests/
+  # acima precisa de um padrao proprio aqui pra cobrir qualquer test_*.py
+  # futuro do mesmo jeito, sem editar este arquivo de novo a cada PR.
+  '''(^|[\\/])public_workouts[\\/]test_[^/\\\\]*\.py$''',
 ]
