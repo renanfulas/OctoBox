@@ -12,7 +12,12 @@
             {% if smart_paste_summary.unresolved_count %}{{ smart_paste_summary.unresolved_count }} para revisar{% else %}Leitura pronta{% endif %}
         </span>
     </div>
-    {% if smart_paste_movement_resolution.state == 'provider_unavailable' or smart_paste_movement_resolution.state == 'provider_error' or smart_paste_movement_resolution.state == 'empty_response' %}
+    {% if smart_paste_should_auto_retry %}
+    <div class="smart-paste-resolution-notice" role="status">
+        <strong>O Haiku está revisando os movimentos</strong>
+        <p>Vamos tentar resolver as pendências deste rascunho antes de pedir sua ajuda.</p>
+    </div>
+    {% elif smart_paste_movement_resolution.state == 'provider_unavailable' or smart_paste_movement_resolution.state == 'provider_error' or smart_paste_movement_resolution.state == 'empty_response' or smart_paste_movement_resolution.state == 'rate_limited' %}
     <div class="smart-paste-resolution-notice" role="status">
         <strong>Revisão automática indisponível</strong>
         <p>Não foi possível concluir a correção automática agora. Revise os itens abaixo para continuar; seu treino continua salvo.</p>
@@ -28,6 +33,15 @@
         <p>Revise os itens abaixo. O rascunho fica salvo e só poderá ser confirmado depois das correções.</p>
     </div>
     {% endif %}
+    {% if smart_paste_summary.unresolved_count and not weekly_plan_is_confirmed %}
+    <form method="post" class="smart-paste-auto-retry" hx-post="{% url 'workout-smart-paste' %}" hx-target="#smart-paste-preview-panel" hx-swap="outerHTML" {% if smart_paste_should_auto_retry %}hx-trigger="load, submit"{% endif %}>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="retry_auto_resolution">
+        <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+        <button class="button secondary" type="submit">Corrigir automaticamente com Haiku</button>
+        <span class="smart-paste-auto-retry__progress" role="status">Analisando movimentos…</span>
+    </form>
+    {% endif %}
     {% if smart_paste_summary.auto_fixed_items %}
     <details class="smart-paste-inline-review-disclosure smart-paste-autofix-summary">
         <summary>Ver o que o Haiku ajustou sozinho</summary>
@@ -39,7 +53,7 @@
     </details>
     {% endif %}
 
-    {% if smart_paste_summary.current_unresolved_item %}
+    {% if smart_paste_summary.current_unresolved_item and not smart_paste_should_auto_retry %}
     <section class="smart-paste-review-queue" aria-label="Revisar primeiro item pendente">
         <article class="smart-paste-warning-card smart-paste-warning-card--focus">
             <h3>Revise o primeiro movimento pendente</h3>
@@ -62,11 +76,11 @@
                 <input type="hidden" name="day_index" value="{{ smart_paste_summary.current_unresolved_item.day_index }}">
                 <input type="hidden" name="block_index" value="{{ smart_paste_summary.current_unresolved_item.block_index }}">
                 <input type="hidden" name="movement_index" value="{{ smart_paste_summary.current_unresolved_item.movement_index }}">
-                <label><span>Texto</span><input type="text" name="movement_label_raw" value="{{ review_form.initial.movement_label_raw|default_if_none:'' }}"></label>
-                <label><span>Slug</span><input type="text" name="movement_slug" value="{{ review_form.initial.movement_slug|default_if_none:'' }}" list="smart-paste-movement-slugs"></label>
-                <label><span>Reps</span><input type="text" name="reps_spec" value="{{ review_form.initial.reps_spec|default_if_none:'' }}"></label>
-                <label><span>Carga</span><input type="text" name="load_spec" value="{{ review_form.initial.load_spec|default_if_none:'' }}"></label>
-                <label><span>Nota</span><input type="text" name="notes" value="{{ review_form.initial.notes|default_if_none:'' }}"></label>
+                <label><span>Texto</span><input type="text" name="movement_label_raw" value="{{ review_form.movement_label_raw.value|default_if_none:'' }}"></label>
+                <label><span>Movimento</span><input type="text" name="movement_slug" value="{{ review_form.movement_slug.value|default_if_none:'' }}" list="smart-paste-movement-slugs" autocomplete="off"><small>Escolha uma opção da lista. Se não existir, use <code>custom</code> para preservar o texto.</small>{% if review_form.movement_slug.errors %}<small class="smart-paste-field-error">{{ review_form.movement_slug.errors.0 }}</small>{% endif %}</label>
+                <label><span>Reps</span><input type="text" name="reps_spec" value="{{ review_form.reps_spec.value|default_if_none:'' }}"></label>
+                <label><span>Carga</span><input type="text" name="load_spec" value="{{ review_form.load_spec.value|default_if_none:'' }}"></label>
+                <label><span>Nota</span><input type="text" name="notes" value="{{ review_form.notes.value|default_if_none:'' }}"></label>
                 <div class="actions">
                     <button class="button tertiary" type="submit">
                         {% if smart_paste_summary.unresolved_count > 1 %}Salvar e revisar proximo{% else %}Salvar revisao{% endif %}
@@ -77,32 +91,33 @@
     </section>
     {% endif %}
 
-    {% if smart_paste_review_days %}
-    <div class="smart-paste-day-chips" aria-label="Dias com revisoes pendentes">
-        {% for day in smart_paste_review_days %}
+    {% if smart_paste_days %}
+    <div class="smart-paste-day-chips" aria-label="Resumo dos treinos da semana">
+        {% for day in smart_paste_days %}
         <button
             type="button"
-            class="smart-paste-day-chip smart-paste-day-chip--warning"
+            class="smart-paste-day-chip {% if day.has_unresolved %}smart-paste-day-chip--warning{% else %}smart-paste-day-chip--clean{% endif %}"
             data-action="open-day-dialog"
             data-target="smart-paste-day-dialog-{{ day.day_index }}"
             aria-haspopup="dialog"
         >
             <span class="smart-paste-day-chip__label">{{ day.weekday_label }}</span>
             <span class="smart-paste-day-chip__count">{{ day.blocks|length }} bloco{% if day.blocks|length != 1 %}s{% endif %}</span>
-            <span class="smart-paste-day-chip__status smart-paste-day-chip__status--warning">{{ day.unresolved_count }} pendência{% if day.unresolved_count != 1 %}s{% endif %}</span>
+            <span class="smart-paste-day-chip__preview">{% for label in day.preview_movements %}<span>{{ label }}</span>{% empty %}<span>Sem movimentos identificados</span>{% endfor %}</span>
+            <span class="smart-paste-day-chip__status {% if day.has_unresolved %}smart-paste-day-chip__status--warning{% endif %}">{% if day.has_unresolved %}{{ day.unresolved_count }} pendência{% if day.unresolved_count != 1 %}s{% endif %}{% else %}Leitura pronta{% endif %}</span>
         </button>
         {% endfor %}
     </div>
     {% endif %}
 
-    {% for day in smart_paste_review_days %}
+    {% for day in smart_paste_days %}
     <dialog class="smart-paste-day-dialog" id="smart-paste-day-dialog-{{ day.day_index }}">
         <div class="smart-paste-day-dialog__inner">
             <header class="smart-paste-day-dialog__head">
                 <div class="smart-paste-day-dialog__heading">
                     <p class="eyebrow">Dia {{ day.weekday|add:"1" }}</p>
                     <h3>{{ day.weekday_label }}</h3>
-                    <p class="smart-paste-day-dialog__summary">{{ day.unresolved_count }} pendência{% if day.unresolved_count != 1 %}s{% endif %} para revisar antes de confirmar a semana.</p>
+                    <p class="smart-paste-day-dialog__summary">{% if day.has_unresolved %}{{ day.unresolved_count }} pendência{% if day.unresolved_count != 1 %}s{% endif %} para revisar antes de confirmar a semana.{% else %}Movimentos identificados e prontos para conferir.{% endif %}</p>
                 </div>
                 <button type="button" class="smart-paste-day-dialog__close" data-action="close-dialog" aria-label="Fechar">✕</button>
             </header>
@@ -187,6 +202,7 @@
     {% endfor %}
 
     <datalist id="smart-paste-movement-slugs">
+        <option value="custom" label="Manter como movimento personalizado"></option>
         {% for slug, aliases in review_slug_choices %}
         <option value="{{ slug }}"></option>
         {% endfor %}

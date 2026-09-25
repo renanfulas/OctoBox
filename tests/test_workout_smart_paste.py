@@ -71,6 +71,52 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         )
         self.assertNotContains(response, 'Plano futuro')
 
+    def test_old_future_draft_retries_haiku_before_showing_manual_review(self):
+        today = timezone.localdate()
+        next_monday = today - timedelta(days=today.weekday()) + timedelta(days=7)
+        plan = WeeklyWodPlan.objects.create(
+            week_start=next_monday,
+            label='Semana do video',
+            source_text='Terca\nWOD\n10m shw',
+            parsed_payload={'days': [{
+                'weekday': 1, 'weekday_label': 'Terca',
+                'blocks': [{'kind': 'metcon', 'title': 'WOD', 'movements': [{
+                    'movement_slug': None, 'movement_label_raw': '10m shw',
+                    'reps_spec': '10m', 'load_spec': None, 'notes': None,
+                }]}],
+            }]},
+            created_by=self.coach,
+            status=WeeklyWodPlanStatus.DRAFT,
+        )
+
+        response = self.client.get(reverse('workout-smart-paste'))
+        self.assertEqual(response.context['weekly_plan'].id, plan.id)
+        self.assertContains(response, 'hx-trigger="load, submit"')
+        self.assertNotContains(response, 'class="smart-paste-review-queue"')
+
+        with (
+            patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-only'}, clear=False),
+            patch('operations.services.wod_slug_resolver._lookup_learned_aliases', return_value={}),
+            patch('operations.services.wod_slug_resolver._remember_resolved_aliases'),
+            patch('operations.workout_board_views.smart_paste_rate_limit_exceeded', return_value=False),
+            patch(
+                'operations.services.wod_slug_resolver._call_anthropic',
+                return_value='{"items": [{"id": 0, "slug": "wall_walk"}]}',
+            ),
+        ):
+            response = self.client.post(
+                reverse('workout-smart-paste'),
+                data={'action': 'retry_auto_resolution', 'plan_id': plan.id},
+                HTTP_HX_REQUEST='true',
+            )
+
+        plan.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(plan.parsed_payload['days'][0]['blocks'][0]['movements'][0]['movement_slug'], 'wall_walk')
+        self.assertEqual(plan.parsed_payload['movement_resolution']['state'], 'haiku_resolved')
+        self.assertContains(response, '10m shw')
+        self.assertNotContains(response, 'smart-paste-review-queue')
+
     def test_coach_can_parse_text_into_weekly_plan_draft(self):
         response = self.client.post(
             reverse('workout-smart-paste'),

@@ -1,0 +1,29 @@
+name: SmartPaste Haiku Production Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  haiku-smoke:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Validate the live Haiku response contract
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          timeout: 2m
+          command_timeout: 2m
+          script: |
+            set -euo pipefail
+            cd /srv/octobox/app
+            set -a
+            source /srv/octobox/shared/octobox.env
+            set +a
+            /srv/octobox/venv/bin/python scripts/smoke_smartpaste_haiku.py

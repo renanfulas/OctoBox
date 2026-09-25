@@ -213,8 +213,27 @@ class WorkoutSmartPasteView(OperationBaseView):
         action = request.POST.get('action')
         plan = self._load_plan(request.POST.get('plan_id'))
 
+        if action == 'retry_auto_resolution':
+            if plan is None or plan.status != WeeklyWodPlanStatus.DRAFT:
+                messages.error(request, 'Abra um rascunho para corrigir os movimentos automaticamente.')
+                return redirect('workout-smart-paste')
+            payload = plan.parsed_payload or {}
+            if count_unresolved_smart_paste_movements(payload):
+                if smart_paste_rate_limit_exceeded(request):
+                    payload['movement_resolution'] = {'provider': 'haiku', 'state': 'rate_limited'}
+                else:
+                    apply_llm_slug_resolution(payload, load_wod_movement_dictionary())
+                plan.parsed_payload = payload
+                plan.save(update_fields=['parsed_payload', 'updated_at'])
+            context = self._build_context(plan=plan, parsed_payload=payload)
+            if self._is_hx_request():
+                return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
+            return self.render_to_response(context)
+
         if action == 'update_review_item':
-            review_form = WeeklyWodReviewMovementForm(request.POST)
+            review_form = WeeklyWodReviewMovementForm(
+                request.POST, slug_choices=load_wod_movement_dictionary(),
+            )
             if not review_form.is_valid():
                 messages.error(request, _first_form_error(review_form, 'Revise o item antes de salvar a correção.'))
                 context = self._build_context(plan=plan, review_form=review_form)
@@ -384,8 +403,9 @@ class WorkoutSmartPasteView(OperationBaseView):
             parsed = detect_and_convert_smartplan_weekly(source_text)
             if parsed is None:
                 parsed = parse_weekly_wod_text(source_text)
-                if _freeform_should_take_over(parsed):
-                    parsed = parse_weekly_wod_freeform(source_text)
+                freeform = parse_weekly_wod_freeform(source_text)
+                if _freeform_should_take_over(parsed, freeform):
+                    parsed = freeform
             # O SmartPlan estruturado também pode chegar com slug vazio (por
             # exemplo, se a geração não reconheceu uma abreviação). Antes,
             # este resolver rodava somente no parser livre, deixando esses

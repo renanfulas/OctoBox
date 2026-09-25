@@ -2,7 +2,7 @@
 ARQUIVO: resolvedor de slugs de movimentos via LLM para o Smart Paste semanal.
 
 POR QUE ELE EXISTE:
-- o dicionario de 104 movimentos nao cobre 100% dos textos reais dos coaches.
+- o dicionario canonico nao cobre 100% dos textos reais dos coaches.
 - quando o parser deterministico nao reconhece um movimento, este servico tenta resolver via LLM.
 - resultado: zero chips vermelhos para a maioria dos treinos sem exigir revisao manual.
 
@@ -19,14 +19,13 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - nao lanca excecao: qualquer falha retorna {} e o comportamento original e preservado.
 - slugs retornados pelo LLM sao validados contra o dicionario antes de serem aplicados.
-- timeout curto (8s) para nao bloquear o render da pagina.
+- timeout limitado a 20s, abaixo do limite padrao do worker web.
 - usa somente ANTHROPIC_API_KEY: a correcao automatica de movimentos e feita pelo Haiku.
 - a "note" e so um resumo em linguagem natural da troca feita (ex.: "Troquei 'agachamnto'
   por Back Squat") para exibir no preview do Smart Paste — nunca usada para alterar dado
   numerico (reps/carga), so texto de UI.
-- o dicionario de slugs + instrucoes (parte estatica) vai em bloco cacheado
-  (cache_control: ephemeral) na chamada Anthropic — so a lista de nomes nao reconhecidos
-  muda a cada chamada, entao o cache reduz custo/latencia quando a memoria nao cobre tudo.
+- os aliases canonicos vao no prompt para o modelo entender abreviacoes. A resposta
+  e JSON estruturado com ids estaveis e passa por validacao de slugs no servidor.
 - a memoria (WodMovementLearnedAlias) vive no app knowledge (schema public, cross-tenant) —
   igual o RAG: erro de digitacao de exercicio e vocabulario universal, nao dado de negocio
   de uma box. Chave de lookup e o texto normalizado (minusculo, sem acento/pontuacao).
@@ -47,31 +46,41 @@ logger = logging.getLogger(__name__)
 
 _ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages'
 _ANTHROPIC_API_VERSION = '2023-06-01'
-_TIMEOUT_SECONDS = 8
+_TIMEOUT_SECONDS = 20
 _ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
+_MAX_OUTPUT_TOKENS = 2048
+_NAMES_PER_BATCH = 80
 
-# Um treino real de uma semana tem no maximo ~60-80 movimentos ao todo; mais que
-# isso sobrando sem slug depois do parser deterministico + memoria aprendida e
-# sinal de spam/lixo colado, nao de treino. Corta antes de gastar chamada de LLM.
-_MAX_NAMES_PER_CALL = 40
+# Limite superior para evitar gastar a API com texto fora do escopo de treino.
+_MAX_NAMES_PER_CALL = 80
 
 
 _STATIC_INSTRUCTIONS = (
     'Voce e um especialista em CrossFit e treinamento funcional. '
-    'Voce recebe uma lista de movimentos extraidos de um treino em portugues ou ingles '
-    'que nao foram reconhecidos pelo dicionario interno (geralmente por erro de digitacao, '
-    'sinonimo ou abreviacao). '
-    'Para cada movimento, identifique o slug canonico mais proximo da lista de slugs validos fornecida. '
-    'Se nao houver correspondencia razoavel, use string vazia "" no slug.\n\n'
-    'Alem do slug, escreva uma nota curta em portugues (menos de 12 palavras) explicando a troca '
-    'de forma natural para o coach ler, ex.: "Troquei \'agachamnto\' por Back Squat". '
-    'Se o slug ficar vazio, a nota deve dizer que nao encontrou correspondencia. '
-    'NUNCA invente ou corrija numero (reps, carga, series) — isso nao e sua tarefa aqui, '
-    'so identificacao de movimento.\n\n'
-    'Responda SOMENTE com um objeto JSON valido no formato:\n'
-    '{"nome do movimento": {"slug": "slug_canonico", "note": "nota curta em pt-br"}}\n'
-    'Sem explicacoes, sem markdown, apenas o JSON.'
+    'Identifique o movimento de cada item pelo contexto do dia e do bloco. '
+    'Escolha apenas um slug da lista canonica e seus aliases. '
+    'Se a linha contiver mais de um movimento, for apenas uma instrucao, ou nao houver '
+    'correspondencia segura, use slug vazio. '
+    'Nao altere numeros, repeticoes, cargas ou o texto original. '
+    'Responda cada id recebido uma unica vez, no formato JSON solicitado.'
 )
+
+_OUTPUT_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'items': {
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {'id': {'type': 'integer'}, 'slug': {'type': 'string'}},
+                'required': ['id', 'slug'],
+                'additionalProperties': False,
+            },
+        },
+    },
+    'required': ['items'],
+    'additionalProperties': False,
+}
 
 
 def _normalize_lookup_text(text: str) -> str:
@@ -162,6 +171,7 @@ def _resolve_unknown_slugs_with_status(
     *,
     unrecognized_names: list[str],
     slug_dictionary: list[tuple[str, tuple[str, ...]]],
+    contexts: dict[str, str] | None = None,
 ) -> tuple[dict[str, dict[str, str]], dict[str, object]]:
     """Resolve with Haiku and return safe, user-displayable outcome metadata."""
     status: dict[str, object] = {
@@ -178,7 +188,10 @@ def _resolve_unknown_slugs_with_status(
         status['state'] = 'dictionary_unavailable'
         return {}, status
 
-    learned = _lookup_learned_aliases(unrecognized_names)
+    learned = {
+        name: entry for name, entry in _lookup_learned_aliases(unrecognized_names).items()
+        if entry.get('slug') in valid_slugs
+    }
     still_unknown = [name for name in unrecognized_names if name not in learned]
     status['memory_resolved_count'] = len(unrecognized_names) - len(still_unknown)
     status['resolved_count'] = len(unrecognized_names) - len(still_unknown)
@@ -195,10 +208,10 @@ def _resolve_unknown_slugs_with_status(
         )
         return learned, status
 
-    all_slugs_text = ', '.join(sorted(valid_slugs))
-    names_text = '\n'.join(f'- {name}' for name in still_unknown)
-    static_block = f'{_STATIC_INSTRUCTIONS}\n\nSlugs validos:\n{all_slugs_text}'
-    dynamic_block = f'Movimentos para resolver:\n{names_text}'
+    dictionary_text = '\n'.join(
+        f'{slug}: {", ".join(aliases)}' for slug, aliases in slug_dictionary
+    )
+    static_block = f'{_STATIC_INSTRUCTIONS}\n\nDicionario canonico:\n{dictionary_text}'
 
     anthropic_key = os.getenv('ANTHROPIC_API_KEY', '').strip()
 
@@ -214,28 +227,36 @@ def _resolve_unknown_slugs_with_status(
 
     status['haiku_attempted'] = True
     status['haiku_candidate_count'] = len(still_unknown)
-    raw_text = _call_anthropic(
-        static_block=static_block,
-        dynamic_block=dynamic_block,
-        api_key=anthropic_key,
-    )
-    if raw_text is None:
-        status['state'] = 'provider_error'
-        return learned, status
-    if not raw_text.strip():
-        status['state'] = 'empty_response'
-        return learned, status
+    from_llm: dict[str, dict[str, str]] = {}
+    failed_batches = 0
+    for offset in range(0, len(still_unknown), _NAMES_PER_BATCH):
+        batch = still_unknown[offset:offset + _NAMES_PER_BATCH]
+        items = [
+            {'id': index, 'texto': name, 'contexto': (contexts or {}).get(name, '')[:160]}
+            for index, name in enumerate(batch)
+        ]
+        raw_text = _call_anthropic(
+            static_block=static_block,
+            dynamic_block='Identifique os itens por id:\n' + json.dumps(items, ensure_ascii=False),
+            api_key=anthropic_key,
+        )
+        if not raw_text or not raw_text.strip():
+            failed_batches += 1
+            continue
+        from_llm.update(_parse_and_validate(
+            raw_text=raw_text,
+            valid_slugs=valid_slugs,
+            unrecognized_names=batch,
+        ))
 
-    from_llm = _parse_and_validate(
-        raw_text=raw_text,
-        valid_slugs=valid_slugs,
-        unrecognized_names=still_unknown,
-    )
     _remember_resolved_aliases(from_llm)
     status['resolved_count'] = len(learned) + len(from_llm)
+    status['haiku_batch_count'] = (len(still_unknown) + _NAMES_PER_BATCH - 1) // _NAMES_PER_BATCH
+    status['haiku_failed_batch_count'] = failed_batches
     status['state'] = (
         'haiku_resolved' if len(from_llm) == len(still_unknown)
         else 'haiku_partial' if from_llm
+        else 'provider_error' if failed_batches == status['haiku_batch_count']
         else 'haiku_no_match'
     )
     return {**learned, **from_llm}, status
@@ -262,10 +283,19 @@ def apply_llm_slug_resolution(parsed_payload: dict, slug_dictionary: list[tuple[
     if not unresolved:
         return
 
-    unrecognized_names = list({name for _, _, _, name in unresolved})
+    unrecognized_names = list(dict.fromkeys(name for _, _, _, name in unresolved))
+    contexts = {}
+    for day_idx, block_idx, _mov_idx, raw_name in unresolved:
+        day = days[day_idx]
+        block = day['blocks'][block_idx]
+        contexts.setdefault(
+            raw_name,
+            f"{day.get('weekday_label', '')} · {block.get('title') or block.get('kind', '')}",
+        )
     resolved, resolution_status = _resolve_unknown_slugs_with_status(
         unrecognized_names=unrecognized_names,
         slug_dictionary=slug_dictionary,
+        contexts=contexts,
     )
 
     parsed_payload['movement_resolution'] = resolution_status
@@ -292,9 +322,7 @@ def apply_llm_slug_resolution(parsed_payload: dict, slug_dictionary: list[tuple[
 # ---------------------------------------------------------------------------
 
 def _call_anthropic(*, static_block: str, dynamic_block: str, api_key: str) -> str | None:
-    # static_block (instrucoes + dicionario de slugs) e identico entre chamadas na mesma
-    # sessao de paste — cache_control:ephemeral evita reprocessar/repagar esses tokens
-    # a cada linha nao reconhecida. So dynamic_block (nomes a resolver) muda.
+    # The dictionary is static and the indexed candidate list changes per paste.
     try:
         response = requests.post(
             _ANTHROPIC_MESSAGES_URL,
@@ -305,12 +333,12 @@ def _call_anthropic(*, static_block: str, dynamic_block: str, api_key: str) -> s
             },
             json={
                 'model': _ANTHROPIC_MODEL,
-                'max_tokens': 512,
+                'max_tokens': _MAX_OUTPUT_TOKENS,
+                'output_config': {'format': {'type': 'json_schema', 'schema': _OUTPUT_SCHEMA}},
                 'system': [
                     {
                         'type': 'text',
                         'text': static_block,
-                        'cache_control': {'type': 'ephemeral'},
                     },
                 ],
                 'messages': [{'role': 'user', 'content': dynamic_block}],
@@ -319,6 +347,9 @@ def _call_anthropic(*, static_block: str, dynamic_block: str, api_key: str) -> s
         )
         response.raise_for_status()
         data = response.json()
+        if data.get('stop_reason') in {'max_tokens', 'model_context_window_exceeded'}:
+            logger.warning('wod_slug_resolver: resposta Haiku truncada (%s).', data['stop_reason'])
+            return None
         parts = [block.get('text', '') for block in data.get('content', []) if block.get('type') == 'text']
         return '\n'.join(parts).strip()
     except Exception as exc:
@@ -336,12 +367,7 @@ def _parse_and_validate(
     valid_slugs: set[str],
     unrecognized_names: list[str],
 ) -> dict[str, dict[str, str]]:
-    """Extrai e valida o JSON retornado pelo LLM.
-
-    Aceita tanto o formato novo ({"nome": {"slug": ..., "note": ...}}) quanto o
-    formato antigo ({"nome": "slug"}) — mantem compatibilidade com respostas de
-    modelos que ignorem a instrucao de incluir "note".
-    """
+    """Accept indexed structured output and legacy name-keyed output safely."""
     text = raw_text.strip()
 
     # Extrair bloco JSON mesmo que o modelo envolva em markdown
@@ -357,9 +383,28 @@ def _parse_and_validate(
         logger.warning('wod_slug_resolver: falha ao parsear JSON: %s', exc)
         return {}
 
+    if not isinstance(mapping, dict):
+        return {}
     result: dict[str, dict[str, str]] = {}
-    unrecognized_lower = {name.lower(): name for name in unrecognized_names}
+    indexed_items = mapping.get('items')
+    if isinstance(indexed_items, list):
+        for item in indexed_items:
+            if not isinstance(item, dict):
+                continue
+            index = item.get('id')
+            slug = item.get('slug')
+            if type(index) is not int or not 0 <= index < len(unrecognized_names):
+                continue
+            if not isinstance(slug, str) or slug not in valid_slugs:
+                continue
+            original_name = unrecognized_names[index]
+            result[original_name] = {
+                'slug': slug,
+                'note': f'Identificado automaticamente como {slug.replace("_", " ")}.',
+            }
+        return result
 
+    unrecognized_lower = {name.lower(): name for name in unrecognized_names}
     for key, value in mapping.items():
         if not isinstance(key, str):
             continue
@@ -371,7 +416,9 @@ def _parse_and_validate(
             note = ''
         else:
             continue
-        original_name = unrecognized_lower.get(key.lower(), key)
+        original_name = unrecognized_lower.get(key.lower())
+        if original_name is None:
+            continue
         # Aceitar apenas slugs que existem no dicionario canonico
         if slug and slug in valid_slugs:
             result[original_name] = {'slug': slug, 'note': note}
