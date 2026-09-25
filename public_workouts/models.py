@@ -1219,19 +1219,21 @@ class PublicWorkoutLoadLog(models.Model):
     # transacao que cria a correcao (services.py::correct_load), nunca
     # calculado a posteriori.
     is_active = models.BooleanField(default=True, db_index=True)
-    # NOT NULL a partir da Migration C (0033_load_log_set_role_not_null) --
-    # ANTES dela (Migrations A/B, 0030/0031) o campo era nullable de
-    # proposito, porque um `default='top_set'` fabricaria precisao sobre o
-    # historico existente. A propria Migration C se recusa a rodar (levanta
-    # erro, RunPython) se encontrar QUALQUER linha com set_role NULL —
-    # nunca depende so' de alguem lembrar de checar antes (ver
-    # management command backfill_public_workout_load_log_set_role e o
-    # checkpoint no plano, §7.12). ATENCAO NO DEPLOY: 0033 tem que ser
-    # aplicada numa migracao SEPARADA de 0028-0032, depois do backfill
-    # confirmar zero linha NULL em produção -- nunca no mesmo `migrate`
-    # que introduz o campo.
+    # Nullable de proposito (Migrations A/B, 0028/0029) -- NUNCA
+    # default='top_set' no field, fabricaria precisao sobre o historico
+    # existente. Vira NOT NULL so' na Migration C, que fica FORA da pasta
+    # migrations/ de proposito (ver docs/plans/
+    # pending-migration-set-role-not-null.py) -- achado real via CI: um
+    # `migrate` sem alvo aplica TODAS as migrations pendentes, e um banco
+    # de teste recem-criado (CI, `--create-db`) passaria qualquer cheque
+    # de "zero linha NULL" trivialmente (banco vazio), tornando a coluna
+    # NOT NULL cedo demais e quebrando testes que criam
+    # PublicWorkoutLoadLog sem set_role explicito. So' vira uma migration
+    # de verdade (e so' entao este campo perde o `null=True`) quando o
+    # backfill em produção for confirmado -- ver checkpoint no plano,
+    # §7.12.
     set_role = models.CharField(
-        max_length=16, choices=PublicWorkoutLoadLogSetRole.choices,
+        max_length=16, choices=PublicWorkoutLoadLogSetRole.choices, null=True,
     )
     # Fase 4 do plano curva-carga-completa-reps-rir-recorde (§6.2):
     # resultado da conquista CALCULADO E GRAVADO na mesma transacao que
@@ -1261,17 +1263,19 @@ class PublicWorkoutLoadLog(models.Model):
             models.Index(fields=['account', 'set_role', 'movement_slug', 'performed_on'], name='pwll_acct_role_move_day_idx'),
         ]
         constraints = [
-            # Migration B (§7.2) -> substituida pela Migration C
-            # (0033_load_log_set_role_not_null): ate a C, aceitava NULL de
-            # proposito (nao dependia do backfill ter completado). A partir
-            # da C, a coluna e' NOT NULL (garantido pelo ALTER COLUMN em
-            # si) e este constraint so' precisa validar o VALOR -- o ramo
-            # `set_role__isnull=True` que existia aqui virou impossivel de
-            # satisfazer (e por isso saiu, nao so' porque parou de ser
-            # necessario).
+            # Migration B (§7.2): defesa em profundidade contra qualquer
+            # escrita que nao passe por record_load/correct_load (edicao
+            # direta no Admin, por exemplo). Aceita NULL de proposito --
+            # nao depende do backfill ter completado; so' quando a
+            # Migration C (pendente, fora de migrations/) for aplicada de
+            # verdade essa coluna vira NOT NULL e este constraint troca de
+            # forma junto.
             models.CheckConstraint(
-                condition=models.Q(set_role__in=PublicWorkoutLoadLogSetRole.values),
-                name='public_workouts_loadlog_set_role_valid',
+                condition=(
+                    models.Q(set_role__in=PublicWorkoutLoadLogSetRole.values)
+                    | models.Q(set_role__isnull=True)
+                ),
+                name='public_workouts_loadlog_set_role_valid_or_null',
             ),
             # Fase 4 (§6.2): os dois campos de conquista nascem juntos ou
             # nao nascem -- defesa em profundidade contra uma escrita

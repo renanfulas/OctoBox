@@ -849,10 +849,14 @@ class AchievementTests(TestCase):
             performed_on=date(2026, 1, 12), idempotency_key='key-2', set_role=_TOP_SET,
         )
 
-        # "Retentativa" com a MESMA chave mas peso totalmente diferente --
-        # o servico ignora o peso do reenvio e devolve a linha original.
+        # "Retentativa" com a MESMA chave mas peso diferente (ainda dentro
+        # do teto valido -- um peso realmente absurdo falharia na
+        # VALIDACAO antes mesmo de chegar na recuperacao por
+        # idempotency_key, que e' um caminho de codigo diferente do que
+        # este teste quer provar) -- o servico ignora o peso do reenvio e
+        # devolve a linha original.
         retry = record_load(
-            account_id=account.pk, movement_slug='agachamento-livre', weight_kg=Decimal('5000'),
+            account_id=account.pk, movement_slug='agachamento-livre', weight_kg=Decimal('999'),
             performed_on=date(2026, 1, 12), idempotency_key='key-2', set_role=_TOP_SET,
         )
 
