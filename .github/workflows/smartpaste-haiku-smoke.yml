@@ -21,7 +21,7 @@ jobs:
           timeout: 2m
           command_timeout: 2m
           script: |
-            set -euo pipefail
+            set -eo pipefail
             cd /srv/octobox/app
             set -a
             source /srv/octobox/shared/octobox.env
