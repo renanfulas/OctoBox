@@ -225,8 +225,9 @@ Sled pull""",
 def test_coach_supplied_wod_is_parsed_without_losing_the_day_or_all_movements(case_name, source_text):
     """Each real-world paste produces a usable day for dictionary/Haiku/review processing."""
     parsed = parse_weekly_wod_text(source_text)
-    if _freeform_should_take_over(parsed):
-        parsed = parse_weekly_wod_freeform(source_text)
+    freeform = parse_weekly_wod_freeform(source_text)
+    if _freeform_should_take_over(parsed, freeform):
+        parsed = freeform
 
     assert len(parsed["days"]) == 1, case_name
     blocks = parsed["days"][0]["blocks"]
