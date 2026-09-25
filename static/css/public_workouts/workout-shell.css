@@ -1301,3 +1301,33 @@ button.workout-week-day:focus-visible {
     line-height: 1.55;
     color: var(--theme-text-secondary);
 }
+.workout-load-chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px 14px;
+    flex-wrap: wrap;
+}
+
+.workout-load-chart-head h3 { flex-basis: 100%; }
+.workout-load-chart-current { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.workout-load-chart-current strong {
+    font-size: clamp(2rem, 8vw, 2.6rem);
+    line-height: 1;
+    font-weight: 800;
+    color: var(--brand);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
+}
+.workout-load-chart-unit { font-size: 0.85rem; color: var(--theme-text-muted); }
+.workout-load-chart-statement { flex-basis: 100%; margin: 0; color: var(--theme-text-secondary, var(--theme-text-muted)); font-size: 0.9rem; }
+.workout-load-chart-context { flex-basis: 100%; display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; color: var(--theme-text-muted); }
+.workout-load-chart-context summary, .workout-load-chart-siblings summary { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.workout-load-chart-scale-label { font-size: 9px; fill: var(--theme-text-muted); }
+.workout-load-chart-dot--legacy { fill: var(--theme-text-muted); stroke: var(--theme-surface-secondary); stroke-width: 1.5; }
+.workout-load-chart-empty, .workout-load-chart-legacy-label { margin: 0.6rem 0; color: var(--theme-text-muted); font-size: 0.85rem; line-height: 1.5; }
+.workout-load-input__warmup-toggle { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--theme-text-muted); font-size: 0.82rem; }
+.workout-load-input__warmup-toggle input { accent-color: var(--brand); }
+@media (max-width: 380px) {
+    .workout-load-chart { padding-inline: 10px; }
+    .workout-load-chart-current strong { font-size: clamp(1.8rem, 9vw, 2.2rem); }
+}

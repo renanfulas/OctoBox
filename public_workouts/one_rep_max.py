@@ -161,15 +161,30 @@ def _week_start(day: date) -> date:
 def _weekly_best_estimates(*, account_id: int, movement_slug: str) -> list[tuple[date, float]]:
     """Melhor 1RM estimado por semana (segunda-feira como chave), mais
     recente por ultimo. So considera sets com estimativa valida (<=15 reps
-    efetivas) — o resto nao entra na tendencia."""
-    from .models import PublicWorkoutLoadLog
+    efetivas) — o resto nao entra na tendencia.
 
-    logs = PublicWorkoutLoadLog.objects.filter(account_id=account_id, movement_slug=movement_slug).order_by(
-        'performed_on'
-    )
+    Plano curva-grafico-hierarquia-e-set-role.md (Revisao 8, §7.7): filtra
+    `set_role__in=_CURVE_AND_TREND_ROLES` no banco (nunca em Python) e
+    aplica `effective_top_sets_by_day` — a MESMA dedup por dia que a curva
+    principal usa. Isso mantém gráfico e tendência coerentes quando há
+    mais de um registro no mesmo dia."""
+    from .models import PublicWorkoutLoadLog
+    from .progress_eligibility import _CURVE_AND_TREND_ROLES, effective_top_sets_by_day
+
+    logs = PublicWorkoutLoadLog.objects.filter(
+        account_id=account_id, movement_slug=movement_slug,
+        set_role__in=_CURVE_AND_TREND_ROLES,
+    ).order_by('performed_on')
+
+    return _weekly_best_estimates_from_logs(movement_slug=movement_slug, logs=list(logs))
+
+
+def _weekly_best_estimates_from_logs(*, movement_slug: str, logs: list) -> list[tuple[date, float]]:
+    """Pure aggregation shared by the ORM entry point and batched snapshots."""
+    from .progress_eligibility import effective_top_sets_by_day
 
     best_by_week: dict[date, float] = {}
-    for log in logs:
+    for log in effective_top_sets_by_day(logs):
         estimate = estimate_one_rep_max(weight_kg=log.weight_kg, reps=log.reps, rir=log.rir)
         if estimate is None:
             continue
@@ -180,24 +195,53 @@ def _weekly_best_estimates(*, account_id: int, movement_slug: str) -> list[tuple
     return sorted(best_by_week.items())
 
 
-def detect_one_rep_max_trend(*, account_id: int, movement_slug: str) -> OneRepMaxTrend:
+def detect_one_rep_max_trend_from_logs(*, movement_slug: str, logs: list, as_of: date | None = None) -> OneRepMaxTrend:
+    """Build the weekly signal from already fetched top sets."""
+    from django.utils import timezone as django_timezone
+
+    as_of = as_of or django_timezone.localdate()
+    weekly = _weekly_best_estimates_from_logs(movement_slug=movement_slug, logs=logs)
+    return _trend_from_weekly(movement_slug=movement_slug, weekly=weekly, as_of=as_of)
+
+
+def detect_one_rep_max_trend(*, account_id: int, movement_slug: str, as_of: date | None = None) -> OneRepMaxTrend:
     """Platô/queda de 1RM sobre uma janela de 3 semanas — v1 deterministica
     (ver PONTOS CRITICOS no topo do arquivo pros limiares).
 
-    - `insufficient_data`: menos de 3 semanas com estimativa valida.
+    - `insufficient_data`: menos de 3 semanas com estimativa valida, OU as
+      3 semanas da janela nao sao CONSECUTIVAS (7 dias entre vizinhas —
+      3 semanas espalhadas ao longo de 6 meses nao formam uma janela
+      coesa), OU a ultima semana da janela nao e' RECENTE (mais de 14 dias
+      de `as_of` — 3 semanas consecutivas de janeiro nao autorizam "Em
+      evolução" se agora e' setembro). Reaproveita o rotulo
+      `insufficient_data` existente em vez de criar um `stale` novo — ver
+      plano §7.7 pro motivo.
     - `declining`: ultima semana da janela cai 5%+ abaixo do pico da janela
       (fadiga acumulada — gatilho de deload mais confiavel que "to cansado").
     - `plateau`: as 3 semanas ficam dentro de uma banda de 2.5% da media —
       1RM estavel mesmo que a carga levantada tenha subido.
     - `improving`: nenhum dos dois — a janela mostra progresso real.
     """
+    from django.utils import timezone as django_timezone
+
+    as_of = as_of or django_timezone.localdate()
     weekly = _weekly_best_estimates(account_id=account_id, movement_slug=movement_slug)
+    return _trend_from_weekly(movement_slug=movement_slug, weekly=weekly, as_of=as_of)
+
+
+def _trend_from_weekly(*, movement_slug: str, weekly: list[tuple[date, float]], as_of: date) -> OneRepMaxTrend:
 
     if len(weekly) < _TREND_WINDOW_WEEKS:
         return OneRepMaxTrend(movement_slug=movement_slug, label='insufficient_data', weekly_estimates_kg=())
 
     window = weekly[-_TREND_WINDOW_WEEKS:]
+    weeks = [week for week, _value in window]
     values = tuple(value for _week, value in window)
+
+    if any((weeks[i + 1] - weeks[i]).days != 7 for i in range(len(weeks) - 1)):
+        return OneRepMaxTrend(movement_slug=movement_slug, label='insufficient_data', weekly_estimates_kg=())
+    if (as_of - weeks[-1]).days > 14:
+        return OneRepMaxTrend(movement_slug=movement_slug, label='insufficient_data', weekly_estimates_kg=())
 
     peak = max(values)
     latest = values[-1]
@@ -219,6 +263,7 @@ __all__ = [
     'OneRepMaxEstimate',
     'OneRepMaxTrend',
     'detect_one_rep_max_trend',
+    'detect_one_rep_max_trend_from_logs',
     'estimate_one_rep_max',
     'estimate_working_weight_kg',
 ]

@@ -31,7 +31,8 @@ POR QUE ELE EXISTE:
 from __future__ import annotations
 
 import re
-from datetime import date as _date
+from datetime import date as _date, timedelta
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 
 from django import template
 from django.utils import timezone
@@ -41,6 +42,7 @@ from django.utils.safestring import mark_safe
 
 from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
 from public_workouts.load_suggestion import suggest_movement_load
+from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.periodization import (
     build_chart_points_from_weeks,
     current_phase_profile,
@@ -335,10 +337,11 @@ _CHART_HEIGHT = 100
 _CHART_PAD = 10
 
 
-def _format_short_date(iso_date: str) -> str:
+def _format_short_date(iso_date: str | _date) -> str:
     """'2026-01-05' -> '05/01'. Rotulo compacto de eixo do mini-grafico —
     nao e' formatacao de data generica do app (list_program_versions, por
     exemplo, deixa a data ISO crua de proposito, pra outro uso)."""
+    iso_date = iso_date.isoformat() if isinstance(iso_date, _date) else iso_date
     parts = iso_date.split('-')
     if len(parts) != 3:
         return iso_date
@@ -371,7 +374,14 @@ def load_chart_points(entries: list[dict]) -> dict:
     (primeiro vs. ultimo ponto), pra exibir o valor atual e a tendencia sem
     o template precisar indexar a lista (Django template nao tem `[-1]`)."""
     baseline_y = _CHART_HEIGHT - _CHART_PAD
-    weighted = [entry for entry in entries if entry.get('weight_kg') is not None]
+    # Plano curva-grafico-hierarquia-e-set-role.md, §2.1/§2.2: a linha so'
+    # pode conectar series COMPARAVEIS -- so' top_set (eligible_for_
+    # progress_curve) entra na curva principal. O template de produção usa
+    # o snapshot para mostrar legado como pontos neutros e sem conexão.
+    weighted = [
+        entry for entry in entries
+        if entry.get('weight_kg') is not None and eligible_for_progress_curve(entry)
+    ]
     if len(weighted) < 2:
         return {
             'has_data': False,
@@ -436,6 +446,109 @@ def load_chart_points(entries: list[dict]) -> dict:
         'trend': _trend(delta),
     }
 
+@register.simple_tag
+def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) -> dict:
+    """Render data prepared by progress_snapshot, never rescan raw history.
+
+    The horizontal axis uses the fixed 90-day window and the vertical scale
+    uses the snapshot's rounded plate increments. Legacy records stay as
+    isolated neutral points and never join the top-set polyline.
+    """
+    snapshot = (progress_snapshots or {}).get(movement_slug)
+    baseline_y = _CHART_HEIGHT - _CHART_PAD
+    plot_height = _CHART_HEIGHT - _CHART_PAD * 2
+    # Reserve a quiet rail for absolute-scale labels so they never sit on
+    # top of the first data point.
+    x_left, x_right = 46, _CHART_WIDTH - _CHART_PAD
+    as_of = snapshot.as_of if snapshot and getattr(snapshot, 'as_of', None) else timezone.localdate()
+    window_start = as_of - timedelta(days=90)
+
+    def point_date(point):
+        value = point.performed_on
+        return value if isinstance(value, _date) else _date.fromisoformat(str(value))
+
+    curve_points = list(snapshot.curve_points) if snapshot else []
+    legacy_points = list(snapshot.legacy_points) if snapshot else []
+    weighted = [point for point in curve_points if point.weight_kg is not None]
+    scale = snapshot.y_scale if snapshot else None
+    if scale is None:
+        legacy_weights = [point.weight_kg for point in legacy_points if point.weight_kg is not None]
+        if legacy_weights:
+            low, high = min(legacy_weights), max(legacy_weights)
+            if low == high:
+                low, high = max(Decimal('0'), low - Decimal('2.5')), high + Decimal('2.5')
+            scale = {
+                'min_kg': (low / Decimal('2.5')).to_integral_value(rounding=ROUND_FLOOR) * Decimal('2.5'),
+                'max_kg': (high / Decimal('2.5')).to_integral_value(rounding=ROUND_CEILING) * Decimal('2.5'),
+            }
+
+    def xy(point):
+        day = point_date(point)
+        x = x_left + (x_right - x_left) * max(0, min(90, (day - window_start).days)) / 90
+        low = scale['min_kg'] if scale else Decimal('0')
+        high = scale['max_kg'] if scale else Decimal('1')
+        span = high - low or Decimal('1')
+        weight = point.weight_kg or Decimal('0')
+        y = baseline_y - float((weight - low) / span) * plot_height
+        return round(x, 2), round(y, 2)
+    timeline_ticks = []
+    for elapsed_days in (0, 30, 60, 90):
+        tick_date = window_start + timedelta(days=elapsed_days)
+        timeline_ticks.append({
+            'x': round(x_left + (x_right - x_left) * elapsed_days / 90, 2),
+            'label': tick_date.strftime('%d/%m'),
+            'anchor': 'start' if elapsed_days == 0 else ('end' if elapsed_days == 90 else 'middle'),
+        })
+    points = []
+    previous_program_id = None
+    for point in weighted:
+        x, y = xy(point)
+        program_id = getattr(point, 'program_id', '') or ''
+        changed = bool(points and program_id and previous_program_id and program_id != previous_program_id)
+        points.append({
+            'x': x, 'y': y, 'weight_kg': point.weight_kg,
+            'performed_on': point.performed_on,
+            'label': _format_short_date(point.performed_on),
+            'is_program_change': changed, 'program_id': program_id,
+            'week_in_program': getattr(point, 'week_in_program', None),
+        })
+        previous_program_id = program_id or previous_program_id
+
+    legacy = []
+    for point in legacy_points:
+        if point.weight_kg is None:
+            continue
+        x, y = xy(point)
+        legacy.append({'x': x, 'y': y, 'label': _format_short_date(point.performed_on), 'weight_kg': point.weight_kg})
+
+    points_attr = ' '.join(f"{point['x']},{point['y']}" for point in points)
+    area_points_attr = (
+        f"{points_attr} {points[-1]['x']},{baseline_y} {points[0]['x']},{baseline_y}" if points else ''
+    )
+    delta = round(float(points[-1]['weight_kg'] - points[0]['weight_kg']), 2) if len(points) > 1 else None
+    has_data = len(points) > 1
+    has_legacy_points = bool(legacy)
+    return {
+        'has_data': has_data,
+        'has_chart': has_data or has_legacy_points,
+        'has_legacy_history': bool(snapshot and snapshot.has_legacy_history),
+        'has_legacy_points': has_legacy_points,
+        'viewbox': f'0 0 {_CHART_WIDTH} {_CHART_HEIGHT + 20}',
+        'label_y': _CHART_HEIGHT + 15,
+        'baseline_y': baseline_y,
+        'points_attr': points_attr if has_data else '',
+        'area_points_attr': area_points_attr if has_data else '',
+        'points': points if has_data else [],
+        'legacy_points': legacy,
+        'timeline_ticks': timeline_ticks,
+        'latest_weight_kg': points[-1]['weight_kg'] if points else None,
+        'delta_weight_kg': delta,
+        'trend': _trend(delta or 0),
+        'trend_signal': snapshot.trend_signal if snapshot else 'insufficient_data',
+        'one_rep_max': snapshot.one_rep_max if snapshot else None,
+        'scale_min': scale['min_kg'] if scale else None,
+        'scale_max': scale['max_kg'] if scale else None,
+    }
 
 @register.filter
 def personal_record(entries: list[dict]) -> dict:
@@ -444,19 +557,27 @@ def personal_record(entries: list[dict]) -> dict:
     pro movimento — mesmo uso de `{% regroup %}` que load_chart_points ja
     faz na aba Historico). Diferente de load_chart_points (que mostra
     EVOLUCAO), aqui so o recorde importa — 1 registro so ja e suficiente,
-    sem o corte de "2 pontos minimo" daquele filtro."""
-    weighted = [entry for entry in entries if entry.get('weight_kg') is not None]
-    if not weighted:
+    sem o corte de "2 pontos minimo" daquele filtro.
+
+    Plano curva-grafico-hierarquia-e-set-role.md (§7.5/§8.1 item 4):
+    `eligible_for_personal_record` (top_set/max_set) filtra ANTES do
+    `max()` — achado real: `max(weighted, key=peso)` sem filtro deixava
+    uma serie de aquecimento pesada virar "recorde" por engano.
+    `legacy_unknown` nunca elegivel (ver progress_eligibility.py)."""
+    eligible = [
+        entry for entry in entries
+        if entry.get('weight_kg') is not None and eligible_for_personal_record(entry)
+    ]
+    if not eligible:
         return {'has_data': False, 'weight_kg': None, 'performed_on': None, 'reps': None}
 
-    best = max(weighted, key=lambda entry: entry['weight_kg'])
+    best = max(eligible, key=lambda entry: entry['weight_kg'])
     return {
         'has_data': True,
         'weight_kg': best['weight_kg'],
         'performed_on': best.get('performed_on'),
         'reps': best.get('reps'),
     }
-
 
 @register.filter
 def periodization_chart_points(periodization: dict | None) -> list[dict]:
@@ -530,30 +651,31 @@ def _round_to_nearest_load(value: float) -> float:
 
 @register.simple_tag
 def todays_logged_weight(load_history: list, movement_slug: str):
-    """Peso ja registrado HOJE pra este movimento, se algum (achado real:
-    o campo de carga sempre renderizava vazio, mesmo depois de salvar com
-    sucesso -- sem nenhuma confirmacao visivel ao recarregar a pagina, o
-    aluno achava que nao tinha salvo e registrava de novo, gerando linhas
-    duplicadas no historico. Pre-preencher o campo com o que ja foi salvo
-    hoje fecha esse gap).
+    """Último peso registrado hoje, de qualquer papel, para o aviso de salvamento."""
+    return _todays_weight(load_history, movement_slug, top_set_only=False)
 
-    'Hoje' e' a data local do servidor (mesmo fuso de PublicWorkoutLoadLog.
-    performed_on, que o endpoint de gravacao grava a partir da data local
-    do PROPRIO APARELHO do aluno via JS todayIso() -- os dois so' divergem
-    perto da virada da meia-noite, caso raro e sem prejuizo: o pior
-    cenario e' o campo nao vir pre-preenchido, nunca um dado errado).
 
-    load_history ja vem carregado no contexto pra o grafico de evolucao
-    (load_chart_points) -- nenhuma consulta nova ao banco so' pra isto."""
+@register.simple_tag
+def todays_top_set_weight(load_history: list, movement_slug: str):
+    """Série principal de hoje para preencher o campo cujo papel padrão é top_set."""
+    return _todays_weight(load_history, movement_slug, top_set_only=True)
+
+
+def _todays_weight(load_history: list, movement_slug: str, *, top_set_only: bool):
     today_iso = timezone.localdate().isoformat()
     for entry in reversed(load_history or ()):
-        if entry.get('movement_slug') == movement_slug and entry.get('performed_on') == today_iso:
-            return entry.get('weight_kg')
+        if entry.get('movement_slug') != movement_slug or entry.get('performed_on') != today_iso:
+            continue
+        if top_set_only and not eligible_for_progress_curve(entry):
+            continue
+        return entry.get('weight_kg')
     return None
 
 
 @register.simple_tag
-def movement_load_display(movement: dict, payload: dict, phase, one_rep_max_by_movement: dict, load_history: list) -> dict:
+def movement_load_display(
+    movement: dict, payload: dict, phase, one_rep_max_by_movement: dict, progress_snapshots: dict | None = None
+) -> dict:
     """Cascata de exibição de carga do movimento — devolve um dict pronto
     pro template só desenhar (`kind`/`value_kg`/`percentage`/
     `show_registration_hint`), mantendo toda a lógica testável em Python
@@ -569,6 +691,14 @@ def movement_load_display(movement: dict, payload: dict, phase, one_rep_max_by_m
        `periodization.suggest_progressive_load_kg`, ancorado na ÚLTIMA
        carga real registrada nesse movimento (nunca recalcula do zero
        contra 1RM estimado, ver docstring de periodization.py).
+       `last_log` vem de `progress_snapshots[movement_slug].latest_top_set`
+       (plano curva-grafico-hierarquia-e-set-role.md, §7.5/§8.1 item 5) —
+       NUNCA mais escaneia `load_history` bruto por conta própria: até a
+       Revisão 6 daquele plano, esta função tinha uma busca de log bruto
+       PRÓPRIA (`_last_log_for_movement`), independente do 1RM/build_
+       student_package, que continuava contaminada por aquecimento mesmo
+       depois deste consumidor "parecer corrigido" — bug real, não
+       hipotético.
     4. Sem fase canônica, ou fase canônica sem âncora ainda (bootstrap,
        primeira vez neste movimento) — `load_suggestion.
        suggest_movement_load`, estimativa pontual a partir do próprio
@@ -596,7 +726,27 @@ def movement_load_display(movement: dict, payload: dict, phase, one_rep_max_by_m
         }
 
     if phase is not None:
-        last_log = _last_log_for_movement(load_history, movement_slug)
+        # Plano curva-grafico-hierarquia-e-set-role.md (§7.5/§8.1 item 5)
+        # -- bug real achado na Revisao 6: _last_log_for_movement fazia
+        # uma busca de log BRUTO propria, independente do 1RM/snapshot, e
+        # nao se corrigia junto quando build_student_package passou a
+        # filtrar por set_role. Agora le progress_snapshot.latest_top_set
+        # (ja' elegivel -- so' top_set real, nunca aquecimento).
+        # suggest_progressive_load_kg espera um dict (`.get(...)`), nao o
+        # dataclass ProgressPoint -- conversao local, sem mudar
+        # periodization.py.
+        snapshot = (progress_snapshots or {}).get(movement_slug)
+        latest_top_set = snapshot.latest_top_set if snapshot else None
+        last_log = (
+            {
+                'weight_kg': latest_top_set.weight_kg,
+                'reps': latest_top_set.reps,
+                'rir': latest_top_set.rir,
+                'performed_on': latest_top_set.performed_on.isoformat(),
+                'program_id': latest_top_set.program_id,
+            }
+            if latest_top_set is not None else None
+        )
         value_kg = suggest_progressive_load_kg(
             payload=payload, current_phase=phase, last_log=last_log, one_rep_max_kg=one_rep_max_kg,
         )

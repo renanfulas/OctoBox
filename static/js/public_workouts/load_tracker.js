@@ -42,7 +42,7 @@
  *
  * PONTOS CRITICOS (dica de ultima carga + stepper):
  * - GET /renan/<slug>/pacote.json (PublicWorkoutPackageView, ja existe)
- *   devolve `last_load_by_movement` — usado so pra popular a dica "Última
+ *   devolve `last_top_set_by_movement` — usado so pra popular a dica "Última
  *   vez: X kg" acima do campo. 401 aqui (sem sessao ainda) so deixa a
  *   dica vazia, nunca bloqueia o registro em si (o aluno pode digitar e
  *   salvar sem nunca ter visto a dica — ela e so um atalho, nao um
@@ -199,7 +199,7 @@
     if (!slug) { return Promise.resolve({}); }
     return window.fetch('/renan/' + slug + '/pacote.json', { credentials: 'same-origin' })
       .then(function (response) { return response.ok ? response.json() : {}; })
-      .then(function (data) { return data.last_load_by_movement || {}; })
+      .then(function (data) { return data.last_top_set_by_movement || {}; })
       .catch(function () { return {}; });
   }
 
@@ -231,11 +231,13 @@
   }
 
   function buildEntryFromWidget(widget, weightKg) {
+    var warmupToggle = widget.querySelector('[data-workout-load-warmup-toggle]');
     return {
       idempotency_key: uuid(),
       movement_slug: widget.getAttribute('data-movement-slug'),
       program_id: widget.getAttribute('data-program-id') || '',
       weight_kg: weightKg,
+      set_role: (warmupToggle && warmupToggle.checked) ? 'warmup' : 'top_set',
       performed_on: todayIso(),
     };
   }
@@ -262,13 +264,22 @@
       return;
     }
 
+    var submittedValue = field.value;
     if (saveBtn) { saveBtn.disabled = true; }
+    // O visibilitychange pode disparar antes de o IndexedDB concluir o put.
+    // Marcar este valor como consumido agora evita enfileirá-lo de novo com
+    // outra chave. Uma edição feita durante o save volta a marcar dirty.
+    field.removeAttribute('data-dirty');
     var entry = buildEntryFromWidget(widget, raw);
     setStatus(widget, 'Salvando…', false);
     queueEntry(entry)
       .then(function () {
-        field.removeAttribute('data-dirty');
         return drainOutbox();
+      }, function (error) {
+        if (field.value === submittedValue && !field.hasAttribute('data-dirty')) {
+          markDirty(field);
+        }
+        throw error;
       })
       .then(function () { return listEntries(); })
       .then(function (remaining) {
@@ -312,8 +323,13 @@
       if (raw === null || isNaN(raw) || raw < 0) { return; }
       var widget = field.closest('[data-workout-load-input]');
       if (!widget) { return; }
-      queueEntry(buildEntryFromWidget(widget, raw));
+      var draftValue = field.value;
       field.removeAttribute('data-dirty');
+      queueEntry(buildEntryFromWidget(widget, raw)).catch(function () {
+        if (field.value === draftValue && !field.hasAttribute('data-dirty')) {
+          markDirty(field);
+        }
+      });
     });
   }
 

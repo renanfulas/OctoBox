@@ -17,7 +17,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutLoadLogSetRole
 from public_workouts.services import LoadValueError, build_student_package, list_load_history, record_load
 
 
@@ -163,9 +163,10 @@ class BuildStudentPackageTests(TestCase):
 
         self.assertEqual(
             set(package),
-            {'last_load_by_movement', 'one_rep_max_by_movement', 'substitutions', 'access_until'},
+            {'last_load_by_movement', 'last_top_set_by_movement', 'one_rep_max_by_movement', 'substitutions', 'access_until'},
         )
         self.assertEqual(package['last_load_by_movement'], {})
+        self.assertEqual(package['last_top_set_by_movement'], {})
         self.assertEqual(package['one_rep_max_by_movement'], {})
         self.assertEqual(package['substitutions'], {})
         self.assertIsNone(package['access_until'])
@@ -191,6 +192,25 @@ class BuildStudentPackageTests(TestCase):
 
         self.assertEqual(package['last_load_by_movement']['agachamento-livre']['weight_kg'], 100.0)
         self.assertEqual(package['last_load_by_movement']['agachamento-livre']['idempotency_key'], 'key-recente')
+        self.assertEqual(package['last_top_set_by_movement']['agachamento-livre']['weight_kg'], 100.0)
+
+    def test_last_top_set_hint_ignores_a_more_recent_warmup(self):
+        account = _make_account()
+        record_load(
+            account_id=account.pk, movement_slug='agachamento-livre',
+            weight_kg=Decimal('100'), performed_on=date(2026, 1, 5),
+            set_role=PublicWorkoutLoadLogSetRole.TOP_SET, idempotency_key='top-set',
+        )
+        record_load(
+            account_id=account.pk, movement_slug='agachamento-livre',
+            weight_kg=Decimal('40'), performed_on=date(2026, 1, 12),
+            set_role=PublicWorkoutLoadLogSetRole.WARMUP, idempotency_key='warmup',
+        )
+
+        package = build_student_package(account_id=account.pk, slug='bruno')
+
+        self.assertEqual(package['last_load_by_movement']['agachamento-livre']['weight_kg'], 40.0)
+        self.assertEqual(package['last_top_set_by_movement']['agachamento-livre']['weight_kg'], 100.0)
 
     def test_one_row_per_movement_even_with_several_movements_logged(self):
         account = _make_account()

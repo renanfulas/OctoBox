@@ -68,7 +68,7 @@ PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 ano
 # PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS abaixo — sem bump, PWA ja
 # instalado no aparelho do aluno nunca baixa o script novo (mesmo motivo
 # do bump anterior).
-PUBLIC_WORKOUT_CACHE_EPOCH = 4
+PUBLIC_WORKOUT_CACHE_EPOCH = 5
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -753,6 +753,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
     plan = _get_public_workout_entry(plan_slug)
 
     from public_workouts.models import PublicWorkoutSubscription
+    from public_workouts.progress_snapshot import build_progress_snapshots
     from public_workouts.services import (
         build_movement_label_lookup,
         build_student_package,
@@ -768,9 +769,10 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         return _render_legacy_template_html(plan_slug)
 
     if account_id is not None:
-        weekly_review = build_weekly_review(account_id=account_id)
-        package = build_student_package(account_id=account_id, slug=plan.slug)
         load_history = list_load_history(account_id=account_id)
+        progress_snapshots = build_progress_snapshots(account_id=account_id)
+        weekly_review = build_weekly_review(account_id=account_id, progress_snapshots=progress_snapshots)
+        package = build_student_package(account_id=account_id, slug=plan.slug, progress_snapshots=progress_snapshots)
         subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
         nutrition_unlocked = bool(subscription and require_nutrition_tier(subscription))
         customer_portal_url = '/treinos/minha-conta' if subscription else None
@@ -779,6 +781,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         weekly_review = {'trends_by_movement': {}}
         package = {'one_rep_max_by_movement': {}}
         load_history = []
+        progress_snapshots = {}
         nutrition_unlocked = False
         customer_portal_url = None
         account_email = None
@@ -789,6 +792,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'program': program,
         'program_versions': list_program_versions(slug=plan.slug),
         'load_history': load_history,
+        'progress_snapshots': progress_snapshots,
         'one_rep_max_by_movement': package['one_rep_max_by_movement'],
         'trends_by_movement': weekly_review['trends_by_movement'],
         'movement_labels': build_movement_label_lookup(program),
@@ -953,6 +957,7 @@ class PublicWorkoutPreviewView(View):
     """
 
     def get(self, request, plan_slug, *args, **kwargs):
+        from public_workouts.progress_snapshot import build_progress_snapshots
         from public_workouts.services import (
             build_movement_label_lookup,
             build_student_package,
@@ -981,13 +986,15 @@ class PublicWorkoutPreviewView(View):
 
         account_id = get_public_workout_account_id_from_request(request)
         load_history: list = []
+        progress_snapshots: dict = {}
         one_rep_max_by_movement: dict = {}
         trends_by_movement: dict = {}
         account_email = None
         if account_id is not None:
             load_history = list_load_history(account_id=account_id)
-            one_rep_max_by_movement = build_student_package(account_id=account_id, slug=plan_slug)['one_rep_max_by_movement']
-            trends_by_movement = build_weekly_review(account_id=account_id)['trends_by_movement']
+            progress_snapshots = build_progress_snapshots(account_id=account_id)
+            one_rep_max_by_movement = build_student_package(account_id=account_id, slug=plan_slug, progress_snapshots=progress_snapshots)['one_rep_max_by_movement']
+            trends_by_movement = build_weekly_review(account_id=account_id, progress_snapshots=progress_snapshots)['trends_by_movement']
 
             from public_workouts.models import PublicWorkoutAccount
 
@@ -998,6 +1005,7 @@ class PublicWorkoutPreviewView(View):
             'accent_variant': program.get('accent_variant'),
             'program_versions': list_program_versions(slug=plan_slug),
             'load_history': load_history,
+            'progress_snapshots': progress_snapshots,
             'one_rep_max_by_movement': one_rep_max_by_movement,
             'trends_by_movement': trends_by_movement,
             'plan_slug': plan_slug,
@@ -1436,9 +1444,11 @@ class PublicWorkoutRecordLoadView(View):
         if not movement_slug or not idempotency_key or not performed_on:
             return JsonResponse({'error': 'movement_slug, performed_on e idempotency_key sao obrigatorios'}, status=400)
 
+        from public_workouts.models import PublicWorkoutLoadLogSetRole
         from public_workouts.services import LoadValueError, record_load
 
         try:
+            set_role = payload['set_role'] if 'set_role' in payload else PublicWorkoutLoadLogSetRole.LEGACY_UNKNOWN
             result = record_load(
                 account_id=account_id,
                 movement_slug=movement_slug,
@@ -1448,6 +1458,7 @@ class PublicWorkoutRecordLoadView(View):
                 performed_on=performed_on,
                 program_id=payload.get('program_id'),
                 week_in_program=payload.get('week_in_program'),
+                set_role=set_role,
                 idempotency_key=idempotency_key,
             )
         except (LoadValueError, ValueError) as exc:

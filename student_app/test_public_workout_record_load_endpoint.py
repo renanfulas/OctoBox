@@ -15,7 +15,7 @@ from decimal import Decimal
 from django.test import TestCase
 from django.urls import reverse
 
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutSubscription
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutLoadLogSetRole, PublicWorkoutSubscription
 from student_identity.public_workout_session import (
     PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
     build_public_workout_session_value,
@@ -89,7 +89,39 @@ class PublicWorkoutRecordLoadEndpointTests(TestCase):
         log = PublicWorkoutLoadLog.objects.get(idempotency_key='k3')
         self.assertEqual(log.account_id, account.pk)
         self.assertEqual(log.weight_kg, Decimal('100.5'))
+        self.assertEqual(log.set_role, PublicWorkoutLoadLogSetRole.LEGACY_UNKNOWN)
+        self.assertEqual(body['set_role'], PublicWorkoutLoadLogSetRole.LEGACY_UNKNOWN)
 
+    def test_explicit_warmup_role_is_persisted(self):
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps({
+                'movement_slug': 'agachamento-livre', 'weight_kg': 50,
+                'performed_on': '2026-09-01', 'idempotency_key': 'warmup-role',
+                'set_role': 'warmup',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['set_role'], 'warmup')
+        self.assertEqual(PublicWorkoutLoadLog.objects.get(idempotency_key='warmup-role').set_role, 'warmup')
+
+    def test_invalid_set_role_returns_400_without_writing(self):
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps({
+                'movement_slug': 'agachamento-livre', 'weight_kg': 50,
+                'performed_on': '2026-09-01', 'idempotency_key': 'invalid-role',
+                'set_role': 'not-a-role',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(PublicWorkoutLoadLog.objects.count(), 0)
     def test_resending_the_same_idempotency_key_does_not_duplicate(self):
         account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
         _login(self.client, account.pk)

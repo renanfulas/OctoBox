@@ -1118,6 +1118,14 @@ class PublicWorkoutPaymentNotice(models.Model):
         return f'{self.payment_id} D{self.offset_days:+d} [{"enviado" if self.sent_at else "pendente"}]'
 
 
+class PublicWorkoutLoadLogSetRole(models.TextChoices):
+    WARMUP = 'warmup', 'Aquecimento'
+    FEEDER = 'feeder', 'Aproximação'
+    TOP_SET = 'top_set', 'Série principal'
+    MAX_SET = 'max_set', 'Esforço máximo'
+    LEGACY_UNKNOWN = 'legacy_unknown', 'Histórico anterior (não classificado)'
+
+
 class PublicWorkoutLoadLog(models.Model):
     """Registro de carga por (conta, movimento, data) — S3 do CORDA (Onda A1, Fatia B).
 
@@ -1150,11 +1158,22 @@ class PublicWorkoutLoadLog(models.Model):
     # Garantia de idempotencia do S3 (D.5): reenvio da outbox (Onda B3) com a
     # mesma chave nunca duplica linha — o banco e a trava, nao o codigo.
     idempotency_key = models.CharField(max_length=128, unique=True)
+    set_role = models.CharField(max_length=16, choices=PublicWorkoutLoadLogSetRole.choices, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-performed_on', '-created_at']
-        indexes = [models.Index(fields=['account', 'movement_slug', 'performed_on'])]
+        indexes = [
+            models.Index(fields=['account', 'movement_slug', 'performed_on']),
+            models.Index(fields=['account', 'set_role', 'movement_slug', 'performed_on'], name='pwll_acct_role_move_day_idx'),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(set_role__in=PublicWorkoutLoadLogSetRole.values)
+                | models.Q(set_role__isnull=True),
+                name='public_workouts_loadlog_set_role_valid_or_null',
+            ),
+        ]
 
     def __str__(self) -> str:
         return f'{self.account_id} · {self.movement_slug} @ {self.performed_on}'
