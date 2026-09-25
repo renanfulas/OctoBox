@@ -256,7 +256,7 @@ def _parse_single_movement(
     notes = None
     working_text = text
 
-    reps_match = re.match(r'^(?P<reps>\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?(?:\s*a\s*\d+)?(?:/\d+)?)\s+(?P<name>.+)$', working_text, flags=re.IGNORECASE)
+    reps_match = re.match(r'^(?P<reps>\d+(?:[.,]\d+)?(?:/\d+(?:[.,]\d+)?)?(?:\s*a\s*\d+)?(?:/\d+)?(?:\s?(?:km|m))?)\s+(?P<name>.+)$', working_text, flags=re.IGNORECASE)
     if reps_match:
         reps_spec = reps_match.group('reps').strip()
         working_text = reps_match.group('name').strip()
@@ -308,7 +308,10 @@ def _parse_movement_line(line: str, block: dict):
     movement_payloads = []
     sequence_parts = [part.strip() for part in re.split(r'\s+\+\s+', working_line) if part.strip()]
     for sequence_part in sequence_parts:
-        alternatives = [part.strip() for part in re.split(r'\s+/\s+', sequence_part) if part.strip()]
+        alternatives = [
+            part.strip() for part in re.split(r'\s+/\s+|\s+ou\s+', sequence_part, flags=re.IGNORECASE)
+            if part.strip()
+        ]
         if len(alternatives) > 1 and all(re.match(r'^\d', part) for part in alternatives):
             for alt_index, alternative in enumerate(alternatives):
                 movement_payload = _parse_single_movement(

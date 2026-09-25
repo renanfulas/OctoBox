@@ -560,6 +560,24 @@ body[data-theme="dark"] .smart-paste-native-picker {
     color: var(--theme-text-secondary);
 }
 
+.smart-paste-day-chip__preview {
+    display: grid;
+    gap: 0.3rem;
+    width: 100%;
+    padding: 0.55rem 0;
+    border-top: 1px solid var(--theme-border-soft);
+    color: var(--theme-text-primary);
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+.smart-paste-day-chip__preview span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
 .smart-paste-day-chip__status {
     margin-top: auto;
     display: inline-flex;
@@ -1087,6 +1105,37 @@ body[data-theme="dark"] .smart-paste-native-picker {
 
 .smart-paste-resolution-notice p {
     margin: 0;
+}
+
+.smart-paste-auto-retry {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.smart-paste-auto-retry .button {
+    min-height: 44px;
+}
+
+.smart-paste-auto-retry__progress {
+    display: none;
+    color: var(--theme-text-secondary);
+    font-size: 0.85rem;
+}
+
+.smart-paste-auto-retry.htmx-request .smart-paste-auto-retry__progress {
+    display: inline;
+}
+
+.smart-paste-auto-retry.htmx-request .button {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.smart-paste-field-error {
+    color: var(--theme-accent-danger);
+    font-weight: 700;
 }
 
 .smart-paste-review-queue-head {

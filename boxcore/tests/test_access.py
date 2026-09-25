@@ -214,3 +214,30 @@ class BootstrapRolesCommandTests(TestCase):
 
         dev_group = Group.objects.get(name=ROLE_DEV)
         self.assertTrue(dev_group.permissions.filter(codename='view_auditevent').exists())
+
+    def test_command_uses_public_content_types_inside_tenant_context(self):
+        from django.contrib.contenttypes.models import ContentType
+        from django.db import connection
+
+        if connection.vendor != 'postgresql':
+            self.skipTest('Requer PostgreSQL com django-tenants')
+
+        from django_tenants.utils import get_public_schema_name, schema_context
+        from auditing.models import AuditEvent
+
+        self.addCleanup(ContentType.objects.clear_cache)
+        tenant_schema = connection.schema_name
+        self.assertNotEqual(tenant_schema, get_public_schema_name())
+        call_command('bootstrap_roles')
+        self.assertEqual(connection.schema_name, tenant_schema)
+
+        with schema_context(get_public_schema_name()):
+            content_type = ContentType.objects.get_for_model(AuditEvent)
+            permission = Permission.objects.get(codename='view_auditevent', content_type=content_type)
+            self.assertTrue(
+                ContentType.objects.filter(
+                    pk=permission.content_type_id,
+                    app_label=AuditEvent._meta.app_label,
+                    model=AuditEvent._meta.model_name,
+                ).exists()
+            )

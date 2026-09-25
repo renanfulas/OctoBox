@@ -275,6 +275,7 @@ def test_unresolved_movement_has_visible_mobile_review_form(page: Page, live_ser
     queue = page.locator(".smart-paste-review-queue")
     expect(queue).to_be_visible()
     expect(page.get_by_text("Revisão automática indisponível")).to_be_visible()
+    expect(page.locator(".smart-paste-day-chip__preview").first).to_contain_text("movimento inventado xyz")
     expect(queue.locator("input[name=movement_slug]")).to_be_visible()
     assert page.locator(".topbar").evaluate("el => getComputedStyle(el).position") == "static"
     assert page.locator("#smart-paste-preview-panel").bounding_box()["y"] < page.locator(".smart-paste-form-card").bounding_box()["y"]
