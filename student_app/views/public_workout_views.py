@@ -69,7 +69,7 @@ PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 ano
 # instalado no aparelho do aluno nunca baixa o script novo (mesmo motivo
 # do bump anterior). Bump 4->5 (plano curva-grafico-hierarquia-e-set-
 # role.md, §7.10): load_tracker.js passa a enviar set_role sempre.
-PUBLIC_WORKOUT_CACHE_EPOCH = 5
+PUBLIC_WORKOUT_CACHE_EPOCH = 6
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -313,6 +313,9 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS: tuple[str, ...] = (
     '/static/css/design-system/components/interactive-tabs.css',
     '/static/css/design-system/neon.css',
     '/static/css/public_workouts/workout-shell.css',
+    '/static/css/public_workouts/workout-training.css',
+    '/static/css/public_workouts/workout-progress.css',
+    '/static/css/public_workouts/workout-assessment.css',
 )
 
 PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
@@ -320,6 +323,8 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/load_tracker.js',
     '/static/js/public_workouts/weekly_review.js',
     '/static/js/public_workouts/nutrition.js',
+    '/static/js/public_workouts/workout-shell.js',
+    '/static/js/public_workouts/assessments.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}
@@ -349,7 +354,11 @@ def public_workout_asset_version() -> str:
 
     base_dir = Path(settings.BASE_DIR)
     mtimes = []
-    for url in PUBLIC_WORKOUT_STYLESHEETS + PUBLIC_WORKOUT_SCRIPTS:
+    for url in (
+        PUBLIC_WORKOUT_STYLESHEETS + PUBLIC_WORKOUT_SCRIPTS
+        + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS
+        + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS
+    ):
         path = base_dir / url.lstrip('/')
         if path.exists():
             mtimes.append(int(path.stat().st_mtime))
@@ -1020,6 +1029,7 @@ class PublicWorkoutPreviewView(View):
             account_email = PublicWorkoutAccount.objects.filter(pk=account_id).values_list('email', flat=True).first()
 
         html = render_to_string('public_workouts/workout.html', {
+            'asset_version': public_workout_asset_version(),
             'program': program,
             'accent_variant': program.get('accent_variant'),
             'program_versions': list_program_versions(slug=plan_slug),
@@ -1177,6 +1187,7 @@ class PublicWorkoutTemplatePreviewView(View):
                 account_email = account.email
 
         html = render_to_string('public_workouts/workout.html', {
+            'asset_version': public_workout_asset_version(),
             'plan_slug': plan.slug,
             'accent_variant': plan.assessment_sex,
             'program': program,

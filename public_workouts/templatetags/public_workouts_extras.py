@@ -40,7 +40,9 @@ from django.utils.formats import number_format
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
+from public_workouts.dashboard import (
+    build_program_summary, build_week_overview, build_workout_day_selection, day_keyword, day_short_label,
+)
 from public_workouts.load_suggestion import suggest_movement_load
 from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.periodization import (
@@ -50,7 +52,6 @@ from public_workouts.periodization import (
     suggest_progressive_load_kg,
 )
 from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementEquipment
-from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.substitutions import suggest_substitutes
 from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
 
@@ -104,7 +105,14 @@ def week_overview(payload: dict, load_history=None) -> list:
         if not performed_on:
             continue
         completed_dates.add(_date.fromisoformat(performed_on) if isinstance(performed_on, str) else performed_on)
-    return build_week_overview(payload=payload, completed_dates=completed_dates)
+    return build_week_overview(payload=payload, completed_dates=completed_dates, today=timezone.localdate())
+
+
+@register.simple_tag
+def workout_day_selection(payload: dict) -> dict:
+    """Dia inicial do treino pelo calendário semanal; descanso aponta para
+    a próxima sessão para pré-visualização, com estado explícito no HTML."""
+    return build_workout_day_selection(payload=payload, today=timezone.localdate())
 
 
 @register.simple_tag
@@ -367,6 +375,16 @@ def _format_short_date(iso_date: str | _date) -> str:
     return f'{day}/{month}'
 
 
+def _format_long_date(value) -> str:
+    """Format an ISO/date value for a visible record label."""
+    if isinstance(value, _date):
+        return value.strftime('%d/%m/%Y')
+    try:
+        return _date.fromisoformat(str(value)).strftime('%d/%m/%Y')
+    except (TypeError, ValueError):
+        return str(value or '')
+
+
 def _trend(delta: float) -> str:
     if delta > 0:
         return 'up'
@@ -528,7 +546,7 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
         changed = bool(points and program_id and previous_program_id and program_id != previous_program_id)
         points.append({
             'x': x, 'y': y, 'weight_kg': point.weight_kg,
-            'performed_on': point.performed_on,
+            'performed_on': point.performed_on, 'reps': point.reps, 'rir': point.rir,
             'label': _format_short_date(point.performed_on),
             'is_program_change': changed, 'program_id': program_id,
             'week_in_program': getattr(point, 'week_in_program', None),
@@ -549,9 +567,39 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
     delta = round(float(points[-1]['weight_kg'] - points[0]['weight_kg']), 2) if len(points) > 1 else None
     has_data = len(points) > 1
     has_legacy_points = bool(legacy)
+    latest = snapshot.latest_top_set if snapshot else None
+    latest_weight = latest.weight_kg if latest else (points[-1]['weight_kg'] if points else None)
+    latest_on = latest.performed_on if latest else (points[-1]['performed_on'] if points else None)
+    latest_reps = latest.reps if latest else (points[-1]['reps'] if points else None)
+    latest_rir = latest.rir if latest else (points[-1]['rir'] if points else None)
+    if has_data and latest_weight is not None and latest_on is not None:
+        accessible_description = (
+            f'{len(points)} registros de série principal nos últimos 90 dias. '
+            f'Último registro: {number_format(float(latest_weight), decimal_pos=1, use_l10n=True)} kg '
+            f'em {_format_short_date(latest_on)}.'
+        )
+    elif points:
+        accessible_description = (
+            f'Uma série principal nos últimos 90 dias, em {_format_short_date(points[-1]["performed_on"])}. '
+            'Ainda não há pontos suficientes para comparar.'
+        )
+    elif latest_weight is not None and latest_on is not None:
+        accessible_description = (
+            'Sem séries principais na janela dos últimos 90 dias. '
+            f'Último registro: {number_format(float(latest_weight), decimal_pos=1, use_l10n=True)} kg '
+            f'em {_format_short_date(latest_on)}.'
+        )
+    elif has_legacy_points or (snapshot and snapshot.has_legacy_history):
+        accessible_description = 'Histórico anterior salvo, sem curva comparável de séries principais.'
+    else:
+        accessible_description = 'Ainda não há série principal para desenhar a curva.'
     return {
         'has_data': has_data,
         'has_chart': has_data or has_legacy_points,
+        'has_latest_top_set': latest is not None,
+        'has_recent_points': bool(points),
+        'session_points': points,
+        'has_session_points': bool(points),
         'has_legacy_history': bool(snapshot and snapshot.has_legacy_history),
         'has_legacy_points': has_legacy_points,
         'viewbox': f'0 0 {_CHART_WIDTH} {_CHART_HEIGHT + 20}',
@@ -562,7 +610,11 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
         'points': points if has_data else [],
         'legacy_points': legacy,
         'timeline_ticks': timeline_ticks,
-        'latest_weight_kg': points[-1]['weight_kg'] if points else None,
+        'latest_weight_kg': latest_weight,
+        'latest_performed_on': latest_on,
+        'latest_reps': latest_reps,
+        'latest_rir': latest_rir,
+        'accessible_description': accessible_description,
         'delta_weight_kg': delta,
         'trend': _trend(delta or 0),
         'trend_signal': snapshot.trend_signal if snapshot else 'insufficient_data',
@@ -695,8 +747,35 @@ def personal_record(entries: list[dict]) -> dict:
         'has_data': True,
         'weight_kg': best['weight_kg'],
         'performed_on': best.get('performed_on'),
+        'performed_on_label': _format_long_date(best.get('performed_on')),
         'reps': best.get('reps'),
     }
+
+
+@register.simple_tag
+def personal_record_rows(entries: list[dict], movement_labels: dict | None = None) -> list[dict]:
+    """Build only real record rows so the template can render an accurate
+    empty state when history contains warmups/legacy entries but no eligible
+    personal record. This is an in-memory projection of the already loaded
+    history and performs no database query."""
+    grouped: dict[str, list[dict]] = {}
+    for entry in entries or []:
+        slug = entry.get('movement_slug')
+        if slug:
+            grouped.setdefault(slug, []).append(entry)
+
+    rows = []
+    for movement_slug, movement_entries in grouped.items():
+        record = personal_record(movement_entries)
+        if not record['has_data']:
+            continue
+        rows.append({
+            'movement_slug': movement_slug,
+            'label': resolve_movement_display_name(movement_slug, movement_labels),
+            **record,
+        })
+    rows.sort(key=lambda row: row['label'])
+    return rows
 
 @register.filter
 def periodization_chart_points(periodization: dict | None) -> list[dict]:
@@ -815,6 +894,31 @@ def todays_logged_idempotency_key(load_history: list, movement_slug: str):
         if entry.get('movement_slug') == movement_slug and entry.get('performed_on') == today_iso:
             return entry.get('idempotency_key')
     return None
+
+
+@register.simple_tag
+def todays_load_entry(load_history: list, movement_slug: str, set_role: str):
+    """Return today's active entry for one explicit role.
+
+    The load widget edits either the top set or a warmup. Keeping these
+    targets separate prevents a later warmup from being corrected with the
+    top-set value shown in the form (and vice versa)."""
+    today_iso = timezone.localdate().isoformat()
+    for entry in reversed(load_history or ()):
+        if (
+            entry.get('movement_slug') == movement_slug
+            and entry.get('performed_on') == today_iso
+            and entry.get('set_role') == set_role
+        ):
+            return entry
+    return None
+
+
+@register.simple_tag
+def todays_default_load_entry(load_history: list, movement_slug: str):
+    """Prefer today's top set for the default form; otherwise use a warmup."""
+    top_set = todays_load_entry(load_history, movement_slug, 'top_set')
+    return top_set or todays_load_entry(load_history, movement_slug, 'warmup')
 
 
 @register.simple_tag
