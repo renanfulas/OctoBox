@@ -346,7 +346,7 @@
     if (!widgets.length) { return; }
     var achievement = responseData && responseData.achievement;
     widgets.forEach(function (widget) {
-      widget.setAttribute('data-today-idempotency-key', entry.idempotency_key);
+      rememberTodayEntry(widget, entry);
       if (isBatch) {
         var extra = achievement
           ? (' · nova maior carga (+' + fmtNumber(achievement.delta_kg) + ' kg sobre seu recorde anterior)')
@@ -453,6 +453,23 @@
     status.classList.toggle('workout-load-input__status--error', !!isError);
   }
 
+  function rememberTodayEntry(widget, entry) {
+    if (!widget || !entry || !entry.idempotency_key) { return; }
+    var rolePrefix = entry.set_role === 'warmup' ? 'warmup' : 'top-set';
+    var roleAttribute = 'data-today-' + rolePrefix + '-idempotency-key';
+    widget.setAttribute(roleAttribute, entry.idempotency_key);
+    widget.setAttribute('data-today-idempotency-key', entry.idempotency_key);
+    ['weight', 'reps', 'rir'].forEach(function (fieldName) {
+      var value = entry[fieldName === 'weight' ? 'weight_kg' : fieldName];
+      var attribute = 'data-today-' + rolePrefix + '-' + fieldName;
+      if (value === null || value === undefined || value === '') {
+        widget.removeAttribute(attribute);
+      } else {
+        widget.setAttribute(attribute, String(value));
+      }
+    });
+  }
+
   function buildEntryFromWidget(widget, weightKg, reps, rir) {
     // Plano curva-grafico-hierarquia-e-set-role.md (§2.3.6/§7.10):
     // set_role SEMPRE presente no payload, nunca omitido -- e' o que
@@ -480,6 +497,52 @@
     var supersedesKey = widget.getAttribute('data-today-idempotency-key');
     if (supersedesKey) { entry.supersedes_idempotency_key = supersedesKey; }
     return entry;
+  }
+
+  function syncCorrectionTargetForRole(widget) {
+    var warmupToggle = widget.querySelector('[data-workout-load-warmup-toggle]');
+    var rolePrefix = (warmupToggle && warmupToggle.checked) ? 'warmup' : 'top-set';
+    var roleAttribute = 'data-today-' + rolePrefix + '-idempotency-key';
+    var roleKey = widget.getAttribute(roleAttribute);
+    if (roleKey) {
+      widget.setAttribute('data-today-idempotency-key', roleKey);
+    } else {
+      widget.removeAttribute('data-today-idempotency-key');
+    }
+
+    var weightField = widget.querySelector('[data-workout-load-field]');
+    var repsField = widget.querySelector('[data-workout-reps-field]');
+    var weight = widget.getAttribute('data-today-' + rolePrefix + '-weight');
+    var reps = widget.getAttribute('data-today-' + rolePrefix + '-reps');
+    if (weightField) {
+      weightField.value = weight || '';
+      weightField.removeAttribute('data-dirty');
+    }
+    if (repsField) {
+      repsField.value = reps || '';
+      repsField.removeAttribute('data-dirty');
+    }
+
+    var rir = widget.getAttribute('data-today-' + rolePrefix + '-rir');
+    var rirPicker = widget.querySelector('[data-workout-rir-picker]');
+    var rirValue = rir === null ? null : parseFloat(rir);
+    var rirLabel = rirValue === null || !isFinite(rirValue)
+      ? ''
+      : (RIR_LABELS[String(rirValue)] || ('RIR ' + fmtNumber(rirValue)));
+    setRirSelection(widget, rirValue !== null && isFinite(rirValue) ? rirValue : null, rirLabel);
+    if (rirPicker) {
+      if (rir === null) { rirPicker.removeAttribute('data-today-rir'); }
+      else { rirPicker.setAttribute('data-today-rir', rir); }
+    }
+    var otherRir = widget.querySelector('[data-workout-rir-other-field]');
+    if (otherRir) {
+      var hasQuickChoice = rir !== null && widget.querySelector('[data-rir-value="' + String(rirValue) + '"]');
+      otherRir.value = rir !== null && !hasQuickChoice ? rir : '';
+      otherRir.hidden = !rir || !!hasQuickChoice;
+    }
+    var effort = widget.querySelector('[data-workout-effort]');
+    if (effort) { effort.open = rir !== null; }
+    updateSaveLabel(widget);
   }
 
   function pulseSuccess(widget) {
@@ -756,7 +819,7 @@
           if (repsField) { repsField.removeAttribute('data-dirty'); }
           // A mesma chave que ja enviamos passa a ser "a de hoje" --
           // nao precisa reconsultar o servidor pra saber isso.
-          widget.setAttribute('data-today-idempotency-key', entry.idempotency_key);
+          rememberTodayEntry(widget, entry);
           var wasCorrection = !!entry.supersedes_idempotency_key;
           setStatus(widget, (wasCorrection ? 'Registro corrigido — ' : 'Registro salvo — ') + describeEntry(entry), false);
           pulseSuccess(widget);
@@ -1106,6 +1169,8 @@
         // desconhecida pra este widget, entao "Salvar" cria um registro
         // novo pro movimento B (nunca corrige o A por engano).
         widget.removeAttribute('data-today-idempotency-key');
+        widget.removeAttribute('data-today-top-set-idempotency-key');
+        widget.removeAttribute('data-today-warmup-idempotency-key');
         updateSaveLabel(widget);
         // Plano §1.5: so carrega rascunho do DESTINO (nunca o que acabou
         // de ser limpo acima) -- data-movement-slug ja apontou pro novo
@@ -1164,6 +1229,29 @@
     });
   }
 
+  function wireKeyboardNavBehavior() {
+    var numericInputSelector = [
+      '[data-workout-load-field]',
+      '[data-workout-reps-field]',
+      '[data-workout-rir-other-field]',
+      '[data-plate-bar-other-field]',
+    ].join(',');
+    document.addEventListener('focusin', function (event) {
+      if (event.target.matches && event.target.matches(numericInputSelector)) {
+        document.body.classList.add('workout-keyboard-open');
+      }
+    });
+    document.addEventListener('focusout', function (event) {
+      if (!event.target.matches || !event.target.matches(numericInputSelector)) { return; }
+      window.setTimeout(function () {
+        var active = document.activeElement;
+        if (!active || !active.matches || !active.matches(numericInputSelector)) {
+          document.body.classList.remove('workout-keyboard-open');
+        }
+      }, 0);
+    });
+  }
+
   function wireWidgets() {
     document.querySelectorAll('[data-workout-load-input]').forEach(function (widget) {
       var field = widget.querySelector('[data-workout-load-field]');
@@ -1177,6 +1265,12 @@
       if (repsField) {
         repsField.addEventListener('input', function () {
           markDirty(repsField); updateSaveLabel(widget); scheduleDraftSave(widget);
+        });
+      }
+      var warmupToggle = widget.querySelector('[data-workout-load-warmup-toggle]');
+      if (warmupToggle) {
+        warmupToggle.addEventListener('change', function () {
+          syncCorrectionTargetForRole(widget);
         });
       }
       if (saveBtn) { saveBtn.addEventListener('click', function () { saveWidget(widget); }); }
@@ -1208,6 +1302,7 @@
     if (!planSlug()) { return; }
     wireWidgets();
     wireShareButtons();
+    wireKeyboardNavBehavior();
     drainOutbox();
     fetchLastLoadByMovement().then(paintHints);
     document.addEventListener('visibilitychange', function () {

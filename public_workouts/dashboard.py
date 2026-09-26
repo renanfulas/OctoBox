@@ -124,6 +124,47 @@ def build_week_overview(*, payload: dict, completed_dates: set, today: date | No
     ]
 
 
+def build_workout_day_selection(*, payload: dict, today: date | None = None) -> dict:
+    """Escolhe o treino de hoje; em dia de descanso, deixa pronto o próximo.
+
+    O destino em dia de descanso é uma prévia explícita do próximo treino,
+    não uma indicação de que existe treino hoje. A ordem do payload não
+    substitui o calendário semanal.
+    """
+    today = today or date.today()
+    days = payload.get('days', ())
+    prescribed = {day.get('day_id'): day for day in days if day.get('day_id') in _WEEKDAY_ORDER}
+    today_id = _WEEKDAY_ORDER[today.weekday()]
+    if today_id in prescribed:
+        return {
+            'selected_day_id': today_id,
+            'is_rest_day': False,
+            'today_day_id': today_id,
+            'next_day': None,
+        }
+
+    upcoming = [
+        (_WEEKDAY_ORDER.index(day_id) - today.weekday()) % 7 or 7
+        for day_id in prescribed
+    ]
+    if not upcoming:
+        return {'selected_day_id': None, 'is_rest_day': True, 'today_day_id': today_id, 'next_day': None}
+
+    next_offset = min(upcoming)
+    next_day_id = _WEEKDAY_ORDER[(today.weekday() + next_offset) % 7]
+    next_day = prescribed[next_day_id]
+    return {
+        'selected_day_id': next_day_id,
+        'is_rest_day': True,
+        'today_day_id': today_id,
+        'next_day': {
+            'day_id': next_day_id,
+            'short_label': day_short_label(next_day_id),
+            'label': day_keyword(day_id=next_day_id, label=next_day.get('label', '')),
+        },
+    }
+
+
 def build_program_summary(payload: dict) -> dict:
     """Explicação determinística (SEM IA) do programa: o que é, pra quantos
     dias por semana foi montado, quantos exercícios tem. Contrato estável
@@ -155,4 +196,7 @@ def build_program_summary(payload: dict) -> dict:
     return {'headline': headline, 'body': body}
 
 
-__all__ = ['WeekDay', 'build_program_summary', 'build_week_overview', 'day_keyword', 'day_short_label']
+__all__ = [
+    'WeekDay', 'build_program_summary', 'build_week_overview', 'build_workout_day_selection',
+    'day_keyword', 'day_short_label',
+]

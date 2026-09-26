@@ -191,14 +191,14 @@ class WorkoutTemplateRenderTests(TestCase):
 
         self.assertIn('40 kg', html)
 
-    def test_free_load_renders_livre(self):
+    def test_free_load_explains_that_no_weight_is_prescribed(self):
         payload = build_example_payload()
         payload['days'][0]['blocks'][0]['movements'][0]['load_type'] = 'free'
         payload['days'][0]['blocks'][0]['movements'][0]['load_value'] = None
 
         html = _render(payload)
 
-        self.assertIn('Livre', html)
+        self.assertIn('Sem carga prescrita', html)
 
     def test_is_tracked_shows_chip(self):
         html = _render(build_example_payload())  # is_tracked=True no exemplo
@@ -218,27 +218,25 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-save', html)
         self.assertIn(f"data-movement-slug=\"{build_example_payload()['days'][0]['blocks'][0]['movements'][0]['movement_slug']}\"", html)
 
-    def test_load_input_widget_starts_hidden_and_card_is_clickable(self):
+    def test_load_input_widget_starts_hidden_and_has_explicit_register_button(self):
         html = _render(build_example_payload())  # is_tracked=True no exemplo
 
-        self.assertIn('<div class="workout-load-input" data-workout-load-input', html)
+        self.assertIn('<div id="workout-load-input-seg-1-1" class="workout-load-input" data-workout-load-input', html)
         self.assertIn('data-workout-load-input data-movement-slug="agachamento-livre" data-program-id="exemplo-2026-q1" hidden', html)
-        self.assertIn('data-workout-load-toggle', html)
+        self.assertIn('class="workout-movement-register" data-workout-load-toggle aria-controls="workout-load-input-seg-1-1"', html)
 
-    def test_load_input_widget_is_always_the_immediate_next_sibling_of_the_card(self):
-        # Regressao real: o JS de toggle (workout.html, [data-workout-load-toggle])
-        # acha o widget via `card.nextElementSibling`, nao querySelector -- se
-        # QUALQUER elemento (ex.: o hint de "Registre sua carga") for inserido
-        # entre </article> e .workout-load-input, o clique para de reabrir o
-        # widget silenciosamente. Movimento sem 1RM (o caso mais comum) sempre
-        # renderiza o hint, entao esse regex tem que casar mesmo nesse caso.
+    def test_register_button_controls_its_widget_without_nested_controls(self):
         html = _render(build_example_payload())
 
-        card_count = html.count('workout-movement-card')
-        sibling_count = len(re.findall(r'</article>\s*<div class="workout-load-input"', html))
+        card = re.search(r'<article class="[^"]*workout-movement-card[^"]*">(.*?)</article>', html, re.S)
+        widget_id = re.search(r'data-workout-load-toggle aria-controls="([^"]+)"', card.group(1))
+        widget = re.search(r'<div id="([^"]+)" class="workout-load-input"', html)
 
-        self.assertGreater(card_count, 0)
-        self.assertEqual(sibling_count, card_count)
+        self.assertIsNotNone(widget_id)
+        self.assertEqual(widget_id.group(1), widget.group(1))
+        opening_tag = card.group(0).split('>', 1)[0]
+        self.assertNotIn('role="button"', opening_tag)
+        self.assertNotIn('tabindex="0"', opening_tag)
 
     def test_movement_not_tracked_still_has_load_input_row(self):
         # Pedido do Renan: "clica expande em todos os exercicios" -- o
@@ -252,8 +250,8 @@ class WorkoutTemplateRenderTests(TestCase):
 
         html = _render(payload)
 
-        self.assertIn('<div class="workout-load-input"', html)
-        self.assertIn('data-workout-load-toggle tabindex="0" role="button" aria-expanded', html)
+        self.assertIn('class="workout-load-input" data-workout-load-input', html)
+        self.assertIn('class="workout-movement-register" data-workout-load-toggle aria-controls=', html)
         self.assertNotIn('workout-tracked-chip', html)
 
     def test_body_carries_plan_slug_for_load_tracker_js(self):
@@ -321,7 +319,7 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
             ],
         )
 
@@ -351,7 +349,7 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k-hoje'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k-hoje', 'set_role': 'top_set'},
             ],
         )
 
@@ -370,11 +368,45 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
             ],
         )
 
         self.assertIn('data-today-rir="2.0"', html)
+
+    def test_load_input_targets_the_top_set_when_a_warmup_was_logged_after_it(self):
+        today = timezone.localdate().isoformat()
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0,
+             'performed_on': today, 'program_id': '', 'week_in_program': None,
+             'idempotency_key': 'top-set-today', 'set_role': 'top_set'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 60.0, 'reps': 10, 'rir': None,
+             'performed_on': today, 'program_id': '', 'week_in_program': None,
+             'idempotency_key': 'warmup-later', 'set_role': 'warmup'},
+        ])
+
+        widget_start = html.index('data-workout-load-input')
+        widget = html[widget_start:html.index('data-workout-load-status', widget_start)]
+        self.assertIn('data-today-idempotency-key="top-set-today"', widget)
+        self.assertIn('data-today-top-set-idempotency-key="top-set-today"', widget)
+        self.assertIn('data-today-warmup-idempotency-key="warmup-later"', widget)
+        self.assertIn('value="100.0"', widget)
+        self.assertNotIn('data-workout-load-warmup-toggle checked', widget)
+
+    def test_load_input_selects_existing_warmup_when_no_top_set_exists(self):
+        today = timezone.localdate().isoformat()
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 60.0, 'reps': 10, 'rir': None,
+             'performed_on': today, 'program_id': '', 'week_in_program': None,
+             'idempotency_key': 'warmup-only', 'set_role': 'warmup'},
+        ])
+
+        widget_start = html.index('data-workout-load-input')
+        widget = html[widget_start:html.index('data-workout-load-status', widget_start)]
+        self.assertIn('data-today-idempotency-key="warmup-only"', widget)
+        self.assertIn('data-today-warmup-idempotency-key="warmup-only"', widget)
+        self.assertIn('data-workout-load-warmup-toggle checked', widget)
+        self.assertIn('value="60.0"', widget)
 
     def test_records_section_exists_inside_cargas_panel(self):
         # "Suas Cargas" (recorde por movimento) mora dentro do painel de
@@ -408,6 +440,7 @@ class WorkoutTemplateRenderTests(TestCase):
         # (6, nao 8 -- o log de 100kg, nao o de 90kg) — achado real: o
         # template ignorava esse valor mesmo com o dado pronto no dict.
         self.assertIn('workout-record-card__reps">6 reps', html)
+        self.assertIn('Maior carga em 01/02/2026', html)
 
     def test_records_tab_omits_reps_when_none(self):
         # Registro anterior a esta fase (ou movimento sem reps
@@ -491,11 +524,8 @@ class WorkoutTemplateRenderTests(TestCase):
 
         html = _render(payload)
 
-        # 'data-workout-load-toggle' sozinho tambem aparece 1x no <script>
-        # inline (querySelectorAll) -- conta o cluster de atributos da tag
-        # de verdade, mesmo padrao ja usado nos outros testes deste arquivo.
-        self.assertEqual(html.count('data-workout-load-toggle tabindex="0" role="button" aria-expanded'), 2)
-        self.assertEqual(html.count('<div class="workout-load-input"'), 2)
+        self.assertEqual(html.count('class="workout-movement-register" data-workout-load-toggle'), 2)
+        self.assertEqual(html.count('class="workout-load-input" data-workout-load-input'), 2)
         self.assertEqual(html.count('workout-tracked-chip'), 1)
 
     def test_history_tab_renders_without_data(self):
@@ -533,6 +563,9 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('Agachamento livre', html)
         self.assertIn('workout-load-chart-line', html)
         self.assertIn('workout-load-chart-trend--up', html)
+        self.assertIn('Ver registros recentes', html)
+        self.assertIn('RIR 2', html)
+        self.assertIn('8 reps', html)
         # Texto visivel usa separador decimal pt-BR (USE_L10N, mesma
         # convencao de "75,0% RM" ja testada acima); coordenadas do SVG
         # abaixo tem que ficar de FORA disso (SVG so aceita ponto).
@@ -545,11 +578,54 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertNotIn('Ainda não há carga suficiente', html)
 
     def test_history_tab_shows_fallback_with_fewer_than_two_points(self):
+        recent_day = timezone.localdate().isoformat()
         html = _render(build_example_payload(), load_history=[
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': recent_day, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
         ])
 
-        self.assertIn('Registre duas séries principais para iniciar sua curva de evolução.', html)
+        self.assertIn('Você já tem uma série principal recente.', html)
+        self.assertIn('Ver registros recentes', html)
+        self.assertNotIn('workout-load-chart-line', html)
+
+    def test_history_tab_keeps_latest_load_visible_when_outside_chart_window(self):
+        from public_workouts.progress_snapshot import ProgressPoint
+
+        latest_day = timezone.localdate() - timedelta(days=120)
+        latest = ProgressPoint(
+            performed_on=latest_day, weight_kg=Decimal('82.5'), reps=6, rir=Decimal('2'),
+            created_at=datetime.combine(latest_day, datetime.min.time()), program_id='bruno-2026-q1',
+        )
+        html = _render(
+            build_example_payload(),
+            load_history=[{
+                'movement_slug': 'agachamento-livre', 'weight_kg': 82.5, 'reps': 6, 'rir': 2.0,
+                'performed_on': latest_day.isoformat(), 'program_id': 'bruno-2026-q1',
+                'week_in_program': None, 'idempotency_key': 'stale-top-set', 'set_role': 'top_set',
+            }],
+            progress_snapshots={
+                'agachamento-livre': SimpleNamespace(
+                    latest_top_set=latest, curve_points=[], legacy_points=[], has_legacy_history=False,
+                    y_scale=None, trend_signal='insufficient_data', one_rep_max=None,
+                ),
+            },
+        )
+
+        self.assertIn('82,5 kg', html)
+        self.assertIn('há mais de 90 dias', html)
+        self.assertIn(latest_day.strftime('%d/%m/%Y'), html)
+        self.assertNotIn('workout-load-chart-line', html)
+
+    def test_warmup_only_history_explains_why_it_does_not_start_the_curve(self):
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 60.0, 'reps': 8, 'rir': None,
+             'performed_on': timezone.localdate().isoformat(), 'program_id': '', 'week_in_program': None,
+             'idempotency_key': 'warmup-only', 'set_role': 'warmup'},
+        ])
+
+        self.assertIn('Séries de aquecimento não entram na evolução.', html)
+        self.assertIn('Seu histórico está salvo. Séries de aquecimento e registros anteriores não contam como recorde.', html)
+        self.assertIn('Registre uma série principal atual para começar seu resumo do ciclo.', html)
+        self.assertNotIn('data-workout-record-card', html)
         self.assertNotIn('workout-load-chart-line', html)
 
     def test_history_tab_shows_sibling_variation_as_labeled_reference(self):
@@ -813,10 +889,9 @@ class WorkoutTopbarAndNavTests(TestCase):
         import datetime
 
         payload = build_example_payload()  # dia unico day_id='seg'
-        # segunda-feira da semana CORRENTE (build_week_overview usa date.today()
-        # internamente, entao a carga registrada precisa cair na mesma semana
-        # de "hoje" pra aparecer, nao importa quando o teste rodar).
-        today = datetime.date.today()
+        # segunda-feira da semana local corrente (mesma data local do seletor
+        # de treino, inclusive perto da virada do dia no servidor).
+        today = timezone.localdate()
         monday = today - datetime.timedelta(days=today.weekday())
         html = _render(payload, load_history=[
             {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': monday.isoformat(), 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
@@ -968,6 +1043,18 @@ class WorkoutAssessmentPanelTests(TestCase):
 
         self.assertIn('js/public_workouts/assessments.js', html)
         self.assertIn('css/public_workouts/assessments.css', html)
+        self.assertIn('css/public_workouts/workout-assessment.css', html)
+        self.assertIn('class="workout-assessment-panel"', html)
+
+
+class WorkoutModuleAssetTests(TestCase):
+    def test_training_progress_and_shell_assets_are_separate(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('css/public_workouts/workout-training.css', html)
+        self.assertIn('css/public_workouts/workout-progress.css', html)
+        self.assertIn('js/public_workouts/workout-shell.js', html)
+        self.assertNotIn('data-workout-load-toggle tabindex="0" role="button"', html)
 
 
 class WorkoutProfilePanelTests(TestCase):
@@ -1009,7 +1096,6 @@ class WorkoutProfilePanelTests(TestCase):
 
         self.assertIn('Sair da conta', html)
         self.assertIn('data-signout-url="/renan/juliana/sair"', html)
-
 
 class HumanizeMovementSlugFilterTests(TestCase):
     def test_replaces_hyphens_and_capitalizes(self):
@@ -1795,7 +1881,9 @@ class MovementDisplayNameAndVariationRenderTests(TestCase):
         html = _render(payload)
 
         self.assertIn('data-workout-variation-toggle', html)
-        self.assertIn('<span class="workout-movement-variation" data-workout-variation hidden>', html)
+        self.assertIn('aria-controls="workout-variation-seg-1-1"', html)
+        self.assertIn('id="workout-variation-seg-1-1"', html)
+        self.assertIn('class="workout-movement-variation" data-workout-variation hidden>', html)
 
     def test_variation_toggle_available_regardless_of_is_tracked(self):
         # Igual ao registro de carga: a disponibilidade do toggle nao
@@ -2162,7 +2250,7 @@ class PeriodizationCanonicalTreinoRenderTests(TestCase):
     def test_registration_hint_renders_in_treino_tab_without_one_rep_max(self):
         html = _render(build_example_payload())
 
-        self.assertIn('Registre sua carga para controlar a kilagem.', html)
+        self.assertIn('Toque em registrar para acompanhar a evolução.', html)
 
     def test_registration_hint_absent_once_one_rep_max_exists(self):
         payload = build_example_payload()
@@ -2171,4 +2259,4 @@ class PeriodizationCanonicalTreinoRenderTests(TestCase):
 
         html = _render(payload, one_rep_max_by_movement=one_rm)
 
-        self.assertNotIn('Registre sua carga para controlar a kilagem.', html)
+        self.assertNotIn('Toque em registrar para acompanhar a evolução.', html)
