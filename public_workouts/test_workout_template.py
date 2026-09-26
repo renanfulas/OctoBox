@@ -587,6 +587,35 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('Ver registros recentes', html)
         self.assertNotIn('workout-load-chart-line', html)
 
+    def test_legacy_only_history_shows_last_value_without_an_empty_chart(self):
+        from public_workouts.progress_snapshot import ProgressPoint
+
+        legacy_day = timezone.localdate() - timedelta(days=25)
+        legacy = ProgressPoint(
+            performed_on=legacy_day, weight_kg=Decimal('72.5'), reps=None, rir=None,
+            created_at=datetime.combine(legacy_day, datetime.min.time()), program_id='',
+        )
+        html = _render(
+            build_example_payload(),
+            load_history=[{
+                'movement_slug': 'agachamento-livre', 'weight_kg': 72.5, 'reps': None, 'rir': None,
+                'performed_on': legacy_day.isoformat(), 'program_id': '', 'week_in_program': None,
+                'idempotency_key': 'legacy-only', 'set_role': 'legacy_unknown',
+            }],
+            progress_snapshots={
+                'agachamento-livre': SimpleNamespace(
+                    latest_top_set=None, curve_points=[], legacy_points=[legacy], has_legacy_history=True,
+                    y_scale=None, trend_signal='insufficient_data', one_rep_max=None,
+                ),
+            },
+        )
+
+        self.assertIn('Último registro anterior', html)
+        self.assertIn('72,5 <span>kg</span>', html)
+        self.assertIn(legacy_day.strftime('%d/%m/%Y'), html)
+        self.assertIn('não entra na curva comparável', html)
+        self.assertNotIn('workout-load-chart-svg', html)
+
     def test_history_tab_keeps_latest_load_visible_when_outside_chart_window(self):
         from public_workouts.progress_snapshot import ProgressPoint
 

@@ -558,7 +558,11 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
         if point.weight_kg is None:
             continue
         x, y = xy(point)
-        legacy.append({'x': x, 'y': y, 'label': _format_short_date(point.performed_on), 'weight_kg': point.weight_kg})
+        legacy.append({
+            'x': x, 'y': y, 'label': _format_short_date(point.performed_on),
+            'performed_on_iso': point_date(point).isoformat(),
+            'performed_on_label': _format_long_date(point.performed_on), 'weight_kg': point.weight_kg,
+        })
 
     points_attr = ' '.join(f"{point['x']},{point['y']}" for point in points)
     area_points_attr = (
@@ -572,6 +576,7 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
     latest_on = latest.performed_on if latest else (points[-1]['performed_on'] if points else None)
     latest_reps = latest.reps if latest else (points[-1]['reps'] if points else None)
     latest_rir = latest.rir if latest else (points[-1]['rir'] if points else None)
+    latest_legacy = legacy[-1] if legacy else None
     if has_data and latest_weight is not None and latest_on is not None:
         accessible_description = (
             f'{len(points)} registros de série principal nos últimos 90 dias. '
@@ -589,13 +594,19 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
             f'Último registro: {number_format(float(latest_weight), decimal_pos=1, use_l10n=True)} kg '
             f'em {_format_short_date(latest_on)}.'
         )
+    elif latest_legacy:
+        accessible_description = (
+            'Histórico anterior salvo, sem classificação. '
+            f'Último registro: {number_format(float(latest_legacy["weight_kg"]), decimal_pos=1, use_l10n=True)} kg '
+            f'em {latest_legacy["label"]}.'
+        )
     elif has_legacy_points or (snapshot and snapshot.has_legacy_history):
         accessible_description = 'Histórico anterior salvo, sem curva comparável de séries principais.'
     else:
         accessible_description = 'Ainda não há série principal para desenhar a curva.'
     return {
         'has_data': has_data,
-        'has_chart': has_data or has_legacy_points,
+        'has_chart': has_data,
         'has_latest_top_set': latest is not None,
         'has_recent_points': bool(points),
         'session_points': points,
@@ -614,6 +625,9 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
         'latest_performed_on': latest_on,
         'latest_reps': latest_reps,
         'latest_rir': latest_rir,
+        'latest_legacy_weight_kg': latest_legacy['weight_kg'] if latest_legacy else None,
+        'latest_legacy_performed_on_iso': latest_legacy['performed_on_iso'] if latest_legacy else None,
+        'latest_legacy_date_label': latest_legacy['performed_on_label'] if latest_legacy else None,
         'accessible_description': accessible_description,
         'delta_weight_kg': delta,
         'trend': _trend(delta or 0),

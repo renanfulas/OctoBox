@@ -475,6 +475,15 @@ body.workout-keyboard-open .workout-mobile-nav {
     cursor: pointer;
 }
 
+.workout-load-input__save:disabled {
+    border-color: var(--theme-border-soft);
+    background: color-mix(in srgb, var(--theme-text-muted) 22%, var(--theme-surface-secondary));
+    color: var(--theme-text-muted);
+    cursor: not-allowed;
+    filter: saturate(0.35);
+    opacity: 0.78;
+}
+
 .workout-load-input__status {
     flex-basis: 100%;
     font-size: 0.74rem;

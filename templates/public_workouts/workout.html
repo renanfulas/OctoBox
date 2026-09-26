@@ -502,6 +502,14 @@ PONTOS CRITICOS:
               {% endif %}
               {% endwith %}
             </div>
+            {% if chart.latest_weight_kg is None and chart.latest_legacy_weight_kg is not None %}
+            <div class="workout-load-chart-legacy-value">
+              <span class="workout-load-chart-legacy-value__label">Último registro anterior</span>
+              <strong>{{ chart.latest_legacy_weight_kg }} <span>kg</span></strong>
+              <time datetime="{{ chart.latest_legacy_performed_on_iso }}">{{ chart.latest_legacy_date_label }}</time>
+              <span class="workout-load-chart-legacy-value__note">Sem classificação · não entra na curva comparável</span>
+            </div>
+            {% endif %}
             {% if chart.has_data %}
             <span class="workout-load-chart-trend workout-load-chart-trend--{{ chart.trend }}">{% if chart.delta_weight_kg > 0 %}+{% endif %}{{ chart.delta_weight_kg }} kg nos últimos 90 dias</span>
             {% endif %}

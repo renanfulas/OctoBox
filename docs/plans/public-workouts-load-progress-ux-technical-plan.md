@@ -1,6 +1,6 @@
 # Plano técnico — evolução de carga no treino do aluno
 
-**Status:** implementação aplicada; validação automatizada concluída, QA visual responsivo e PWA instalada pendentes
+**Status:** implementação e QA visual responsivo concluídos; smoke offline em instalação PWA existente aguarda deploy
 **Escopo:** experiência de evolução de carga na tela pública de treino do aluno
 **Referência visual:** Luxo Futurista 2050, aplicado com contenção e prioridade à leitura
 **Não inclui:** mudanças de regra de elegibilidade, migração de dados ou reescrita da experiência de treino
@@ -306,4 +306,5 @@ Se o diff ficar pequeno e os mesmos arquivos precisarem de coordenação, B e C 
 - Os pontos expõem reps e RIR já disponíveis no snapshot, sem consulta por exercício. Recordes inválidos/ausentes e histórico só de aquecimento têm estados explícitos.
 - O formulário conserva os contratos de correção por `set_role`, top set e aquecimento; seleção de carga não muda a idempotência nem a fila offline.
 - A suite direcionada executou 245 testes com PostgreSQL temporário limpo: template, clientes reais, dashboard, snapshots e versão de assets. Sintaxe dos scripts e Python, além de `git diff --check`, também passaram.
-- QA visual autenticado nos tamanhos/temas da matriz e smoke offline numa instalação PWA existente continuam pendentes.
+- QA visual autenticado realizado em 360, 390, 768 e 1280 px, em claro/escuro. Foi corrigido o estado em que havia apenas histórico legado: o último valor e data agora aparecem sem desenhar uma curva vazia. Rótulos dentro do SVG ficam ocultos até 480 px porque encolhiam abaixo de leitura confortável; cabeçalho e lista expansível conservam valores e datas.
+- Validação automatizada repetida: 246 testes direcionados e `check_static_drift --strict` passaram. O smoke offline de uma PWA já instalada precisa ocorrer após deploy e permanece pendente.
