@@ -294,6 +294,10 @@ body[data-theme="dark"] .wod-planner-shell .button.wod-planner__btn-danger:focus
     background: var(--theme-border-soft);
 }
 
+.wod-planner__cell-state {
+    display: none;
+}
+
 .wod-planner__cell:hover,
 .wod-planner__cell:focus-visible {
     border-color: color-mix(in srgb, var(--theme-accent-support) 42%, transparent);
@@ -645,7 +649,48 @@ body[data-theme="dark"] .wod-planner__funnel-head h3 {
     }
 
     .wod-planner__grid {
-        grid-template-columns: repeat(7, minmax(140px, 1fr));
+        grid-template-columns: minmax(0, 1fr);
+        overflow-x: visible;
+        gap: 12px;
+    }
+
+    .wod-planner__day {
+        min-height: 0;
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .wod-planner__cells {
+        gap: 8px;
+    }
+
+    .wod-planner__cell {
+        min-height: 104px;
+        gap: 5px;
+        padding: 12px;
+    }
+
+    .wod-planner__cell-state {
+        display: inline-flex;
+        width: fit-content;
+        color: var(--theme-text-secondary);
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .wod-planner__cell-action {
+        min-height: 42px;
+        padding: 0 14px;
+        font-size: 0.8rem;
+    }
+
+    .wod-planner__toolbar-actions,
+    .wod-planner__toolbar-actions > .button {
+        width: 100%;
+    }
+
+    .wod-planner__keyboard-hint {
+        display: none;
     }
 
 
@@ -660,6 +705,9 @@ html.wod-planner-template-picker-open body {
 }
 
 .wod-planner__template-picker {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     width: min(560px, calc(100vw - 32px));
     max-height: min(720px, calc(100dvh - 48px));
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
@@ -668,8 +716,7 @@ html.wod-planner-template-picker-open body {
     overflow: hidden;
     overscroll-behavior: contain;
     box-shadow: var(--theme-shadow-xl);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 253, 0.95));
+    background: var(--theme-surface-panel);
     color: var(--theme-text-primary);
 }
 
@@ -693,8 +740,7 @@ html.wod-planner-template-picker-open body {
     position: sticky;
     top: 0;
     z-index: 2;
-    background:
-        linear-gradient(180deg, rgba(250, 252, 255, 0.98), rgba(250, 252, 255, 0.92));
+    background: var(--theme-surface-panel);
 }
 
 .wod-planner__template-picker-head h3,
@@ -724,8 +770,7 @@ html.wod-planner-template-picker-open body {
     padding: 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
     border-radius: 16px;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 246, 252, 0.92));
+    background: var(--theme-surface-secondary);
     box-shadow: 0 10px 24px rgba(22, 35, 68, 0.08);
 }
 
@@ -757,8 +802,7 @@ html.wod-planner-template-picker-open body {
     padding: 10px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
     border-radius: 12px;
-    background:
-        linear-gradient(180deg, rgba(248, 251, 255, 0.96), rgba(239, 245, 251, 0.9));
+    background: var(--theme-surface-strong);
 }
 
 .wod-planner__template-picker-preview-card p,
@@ -768,12 +812,16 @@ html.wod-planner-template-picker-open body {
 
 @media (max-width: 640px) {
     .wod-planner__template-picker {
-        width: min(100%, calc(100vw - 20px));
-        height: min(740px, calc(100dvh - 20px));
-        max-height: calc(100dvh - 20px);
-        margin: auto;
+        inset: auto 0 0;
+        width: 100%;
+        max-width: none;
+        height: min(740px, calc(100dvh - env(safe-area-inset-top) - 0.75rem));
+        max-height: calc(100dvh - env(safe-area-inset-top) - 0.75rem);
+        margin: 0;
         padding: 14px;
-        border-radius: 22px;
+        padding-bottom: calc(14px + env(safe-area-inset-bottom));
+        border-radius: 22px 22px 0 0;
+        border-bottom: 0;
     }
 
     .wod-planner__template-picker-head {
@@ -941,6 +989,9 @@ html.wod-planner-template-picker-open body {
 /* ── Confirm dialog (Clear Week) ─────────────────────────────────────────── */
 
 .wod-planner__confirm-dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     width: min(440px, calc(100vw - 32px));
     padding: 24px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
@@ -948,6 +999,21 @@ html.wod-planner-template-picker-open body {
     box-shadow: var(--theme-shadow-xl);
     background: var(--theme-surface-secondary);
     color: var(--theme-text-primary);
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+}
+
+@media (max-width: 640px) {
+    .wod-planner__confirm-dialog {
+        inset: auto 0 0;
+        margin: 0;
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - env(safe-area-inset-top) - 0.75rem);
+        border-radius: 20px 20px 0 0;
+        border-bottom: 0;
+        padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
 }
 
 .wod-planner__confirm-dialog::backdrop {

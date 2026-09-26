@@ -11,7 +11,7 @@
         <div class="wod-week-overview__intro">
             <p class="eyebrow">Visão da semana</p>
             <h2>O que falta para os alunos verem os treinos?</h2>
-            <p>{% if planner_week.total_sessions %}Acompanhe cada aula até a publicação.{% else %}Ainda não há aulas nesta semana. Cadastre a grade para distribuir os WODs.{% endif %}</p>
+            <p>{% if planner_week.total_sessions %}Cada cartão é uma aula. Abra o treino para editar; os que aguardam aprovação ainda não aparecem aos alunos.{% else %}Ainda não há aulas nesta semana. Cadastre a grade para distribuir os WODs.{% endif %}</p>
         </div>
         <div class="wod-week-overview__states">
             <div><strong>{{ planner_week.empty_count }}</strong><span>sem treino</span></div>
@@ -24,6 +24,7 @@
         {% elif planner_week.pending_count %}
             <p class="wod-week-overview__footnote">O Manager ou Owner precisa aprovar os treinos pendentes.</p>
         {% endif %}
+        {% if not planner_week.total_sessions %}<a class="button secondary" href="{% url 'class-grid' %}">Cadastrar aulas da semana</a>{% endif %}
     </section>
 
     <section class="wod-planner" data-wod-planner data-template-picker-telemetry-url="{% url 'workout-planner-template-picker-telemetry' %}" aria-label="Planner semanal de WOD">
@@ -39,6 +40,7 @@
                     <a class="button tertiary" href="{{ planner_next_week_href }}">Próxima →</a>
                 </nav>
                 <div class="wod-planner__toolbar-actions">
+                    <a class="button secondary" href="{% url 'workout-smart-paste' %}">+ Colar WOD da semana</a>
                     {% if current_role.slug == 'Owner' or current_role.slug == 'Manager' or current_role.slug == 'Coach' %}
                     <button type="button" class="button tertiary danger wod-planner__btn-danger" onclick="document.getElementById('planner-clear-week-dialog').showModal()">Remover todos os WODs</button>
                     {% endif %}
@@ -89,6 +91,7 @@
                                 <span class="wod-planner__cell-status-dot" title="{{ cell.status_label }}"></span>
                             </div>
                             <strong class="wod-planner__cell-title">{{ cell.session_title }}</strong>
+                            <span class="wod-planner__cell-state">{{ cell.status_label }}</span>
                             {% if cell.workout_title %}
                             <span class="wod-planner__cell-workout">{{ cell.workout_title }}</span>
                             {% endif %}

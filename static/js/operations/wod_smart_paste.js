@@ -179,7 +179,7 @@ POR QUE ELE EXISTE:
     // If target lives inside a <dialog>, open the dialog first
     var parentDialog = reviewTarget.closest('dialog');
     if (parentDialog && !parentDialog.open) {
-      parentDialog.showModal();
+      showDayDialog(parentDialog);
     }
     var parentBlock = reviewTarget.closest('[data-dialog-block]');
     if (parentBlock) {
@@ -191,7 +191,12 @@ POR QUE ELE EXISTE:
     if (reviewTarget.tagName === 'DETAILS') {
       reviewTarget.open = true;
     }
-    reviewTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var scrollBody = reviewTarget.closest('.smart-paste-day-dialog__body');
+    if (scrollBody) {
+      scrollBody.scrollTop += reviewTarget.getBoundingClientRect().top - scrollBody.getBoundingClientRect().top - 16;
+    } else {
+      reviewTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     var focusField = reviewTarget.querySelector('input:not([type=hidden]), textarea, select');
     if (focusField) {
       window.setTimeout(function () { focusField.focus(); }, 180);
@@ -213,9 +218,29 @@ POR QUE ELE EXISTE:
       if (surface) surface.setAttribute('aria-expanded', isActive ? 'true' : 'false');
       if (detail) detail.hidden = !isActive;
     });
-    if (activeBlock && typeof activeBlock.scrollIntoView === 'function') {
-      activeBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (activeBlock) {
+      body.scrollTop += activeBlock.getBoundingClientRect().top - body.getBoundingClientRect().top;
     }
+  }
+
+  function restoreDayDialog(dialog) {
+    var owner = dialog._smartPasteOwner;
+    if (!owner) return;
+    dialog._smartPasteOwner = null;
+    if (owner.isConnected) owner.appendChild(dialog);
+    else dialog.remove();
+  }
+
+  function showDayDialog(dialog) {
+    if (!dialog || typeof dialog.showModal !== 'function' || dialog.open) return;
+    // Safari can anchor a modal inside the blurred preview card to its scroll
+    // position. Put it directly under body while it is in the top layer.
+    var owner = dialog.closest('[data-smart-paste-preview-panel]');
+    if (owner) {
+      dialog._smartPasteOwner = owner;
+      document.body.appendChild(dialog);
+    }
+    dialog.showModal();
   }
 
   function clearFocusedBlock(body) {
@@ -261,7 +286,7 @@ POR QUE ELE EXISTE:
         if (dialog && typeof dialog.showModal === 'function') {
           var body = dialog.querySelector('.smart-paste-day-dialog__body');
           if (body) clearFocusedBlock(body);
-          dialog.showModal();
+          showDayDialog(dialog);
         }
       });
     });
@@ -298,6 +323,7 @@ POR QUE ELE EXISTE:
     scope.querySelectorAll('.smart-paste-day-dialog').forEach(function (dialog) {
       if (dialog.dataset.backdropBound === 'true') return;
       dialog.dataset.backdropBound = 'true';
+      dialog.addEventListener('close', function () { restoreDayDialog(dialog); });
       dialog.addEventListener('click', function (e) {
         if (e.target === dialog) {
           var body = dialog.querySelector('.smart-paste-day-dialog__body');
@@ -311,13 +337,13 @@ POR QUE ELE EXISTE:
   function initializeScope(scope) {
     if (!scope) return;
     scope.querySelectorAll('[data-smart-date-input]').forEach(bindSmartDateField);
-    bindReviewQueue(scope);
     bindDayDialogs(scope);
+    bindReviewQueue(scope);
   }
 
-  root.addEventListener('click', function (event) {
+  document.addEventListener('click', function (event) {
     var button = event.target.closest('[data-action="use-custom-movement"]');
-    if (!button || !root.contains(button)) return;
+    if (!button || (!root.contains(button) && !button.closest('dialog.smart-paste-day-dialog'))) return;
     var form = button.closest('form');
     var slugField = form && form.querySelector('[name="movement_slug"]');
     if (!slugField) return;
@@ -328,6 +354,15 @@ POR QUE ELE EXISTE:
   });
 
   initializeScope(root);
+
+  document.body.addEventListener('htmx:beforeSwap', function (event) {
+    if (!event.detail || !event.detail.target || !event.detail.target.matches('[data-smart-paste-preview-panel]')) return;
+    document.querySelectorAll('dialog.smart-paste-day-dialog').forEach(function (dialog) {
+      if (!dialog._smartPasteOwner) return;
+      if (dialog.open) dialog.close();
+      restoreDayDialog(dialog);
+    });
+  });
 
   document.body.addEventListener('htmx:afterSwap', function (event) {
     initializeScope(event.target);

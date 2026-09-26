@@ -24,7 +24,7 @@
             <div class="coach-wod-editor-head">
                 <div>
                     <p class="eyebrow">Semana</p>
-                    <h2>Cole ou escreva o treino</h2>
+                    <h2>Cole o treino aqui</h2>
                 </div>
                 <div class="smart-paste-head-actions">
                     {% if smartplan_gpt_is_configured %}<a class="button secondary smart-paste-gpt-btn" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener noreferrer">
@@ -54,16 +54,16 @@
                 <input type="hidden" name="action" value="parse_text">
                 {% include "operations/includes/wod_smart_paste_week_input.html" with field=smart_paste_form.week_start picker_id="smart-paste-week-start-picker" picker_value=smart_paste_picker_value picker_min=smart_paste_picker_min picker_max=smart_paste_picker_max label_text="Início da semana" %}
                 <label>
-                    <span>Nome da semana</span>
+                    <span>Nome da semana <small>(opcional)</small></span>
                     {{ smart_paste_form.label }}
                 </label>
                 <label>
-                    <span>Texto colado</span>
+                    <span>Treino da semana</span>
                     {{ smart_paste_form.source_text }}
-                    <small>O dicionário e o Haiku tentam corrigir os movimentos. Você só revisa o que continuar incerto.</small>
+                    <small>Cole como recebeu, mesmo com abreviações. Vamos separar os dias e tentar corrigir os movimentos automaticamente.</small>
                 </label>
                 <div class="actions">
-                    <button class="button" type="submit">Organizar semana automaticamente</button>
+                    <button class="button" type="submit">Organizar meu treino</button>
                 </div>
             </form>
         </article>

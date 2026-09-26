@@ -59,7 +59,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Abrir no ChatGPT')
-        self.assertContains(response, 'Organizar semana automaticamente')
+        self.assertContains(response, 'Organizar meu treino')
 
     def test_manager_can_open_smart_paste_and_sees_approval_step(self):
         self.login_as_manager()
@@ -118,7 +118,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         resolver.assert_called_once()
-        self.assertContains(response, 'Manter nome original como personalizado')
+        self.assertContains(response, 'Usar o nome original')
 
     def test_surface_does_not_auto_bind_latest_plan_from_another_week(self):
         WeeklyWodPlan.objects.create(
@@ -312,7 +312,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         plan.refresh_from_db()
         self.assertEqual(plan.status, WeeklyWodPlanStatus.DRAFT)
         self.assertContains(response, 'pendencia')
-        self.assertContains(response, 'Manter nome original como personalizado')
+        self.assertContains(response, 'Usar o nome original')
         self.assertNotContains(response, 'Plano semanal confirmado.')
         self.assertNotContains(response, 'id="smart-paste-projection-panel"')
 
@@ -546,7 +546,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         retry_haiku.assert_called_once()
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Ainda ha 1 pendencia')
-        self.assertContains(response, 'Manter nome original como personalizado')
+        self.assertContains(response, 'Usar o nome original')
         plan.refresh_from_db()
         self.assertEqual(plan.status, WeeklyWodPlanStatus.DRAFT)
         self.assertFalse(SessionWorkout.objects.filter(replication_batch__weekly_plan=plan).exists())
@@ -765,7 +765,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'pendência')
-        self.assertContains(response, 'Manter nome original como personalizado')
+        self.assertContains(response, 'Usar o nome original')
         self.assertContains(response, 'rum')
         self.assertContains(response, 'bike')
         self.assertContains(response, 'hx-trigger="load, submit"')
@@ -975,8 +975,8 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-smart-paste'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Corrigir pendências e enviar às aulas')
-        self.assertContains(response, 'Manter nome original como personalizado')
+        self.assertContains(response, 'Tentar corrigir e enviar às aulas')
+        self.assertContains(response, 'Usar o nome original')
         self.assertContains(response, 'disabled aria-disabled="true"')
 
     def test_coach_can_preview_and_create_projection_as_drafts(self):
