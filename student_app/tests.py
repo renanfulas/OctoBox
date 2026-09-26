@@ -2510,6 +2510,10 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         content = response.content.decode('utf-8')
         self.assertIn('workout-shell', content)
         self.assertIn('workout-mobile-nav', content)
+        self.assertIn('/renan/bruno/manifest.webmanifest', content)
+        self.assertIn("register('/renan/sw.js?slug=", content)
+        self.assertIn('id="public-workout-install"', content)
+        self.assertRegex(content, r'workout-progress\.css\?v=[^"\']+')
 
     def test_falls_back_to_legacy_when_no_program_published(self):
         # giovanna: nenhum publish_program chamado nesta base de teste —

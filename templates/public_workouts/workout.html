@@ -16,13 +16,13 @@ POR QUE ELE EXISTE:
   usados no resto deste arquivo) sao compartilhados.
 
 PONTOS CRITICOS:
-- NAO esta ligado a nenhuma URL/view ainda — a Onda B3 real ainda precisa
-  decidir fase de acesso, hard reset e o sw.js novo antes de qualquer corte
-  de producao. Isto e so a base de renderizacao.
+- E servido por `PublicWorkoutDetailView` para programas ativos e pelo
+  preview de desenvolvimento. A rota real injeta manifest, prompt de
+  instalacao e registro do service worker apos renderizar, preservando o
+  shell visual independente deste template.
 - NAO estende templates/public_workouts/_base.html (a base legada, com o
-  sistema --accent por-plano e o bootstrap de PWA que a propria Onda B3
-  manda matar) nem templates/student_app/layout.html (acopla tenant via
-  {% load student_shell %} no sidebar/topbar — D.3 diz que
+  sistema --accent por-plano) nem templates/student_app/layout.html (acopla
+  tenant via {% load student_shell %} no sidebar/topbar — D.3 diz que
   templates/student_app/** e so leitura pra este produto).
 - Resumo do programa (tela Inicio) e TEXTO DETERMINISTICO
   (dashboard.py::build_program_summary), sem chamada de IA — decisao do
