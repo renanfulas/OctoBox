@@ -1,6 +1,6 @@
 # Plano técnico — Treino e avaliação física do aluno
 
-**Status:** implementação aplicada; validação final de viewport e PWA instalada continua pendente
+**Status:** implementação e QA visual autenticado concluídos; smoke offline em instalação PWA existente aguarda deploy
 **Escopo:** `/renan/<slug>` no template unificado `workout.html`
 **Direção visual:** Luxo Futurista 2050, com hierarquia e clareza antes de efeitos
 **Plano relacionado:** [Evolução de carga](public-workouts-load-progress-ux-technical-plan.md)
@@ -231,7 +231,7 @@ Antes de mover CSS, classificar cada bloco como base, breakpoint, estado reduzid
 2. Em dia de descanso, a tela informa o próximo dia prescrito e o deixa selecionado como prévia. Em dia com treino, seleciona o dia local correspondente.
 3. A avaliação não recomenda uma cadência fixa; a mensagem de primeira medição explica a linha de base sem sugerir intervalo.
 4. A época do cache PWA foi incrementada e os novos CSS/JS entraram no precache. Confirmar uma instalação existente, incluindo abertura offline, após o deploy.
-5. O render e os assets locais foram verificados; falta conferir visualmente 360, 390, 768 e 1280 px, claro/escuro e `prefers-reduced-motion` num navegador autenticado.
+5. QA visual autenticado realizado em 360, 390, 768 e 1280 px, em claro/escuro. Campos numéricos e observações da avaliação escondem a navegação inferior quando recebem foco. `prefers-reduced-motion` foi conferido nas regras CSS existentes; smoke offline em PWA instalada permanece pendente após deploy.
 
 ## 10. Referências de implementação
 
@@ -253,4 +253,5 @@ Antes de mover CSS, classificar cada bloco como base, breakpoint, estado reduzid
 - O JavaScript inline de navegação e microinterações foi extraído para `workout-shell.js`. O tracker de carga foi mantido; o widget ainda preserva sua posição no DOM e os contratos de registro.
 - A avaliação agora explica o primeiro uso, diferencia linha de base de histórico e ordena relatório antes do formulário quando já existem dados. “Nova avaliação” leva o foco ao formulário.
 - CSS/JS unificados receberam versão de asset, entraram no precache do service worker e elevaram a época do cache.
-- Validação executada: 245 testes direcionados passaram em banco PostgreSQL temporário e isolado, cobrindo dashboard, template, clientes reais, snapshots de progresso e versão de assets. Também passaram `node --check` nos três scripts alterados, `py_compile` nos módulos Python e `git diff --check`. Continua pendente a conferência visual autenticada nos viewports e temas da matriz acima e a validação offline numa instalação PWA já ativa.
+- Validação executada: 246 testes direcionados passaram em banco PostgreSQL temporário e isolado, cobrindo dashboard, template, clientes reais, snapshots de progresso e versão de assets. Também passaram `node --check` nos scripts alterados, `py_compile` nos módulos Python, `git diff --check` e `check_static_drift --strict`. QA visual autenticado cobriu 360, 390, 768 e 1280 px em claro/escuro. A conferência de `prefers-reduced-motion` foi feita no CSS; smoke offline em PWA já instalada continua pendente após deploy.
+- A inspeção encontrou três falhas pós-merge e as corrigiu: histórico legado sem valor visível quando não havia curva; navegação inferior ainda visível ao focar campos da avaliação; botão de salvar com aparência ativa mesmo desabilitado. Os rótulos do SVG são ocultados até 480 px, onde ficavam pequenos demais, enquanto o resumo e a lista expansível mantêm valor e data legíveis.

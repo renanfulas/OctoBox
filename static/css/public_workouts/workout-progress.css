@@ -110,6 +110,50 @@
     color: var(--theme-text-muted);
 }
 
+.workout-load-chart-legacy-value {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin: 10px 0;
+    padding: 12px 14px;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--theme-surface-secondary) 76%, transparent);
+}
+
+.workout-load-chart-legacy-value__label,
+.workout-load-chart-legacy-value__note {
+    color: var(--theme-text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.workout-load-chart-legacy-value strong {
+    grid-column: 1;
+    color: var(--theme-text-primary);
+    font-size: 1.375rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-chart-legacy-value strong span {
+    color: var(--theme-text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.workout-load-chart-legacy-value time {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    color: var(--theme-text-secondary, var(--theme-text-muted));
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-chart-legacy-value__note {
+    grid-column: 1 / -1;
+}
+
 .workout-load-chart-trend {
     font-size: 0.72rem;
     font-weight: 600;
@@ -299,6 +343,15 @@
     .workout-load-chart { padding-inline: 10px; }
     .workout-load-chart-current strong { font-size: clamp(1.8rem, 9vw, 2.2rem); }
     .workout-load-chart-sessions li { grid-template-columns: minmax(60px, 0.7fr) minmax(76px, 1fr) minmax(54px, 0.8fr); gap: 5px; padding-inline: 7px; font-size: 0.72rem; }
+}
+
+@media (max-width: 480px) {
+    /* Labels inside the fixed 600-unit SVG become too small on narrow cards.
+       The card summary and expandable session list retain the exact values. */
+    .workout-load-chart-label,
+    .workout-load-chart-scale-label {
+        display: none;
+    }
 }
 
 .workout-load-chart h3,

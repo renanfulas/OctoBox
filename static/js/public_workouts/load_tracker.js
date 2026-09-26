@@ -1235,6 +1235,8 @@
       '[data-workout-reps-field]',
       '[data-workout-rir-other-field]',
       '[data-plate-bar-other-field]',
+      '#workout-panel-avaliacao input[type="number"]',
+      '#workout-panel-avaliacao textarea',
     ].join(',');
     document.addEventListener('focusin', function (event) {
       if (event.target.matches && event.target.matches(numericInputSelector)) {
