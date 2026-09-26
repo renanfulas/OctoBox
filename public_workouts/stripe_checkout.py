@@ -120,6 +120,78 @@ def start_subscription_checkout(
     return session.url
 
 
+def start_custom_price_subscription_checkout(
+    *, subscription, success_url: str, cancel_url: str, acquisition_session_id=None
+) -> str:
+    """Checkout de assinatura com valor negociado (sem Price ID fixo).
+
+    Pros alunos legados que nunca passaram pelo checkout dos 3 planos
+    (Essencial/Completo/Premium) e pagam um valor combinado individualmente
+    fora da Stripe: em vez de resolver um Price ID pre-cadastrado
+    (_resolve_price_id), usa `price_data` pra criar o Price ad-hoc na hora,
+    com o valor de `subscription.custom_monthly_price`. Precisa desse campo
+    preenchido -- e' o admin (PublicWorkoutSubscriptionAdmin) quem grava,
+    nunca um valor vindo de request.
+
+    metadata['custom_price']='1' avisa stripe_handlers._confirm_tier_price
+    (RT3) pra pular o cross-check de Price ID fixo -- o real DIVERGE de
+    proposito aqui, nao e fraude.
+    """
+    import stripe
+
+    if subscription.custom_monthly_price is None:
+        raise PublicWorkoutStripeNotConfiguredError(
+            'custom_monthly_price nao definido nesta assinatura -- preencha no admin antes de gerar o link.'
+        )
+
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key:
+        raise PublicWorkoutStripeNotConfiguredError('STRIPE_SECRET_KEY nao definida.')
+    stripe.api_key = secret_key
+
+    unit_amount = int((subscription.custom_monthly_price * 100).to_integral_value())
+    account = subscription.account
+    metadata = {
+        'product': 'coaching',
+        'public_workout_subscription_id': str(subscription.pk),
+        'plan_slug': subscription.plan_slug or '',
+        'tier': subscription.tier,
+        'custom_price': '1',
+        'offer_version': subscription.offer_version or '',
+        'service_policy_version': subscription.service_policy_version or '',
+        'terms_version': subscription.terms_version or '',
+        'privacy_version': subscription.privacy_version or '',
+        'guarantee_model': subscription.guarantee_model,
+        'acquisition_session_id': str(acquisition_session_id or ''),
+    }
+
+    session = stripe.checkout.Session.create(
+        mode='subscription',
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'brl',
+                'unit_amount': unit_amount,
+                'recurring': {'interval': 'month'},
+                'product_data': {
+                    'name': f'Consultoria Curva — {subscription.plan_slug or account.email}',
+                },
+            },
+            'quantity': 1,
+        }],
+        customer_email=account.email,
+        client_reference_id=str(subscription.pk),
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata=metadata,
+        subscription_data={'metadata': metadata},
+        # inclui unit_amount na chave: valor renegociado precisa de Session
+        # nova, nunca reaproveitar a Session cacheada do valor antigo.
+        idempotency_key=f'public-workout-subscription-custom-{subscription.pk}-{unit_amount}',
+    )
+    return session.url
+
+
 def start_customer_portal_session(*, customer_id: str, return_url: str) -> str:
     """Cria stripe.billing_portal.Session pra o aluno gerenciar/cancelar a
     propria assinatura direto com a Stripe (Onda B2, item 6 — Customer
@@ -149,6 +221,7 @@ def start_customer_portal_session(*, customer_id: str, return_url: str) -> str:
 
 __all__ = [
     'PublicWorkoutStripeNotConfiguredError',
+    'start_custom_price_subscription_checkout',
     'start_customer_portal_session',
     'start_subscription_checkout',
 ]

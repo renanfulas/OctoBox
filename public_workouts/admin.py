@@ -3,11 +3,13 @@ import json
 from django import forms
 from django.contrib import admin, messages
 from django.db import IntegrityError, models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from . import nutrition_schema, schema
 from .models import (
+    PublicWorkoutAccount,
     PublicWorkoutAssessment,
     PublicWorkoutCampaignSpend,
     PublicWorkoutAcquisitionSession,
@@ -37,18 +39,14 @@ from .models import (
     PublicWorkoutWaitlistEntry,
     PublicWorkoutWaitlistStatus,
 )
-from .program_generation_ai import generate_program_draft_payload
 from .widgets import NutritionPlanEditorWidget
 from .notifications import notify_program_ready
 from .services import (
     ProgramDraftReviewError,
     approve_and_publish_draft,
-    create_program_draft,
     flag_movements_against_restrictions,
-    get_training_profile,
     publish_meal_plan,
     reject_program_draft,
-    serialize_training_profile,
 )
 
 
@@ -223,72 +221,71 @@ class AwaitingNutritionFilter(admin.SimpleListFilter):
         ).exclude(account_id__in=accounts_com_plano)
 
 
+@admin.register(PublicWorkoutAccount)
+class PublicWorkoutAccountAdmin(admin.ModelAdmin):
+    list_display = ('email', 'whatsapp', 'created_at')
+    search_fields = ('email',)
+    readonly_fields = ('created_at', 'updated_at', 'last_login_at', 'student_identity_id')
+
+
 @admin.register(PublicWorkoutSubscription)
 class PublicWorkoutSubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('account', 'tier', 'status', 'plan_slug', 'created_at')
+    list_display = ('account', 'tier', 'status', 'plan_slug', 'custom_monthly_price', 'created_at')
     list_filter = (AwaitingActivationFilter, AwaitingNutritionFilter, 'tier', 'status')
     search_fields = ('account__email', 'plan_slug')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at')
-    actions = ['generate_ai_draft']
+    actions = ['generate_ai_draft', 'generate_custom_price_checkout_link']
 
     @admin.action(description='Gerar rascunho de treino com IA')
     def generate_ai_draft(self, request, queryset):
+        from .services import generate_ai_draft_for_subscription
+
         for subscription in queryset:
-            if not subscription.plan_slug:
-                self.message_user(
-                    request, f'{subscription}: defina plan_slug antes de gerar.', level=messages.ERROR
-                )
-                continue
+            status, message = generate_ai_draft_for_subscription(subscription)
+            level = messages.SUCCESS if status == 'success' else messages.ERROR
+            self.message_user(request, f'{subscription}: {message}', level=level)
 
-            profile = get_training_profile(account_id=subscription.account_id)
-            if profile is None:
-                self.message_user(
-                    request, f'{subscription}: aluno ainda não respondeu à anamnese.', level=messages.ERROR
-                )
-                continue
+    @admin.action(description='Gerar link de checkout com valor personalizado (legado sem plano fixo)')
+    def generate_custom_price_checkout_link(self, request, queryset):
+        from .stripe_checkout import (
+            PublicWorkoutStripeNotConfiguredError,
+            start_custom_price_subscription_checkout,
+        )
 
-            training_profile_dict = serialize_training_profile(profile)
-            known_slugs = list(
-                PublicWorkoutMovement.objects.filter(status=PublicWorkoutMovementStatus.ACTIVE).values_list(
-                    'slug', flat=True
-                )
-            )
-            payload, model = generate_program_draft_payload(
-                training_profile=training_profile_dict,
-                tier=subscription.tier,
-                plan_slug=subscription.plan_slug,
-                known_movement_slugs=known_slugs,
-            )
-            if payload is None:
+        success_url = request.build_absolute_uri(reverse('public-workout-account')) + '?checkout=retorno'
+        cancel_url = request.build_absolute_uri(reverse('public-workout-account')) + '?checkout=cancelado'
+
+        for subscription in queryset:
+            if subscription.stripe_customer_id:
                 self.message_user(
                     request,
-                    f'{subscription}: geração falhou (sem chave configurada, timeout, ou saída inválida — '
-                    'ver logs). Monte manualmente como antes.',
+                    f'{subscription}: já tem stripe_customer_id (já concluiu checkout antes) — '
+                    'use o Customer Portal normal, não este link.',
                     level=messages.WARNING,
                 )
                 continue
-
+            if subscription.custom_monthly_price is None:
+                self.message_user(
+                    request,
+                    f'{subscription}: preencha "custom monthly price" antes de gerar o link.',
+                    level=messages.ERROR,
+                )
+                continue
             try:
-                create_program_draft(
-                    account_id=subscription.account_id,
-                    slug=subscription.plan_slug,
-                    payload=payload,
-                    source=PublicWorkoutProgramDraftSource.AI_GENERATED,
-                    ai_model=model,
-                    training_profile_snapshot=training_profile_dict,
+                url = start_custom_price_subscription_checkout(
+                    subscription=subscription, success_url=success_url, cancel_url=cancel_url,
                 )
-            except IntegrityError:
-                self.message_user(
-                    request,
-                    f'{subscription}: já existe rascunho pendente para este slug — revise-o antes de gerar outro.',
-                    level=messages.WARNING,
-                )
+            except PublicWorkoutStripeNotConfiguredError as exc:
+                self.message_user(request, f'{subscription}: {exc}', level=messages.ERROR)
                 continue
-
             self.message_user(
                 request,
-                f'{subscription}: rascunho gerado — revise em "Rascunhos de programa" antes de publicar.',
+                format_html(
+                    '{}: <a href="{}" target="_blank" rel="noopener">{}</a> '
+                    '(copie e envie pro aluno — expira como qualquer Checkout Session da Stripe)',
+                    subscription, url, url,
+                ),
                 level=messages.SUCCESS,
             )
 

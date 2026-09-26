@@ -61,11 +61,13 @@ from .models import (
     PublicWorkoutMealPlan,
     PublicWorkoutMovement,
     PublicWorkoutMovementModality,
+    PublicWorkoutMovementStatus,
     PublicWorkoutNutritionProfile,
     PublicWorkoutPayment,
     PublicWorkoutPhysicalRestrictionTag,
     PublicWorkoutProgram,
     PublicWorkoutProgramDraft,
+    PublicWorkoutProgramDraftSource,
     PublicWorkoutProgramDraftStatus,
     PublicWorkoutTier,
     PublicWorkoutTrainingExperience,
@@ -640,6 +642,55 @@ def create_program_draft(
             ai_model=ai_model,
             training_profile_snapshot=training_profile_snapshot or {},
         )
+
+
+def generate_ai_draft_for_subscription(subscription) -> tuple[str, str]:
+    """Mesma logica de PublicWorkoutSubscriptionAdmin.generate_ai_draft,
+    fatorada pra ser chamada tambem do cockpit do treinador (ficha do
+    aluno) sem duplicar o fluxo em dois lugares -- resultado
+    ('error'|'success', mensagem) pra quem chama decidir como exibir.
+    """
+    from .program_generation_ai import generate_program_draft_payload
+
+    if not subscription.plan_slug:
+        return 'error', 'defina plan_slug antes de gerar.'
+
+    profile = get_training_profile(account_id=subscription.account_id)
+    if profile is None:
+        return 'error', 'aluno ainda não respondeu à anamnese.'
+
+    training_profile_dict = serialize_training_profile(profile)
+    known_slugs = list(
+        PublicWorkoutMovement.objects.filter(status=PublicWorkoutMovementStatus.ACTIVE).values_list(
+            'slug', flat=True,
+        )
+    )
+    payload, model = generate_program_draft_payload(
+        training_profile=training_profile_dict,
+        tier=subscription.tier,
+        plan_slug=subscription.plan_slug,
+        known_movement_slugs=known_slugs,
+    )
+    if payload is None:
+        return (
+            'error',
+            'geração falhou (sem chave configurada, timeout, ou saída inválida — '
+            'ver logs). Monte manualmente como antes.',
+        )
+
+    try:
+        create_program_draft(
+            account_id=subscription.account_id,
+            slug=subscription.plan_slug,
+            payload=payload,
+            source=PublicWorkoutProgramDraftSource.AI_GENERATED,
+            ai_model=model,
+            training_profile_snapshot=training_profile_dict,
+        )
+    except IntegrityError:
+        return 'error', 'já existe rascunho pendente para este slug — revise-o antes de gerar outro.'
+
+    return 'success', 'rascunho gerado — revise em "Rascunhos de programa" antes de publicar.'
 
 
 def _resolve_stable_program_id(*, slug: str) -> str:

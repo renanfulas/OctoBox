@@ -14,10 +14,13 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase, override_settings
 
+from decimal import Decimal
+
 from public_workouts.billing import get_or_create_subscription
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutTier
 from public_workouts.stripe_checkout import (
     PublicWorkoutStripeNotConfiguredError,
+    start_custom_price_subscription_checkout,
     start_customer_portal_session,
     start_subscription_checkout,
 )
@@ -138,6 +141,76 @@ class StartSubscriptionCheckoutTests(TestCase):
             start_subscription_checkout(
                 subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
             )
+
+
+class StartCustomPriceSubscriptionCheckoutTests(TestCase):
+    # Legado sem plano fixo (achado do Renan): "quem nao tem valor fixo,
+    # colocar uma estrutura onde coloque um valor personalizado pra cobrar".
+
+    def setUp(self):
+        self.account = PublicWorkoutAccount.objects.create(email='legado@example.com')
+        self.subscription = get_or_create_subscription(account=self.account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno')
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    def test_raises_when_custom_monthly_price_not_set(self):
+        with self.assertRaises(PublicWorkoutStripeNotConfiguredError):
+            start_custom_price_subscription_checkout(
+                subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+            )
+
+    @override_settings(STRIPE_SECRET_KEY='')
+    def test_raises_when_secret_key_not_configured(self):
+        self.subscription.custom_monthly_price = Decimal('150.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+
+        with self.assertRaises(PublicWorkoutStripeNotConfiguredError):
+            start_custom_price_subscription_checkout(
+                subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+            )
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_creates_session_with_ad_hoc_price_data_in_cents(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_custom')
+        self.subscription.custom_monthly_price = Decimal('150.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+
+        url = start_custom_price_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+
+        self.assertEqual(url, 'https://checkout.stripe.com/pay/cs_test_custom')
+        _, kwargs = mock_create.call_args
+        self.assertEqual(kwargs['mode'], 'subscription')
+        line_item = kwargs['line_items'][0]
+        self.assertEqual(line_item['price_data']['currency'], 'brl')
+        self.assertEqual(line_item['price_data']['unit_amount'], 15000)
+        self.assertEqual(line_item['price_data']['recurring'], {'interval': 'month'})
+        self.assertEqual(kwargs['metadata']['product'], 'coaching')
+        self.assertEqual(kwargs['metadata']['custom_price'], '1')
+        self.assertEqual(kwargs['subscription_data']['metadata']['custom_price'], '1')
+        # Nunca chama _resolve_price_id (nao ha Price ID fixo pra checar).
+        self.assertNotIn('price', line_item)
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_idempotency_key_changes_when_value_is_renegotiated(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_custom')
+        self.subscription.custom_monthly_price = Decimal('150.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+        start_custom_price_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+        _, first_kwargs = mock_create.call_args
+
+        self.subscription.custom_monthly_price = Decimal('180.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+        start_custom_price_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+        _, second_kwargs = mock_create.call_args
+
+        self.assertNotEqual(first_kwargs['idempotency_key'], second_kwargs['idempotency_key'])
 
 
 class StartCustomerPortalSessionTests(TestCase):

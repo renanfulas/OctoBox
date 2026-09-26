@@ -65,6 +65,7 @@ def _render(
     student_name='',
     student_photo_url=None,
     customer_portal_url=None,
+    billing_portal_available=False,
     account_email=None,
 ) -> str:
     if progress_snapshots is None:
@@ -133,6 +134,7 @@ def _render(
         'student_name': student_name,
         'student_photo_url': student_photo_url,
         'customer_portal_url': customer_portal_url,
+        'billing_portal_available': billing_portal_available,
         'account_email': account_email,
     })
 
@@ -971,11 +973,22 @@ class WorkoutAssessmentPanelTests(TestCase):
 
 
 class WorkoutProfilePanelTests(TestCase):
-    def test_payments_link_shown_when_portal_url_provided(self):
-        html = _render(build_example_payload(), customer_portal_url='https://billing.stripe.com/session/abc')
+    def test_payments_opens_billing_portal_directly_when_available(self):
+        # Aluno com stripe_customer_id (1o checkout ja concluido): "Pagamentos"
+        # precisa abrir o Customer Portal direto, sem passar por /treinos/minha-conta
+        # (achado do Renan: pra quem ja tem assinatura ativa, a pagina de conta
+        # some no meio do caminho um CTA de "abrir programa", nao de pagamento).
+        html = _render(build_example_payload(), billing_portal_available=True, customer_portal_url='/treinos/minha-conta')
 
-        self.assertIn('href="https://billing.stripe.com/session/abc"', html)
+        self.assertIn('data-billing-portal', html)
+        self.assertNotIn('href="/treinos/minha-conta"', html)
         self.assertIn('Pagamentos', html)
+
+    def test_payments_falls_back_to_account_hub_without_stripe_customer_id(self):
+        html = _render(build_example_payload(), billing_portal_available=False, customer_portal_url='/treinos/minha-conta')
+
+        self.assertIn('href="/treinos/minha-conta"', html)
+        self.assertNotIn('data-billing-portal', html)
 
     def test_payments_shows_unavailable_without_portal_url(self):
         html = _render(build_example_payload(), customer_portal_url=None)
@@ -2172,3 +2185,29 @@ class PeriodizationCanonicalTreinoRenderTests(TestCase):
         html = _render(payload, one_rep_max_by_movement=one_rm)
 
         self.assertNotIn('Registre sua carga para controlar a kilagem.', html)
+
+
+class WeeklyReviewHeroCardTests(TestCase):
+    # Card automatico da Início com o resumo por Haiku (achado do Renan) --
+    # so' prova a MARCACAO (atributos que weekly_review.js le), o
+    # comportamento de fetch/cache ja e' coberto em
+    # public_workouts/test_weekly_review_ai.py e
+    # student_app/test_public_workout_weekly_review_endpoint.py.
+
+    def test_hero_card_starts_hidden_and_silent(self):
+        html = _render(build_example_payload(), plan_slug='bruno')
+
+        self.assertIn('data-workout-weekly-review', html)
+        self.assertIn('data-workout-weekly-review-silent-empty', html)
+        self.assertIn('data-weekly-review-url="/renan/bruno/revisao-semanal"', html)
+
+    def test_hero_card_has_no_manual_generate_button(self):
+        # Diferenca do card da aba Cargas: sem botao, weekly_review.js
+        # busca sozinho ao carregar (ver docstring do JS).
+        html = _render(build_example_payload(), plan_slug='bruno')
+
+        hero_start = html.index('workout-weekly-review-hero')
+        cargas_start = html.index('data-workout-weekly-review-generate')
+        self.assertLess(hero_start, cargas_start)
+        hero_section = html[hero_start:cargas_start]
+        self.assertNotIn('data-workout-weekly-review-generate', hero_section)

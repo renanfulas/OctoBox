@@ -46,6 +46,7 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import re
 import uuid
 
 from django.conf import settings
@@ -482,6 +483,11 @@ class PublicWorkoutAccount(TimeStampedModel):
     email = models.EmailField(unique=True, db_index=True)
     student_identity_id = models.IntegerField(null=True, blank=True, db_index=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
+    # So digitos (DDI+DDD+numero, ex.: '5511987654321') -- normalizado em
+    # save() abaixo. Cockpit do treinador (public_workouts/views.py) usa
+    # isto pra montar o link wa.me de "chamar aluno"; em branco, o cockpit
+    # so mostra o e-mail (nunca inventa numero).
+    whatsapp = models.CharField(max_length=20, blank=True)
     # Preenchido so' pelo login por Google (identity.photo_url em
     # oauth_providers.py) -- login por e-mail nunca tem foto pra oferecer,
     # entao resolve_or_create_public_workout_account (public_workout_login.py)
@@ -492,6 +498,11 @@ class PublicWorkoutAccount(TimeStampedModel):
 
     class Meta:
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if self.whatsapp:
+            self.whatsapp = re.sub(r'\D', '', self.whatsapp)
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.email
@@ -637,6 +648,15 @@ class PublicWorkoutSubscription(models.Model):
     )
     contract_accepted_at = models.DateTimeField(null=True, blank=True)
     contracted_price_id = models.CharField(max_length=255, blank=True)
+    # So pros legados sem Price ID fixo (nunca passaram pelo checkout dos 3
+    # planos, valor negociado individualmente): quando preenchido, o admin
+    # ganha a acao "gerar link de checkout com valor personalizado"
+    # (stripe_checkout.start_custom_price_subscription_checkout), que cria
+    # um Price ad-hoc na Stripe via price_data em vez de um dos 3 Price ID
+    # fixos de _TIER_PRICE_SETTINGS. Por isso o cross-check de tier/price
+    # (RT3, stripe_handlers._confirm_tier_price) pula a validacao quando
+    # este campo esta preenchido -- o valor real diverge de proposito.
+    custom_monthly_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
     suspended_at = models.DateTimeField(null=True, blank=True)
     canceled_at = models.DateTimeField(null=True, blank=True)
@@ -1168,6 +1188,33 @@ class PublicWorkoutLoadLogSetRole(models.TextChoices):
     TOP_SET = 'top_set', 'Série principal'
     MAX_SET = 'max_set', 'Esforço máximo'
     LEGACY_UNKNOWN = 'legacy_unknown', 'Histórico anterior (não classificado)'
+
+
+class PublicWorkoutWeeklyReviewCache(models.Model):
+    """1 linha por (conta, semana ISO) -- garante NO MAXIMO 1 chamada a
+    Claude Haiku por aluno por semana (weekly_review_ai.py), nunca por
+    visita a pagina. `review_text=None` e' um resultado CACHEADO valido
+    (ja tentou gerar esta semana, IA nao configurada/sem sinal/erro) --
+    distingue de "ainda nao tentou" (linha inexistente), pra nunca tentar
+    de novo so' porque o resultado anterior foi vazio."""
+
+    account = models.ForeignKey(
+        PublicWorkoutAccount, on_delete=models.CASCADE, related_name='weekly_review_cache_entries',
+    )
+    # Formato 'YYYY-Www' (ISO 8601, ex.: '2026-W39') -- string, nao par de
+    # inteiros: unique_together fica trivial e o valor e' auto-descritivo
+    # em qualquer leitura direta do banco/admin.
+    iso_week = models.CharField(max_length=8, db_index=True)
+    review_text = models.TextField(null=True, blank=True)
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['account', 'iso_week'], name='unique_weekly_review_cache_per_week'),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.account_id} · {self.iso_week}'
 
 
 class PublicWorkoutLoadLog(models.Model):

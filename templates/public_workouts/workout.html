@@ -86,6 +86,17 @@ PONTOS CRITICOS:
         <p>{{ summary.body }}</p>
       </article>
 
+      <article
+        class="student-card card-decor-topstripe workout-weekly-review-hero"
+        data-workout-weekly-review
+        data-weekly-review-url="{% url 'public-workout-weekly-review' plan_slug=plan_slug %}"
+        data-workout-weekly-review-silent-empty
+        hidden
+      >
+        <span class="workout-weekly-review-hero__eyebrow">Revisão da semana</span>
+        <p class="workout-weekly-review__text" data-workout-weekly-review-text hidden></p>
+      </article>
+
       {% week_overview program load_history as week_days %}
       <section class="workout-week-strip" aria-label="Sua semana">
         <div class="workout-week-strip__head">
@@ -614,7 +625,12 @@ PONTOS CRITICOS:
             <span class="workout-profile-row__label">Dados pessoais</span>
             <span>{{ account_email|default:"—" }}</span>
           </span>
-          {% if customer_portal_url %}
+          {% if billing_portal_available %}
+          <button type="button" class="workout-profile-row" data-billing-portal>
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span aria-hidden="true">→</span>
+          </button>
+          {% elif customer_portal_url %}
           <a class="workout-profile-row" href="{{ customer_portal_url }}">
             <span class="workout-profile-row__label">Pagamentos</span>
             <span aria-hidden="true">→</span>
@@ -630,6 +646,7 @@ PONTOS CRITICOS:
             <span class="theme-toggle-icon" aria-hidden="true"></span>
           </button>
         </div>
+        <span class="workout-profile-row__status" data-action-status aria-live="polite"></span>
       </article>
 
       <article class="student-card card-decor-topstripe workout-block-card">
@@ -987,5 +1004,6 @@ PONTOS CRITICOS:
 <script src="{% static 'js/public_workouts/weekly_review.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/nutrition.js' %}" defer></script>
 <script src="{% static 'js/public_workouts/assessments.js' %}" defer></script>
+<script src="{% static 'js/public_workouts/account.js' %}" defer></script>
 </body>
 </html>

@@ -134,6 +134,39 @@
     line-height: 1.5;
 }
 
+/* Card automatico da Início com o resumo por Haiku (achado do Renan) --
+   comeca `hidden` no HTML e so aparece via JS (weekly_review.js) quando
+   ha texto de verdade pra mostrar. --brand (mesmo token do avatar/flame
+   acima) marca que este texto veio de uma leitura sobre o aluno, nao e'
+   so' descricao estatica do programa como o card anterior.
+
+   `[hidden]` sozinho NAO bastava aqui: `.student-card` ja declara
+   `display: grid` com a MESMA especificidade (0,1,0) do `[hidden]` do
+   stylesheet do proprio navegador -- empate de especificidade, a regra
+   de autor (carregada depois) vence, e o card aparecia mesmo com o
+   atributo presente. Precisa deste seletor combinado (especificidade
+   0,2,0) pra `hidden` ganhar de verdade. */
+.workout-weekly-review-hero[hidden] {
+    display: none;
+}
+
+.workout-weekly-review-hero__eyebrow {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brand);
+}
+
+.workout-weekly-review-hero .workout-weekly-review__text {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: 0.98rem;
+    line-height: 1.55;
+}
+
 /* Banner de fase ativa (Treino) -- so' aparece pra cliente ja migrado pro
    modelo canonico de periodizacao. Mesmo cartao/topstripe dos outros
    blocos, sem paleta nova. */
@@ -550,6 +583,18 @@ button.workout-week-day:focus-visible {
        unica vez em :root, nunca redeclarado em body[data-theme="dark"]) -- ver
        mesmo bug ja documentado em static/css/access/overview.css. */
     color: var(--theme-text-primary);
+}
+
+.workout-profile-row__status {
+    display: block;
+    min-height: 1.2em;
+    margin: 4px 4px 0;
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-profile-row__status[data-state="error"] {
+    color: var(--theme-accent-danger);
 }
 
 /* .theme-toggle-icon (design-system/topbar.css) e' pensado pra preencher um

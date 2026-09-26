@@ -192,6 +192,38 @@ class RouteToCorrectHandlerTests(TestCase):
         # so porque a ativacao ficou pendente.
         self.assertEqual(self.subscription.stripe_customer_id, 'cus_1')
 
+    def test_checkout_session_completed_with_custom_price_skips_tier_price_cross_check(self):
+        # start_custom_price_subscription_checkout manda metadata.custom_price
+        # ='1': o Price real e' ad-hoc, nunca vai bater com nenhum tier fixo
+        # -- diferente do teste anterior (mesma divergencia, mas SEM a flag),
+        # aqui e' esperado e current_period_end precisa gravar normalmente.
+        self.subscription.custom_monthly_price = Decimal('150.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+        event = _make_event(
+            event_id='evt_2c_custom',
+            event_type='checkout.session.completed',
+            data_object={
+                'metadata': {
+                    'product': 'coaching',
+                    'public_workout_subscription_id': str(self.subscription.pk),
+                    'tier': PublicWorkoutTier.ESSENCIAL,
+                    'custom_price': '1',
+                },
+                'customer': 'cus_1',
+                'subscription': 'sub_1',
+            },
+        )
+        with override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_essencial', STRIPE_SECRET_KEY='sk_test_x'):
+            with patch(
+                'stripe.Subscription.retrieve',
+                return_value={**_fake_stripe_subscription(price_id='price_ad_hoc_custom'), 'current_period_end': 1790000000},
+            ):
+                route_public_workout_stripe_event(event)
+
+        self.subscription.refresh_from_db()
+        self.assertEqual(self.subscription.stripe_customer_id, 'cus_1')
+        self.assertIsNotNone(self.subscription.current_period_end)
+
     def test_checkout_session_completed_without_tier_in_metadata_does_not_activate(self):
         # Compat com evento antigo/reenviado de antes desta mudanca — nunca
         # deveria acontecer pra checkout novo (start_subscription_checkout
@@ -273,6 +305,44 @@ class RouteToCorrectHandlerTests(TestCase):
         self.assertEqual(self.subscription.stripe_customer_id, 'cus_out_of_order')
         self.assertEqual(self.subscription.stripe_subscription_id, 'sub_out_of_order')
         self.assertTrue(self.subscription.payments.filter(stripe_invoice_id='in_out_of_order').exists())
+
+    def test_invoice_metadata_fallback_accepts_custom_price_out_of_order(self):
+        # Mesma corrida do teste anterior (invoice chega antes do checkout.
+        # session.completed), so que pra assinatura com valor personalizado
+        # -- o Price ad-hoc nunca bate com nenhum tier fixo, e a flag
+        # custom_price='1' e' o que autoriza pular esse cross-check aqui
+        # tambem (nao so' no _confirm_tier_price).
+        self.subscription.custom_monthly_price = Decimal('150.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+        event = _make_event(
+            event_id='evt_4_out_of_order_custom',
+            event_type='invoice.payment_succeeded',
+            data_object={
+                'id': 'in_out_of_order_custom',
+                'customer': 'cus_out_of_order_custom',
+                'subscription': 'sub_out_of_order_custom',
+                'amount_paid': 15000,
+                'period_start': 1770000000,
+                'lines': {'data': [{'price': {'id': 'price_ad_hoc_custom'}}]},
+                'parent': {
+                    'subscription_details': {
+                        'metadata': {
+                            'product': 'coaching',
+                            'tier': PublicWorkoutTier.ESSENCIAL,
+                            'custom_price': '1',
+                            'public_workout_subscription_id': str(self.subscription.pk),
+                        },
+                    },
+                },
+            },
+        )
+
+        route_public_workout_stripe_event(event)
+
+        self.subscription.refresh_from_db()
+        self.assertEqual(self.subscription.status, PublicWorkoutSubscriptionStatus.ACTIVE)
+        self.assertEqual(self.subscription.stripe_customer_id, 'cus_out_of_order_custom')
+        self.assertTrue(self.subscription.payments.filter(stripe_invoice_id='in_out_of_order_custom').exists())
 
     def test_invoice_metadata_fallback_rejects_another_product(self):
         event = _make_event(
