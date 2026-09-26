@@ -1,0 +1,126 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Alunos — Curva</title>
+<link rel="stylesheet" href="{% static 'css/public_workouts/account.css' %}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/staff_ops.css' %}">
+</head>
+<body class="curva-ops">
+<main class="curva-ops-shell">
+  <header class="curva-ops-topbar">
+    <a href="{% url 'public-workout-coach-roster' %}" class="curva-ops-brand">Cur<span>va</span> · operação</a>
+    <nav class="curva-ops-nav">
+      <a href="{% url 'public-workout-activation-queue' %}">Fila de ativação</a>
+      <a href="{% url 'public-workout-coach-roster' %}" aria-current="page">Alunos</a>
+    </nav>
+    <div class="curva-ops-user">
+      <span>{{ staff_username }}</span>
+      <form method="post" action="{% url 'public-workout-staff-logout' %}">{% csrf_token %}<button type="submit">Sair</button></form>
+    </div>
+  </header>
+
+  <section class="curva-ops-hero">
+    <p class="curva-ops-eyebrow">{{ hero.eyebrow }}</p>
+    <h1>{{ hero.title }}</h1>
+    <p>{{ hero.copy }}</p>
+  </section>
+
+  <section class="curva-ops-stats" aria-label="Resumo de risco">
+    <article class="curva-ops-stat is-danger"><span>Alto risco</span><strong>{{ risk_summary.high }}</strong></article>
+    <article class="curva-ops-stat is-warning"><span>De olho</span><strong>{{ risk_summary.medium }}</strong></article>
+    <article class="curva-ops-stat is-success"><span>Indo bem</span><strong>{{ risk_summary.healthy }}</strong></article>
+    <article class="curva-ops-stat"><span>Renovando em 7 dias</span><strong>{{ risk_summary.renewing_soon }}</strong></article>
+  </section>
+
+  <section class="curva-risk-radar" aria-label="Quem precisa de atenção agora">
+    <div class="curva-risk-lane">
+      <h2 class="curva-risk-lane__title curva-risk-lane__title--high">🔴 Agir agora</h2>
+      {% if high_risk_rows %}
+      <div class="curva-risk-cards">
+        {% for row in high_risk_rows %}
+        <article class="curva-risk-card curva-risk-card--high">
+          <div class="curva-risk-card__head">
+            <a href="{% url 'public-workout-coach-student-detail' account_id=row.account_id %}"><strong>{{ row.student_label }}</strong></a>
+          </div>
+          <ul class="curva-risk-card__reasons">
+            {% for reason in row.risk_reasons %}<li>{{ reason }}</li>{% endfor %}
+          </ul>
+          <div class="curva-risk-card__actions">
+            {% if row.whatsapp_url %}<a href="{{ row.whatsapp_url }}" target="_blank" rel="noopener" class="curva-ops-whatsapp-button">Chamar</a>
+            {% else %}<span class="curva-ops-meta">sem WhatsApp</span>{% endif %}
+            <a href="{% url 'public-workout-coach-student-detail' account_id=row.account_id %}" class="curva-risk-card__link">Ver ficha →</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="curva-ops-empty curva-risk-lane__empty">Ninguém em alto risco agora.</p>
+      {% endif %}
+    </div>
+
+    <div class="curva-risk-lane">
+      <h2 class="curva-risk-lane__title curva-risk-lane__title--medium">🟡 De olho</h2>
+      {% if medium_risk_rows %}
+      <div class="curva-risk-cards">
+        {% for row in medium_risk_rows %}
+        <article class="curva-risk-card curva-risk-card--medium">
+          <div class="curva-risk-card__head">
+            <a href="{% url 'public-workout-coach-student-detail' account_id=row.account_id %}"><strong>{{ row.student_label }}</strong></a>
+          </div>
+          <ul class="curva-risk-card__reasons">
+            {% for reason in row.risk_reasons %}<li>{{ reason }}</li>{% endfor %}
+          </ul>
+          <div class="curva-risk-card__actions">
+            {% if row.whatsapp_url %}<a href="{{ row.whatsapp_url }}" target="_blank" rel="noopener" class="curva-ops-whatsapp-button">Chamar</a>
+            {% else %}<span class="curva-ops-meta">sem WhatsApp</span>{% endif %}
+            <a href="{% url 'public-workout-coach-student-detail' account_id=row.account_id %}" class="curva-risk-card__link">Ver ficha →</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="curva-ops-empty curva-risk-lane__empty">Ninguém de olho agora.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="curva-ops-card" aria-label="Todos os alunos">
+    <h2 class="curva-ops-section-title">Todos os alunos</h2>
+    {% if rows %}
+    <table class="curva-ops-table">
+      <thead>
+        <tr><th>Aluno</th><th>Plano</th><th>Sinal</th><th>Último treino</th><th>Esta semana</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>
+            <a href="{% url 'public-workout-coach-student-detail' account_id=row.account_id %}" class="curva-ops-student-link">
+              <strong>{{ row.student_label }}</strong>
+            </a>
+            <p class="curva-ops-meta">{{ row.account.email }}</p>
+          </td>
+          <td>{{ row.get_tier_display }}{% if row.plan_slug %}<br><code style="font-size:.82em;color:var(--curve-muted)">{{ row.plan_slug }}</code>{% endif %}</td>
+          <td>
+            {% if row.risk_level == 'high' %}<span class="curva-ops-pill is-danger">alto risco</span>
+            {% elif row.risk_level == 'medium' %}<span class="curva-ops-pill is-warning">de olho</span>
+            {% else %}<span class="curva-ops-pill is-success">indo bem</span>{% endif %}
+            {% if row.risk_reasons %}<p class="curva-ops-meta">{{ row.risk_reasons|join:", " }}</p>{% endif %}
+          </td>
+          <td>{% if row.last_workout_on %}{{ row.last_workout_on|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+          <td>{{ row.sessions_this_week }} sess{{ row.sessions_this_week|pluralize:"ão,ões" }}</td>
+          <td>
+            {% if row.whatsapp_url %}<a href="{{ row.whatsapp_url }}" target="_blank" rel="noopener" class="curva-ops-whatsapp-button">Chamar</a>
+            {% else %}<span class="curva-ops-meta">sem WhatsApp</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="curva-ops-empty">Nenhum aluno ativo ainda.</div>
+    {% endif %}
+  </section>
+
+  <p class="curva-ops-footer">Sem WhatsApp cadastrado? Preencha em <a href="{% url 'admin:public_workouts_publicworkoutaccount_changelist' %}">Contas (admin)</a>.</p>
+</main>
+</body></html>

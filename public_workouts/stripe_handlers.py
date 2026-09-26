@@ -117,20 +117,25 @@ def _resolve_subscription_from_invoice(invoice: dict) -> PublicWorkoutSubscripti
     metadata = subscription_details.get('metadata') or {}
     if metadata.get('product') != 'coaching':
         return None
-    tier = metadata.get('tier')
-    setting_name = _TIER_PRICE_SETTINGS.get(tier)
-    expected_price_id = (getattr(settings, setting_name, '') or '').strip() if setting_name else ''
-    line_items = (invoice.get('lines') or {}).get('data') or []
-    first_line = line_items[0] if line_items else {}
-    actual_price_id = ((first_line.get('pricing') or {}).get('price_details') or {}).get('price')
-    actual_price_id = actual_price_id or (first_line.get('price') or {}).get('id') or ''
-    if not expected_price_id or actual_price_id != expected_price_id:
-        logger.error(
-            'invoice do corredor fora de ordem com tier/price divergente; pagamento exige revisao manual. '
-            'invoice=%s tier_metadata=%r real_price_id=%r',
-            invoice.get('id'), tier, actual_price_id,
-        )
-        return None
+    # custom_price='1' (start_custom_price_subscription_checkout): o Price
+    # e' ad-hoc (price_data), nunca vai bater com nenhum dos 3 Price ID
+    # fixos -- divergencia esperada, nao fraude. So' o RT3 normal (tier
+    # fixo) precisa do cross-check de Price ID abaixo.
+    if metadata.get('custom_price') != '1':
+        tier = metadata.get('tier')
+        setting_name = _TIER_PRICE_SETTINGS.get(tier)
+        expected_price_id = (getattr(settings, setting_name, '') or '').strip() if setting_name else ''
+        line_items = (invoice.get('lines') or {}).get('data') or []
+        first_line = line_items[0] if line_items else {}
+        actual_price_id = ((first_line.get('pricing') or {}).get('price_details') or {}).get('price')
+        actual_price_id = actual_price_id or (first_line.get('price') or {}).get('id') or ''
+        if not expected_price_id or actual_price_id != expected_price_id:
+            logger.error(
+                'invoice do corredor fora de ordem com tier/price divergente; pagamento exige revisao manual. '
+                'invoice=%s tier_metadata=%r real_price_id=%r',
+                invoice.get('id'), tier, actual_price_id,
+            )
+            return None
     local_id = metadata.get('public_workout_subscription_id')
     try:
         subscription = PublicWorkoutSubscription.objects.get(pk=int(local_id))
@@ -147,7 +152,8 @@ def _resolve_subscription_from_invoice(invoice: dict) -> PublicWorkoutSubscripti
 
 
 def _confirm_tier_price(
-    subscription: PublicWorkoutSubscription, *, stripe_subscription_id: str, tier_from_metadata: str | None, event_id: str
+    subscription: PublicWorkoutSubscription, *, stripe_subscription_id: str, tier_from_metadata: str | None,
+    event_id: str, custom_price: bool = False,
 ) -> None:
     """Cross-check de D.3/RT3 sem conceder acesso antecipadamente.
 
@@ -155,6 +161,11 @@ def _confirm_tier_price(
     Divergencia fica pendente para revisao manual. Este evento apenas liga
     IDs e registra o periodo; `invoice.payment_succeeded` e a unica prova
     financeira que promove a assinatura para ACTIVE.
+
+    `custom_price=True` (start_custom_price_subscription_checkout): pula o
+    cross-check de Price ID fixo -- o real e' um Price ad-hoc de proposito,
+    nunca vai bater com _TIER_PRICE_SETTINGS. Ainda assim grava
+    current_period_end normalmente, so' nao valida contra o tier.
     """
     if not stripe_subscription_id:
         return
@@ -170,16 +181,17 @@ def _confirm_tier_price(
     stripe_subscription = stripe.Subscription.retrieve(stripe_subscription_id)
     real_price_id = stripe_subscription['items']['data'][0]['price']['id']
 
-    setting_name = _TIER_PRICE_SETTINGS.get(tier_from_metadata)
-    configured_price_id = (getattr(settings, setting_name, '') or '').strip() if setting_name else ''
+    if not custom_price:
+        setting_name = _TIER_PRICE_SETTINGS.get(tier_from_metadata)
+        configured_price_id = (getattr(settings, setting_name, '') or '').strip() if setting_name else ''
 
-    if not configured_price_id or real_price_id != configured_price_id:
-        logger.error(
-            'checkout.session.completed do corredor: tier/price nao confere, fica pendente pra revisao manual. '
-            'event=%s subscription_id=%s tier_metadata=%r real_price_id=%r',
-            event_id, subscription.pk, tier_from_metadata, real_price_id,
-        )
-        return
+        if not configured_price_id or real_price_id != configured_price_id:
+            logger.error(
+                'checkout.session.completed do corredor: tier/price nao confere, fica pendente pra revisao manual. '
+                'event=%s subscription_id=%s tier_metadata=%r real_price_id=%r',
+                event_id, subscription.pk, tier_from_metadata, real_price_id,
+            )
+            return
 
     period_end = stripe_subscription.get('current_period_end')
     if not period_end:
@@ -221,6 +233,7 @@ def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
         stripe_subscription_id=stripe_subscription_id,
         tier_from_metadata=metadata.get('tier'),
         event_id=event.event_id,
+        custom_price=metadata.get('custom_price') == '1',
     )
     from public_workouts.acquisition import bind_acquisition_session, record_funnel_event
     from public_workouts.models import PublicWorkoutAcquisitionSession
@@ -332,11 +345,20 @@ def _handle_subscription_updated(event: PaymentWebhookEvent) -> None:
         None,
     )
     if tier is None:
-        logger.error(
-            'customer.subscription.updated com Price ID desconhecido. event=%s subscription=%s price=%r',
-            event.event_id, subscription.pk, price_id,
-        )
-        return
+        # custom_monthly_price preenchido (start_custom_price_subscription_
+        # checkout): Price ad-hoc de proposito, nunca vai bater com os 3
+        # fixos -- nao ha tier canonico pra reconciliar aqui, mantem o que
+        # ja esta salvo. Sem isso ficaria cego pra status (past_due/paused/
+        # canceled) de todo aluno com valor personalizado, nunca so' o
+        # tier. Price REALMENTE desconhecido (nem custom) continua sendo
+        # erro, pendente de revisao manual.
+        if subscription.custom_monthly_price is None:
+            logger.error(
+                'customer.subscription.updated com Price ID desconhecido. event=%s subscription=%s price=%r',
+                event.event_id, subscription.pk, price_id,
+            )
+            return
+        tier = subscription.tier
 
     stripe_status = stripe_subscription.get('status') or ''
     has_confirmed_payment = subscription.payments.filter(

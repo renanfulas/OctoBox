@@ -14,6 +14,9 @@ POR QUE ELE EXISTE:
   PublicWorkoutProgram ativo continua "aguardando ativação" de verdade.
 """
 
+from decimal import Decimal
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -81,3 +84,59 @@ class PublicWorkoutSubscriptionAdminTests(TestCase):
 
         self.assertContains(response, 'a@example.com')
         self.assertContains(response, 'b@example.com')
+
+
+class GenerateCustomPriceCheckoutLinkActionTests(TestCase):
+    # Achado do Renan no fluxo de Pagamentos: legados (bruno, juliana etc.)
+    # nunca passaram pelo checkout dos 3 planos fixos e pagam valor
+    # negociado — esta acao gera o link de cobranca recorrente real na
+    # Stripe pra esses casos, a partir do admin.
+
+    def setUp(self):
+        User = get_user_model()
+        self.superuser = User.objects.create_superuser(
+            username='admin2', email='admin2@example.com', password='senha-forte-123',
+        )
+        self.client.force_login(self.superuser)
+        self.changelist_url = reverse('admin:public_workouts_publicworkoutsubscription_changelist')
+
+    def _run_action(self, subscription):
+        return self.client.post(self.changelist_url, {
+            'action': 'generate_custom_price_checkout_link',
+            '_selected_action': [str(subscription.pk)],
+        }, follow=True)
+
+    @patch('public_workouts.stripe_checkout.start_custom_price_subscription_checkout')
+    def test_generates_link_for_legacy_subscription_with_custom_price(self, mock_start_checkout):
+        mock_start_checkout.return_value = 'https://checkout.stripe.com/pay/cs_test_custom'
+        subscription = _make_subscription(email='legado@example.com', status=PublicWorkoutSubscriptionStatus.ACTIVE, plan_slug='bruno')
+        subscription.custom_monthly_price = Decimal('150.00')
+        subscription.save(update_fields=['custom_monthly_price'])
+
+        response = self._run_action(subscription)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'https://checkout.stripe.com/pay/cs_test_custom')
+        mock_start_checkout.assert_called_once()
+        self.assertEqual(mock_start_checkout.call_args.kwargs['subscription'], subscription)
+
+    @patch('public_workouts.stripe_checkout.start_custom_price_subscription_checkout')
+    def test_refuses_when_custom_monthly_price_missing(self, mock_start_checkout):
+        subscription = _make_subscription(email='sem-valor@example.com', status=PublicWorkoutSubscriptionStatus.ACTIVE, plan_slug='bruno')
+
+        response = self._run_action(subscription)
+
+        self.assertContains(response, 'preencha')
+        mock_start_checkout.assert_not_called()
+
+    @patch('public_workouts.stripe_checkout.start_custom_price_subscription_checkout')
+    def test_refuses_when_subscription_already_has_stripe_customer_id(self, mock_start_checkout):
+        subscription = _make_subscription(email='ja-tem-checkout@example.com', status=PublicWorkoutSubscriptionStatus.ACTIVE, plan_slug='bruno')
+        subscription.custom_monthly_price = Decimal('150.00')
+        subscription.stripe_customer_id = 'cus_ja_existente'
+        subscription.save(update_fields=['custom_monthly_price', 'stripe_customer_id'])
+
+        response = self._run_action(subscription)
+
+        self.assertContains(response, 'Customer Portal normal')
+        mock_start_checkout.assert_not_called()

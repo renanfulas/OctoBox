@@ -81,6 +81,36 @@ class PublicWorkoutWeeklyReviewEndpointTests(TestCase):
         self.assertEqual(response.json(), {'review_text': None})
         post.assert_not_called()
 
+    def test_second_request_same_week_reuses_cache_never_calls_anthropic_again(self):
+        # achado do Renan (Haiku no resumo da Início): a Início busca este
+        # MESMO endpoint automaticamente a cada carregamento -- sem cache
+        # semanal, isso chamaria a Anthropic em toda visita.
+        from public_workouts.models import PublicWorkoutLoadLog, PublicWorkoutLoadLogSetRole
+        from datetime import date, timedelta
+        from decimal import Decimal
+
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+        for offset, weight in ((14, 100), (7, 95), (0, 90)):
+            PublicWorkoutLoadLog.objects.create(
+                account=account, movement_slug='squat', weight_kg=Decimal(str(weight)), reps=5,
+                performed_on=date.today() - timedelta(days=offset), set_role=PublicWorkoutLoadLogSetRole.TOP_SET,
+                idempotency_key=f'weekly-review-cache-{offset}',
+            )
+
+        response_mock = mock.Mock()
+        response_mock.raise_for_status = mock.Mock()
+        response_mock.json.return_value = {'content': [{'type': 'text', 'text': 'Sua carga caiu essa semana.'}]}
+
+        with mock.patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'sk-ant-test'}):
+            with mock.patch('public_workouts.weekly_review_ai.requests.post', return_value=response_mock) as post:
+                first = self.client.get(self._url('bruno'))
+                second = self.client.get(self._url('bruno'))
+
+        self.assertEqual(first.json(), {'review_text': 'Sua carga caiu essa semana.'})
+        self.assertEqual(second.json(), {'review_text': 'Sua carga caiu essa semana.'})
+        post.assert_called_once()
+
     def test_is_read_only_post_not_allowed(self):
         account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
         _login(self.client, account.pk)

@@ -69,7 +69,7 @@ PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 ano
 # instalado no aparelho do aluno nunca baixa o script novo (mesmo motivo
 # do bump anterior). Bump 4->5 (plano curva-grafico-hierarquia-e-set-
 # role.md, §7.10): load_tracker.js passa a enviar set_role sempre.
-PUBLIC_WORKOUT_CACHE_EPOCH = 5
+PUBLIC_WORKOUT_CACHE_EPOCH = 6
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -313,6 +313,9 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS: tuple[str, ...] = (
     '/static/css/design-system/components/interactive-tabs.css',
     '/static/css/design-system/neon.css',
     '/static/css/public_workouts/workout-shell.css',
+    '/static/css/public_workouts/workout-training.css',
+    '/static/css/public_workouts/workout-progress.css',
+    '/static/css/public_workouts/workout-assessment.css',
 )
 
 PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
@@ -320,6 +323,9 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/load_tracker.js',
     '/static/js/public_workouts/weekly_review.js',
     '/static/js/public_workouts/nutrition.js',
+    '/static/js/public_workouts/workout-shell.js',
+    '/static/js/public_workouts/assessments.js',
+    '/static/js/public_workouts/account.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}
@@ -349,7 +355,11 @@ def public_workout_asset_version() -> str:
 
     base_dir = Path(settings.BASE_DIR)
     mtimes = []
-    for url in PUBLIC_WORKOUT_STYLESHEETS + PUBLIC_WORKOUT_SCRIPTS:
+    for url in (
+        PUBLIC_WORKOUT_STYLESHEETS + PUBLIC_WORKOUT_SCRIPTS
+        + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS
+        + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS
+    ):
         path = base_dir / url.lstrip('/')
         if path.exists():
             mtimes.append(int(path.stat().st_mtime))
@@ -785,7 +795,14 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         )
         subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
         nutrition_unlocked = bool(subscription and require_nutrition_tier(subscription))
-        customer_portal_url = '/treinos/minha-conta' if subscription else None
+        # Com stripe_customer_id (1o checkout ja concluido, webhook ja fez
+        # link_stripe_ids): manda pro Customer Portal de verdade, igual ao
+        # botao "Gerenciar assinatura" de minha_conta.html (mesmo endpoint
+        # POST /treinos/billing-portal, mesmo account.js). Sem isso ainda
+        # nao ha o que gerenciar -- cai no hub /treinos/minha-conta, que
+        # mostra o proximo passo certo (ex.: retomar checkout).
+        billing_portal_available = bool(subscription and subscription.stripe_customer_id)
+        customer_portal_url = '/treinos/minha-conta' if subscription and not billing_portal_available else None
         account_email = subscription.account.email if subscription else None
     else:
         weekly_review = {'trends_by_movement': {}}
@@ -793,6 +810,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         load_history = []
         progress_snapshots = {}
         nutrition_unlocked = False
+        billing_portal_available = False
         customer_portal_url = None
         account_email = None
 
@@ -808,6 +826,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'movement_labels': build_movement_label_lookup(program),
         'student_name': plan.short_name,
         'student_photo_url': None,
+        'billing_portal_available': billing_portal_available,
         'customer_portal_url': customer_portal_url,
         'account_email': account_email,
         'nutrition_unlocked': nutrition_unlocked,
@@ -1020,6 +1039,7 @@ class PublicWorkoutPreviewView(View):
             account_email = PublicWorkoutAccount.objects.filter(pk=account_id).values_list('email', flat=True).first()
 
         html = render_to_string('public_workouts/workout.html', {
+            'asset_version': public_workout_asset_version(),
             'program': program,
             'accent_variant': program.get('accent_variant'),
             'program_versions': list_program_versions(slug=plan_slug),
@@ -1177,6 +1197,7 @@ class PublicWorkoutTemplatePreviewView(View):
                 account_email = account.email
 
         html = render_to_string('public_workouts/workout.html', {
+            'asset_version': public_workout_asset_version(),
             'plan_slug': plan.slug,
             'accent_variant': plan.assessment_sex,
             'program': program,
@@ -1331,10 +1352,12 @@ class PublicWorkoutPackageView(View):
 class PublicWorkoutWeeklyReviewView(View):
     """GET /renan/<slug>/revisao-semanal — Entrega 4: pega os sinais
     deterministicos de `build_weekly_review` (S/A3) e tenta transformar em
-    texto curto via `weekly_review_ai.generate_weekly_review_text` (Claude
-    Haiku). Sob demanda (a propria tela so chama isto quando o aluno clica
-    em "gerar revisao"), nunca no GET principal da pagina — custo/latencia
-    de LLM por page-load seria inaceitavel.
+    texto curto via `weekly_review_ai.get_or_create_cached_review_text`
+    (Claude Haiku, no maximo 1 chamada por conta por semana ISO — ver
+    docstring de weekly_review_ai.py). Chamado tanto pelo botao manual
+    "Gerar revisão" (aba Cargas) quanto automaticamente pelo card da aba
+    Início (weekly_review.js) — os dois leem/escrevem a MESMA linha de
+    cache pra semana corrente, nunca duplicam a chamada a IA.
 
     PONTOS CRITICOS:
     - Mesma regra de auth de PublicWorkoutPackageView: sessao de LOGIN
@@ -1356,10 +1379,10 @@ class PublicWorkoutWeeklyReviewView(View):
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
 
         from public_workouts.services import build_weekly_review
-        from public_workouts.weekly_review_ai import generate_weekly_review_text
+        from public_workouts.weekly_review_ai import get_or_create_cached_review_text
 
         review = build_weekly_review(account_id=account_id)
-        review_text = generate_weekly_review_text(review)
+        review_text = get_or_create_cached_review_text(account_id=account_id, review=review)
         return JsonResponse({'review_text': review_text}, status=200)
 
 
