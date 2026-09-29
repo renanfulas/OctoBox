@@ -38,6 +38,11 @@ O QUE ESTE ARQUIVO FAZ:
 PONTOS CRITICOS:
 - Mesmo padrao HTTP de `weekly_review_ai.py`: `requests` cru, NAO o SDK
   `anthropic`. Mesma env var `ANTHROPIC_API_KEY` via `os.getenv` direto.
+- Achado em producao: a chave configurada e' multi-workspace — sem o
+  header `anthropic-workspace-id` (env `ANTHROPIC_WORKSPACE_ID`), a
+  Anthropic devolve 400 `invalid_request_error`. Mesmo padrao ja usado em
+  `operations/services/wod_slug_resolver.py`; `weekly_review_ai.py` NAO
+  tem esse header — se um dia parar de responder em producao, e' por isso.
 - O prompt pede explicitamente pra nunca inventar numero fora do dict
   recebido, e pra nunca contradizer a classificacao (`label`/`level`) ja
   calculada — o texto so descreve o que os indicadores ja dizem.
@@ -100,14 +105,22 @@ def generate_assessment_hero_text(indicators: dict) -> str | None:
 
     user_message = f'Indicadores da avaliacao mais recente: {indicators}'
 
+    headers = {
+        'x-api-key': api_key,
+        'anthropic-version': _ANTHROPIC_API_VERSION,
+        'Content-Type': 'application/json',
+    }
+    # Chaves multi-workspace exigem este header (mesmo padrao de
+    # operations/services/wod_slug_resolver.py) — sem ele a Anthropic
+    # devolve 400 invalid_request_error.
+    workspace_id = os.getenv('ANTHROPIC_WORKSPACE_ID', '').strip()
+    if workspace_id:
+        headers['anthropic-workspace-id'] = workspace_id
+
     try:
         response = requests.post(
             _ANTHROPIC_MESSAGES_URL,
-            headers={
-                'x-api-key': api_key,
-                'anthropic-version': _ANTHROPIC_API_VERSION,
-                'Content-Type': 'application/json',
-            },
+            headers=headers,
             json={
                 'model': _ANTHROPIC_MODEL,
                 'max_tokens': 300,

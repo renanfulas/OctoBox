@@ -74,6 +74,20 @@ class GenerateAssessmentHeroTextTests(SimpleTestCase):
             with mock.patch('public_workouts.assessment_hero_ai.requests.post', return_value=response):
                 self.assertIsNone(generate_assessment_hero_text(_INDICATORS_WITH_DATA))
 
+    def test_includes_workspace_header_when_configured(self):
+        response = _mock_response(content_blocks=[{'type': 'text', 'text': 'ok'}])
+        with mock.patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'sk-ant-test', 'ANTHROPIC_WORKSPACE_ID': 'wrkspc_test'}):
+            with mock.patch('public_workouts.assessment_hero_ai.requests.post', return_value=response) as post:
+                generate_assessment_hero_text(_INDICATORS_WITH_DATA)
+        self.assertEqual(post.call_args.kwargs['headers']['anthropic-workspace-id'], 'wrkspc_test')
+
+    def test_omits_workspace_header_when_not_configured(self):
+        response = _mock_response(content_blocks=[{'type': 'text', 'text': 'ok'}])
+        with mock.patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'sk-ant-test', 'ANTHROPIC_WORKSPACE_ID': ''}):
+            with mock.patch('public_workouts.assessment_hero_ai.requests.post', return_value=response) as post:
+                generate_assessment_hero_text(_INDICATORS_WITH_DATA)
+        self.assertNotIn('anthropic-workspace-id', post.call_args.kwargs['headers'])
+
 
 class GenerateAndStoreHeroCommentaryTests(TestCase):
     def test_stores_generated_text_on_latest_assessment_only(self):
