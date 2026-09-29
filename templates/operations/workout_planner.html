@@ -5,11 +5,9 @@
 <div class="operation-shell coach-scene workspace-shell wod-planner-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
-    {% with wod_journey_step='planner' %}{% include "operations/includes/wod_journey.html" %}{% endwith %}
-
     <section class="wod-week-overview" aria-label="Situação dos WODs na semana">
         <div class="wod-week-overview__intro">
-            <p class="eyebrow">Visão da semana</p>
+            <p class="eyebrow">Calendário semanal</p>
             <h2>O que falta para os alunos verem os treinos?</h2>
             <p>{% if planner_week.total_sessions %}Cada cartão é uma aula. Abra o treino para editar; os que aguardam aprovação ainda não aparecem aos alunos.{% else %}Ainda não há aulas nesta semana. Cadastre a grade para distribuir os WODs.{% endif %}</p>
         </div>
@@ -27,7 +25,7 @@
         {% if not planner_week.total_sessions %}<a class="button secondary" href="{% url 'class-grid' %}">Cadastrar aulas da semana</a>{% endif %}
     </section>
 
-    <section class="wod-planner" data-wod-planner data-template-picker-telemetry-url="{% url 'workout-planner-template-picker-telemetry' %}" aria-label="Planner semanal de WOD">
+    <section class="wod-planner" data-wod-planner data-template-picker-telemetry-url="{% url 'workout-planner-template-picker-telemetry' %}" aria-label="Calendário semanal de WOD">
         <header class="wod-planner__toolbar">
             <div>
                 <p class="eyebrow">Semana</p>
@@ -40,15 +38,12 @@
                     <a class="button tertiary" href="{{ planner_next_week_href }}">Próxima →</a>
                 </nav>
                 <div class="wod-planner__toolbar-actions">
-                    <a class="button secondary" href="{% url 'workout-smart-paste' %}">+ Colar WOD da semana</a>
-                    {% if current_role.slug == 'Owner' or current_role.slug == 'Manager' or current_role.slug == 'Coach' %}
-                    <button type="button" class="button tertiary danger wod-planner__btn-danger" onclick="document.getElementById('planner-clear-week-dialog').showModal()">Remover todos os WODs</button>
-                    {% endif %}
+                    <a class="button secondary" href="{% url 'workout-smart-paste' %}">+ Programar WOD</a>
                 </div>
             </div>
         </header>
 
-        <p class="wod-planner__keyboard-hint">Teclado: <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> movem o foco · <kbd>Enter</kbd> abre a ação principal.<br><span class="wod-planner__keyboard-hint-line-2">Teclado: <kbd>DEL</kbd> exclui o WOD selecionado e <kbd>D</kbd> exclui todos os WODs da semana.</span></p>
+        <p class="wod-planner__keyboard-hint">Teclado: <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> movem o foco · <kbd>Enter</kbd> abre a ação principal.<br><span class="wod-planner__keyboard-hint-line-2">Teclado: <kbd>DEL</kbd> abre a confirmação para excluir o WOD da aula selecionada.</span></p>
 
         <div class="wod-planner__layout">
             <div class="wod-planner__grid" role="list" aria-label="Dias da semana">
@@ -314,25 +309,6 @@
 
         {% include "operations/includes/wod_day_apply_popover.html" %}
         {% include "operations/includes/wod_day_apply_toast.html" %}
-
-        {# ── Dialog: Remover todos os WODs da semana ─────────────────────── #}
-        <dialog id="planner-clear-week-dialog" class="wod-planner__confirm-dialog" aria-label="Confirmar remoção de todos os WODs">
-            <p class="eyebrow">Atenção</p>
-            <h3>Deseja excluir os WODs da semana? <kbd>D</kbd></h3>
-            {% if current_role.slug == 'Coach' %}
-            <p>Esta ação remove os WODs das <strong>suas aulas</strong> em <strong>{{ planner_week.label }}</strong>. Rascunhos, pendentes e publicados serão excluídos. Não é possível desfazer.</p>
-            {% else %}
-            <p>Esta ação remove os WODs de <strong>todas as aulas</strong> de <strong>{{ planner_week.label }}</strong>. Rascunhos, pendentes e publicados serão excluídos. Não é possível desfazer.</p>
-            {% endif %}
-            <div class="wod-planner__confirm-actions">
-                <form method="post" action="{% url 'workout-planner-clear-week' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="week" value="{{ planner_week.week_start|date:'Y-m-d' }}">
-                    <button class="button danger" type="submit">Confirmar remoção</button>
-                </form>
-                <button class="button tertiary" type="button" onclick="document.getElementById('planner-clear-week-dialog').close()">Cancelar</button>
-            </div>
-        </dialog>
 
         <dialog id="planner-delete-selected-dialog" class="wod-planner__confirm-dialog" aria-label="Confirmar remoção do WOD selecionado">
             <p class="eyebrow">Atenção</p>

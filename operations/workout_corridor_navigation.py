@@ -1,8 +1,8 @@
 """
-ARQUIVO: navegacao compartilhada do corredor de WOD.
+ARQUIVO: navegacao compartilhada das duas superficies principais de WOD.
 
 POR QUE ELE EXISTE:
-- mantem a navegacao do corredor consistente entre planner, Smart Paste e aprovacoes.
+- mantém a navegacao consistente entre WOD Semana e Calendario; rotas de apoio nao viram abas primarias.
 
 O QUE ESTE ARQUIVO FAZ:
 1. define tabs por papel.
@@ -17,22 +17,16 @@ from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
 
 _TAB_SPECS = (
     {
-        'key': 'planner',
-        'label': 'Semana',
-        'route_name': 'workout-planner',
-        'allowed_roles': {ROLE_COACH, ROLE_MANAGER, ROLE_OWNER},
-    },
-    {
         'key': 'smart_paste',
-        'label': 'Colar WOD',
+        'label': 'WOD Semana',
         'route_name': 'workout-smart-paste',
         'allowed_roles': {ROLE_COACH, ROLE_MANAGER, ROLE_OWNER},
     },
     {
-        'key': 'approval',
-        'label': 'Aprovar',
-        'route_name': 'workout-approval-board',
-        'allowed_roles': {ROLE_MANAGER, ROLE_OWNER},
+        'key': 'planner',
+        'label': 'Calendário',
+        'route_name': 'workout-planner',
+        'allowed_roles': {ROLE_COACH, ROLE_MANAGER, ROLE_OWNER},
     },
 )
 

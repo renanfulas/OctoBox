@@ -1,8 +1,8 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from unittest.mock import patch
 
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -11,6 +11,17 @@ from operations.workout_corridor_navigation import build_workout_corridor_tabs
 from operations.workout_planner_builders import build_planner_cell, build_planner_week, load_planner_sessions, resolve_week_start
 from student_app.models import SessionWorkout, SessionWorkoutRevision, SessionWorkoutRevisionEvent, SessionWorkoutStatus, WorkoutLoadType
 from tests.workout_test_support import WorkoutFlowBaseTestCase
+
+
+class PlannerWeekBoundaryTests(SimpleTestCase):
+    def test_first_day_of_new_year_resolves_to_monday_and_keeps_cross_year_label(self):
+        week_start = resolve_week_start('2027-01-01')
+        planner_week = build_planner_week(week_start=week_start, sessions=())
+
+        self.assertEqual(week_start, date(2026, 12, 28))
+        self.assertEqual(planner_week.week_start, date(2026, 12, 28))
+        self.assertEqual(planner_week.week_end, date(2027, 1, 3))
+        self.assertEqual(planner_week.label, '28/12 - 03/01')
 
 
 class WorkoutPlannerBuilderTests(WorkoutFlowBaseTestCase):
@@ -185,16 +196,18 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(
             [tab['key'] for tab in owner_tabs],
-            ['planner', 'smart_paste', 'approval'],
+            ['smart_paste', 'planner'],
         )
         self.assertEqual(
             [tab['key'] for tab in coach_tabs],
-            ['planner', 'smart_paste'],
+            ['smart_paste', 'planner'],
         )
         self.assertEqual(
             [tab['key'] for tab in manager_tabs],
-            ['planner', 'smart_paste', 'approval'],
+            ['smart_paste', 'planner'],
         )
+        self.assertEqual([tab['label'] for tab in manager_tabs], ['WOD Semana', 'Calendário'])
+        self.assertEqual([tab['label'] for tab in coach_tabs], ['WOD Semana', 'Calendário'])
 
     def test_planner_renders_week_grid_for_coach(self):
         WorkoutTemplate.objects.create(
@@ -207,17 +220,19 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-planner'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Planeje a semana. Publique com confiança.')
+        self.assertContains(response, 'A semana de treinos, aula por aula.')
         self.assertContains(response, 'visíveis aos alunos')
+        self.assertContains(response, 'Calendário')
+        self.assertContains(response, 'WOD Semana')
+        self.assertNotContains(response, 'class="wod-journey"')
         self.assertContains(response, self.session.title)
         self.assertContains(response, reverse('coach-session-workout-editor', args=[self.session.id]))
         self.assertContains(response, 'Criar WOD')
-        self.assertContains(response, 'Teclado:')
-        self.assertContains(response, 'DEL')
-        self.assertContains(response, 'exclui o WOD selecionado')
-        self.assertContains(response, 'exclui todos os WODs da semana')
+        self.assertContains(response, 'DEL</kbd> abre a confirmação para excluir o WOD da aula selecionada')
         self.assertContains(response, 'Deseja excluir o WOD selecionado?')
-        self.assertContains(response, 'Deseja excluir os WODs da semana?')
+        self.assertNotContains(response, 'Remover todos os WODs')
+        self.assertNotContains(response, 'exclui todos os WODs da semana')
+        self.assertNotContains(response, 'planner-clear-week-dialog')
         self.assertContains(response, 'data-wod-planner-cell')
         self.assertContains(response, 'data-planner-day-index')
         self.assertContains(response, 'data-planner-row-index')
@@ -225,15 +240,16 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'data-planner-spotlight-session')
         self.assertContains(response, 'tabindex="0"')
 
-    def test_manager_sees_approval_step_and_can_start_weekly_paste(self):
+    def test_manager_sees_calendar_approval_action_and_weekly_programming_entry(self):
         self.login_as_manager()
 
         response = self.client.get(reverse('workout-planner'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Revisar aprovações')
-        self.assertContains(response, 'Colar WOD da semana')
-        self.assertContains(response, 'Libera para os alunos')
+        self.assertContains(response, 'Programar WOD da semana')
+        self.assertContains(response, 'Calendário')
+        self.assertContains(response, 'WOD Semana')
 
     def test_owner_planner_renders_template_picker_when_trusted_templates_exist(self):
         WorkoutTemplate.objects.create(

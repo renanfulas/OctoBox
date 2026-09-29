@@ -44,8 +44,9 @@ def _serialize_student_workout_snapshot(*, workout, box_root_slug: str | None) -
     session = workout.session
     coach = session.coach
     coach_name = coach.get_full_name() if coach else ''
+    blocks = list(workout.blocks.all())
     return {
-        'schema_version': 1,
+        'schema_version': 2,
         'box_root_slug': box_root_slug or '',
         'session_id': session.id,
         'session_title': session.title,
@@ -56,12 +57,18 @@ def _serialize_student_workout_snapshot(*, workout, box_root_slug: str | None) -
         'workout_title': workout.title or session.title,
         'coach_notes': workout.coach_notes,
         'is_normalized': workout.is_normalized,
+        'has_structured_content': bool(blocks),
         'blocks': [
             {
                 'title': block.title,
                 'kind': block.kind,
                 'kind_label': block.get_kind_display(),
                 'notes': block.notes,
+                'timecap_min': block.timecap_min,
+                'rounds': block.rounds,
+                'interval_seconds': block.interval_seconds,
+                'score_type': block.score_type,
+                'format_spec': block.format_spec,
                 'sort_order': block.sort_order,
                 'movements': [
                     {
@@ -69,8 +76,11 @@ def _serialize_student_workout_snapshot(*, workout, box_root_slug: str | None) -
                         'movement_label': movement.movement_label,
                         'sets': movement.sets,
                         'reps': movement.reps,
+                        'reps_spec': movement.reps_spec,
                         'load_type': movement.load_type,
                         'load_value': _decimal_to_cache(movement.load_value),
+                        'load_spec': movement.load_spec,
+                        'is_scaled_alternative': movement.is_scaled_alternative,
                         'notes': movement.notes,
                         'sort_order': movement.sort_order,
                     }
