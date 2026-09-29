@@ -1640,7 +1640,7 @@ class StudentAppExperienceTests(TestCase):
         actor = get_user_model().objects.create_user(
             username='weekly-projection-qa',
             email='weekly-projection-qa@example.com',
-            password='senha-forte-123',
+            password=None,
         )
         project_plan_to_sessions(
             weekly_plan=plan,

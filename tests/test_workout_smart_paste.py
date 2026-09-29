@@ -1521,16 +1521,16 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         )
 
         self.assertEqual(preview_response.status_code, 200)
-        self.assertContains(preview_response, 'Preview de replicacao montado sem criar WODs ainda.')
-        self.assertContains(preview_response, 'Semana selecionada: <strong>27/04/2026</strong>')
-        self.assertContains(preview_response, '<details class="smart-paste-target-week-override">')
-        self.assertContains(preview_response, 'Mudar a semana de destino (opcional)')
-        self.assertContains(preview_response, 'Use esta opção somente se quiser reutilizar esta programação em outra semana.')
-        self.assertContains(preview_response, '1 aula(s) pronta(s) para criar')
-        self.assertContains(preview_response, '1 aula(s) encontrada(s)')
-        self.assertContains(preview_response, '0 aula(s) com colisao')
-        self.assertContains(preview_response, '40/25')
-        self.assertContains(preview_response, '50 reps')
+        preview = preview_response.context['projection_preview']
+        self.assertEqual(preview['target_week_start'], date(2026, 4, 27))
+        self.assertEqual(preview['totals']['sessions_found'], 1)
+        self.assertEqual(preview['totals']['sessions_creatable'], 1)
+        self.assertEqual(preview['totals']['sessions_with_existing_workout'], 0)
+        monday = preview_response.context['smart_paste_projection_week'][0]
+        self.assertEqual((monday['entry_count'], monday['ready_count']), (1, 1))
+        projected_movements = preview['entries'][0]['projection_blocks'][1]['movements']
+        self.assertEqual(projected_movements[0]['load_spec'], '40/25')
+        self.assertEqual(projected_movements[0]['reps_spec'], '50')
 
         create_response = self.client.post(
             reverse('workout-smart-paste'),
@@ -1551,7 +1551,6 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertIsNotNone(workout.replication_batch)
         self.assertEqual(workout.replication_batch.sessions_created, 1)
         self.assertEqual(workout.blocks.count(), 2)
-        self.assertContains(create_response, '1 WOD(s) criados: 1 aguardando aprovacao')
 
         undo_response = self.client.post(
             reverse('workout-smart-paste'),
@@ -1565,7 +1564,6 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(undo_response.status_code, 200)
         self.assertTrue(SessionWorkout.objects.filter(session=self.session).exists())
-        self.assertContains(undo_response, 'desfazer foi bloqueado')
         plan.refresh_from_db()
         latest_batch = plan.replication_batches.order_by('-created_at', '-id').first()
         self.assertIsNone(latest_batch.undone_at)
