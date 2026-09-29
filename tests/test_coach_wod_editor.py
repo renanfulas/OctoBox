@@ -3,6 +3,7 @@ from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from django.core.cache import cache
 from django.test import override_settings
 from django.urls import reverse
 
@@ -18,6 +19,7 @@ from student_app.models import (
     StudentExerciseMax,
     WorkoutLoadType,
 )
+from student_app.application.wod_snapshots import get_published_student_workout_snapshot
 from tests.workout_test_support import WorkoutFlowBaseTestCase
 from operations.models import WorkoutApprovalPolicySetting
 from operations.workout_approval_policy import resolve_workout_approval_policy, update_workout_approval_policy_setting
@@ -220,6 +222,94 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
         self.assertEqual(movement.load_type, WorkoutLoadType.FIXED_KG)
         self.assertEqual(movement.load_value, Decimal('52.50'))
         self.assertEqual(movement.sort_order, 2)
+
+    def test_confirming_raw_smartplan_replacement_advances_student_snapshot_version(self):
+        cache.clear()
+        workout = self._create_workout(
+            status=SessionWorkoutStatus.PUBLISHED,
+            version=5,
+            coach_notes='Versao publicada antiga',
+        )
+        old_block = self._create_block(workout)
+        self._create_movement(old_block)
+
+        old_snapshot = get_published_student_workout_snapshot(
+            session_id=self.session.id,
+            box_root_slug=None,
+        )
+        self.assertEqual(old_snapshot['coach_notes'], 'Versao publicada antiga')
+        self.assertEqual(old_snapshot['workout_version'], 5)
+
+        with patch(
+            'operations.workout_editor_actions.detect_smartplan_format',
+            return_value={'is_normalized': False, 'reason': 'invalid_structure'},
+        ), patch(
+            'operations.workout_editor_actions.detect_smartplan_text_format',
+            return_value={'is_normalized': False, 'reason': 'invalid_structure'},
+        ):
+            response = self.client.post(
+                self._editor_url(),
+                {
+                    'intent': 'apply_smartplan_paste',
+                    'smartplan_paste': 'Treino em texto livre para revisao',
+                    'confirm_publish_raw': '1',
+                },
+            )
+
+        self.assertEqual(response.status_code, 302)
+        workout.refresh_from_db()
+        self.assertEqual(workout.version, 6)
+        self.assertEqual(workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        self.assertEqual(workout.coach_notes, 'Treino em texto livre para revisao')
+        self.assertFalse(workout.blocks.exists())
+        self.assertIsNone(
+            get_published_student_workout_snapshot(
+                session_id=self.session.id,
+                box_root_slug=None,
+            )
+        )
+
+        # A aprovacao posterior deve liberar a nova versao, nunca o snapshot
+        # antigo ainda quente no cache.
+        self.login_as_manager()
+        approval_response = self.client.post(
+            reverse('workout-approval-action', args=[workout.id, 'approve']),
+            follow=True,
+        )
+        self.assertEqual(approval_response.status_code, 200)
+        workout.refresh_from_db()
+        self.assertEqual(workout.status, SessionWorkoutStatus.PUBLISHED)
+        refreshed_snapshot = get_published_student_workout_snapshot(
+            session_id=self.session.id,
+            box_root_slug=None,
+        )
+        self.assertEqual(refreshed_snapshot['workout_version'], 6)
+        self.assertEqual(refreshed_snapshot['coach_notes'], 'Treino em texto livre para revisao')
+        self.assertFalse(refreshed_snapshot['has_structured_content'])
+
+    def test_adding_block_to_pending_workout_returns_it_to_draft_and_advances_version(self):
+        workout = self._create_workout(
+            status=SessionWorkoutStatus.PENDING_APPROVAL,
+            version=5,
+        )
+
+        response = self.client.post(
+            self._editor_url(),
+            {
+                'intent': 'add_block',
+                'title': 'Metcon atualizado',
+                'kind': 'metcon',
+                'notes': 'Mudanca feita depois do envio.',
+                'sort_order': 1,
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        workout.refresh_from_db()
+        self.assertEqual(workout.status, SessionWorkoutStatus.DRAFT)
+        self.assertEqual(workout.version, 6)
+        self.assertEqual(workout.blocks.get().title, 'Metcon atualizado')
 
     def test_editor_renders_structure_overview_and_detail_shell(self):
         workout = self._create_workout()
@@ -879,6 +969,12 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
             template=template,
             title='Primeiro bloco',
             kind='strength',
+            notes='Subir a carga sem perder técnica.',
+            timecap_min=12,
+            rounds=5,
+            interval_seconds=60,
+            score_type='emom',
+            format_spec='EMOM 12 min',
             sort_order=1,
         )
         WorkoutTemplateMovement.objects.create(
@@ -887,8 +983,12 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
             movement_label='Deadlift',
             sets=5,
             reps=3,
+            reps_spec='3',
             load_type=WorkoutLoadType.PERCENTAGE_OF_RM,
             load_value=Decimal('70.00'),
+            load_spec='70% RM',
+            is_scaled_alternative=True,
+            notes='Alternativa com halteres.',
             sort_order=1,
         )
 
@@ -903,7 +1003,20 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
         self.assertEqual(duplicated.description, 'Descricao base')
         self.assertFalse(duplicated.is_featured)
         self.assertEqual(duplicated.blocks.count(), 1)
-        self.assertEqual(duplicated.blocks.first().movements.count(), 1)
+        duplicated_block = duplicated.blocks.first()
+        self.assertEqual(duplicated_block.notes, 'Subir a carga sem perder técnica.')
+        self.assertEqual(duplicated_block.timecap_min, 12)
+        self.assertEqual(duplicated_block.rounds, 5)
+        self.assertEqual(duplicated_block.interval_seconds, 60)
+        self.assertEqual(duplicated_block.score_type, 'emom')
+        self.assertEqual(duplicated_block.format_spec, 'EMOM 12 min')
+        duplicated_movement = duplicated_block.movements.get()
+        self.assertEqual(duplicated_movement.load_type, WorkoutLoadType.PERCENTAGE_OF_RM)
+        self.assertEqual(duplicated_movement.load_value, Decimal('70.00'))
+        self.assertEqual(duplicated_movement.reps_spec, '3')
+        self.assertEqual(duplicated_movement.load_spec, '70% RM')
+        self.assertTrue(duplicated_movement.is_scaled_alternative)
+        self.assertEqual(duplicated_movement.notes, 'Alternativa com halteres.')
         self.assertContains(response, 'duplicado com sucesso')
 
         response = self.client.post(

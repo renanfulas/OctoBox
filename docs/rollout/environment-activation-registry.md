@@ -107,6 +107,11 @@ Rodar no ambiente alvo, na ordem. Todos são idempotentes (seguro repetir).
 ### Workspace do Manager (piloto)
 - **Var:** `OPERATIONS_MANAGER_WORKSPACE_ENABLED=True` quando o papel Manager faz parte do pacote do dia 1.
 
+### Normalização estrutural do WOD com Haiku (piloto controlado)
+- **Vars:** `WOD_WEEKLY_NORMALIZER_ENABLED=True` liga o kill switch global; `WOD_WEEKLY_NORMALIZER_BOXES=box_<slug>` limita a chamada aos schemas tenant explicitamente listados. O schema `public` nunca é elegível. `ANTHROPIC_API_KEY` é segredo e precisa existir apenas no ambiente-alvo.
+- **Rollout:** manter desligado por padrão; validar primeiro em staging com corpus dourado, latência/custo e UX de recuperação. Depois, incluir um schema piloto, reiniciar o runtime, verificar, e expandir a allowlist somente após os gates operacionais. Para rollback, desligar a flag global e reiniciar o runtime.
+- **Verificar:** com a flag desligada, fora da allowlist ou no schema `public`, não há chamada Anthropic; o texto original permanece e a tela mantém a correção manual. No box piloto, aceitar apenas resposta validada e revisada pelo coach.
+
 ### Push web do aluno (pagamento confirmado)
 - **Vars:** `STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY`, `STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY` (**segredo**), `STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT` (`mailto:suporte@octoboxfit.com.br`, não é segredo).
 - **Como gerar:** par de chaves VAPID (`py_vapid`, já é dependência via `pywebpush`). A privada precisa estar em **formato PEM** — `_build_vapid_private_key()` em `student_identity/push_notifications.py` usa `Vapid02.from_pem(...)`, não `Vapid02.from_string(...)` (bug real documentado ali: `from_string`/passar a chave crua tenta decodificar os cabeçalhos `-----BEGIN...-----` como base64url e quebra). A pública precisa estar em base64url do ponto EC não-comprimido (formato `applicationServerKey` do Push API do navegador), não em PEM.

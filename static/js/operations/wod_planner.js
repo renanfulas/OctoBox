@@ -32,7 +32,6 @@ PONTOS CRITICOS:
     const deleteSelectedDialog = document.getElementById('planner-delete-selected-dialog');
     const deleteSelectedForm = deleteSelectedDialog?.querySelector('[data-planner-delete-selected-form]');
     const deleteSelectedCopy = deleteSelectedDialog?.querySelector('[data-planner-delete-selected-copy]');
-    const clearWeekDialog = document.getElementById('planner-clear-week-dialog');
 
     planner.classList.add('is-enhanced');
 
@@ -238,11 +237,6 @@ PONTOS CRITICOS:
         }
     }
 
-    function openClearWeekDialog() {
-        if (!clearWeekDialog || typeof clearWeekDialog.showModal !== 'function') return;
-        clearWeekDialog.showModal();
-    }
-
     cells.forEach((cell) => {
         cell.addEventListener('focus', () => setFocusedCell(cell));
         cell.addEventListener('click', (event) => {
@@ -285,12 +279,6 @@ PONTOS CRITICOS:
         if (event.key === 'Delete') {
             event.preventDefault();
             openDeleteSelectedDialog();
-            return;
-        }
-
-        if ((event.key === 'd' || event.key === 'D') && clearWeekDialog) {
-            event.preventDefault();
-            openClearWeekDialog();
             return;
         }
 

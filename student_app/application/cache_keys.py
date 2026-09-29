@@ -55,7 +55,7 @@ def normalize_student_cache_box_slug(box_root_slug: str | None) -> str:
 
 def build_student_wod_snapshot_cache_key(*, box_root_slug: str | None, session_id: int, workout_version: int) -> str:
     tenant = get_active_tenant_slug(fallback=box_root_slug)
-    return f'{STUDENT_APP_CACHE_NAMESPACE}:wod:v1:{tenant}:session:{session_id}:version:{workout_version}'
+    return f'{STUDENT_APP_CACHE_NAMESPACE}:wod:v2:{tenant}:session:{session_id}:version:{workout_version}'
 
 
 def build_student_agenda_snapshot_cache_key(

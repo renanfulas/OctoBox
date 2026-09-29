@@ -36,6 +36,7 @@ from operations.models import AttendanceStatus
 from student_app.application import cache_keys
 from student_app.application.timezone import localize_box_datetime, resolve_box_timezone
 from student_app.application.use_cases import (
+    _build_student_block_format_label,
     _build_student_recommendation_payload_from_rm,
     _format_attendance_status,
     _movement_value,
@@ -86,6 +87,20 @@ class WorkoutPrescriptionRoundingTests(TestCase):
 
 
 class PrescriptionLabelTests(TestCase):
+    def test_block_format_label_keeps_format_and_all_structural_metadata(self):
+        self.assertEqual(
+            _build_student_block_format_label(
+                {
+                    'format_spec': '21/15/9',
+                    'score_type': 'for_time',
+                    'rounds': 3,
+                    'timecap_min': 12,
+                    'interval_seconds': 90,
+                }
+            ),
+            '21/15/9 · For time · 3 rounds · time cap 12 min · intervalo 90 s',
+        )
+
     def test_label_for_percentage_of_rm(self):
         movement = {
             'sets': 5,
@@ -108,6 +123,32 @@ class PrescriptionLabelTests(TestCase):
         self.assertEqual(
             build_student_prescription_label(movement=movement),
             '3 séries · 5 reps · @ 40 kg',
+        )
+
+    def test_label_preserves_weekly_wod_range_reps_and_paired_load(self):
+        self.assertEqual(
+            build_student_prescription_label(
+                movement={
+                    'reps': None,
+                    'reps_spec': '21/15/9',
+                    'load_type': WorkoutLoadType.FREE,
+                    'load_value': None,
+                    'load_spec': '40/25 kg',
+                }
+            ),
+            '21/15/9 reps · @ 40/25 kg',
+        )
+
+    def test_label_preserves_percentage_spec_without_calling_it_free_load(self):
+        self.assertEqual(
+            build_student_prescription_label(
+                movement={
+                    'load_type': WorkoutLoadType.PERCENTAGE_OF_RM,
+                    'load_value': Decimal('65'),
+                    'load_spec': '65% RM',
+                }
+            ),
+            '@ 65% RM',
         )
 
     def test_label_for_free_load(self):
@@ -203,7 +244,7 @@ class CacheKeyTests(TestCase):
             cache_keys.build_student_wod_snapshot_cache_key(
                 box_root_slug=None, session_id=3, workout_version=2
             ),
-            f'student_app:wod:v1:{tenant}:session:3:version:2',
+            f'student_app:wod:v2:{tenant}:session:3:version:2',
         )
 
     def test_home_key_scope_switches_between_window_and_radar(self):
