@@ -81,6 +81,7 @@ ARQUIVO: tela WOD do aluno (shell v2, Onda 3).
 .student-wod-block[data-kind="forca"] { --student-wod-kind-color: var(--theme-accent-support); }
 .student-wod-block[data-kind="skill"] { --student-wod-kind-color: var(--theme-accent-primary); }
 .student-wod-block[data-kind="metcon"] { --student-wod-kind-color: var(--theme-accent-danger); }
+.student-wod-block[data-kind="mobilidade"] { --student-wod-kind-color: var(--theme-accent-success); }
 .student-wod-block[data-kind="cooldown"] { --student-wod-kind-color: var(--theme-accent-premium); }
 
 .student-wod-block__notes {

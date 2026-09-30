@@ -14,6 +14,11 @@ PONTOS CRITICOS:
         {% for error in page.data.schedule_form.title.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
     </label>
     <label>
+        <span class="field-label">{{ page.data.schedule_form.workout_program.label }}</span>
+        {{ page.data.schedule_form.workout_program }}
+        {% for error in page.data.schedule_form.workout_program.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+    </label>
+    <label>
         <span class="field-label">{{ page.data.schedule_form.coach.label }}</span>
         {{ page.data.schedule_form.coach }}
         {% for error in page.data.schedule_form.coach.errors %}<span class="form-error">{{ error }}</span>{% endfor %}

@@ -14,6 +14,7 @@ PONTOS CRITICOS:
 """
 
 from django.db import transaction
+from operations.models import WorkoutProgram
 
 from operations.application.commands import (
     ClassScheduleCreateCommand,
@@ -50,6 +51,19 @@ from operations.infrastructure.django_class_grid_sessions import DjangoClassGrid
 from .django_schedule_limits import ensure_schedule_limits
 
 
+def _class_type_for_program(program):
+    slug_to_type = {
+        'crossfit': 'cross',
+        'hyrox': 'hyrox',
+        'mobility': 'mobility',
+        'oly': 'oly',
+        'strength': 'strength',
+        'open_gym': 'open_gym',
+        'other': 'other',
+    }
+    return slug_to_type.get(getattr(program, 'slug', ''), 'other')
+
+
 class DjangoAtomicUnitOfWork(UnitOfWorkPort):
     def run(self, operation):
         with transaction.atomic():
@@ -76,6 +90,7 @@ class DjangoClassGridWriter(ClassGridWriterPort):
         current_timezone = self.clock.get_current_timezone()
         created_session_ids = []
         coach = self.coach_resolver.resolve(command.coach_id)
+        workout_program = WorkoutProgram.objects.get(pk=command.workout_program_id) if command.workout_program_id else None
         planned_slots = build_class_grid_schedule_plan(
             start_date=command.start_date,
             end_date=command.end_date,
@@ -118,6 +133,8 @@ class DjangoClassGridWriter(ClassGridWriterPort):
                 capacity=command.capacity,
                 status=command.status,
                 notes=command.notes,
+                workout_program_id=command.workout_program_id,
+                class_type=_class_type_for_program(workout_program),
             )
             created_session_ids.append(session_id)
 
@@ -152,6 +169,10 @@ class DjangoClassGridWriter(ClassGridWriterPort):
                 exclude_session_ids=[session.id],
             )
 
+        workout_program = (
+            WorkoutProgram.objects.get(pk=command.workout_program_id)
+            if command.workout_program_id else session.workout_program
+        )
         target_values = {
             'title': command.title,
             'coach': self.coach_resolver.resolve(command.coach_id),
@@ -160,6 +181,8 @@ class DjangoClassGridWriter(ClassGridWriterPort):
             'capacity': command.capacity,
             'status': command.status,
             'notes': command.notes,
+            'workout_program': workout_program,
+            'class_type': _class_type_for_program(workout_program),
         }
         current_values = self.session_store.collect_current_values(
             session=session,

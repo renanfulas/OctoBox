@@ -1,5 +1,44 @@
 <article class="table-card smart-paste-card" id="smart-paste-preview-panel" data-smart-paste-preview-panel {% if smart_paste_auto_open_review_target %}data-smart-paste-auto-open-target="{{ smart_paste_auto_open_review_target }}"{% endif %}>
 
+    {% if smart_paste_weekly_normalization.status == 'awaiting_coach_review' %}
+    <section class="smart-paste-resolution-notice" role="status" aria-live="polite">
+        <strong>O Haiku organizou a estrutura. Confira as mudanças antes de continuar.</strong>
+        <p>A semana ainda não foi aplicada às aulas. Compare cada trecho original com a organização sugerida; se algo estiver incorreto, volte ao texto e ajuste antes de confirmar.</p>
+        <ul>
+            {% for change in smart_paste_weekly_normalization.changes %}
+            <li>
+                {% if change.line_number %}<small>Linha {{ change.line_number }}</small>{% endif %}
+                <div><strong>Original:</strong> {{ change.source_text }}</div>
+                <div><strong>Organizado:</strong> {{ change.normalized_text }}</div>
+                <div><strong>Motivo:</strong> {{ change.reason }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+        <a class="button tertiary" href="#id_source_text">Recusar organização e ajustar o texto</a>
+    </section>
+    {% elif smart_paste_weekly_normalization.error %}
+    <div class="smart-paste-resolution-notice" role="alert">
+        <strong>Não conseguimos corrigir a estrutura com segurança.</strong>
+        <p>{{ smart_paste_weekly_normalization.error }} Revise o texto manualmente e tente organizar de novo.</p>
+    </div>
+    {% endif %}
+
+    {% if smart_paste_parse_errors %}
+    <div class="smart-paste-resolution-notice" role="alert" aria-live="assertive">
+        <strong>Treino não foi organizado com segurança.</strong>
+        <ul>{% for error in smart_paste_parse_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        <p>Solução: reformule a semana no SmartPlan GPT e cole a resposta completa novamente. Cada bloco precisa indicar um único dia (por exemplo, “SEGUNDA-FEIRA — Força”). Nenhum treino será distribuído até corrigir isso.</p>
+        <a class="button secondary" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener noreferrer">Reformular no SmartPlan GPT ↗</a>
+    </div>
+    {% endif %}
+    {% if smart_paste_warnings %}
+    <div class="smart-paste-resolution-notice" role="status">
+        <strong>Observações do SmartPlan</strong>
+        <ul>{% for warning in smart_paste_warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+        <p>Confira estas observações nos treinos antes de aplicar à grade.</p>
+    </div>
+    {% endif %}
+
     {% if smart_paste_days %}
     <div class="smart-paste-confidence-strip" aria-label="Resumo de confianca da leitura">
         <span class="pill success">{{ smart_paste_summary.days_count }} dia(s)</span>
@@ -112,8 +151,9 @@
             data-action="open-day-dialog"
             data-target="smart-paste-day-dialog-{{ day.day_index }}"
             aria-haspopup="dialog"
+            aria-label="{{ day.weekday_label }}{% if day.date_label %}, {{ day.date_label }}{% endif %}: abrir treinos do dia"
         >
-            <span class="smart-paste-day-chip__label">{{ day.weekday_label }}</span>
+            <span class="smart-paste-day-chip__label">{{ day.weekday_label }}{% if day.date_label %} · {{ day.date_label }}{% endif %}</span>
             <span class="smart-paste-day-chip__count">{{ day.blocks|length }} bloco{% if day.blocks|length != 1 %}s{% endif %}</span>
             <span class="smart-paste-day-chip__preview">{% for label in day.preview_movements %}<span>{{ label }}</span>{% empty %}<span>Sem movimentos identificados</span>{% endfor %}</span>
             <span class="smart-paste-day-chip__status {% if day.has_unresolved %}smart-paste-day-chip__status--warning{% endif %}">{% if day.has_unresolved %}{{ day.unresolved_count }} pendência{% if day.unresolved_count != 1 %}s{% endif %}{% else %}Leitura pronta{% endif %}</span>
@@ -129,7 +169,7 @@
             <header class="smart-paste-day-dialog__head">
                 <div class="smart-paste-day-dialog__heading">
                     <p class="eyebrow">Dia {{ day.weekday|add:"1" }}</p>
-                    <h3 id="smart-paste-day-title-{{ day.day_index }}">{{ day.weekday_label }}</h3>
+                    <h3 id="smart-paste-day-title-{{ day.day_index }}">{{ day.weekday_label }}{% if day.date_label %} · {{ day.date_label }}{% endif %}</h3>
                     <p class="smart-paste-day-dialog__summary">{% if day.has_unresolved %}{{ day.unresolved_count }} pendência{% if day.unresolved_count != 1 %}s{% endif %} para revisar antes de confirmar a semana.{% else %}Movimentos identificados e prontos para conferir.{% endif %}</p>
                 </div>
                 <button type="button" class="smart-paste-day-dialog__close" data-action="close-dialog" aria-label="Fechar">✕</button>
@@ -227,22 +267,33 @@
         {% endfor %}
     </datalist>
 
-    <form method="post" class="coach-wod-form-stack smart-paste-confirm-form">
+    {% if not smart_paste_parse_errors %}<form method="post" class="coach-wod-form-stack smart-paste-confirm-form">
         {% csrf_token %}
         <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
         <input type="hidden" name="week_start" value="{{ weekly_plan.week_start|date:'d/m' }}">
         <input type="hidden" name="label" value="{{ weekly_plan.label }}">
+        <input type="hidden" name="workout_program" value="{{ weekly_plan.workout_program_id }}">
         <input type="hidden" name="source_text" value="{{ weekly_plan.source_text }}">
+        <div class="smart-paste-resolution-notice" role="alert" data-smart-paste-stale-source-notice hidden>
+            <strong>O texto ou os dados da semana mudaram depois desta prévia.</strong>
+            <p>Clique em “Organizar meu treino” para atualizar a prévia antes de confirmar.</p>
+        </div>
+        {% if smart_paste_weekly_normalization.status == 'awaiting_coach_review' %}
+        <label class="smart-paste-normalization-acknowledgement">
+            <input type="checkbox" name="normalization_reviewed" value="yes" required>
+            <span>Revisei a organização sugerida e confirmo que os treinos estão nos dias corretos.</span>
+        </label>
+        {% endif %}
         <div class="actions">
             <button class="button" type="submit" name="action" value="confirm_and_project">
-                {% if smart_paste_summary.unresolved_count %}Tentar corrigir e enviar às aulas{% else %}Enviar WODs às aulas{% endif %}
+                {% if smart_paste_weekly_normalization.status == 'awaiting_coach_review' %}Aceitar organização e conferir aulas{% elif smart_paste_summary.unresolved_count %}Tentar corrigir e conferir aulas{% else %}Conferir aulas da semana{% endif %}
             </button>
             <button class="button secondary" type="submit" name="action" value="confirm_plan" {% if smart_paste_summary.unresolved_count %}disabled aria-disabled="true"{% endif %}>
-                Salvar sem enviar às aulas
+                {% if smart_paste_weekly_normalization.status == 'awaiting_coach_review' %}Aceitar e salvar rascunho{% else %}Salvar rascunho sem distribuir{% endif %}
             </button>
         </div>
-        <p class="operation-session-meta">Primeiro tentamos corrigir as pendências automaticamente. Depois, os treinos entram nas aulas da semana. Manager ou Owner aprova antes de os alunos verem.</p>
-    </form>
+        <p class="operation-session-meta">{% if smart_paste_weekly_normalization.status == 'awaiting_coach_review' %}A confirmação registra que você revisou a organização sugerida. Em seguida, confira quais aulas receberão cada WOD; a aprovação do box continua protegendo o que chega aos alunos.{% else %}Primeiro tentamos corrigir as pendências automaticamente. Depois, você confere quais aulas receberão cada WOD. A distribuição só acontece após a confirmação; a aprovação do box continua protegendo o que chega aos alunos.{% endif %}</p>
+    </form>{% endif %}
 
     {% if weekly_plan_is_confirmed %}
     <section class="smart-paste-template-bridge" aria-label="Transformar semana em template">
@@ -274,7 +325,7 @@
     </section>
     {% endif %}
 
-    {% else %}
+    {% elif not smart_paste_parse_errors %}
     <div class="smart-paste-empty-state">
         <div class="smart-paste-empty-state__icon" aria-hidden="true">📋</div>
         <h3 class="smart-paste-empty-state__title">Preview da semana</h3>

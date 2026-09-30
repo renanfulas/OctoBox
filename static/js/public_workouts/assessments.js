@@ -697,16 +697,41 @@
     });
   }
 
-  function buildPanel(report) {
+  function buildPanel(report, isUnified) {
     if (!report.assessments.length) {
-      return '<div class="assess-empty">Nenhuma avaliação registrada ainda.</div>';
+      if (!isUnified) return '<div class="assess-empty">Nenhuma avaliação registrada ainda.</div>';
+      return '' +
+        '<section class="workout-assessment-empty" aria-labelledby="workout-assessment-empty-title">' +
+          '<span class="workout-assessment-empty__eyebrow">Seu ponto de partida</span>' +
+          '<h2 id="workout-assessment-empty-title">Comece sua linha do tempo</h2>' +
+          '<p>Registre seu peso e as medidas que tiver. Com os dados do perfil, os indicadores disponíveis aparecem junto do seu histórico.</p>' +
+          '<div class="workout-assessment-empty__steps" aria-label="Como funciona">' +
+            '<span><b>1</b> Registre sua primeira avaliação</span>' +
+            '<span><b>2</b> Compare as próximas medições</span>' +
+          '</div>' +
+          '<p class="workout-assessment-empty__privacy">Preencha apenas as medidas que tiver. Novos registros ajudam a comparar sua evolução.</p>' +
+        '</section>';
     }
 
     var summary = report.summary;
-    var last = report.assessments[report.assessments.length - 1];
     var sections = [];
 
+    if (isUnified) {
+      sections.push(
+        '<div class="workout-assessment-report-head">' +
+          '<div><span class="workout-assessment-empty__eyebrow">Sua evolução</span>' +
+          '<h2>Última avaliação</h2></div>' +
+          '<button type="button" class="workout-assessment-new" data-assess-new>Nova avaliação</button>' +
+        '</div>'
+      );
+    }
     sections.push(buildSummaryCards(report.indicators));
+
+    if (isUnified && report.assessments.length === 1) {
+      sections.push(
+        '<p class="workout-assessment-baseline" role="status">Este é seu ponto de partida. Ao registrar a próxima avaliação, você poderá comparar suas medidas e indicadores.</p>'
+      );
+    }
 
     var silhouette = buildSilhouette(summary.measurements);
     var measurementsGrid = buildMeasurementsGrid(summary.measurements);
@@ -779,7 +804,7 @@
     return panel;
   }
 
-  function loadReport(form, reportSlot) {
+  function loadReport(panel, formSlot, form, reportSlot) {
     var slug = planSlug();
     return fetch('/renan/' + slug + '/avaliacoes.json')
       .then(function (response) {
@@ -787,7 +812,23 @@
         return response.json();
       })
       .then(function (report) {
-        reportSlot.innerHTML = buildPanel(report);
+        var isUnified = panel.id === 'workout-panel-avaliacao';
+        reportSlot.innerHTML = buildPanel(report, isUnified);
+        var hasHistory = report.assessments.length > 0;
+        if (isUnified) {
+          panel.classList.toggle('has-assessment-history', hasHistory);
+          if (hasHistory) formSlot.parentElement.insertBefore(reportSlot, formSlot);
+          else formSlot.parentElement.insertBefore(formSlot, reportSlot);
+        }
+        var newAssessmentButton = reportSlot.querySelector('[data-assess-new]');
+        if (newAssessmentButton) {
+          newAssessmentButton.addEventListener('click', function () {
+            var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            formSlot.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+            var dateInput = formSlot.querySelector('#assess-f-date');
+            if (dateInput) dateInput.focus({ preventScroll: true });
+          });
+        }
         if (report.skinfold_self_report_unlocked) ensureSkinfoldSection(form);
       })
       .catch(function () {
@@ -807,9 +848,9 @@
     var form = formSlot.querySelector('#assess-form');
     var dateEl = form.querySelector('#assess-f-date');
     if (dateEl) dateEl.value = todayIso();
-    bindForm(form, function () { loadReport(form, reportSlot); });
+    bindForm(form, function () { loadReport(panel, formSlot, form, reportSlot); });
 
-    loadReport(form, reportSlot);
+    loadReport(panel, formSlot, form, reportSlot);
   }
 
   if (document.readyState === 'loading') {

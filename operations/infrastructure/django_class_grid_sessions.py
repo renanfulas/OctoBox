@@ -36,6 +36,8 @@ class DjangoClassGridSessionStore:
         capacity: int,
         status: str,
         notes: str,
+        workout_program_id: int | None = None,
+        class_type: str = 'other',
     ) -> int:
         session = ClassSession.objects.create(
             title=title,
@@ -45,6 +47,8 @@ class DjangoClassGridSessionStore:
             capacity=capacity,
             status=status,
             notes=notes,
+            workout_program_id=workout_program_id,
+            class_type=class_type,
         )
         return session.id
 

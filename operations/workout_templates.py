@@ -117,12 +117,16 @@ def apply_persisted_workout_template(*, actor, template, target_session):
             status=SessionWorkoutStatus.DRAFT,
             created_by=actor,
             version=1,
+            is_normalized=False,
+            structured_payload={'source': 'stored_template', 'template_id': template.id},
         )
     else:
         target_workout.title = template.name
         target_workout.status = SessionWorkoutStatus.DRAFT
+        target_workout.is_normalized = False
+        target_workout.structured_payload = {'source': 'stored_template', 'template_id': template.id}
         target_workout.version += 1
-        target_workout.save(update_fields=['title', 'status', 'version', 'updated_at'])
+        target_workout.save(update_fields=['title', 'status', 'is_normalized', 'structured_payload', 'version', 'updated_at'])
 
     for block in template.blocks.all():
         created_block = SessionWorkoutBlock.objects.create(
@@ -130,6 +134,11 @@ def apply_persisted_workout_template(*, actor, template, target_session):
             kind=block.kind,
             title=block.title,
             notes=block.notes,
+            timecap_min=block.timecap_min,
+            rounds=block.rounds,
+            interval_seconds=block.interval_seconds,
+            score_type=block.score_type,
+            format_spec=block.format_spec,
             sort_order=block.sort_order,
         )
         for movement in block.movements.all():
@@ -139,8 +148,11 @@ def apply_persisted_workout_template(*, actor, template, target_session):
                 movement_label=movement.movement_label,
                 sets=movement.sets,
                 reps=movement.reps,
+                reps_spec=movement.reps_spec,
                 load_type=movement.load_type,
                 load_value=movement.load_value,
+                load_spec=movement.load_spec,
+                is_scaled_alternative=movement.is_scaled_alternative,
                 notes=movement.notes,
                 sort_order=movement.sort_order,
             )
@@ -177,6 +189,11 @@ def create_persisted_template_from_workout(*, actor, source_workout, name):
             kind=block.kind,
             title=block.title,
             notes=block.notes,
+            timecap_min=block.timecap_min,
+            rounds=block.rounds,
+            interval_seconds=block.interval_seconds,
+            score_type=block.score_type,
+            format_spec=block.format_spec,
             sort_order=block.sort_order,
         )
         for movement in block.movements.all():
@@ -186,8 +203,11 @@ def create_persisted_template_from_workout(*, actor, source_workout, name):
                 movement_label=movement.movement_label,
                 sets=movement.sets,
                 reps=movement.reps,
+                reps_spec=movement.reps_spec,
                 load_type=movement.load_type,
                 load_value=movement.load_value,
+                load_spec=movement.load_spec,
+                is_scaled_alternative=movement.is_scaled_alternative,
                 notes=movement.notes,
                 sort_order=movement.sort_order,
             )
@@ -206,47 +226,40 @@ def create_persisted_template_from_weekly_plan(*, actor, weekly_plan, name, desc
     )
     block_order = 1
     for day in days:
-        weekday_label = (day.get('weekday_label') or '').strip()
         for block in day.get('blocks', []):
             block_kind = (block.get('kind') or 'custom').strip()
             if block_kind not in {choice[0] for choice in WorkoutTemplateBlock._meta.get_field('kind').choices}:
                 block_kind = 'custom'
             block_title = (block.get('title') or '').strip() or block_kind.title()
-            block_notes_parts = []
-            if weekday_label:
-                block_notes_parts.append(f'Dia base: {weekday_label}')
-            for extra in (block.get('format_spec'), block.get('notes')):
-                extra_text = (extra or '').strip()
-                if extra_text:
-                    block_notes_parts.append(extra_text)
             created_block = WorkoutTemplateBlock.objects.create(
                 template=template,
                 kind=block_kind,
                 title=block_title,
-                notes=' | '.join(block_notes_parts),
+                notes=(block.get('notes') or '').strip(),
+                timecap_min=block.get('timecap_min'),
+                rounds=block.get('rounds'),
+                interval_seconds=block.get('interval_seconds'),
+                score_type=block.get('score_type') or '',
+                format_spec=(block.get('format_spec') or '').strip(),
                 sort_order=block_order,
             )
             block_order += 1
             for movement_index, movement in enumerate(block.get('movements', []), start=1):
-                load_type, load_value, load_note = _summarize_load_projection(movement)
-                notes_parts = []
+                load_type, load_value, _ = _summarize_load_projection(movement)
                 load_spec = (movement.get('load_spec') or '').strip()
                 movement_note = (movement.get('notes') or '').strip()
-                if load_note:
-                    notes_parts.append(load_note)
-                elif load_spec and load_type == 'free':
-                    notes_parts.append(load_spec)
-                if movement_note:
-                    notes_parts.append(movement_note)
                 WorkoutTemplateMovement.objects.create(
                     block=created_block,
                     movement_slug=(movement.get('movement_slug') or 'custom').strip() or 'custom',
                     movement_label=(movement.get('movement_label_raw') or 'Movimento').strip() or 'Movimento',
-                    sets=None,
+                    sets=movement.get('sets'),
                     reps=_parse_reps(movement.get('reps_spec') or ''),
+                    reps_spec=(movement.get('reps_spec') or '').strip(),
                     load_type=load_type,
                     load_value=load_value,
-                    notes=' | '.join(notes_parts)[:255],
+                    load_spec=load_spec,
+                    is_scaled_alternative=bool(movement.get('is_scaled_alternative')),
+                    notes=movement_note[:255],
                     sort_order=movement_index,
                 )
     return template
@@ -276,6 +289,11 @@ def duplicate_persisted_template(*, actor, template, name=None):
             kind=block.kind,
             title=block.title,
             notes=block.notes,
+            timecap_min=block.timecap_min,
+            rounds=block.rounds,
+            interval_seconds=block.interval_seconds,
+            score_type=block.score_type,
+            format_spec=block.format_spec,
             sort_order=block.sort_order,
         )
         for movement in block.movements.all():
@@ -285,8 +303,11 @@ def duplicate_persisted_template(*, actor, template, name=None):
                 movement_label=movement.movement_label,
                 sets=movement.sets,
                 reps=movement.reps,
+                reps_spec=movement.reps_spec,
                 load_type=movement.load_type,
                 load_value=movement.load_value,
+                load_spec=movement.load_spec,
+                is_scaled_alternative=movement.is_scaled_alternative,
                 notes=movement.notes,
                 sort_order=movement.sort_order,
             )
@@ -347,8 +368,11 @@ def build_manageable_workout_templates(*, current_role_slug, actor, active_only=
                         'movement_label': movement.movement_label,
                         'sets': movement.sets,
                         'reps': movement.reps,
+                        'reps_spec': movement.reps_spec,
                         'load_type': movement.load_type,
                         'load_value': movement.load_value,
+                        'load_spec': movement.load_spec,
+                        'is_scaled_alternative': movement.is_scaled_alternative,
                         'notes': movement.notes,
                         'sort_order': movement.sort_order,
                     }
@@ -359,6 +383,11 @@ def build_manageable_workout_templates(*, current_role_slug, actor, active_only=
                     'title': block.title,
                     'kind': block.kind,
                     'notes': block.notes,
+                    'timecap_min': block.timecap_min,
+                    'rounds': block.rounds,
+                    'interval_seconds': block.interval_seconds,
+                    'score_type': block.score_type,
+                    'format_spec': block.format_spec,
                     'sort_order': block.sort_order,
                     'movements': tuple(movements),
                 }

@@ -217,7 +217,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#f6f5f2',
             template_file='john.html',
             accent=PublicWorkoutAccent('#0891B2', '#ECFEFF', '#A5F3FC', '#CFFAFE', '#0E7490'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD, _TAB_AVALIACOES),
             tracker_weeks=6,  # unico plano com mesociclo de 6 semanas
             store_key='john_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
@@ -642,14 +642,12 @@ _LEGACY_SW_REGISTRATION_SCRIPT = """
 """.strip()
 
 
-def _inject_legacy_pwa_head(html: str, plan: PublicWorkoutPlan, asset_version: str) -> str:
-    """Injeta manifest/instalacao/service-worker em arquivo NAO convertido.
+def _inject_public_workout_pwa(html: str, plan: PublicWorkoutPlan, asset_version: str) -> str:
+    """Injeta manifest, instalacao e service worker em shells standalone.
 
-    E o mecanismo original (substituicao de string), mantido vivo so para
-    templates que ainda nao viraram `{% extends '_base.html' %}` — hoje,
-    rafael/franciele/johnespanha, que chegaram em PRs paralelos enquanto
-    aquela refatoracao estava em andamento. Qualquer novo arquivo nesse
-    formato continua funcionando ate ser convertido.
+    O bootstrap permanece na borda da view para que tanto arquivos HTML
+    legados sem base compartilhada quanto `workout.html` mantenham seu shell
+    visual proprio sem perder instalacao e cache offline.
 
     Tambem injeta CSS/JS da aba Avaliacoes (public_workouts app): arquivos
     legados nao consomem `stylesheet_urls`/`app.js` do design system
@@ -733,7 +731,7 @@ def _render_legacy_template_html(plan_slug: str) -> str:
         raise Http404('Arquivo de treino publico indisponivel.')
 
     if _SHARED_BASE_MARKER not in html:
-        html = _inject_legacy_pwa_head(html, plan, asset_version)
+        html = _inject_public_workout_pwa(html, plan, asset_version)
     return html
 
 
@@ -814,7 +812,9 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         customer_portal_url = None
         account_email = None
 
-    return render_to_string('public_workouts/workout.html', {
+    asset_version = public_workout_asset_version()
+    html = render_to_string('public_workouts/workout.html', {
+        'asset_version': asset_version,
         'plan_slug': plan.slug,
         'accent_variant': plan.assessment_sex,
         'program': program,
@@ -831,6 +831,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'account_email': account_email,
         'nutrition_unlocked': nutrition_unlocked,
     })
+    return _inject_public_workout_pwa(html, plan, asset_version)
 
 
 def _render_payment_blocked_html(plan: PublicWorkoutPlan) -> str:

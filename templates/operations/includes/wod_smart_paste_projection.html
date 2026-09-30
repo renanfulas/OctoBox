@@ -1,12 +1,32 @@
 {% if weekly_plan and smart_paste_days and weekly_plan_is_confirmed %}
-<section class="table-card smart-paste-card" id="smart-paste-projection-panel" aria-label="Replicar em aulas da semana">
+<section class="table-card smart-paste-card" id="smart-paste-projection-panel" data-smart-paste-projection-panel aria-label="Replicar em aulas da semana">
     <div class="coach-wod-editor-head">
         <div>
             <p class="eyebrow">Replicar</p>
-            <h2>Escolha a semana e monte a replicacao</h2>
-            <p class="operation-session-meta">Depois do rascunho confirmado, escolha a semana alvo e confira as aulas antes de enviar os WODs ao Planner e à fila de aprovação.</p>
+            <h2>Confira as aulas desta semana</h2>
+            <p class="operation-session-meta">Semana selecionada: <strong>{% if projection_preview %}{{ projection_preview.target_week_start|date:'d/m/Y' }}{% else %}{{ weekly_plan.week_start|date:'d/m/Y' }}{% endif %}</strong>. Vamos conferir as aulas dessa data. A distribuição só acontece após sua confirmação; a aprovação para os alunos continua seguindo a regra do box.</p>
         </div>
     </div>
+
+    {% if projection_distribution_result %}
+    <div class="notice-panel notice-panel--success smart-paste-distribution-result" role="status" aria-live="polite">
+        <div>
+            {% if projection_distribution_result.replayed %}
+            <p class="eyebrow">Resultado recuperado</p>
+            <p>Este envio já havia sido concluído; recuperamos a confirmação. <strong>{{ projection_distribution_result.sessions_created }} WOD(s) criados:</strong> {{ projection_distribution_result.sessions_pending_approval }} aguardando aprovação e {{ projection_distribution_result.sessions_published }} publicados conforme a política do box.</p>
+            {% else %}
+            <p class="eyebrow">Distribuição concluída</p>
+            <p><strong>{{ projection_distribution_result.sessions_created }} WOD(s) criados:</strong> {{ projection_distribution_result.sessions_pending_approval }} aguardando aprovação e {{ projection_distribution_result.sessions_published }} publicados conforme a política do box.</p>
+            {% endif %}
+        </div>
+        <a class="button secondary" href="{% url 'workout-planner' %}?week={{ projection_preview.target_week_start|date:'Y-m-d' }}">Acompanhar no Calendário</a>
+    </div>
+    {% endif %}
+    {% if projection_distribution_warning %}
+    <div class="notice-panel notice-panel--warning smart-paste-distribution-warning" role="alert">
+        <p><strong>Não foi possível concluir a distribuição.</strong> {{ projection_distribution_warning }}</p>
+    </div>
+    {% endif %}
 
     <form
         method="post"
@@ -17,12 +37,15 @@
     >
         {% csrf_token %}
         <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+        <input type="hidden" name="idempotency_key" value="{{ projection_form.idempotency_key.value|default:'' }}">
         <input type="hidden" name="action" value="preview_projection">
-        <div class="coach-wod-form-grid coach-wod-form-grid--two">
+        <details class="smart-paste-target-week-override">
+            <summary>Mudar a semana de destino (opcional)</summary>
+            <p class="operation-session-meta">Use esta opção somente se quiser reutilizar esta programação em outra semana.</p>
             {% if projection_preview %}
             {% with target_week_display=projection_preview.target_week_start|date:"d/m/Y" target_week_picker=projection_preview.target_week_start|date:"Y-m-d" %}
             <label>
-                <span>Escolhe a semana</span>
+                <span>Nova segunda-feira</span>
                 <div class="smart-paste-date-input-wrap">
                     <input
                         type="hidden"
@@ -49,7 +72,7 @@
             {% endwith %}
             {% else %}
             <label>
-                <span>Escolhe a semana</span>
+                <span>Nova segunda-feira</span>
                 <div class="smart-paste-date-input-wrap">
                     <input
                         type="hidden"
@@ -74,29 +97,45 @@
                 </div>
             </label>
             {% endif %}
-            {% for value, label in projection_form.fields.class_types.choices %}
-            <input type="hidden" name="class_types" value="{{ value }}">
-            {% endfor %}
-        </div>
+        </details>
+        {% for value, label in projection_form.fields.class_types.choices %}
+        <input type="hidden" name="class_types" value="{{ value }}">
+        {% endfor %}
         <div class="actions">
-            <button class="button" type="submit">Montar preview de replicacao</button>
+            <button class="button{% if projection_preview %} secondary{% endif %}" type="submit">{% if projection_preview %}Atualizar prévia da semana{% else %}Ver aulas que receberão os WODs{% endif %}</button>
         </div>
     </form>
 
     {% if projection_preview %}
+    <div class="smart-paste-week-review-launch">
+        <p class="operation-session-meta">A prévia está pronta. Confira os destinos e os treinos antes de distribuir.</p>
+        <button class="button secondary" type="button" data-action="open-week-dialog" aria-haspopup="dialog" aria-controls="smart-paste-week-dialog">Abrir revisão da semana</button>
+    </div>
+    <dialog class="smart-paste-week-dialog" id="smart-paste-week-dialog" aria-labelledby="smart-paste-week-dialog-title" data-auto-open="{{ projection_preview_auto_open|yesno:'true,false' }}">
+    <div class="smart-paste-week-dialog__inner">
+        <header class="smart-paste-week-dialog__head">
+            <div>
+                <p class="eyebrow">{{ projection_preview.workout_program_label|default:'Modalidade' }} · semana de {{ projection_preview.target_week_start|date:'d/m/Y' }}</p>
+                <h2 id="smart-paste-week-dialog-title">Confira para onde cada WOD vai</h2>
+                <p class="operation-session-meta">Distribuir cria os WODs nas aulas elegíveis. A publicação para os alunos continua sujeita à aprovação do box.</p>
+            </div>
+            <button class="smart-paste-week-dialog__close" type="button" data-action="close-week-dialog" aria-label="Voltar sem distribuir">✕</button>
+        </header>
+        <div class="smart-paste-week-dialog__body">
     {% if not projection_preview.totals.sessions_creatable %}
     <div class="smart-paste-projection-blocker" role="status">
         <strong>A semana está pronta, mas ainda não há aula disponível para receber o WOD.</strong>
-        <p>{% if not projection_preview.sessions_in_week_total %}Cadastre as aulas dessa semana na Grade de aulas e volte aqui para enviar os treinos.{% else %}As aulas encontradas já têm treino ou não aceitam os blocos desta colagem. Confira os detalhes abaixo e ajuste a grade ou o WOD da aula.{% endif %}</p>
+        <p>{% if not projection_preview.sessions_in_week_total %}Cadastre as aulas dessa semana na Grade de aulas e volte aqui para enviar os treinos.{% elif not projection_preview.totals.sessions_found and projection_preview.sessions_canceled_selected_total %}{{ projection_preview.sessions_canceled_selected_total }} aula(s) do(s) tipo(s) selecionado(s) estão canceladas e não receberão WOD. Reative essas aulas ou ajuste os tipos antes de distribuir.{% elif not projection_preview.sessions_active_in_week_total %}As {{ projection_preview.sessions_canceled_total }} aula(s) da semana estão canceladas e não receberão WOD. Reative essas aulas ou ajuste a grade antes de distribuir.{% else %}As aulas elegíveis já têm treino ou não aceitam os blocos desta colagem. Confira os detalhes abaixo e ajuste a grade ou o WOD da aula.{% endif %}</p>
         <div class="actions">
             <a class="button" href="{% url 'class-grid' %}">Abrir Grade de aulas</a>
-            <a class="button secondary" href="{% url 'workout-planner' %}?week={{ projection_preview.target_week_start|date:'Y-m-d' }}">Ver semana no Planner</a>
+            <a class="button secondary" href="{% url 'workout-planner' %}?week={{ projection_preview.target_week_start|date:'Y-m-d' }}">Abrir Calendário</a>
         </div>
     </div>
     {% endif %}
     <div class="smart-paste-projection-summary">
         <span class="pill success">{{ projection_preview.totals.sessions_creatable }} aula(s) pronta(s) para criar</span>
         <span class="pill info">{{ projection_preview.totals.sessions_found }} aula(s) encontrada(s)</span>
+        {% if projection_preview.sessions_canceled_selected_total %}<span class="pill warning">{{ projection_preview.sessions_canceled_selected_total }} aula(s) cancelada(s) ignorada(s)</span>{% endif %}
         <span class="pill warning">{{ projection_preview.totals.discarded_blocks }} bloco(s) descartado(s)</span>
         <span class="pill danger">{{ projection_preview.totals.sessions_with_existing_workout }} aula(s) com colisao</span>
         <span class="pill accent">{{ projection_preview.totals.sessions_skipped }} aula(s) puladas</span>
@@ -104,18 +143,89 @@
         {% if projection_preview.totals.sessions_published %}<span class="pill success">{{ projection_preview.totals.sessions_published }} publicados pela política do box</span>{% endif %}
     </div>
 
+    <nav class="smart-paste-week-calendar" aria-label="Dias da semana e aulas de destino">
+        <button class="smart-paste-week-calendar__day is-active" type="button" data-weekday-filter="all" aria-pressed="true">
+            <strong>Semana</strong><span>{{ projection_preview.totals.sessions_found }} aula{% if projection_preview.totals.sessions_found != 1 %}s{% endif %}</span>
+        </button>
+        {% for day in smart_paste_projection_week %}
+        <button class="smart-paste-week-calendar__day smart-paste-week-calendar__day--{{ day.status }}" type="button" data-weekday-filter="{{ day.weekday_index }}" aria-pressed="false">
+            <strong>{{ day.weekday_label|slice:':3' }} <time datetime="{{ day.date_iso }}">{{ day.date_label }}</time></strong>
+            <span>{% if day.entry_count %}{{ day.entry_count }} destino{% if day.entry_count != 1 %}s{% endif %}{% if day.canceled_count %} · {{ day.canceled_count }} cancelada(s){% endif %}{% elif day.canceled_count %}{{ day.canceled_count }} cancelada(s) ignorada(s){% else %}{{ day.status_label }}{% endif %}</span>
+        </button>
+        {% endfor %}
+    </nav>
+    <p class="smart-paste-week-calendar__empty" data-weekday-filter-empty role="status" hidden>Não há aulas de destino neste dia. O plano semanal permanece salvo e nenhum WOD foi criado para ele.</p>
+
+    {% if smart_paste_unlinked_movements %}
+    <aside class="smart-paste-unlinked-warning" role="alert" aria-labelledby="smart-paste-unlinked-title">
+        <div>
+            <p class="eyebrow">Precisa da sua confirmação</p>
+            <h3 id="smart-paste-unlinked-title">{{ smart_paste_unlinked_movements|length }} exercício(s) precisam da sua confirmação</h3>
+            <p>Confira cada item: “sem cadastro” significa que não validamos o movimento; sem vídeo, o aluno não terá demonstração no app.</p>
+        </div>
+        <ul>
+            {% for item in smart_paste_unlinked_movements %}
+            <li>
+                <strong>{{ item.movement_label }}</strong>
+                <span>{{ item.day_label }} · {{ item.block_title }} · {{ item.warning_label }}</span>
+                {% if item.demo_video_url %}<a href="{{ item.demo_video_url }}" target="_blank" rel="noopener noreferrer">Abrir vídeo ↗</a>{% else %}<a href="https://www.youtube.com/results?search_query={{ item.movement_label|urlencode }}+exercise+demonstration" target="_blank" rel="noopener noreferrer">Buscar demonstração ↗</a>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        <label class="smart-paste-unlinked-warning__ack">
+            <input type="checkbox" name="acknowledge_unlinked_movements" value="yes" form="smart-paste-distribute-form" data-action="acknowledge-unlinked-movements" required>
+            <span>Entendi: sem cadastro não há compatibilidade validada; sem vídeo o aluno não verá demonstração. Quero continuar.</span>
+        </label>
+    </aside>
+    {% endif %}
+
     <div class="smart-paste-projection-list">
         {% for entry in projection_preview.entries %}
-        <article class="smart-paste-projection-card smart-paste-projection-card--{{ entry.status }}">
+        <article class="smart-paste-projection-card smart-paste-projection-card--{{ entry.status }}" data-weekday-index="{{ entry.weekday_index }}">
             <div class="smart-paste-projection-head">
                 <div>
                     <strong>{{ entry.session_title }}</strong>
-                    <p>{{ entry.session_date_label }} · {{ entry.class_type }}</p>
+                    <p>{{ entry.weekday_label }} · {{ entry.session_date_label }} · {{ entry.class_type }}</p>
                 </div>
                 <span class="pill {% if entry.status == 'ready' %}success{% elif 'skip' in entry.status %}warning{% else %}info{% endif %}">{{ entry.status }}</span>
             </div>
             {% if entry.reason %}
             <p>{{ entry.reason }}</p>
+            {% endif %}
+            {% if entry.projection_blocks %}
+            <details class="smart-paste-projection-workout">
+                <summary>Conferir treino desta aula</summary>
+                {% for block in entry.projection_blocks %}
+                <section class="smart-paste-projection-workout__block">
+                    <strong>{{ block.title }}</strong>
+                    {% if block.format_spec %}<p>{{ block.format_spec }}</p>{% else %}
+                        <p>
+                            {% if block.score_type %}{{ block.score_type|upper }}{% endif %}
+                            {% if block.rounds %} · {{ block.rounds }} rounds{% endif %}
+                            {% if block.timecap_min %} · {{ block.timecap_min }} min{% endif %}
+                            {% if block.interval_seconds %} · intervalo {{ block.interval_seconds }} s{% endif %}
+                        </p>
+                    {% endif %}
+                    {% if block.movements %}
+                    <ul class="smart-paste-movement-list">
+                        {% for movement in block.movements %}
+                        <li>
+                            <span>{{ movement.movement_label_raw }}</span>
+                            <small>
+                                {% if movement.sets %}{{ movement.sets }} séries · {% endif %}
+                                {% if movement.reps_spec %}{{ movement.reps_spec }} reps{% endif %}
+                                {% if movement.load_spec %}{% if movement.reps_spec or movement.sets %} · {% endif %}{{ movement.load_spec }}{% endif %}
+                                {% if movement.is_scaled_alternative %} · alternativa escalada{% endif %}
+                            </small>
+                            {% if movement.notes %}<small>{{ movement.notes }}</small>{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if block.notes %}<p>{{ block.notes }}</p>{% endif %}
+                </section>
+                {% endfor %}
+            </details>
             {% endif %}
             {% if entry.discarded_blocks %}
             <div class="smart-paste-warning-list">
@@ -146,23 +256,28 @@
     </div>
 
     <form
+        id="smart-paste-distribute-form"
         method="post"
-        class="coach-wod-form-stack smart-paste-confirm-form"
+        class="coach-wod-form-stack smart-paste-confirm-form smart-paste-week-dialog__actions"
         hx-post="{% url 'workout-smart-paste' %}"
         hx-target="#smart-paste-projection-panel"
         hx-swap="outerHTML"
     >
         {% csrf_token %}
         <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+        <input type="hidden" name="idempotency_key" value="{{ projection_form.idempotency_key.value|default:'' }}">
         <input type="hidden" name="target_week_start" value="{{ projection_preview.target_week_start|date:'d/m/Y' }}">
         {% for class_type in projection_preview.class_types %}
         <input type="hidden" name="class_types" value="{{ class_type }}">
         {% endfor %}
         <input type="hidden" name="action" value="create_projection">
         <div class="actions">
-            <button class="button secondary" type="submit" {% if not projection_preview.totals.sessions_creatable %}disabled aria-disabled="true"{% endif %}>Enviar WODs ao Planner e para aprovação</button>
+            <button class="button" type="submit" data-action="distribute-week" data-eligible="{% if projection_preview.totals.sessions_creatable %}true{% else %}false{% endif %}" {% if not projection_preview.totals.sessions_creatable or smart_paste_unlinked_movements %}disabled aria-disabled="true"{% endif %}>Distribuir WODs às aulas</button>
+            <button class="button secondary" type="button" data-action="close-week-dialog">Voltar para revisar</button>
         </div>
     </form>
+        </div>
+    </div>
     {% endif %}
 
     {% if latest_replication_batch %}
