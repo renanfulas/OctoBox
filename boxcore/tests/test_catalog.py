@@ -32,11 +32,13 @@ from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment
 from operations.models import Attendance, ClassSession, SessionStatus, WorkoutProgram
 from operations.session_snapshots import serialize_class_session
 from students.models import Student
+from operations.workout_program_catalog import ensure_default_workout_programs
 
 
 class CatalogViewTests(TestCase):
     def setUp(self):
         cache.clear()
+        ensure_default_workout_programs()
         self.user = get_user_model().objects.create_superuser(
             username='catalog-owner',
             email='catalog-owner@example.com',

@@ -70,6 +70,7 @@ Se uma academia oferece CrossFit, HYROX e alongamento no mesmo dia, cria turmas 
 Em 30/09/2026, num banco PostgreSQL novo com migrations e schema tenant:
 
 - 145 testes focados passaram (grade, roteamento/projeção, compatibilidade do SmartPaste e testes de catálogo).
+- A mesma suíte focada também passou com `--randomly-seed=42`; o seed de programas de modalidade nos testes de catálogo é explícito e não depende da ordem em que outra classe rodou.
 - 4 cenários E2E browser passaram: SmartPaste CrossFit, SmartPaste HYROX, bloqueio de submissão sem modalidade e calendário com seletor obrigatório e turmas paralelas identificadas.
 - `manage.py check` não apontou problemas; `makemigrations --check --dry-run` não detectou migrations ausentes; `git diff --check` passou.
 
