@@ -2600,7 +2600,13 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         payload = response.json()
         self.assertEqual(
             payload,
-            {'assessments': [], 'summary': None, 'indicators': None, 'skinfold_self_report_unlocked': False},
+            {
+                'assessments': [],
+                'summary': None,
+                'indicators': None,
+                'skinfold_self_report_unlocked': False,
+                'hero_text': None,
+            },
         )
 
     def test_returns_404_for_unknown_plan_slug(self):
