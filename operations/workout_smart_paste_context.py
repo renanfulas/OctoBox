@@ -361,6 +361,7 @@ def build_weekly_wod_smart_paste_context(
     form = form or WeeklyWodSmartPasteForm(
         initial={
             'plan_id': getattr(weekly_plan, 'id', None),
+            'workout_program': getattr(weekly_plan, 'workout_program_id', None),
             'week_start': (getattr(weekly_plan, 'week_start', None) or week_start).strftime('%d/%m/%Y'),
             'label': getattr(weekly_plan, 'label', ''),
             'source_text': getattr(weekly_plan, 'source_text', ''),
@@ -369,7 +370,7 @@ def build_weekly_wod_smart_paste_context(
     projection_form = projection_form or WeeklyWodProjectionForm(
         initial={
             'plan_id': getattr(weekly_plan, 'id', None),
-            'workout_program': getattr(weekly_plan, 'workout_program_id', None) or WorkoutProgram.objects.filter(slug='crossfit', is_active=True).values_list('pk', flat=True).first(),
+            'workout_program': getattr(weekly_plan, 'workout_program_id', None),
             'idempotency_key': uuid4(),
             # A semana definida no WOD Semana é a âncora de toda a jornada.
             # Antes, a distribuição usava a próxima segunda sugerida, podendo

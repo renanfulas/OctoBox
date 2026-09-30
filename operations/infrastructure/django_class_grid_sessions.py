@@ -18,10 +18,11 @@ from operations.models import ClassSession
 
 
 class DjangoClassGridSessionStore:
-    def find_existing_scheduled_ats(self, *, title: str, scheduled_ats: list) -> frozenset:
+    def find_existing_scheduled_ats(self, *, title: str, workout_program_id: int, scheduled_ats: list) -> frozenset:
         return frozenset(
             ClassSession.objects.filter(
                 title=title,
+                workout_program_id=workout_program_id,
                 scheduled_at__in=scheduled_ats,
             ).values_list('scheduled_at', flat=True)
         )

@@ -333,6 +333,7 @@ def test_smart_paste_visual_baseline_contract(
         page.locator("textarea[name=source_text]").fill(
             "Segunda:\nAquecimento\n3 rounds\n10 agachamnto\n8 push up\n5 pull up\n"
         )
+        page.locator('select[name="workout_program"]').select_option(label='CrossFit')
         page.locator("form.smart-paste-form button[type=submit]").click()
         page.wait_for_load_state("networkidle")
         assert _horizontal_overflow(page) <= 1, "overflow horizontal apos organizar o texto"
@@ -407,6 +408,7 @@ def test_iphone_dialog_review_survives_htmx_swap(browser: Browser, live_server, 
         page.locator('textarea[name="source_text"]').fill(
             'Segunda:\nAquecimento\n3 rounds\n10 movimento inventado xyz\n8 push up\n'
         )
+        page.locator('select[name="workout_program"]').select_option(label='CrossFit')
         page.locator('form.smart-paste-form button[type="submit"]').click()
         page.wait_for_load_state('networkidle')
         page.locator('[data-action="open-day-dialog"]').first.click()
@@ -426,7 +428,13 @@ def test_iphone_dialog_review_survives_htmx_swap(browser: Browser, live_server, 
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
-def test_smart_paste_golden_path_end_to_end(page: Page, live_server, e2e_owner_credentials):
+@pytest.mark.parametrize(
+    ('program_slug', 'program_label', 'class_type'),
+    (('crossfit', 'CrossFit', ClassType.CROSS), ('hyrox', 'HYROX', ClassType.HYROX)),
+)
+def test_smart_paste_golden_path_end_to_end(
+    page: Page, live_server, e2e_owner_credentials, program_slug, program_label, class_type,
+):
     """
     Fluxo principal ponta a ponta: colar um treino limpo (sem pendência de
     revisão) -> organizar -> conferir cobertura real sem gravar WODs. Usa CLEAN_SAMPLE_WOD (mesmo texto de
@@ -444,8 +452,8 @@ def test_smart_paste_golden_path_end_to_end(page: Page, live_server, e2e_owner_c
     ).date()
     actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
     ClassSession.objects.create(
-        title='Smart Paste Golden Path CrossFit',
-        class_type=ClassType.CROSS,
+        title=f'Smart Paste Golden Path {program_label}',
+        class_type=class_type,
         coach=actor,
         scheduled_at=timezone.make_aware(
             datetime.combine(selected_week_start, datetime.min.time()).replace(hour=12)
@@ -455,6 +463,7 @@ def test_smart_paste_golden_path_end_to_end(page: Page, live_server, e2e_owner_c
     )
 
     page.locator("textarea[name=source_text]").fill(CLEAN_SAMPLE_WOD)
+    page.locator('select[name="workout_program"]').select_option(label=program_label)
     page.locator("form.smart-paste-form button[type=submit]").click()
     page.wait_for_load_state("networkidle")
 
@@ -463,6 +472,7 @@ def test_smart_paste_golden_path_end_to_end(page: Page, live_server, e2e_owner_c
     plan = WeeklyWodPlan.objects.get(created_by=actor)
     assert plan.workout_program_id, 'todo plano semanal precisa guardar sua trilha de modalidade'
     assert plan.workout_program.is_active
+    assert plan.workout_program.slug == program_slug
     assert page.locator('form.smart-paste-confirm-form input[name="workout_program"]').input_value() == str(plan.workout_program_id)
 
     confirm_button = page.locator(
@@ -479,6 +489,25 @@ def test_smart_paste_golden_path_end_to_end(page: Page, live_server, e2e_owner_c
     assert not SessionWorkout.objects.exists(), 'conferir a semana nao deve gravar WODs'
 
     assert _horizontal_overflow(page) <= 1, "overflow horizontal apos confirmar e abrir a replicacao"
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+def test_smart_paste_requires_explicit_modality_in_browser(page: Page, live_server, e2e_owner_credentials):
+    """A tela nova não pode manter um CrossFit oculto como destino padrão."""
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.goto(f'{live_server.url}/operacao/wod/paste/')
+    selector = page.locator('select[name="workout_program"]')
+    expect(selector).to_be_visible()
+    expect(selector).to_have_value('')
+    expect(selector).to_have_attribute('required', 'required')
+
+    page.locator('textarea[name="source_text"]').fill(CLEAN_SAMPLE_WOD)
+    page.locator('form.smart-paste-form button[type="submit"]').click()
+
+    actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    assert not WeeklyWodPlan.objects.filter(created_by=actor).exists()
+    expect(selector).to_be_focused()
 
 
 @pytest.mark.e2e
@@ -530,6 +559,7 @@ def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gat
     expect(page.locator('[data-smart-date-monday-hint]')).to_contain_text('Ajustado para segunda')
     page.locator('input[name="label"]').fill('E2E Smart Paste Automático')
     page.locator('textarea[name="source_text"]').fill(CLEAN_SAMPLE_WOD)
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
     page.locator('form.smart-paste-form button[type="submit"]').click()
     page.wait_for_load_state("networkidle")
 
@@ -876,6 +906,7 @@ def test_unresolved_movement_has_visible_mobile_review_form(page: Page, live_ser
     page.wait_for_load_state("networkidle")
 
     page.locator("textarea[name=source_text]").fill("Segunda\nWOD\n10 movimento inventado xyz")
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
     page.locator("form.smart-paste-form button[type=submit]").click()
     page.wait_for_load_state("networkidle")
 
@@ -946,6 +977,7 @@ def test_weekly_normalization_review_is_explicit_and_mobile_safe(
     _set_theme(page, theme)
     page.goto(f'{live_server.url}/operacao/wod/paste/')
     page.locator('textarea[name="source_text"]').fill('Segunda\nMovimento perdido')
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
     page.locator('form.smart-paste-form button[type="submit"]').click()
     page.wait_for_load_state('networkidle')
 
@@ -999,6 +1031,7 @@ def test_smart_paste_without_classes_stays_on_actionable_screen(page: Page, live
     page.set_viewport_size(VIEWPORTS['mobile'])
     page.goto(f'{live_server.url}/operacao/wod/paste/')
     page.locator('textarea[name="source_text"]').fill(CLEAN_SAMPLE_WOD)
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
     page.locator('form.smart-paste-form button[type="submit"]').click()
     page.wait_for_load_state('networkidle')
     page.locator('form.smart-paste-confirm-form button[value="confirm_and_project"]').click()
@@ -1025,6 +1058,7 @@ def test_smart_paste_rejects_source_text_over_line_limit(page: Page, live_server
 
     oversized_text = "\n".join(f"linha de lixo aleatorio numero {i}" for i in range(501))
     page.locator("textarea[name=source_text]").fill(oversized_text)
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
     page.locator("form.smart-paste-form button[type=submit]").click()
     page.wait_for_load_state("networkidle")
 
