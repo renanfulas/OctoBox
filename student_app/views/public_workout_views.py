@@ -217,7 +217,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
             background_color='#f6f5f2',
             template_file='john.html',
             accent=PublicWorkoutAccent('#0891B2', '#ECFEFF', '#A5F3FC', '#CFFAFE', '#0E7490'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
+            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD, _TAB_AVALIACOES),
             tracker_weeks=6,  # unico plano com mesociclo de 6 semanas
             store_key='john_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
         ),
