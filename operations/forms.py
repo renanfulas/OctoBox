@@ -408,12 +408,24 @@ SMART_PASTE_MAX_LINES = 500
 
 class WeeklyWodSmartPasteForm(forms.Form):
     plan_id = forms.IntegerField(required=False, min_value=1)
+    workout_program = forms.ModelChoiceField(queryset=None, empty_label=None, label='Modalidade')
     week_start = forms.CharField(max_length=10)
     label = forms.CharField(max_length=140, required=False)
     source_text = forms.CharField(widget=forms.Textarea(attrs={'rows': 22}), required=False)
 
     def __init__(self, *args, max_week_start: date | None = None, **kwargs):
         super().__init__(*args, **kwargs)
+        from operations.models import WorkoutProgram
+        from operations.workout_program_catalog import ensure_default_workout_programs
+        programs = ensure_default_workout_programs()
+        self.fields['workout_program'].queryset = programs
+        # Preserve compatibility for existing clients/forms that submit the
+        # weekly paste without the new modality field. The visible UI still
+        # sends an explicit choice; omission safely defaults to CrossFit.
+        self.fields['workout_program'].required = False
+        if not self.initial.get('workout_program') and not self.is_bound:
+            self.initial['workout_program'] = programs.filter(slug='crossfit').values_list('pk', flat=True).first()
+        self.fields['workout_program'].widget.attrs.update({'class': 'smart-paste-program-select'})
         self._max_week_start = max_week_start
         apply_text_input_attrs(
             self.fields['label'],
@@ -452,6 +464,9 @@ class WeeklyWodSmartPasteForm(forms.Form):
             }
         )
 
+    def clean_workout_program(self):
+        return self.cleaned_data.get('workout_program') or self.fields['workout_program'].queryset.filter(slug='crossfit').first()
+
     def clean_source_text(self):
         text = (self.cleaned_data.get('source_text') or '').strip()
         if text:
@@ -474,14 +489,17 @@ class WeeklyWodSmartPasteForm(forms.Form):
 
 class WeeklyWodProjectionForm(forms.Form):
     plan_id = forms.IntegerField(min_value=1)
+    idempotency_key = forms.UUIDField(required=False, widget=forms.HiddenInput())
     target_week_start = forms.CharField(max_length=10)
     class_types = forms.MultipleChoiceField(
         choices=(
             (ClassType.CROSS, 'CrossFit'),
+            (ClassType.HYROX, 'HYROX'),
             (ClassType.MOBILITY, 'Mobilidade'),
             (ClassType.OLY, 'Halterofilia'),
             (ClassType.STRENGTH, 'Forca'),
             (ClassType.OPEN_GYM, 'Open Gym'),
+            (ClassType.OTHER, 'Outros'),
         ),
         required=False,
     )

@@ -23,7 +23,13 @@ from __future__ import annotations
 
 import logging
 
-from .wod_normalization.response_parser import detect_smartplan_format
+from .wod_normalization.response_parser import (
+    END_MARKER,
+    JSON_MARKER,
+    TEXT_MARKER,
+    detect_smartplan_format,
+    detect_smartplan_text_format,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -74,8 +80,39 @@ def detect_and_convert_smartplan_weekly(text: str) -> dict | None:
         dict compatível com Smart Paste (chaves: days, week_label, parse_warnings, source_format)
         ou None se o texto não for formato SmartPlan.
     """
-    if not text or '=== JSON ESTRUTURADO ===' not in text:
+    if not text:
         return None
+
+    if JSON_MARKER not in text:
+        # SmartPlan v2 intentionally returns readable normalized text only.
+        # Return it as a typed input for the weekly Haiku normalizer; do not
+        # send a marked SmartPlan response through the legacy freeform parser.
+        if TEXT_MARKER not in text and END_MARKER not in text:
+            return None
+        result = detect_smartplan_text_format(text)
+        if not result.get('is_normalized'):
+            reason = result.get('reason')
+            message = (
+                'A resposta do SmartPlan precisa conter os marcadores '
+                '“=== WOD NORMALIZADO ===” e “=== FIM ===”, com o treino entre eles.'
+                if reason == 'markers_missing'
+                else 'A seção WOD NORMALIZADO está vazia.'
+            )
+            return {
+                'week_label': None,
+                'parse_warnings': [],
+                'parse_errors': [message],
+                'days': [],
+                'source_format': 'smartplan_text_v2',
+            }
+        return {
+            'week_label': None,
+            'parse_warnings': [],
+            'parse_errors': [],
+            'days': [],
+            'normalized_text': result['normalized_text'],
+            'source_format': 'smartplan_text_v2',
+        }
 
     result = detect_smartplan_format(text)
     if not result.get('is_normalized'):
@@ -83,14 +120,34 @@ def detect_and_convert_smartplan_weekly(text: str) -> dict | None:
             'wod_smartplan_weekly_parser: formato SmartPlan detectado mas inválido (%s)',
             result.get('reason'),
         )
-        return None
+        reason_messages = {
+            'markers_missing': 'A resposta do SmartPlan está sem as seções obrigatórias.',
+            'text_empty': 'A seção WOD NORMALIZADO está vazia.',
+            'json_not_found': 'Não encontrei o JSON estruturado da semana.',
+            'json_invalid': 'O JSON estruturado está malformado.',
+            'blocks_missing': 'A resposta não contém a lista de treinos por dia.',
+            'blocks_empty': 'A resposta não contém blocos de treino.',
+        }
+        return {
+            'week_label': None,
+            'parse_warnings': [],
+            'parse_errors': [reason_messages.get(result.get('reason'), 'A estrutura do SmartPlan é inválida.')],
+            'days': [],
+            'source_format': 'smartplan_json',
+        }
 
     structured = result['structured_payload']
     try:
         return _build_smart_paste_payload(structured)
     except Exception as exc:
         logger.warning('wod_smartplan_weekly_parser: erro ao converter payload: %s', exc)
-        return None
+        return {
+            'week_label': None,
+            'parse_warnings': [],
+            'parse_errors': ['Não foi possível interpretar a estrutura dos blocos do SmartPlan.'],
+            'days': [],
+            'source_format': 'smartplan_json',
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -98,13 +155,17 @@ def detect_and_convert_smartplan_weekly(text: str) -> dict | None:
 # ---------------------------------------------------------------------------
 
 def _detect_day_from_title(title: str) -> tuple[int, str] | None:
-    """Extrai (weekday_index, label) do título de um bloco SmartPlan."""
+    """Retorna o dia somente quando o título identifica exatamente um dia."""
     title_norm = title.upper()
-    # Ordenar por comprimento decrescente para evitar match parcial ("SEGUNDA" antes de "SEGUNDA-FEIRA")
-    for token, weekday, label in sorted(_DAY_TOKENS, key=lambda t: len(t[0]), reverse=True):
-        if token in title_norm:
-            return weekday, label
-    return None
+    # Deduplica variantes com/sem acento e forma curta/longa do mesmo dia.
+    # Dois dias distintos no mesmo título são ambíguos e não escolhemos o
+    # primeiro da lista silenciosamente.
+    matches = {
+        (weekday, label)
+        for token, weekday, label in _DAY_TOKENS
+        if token in title_norm
+    }
+    return next(iter(matches)) if len(matches) == 1 else None
 
 
 def _block_title_without_day(title: str) -> str:
@@ -165,9 +226,11 @@ def _convert_movement(m: dict) -> dict:
     return {
         'movement_slug': (m.get('slug') or '').strip(),
         'movement_label_raw': (m.get('label_pt') or m.get('label_en') or '').strip(),
+        'sets': m.get('sets'),
         'reps_spec': str(reps) if reps is not None else None,
         'load_spec': _build_load_spec(m),
-        'notes': None,
+        'is_scaled_alternative': bool(m.get('is_scaled_alternative', False)),
+        'notes': (m.get('notes') or '').strip() or None,
         'sort_order': m.get('order', 0),
     }
 
@@ -179,7 +242,8 @@ def _build_smart_paste_payload(structured: dict) -> dict:
 
     # Agrupar blocos por dia — dict weekday → day_dict
     days_map: dict[int, dict] = {}
-    unrooted_blocks: list[dict] = []  # blocos sem dia identificável
+    unrooted_blocks: list[str] = []  # blocos sem um único dia identificável
+    parse_errors: list[str] = []
 
     for block in blocks_raw:
         title = block.get('title', '')
@@ -201,7 +265,7 @@ def _build_smart_paste_payload(structured: dict) -> dict:
         }
 
         if day_info is None:
-            unrooted_blocks.append(converted_block)
+            unrooted_blocks.append(title.strip() or 'bloco sem título')
             continue
 
         weekday, label = day_info
@@ -213,18 +277,20 @@ def _build_smart_paste_payload(structured: dict) -> dict:
             }
         days_map[weekday]['blocks'].append(converted_block)
 
-    # Blocos sem dia detectável vão para Segunda (weekday 0) como fallback
+    # Sem dia, ou com mais de um dia, não há base segura para distribuir.
+    # Os demais dias continuam revisáveis, mas a confirmação será bloqueada.
     if unrooted_blocks:
-        if 0 not in days_map:
-            days_map[0] = {'weekday': 0, 'weekday_label': 'Segunda', 'blocks': []}
-        days_map[0]['blocks'].extend(unrooted_blocks)
-        session_warnings.append(f'{len(unrooted_blocks)} bloco(s) sem dia identificado foram associados à Segunda.')
+        parse_errors.extend(
+            f'Não foi possível identificar um único dia no bloco “{title}”.'
+            for title in unrooted_blocks
+        )
 
     days = [days_map[k] for k in sorted(days_map.keys())]
 
     return {
         'week_label': None,
         'parse_warnings': session_warnings,
+        'parse_errors': parse_errors,
         'days': days,
         'source_format': 'smartplan_json',
     }

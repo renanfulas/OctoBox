@@ -419,6 +419,29 @@ body[data-theme="dark"] .smart-paste-native-picker {
     transform: translateY(0);
 }
 
+.smart-paste-target-week-override {
+    margin-block: 0.25rem 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 14px;
+    background: var(--theme-surface-secondary);
+}
+
+.smart-paste-target-week-override > summary {
+    color: var(--theme-text-primary);
+    cursor: pointer;
+    font-weight: 650;
+}
+
+.smart-paste-target-week-override > .operation-session-meta {
+    margin-block: 0.65rem 0.85rem;
+}
+
+.smart-paste-target-week-override > label {
+    display: grid;
+    gap: 0.5rem;
+}
+
 /* Ready days keep a calm success signal beside pending days. */
 .smart-paste-day-chip--clean {
     border-color: color-mix(in srgb, var(--theme-accent-success) 35%, transparent);
@@ -1004,8 +1027,38 @@ body[data-theme="dark"] .smart-paste-native-picker {
     background: color-mix(in srgb, var(--theme-accent-warning) 10%, var(--theme-surface));
 }
 
+.smart-paste-resolution-notice[hidden] {
+    display: none;
+}
+
 .smart-paste-resolution-notice p {
     margin: 0;
+}
+
+.coach-wod-form-stack label.smart-paste-normalization-acknowledgement {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 12px;
+    background: var(--theme-surface-secondary);
+    color: var(--theme-text-primary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.smart-paste-normalization-acknowledgement input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0.15rem 0 0;
+    accent-color: var(--theme-accent-primary);
+}
+
+.smart-paste-normalization-acknowledgement:focus-within {
+    outline: 2px solid var(--theme-focus-ring);
+    outline-offset: 2px;
 }
 
 .smart-paste-day-chip__hint {
@@ -1248,6 +1301,235 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
     gap: 0.6rem;
 }
 
+.smart-paste-week-review-launch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    padding-top: 0.25rem;
+}
+
+.smart-paste-week-review-launch > p {
+    margin: 0;
+}
+
+.smart-paste-week-dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    width: min(920px, calc(100vw - 2rem));
+    max-width: none;
+    height: min(86vh, calc(100dvh - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 20px;
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary);
+    box-shadow: var(--theme-shadow-xl);
+}
+
+.smart-paste-week-dialog::backdrop {
+    background: color-mix(in srgb, var(--theme-bg-root) 62%, transparent);
+    backdrop-filter: blur(5px);
+}
+
+.smart-paste-week-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.smart-paste-week-dialog__inner {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.smart-paste-week-dialog__head {
+    position: relative;
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 4rem 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-secondary);
+}
+
+.smart-paste-week-dialog__head h2 {
+    margin: 0.2rem 0 0.4rem;
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
+}
+
+.smart-paste-week-dialog__head p:last-child {
+    max-width: 68ch;
+    margin-bottom: 0;
+}
+
+.smart-paste-week-dialog__close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 999px;
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary);
+    cursor: pointer;
+}
+
+.smart-paste-week-dialog__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.1rem 1.25rem 1.25rem;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.smart-paste-week-dialog__actions {
+    position: sticky;
+    bottom: -1.25rem;
+    z-index: 2;
+    margin: auto -1.25rem -1.25rem;
+    padding: 0.9rem 1.25rem calc(0.9rem + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+}
+
+.smart-paste-week-calendar {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(76px, 1fr));
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding: 0.1rem 0 0.4rem;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+}
+
+.smart-paste-week-calendar__day {
+    display: grid;
+    align-content: start;
+    gap: 0.32rem;
+    min-width: 76px;
+    min-height: 74px;
+    padding: 0.58rem 0.6rem;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 12px;
+    background: var(--theme-surface-secondary);
+    color: var(--theme-text-secondary);
+    text-align: left;
+    cursor: pointer;
+}
+
+.smart-paste-week-calendar__day strong {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.2rem;
+    color: var(--theme-text-primary);
+    font-size: 0.83rem;
+}
+
+.smart-paste-week-calendar__day time,
+.smart-paste-week-calendar__day span {
+    color: var(--theme-text-secondary);
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
+
+.smart-paste-week-calendar__day.is-active {
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 58%, var(--theme-border-soft));
+    background: color-mix(in srgb, var(--theme-accent-primary) 9%, var(--theme-surface-secondary));
+    color: var(--theme-text-primary);
+}
+
+.smart-paste-week-calendar__day--attention span,
+.smart-paste-week-calendar__day--no_sessions span {
+    color: var(--theme-accent-warning);
+}
+
+.smart-paste-week-calendar__empty {
+    margin: 0;
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    background: var(--theme-surface-secondary);
+    color: var(--theme-text-secondary);
+}
+
+.smart-paste-projection-card[hidden] {
+    display: none;
+}
+
+.smart-paste-unlinked-warning {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-warning) 45%, var(--theme-border-soft));
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--theme-accent-warning) 7%, var(--theme-surface-secondary));
+}
+
+.smart-paste-unlinked-warning h3 {
+    margin: 0.15rem 0 0.4rem;
+    font-size: 1rem;
+}
+
+.smart-paste-unlinked-warning p:not(.eyebrow) {
+    max-width: 76ch;
+    margin: 0;
+    color: var(--theme-text-secondary);
+    line-height: 1.5;
+}
+
+.smart-paste-unlinked-warning > ul {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.smart-paste-unlinked-warning > ul li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.2rem 0.8rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 9px;
+    background: var(--theme-surface-strong);
+}
+
+.smart-paste-unlinked-warning > ul span {
+    color: var(--theme-text-secondary);
+    font-size: 0.82rem;
+}
+
+.smart-paste-unlinked-warning__ack {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--theme-border-soft);
+    color: var(--theme-text-primary);
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.smart-paste-unlinked-warning__ack input {
+    flex: 0 0 auto;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.1rem;
+    accent-color: var(--theme-accent-primary);
+}
+
 .smart-paste-projection-list {
     display: grid;
     gap: 0.85rem;
@@ -1278,6 +1560,28 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
     justify-content: space-between;
     gap: 1rem;
     align-items: flex-start;
+}
+
+.smart-paste-projection-workout {
+    border-top: 1px solid var(--theme-border-soft);
+    padding-top: 0.7rem;
+}
+
+.smart-paste-projection-workout > summary {
+    color: var(--theme-text-primary);
+    cursor: pointer;
+    font-weight: 650;
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.smart-paste-projection-workout__block {
+    padding: 0.65rem 0;
+}
+
+.smart-paste-projection-workout__block + .smart-paste-projection-workout__block {
+    border-top: 1px solid var(--theme-border-soft);
 }
 
 /* SmartPlan link em cada sessão replicada */
@@ -1469,6 +1773,38 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
     .smart-paste-day-dialog__close {
         top: 0.85rem;
         right: 0.85rem;
+    }
+
+    .smart-paste-week-dialog {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        max-height: 100dvh;
+        border: 0;
+        border-radius: 0;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .smart-paste-week-dialog__head {
+        padding: 1rem 3.3rem 0.9rem 1rem;
+    }
+
+    .smart-paste-week-dialog__body {
+        padding: 0.85rem 0.85rem 1rem;
+    }
+
+    .smart-paste-week-calendar {
+        grid-template-columns: none;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(5.5rem, 1fr);
+    }
+
+    .smart-paste-week-dialog__actions {
+        bottom: -1rem;
+        margin: auto -0.85rem -1rem;
+        padding-right: 0.85rem;
+        padding-left: 0.85rem;
     }
 }
 

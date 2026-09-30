@@ -21,7 +21,7 @@ from django.utils import timezone
 
 from control.models import Membership
 from operations.domain import build_class_grid_session_policy
-from operations.models import ClassSession, SessionStatus
+from operations.models import ClassSession, SessionStatus, WorkoutProgram
 from shared_support.form_inputs import (
     LenientDateField,
     LenientTimeField,
@@ -234,6 +234,7 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         model = ClassSession
         fields = [
             'title',
+            'workout_program',
             'coach',
             'start_date',
             'end_date',
@@ -251,6 +252,9 @@ class ClassScheduleRecurringForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['workout_program'].queryset = WorkoutProgram.objects.filter(is_active=True)
+        self.fields['workout_program'].empty_label = None
+        self.fields['workout_program'].required = False
         self.fields['title'].label = 'Nome da aula'
         self.fields['duration_minutes'].label = 'Duração em minutos'
         self.fields['capacity'].label = 'Capacidade da turma'
@@ -277,6 +281,7 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         self.fields['duration_minutes'].initial = 60
         self.fields['capacity'].initial = 20
         self.fields['weekdays'].initial = [str(timezone.localdate().weekday())]
+        self.fields['workout_program'].initial = WorkoutProgram.objects.filter(slug='crossfit', is_active=True).values_list('pk', flat=True).first()
         self.fields['sequence_count'].initial = 0
         self.fields['notes'].required = False
         self.instance.status = SessionStatus.SCHEDULED
@@ -284,6 +289,9 @@ class ClassScheduleRecurringForm(forms.ModelForm):
     def clean_weekdays(self):
         weekdays = self.cleaned_data.get('weekdays') or []
         return [int(value) for value in weekdays]
+
+    def clean_workout_program(self):
+        return self.cleaned_data.get('workout_program') or WorkoutProgram.objects.filter(slug='crossfit', is_active=True).first()
 
     def clean_duration_minutes(self):
         duration_minutes = self.cleaned_data.get('duration_minutes')
@@ -346,6 +354,7 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         model = ClassSession
         fields = [
             'title',
+            'workout_program',
             'coach',
             'start_time',
             'duration_minutes',
@@ -368,6 +377,9 @@ class ClassSessionQuickEditForm(forms.ModelForm):
             else None
         )
         self.fields['coach'].queryset = _get_class_coach_queryset()
+        self.fields['workout_program'].queryset = WorkoutProgram.objects.filter(is_active=True)
+        self.fields['workout_program'].empty_label = None
+        self.fields['workout_program'].required = False
         self.fields['title'].label = 'Nome da aula'
         self.fields['coach'].label = 'Coach responsável pela aula'
         self.fields['duration_minutes'].label = 'Duração em minutos'
@@ -411,3 +423,6 @@ class ClassSessionQuickEditForm(forms.ModelForm):
                 timezone.get_current_timezone(),
             )
         return cleaned_data
+
+    def clean_workout_program(self):
+        return self.cleaned_data.get('workout_program') or getattr(self.instance, 'workout_program', None) or WorkoutProgram.objects.filter(slug='crossfit', is_active=True).first()

@@ -16,15 +16,23 @@ PONTOS CRITICOS:
 from django.contrib import admin
 
 from auditing.admin_mixins import AuditedAdminMixin
-from operations.models import Attendance, BehaviorNote, ClassSession, LeadImportJob
+from operations.models import Attendance, BehaviorNote, ClassSession, LeadImportJob, WorkoutProgram
 
 
 @admin.register(ClassSession)
 class ClassSessionAdmin(AuditedAdminMixin, admin.ModelAdmin):
-    list_display = ('title', 'scheduled_at', 'coach', 'capacity', 'status')
+    list_display = ('title', 'workout_program', 'scheduled_at', 'coach', 'capacity', 'status')
     list_filter = ('status', 'scheduled_at')
     search_fields = ('title', 'coach__username')
     autocomplete_fields = ('coach',)
+
+
+@admin.register(WorkoutProgram)
+class WorkoutProgramAdmin(AuditedAdminMixin, admin.ModelAdmin):
+    list_display = ('name', 'slug', 'is_active', 'sort_order')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'slug')
+    prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(Attendance)
@@ -68,4 +76,4 @@ class LeadImportJobAdmin(AuditedAdminMixin, admin.ModelAdmin):
     )
 
 
-__all__ = ['AttendanceAdmin', 'BehaviorNoteAdmin', 'ClassSessionAdmin', 'LeadImportJobAdmin']
+__all__ = ['AttendanceAdmin', 'BehaviorNoteAdmin', 'ClassSessionAdmin', 'LeadImportJobAdmin', 'WorkoutProgramAdmin']

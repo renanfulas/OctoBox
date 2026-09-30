@@ -728,6 +728,10 @@ ALERT_SIREN_HIGH_WEBHOOK_LIMIT_CAP = env_int('ALERT_SIREN_HIGH_WEBHOOK_LIMIT_CAP
 WOD_ACTION_TELEMETRY_ENABLED = env_bool('WOD_ACTION_TELEMETRY_ENABLED', True)
 WOD_ACTION_TELEMETRY_SAMPLE_RATE = env_float('WOD_ACTION_TELEMETRY_SAMPLE_RATE', 1.0)
 WOD_APPROVAL_POLICY = env_str('WOD_APPROVAL_POLICY', 'strict')
+# Kill switch for the structural Smart Paste normalizer. Keep disabled until
+# provider quality, latency/cost and recovery UX pass the staging rollout gate.
+WOD_WEEKLY_NORMALIZER_ENABLED = env_bool('WOD_WEEKLY_NORMALIZER_ENABLED', False)
+WOD_WEEKLY_NORMALIZER_BOXES = env_list('WOD_WEEKLY_NORMALIZER_BOXES')
 
 # 🔒 Segurança Institucional White Hat (Bug Bounty Fixes)
 # Força o browser do cliente a nunca se conectar com HTTP por 1 ano (prevenindo mitm_downgrade)
