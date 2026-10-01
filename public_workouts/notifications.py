@@ -73,10 +73,12 @@ def _previous_status_label(previous_status: str) -> str:
 
 
 def _intake_cta_block(safe_intake_url: str) -> str:
-    """Bloco de CTA pra anamnese — vazio se nao houver link (ex.:
-    PUBLIC_WORKOUT_PUBLIC_BASE_URL ausente, mesma degradacao graciosa que
-    o resto deste modulo ja usa pra nao derrubar um alerta interno por
-    uma config que nao lhe diz respeito)."""
+    """So o link puro (sem botao) — pensado pro staff copiar e colar no
+    WhatsApp, nunca clicar primeiro: o token e' de uso unico, entao abrir
+    aqui antes consome o link e quebra o fluxo da aluna. Vazio se nao
+    houver link (ex.: PUBLIC_WORKOUT_PUBLIC_BASE_URL ausente, mesma
+    degradacao graciosa que o resto deste modulo ja usa pra nao derrubar
+    um alerta interno por uma config que nao lhe diz respeito)."""
     if not safe_intake_url:
         return ''
     return f"""\
@@ -86,19 +88,15 @@ def _intake_cta_block(safe_intake_url: str) -> str:
                     <p style="margin:0;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
                       Próximo passo
                     </p>
+                    <p style="margin:0;font-size:17px;font-weight:700;color:#0d1320;letter-spacing:-0.01em;">
+                      Responda sua anamnese
+                    </p>
                   </td>
                 </tr>
                 <tr>
-                  <td bgcolor="#2451C4" style="border-radius:14px;background:linear-gradient(135deg,#2451C4,#4C74D9);">
-                    <a href="{safe_intake_url}" style="display:inline-block;padding:16px 28px;font-size:16px;font-weight:700;letter-spacing:-0.01em;color:#ffffff;text-decoration:none;border-radius:14px;">
-                      Responda sua anamnese →
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:10px 0 0;">
+                  <td style="padding:6px 0 0;">
                     <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#60738f;">
-                      Link pessoal dela, de uso único — repasse por WhatsApp em vez de clicar aqui antes:
+                      Link pessoal dela, de uso único — envie por WhatsApp:
                     </p>
                     <p style="margin:0;font-size:12px;line-height:1.5;color:#3a5371;word-break:break-all;font-family:'SF Mono','Menlo','Consolas',monospace;background:#f6f7fa;padding:10px 12px;border-radius:8px;">
                       {safe_intake_url}
