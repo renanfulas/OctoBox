@@ -19,6 +19,7 @@
                         <span class="monthly-session-chip-coach">{{ item.coach_display_name }}</span>
                     </div>
                     <span>{{ item.object.title }}</span>
+                    {% if item.workout_program_name %}<small class="class-grid-meta">{{ item.workout_program_name }}</small>{% endif %}
                 </div>
             </div>
             {% endfor %}

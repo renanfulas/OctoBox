@@ -172,6 +172,8 @@ def serialize_class_session(session, *, now):
     return {
         'object': session,
         'title': getattr(session, 'title', ''),
+        'workout_program_name': getattr(getattr(session, 'workout_program', None), 'name', ''),
+        'workout_program_slug': getattr(getattr(session, 'workout_program', None), 'slug', ''),
         'coach_name': getattr(session.coach, 'get_full_name', lambda: '')() or getattr(session.coach, 'username', '') or 'Coach ainda não definido',
         'coach_display_name': _resolve_coach_display_name(session.coach),
         'status_label': runtime_state['label'],

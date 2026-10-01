@@ -408,7 +408,13 @@ SMART_PASTE_MAX_LINES = 500
 
 class WeeklyWodSmartPasteForm(forms.Form):
     plan_id = forms.IntegerField(required=False, min_value=1)
-    workout_program = forms.ModelChoiceField(queryset=None, empty_label=None, label='Modalidade')
+    workout_program = forms.ModelChoiceField(
+        queryset=None,
+        empty_label='Selecione a modalidade',
+        label='Modalidade desta programação',
+        help_text='A distribuição será limitada às aulas desta modalidade na semana escolhida.',
+        required=False,
+    )
     week_start = forms.CharField(max_length=10)
     label = forms.CharField(max_length=140, required=False)
     source_text = forms.CharField(widget=forms.Textarea(attrs={'rows': 22}), required=False)
@@ -422,9 +428,9 @@ class WeeklyWodSmartPasteForm(forms.Form):
         # Preserve compatibility for existing clients/forms that submit the
         # weekly paste without the new modality field. The visible UI still
         # sends an explicit choice; omission safely defaults to CrossFit.
-        self.fields['workout_program'].required = False
-        if not self.initial.get('workout_program') and not self.is_bound:
-            self.initial['workout_program'] = programs.filter(slug='crossfit').values_list('pk', flat=True).first()
+        # A UI envia escolha explícita; payloads antigos que omitem o campo
+        # seguem temporariamente com CrossFit para compatibilidade.
+        self.fields['workout_program'].widget.attrs['required'] = 'required'
         self.fields['workout_program'].widget.attrs.update({'class': 'smart-paste-program-select'})
         self._max_week_start = max_week_start
         apply_text_input_attrs(
@@ -465,7 +471,12 @@ class WeeklyWodSmartPasteForm(forms.Form):
         )
 
     def clean_workout_program(self):
-        return self.cleaned_data.get('workout_program') or self.fields['workout_program'].queryset.filter(slug='crossfit').first()
+        program = self.cleaned_data.get('workout_program')
+        if program is not None:
+            return program
+        if self.is_bound and 'workout_program' in self.data:
+            raise forms.ValidationError('Escolha a modalidade antes de organizar a semana.')
+        return self.fields['workout_program'].queryset.filter(slug='crossfit').first()
 
     def clean_source_text(self):
         text = (self.cleaned_data.get('source_text') or '').strip()

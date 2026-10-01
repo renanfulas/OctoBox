@@ -528,6 +528,18 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         self.assertEqual(WorkoutProgram.objects.get(slug='crossfit').pk, form.cleaned_data['workout_program'].pk)
         self.assertEqual(plan.workout_program.slug, 'crossfit')
 
+    def test_explicit_blank_modality_is_rejected_in_new_smartpaste_ui_contract(self):
+        from operations.forms import WeeklyWodSmartPasteForm
+
+        form = WeeklyWodSmartPasteForm(data={
+            'week_start': '28/09/2026',
+            'workout_program': '',
+            'source_text': SMART_PASTE_SAMPLE,
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('workout_program', form.errors)
+
     def test_coach_can_confirm_existing_weekly_plan_after_preview(self):
         plan = WeeklyWodPlan.objects.create(
             week_start='2026-04-20',

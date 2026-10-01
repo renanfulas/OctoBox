@@ -253,8 +253,12 @@ class ClassScheduleRecurringForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['workout_program'].queryset = WorkoutProgram.objects.filter(is_active=True)
-        self.fields['workout_program'].empty_label = None
-        self.fields['workout_program'].required = False
+        self.fields['workout_program'].empty_label = 'Selecione a modalidade'
+        self.fields['workout_program'].required = True
+        self.fields['workout_program'].label = 'Modalidade da aula'
+        self.fields['workout_program'].help_text = (
+            'Escolha a trilha que receberá o SmartPaste; o nome da aula é apenas para identificação.'
+        )
         self.fields['title'].label = 'Nome da aula'
         self.fields['duration_minutes'].label = 'Duração em minutos'
         self.fields['capacity'].label = 'Capacidade da turma'
@@ -281,7 +285,6 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         self.fields['duration_minutes'].initial = 60
         self.fields['capacity'].initial = 20
         self.fields['weekdays'].initial = [str(timezone.localdate().weekday())]
-        self.fields['workout_program'].initial = WorkoutProgram.objects.filter(slug='crossfit', is_active=True).values_list('pk', flat=True).first()
         self.fields['sequence_count'].initial = 0
         self.fields['notes'].required = False
         self.instance.status = SessionStatus.SCHEDULED
@@ -291,7 +294,10 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         return [int(value) for value in weekdays]
 
     def clean_workout_program(self):
-        return self.cleaned_data.get('workout_program') or WorkoutProgram.objects.filter(slug='crossfit', is_active=True).first()
+        program = self.cleaned_data.get('workout_program')
+        if program is None:
+            raise forms.ValidationError('Escolha a modalidade que receberá a programação semanal.')
+        return program
 
     def clean_duration_minutes(self):
         duration_minutes = self.cleaned_data.get('duration_minutes')
@@ -378,8 +384,10 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         )
         self.fields['coach'].queryset = _get_class_coach_queryset()
         self.fields['workout_program'].queryset = WorkoutProgram.objects.filter(is_active=True)
-        self.fields['workout_program'].empty_label = None
-        self.fields['workout_program'].required = False
+        self.fields['workout_program'].empty_label = 'Selecione a modalidade'
+        self.fields['workout_program'].required = True
+        self.fields['workout_program'].label = 'Modalidade da aula'
+        self.fields['workout_program'].help_text = 'A modalidade controla qual SmartPaste pode ser distribuído para esta aula.'
         self.fields['title'].label = 'Nome da aula'
         self.fields['coach'].label = 'Coach responsável pela aula'
         self.fields['duration_minutes'].label = 'Duração em minutos'
@@ -405,6 +413,18 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         cleaned_data = super().clean()
         start_time = cleaned_data.get('start_time')
         selected_status = cleaned_data.get('status')
+        selected_program = cleaned_data.get('workout_program')
+
+        if (
+            self.instance.pk
+            and selected_program is not None
+            and selected_program.pk != self.instance.workout_program_id
+            and hasattr(self.instance, 'workout')
+        ):
+            self.add_error(
+                'workout_program',
+                'Esta aula já tem WOD associado. Ajuste o WOD antes de trocar a modalidade.',
+            )
 
         if self.instance.pk:
             session_policy = build_class_grid_session_policy(
@@ -425,4 +445,7 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         return cleaned_data
 
     def clean_workout_program(self):
-        return self.cleaned_data.get('workout_program') or getattr(self.instance, 'workout_program', None) or WorkoutProgram.objects.filter(slug='crossfit', is_active=True).first()
+        program = self.cleaned_data.get('workout_program')
+        if program is None:
+            raise forms.ValidationError('Escolha a modalidade que receberá a programação semanal.')
+        return program
