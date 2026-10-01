@@ -161,6 +161,7 @@ def _num(value) -> float | None:
 
 def _serialize(assessment: PublicWorkoutAssessment) -> dict:
     return {
+        'id': assessment.id,
         'measured_at': assessment.measured_at.isoformat(),
         'weight_kg': _num(assessment.weight_kg),
         'body_fat_percent': _num(assessment.body_fat_percent),
@@ -191,6 +192,7 @@ def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) ->
             'summary': None,
             'indicators': None,
             'skinfold_self_report_unlocked': False,
+            'hero_text': None,
         }
 
     first, last = assessments[0], assessments[-1]
@@ -227,6 +229,12 @@ def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) ->
         'summary': summary,
         'indicators': indicators,
         'skinfold_self_report_unlocked': skinfold_self_report_unlocked,
+        # Gerado uma vez por assessment_hero_ai.py no momento em que a
+        # avaliacao mais recente foi registrada (nunca aqui, em tempo de
+        # leitura) — so' leitura de campo, nao chama IA. None quando nunca
+        # foi gerado (avaliacao antiga, anterior a este campo) ou quando a
+        # IA nao respondeu.
+        'hero_text': last.hero_commentary or None,
     }
 
 

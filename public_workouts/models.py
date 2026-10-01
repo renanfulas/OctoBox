@@ -162,6 +162,13 @@ class PublicWorkoutAssessment(models.Model):
     # e aluno de box com StudentIdentity. Nunca ressincronizado — trocar de
     # identidade de um lado nao apaga nem altera avaliacoes ja lancadas.
     student_identity_id = models.IntegerField(null=True, blank=True, db_index=True)
+    # Comentario tecnico gerado por IA (Claude Haiku, assessment_hero_ai.py)
+    # UMA VEZ, no momento em que esta avaliacao e registrada — nunca
+    # recalculado em GET (mesmo principio de weekly_review_ai.py: custo/
+    # latencia de LLM por page-load seria inaceitavel). None quando a IA
+    # nao respondeu/falhou/nao configurada: o frontend so nao mostra o
+    # hero nesse caso, nunca quebra.
+    hero_commentary = models.TextField(null=True, blank=True)
 
     class Meta:
         db_table = 'public_workout_assessments'
