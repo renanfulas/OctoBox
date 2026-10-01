@@ -35,10 +35,12 @@ def enqueue_outbox(*, topic: str, aggregate_type: str, aggregate_id, version: in
 
 
 def _dispatch(message) -> bool:
-    # TOPIC_STAFF_NEW_SUBSCRIPTION nao usa base_url (nao carrega link
-    # magico) — checar a variavel so' pros topicos que precisam dela, pra
-    # um alerta interno de staff nunca falhar por uma config que nao lhe
-    # diz respeito.
+    base_url = str(getattr(settings, 'PUBLIC_WORKOUT_PUBLIC_BASE_URL', '') or '').strip()
+
+    # TOPIC_STAFF_NEW_SUBSCRIPTION nunca EXIGE base_url (so' usa, se
+    # presente, pra montar o link de anamnese) — um alerta interno de
+    # staff nao pode falhar por uma config que serve so' pra montar um
+    # link a mais (notify_staff_new_subscription degrada sozinho sem ela).
     if message.topic == TOPIC_STAFF_NEW_SUBSCRIPTION:
         from .models import PublicWorkoutSubscriptionEvent
         from .notifications import notify_staff_new_subscription
@@ -46,7 +48,9 @@ def _dispatch(message) -> bool:
         event = PublicWorkoutSubscriptionEvent.objects.select_related('subscription__account').get(
             pk=message.aggregate_id,
         )
-        results = notify_staff_new_subscription(event.subscription, previous_status=event.from_status)
+        results = notify_staff_new_subscription(
+            event.subscription, previous_status=event.from_status, base_url=base_url,
+        )
         # Sem rastreio por destinatario (diferente de PublicWorkoutProgramDelivery):
         # um sucesso parcial conta como entregue pra nao reenviar pra quem
         # ja recebeu a cada retry — so falha total (ou lista vazia de nada
@@ -55,7 +59,6 @@ def _dispatch(message) -> bool:
 
     from .notifications import notify_meal_plan_ready, notify_program_ready, notify_waitlist_invitation
 
-    base_url = str(getattr(settings, 'PUBLIC_WORKOUT_PUBLIC_BASE_URL', '') or '').strip()
     if not base_url:
         raise RuntimeError('PUBLIC_WORKOUT_PUBLIC_BASE_URL nao configurada')
     if message.topic == TOPIC_PROGRAM_READY:

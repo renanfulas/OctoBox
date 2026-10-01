@@ -72,18 +72,60 @@ def _previous_status_label(previous_status: str) -> str:
         return previous_status or '(desconhecido)'
 
 
+def _intake_cta_block(safe_intake_url: str) -> str:
+    """Bloco de CTA pra anamnese — vazio se nao houver link (ex.:
+    PUBLIC_WORKOUT_PUBLIC_BASE_URL ausente, mesma degradacao graciosa que
+    o resto deste modulo ja usa pra nao derrubar um alerta interno por
+    uma config que nao lhe diz respeito)."""
+    if not safe_intake_url:
+        return ''
+    return f"""\
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+                <tr>
+                  <td style="padding:0 0 10px;">
+                    <p style="margin:0;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
+                      Próximo passo
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td bgcolor="#2451C4" style="border-radius:14px;background:linear-gradient(135deg,#2451C4,#4C74D9);">
+                    <a href="{safe_intake_url}" style="display:inline-block;padding:16px 28px;font-size:16px;font-weight:700;letter-spacing:-0.01em;color:#ffffff;text-decoration:none;border-radius:14px;">
+                      Responda sua anamnese →
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0 0;">
+                    <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#60738f;">
+                      Link pessoal dela, de uso único — repasse por WhatsApp em vez de clicar aqui antes:
+                    </p>
+                    <p style="margin:0;font-size:12px;line-height:1.5;color:#3a5371;word-break:break-all;font-family:'SF Mono','Menlo','Consolas',monospace;background:#f6f7fa;padding:10px 12px;border-radius:8px;">
+                      {safe_intake_url}
+                    </p>
+                  </td>
+                </tr>
+              </table>"""
+
+
 def _build_staff_new_subscription_html(
-    *, email: str, tier_label: str, amount_str: str, plan_slug: str | None, previous_status_label: str,
+    *, email: str, tier_label: str, amount_str: str, intake_url: str, previous_status_label: str,
 ) -> str:
     """Mesma estrutura table-based/inline-style de
     student_identity/public_workout_notifications.py::build_login_email_html_body
     (a "cara" do Curva ja validada em producao) — so troca o conteudo do card
-    de link magico por um resumo de venda fechada, pro staff."""
+    de link magico por um resumo de venda fechada, pro staff.
+
+    `intake_url` (se presente) e' o link magico de login da PROPRIA aluna
+    direto pra anamnese (/treinos/anamnese) — pensado pro staff repassar
+    por WhatsApp, nao pra abrir primeiro: o token e' de uso unico (ver
+    PublicWorkoutLoginToken.mark_used), entao clicar aqui antes consome o
+    link e quebra o fluxo dela."""
     safe_email = _html_escape(email)
     safe_tier = _html_escape(tier_label)
     safe_amount = _html_escape(amount_str)
-    safe_slug = _html_escape(plan_slug or '(ainda nao atribuido)')
     safe_previous = _html_escape(previous_status_label)
+    safe_intake_url = _html_escape(intake_url)
     amount_row = (
         f"""
               <tr>
@@ -175,17 +217,9 @@ def _build_staff_new_subscription_html(
                     </p>
                   </td>
                 </tr>{amount_row}
-                <tr>
-                  <td style="padding:14px 18px;border-top:1px solid rgba(13,19,32,0.06);">
-                    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
-                      Slug do programa
-                    </p>
-                    <p style="margin:0;font-size:14px;color:#3a5371;">
-                      {safe_slug}
-                    </p>
-                  </td>
-                </tr>
               </table>
+
+              {_intake_cta_block(safe_intake_url)}
 
               <hr style="border:0;border-top:1px solid rgba(13,19,32,0.08);margin:0 0 20px;">
 
@@ -258,7 +292,29 @@ def notify_payment_due(payment, offset_days: int) -> dict:
     return result
 
 
-def notify_staff_new_subscription(subscription, *, previous_status: str) -> dict:
+def _build_intake_url(subscription, *, base_url: str) -> str:
+    """Magic link de login da PROPRIA aluna, ja apontando pra anamnese de
+    treino (/treinos/anamnese — whitelisted em _safe_public_workout_next,
+    student_identity/public_workout_views.py).
+
+    72h de validade (nao os 15min do link de "entrar agora" — esse aqui
+    nasce num e-mail de STAFF, pra ser repassado por WhatsApp quando der,
+    nao clicado na hora). Vazio se base_url nao estiver configurada: um
+    alerta interno de staff nao pode falhar por uma config que serve so
+    pra montar um link a mais (mesma regra do resto deste modulo).
+    """
+    if not base_url:
+        return ''
+    from .models import PublicWorkoutLoginToken
+
+    token = PublicWorkoutLoginToken.objects.create(
+        account=subscription.account,
+        expires_at=timezone.now() + timezone.timedelta(hours=72),
+    )
+    return f'{base_url.rstrip("/")}/treinos/login?token={token.token}&next=/treinos/anamnese'
+
+
+def notify_staff_new_subscription(subscription, *, previous_status: str, base_url: str = '') -> dict:
     """Avisa a equipe quando uma assinatura do corredor vira ACTIVE.
 
     Cobre venda nova (PENDING_PAYMENT -> ACTIVE) e reativacao apos
@@ -277,6 +333,7 @@ def notify_staff_new_subscription(subscription, *, previous_status: str) -> dict
     amount = _latest_paid_amount(subscription)
     amount_str = _format_brl(amount)
     previous_status_label = _previous_status_label(previous_status)
+    intake_url = _build_intake_url(subscription, base_url=base_url)
 
     subject_tier = f'{tier_label} {amount_str}' if amount_str else tier_label
     subject = f'Nova assinatura ativa — {account.email} ({subject_tier})'
@@ -285,12 +342,16 @@ def notify_staff_new_subscription(subscription, *, previous_status: str) -> dict
         f'Aluno: {account.email}\n'
         f'Plano: {tier_label}\n'
         + (f'Valor: {amount_str}/mes\n' if amount_str else '')
-        + f'Slug: {subscription.plan_slug or "(ainda nao atribuido)"}\n'
-        f'Status anterior: {previous_status_label}\n'
+        + f'Status anterior: {previous_status_label}\n'
+        + (
+            f'\nProximo passo: responda sua anamnese — link pessoal dela, de uso '
+            f'unico, repasse por WhatsApp em vez de abrir primeiro:\n{intake_url}\n'
+            if intake_url else ''
+        )
     )
     html_body = _build_staff_new_subscription_html(
         email=account.email, tier_label=tier_label, amount_str=amount_str,
-        plan_slug=subscription.plan_slug, previous_status_label=previous_status_label,
+        intake_url=intake_url, previous_status_label=previous_status_label,
     )
     result = {}
     for staff_email in getattr(settings, 'PUBLIC_WORKOUT_STAFF_ALERT_EMAILS', []):
