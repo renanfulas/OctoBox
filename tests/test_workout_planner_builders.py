@@ -220,7 +220,7 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         response = self.client.get(reverse('workout-planner'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Planeje a semana. Publique com confiança.')
+        self.assertContains(response, 'A semana de treinos, aula por aula.')
         self.assertContains(response, 'visíveis aos alunos')
         self.assertContains(response, 'WOD da semana')
         self.assertContains(response, 'WOD Semana')

@@ -244,3 +244,36 @@ class CustomerPortalReconciliationTests(TestCase):
         subscription.refresh_from_db()
         self.assertEqual(subscription.tier, PublicWorkoutTier.ESSENCIAL)
         self.assertEqual(subscription.status, PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_e')
+    def test_custom_priced_subscription_still_reconciles_status_despite_unknown_price(self):
+        # Achado ao desenhar o valor personalizado (start_custom_price_
+        # subscription_checkout): sem este bypass, um aluno com
+        # custom_monthly_price preenchido nunca teria past_due/suspenso
+        # reconciliado aqui, porque o Price ad-hoc nunca bate com nenhum
+        # dos 3 tiers fixos -- so o TIER fica congelado (correto), o
+        # STATUS precisa continuar respondendo ao Stripe normalmente.
+        from decimal import Decimal
+
+        account = PublicWorkoutAccount.objects.create(email='legado-valor-custom@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL)
+        subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        subscription.stripe_subscription_id = 'sub_custom_price'
+        subscription.custom_monthly_price = Decimal('150.00')
+        subscription.save(update_fields=['status', 'stripe_subscription_id', 'custom_monthly_price'])
+        event = PaymentWebhookEvent.objects.create(
+            event_id='evt_subscription_updated_custom_price', event_type='customer.subscription.updated',
+            payload={'data': {'object': {
+                'id': 'sub_custom_price', 'status': 'past_due', 'current_period_end': 1790000000,
+                'items': {'data': [{'price': {'id': 'price_ad_hoc_custom'}}]},
+            }}},
+        )
+
+        route_public_workout_stripe_event(event)
+
+        subscription.refresh_from_db()
+        # Tier congelado (nao ha tier canonico pra reconciliar de um Price ad-hoc)...
+        self.assertEqual(subscription.tier, PublicWorkoutTier.ESSENCIAL)
+        # ...mas o status continua respondendo ao Stripe normalmente.
+        self.assertEqual(subscription.status, PublicWorkoutSubscriptionStatus.PAST_DUE)
+        self.assertIsNotNone(subscription.current_period_end)

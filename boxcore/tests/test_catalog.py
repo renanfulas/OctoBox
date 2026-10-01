@@ -29,20 +29,23 @@ from auditing.models import AuditEvent
 from catalog.forms import ClassScheduleRecurringForm, StudentQuickForm
 from communications.models import StudentIntake, WhatsAppContact, WhatsAppMessageLog
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
-from operations.models import Attendance, ClassSession, SessionStatus
+from operations.models import Attendance, ClassSession, SessionStatus, WorkoutProgram
 from operations.session_snapshots import serialize_class_session
 from students.models import Student
+from operations.workout_program_catalog import ensure_default_workout_programs
 
 
 class CatalogViewTests(TestCase):
     def setUp(self):
         cache.clear()
+        ensure_default_workout_programs()
         self.user = get_user_model().objects.create_superuser(
             username='catalog-owner',
             email='catalog-owner@example.com',
             password='senha-forte-123',
         )
         self.valid_cpf = '052.484.340-68'
+        self.crossfit_program = WorkoutProgram.objects.get(slug='crossfit')
         self.student = Student.objects.create(full_name='Bruna Costa', phone='5511988888888')
         self.plan = MembershipPlan.objects.create(name='Cross Prime', price='289.90')
         self.plan_plus = MembershipPlan.objects.create(name='Cross Black', price='349.90')
@@ -216,6 +219,7 @@ class CatalogViewTests(TestCase):
             reverse('class-grid'),
             data={
                 'title': 'WOD 07h',
+                'workout_program': self.crossfit_program.pk,
                 'coach': '',
                 'start_date': str(start_date),
                 'end_date': str(end_date),
@@ -246,6 +250,7 @@ class CatalogViewTests(TestCase):
             reverse('class-grid'),
             data={
                 'title': 'WOD Sequencia 07h',
+                'workout_program': self.crossfit_program.pk,
                 'coach': '',
                 'start_date': start_date.strftime('%d/%m/%y'),
                 'end_date': start_date.strftime('%d/%m/%y'),
@@ -302,6 +307,7 @@ class CatalogViewTests(TestCase):
             data={
                 'form_kind': 'planner',
                 'title': 'Rodizio Weekend',
+                'workout_program': self.crossfit_program.pk,
                 'coach': self.coach.id,
                 'start_date': '2026-04-01',
                 'end_date': '2026-04-30',
@@ -344,6 +350,7 @@ class CatalogViewTests(TestCase):
             data={
                 'form_kind': 'planner',
                 'title': 'Rodizio Weekend',
+                'workout_program': self.crossfit_program.pk,
                 'coach': self.coach.id,
                 'start_date': '2026-04-01',
                 'end_date': '2026-04-30',
@@ -372,6 +379,7 @@ class CatalogViewTests(TestCase):
         form = ClassScheduleRecurringForm(
             data={
                 'title': 'WOD 08h',
+                'workout_program': str(self.crossfit_program.pk),
                 'coach': '',
                 'start_date': start_date.strftime('%d/%m/%y'),
                 'end_date': start_date.strftime('%d/%m/%y'),
@@ -393,6 +401,7 @@ class CatalogViewTests(TestCase):
         form = ClassScheduleRecurringForm(
             data={
                 'title': 'WOD 08h',
+                'workout_program': str(self.crossfit_program.pk),
                 'coach': '',
                 'start_date': '110326',
                 'end_date': '180326',
@@ -415,6 +424,7 @@ class CatalogViewTests(TestCase):
         form = ClassScheduleRecurringForm(
             data={
                 'title': 'WOD 08h',
+                'workout_program': str(self.crossfit_program.pk),
                 'coach': '',
                 'start_date': '111726',
                 'end_date': '180326',
@@ -437,6 +447,7 @@ class CatalogViewTests(TestCase):
         form = ClassScheduleRecurringForm(
             data={
                 'title': 'WOD 08h',
+                'workout_program': str(self.crossfit_program.pk),
                 'coach': '',
                 'start_date': start_date.strftime('%d/%m/%y'),
                 'end_date': start_date.strftime('%d/%m/%y'),
@@ -502,6 +513,7 @@ class CatalogViewTests(TestCase):
             reverse('class-grid'),
             data={
                 'title': 'WOD Limite Diario Exato',
+                'workout_program': self.crossfit_program.pk,
                 'coach': '',
                 'start_date': start_date.strftime('%d/%m/%y'),
                 'end_date': start_date.strftime('%d/%m/%y'),
@@ -530,6 +542,7 @@ class CatalogViewTests(TestCase):
             reverse('class-grid'),
             data={
                 'title': 'WOD Limite Semanal Exato',
+                'workout_program': self.crossfit_program.pk,
                 'coach': '',
                 'start_date': start_date.strftime('%d/%m/%y'),
                 'end_date': end_date.strftime('%d/%m/%y'),
@@ -562,6 +575,7 @@ class CatalogViewTests(TestCase):
             reverse('class-grid'),
             data={
                 'title': 'WOD Limite Mensal Exato',
+                'workout_program': self.crossfit_program.pk,
                 'coach': '',
                 'start_date': start_date.strftime('%d/%m/%y'),
                 'end_date': end_date.strftime('%d/%m/%y'),
@@ -659,6 +673,7 @@ class CatalogViewTests(TestCase):
                 'session_id': session.id,
                 'return_query': '',
                 'title': 'WOD 19h',
+                'workout_program': self.crossfit_program.pk,
                 'coach': self.coach.id,
                 'start_time': '19:00',
                 'duration_minutes': 75,
@@ -721,6 +736,7 @@ class CatalogViewTests(TestCase):
                 'session_id': session.id,
                 'return_query': '',
                 'title': 'Cross 06h',
+                'workout_program': self.crossfit_program.pk,
                 'coach': self.coach.id,
                 'start_time': '06:00',
                 'duration_minutes': 60,
@@ -752,6 +768,7 @@ class CatalogViewTests(TestCase):
                 'session_id': session.id,
                 'return_query': '',
                 'title': 'Mobility 08h',
+                'workout_program': session.workout_program_id,
                 'coach': self.coach.id,
                 'start_time': '08:00',
                 'duration_minutes': 60,
@@ -773,6 +790,7 @@ class CatalogViewTests(TestCase):
                 'session_id': session.id,
                 'return_query': '',
                 'title': 'Mobility 08h',
+                'workout_program': session.workout_program_id,
                 'coach': self.coach.id,
                 'start_time': '08:00',
                 'duration_minutes': 60,
@@ -805,6 +823,7 @@ class CatalogViewTests(TestCase):
                 'session_id': session.id,
                 'return_query': '',
                 'title': 'Engine 18h reforcada',
+                'workout_program': session.workout_program_id,
                 'coach': self.coach.id,
                 'start_time': '18:30',
                 'duration_minutes': 45,
@@ -829,6 +848,7 @@ class CatalogViewTests(TestCase):
                 'session_id': session.id,
                 'return_query': '',
                 'title': 'Engine 18h',
+                'workout_program': session.workout_program_id,
                 'coach': self.coach.id,
                 'start_time': '18:00',
                 'duration_minutes': 60,
@@ -888,6 +908,7 @@ class CatalogViewTests(TestCase):
                 'session_id': completed_session.id,
                 'return_query': '',
                 'title': 'Recovery 21h ajustada',
+                'workout_program': self.crossfit_program.pk,
                 'coach': self.coach.id,
                 'start_time': '21:00',
                 'duration_minutes': 60,
@@ -1007,6 +1028,7 @@ class CatalogViewTests(TestCase):
                 'form_kind': 'planner',
                 'return_query': '',
                 'title': 'WOD limite',
+                'workout_program': self.crossfit_program.pk,
                 'coach': '',
                 'start_date': str(start_date),
                 'end_date': str(start_date),

@@ -64,8 +64,11 @@ def _render(
     movement_labels=None,
     student_name='',
     student_photo_url=None,
-    customer_portal_url=None,
+    custom_checkout_available=False,
+    payment_setup_pending=False,
+    billing_portal_available=False,
     account_email=None,
+    nutrition_unlocked=False,
 ) -> str:
     if progress_snapshots is None:
         # Template fixtures now follow the production contract: the graph
@@ -132,8 +135,11 @@ def _render(
         'movement_labels': movement_labels or {},
         'student_name': student_name,
         'student_photo_url': student_photo_url,
-        'customer_portal_url': customer_portal_url,
+        'custom_checkout_available': custom_checkout_available,
+        'payment_setup_pending': payment_setup_pending,
+        'billing_portal_available': billing_portal_available,
         'account_email': account_email,
+        'nutrition_unlocked': nutrition_unlocked,
     })
 
 
@@ -191,14 +197,14 @@ class WorkoutTemplateRenderTests(TestCase):
 
         self.assertIn('40 kg', html)
 
-    def test_free_load_renders_livre(self):
+    def test_free_load_explains_that_no_weight_is_prescribed(self):
         payload = build_example_payload()
         payload['days'][0]['blocks'][0]['movements'][0]['load_type'] = 'free'
         payload['days'][0]['blocks'][0]['movements'][0]['load_value'] = None
 
         html = _render(payload)
 
-        self.assertIn('Livre', html)
+        self.assertIn('Sem carga prescrita', html)
 
     def test_is_tracked_shows_chip(self):
         html = _render(build_example_payload())  # is_tracked=True no exemplo
@@ -218,27 +224,25 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-save', html)
         self.assertIn(f"data-movement-slug=\"{build_example_payload()['days'][0]['blocks'][0]['movements'][0]['movement_slug']}\"", html)
 
-    def test_load_input_widget_starts_hidden_and_card_is_clickable(self):
+    def test_load_input_widget_starts_hidden_and_has_explicit_register_button(self):
         html = _render(build_example_payload())  # is_tracked=True no exemplo
 
-        self.assertIn('<div class="workout-load-input" data-workout-load-input', html)
+        self.assertIn('<div id="workout-load-input-seg-1-1" class="workout-load-input" data-workout-load-input', html)
         self.assertIn('data-workout-load-input data-movement-slug="agachamento-livre" data-program-id="exemplo-2026-q1" hidden', html)
-        self.assertIn('data-workout-load-toggle', html)
+        self.assertIn('class="workout-movement-register" data-workout-load-toggle aria-controls="workout-load-input-seg-1-1"', html)
 
-    def test_load_input_widget_is_always_the_immediate_next_sibling_of_the_card(self):
-        # Regressao real: o JS de toggle (workout.html, [data-workout-load-toggle])
-        # acha o widget via `card.nextElementSibling`, nao querySelector -- se
-        # QUALQUER elemento (ex.: o hint de "Registre sua carga") for inserido
-        # entre </article> e .workout-load-input, o clique para de reabrir o
-        # widget silenciosamente. Movimento sem 1RM (o caso mais comum) sempre
-        # renderiza o hint, entao esse regex tem que casar mesmo nesse caso.
+    def test_register_button_controls_its_widget_without_nested_controls(self):
         html = _render(build_example_payload())
 
-        card_count = html.count('workout-movement-card')
-        sibling_count = len(re.findall(r'</article>\s*<div class="workout-load-input"', html))
+        card = re.search(r'<article class="[^"]*workout-movement-card[^"]*">(.*?)</article>', html, re.S)
+        widget_id = re.search(r'data-workout-load-toggle aria-controls="([^"]+)"', card.group(1))
+        widget = re.search(r'<div id="([^"]+)" class="workout-load-input"', html)
 
-        self.assertGreater(card_count, 0)
-        self.assertEqual(sibling_count, card_count)
+        self.assertIsNotNone(widget_id)
+        self.assertEqual(widget_id.group(1), widget.group(1))
+        opening_tag = card.group(0).split('>', 1)[0]
+        self.assertNotIn('role="button"', opening_tag)
+        self.assertNotIn('tabindex="0"', opening_tag)
 
     def test_movement_not_tracked_still_has_load_input_row(self):
         # Pedido do Renan: "clica expande em todos os exercicios" -- o
@@ -252,8 +256,8 @@ class WorkoutTemplateRenderTests(TestCase):
 
         html = _render(payload)
 
-        self.assertIn('<div class="workout-load-input"', html)
-        self.assertIn('data-workout-load-toggle tabindex="0" role="button" aria-expanded', html)
+        self.assertIn('class="workout-load-input" data-workout-load-input', html)
+        self.assertIn('class="workout-movement-register" data-workout-load-toggle aria-controls=', html)
         self.assertNotIn('workout-tracked-chip', html)
 
     def test_body_carries_plan_slug_for_load_tracker_js(self):
@@ -321,7 +325,7 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
             ],
         )
 
@@ -351,7 +355,7 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k-hoje'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': None, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k-hoje', 'set_role': 'top_set'},
             ],
         )
 
@@ -370,11 +374,45 @@ class WorkoutTemplateRenderTests(TestCase):
         html = _render(
             build_example_payload(),
             load_history=[
-                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1'},
+                {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0, 'performed_on': today, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
             ],
         )
 
         self.assertIn('data-today-rir="2.0"', html)
+
+    def test_load_input_targets_the_top_set_when_a_warmup_was_logged_after_it(self):
+        today = timezone.localdate().isoformat()
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 100.0, 'reps': 8, 'rir': 2.0,
+             'performed_on': today, 'program_id': '', 'week_in_program': None,
+             'idempotency_key': 'top-set-today', 'set_role': 'top_set'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 60.0, 'reps': 10, 'rir': None,
+             'performed_on': today, 'program_id': '', 'week_in_program': None,
+             'idempotency_key': 'warmup-later', 'set_role': 'warmup'},
+        ])
+
+        widget_start = html.index('data-workout-load-input')
+        widget = html[widget_start:html.index('data-workout-load-status', widget_start)]
+        self.assertIn('data-today-idempotency-key="top-set-today"', widget)
+        self.assertIn('data-today-top-set-idempotency-key="top-set-today"', widget)
+        self.assertIn('data-today-warmup-idempotency-key="warmup-later"', widget)
+        self.assertIn('value="100.0"', widget)
+        self.assertNotIn('data-workout-load-warmup-toggle checked', widget)
+
+    def test_load_input_selects_existing_warmup_when_no_top_set_exists(self):
+        today = timezone.localdate().isoformat()
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 60.0, 'reps': 10, 'rir': None,
+             'performed_on': today, 'program_id': '', 'week_in_program': None,
+             'idempotency_key': 'warmup-only', 'set_role': 'warmup'},
+        ])
+
+        widget_start = html.index('data-workout-load-input')
+        widget = html[widget_start:html.index('data-workout-load-status', widget_start)]
+        self.assertIn('data-today-idempotency-key="warmup-only"', widget)
+        self.assertIn('data-today-warmup-idempotency-key="warmup-only"', widget)
+        self.assertIn('data-workout-load-warmup-toggle checked', widget)
+        self.assertIn('value="60.0"', widget)
 
     def test_records_section_exists_inside_cargas_panel(self):
         # "Suas Cargas" (recorde por movimento) mora dentro do painel de
@@ -408,6 +446,7 @@ class WorkoutTemplateRenderTests(TestCase):
         # (6, nao 8 -- o log de 100kg, nao o de 90kg) — achado real: o
         # template ignorava esse valor mesmo com o dado pronto no dict.
         self.assertIn('workout-record-card__reps">6 reps', html)
+        self.assertIn('Maior carga em 01/02/2026', html)
 
     def test_records_tab_omits_reps_when_none(self):
         # Registro anterior a esta fase (ou movimento sem reps
@@ -491,11 +530,8 @@ class WorkoutTemplateRenderTests(TestCase):
 
         html = _render(payload)
 
-        # 'data-workout-load-toggle' sozinho tambem aparece 1x no <script>
-        # inline (querySelectorAll) -- conta o cluster de atributos da tag
-        # de verdade, mesmo padrao ja usado nos outros testes deste arquivo.
-        self.assertEqual(html.count('data-workout-load-toggle tabindex="0" role="button" aria-expanded'), 2)
-        self.assertEqual(html.count('<div class="workout-load-input"'), 2)
+        self.assertEqual(html.count('class="workout-movement-register" data-workout-load-toggle'), 2)
+        self.assertEqual(html.count('class="workout-load-input" data-workout-load-input'), 2)
         self.assertEqual(html.count('workout-tracked-chip'), 1)
 
     def test_history_tab_renders_without_data(self):
@@ -533,6 +569,9 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('Agachamento livre', html)
         self.assertIn('workout-load-chart-line', html)
         self.assertIn('workout-load-chart-trend--up', html)
+        self.assertIn('Ver registros recentes', html)
+        self.assertIn('RIR 2', html)
+        self.assertIn('8 reps', html)
         # Texto visivel usa separador decimal pt-BR (USE_L10N, mesma
         # convencao de "75,0% RM" ja testada acima); coordenadas do SVG
         # abaixo tem que ficar de FORA disso (SVG so aceita ponto).
@@ -545,11 +584,83 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertNotIn('Ainda não há carga suficiente', html)
 
     def test_history_tab_shows_fallback_with_fewer_than_two_points(self):
+        recent_day = timezone.localdate().isoformat()
         html = _render(build_example_payload(), load_history=[
-            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': '2026-01-05', 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': recent_day, 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
         ])
 
-        self.assertIn('Registre duas séries principais para iniciar sua curva de evolução.', html)
+        self.assertIn('Você já tem uma série principal recente.', html)
+        self.assertIn('Ver registros recentes', html)
+        self.assertNotIn('workout-load-chart-line', html)
+
+    def test_legacy_only_history_shows_last_value_without_an_empty_chart(self):
+        from public_workouts.progress_snapshot import ProgressPoint
+
+        legacy_day = timezone.localdate() - timedelta(days=25)
+        legacy = ProgressPoint(
+            performed_on=legacy_day, weight_kg=Decimal('72.5'), reps=None, rir=None,
+            created_at=datetime.combine(legacy_day, datetime.min.time()), program_id='',
+        )
+        html = _render(
+            build_example_payload(),
+            load_history=[{
+                'movement_slug': 'agachamento-livre', 'weight_kg': 72.5, 'reps': None, 'rir': None,
+                'performed_on': legacy_day.isoformat(), 'program_id': '', 'week_in_program': None,
+                'idempotency_key': 'legacy-only', 'set_role': 'legacy_unknown',
+            }],
+            progress_snapshots={
+                'agachamento-livre': SimpleNamespace(
+                    latest_top_set=None, curve_points=[], legacy_points=[legacy], has_legacy_history=True,
+                    y_scale=None, trend_signal='insufficient_data', one_rep_max=None,
+                ),
+            },
+        )
+
+        self.assertIn('Último registro anterior', html)
+        self.assertIn('72,5 <span>kg</span>', html)
+        self.assertIn(legacy_day.strftime('%d/%m/%Y'), html)
+        self.assertIn('não entra na curva comparável', html)
+        self.assertNotIn('workout-load-chart-svg', html)
+
+    def test_history_tab_keeps_latest_load_visible_when_outside_chart_window(self):
+        from public_workouts.progress_snapshot import ProgressPoint
+
+        latest_day = timezone.localdate() - timedelta(days=120)
+        latest = ProgressPoint(
+            performed_on=latest_day, weight_kg=Decimal('82.5'), reps=6, rir=Decimal('2'),
+            created_at=datetime.combine(latest_day, datetime.min.time()), program_id='bruno-2026-q1',
+        )
+        html = _render(
+            build_example_payload(),
+            load_history=[{
+                'movement_slug': 'agachamento-livre', 'weight_kg': 82.5, 'reps': 6, 'rir': 2.0,
+                'performed_on': latest_day.isoformat(), 'program_id': 'bruno-2026-q1',
+                'week_in_program': None, 'idempotency_key': 'stale-top-set', 'set_role': 'top_set',
+            }],
+            progress_snapshots={
+                'agachamento-livre': SimpleNamespace(
+                    latest_top_set=latest, curve_points=[], legacy_points=[], has_legacy_history=False,
+                    y_scale=None, trend_signal='insufficient_data', one_rep_max=None,
+                ),
+            },
+        )
+
+        self.assertIn('82,5 kg', html)
+        self.assertIn('há mais de 90 dias', html)
+        self.assertIn(latest_day.strftime('%d/%m/%Y'), html)
+        self.assertNotIn('workout-load-chart-line', html)
+
+    def test_warmup_only_history_explains_why_it_does_not_start_the_curve(self):
+        html = _render(build_example_payload(), load_history=[
+            {'movement_slug': 'agachamento-livre', 'weight_kg': 60.0, 'reps': 8, 'rir': None,
+             'performed_on': timezone.localdate().isoformat(), 'program_id': '', 'week_in_program': None,
+             'idempotency_key': 'warmup-only', 'set_role': 'warmup'},
+        ])
+
+        self.assertIn('Séries de aquecimento não entram na evolução.', html)
+        self.assertIn('Seu histórico está salvo. Séries de aquecimento e registros anteriores não contam como recorde.', html)
+        self.assertIn('Registre uma série principal atual para começar seu resumo do ciclo.', html)
+        self.assertNotIn('data-workout-record-card', html)
         self.assertNotIn('workout-load-chart-line', html)
 
     def test_history_tab_shows_sibling_variation_as_labeled_reference(self):
@@ -769,22 +880,21 @@ class WorkoutTopbarAndNavTests(TestCase):
         self.assertIn('<img src="https://example.com/foto.jpg"', html)
 
     def test_bottom_nav_has_five_destinations_in_order(self):
-        # Treino nao tem mais [data-workout-tab-target] fixo -- virou o
-        # botao de ciclo (Treino/Cardio/Periodizacao, ver
-        # data-workout-cycle-nav) pedido pelo Renan, ainda assim ocupa o
-        # 3o slot visualmente entre Avaliacao e Cargas.
+        # Avaliacao e Treino nao tem mais [data-workout-tab-target] fixo --
+        # viraram botoes de ciclo (Avaliacao/Dieta e Treino/Cardio/
+        # Periodizacao, ver data-workout-cycle-nav), cada um desambiguado
+        # por data-cycle-key.
         html = _render(build_example_payload())
 
         nav_start = html.index('workout-mobile-nav')
-        fixed_order = ['workout-panel-inicio', 'workout-panel-avaliacao']
-        positions = [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in fixed_order]
-        cycle_nav_position = html.index('data-workout-cycle-nav', nav_start)
+        inicio_position = html.index('data-workout-tab-target="workout-panel-inicio"', nav_start)
+        avaliacao_cycle_position = html.index('data-cycle-key="avaliacao"', nav_start)
+        treino_cycle_position = html.index('data-cycle-key="treino"', nav_start)
         trailing_order = ['workout-panel-cargas', 'workout-panel-perfil']
-        positions += [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in trailing_order]
+        positions = [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in trailing_order]
 
-        self.assertEqual(positions[:2], sorted(positions[:2]))
-        self.assertTrue(positions[1] < cycle_nav_position < positions[2])
-        self.assertEqual(positions[2:], sorted(positions[2:]))
+        self.assertTrue(inicio_position < avaliacao_cycle_position < treino_cycle_position < positions[0])
+        self.assertEqual(positions, sorted(positions))
 
     def test_inicio_panel_is_active_by_default(self):
         html = _render(build_example_payload())
@@ -813,10 +923,9 @@ class WorkoutTopbarAndNavTests(TestCase):
         import datetime
 
         payload = build_example_payload()  # dia unico day_id='seg'
-        # segunda-feira da semana CORRENTE (build_week_overview usa date.today()
-        # internamente, entao a carga registrada precisa cair na mesma semana
-        # de "hoje" pra aparecer, nao importa quando o teste rodar).
-        today = datetime.date.today()
+        # segunda-feira da semana local corrente (mesma data local do seletor
+        # de treino, inclusive perto da virada do dia no servidor).
+        today = timezone.localdate()
         monday = today - datetime.timedelta(days=today.weekday())
         html = _render(payload, load_history=[
             {'movement_slug': 'agachamento-livre', 'weight_kg': 90.0, 'reps': 8, 'rir': 2.0, 'performed_on': monday.isoformat(), 'program_id': '', 'week_in_program': None, 'idempotency_key': 'k1', 'set_role': 'top_set'},
@@ -858,12 +967,18 @@ class CardioPeriodizacaoCycleNavTests(TestCase):
     """Botao de ciclo "Treino" do bottom nav (pedido do Renan): um SO' slot
     alterna Treino/Cardio/Periodizacao a cada toque, em vez de 3 botoes
     fixos. Cardio/Periodizacao saem da lista de alvos quando o payload nao
-    tem esse dado (aditivo ao schema, ver schema.py)."""
+    tem esse dado (aditivo ao schema, ver schema.py).
+
+    A pagina tem um SEGUNDO botao de ciclo (Avaliacao/Dieta, ver
+    NutritionCycleNavTests abaixo) -- os regex aqui exigem
+    data-cycle-key="treino" pra nunca casar com o data-cycle-targets do
+    outro botao por engano (re.search pega o PRIMEIRO match da pagina, e
+    Avaliacao vem antes de Treino na ordem do nav)."""
 
     def test_cycle_targets_only_treino_without_cardio_or_periodization(self):
         html = _render(build_example_payload())
 
-        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        match = re.search(r'data-cycle-key="treino"\s+data-cycle-targets="([^"]*)"', html)
         self.assertIsNotNone(match)
         self.assertEqual(match.group(1), 'workout-panel-treino')
 
@@ -873,7 +988,7 @@ class CardioPeriodizacaoCycleNavTests(TestCase):
 
         html = _render(payload)
 
-        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        match = re.search(r'data-cycle-key="treino"\s+data-cycle-targets="([^"]*)"', html)
         self.assertEqual(match.group(1), 'workout-panel-treino|workout-panel-cardio')
 
     def test_cycle_targets_include_both_when_present(self):
@@ -886,8 +1001,56 @@ class CardioPeriodizacaoCycleNavTests(TestCase):
 
         html = _render(payload)
 
-        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        match = re.search(r'data-cycle-key="treino"\s+data-cycle-targets="([^"]*)"', html)
         self.assertEqual(match.group(1), 'workout-panel-treino|workout-panel-cardio|workout-panel-periodizacao')
+
+
+class NutritionCycleNavTests(TestCase):
+    """Botao de ciclo "Avaliacao" do bottom nav: alterna Avaliacao -> Dieta
+    -> Avaliacao a cada toque (mesmo mecanismo do ciclo Treino acima, ver
+    data-workout-cycle-nav em workout-shell.js). Dieta sai do Perfil (onde
+    vivia antes) porque o card ficava enterrado atras de Conta/Pagamentos/
+    Tema -- agora tem visibilidade de aba de primeiro nivel, igual
+    Treino/Cardio/Periodizacao."""
+
+    def test_avaliacao_cycle_targets_avaliacao_then_dieta(self):
+        html = _render(build_example_payload())
+
+        match = re.search(r'data-cycle-key="avaliacao"\s+data-cycle-targets="([^"]*)"', html)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.group(1), 'workout-panel-avaliacao|workout-panel-dieta')
+
+    def test_dieta_panel_exists_as_sibling_of_avaliacao(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('<section id="workout-panel-dieta"', html)
+
+    def test_nutrition_card_no_longer_renders_inside_perfil(self):
+        html = _render(build_example_payload(), nutrition_unlocked=True)
+
+        perfil_start = html.index('id="workout-panel-perfil"')
+        dieta_start = html.index('id="workout-panel-dieta"')
+        perfil_html = html[perfil_start:dieta_start if dieta_start > perfil_start else len(html)]
+        self.assertNotIn('data-workout-nutrition', perfil_html)
+
+    def test_dieta_panel_shows_meal_plan_widget_when_unlocked(self):
+        html = _render(build_example_payload(), nutrition_unlocked=True)
+
+        dieta_start = html.index('id="workout-panel-dieta"')
+        dieta_end = html.index('id="workout-panel-treino"')
+        dieta_html = html[dieta_start:dieta_end]
+        self.assertIn('data-workout-nutrition', dieta_html)
+        self.assertIn('data-nutrition-url', dieta_html)
+        self.assertNotIn('Disponível nos planos Completo e Premium', dieta_html)
+
+    def test_dieta_panel_shows_upsell_when_locked(self):
+        html = _render(build_example_payload(), nutrition_unlocked=False)
+
+        dieta_start = html.index('id="workout-panel-dieta"')
+        dieta_end = html.index('id="workout-panel-treino"')
+        dieta_html = html[dieta_start:dieta_end]
+        self.assertIn('Disponível nos planos Completo e Premium', dieta_html)
+        self.assertNotIn('data-workout-nutrition', dieta_html)
 
     def test_cardio_panel_empty_without_cardio_data(self):
         html = _render(build_example_payload())
@@ -968,19 +1131,62 @@ class WorkoutAssessmentPanelTests(TestCase):
 
         self.assertIn('js/public_workouts/assessments.js', html)
         self.assertIn('css/public_workouts/assessments.css', html)
+        self.assertIn('css/public_workouts/workout-assessment.css', html)
+        self.assertIn('class="workout-assessment-panel"', html)
+
+
+class WorkoutModuleAssetTests(TestCase):
+    def test_training_progress_and_shell_assets_are_separate(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('css/public_workouts/workout-training.css', html)
+        self.assertIn('css/public_workouts/workout-progress.css', html)
+        self.assertIn('js/public_workouts/workout-shell.js', html)
+        self.assertNotIn('data-workout-load-toggle tabindex="0" role="button"', html)
 
 
 class WorkoutProfilePanelTests(TestCase):
-    def test_payments_link_shown_when_portal_url_provided(self):
-        html = _render(build_example_payload(), customer_portal_url='https://billing.stripe.com/session/abc')
+    def test_payments_opens_billing_portal_directly_when_available(self):
+        # Aluno com stripe_customer_id (1o checkout ja concluido): "Pagamentos"
+        # precisa abrir o Customer Portal direto, sem passar por /treinos/minha-conta
+        # (achado do Renan: pra quem ja tem assinatura ativa, a pagina de conta
+        # some no meio do caminho um CTA de "abrir programa", nao de pagamento).
+        html = _render(build_example_payload(), billing_portal_available=True)
 
-        self.assertIn('href="https://billing.stripe.com/session/abc"', html)
+        self.assertIn('data-billing-portal', html)
+        self.assertNotIn('data-workout-start-custom-checkout', html)
         self.assertIn('Pagamentos', html)
 
-    def test_payments_shows_unavailable_without_portal_url(self):
-        html = _render(build_example_payload(), customer_portal_url=None)
+    def test_payments_starts_custom_checkout_when_price_already_set(self):
+        # Achado real (Rafael, cliente legado): sem stripe_customer_id, a
+        # assinatura ja' nasce ACTIVE (seed_legacy_workout_accounts) e nunca
+        # cai nos estados de pagamento de get_customer_journey() -- o hub
+        # /treinos/minha-conta nao mostra nada sobre pagar. Depois que o
+        # Renan preenche custom_monthly_price no admin, "Pagamentos" dispara
+        # o checkout de valor negociado (POST /treinos/checkout-
+        # personalizado), nunca mais um link morto pro hub.
+        html = _render(build_example_payload(), billing_portal_available=False, custom_checkout_available=True)
+
+        self.assertIn('data-workout-start-custom-checkout', html)
+        self.assertNotIn('data-billing-portal', html)
+        self.assertNotIn('href="/treinos/minha-conta"', html)
+
+    def test_payments_asks_to_talk_to_renan_when_price_not_set_yet(self):
+        # Mesmo achado acima, ANTES do Renan preencher custom_monthly_price
+        # no admin -- nunca mostra um botao que chamaria a view e falharia
+        # com 404 'valor_nao_definido'.
+        html = _render(build_example_payload(), billing_portal_available=False, payment_setup_pending=True)
+
+        self.assertIn('Fale com o Renan', html)
+        self.assertNotIn('data-workout-start-custom-checkout', html)
+        self.assertNotIn('data-billing-portal', html)
+
+    def test_payments_shows_unavailable_without_subscription(self):
+        html = _render(build_example_payload())
 
         self.assertIn('indisponível', html)
+        self.assertNotIn('data-billing-portal', html)
+        self.assertNotIn('data-workout-start-custom-checkout', html)
 
     def test_theme_toggle_button_present(self):
         html = _render(build_example_payload())
@@ -1009,7 +1215,6 @@ class WorkoutProfilePanelTests(TestCase):
 
         self.assertIn('Sair da conta', html)
         self.assertIn('data-signout-url="/renan/juliana/sair"', html)
-
 
 class HumanizeMovementSlugFilterTests(TestCase):
     def test_replaces_hyphens_and_capitalizes(self):
@@ -1795,7 +2000,9 @@ class MovementDisplayNameAndVariationRenderTests(TestCase):
         html = _render(payload)
 
         self.assertIn('data-workout-variation-toggle', html)
-        self.assertIn('<span class="workout-movement-variation" data-workout-variation hidden>', html)
+        self.assertIn('aria-controls="workout-variation-seg-1-1"', html)
+        self.assertIn('id="workout-variation-seg-1-1"', html)
+        self.assertIn('class="workout-movement-variation" data-workout-variation hidden>', html)
 
     def test_variation_toggle_available_regardless_of_is_tracked(self):
         # Igual ao registro de carga: a disponibilidade do toggle nao
@@ -2162,7 +2369,7 @@ class PeriodizationCanonicalTreinoRenderTests(TestCase):
     def test_registration_hint_renders_in_treino_tab_without_one_rep_max(self):
         html = _render(build_example_payload())
 
-        self.assertIn('Registre sua carga para controlar a kilagem.', html)
+        self.assertIn('Toque em registrar para acompanhar a evolução.', html)
 
     def test_registration_hint_absent_once_one_rep_max_exists(self):
         payload = build_example_payload()
@@ -2171,4 +2378,30 @@ class PeriodizationCanonicalTreinoRenderTests(TestCase):
 
         html = _render(payload, one_rep_max_by_movement=one_rm)
 
-        self.assertNotIn('Registre sua carga para controlar a kilagem.', html)
+        self.assertNotIn('Toque em registrar para acompanhar a evolução.', html)
+
+
+class WeeklyReviewHeroCardTests(TestCase):
+    # Card automatico da Início com o resumo por Haiku (achado do Renan) --
+    # so' prova a MARCACAO (atributos que weekly_review.js le), o
+    # comportamento de fetch/cache ja e' coberto em
+    # public_workouts/test_weekly_review_ai.py e
+    # student_app/test_public_workout_weekly_review_endpoint.py.
+
+    def test_hero_card_starts_hidden_and_silent(self):
+        html = _render(build_example_payload(), plan_slug='bruno')
+
+        self.assertIn('data-workout-weekly-review', html)
+        self.assertIn('data-workout-weekly-review-silent-empty', html)
+        self.assertIn('data-weekly-review-url="/renan/bruno/revisao-semanal"', html)
+
+    def test_hero_card_has_no_manual_generate_button(self):
+        # Diferenca do card da aba Cargas: sem botao, weekly_review.js
+        # busca sozinho ao carregar (ver docstring do JS).
+        html = _render(build_example_payload(), plan_slug='bruno')
+
+        hero_start = html.index('workout-weekly-review-hero')
+        cargas_start = html.index('data-workout-weekly-review-generate')
+        self.assertLess(hero_start, cargas_start)
+        hero_section = html[hero_start:cargas_start]
+        self.assertNotIn('data-workout-weekly-review-generate', hero_section)

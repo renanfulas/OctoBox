@@ -133,3 +133,99 @@ def test_returning_customer_enters_with_one_time_magic_link(page: Page, live_ser
         assert account.last_login_at is not None
     finally:
         account.delete()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+def test_legacy_active_customer_with_custom_price_starts_checkout_from_the_app(
+    page: Page, live_server, monkeypatch,
+):
+    """Achado real (Rafael, cliente legado — seed_legacy_workout_accounts):
+    assinatura ja' nasce com status=ACTIVE mas SEM stripe_customer_id (nunca
+    passou pelo checkout de verdade). Antes, "Pagamentos" na aba Perfil
+    (/renan/<slug>) caia num link morto pro hub /treinos/minha-conta — o
+    hub nao mostra nada sobre pagar porque get_customer_journey() so' trata
+    status PAST_DUE/SUSPENDED/PENDING_PAYMENT, nunca "ACTIVE sem Stripe
+    nenhum ainda". Depois que o Renan preenche custom_monthly_price no
+    admin (PublicWorkoutSubscriptionAdmin), "Pagamentos" dispara o checkout
+    de valor negociado (POST /treinos/checkout-personalizado,
+    PublicWorkoutCustomCheckoutView) direto do app, sem ele precisar
+    copiar/colar link no WhatsApp."""
+    from public_workouts.schema import build_example_payload
+    from public_workouts.services import publish_program
+
+    email = 'legado-valor-negociado-e2e@example.test'
+    publish_program(slug='bruno', payload=build_example_payload())
+    account = PublicWorkoutAccount.objects.create(email=email)
+    subscription = get_or_create_subscription(account=account, plan_slug='bruno', tier=PublicWorkoutTier.ESSENCIAL)
+    subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+    subscription.custom_monthly_price = 150
+    subscription.save(update_fields=['status', 'custom_monthly_price'])
+    monkeypatch.setattr(
+        'student_identity.public_workout_views.start_custom_price_subscription_checkout',
+        lambda **_kwargs: f'{live_server.url}/treinos/minha-conta?checkout=retorno',
+    )
+    try:
+        page.context.add_cookies([{
+            'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            'value': build_public_workout_session_value(account_id=account.pk),
+            'url': live_server.url,
+        }])
+        page.goto(f'{live_server.url}/renan/bruno')
+        page.locator('[data-workout-tab-target="workout-panel-perfil"]').click()
+
+        pagamentos = page.locator('[data-workout-start-custom-checkout]')
+        expect(pagamentos).to_be_visible()
+        expect(pagamentos).to_contain_text('Pagar agora')
+        pagamentos.click()
+
+        page.wait_for_url('**/treinos/minha-conta?checkout=retorno')
+        expect(page.locator('body')).not_to_have_text('Server Error')
+
+        subscription.refresh_from_db()
+        assert subscription.status == PublicWorkoutSubscriptionStatus.ACTIVE
+    finally:
+        account.delete()
+        from public_workouts.models import PublicWorkoutProgram
+
+        PublicWorkoutProgram.objects.filter(slug='bruno').delete()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+def test_legacy_active_customer_without_custom_price_sees_talk_to_renan_message(
+    page: Page, live_server,
+):
+    """Mesmo cenario acima, ANTES do Renan preencher custom_monthly_price
+    no admin -- nunca mostra um botao que chamaria a view e falharia com
+    404 'valor_nao_definido'."""
+    from public_workouts.schema import build_example_payload
+    from public_workouts.services import publish_program
+
+    email = 'legado-sem-valor-e2e@example.test'
+    publish_program(slug='bruno', payload=build_example_payload())
+    account = PublicWorkoutAccount.objects.create(email=email)
+    subscription = get_or_create_subscription(account=account, plan_slug='bruno', tier=PublicWorkoutTier.ESSENCIAL)
+    subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+    subscription.save(update_fields=['status'])
+    try:
+        page.context.add_cookies([{
+            'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            'value': build_public_workout_session_value(account_id=account.pk),
+            'url': live_server.url,
+        }])
+        page.goto(f'{live_server.url}/renan/bruno')
+        page.locator('[data-workout-tab-target="workout-panel-perfil"]').click()
+
+        perfil_panel = page.locator('#workout-panel-perfil')
+        expect(perfil_panel.get_by_text('Fale com o Renan', exact=True)).to_be_visible()
+        expect(page.locator('[data-workout-start-custom-checkout]')).to_have_count(0)
+        expect(page.locator('[data-billing-portal]')).to_have_count(0)
+    finally:
+        from public_workouts.models import PublicWorkoutFunnelEvent, PublicWorkoutProgram
+
+        # PublicWorkoutDetailView.get registra funnel event a cada visita --
+        # FK pra subscription nao e CASCADE, precisa sair antes da conta.
+        PublicWorkoutFunnelEvent.objects.filter(subscription=subscription).delete()
+        account.delete()
+        PublicWorkoutProgram.objects.filter(slug='bruno').delete()

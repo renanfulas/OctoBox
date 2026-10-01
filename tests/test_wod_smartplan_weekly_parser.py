@@ -107,10 +107,46 @@ class DetectAndConvertSmartplanWeeklyTests(TestCase):
         result = detect_and_convert_smartplan_weekly('')
         self.assertIsNone(result)
 
-    def test_returns_none_when_markers_incomplete(self):
+    def test_blocks_text_only_smartplan_when_markers_incomplete(self):
         text = '=== WOD NORMALIZADO ===\nAlgum treino\n(sem JSON)'
         result = detect_and_convert_smartplan_weekly(text)
-        self.assertIsNone(result)
+        self.assertIsNotNone(result)
+        self.assertEqual(result['source_format'], 'smartplan_text_v2')
+        self.assertTrue(result['parse_errors'])
+
+    def test_detects_text_only_v2_wrapped_in_code_fence_and_extracts_content(self):
+        text = (
+            '```\n=== WOD NORMALIZADO ===\n'
+            'SEGUNDA-FEIRA\n[MOBILIDADE]\n[AQUECIMENTO]\n3 séries\n'
+            '▸ 15x Sit-Up\n=== FIM ===\n```'
+        )
+
+        result = detect_and_convert_smartplan_weekly(text)
+
+        self.assertEqual(result['source_format'], 'smartplan_text_v2')
+        self.assertEqual(result['normalized_text'], 'SEGUNDA-FEIRA\n[MOBILIDADE]\n[AQUECIMENTO]\n3 séries\n▸ 15x Sit-Up')
+        self.assertEqual(result['parse_errors'], [])
+
+    def test_detects_text_only_v2_markers_on_same_line(self):
+        text = '=== WOD NORMALIZADO === SEGUNDA-FEIRA [WOD] ▸ 10x Burpee === FIM ==='
+
+        result = detect_and_convert_smartplan_weekly(text)
+
+        self.assertEqual(result['source_format'], 'smartplan_text_v2')
+        self.assertEqual(result['normalized_text'], 'SEGUNDA-FEIRA [WOD] ▸ 10x Burpee')
+        self.assertEqual(result['parse_errors'], [])
+
+    def test_malformed_structured_json_returns_blocking_parse_error(self):
+        text = (
+            '=== WOD NORMALIZADO ===\nSegunda\nWOD\n10 push up\n'
+            '=== JSON ESTRUTURADO ===\n{not valid json\n=== FIM ==='
+        )
+
+        result = detect_and_convert_smartplan_weekly(text)
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result['days'], [])
+        self.assertIn('JSON estruturado está malformado', result['parse_errors'][0])
 
     def test_detects_smartplan_format_and_returns_payload(self):
         result = detect_and_convert_smartplan_weekly(FULL_WEEK_SAMPLE)
@@ -211,8 +247,7 @@ class DetectAndConvertSmartplanWeeklyTests(TestCase):
         movement = result['days'][0]['blocks'][0]['movements'][0]
         self.assertIsNone(movement['load_spec'])
 
-    def test_blocks_without_day_prefix_go_to_fallback_day(self):
-        """Blocos sem prefixo de dia são associados à Segunda como fallback."""
+    def test_blocks_without_day_prefix_are_blocked_instead_of_assigned_to_monday(self):
         text = _make_smartplan_text([
             {
                 'order': 1,
@@ -231,8 +266,26 @@ class DetectAndConvertSmartplanWeeklyTests(TestCase):
             }
         ])
         result = detect_and_convert_smartplan_weekly(text)
-        self.assertEqual(len(result['days']), 1)
-        self.assertEqual(result['days'][0]['weekday'], 0)
+        self.assertEqual(result['days'], [])
+        self.assertEqual(len(result['parse_errors']), 1)
+        self.assertIn('WOD Genérico', result['parse_errors'][0])
+
+    def test_block_title_with_multiple_days_is_blocked_as_ambiguous(self):
+        blocks = [{
+            'order': 1,
+            'type': 'metcon',
+            'title': 'SEGUNDA-FEIRA + TERÇA-FEIRA — WOD',
+            'duration_min': None,
+            'rounds': None,
+            'movements': [],
+        }]
+
+        result = detect_and_convert_smartplan_weekly(_make_smartplan_text(blocks))
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result['days'], [])
+        self.assertEqual(len(result['parse_errors']), 1)
+        self.assertIn('único dia', result['parse_errors'][0])
 
     def test_session_warnings_propagated(self):
         text = _make_smartplan_text(
@@ -246,3 +299,34 @@ class DetectAndConvertSmartplanWeeklyTests(TestCase):
         )
         result = detect_and_convert_smartplan_weekly(text)
         self.assertIn('aviso de exemplo', result['parse_warnings'])
+
+    def test_movement_prescription_metadata_is_preserved(self):
+        text = _make_smartplan_text([{
+            'order': 1,
+            'type': 'strength',
+            'title': 'SEGUNDA-FEIRA — Força',
+            'duration_min': None,
+            'rounds': 4,
+            'movements': [{
+                'order': 1,
+                'slug': 'front_squat',
+                'label_pt': 'Agachamento frontal',
+                'reps': '5-5-5',
+                'sets': 3,
+                'load_kg': None,
+                'load_note': None,
+                'load_pct_rm': 75,
+                'load_pct_rm_exercise': 'front_squat',
+                'is_scaled_alternative': True,
+                'notes': 'Manter a técnica em todas as séries.',
+            }],
+        }])
+
+        result = detect_and_convert_smartplan_weekly(text)
+        movement = result['days'][0]['blocks'][0]['movements'][0]
+
+        self.assertEqual(movement['sets'], 3)
+        self.assertEqual(movement['reps_spec'], '5-5-5')
+        self.assertEqual(movement['load_spec'], '75% RM')
+        self.assertTrue(movement['is_scaled_alternative'])
+        self.assertEqual(movement['notes'], 'Manter a técnica em todas as séries.')

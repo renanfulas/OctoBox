@@ -286,7 +286,6 @@ PONTOS CRITICOS:
             openClearWeekDialog();
             return;
         }
-
         if (event.key === 'Delete') {
             event.preventDefault();
             openDeleteSelectedDialog();

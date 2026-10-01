@@ -95,6 +95,7 @@ from public_workouts.services import (
 
 from public_workouts.stripe_checkout import (
     PublicWorkoutStripeNotConfiguredError,
+    start_custom_price_subscription_checkout,
     start_customer_portal_session,
     start_subscription_checkout,
 )
@@ -667,6 +668,58 @@ class PublicWorkoutColdSignupView(View):
         # so pra ver a propria fila de status depois do pagamento, e o
         # redirect pra anamnese acima dependeria de sessao ja existir.
         return attach_public_workout_session_cookie(response, account_id=account.pk)
+
+
+class PublicWorkoutCustomCheckoutView(View):
+    """POST /treinos/checkout-personalizado — self-service do checkout de
+    valor negociado, pra cliente legado ACTIVE que nunca passou pela
+    Stripe (achado real: Rafael — seed_legacy_workout_accounts cria a
+    assinatura ja' ACTIVE, status que get_customer_journey() nunca trata
+    como "precisa pagar", entao /treinos/minha-conta nao mostrava nada
+    sobre pagamento e "Pagamentos" caia num link morto).
+
+    Antes desta view, o UNICO jeito de gerar esse checkout era a acao de
+    admin "Gerar link de checkout com valor personalizado" (Public
+    Workout Subscription, PublicWorkoutSubscriptionAdmin) -- o Renan
+    tinha que copiar a URL e mandar por fora (WhatsApp). Esta view fecha
+    o loop DENTRO do app, mas so' funciona depois que ele ja' preencheu
+    `custom_monthly_price` no admin pra aquela assinatura -- nunca aceita
+    valor vindo do proprio request (mesma trava de
+    start_custom_price_subscription_checkout). Sem o valor definido:
+    404 'valor_nao_definido' -- o template mostra "Fale com o Renan" em
+    vez de um botao que sempre falharia.
+    """
+
+    def post(self, request, *args, **kwargs):
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'nao_autenticado'}, status=401)
+
+        try:
+            account = PublicWorkoutAccount.objects.get(pk=account_id)
+        except PublicWorkoutAccount.DoesNotExist:
+            return JsonResponse({'error': 'nao_autenticado'}, status=401)
+
+        subscription = getattr(account, 'subscription', None)
+        if subscription is None or subscription.stripe_customer_id:
+            # Sem assinatura, ou ja tem stripe_customer_id (usa o Customer
+            # Portal normal, data-billing-portal) -- este caminho nao se
+            # aplica, nao e erro de configuracao.
+            return JsonResponse({'error': 'nao_aplicavel'}, status=404)
+        if subscription.custom_monthly_price is None:
+            return JsonResponse({'error': 'valor_nao_definido'}, status=404)
+
+        account_url = request.build_absolute_uri(reverse('public-workout-account'))
+        try:
+            checkout_url = start_custom_price_subscription_checkout(
+                subscription=subscription,
+                success_url=f'{account_url}?checkout=retorno',
+                cancel_url=f'{account_url}?checkout=cancelado',
+            )
+        except PublicWorkoutStripeNotConfiguredError as exc:
+            return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
+
+        return JsonResponse({'checkout_url': checkout_url})
 
 
 class PublicWorkoutBillingPortalView(View):

@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from freezegun import freeze_time
 
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
@@ -16,7 +17,8 @@ from django.utils import timezone
 
 from auditing.models import AuditEvent
 from finance.models import Enrollment, MembershipPlan
-from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
+from operations.models import Attendance, AttendanceStatus, ClassSession, ClassType, SessionStatus
+from operations.services.wod_projection import project_plan_to_sessions
 from student_app.application.cache_keys import (
     build_student_agenda_snapshot_cache_key,
     build_student_home_snapshot_cache_key,
@@ -30,6 +32,7 @@ from student_app.models import (
     SessionWorkoutBlock,
     SessionWorkoutMovement,
     SessionWorkoutStatus,
+    MovementLibrary,
     StudentAppActivity,
     StudentAppActivityKind,
     StudentExerciseMax,
@@ -37,6 +40,7 @@ from student_app.models import (
     StudentProfileChangeRequest,
     StudentProfileChangeRequestStatus,
     StudentWorkoutView,
+    WeeklyWodPlan,
     WorkoutBlockKind,
     WorkoutLoadType,
 )
@@ -1569,6 +1573,121 @@ class StudentAppExperienceTests(TestCase):
         self.assertLessEqual(len(captured_queries), 4)
         self.assertEqual(second_result.primary_recommendation.recommended_load_kg, Decimal('55.00'))
 
+    def test_weekly_projected_workout_uses_rich_student_render_without_smartplan_flag(self):
+        MovementLibrary.objects.create(
+            slug='push-press',
+            label_pt='Push press',
+            reference_url='https://example.test/push-press',
+            demo_video_url='https://video.example.test/push-press',
+        )
+        session = ClassSession.objects.create(
+            title='Cross semanal',
+            scheduled_at=timezone.now() + timedelta(minutes=30),
+            status='open',
+            class_type=ClassType.CROSS,
+        )
+        local_session_date = timezone.localtime(session.scheduled_at).date()
+        week_start = local_session_date - timedelta(days=local_session_date.weekday())
+        weekday = local_session_date.weekday()
+        plan = WeeklyWodPlan.objects.create(
+            week_start=week_start,
+            label='Semana com metadados completos',
+            source_text='21/15/9 For time, 3 rounds, cap 12 min, intervalo 90 s.',
+            status='confirmed',
+            parsed_payload={
+                'source': 'weekly_smart_paste',
+                'days': [{
+                    'weekday': weekday,
+                    'blocks': [{
+                        'kind': 'metcon',
+                        'title': 'WOD',
+                        'notes': '',
+                        'timecap_min': 12,
+                        'rounds': 3,
+                        'interval_seconds': 90,
+                        'score_type': 'for_time',
+                        'format_spec': '21/15/9',
+                        'movements': [{
+                            'movement_slug': 'push_press',
+                            'movement_label_raw': '21/15/9 push press 40/25 kg',
+                            'sets': 3,
+                            'reps_spec': '21/15/9',
+                            'load_spec': '40/25 kg',
+                            'is_scaled_alternative': True,
+                            'notes': 'Carga por categoria.',
+                        }, {
+                            'movement_slug': 'deadlift',
+                            'movement_label_raw': 'Deadlift de 10 a 12 reps a 65% RM',
+                            'sets': 4,
+                            'reps_spec': '10 a 12',
+                            'load_spec': '65% RM',
+                            'is_scaled_alternative': False,
+                            'notes': '',
+                        }],
+                    }, {
+                        'kind': 'skill',
+                        'title': 'EMOM tecnico',
+                        'notes': '',
+                        'rounds': 10,
+                        'interval_seconds': 60,
+                        'score_type': 'emom',
+                        'format_spec': 'EMOM 10 — 1:00 rest',
+                        'movements': [],
+                    }],
+                }],
+            },
+        )
+        actor = get_user_model().objects.create_user(
+            username='weekly-projection-qa',
+            email='weekly-projection-qa@example.com',
+            password=None,
+        )
+        project_plan_to_sessions(
+            weekly_plan=plan,
+            target_week_start=week_start,
+            class_types=[ClassType.CROSS],
+            actor=actor,
+        )
+        workout = SessionWorkout.objects.get(session=session)
+        self.assertEqual(workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        workout.status = SessionWorkoutStatus.PUBLISHED
+        workout.save(update_fields=['status', 'updated_at'])
+
+        result = GetStudentWorkoutDay().execute(
+            student=self.student,
+            session_id=session.id,
+            box_root_slug=get_box_runtime_slug(),
+        )
+
+        self.assertFalse(result.is_normalized)
+        self.assertTrue(result.has_structured_content)
+        self.assertEqual(
+            result.blocks[0].format_label,
+            '21/15/9 · For time · 3 rounds · time cap 12 min · intervalo 90 s',
+        )
+        self.assertEqual(result.blocks[0].movements[0].prescription_label, '3 séries · 21/15/9 reps · @ 40/25 kg')
+        self.assertTrue(result.blocks[0].movements[0].is_scaled_alternative)
+        self.assertEqual(result.blocks[0].movements[0].notes, 'Carga por categoria.')
+        self.assertEqual(result.blocks[0].movements[0].reference_url, 'https://example.test/push-press')
+        self.assertEqual(result.blocks[0].movements[0].demo_video_url, 'https://video.example.test/push-press')
+        self.assertEqual(result.blocks[0].movements[1].prescription_label, '4 séries · 10 a 12 reps · @ 65% RM')
+        self.assertEqual(result.blocks[1].format_label, 'EMOM 10 — 1:00 rest · 10 rounds · intervalo 60 s')
+
+        response = self.client.get(
+            reverse('student-app-wod'),
+            {'session_id': session.id},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            '21/15/9 · For time · 3 rounds · time cap 12 min · intervalo 90 s',
+        )
+        self.assertContains(response, '3 séries · 21/15/9 reps · @ 40/25 kg')
+        self.assertContains(response, 'Ver demonstração')
+        self.assertContains(response, 'https://video.example.test/push-press')
+        self.assertContains(response, '4 séries · 10 a 12 reps · @ 65% RM')
+        self.assertContains(response, 'EMOM 10 — 1:00 rest · 10 rounds · intervalo 60 s')
+
     def test_student_dashboard_agenda_snapshot_keeps_attendance_personalized(self):
         cache.clear()
         session = ClassSession.objects.create(
@@ -2510,6 +2629,10 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         content = response.content.decode('utf-8')
         self.assertIn('workout-shell', content)
         self.assertIn('workout-mobile-nav', content)
+        self.assertIn('/renan/bruno/manifest.webmanifest', content)
+        self.assertIn("register('/renan/sw.js?slug=", content)
+        self.assertIn('id="public-workout-install"', content)
+        self.assertRegex(content, r'workout-progress\.css\?v=[^"\']+')
 
     def test_falls_back_to_legacy_when_no_program_published(self):
         # giovanna: nenhum publish_program chamado nesta base de teste —
@@ -2596,7 +2719,13 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         payload = response.json()
         self.assertEqual(
             payload,
-            {'assessments': [], 'summary': None, 'indicators': None, 'skinfold_self_report_unlocked': False},
+            {
+                'assessments': [],
+                'summary': None,
+                'indicators': None,
+                'skinfold_self_report_unlocked': False,
+                'hero_text': None,
+            },
         )
 
     def test_returns_404_for_unknown_plan_slug(self):

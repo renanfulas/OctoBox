@@ -11,7 +11,7 @@ O QUE ESTE ARQUIVO FAZ:
 3. evita duplicar chip/titulo quando o titulo do bloco repete o kind_label.
 
 PONTOS CRITICOS:
-- esta partial so e incluida quando student_workout.is_normalized == True.
+- esta partial so e incluida quando ha blocos estruturados no snapshot; isso pode ocorrer em SmartPlan ou Smart Paste semanal.
 - nao referenciar student_workout.structured_payload aqui; isso e auditoria, nao render.
 - movimentos sem carga mostram so a prescricao (sem repetir "carga livre").
 - meta da sessao e badge SmartPlan vivem no header de wod.html (shell v2, Onda 3).
@@ -31,6 +31,9 @@ PONTOS CRITICOS:
         {% if block.notes %}
         <p class="student-wod-block__notes">{{ block.notes }}</p>
         {% endif %}
+        {% if block.format_label %}
+        <p class="student-wod-block__format">{{ block.format_label }}</p>
+        {% endif %}
         <div class="student-wod-movement-list">
             {% for movement in block.movements %}
             <article class="student-wod-movement-card">
@@ -41,6 +44,9 @@ PONTOS CRITICOS:
                     <strong>{{ movement.movement_label }}</strong>
                     {% endif %}
                     <span>{{ movement.prescription_label }}</span>
+                    {% if movement.demo_video_url %}<a href="{{ movement.demo_video_url }}" target="_blank" rel="noopener noreferrer" class="student-wod-movement-video">Ver demonstração ↗</a>{% endif %}
+                    {% if movement.is_scaled_alternative %}<small class="student-wod-movement-card__scaled">Alternativa escalada</small>{% endif %}
+                    {% if movement.notes %}<small class="student-wod-movement-card__notes">{{ movement.notes }}</small>{% endif %}
                 </div>
 
                 {% if movement.load_context_label == 'Percentual do RM' %}

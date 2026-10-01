@@ -34,6 +34,7 @@ class ClassScheduleCreateCommand:
     status: str
     notes: str
     skip_existing: bool
+    workout_program_id: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +48,7 @@ class ClassSessionUpdateCommand:
     capacity: int
     status: str
     notes: str
+    workout_program_id: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +81,7 @@ def build_class_schedule_create_command(*, actor_id: int | None, cleaned_data: d
         status='scheduled',
         notes=cleaned_data.get('notes') or '',
         skip_existing=bool(cleaned_data.get('skip_existing')),
+        workout_program_id=getattr(cleaned_data.get('workout_program'), 'pk', None),
     )
 
 
@@ -99,6 +102,7 @@ def build_class_session_update_command(
         capacity=cleaned_data.get('capacity'),
         status=cleaned_data.get('status') or '',
         notes=cleaned_data.get('notes') or '',
+        workout_program_id=getattr(cleaned_data.get('workout_program'), 'pk', None),
     )
 
 

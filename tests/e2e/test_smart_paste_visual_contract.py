@@ -44,7 +44,7 @@ from django.utils import timezone
 from playwright.sync_api import Browser, Page, expect
 
 from operations.models import ClassSession, ClassType, WorkoutTemplate
-from student_app.models import SessionWorkout, SessionWorkoutStatus
+from student_app.models import ReplicationBatch, SessionWorkout, SessionWorkoutStatus, WeeklyWodPlan, WeeklyWodPlanStatus
 from student_identity.infrastructure.session import build_student_session_value
 from student_identity.models import StudentBoxMembership, StudentBoxMembershipStatus, StudentIdentity, StudentIdentityProvider, StudentIdentityStatus
 from students.models import Student
@@ -232,14 +232,15 @@ def test_wod_template_archive_dialog_has_readable_colors(page: Page, live_server
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize('theme', THEMES)
-def test_wod_planner_danger_action_is_visible_and_uses_semantic_surface(page: Page, live_server, e2e_owner_credentials, theme):
+def test_wod_planner_does_not_expose_bulk_delete_action(page: Page, live_server, e2e_owner_credentials, theme):
     _login(page, live_server.url, e2e_owner_credentials)
     page.set_viewport_size(VIEWPORTS['mobile'])
     _set_theme(page, theme)
     page.goto(f'{live_server.url}/operacao/wod/planner/')
-    button = page.locator('.wod-planner__btn-danger')
-    expect(button).to_be_visible()
-    assert button.evaluate('el => getComputedStyle(el).backgroundImage') == 'none'
+    expect(page.get_by_role('button', name='Remover todos os WODs')).to_have_count(0)
+    expect(page.locator('#planner-clear-week-dialog')).to_have_count(0)
+    page.keyboard.press('d')
+    expect(page.locator('#planner-clear-week-dialog')).to_have_count(0)
     assert _horizontal_overflow(page) <= 1
 
 
@@ -332,6 +333,7 @@ def test_smart_paste_visual_baseline_contract(
         page.locator("textarea[name=source_text]").fill(
             "Segunda:\nAquecimento\n3 rounds\n10 agachamnto\n8 push up\n5 pull up\n"
         )
+        page.locator('select[name="workout_program"]').select_option(label='CrossFit')
         page.locator("form.smart-paste-form button[type=submit]").click()
         page.wait_for_load_state("networkidle")
         assert _horizontal_overflow(page) <= 1, "overflow horizontal apos organizar o texto"
@@ -406,6 +408,7 @@ def test_iphone_dialog_review_survives_htmx_swap(browser: Browser, live_server, 
         page.locator('textarea[name="source_text"]').fill(
             'Segunda:\nAquecimento\n3 rounds\n10 movimento inventado xyz\n8 push up\n'
         )
+        page.locator('select[name="workout_program"]').select_option(label='CrossFit')
         page.locator('form.smart-paste-form button[type="submit"]').click()
         page.wait_for_load_state('networkidle')
         page.locator('[data-action="open-day-dialog"]').first.click()
@@ -425,11 +428,16 @@ def test_iphone_dialog_review_survives_htmx_swap(browser: Browser, live_server, 
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
-def test_smart_paste_golden_path_end_to_end(page: Page, live_server, e2e_owner_credentials):
+@pytest.mark.parametrize(
+    ('program_slug', 'program_label', 'class_type'),
+    (('crossfit', 'CrossFit', ClassType.CROSS), ('hyrox', 'HYROX', ClassType.HYROX)),
+)
+def test_smart_paste_golden_path_end_to_end(
+    page: Page, live_server, e2e_owner_credentials, program_slug, program_label, class_type,
+):
     """
     Fluxo principal ponta a ponta: colar um treino limpo (sem pendência de
-    revisão) -> organizar -> confirmar rascunho semanal -> painel de
-    replicação aparece. Usa CLEAN_SAMPLE_WOD (mesmo texto de
+    revisão) -> organizar -> conferir cobertura real sem gravar WODs. Usa CLEAN_SAMPLE_WOD (mesmo texto de
     tests/test_workout_smart_paste.py) para não depender de chave de API
     real em CI — todo movimento resolve pelo dicionário estático.
     """
@@ -438,38 +446,82 @@ def test_smart_paste_golden_path_end_to_end(page: Page, live_server, e2e_owner_c
     page.goto(f"{live_server.url}/operacao/wod/paste/")
     page.wait_for_load_state("networkidle")
 
+    selected_week_start = datetime.strptime(
+        page.locator('input[name="week_start"]').input_value(),
+        '%d/%m/%Y',
+    ).date()
+    actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    ClassSession.objects.create(
+        title=f'Smart Paste Golden Path {program_label}',
+        class_type=class_type,
+        coach=actor,
+        scheduled_at=timezone.make_aware(
+            datetime.combine(selected_week_start, datetime.min.time()).replace(hour=12)
+        ),
+        duration_minutes=60,
+        capacity=16,
+    )
+
     page.locator("textarea[name=source_text]").fill(CLEAN_SAMPLE_WOD)
+    page.locator('select[name="workout_program"]').select_option(label=program_label)
     page.locator("form.smart-paste-form button[type=submit]").click()
     page.wait_for_load_state("networkidle")
 
     expect(page.locator(".smart-paste-confidence-strip")).to_contain_text("Leitura pronta")
 
-    # Keep this test on the explicit confirm-only path; the adjacent primary
-    # action now retries Haiku and immediately projects to the Planner.
+    plan = WeeklyWodPlan.objects.get(created_by=actor)
+    assert plan.workout_program_id, 'todo plano semanal precisa guardar sua trilha de modalidade'
+    assert plan.workout_program.is_active
+    assert plan.workout_program.slug == program_slug
+    assert page.locator('form.smart-paste-confirm-form input[name="workout_program"]').input_value() == str(plan.workout_program_id)
+
     confirm_button = page.locator(
-        'form.smart-paste-confirm-form button[name="action"][value="confirm_plan"]'
+        'form.smart-paste-confirm-form button[name="action"][value="confirm_and_project"]'
     )
     expect(confirm_button).to_be_enabled()
     confirm_button.click()
     page.wait_for_load_state("networkidle")
 
     expect(page.locator("#smart-paste-projection-panel")).to_be_visible(timeout=10_000)
-    expect(page.get_by_text("Montar preview de replicacao", exact=False)).to_be_visible()
+    expect(page.get_by_text("1 aula(s) pronta(s) para criar")).to_be_visible()
+    expect(page.locator('dialog.smart-paste-week-dialog[open]')).to_be_visible()
+    expect(page.get_by_role('button', name='Distribuir WODs às aulas')).to_be_visible()
+    assert not SessionWorkout.objects.exists(), 'conferir a semana nao deve gravar WODs'
 
     assert _horizontal_overflow(page) <= 1, "overflow horizontal apos confirmar e abrir a replicacao"
 
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
-def test_smart_paste_auto_send_reaches_planner_and_keeps_approval_gate(
+def test_smart_paste_requires_explicit_modality_in_browser(page: Page, live_server, e2e_owner_credentials):
+    """A tela nova não pode manter um CrossFit oculto como destino padrão."""
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.goto(f'{live_server.url}/operacao/wod/paste/')
+    selector = page.locator('select[name="workout_program"]')
+    expect(selector).to_be_visible()
+    expect(selector).to_have_value('')
+    expect(selector).to_have_attribute('required', 'required')
+
+    page.locator('textarea[name="source_text"]').fill(CLEAN_SAMPLE_WOD)
+    page.locator('form.smart-paste-form button[type="submit"]').click()
+
+    actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    assert not WeeklyWodPlan.objects.filter(created_by=actor).exists()
+    expect(selector).to_be_focused()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gate(
     page: Page,
     live_server,
     e2e_owner_credentials,
 ):
-    """A ação automática coloca o WOD na aula certa e conserva a aprovação."""
+    """A semana mostra os destinos antes de escrever os WODs e conserva a aprovação."""
     actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
     today = timezone.localdate()
-    target_monday = today + timedelta(days=(7 - today.weekday()) % 7)
+    # Diferencia a semana escolhida da sugestão padrão para detectar fallback silencioso.
+    target_monday = today + timedelta(days=(7 - today.weekday()) % 7) + timedelta(days=7)
     session = ClassSession.objects.create(
         title='Smart Paste E2E CrossFit',
         class_type=ClassType.CROSS,
@@ -478,26 +530,161 @@ def test_smart_paste_auto_send_reaches_planner_and_keeps_approval_gate(
         duration_minutes=60,
         capacity=16,
     )
+    # Estende o limite do picker até a semana seguinte, permitindo escolher
+    # uma quarta-feira na semana-alvo e verificar o snap no fluxo completo.
+    ClassSession.objects.create(
+        title='Limite futuro do calendário WOD',
+        class_type=ClassType.CROSS,
+        coach=actor,
+        scheduled_at=timezone.make_aware(
+            datetime.combine(target_monday + timedelta(days=7), datetime.min.time()).replace(hour=12)
+        ),
+        duration_minutes=60,
+        capacity=16,
+    )
 
     _login(page, live_server.url, e2e_owner_credentials)
     page.goto(f"{live_server.url}/operacao/wod/paste/")
     page.wait_for_load_state("networkidle")
-    page.locator('input[name="week_start"]').fill(target_monday.strftime('%d/%m/%Y'))
+    target_wednesday = target_monday + timedelta(days=2)
+    page.locator('#smart-paste-week-start-picker').evaluate(
+        """(picker, value) => {
+            picker.value = value;
+            picker.dispatchEvent(new Event('change', { bubbles: true }));
+        }""",
+        target_wednesday.isoformat(),
+    )
+    expect(page.locator('input[name="week_start"]')).to_have_value(target_monday.strftime('%d/%m/%Y'))
+    expect(page.locator('#smart-paste-week-start-picker')).to_have_value(target_monday.isoformat())
+    expect(page.locator('[data-smart-date-monday-hint]')).to_contain_text('Ajustado para segunda')
     page.locator('input[name="label"]').fill('E2E Smart Paste Automático')
     page.locator('textarea[name="source_text"]').fill(CLEAN_SAMPLE_WOD)
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
     page.locator('form.smart-paste-form button[type="submit"]').click()
     page.wait_for_load_state("networkidle")
 
     page.locator(
         'form.smart-paste-confirm-form button[name="action"][value="confirm_and_project"]'
     ).click()
-    page.wait_for_url(f"**/operacao/wod/planner/?week={target_monday.isoformat()}", timeout=15_000)
+    expect(page.locator('#smart-paste-projection-panel')).to_be_visible()
+    expect(page.get_by_text('1 aula(s) pronta(s) para criar')).to_be_visible()
+    idempotency_field = page.locator('#smart-paste-distribute-form [name="idempotency_key"]')
+    expect(idempotency_field).to_have_count(1)
+    expect(idempotency_field).not_to_have_value('')
+    expect(page.locator('#smart-paste-projection-panel #id_idempotency_key')).to_have_count(0)
+    dialog = page.locator('dialog.smart-paste-week-dialog[open]')
+    expect(dialog).to_be_visible()
+    expect(dialog.get_by_role('heading', name='Confira para onde cada WOD vai')).to_be_visible()
+    assert not SessionWorkout.objects.filter(session=session).exists(), 'o preview nao deve gravar o WOD'
+
+    dialog.locator('[data-weekday-filter="0"]').click()
+    monday_destination = dialog.locator('.smart-paste-projection-card[data-weekday-index="0"]').filter(
+        has_text='Smart Paste E2E CrossFit'
+    )
+    expect(monday_destination).to_be_visible()
+    monday_destination.locator('details > summary').first.click()
+    expect(monday_destination).to_contain_text('3x')
+    for prescription in ('10 reps', '8 reps', '20 reps'):
+        expect(monday_destination).to_contain_text(prescription)
+    dialog.locator('[data-weekday-filter="all"]').click()
+
+    page.set_viewport_size({'width': 375, 'height': 667})
+    dialog_box = dialog.bounding_box()
+    assert dialog_box
+    assert dialog_box['x'] >= 0 and dialog_box['y'] >= 0
+    assert dialog_box['x'] + dialog_box['width'] <= 376
+    assert dialog_box['y'] + dialog_box['height'] <= 668
+    expect(dialog.get_by_role('button', name='Voltar para revisar')).to_be_visible()
+    expect(dialog.locator('.smart-paste-projection-card').first).to_contain_text('Smart Paste E2E CrossFit')
+
+    dialog.get_by_role('button', name='Voltar para revisar').click()
+    expect(page.locator('dialog.smart-paste-week-dialog[open]')).to_have_count(0)
+    expect(page.locator('#smart-paste-projection-panel')).to_be_visible()
+    open_review_button = page.get_by_role('button', name='Abrir revisão da semana')
+    expect(open_review_button).to_be_focused()
+    open_review_button.click()
+    dialog = page.locator('dialog.smart-paste-week-dialog[open]')
+    expect(dialog).to_be_visible()
+    page.keyboard.press('Escape')
+    expect(page.locator('dialog.smart-paste-week-dialog[open]')).to_have_count(0)
+    expect(open_review_button).to_be_focused()
+    open_review_button.click()
+    dialog = page.locator('dialog.smart-paste-week-dialog[open]')
+
+    distribution_button = page.get_by_role('button', name='Distribuir WODs às aulas')
+    expect(dialog.locator('.smart-paste-unlinked-warning')).to_be_visible()
+    acknowledgement = dialog.locator('[name="acknowledge_unlinked_movements"]')
+    expect(acknowledgement).not_to_be_checked()
+    expect(distribution_button).to_be_disabled()
+    acknowledgement.check()
+    expect(distribution_button).to_be_enabled()
+    retry_key = dialog.locator('#smart-paste-distribute-form [name="idempotency_key"]').input_value()
+
+    dropped_response = {}
+
+    def commit_then_drop_response(route):
+        upstream_response = route.fetch()
+        dropped_response['status'] = upstream_response.status
+        route.abort(error_code='failed')
+
+    page.route('**/operacao/wod/paste/', commit_then_drop_response)
+    with page.expect_event(
+        'requestfailed',
+        predicate=lambda request: request.url.split('?')[0].rstrip('/').endswith('/operacao/wod/paste'),
+        timeout=10000,
+    ):
+        distribution_button.click()
+    expect(dialog).to_be_visible()
+    assert dropped_response.get('status') == 200, 'o servidor deve ter confirmado a gravação antes da queda simulada'
+    assert SessionWorkout.objects.filter(session=session, status=SessionWorkoutStatus.PENDING_APPROVAL).exists()
+    page.unroute('**/operacao/wod/paste/', commit_then_drop_response)
+    expect(distribution_button).to_be_enabled()
+    distribution_button.click()
+
+    distribution_result = page.locator('#smart-paste-projection-panel .smart-paste-distribution-result')
+    expect(distribution_result).to_be_visible()
+    expect(distribution_result).to_contain_text('Resultado recuperado')
+    expect(distribution_result).to_contain_text('1 WOD(s) criados')
+    expect(distribution_result).to_contain_text('1 aguardando aprovação')
+    expect(distribution_result).to_contain_text('0 publicados conforme a política do box')
+    expect(page.locator('#smart-paste-projection-panel .smart-paste-projection-summary')).to_contain_text(
+        '0 aula(s) pronta(s) para criar'
+    )
+    expect(page.locator('#smart-paste-distribute-form [data-action="distribute-week"]')).to_be_disabled()
+    assert SessionWorkout.objects.filter(session=session, status=SessionWorkoutStatus.PENDING_APPROVAL).exists()
+    plan = WeeklyWodPlan.objects.get(label='E2E Smart Paste Automático')
+    assert plan.week_start == target_monday
+    batch = ReplicationBatch.objects.get(weekly_plan=plan)
+    assert batch.target_week_start == target_monday
+    assert str(batch.idempotency_key) == retry_key
+    assert SessionWorkout.objects.filter(session=session).count() == 1
+    page.goto(f'{live_server.url}/operacao/wod/planner/?week={target_monday.isoformat()}')
+    page.wait_for_load_state('networkidle')
 
     projected_cell = page.locator(
         '[data-wod-planner-cell][data-wod-state="pending"]'
     ).filter(has_text='E2E Smart Paste Automático')
     expect(projected_cell).to_be_visible()
     expect(projected_cell).to_have_attribute('data-planner-status-label', 'Aguardando aprovação')
+    week_heading = page.locator('.wod-planner__toolbar h2')
+    target_week_label = f'{target_monday:%d/%m} - {target_monday + timedelta(days=6):%d/%m}'
+    previous_week = target_monday - timedelta(days=7)
+    previous_week_label = f'{previous_week:%d/%m} - {previous_week + timedelta(days=6):%d/%m}'
+    next_link = page.get_by_role('link', name='Próxima →')
+    assert next_link.get_attribute('href').endswith(
+        f'?week={(target_monday + timedelta(days=7)).isoformat()}'
+    )
+    next_link.click()
+    expect(week_heading).to_have_text(
+        f'{target_monday + timedelta(days=7):%d/%m} - {target_monday + timedelta(days=13):%d/%m}'
+    )
+    page.get_by_role('link', name='← Anterior').click()
+    expect(week_heading).to_have_text(target_week_label)
+    page.get_by_role('link', name='← Anterior').click()
+    expect(week_heading).to_have_text(previous_week_label)
+    page.get_by_role('link', name='Próxima →').click()
+    expect(week_heading).to_have_text(target_week_label)
+    expect(projected_cell).to_be_visible()
     screenshot_dir = Path('tmp') / 'visual_contract' / 'smart_paste'
     screenshot_dir.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=screenshot_dir / 'planner-pending-desktop.png', full_page=True)
@@ -541,6 +728,8 @@ def test_smart_paste_auto_send_reaches_planner_and_keeps_approval_gate(
     assert page.locator('.wod-inbox__preview-card select[name="rejection_category"]').bounding_box()['height'] <= 64
     assert page.locator('.wod-inbox__preview-card input[name="rejection_reason"]').bounding_box()['height'] <= 64
     page.screenshot(path=screenshot_dir / 'approval-mobile-dark.png', full_page=True)
+
+
     assert not form_field_background.startswith('rgb(255'), (
         f'campo de aprovação branco no tema escuro: {form_field_background}'
     )
@@ -640,6 +829,74 @@ def test_smart_paste_auto_send_reaches_planner_and_keeps_approval_gate(
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
+def test_custom_movement_requires_explicit_ack_in_mobile_distribution_dialog(
+    page: Page,
+    live_server,
+    e2e_owner_credentials,
+):
+    actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    today = timezone.localdate()
+    target_monday = today + timedelta(days=(7 - today.weekday()) % 7)
+    session = ClassSession.objects.create(
+        title='Smart Paste Custom E2E',
+        class_type=ClassType.CROSS,
+        coach=actor,
+        scheduled_at=timezone.make_aware(datetime.combine(target_monday, datetime.min.time()).replace(hour=11)),
+        duration_minutes=60,
+        capacity=16,
+    )
+    plan = WeeklyWodPlan.objects.create(
+        week_start=target_monday,
+        label='Semana com movimento personalizado',
+        source_text='Segunda\nWOD\n10 ski erg lateral',
+        parsed_payload={
+            'days': [{
+                'weekday': 0,
+                'weekday_label': 'Segunda',
+                'blocks': [{
+                    'kind': 'metcon',
+                    'title': 'WOD',
+                    'movements': [{
+                        'movement_slug': 'custom',
+                        'movement_label_raw': '10 ski erg lateral',
+                        'reps_spec': '10',
+                        'load_spec': '',
+                        'notes': '',
+                    }],
+                }],
+            }],
+        },
+        created_by=actor,
+        status=WeeklyWodPlanStatus.CONFIRMED,
+    )
+
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.set_viewport_size({'width': 375, 'height': 667})
+    page.goto(f'{live_server.url}/operacao/wod/paste/')
+    page.wait_for_load_state('networkidle')
+    expect(page.locator('#smart-paste-projection-panel')).to_be_visible()
+    page.locator('#smart-paste-projection-panel form').first.locator('button[type="submit"]').click()
+
+    dialog = page.locator('dialog.smart-paste-week-dialog[open]')
+    expect(dialog).to_be_visible()
+    expect(dialog).to_contain_text('10 ski erg lateral')
+    expect(dialog).to_contain_text('sem compatibilidade validada nem vídeo')
+    expect(dialog).to_contain_text('aluno não terá demonstração no app')
+    distribution_button = dialog.get_by_role('button', name='Distribuir WODs às aulas')
+    expect(distribution_button).to_be_disabled()
+    assert not SessionWorkout.objects.filter(session=session).exists()
+
+    dialog.locator('[name="acknowledge_unlinked_movements"]').check()
+    expect(distribution_button).to_be_enabled()
+    distribution_button.click()
+    expect(page.get_by_text('1 WOD(s) criados: 1 aguardando aprovacao e', exact=False)).to_be_visible()
+    projected = SessionWorkout.objects.get(session=session)
+    assert projected.blocks.first().movements.first().movement_slug == 'custom'
+    assert plan.replication_batches.filter(sessions_created=1).exists()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
 def test_unresolved_movement_has_visible_mobile_review_form(page: Page, live_server, e2e_owner_credentials, monkeypatch):
     """A pendencia permanece corrigivel no mobile sem depender do dialog oculto."""
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
@@ -649,6 +906,7 @@ def test_unresolved_movement_has_visible_mobile_review_form(page: Page, live_ser
     page.wait_for_load_state("networkidle")
 
     page.locator("textarea[name=source_text]").fill("Segunda\nWOD\n10 movimento inventado xyz")
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
     page.locator("form.smart-paste-form button[type=submit]").click()
     page.wait_for_load_state("networkidle")
 
@@ -666,10 +924,103 @@ def test_unresolved_movement_has_visible_mobile_review_form(page: Page, live_ser
     queue.locator("button[type=submit]").click()
     page.wait_for_load_state("networkidle")
     expect(page.locator(".smart-paste-review-queue")).to_have_count(0)
-    expect(page.locator(".smart-paste-resolution-notice")).to_have_count(0)
+    expect(page.locator(".smart-paste-resolution-notice:not([hidden])")).to_have_count(0)
     expect(
         page.locator('form.smart-paste-confirm-form button[name="action"][value="confirm_plan"]')
     ).to_be_enabled()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize('theme', THEMES)
+def test_weekly_normalization_review_is_explicit_and_mobile_safe(
+    page: Page, live_server, e2e_owner_credentials, monkeypatch, theme: str,
+):
+    """Haiku's structural proposal is inspectable and coach-accepted before confirmation."""
+    actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    candidate = {
+        'week_label': None,
+        'parse_warnings': [],
+        'days': [{
+            'weekday': 0,
+            'weekday_label': 'Segunda',
+            'blocks': [{
+                'kind': 'custom', 'title': 'Treino', 'notes': 'Movimento perdido',
+                'timecap_min': None, 'rounds': None, 'interval_seconds': None,
+                'score_type': None, 'format_spec': None, 'movements': [], 'sort_order': 0,
+            }],
+        }],
+    }
+    monkeypatch.setattr('operations.workout_board_views.detect_and_convert_smartplan_weekly', lambda _text: None)
+    monkeypatch.setattr('operations.workout_board_views.parse_weekly_wod_text', lambda _text: {
+        'week_label': None,
+        'parse_warnings': [{'line_number': 2, 'line_text': 'Movimento perdido', 'message': 'linha solta'}],
+        'days': [],
+    })
+    monkeypatch.setattr('operations.workout_board_views.parse_weekly_wod_freeform', lambda _text: {
+        'week_label': None, 'parse_warnings': [], 'days': [],
+    })
+    monkeypatch.setattr('operations.workout_board_views._freeform_should_take_over', lambda _parsed, _freeform: False)
+    monkeypatch.setattr('operations.workout_board_views.normalize_weekly_wod', lambda **_kwargs: {
+        'status': 'normalized',
+        'candidate': candidate,
+        'changes': [{
+            'line_number': 2,
+            'source_text': 'Movimento perdido',
+            'normalized_text': 'Anotação preservada no bloco de segunda-feira',
+            'reason': 'O trecho não identificava um movimento estruturado.',
+        }],
+    })
+
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.set_viewport_size(VIEWPORTS['mobile'])
+    _set_theme(page, theme)
+    page.goto(f'{live_server.url}/operacao/wod/paste/')
+    page.locator('textarea[name="source_text"]').fill('Segunda\nMovimento perdido')
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
+    page.locator('form.smart-paste-form button[type="submit"]').click()
+    page.wait_for_load_state('networkidle')
+
+    review = page.locator('.smart-paste-normalization-acknowledgement')
+    expect(page.get_by_text('O Haiku organizou a estrutura. Confira as mudanças antes de continuar.')).to_be_visible()
+    expect(page.get_by_role('heading', name='Revise a organização sugerida')).to_be_visible()
+    expect(page.get_by_text('Compare cada alteração com o texto original', exact=False)).to_be_visible()
+    expect(page.get_by_text('Original:', exact=False)).to_be_visible()
+    expect(page.get_by_text('Anotação preservada no bloco de segunda-feira')).to_be_visible()
+    expect(page.get_by_role('link', name='Recusar organização e ajustar o texto')).to_be_visible()
+    expect(review.locator('input[type="checkbox"]')).to_have_attribute('required', '')
+    assert review.evaluate('el => getComputedStyle(el).display') == 'flex'
+    assert _horizontal_overflow(page) <= 1
+
+    composer = page.locator('.smart-paste-form textarea[name="source_text"]')
+    confirm = page.locator('form.smart-paste-confirm-form button[value="confirm_plan"]')
+    expect(confirm).to_have_text('Aceitar e salvar rascunho')
+    composer.fill('Segunda\nOutro treino que ainda não foi organizado')
+    expect(page.locator('[data-smart-paste-stale-source-notice]')).to_be_visible()
+    expect(confirm).to_be_disabled()
+    composer.fill('Segunda\nMovimento perdido')
+    expect(page.locator('[data-smart-paste-stale-source-notice]')).to_be_hidden()
+    expect(confirm).to_be_enabled()
+    week_field = page.locator('.smart-paste-form [name="week_start"]')
+    original_week = week_field.input_value()
+    week_field.fill('07/09/2026')
+    expect(page.locator('[data-smart-paste-stale-source-notice]')).to_be_visible()
+    expect(confirm).to_be_disabled()
+    week_field.fill(original_week)
+    expect(confirm).to_be_enabled()
+    label_field = page.locator('.smart-paste-form [name="label"]')
+    original_label = label_field.input_value()
+    label_field.fill('Semana diferente')
+    expect(page.locator('[data-smart-paste-stale-source-notice]')).to_be_visible()
+    expect(confirm).to_be_disabled()
+    label_field.fill(original_label)
+    expect(confirm).to_be_enabled()
+    review.locator('input[type="checkbox"]').check()
+    confirm.click()
+    page.wait_for_load_state('networkidle')
+    plan = WeeklyWodPlan.objects.get(created_by=actor)
+    assert plan.status == WeeklyWodPlanStatus.CONFIRMED
+    assert plan.parsed_payload['weekly_normalization']['status'] == 'coach_accepted'
 
 
 @pytest.mark.e2e
@@ -680,6 +1031,7 @@ def test_smart_paste_without_classes_stays_on_actionable_screen(page: Page, live
     page.set_viewport_size(VIEWPORTS['mobile'])
     page.goto(f'{live_server.url}/operacao/wod/paste/')
     page.locator('textarea[name="source_text"]').fill(CLEAN_SAMPLE_WOD)
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
     page.locator('form.smart-paste-form button[type="submit"]').click()
     page.wait_for_load_state('networkidle')
     page.locator('form.smart-paste-confirm-form button[value="confirm_and_project"]').click()
@@ -706,6 +1058,7 @@ def test_smart_paste_rejects_source_text_over_line_limit(page: Page, live_server
 
     oversized_text = "\n".join(f"linha de lixo aleatorio numero {i}" for i in range(501))
     page.locator("textarea[name=source_text]").fill(oversized_text)
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
     page.locator("form.smart-paste-form button[type=submit]").click()
     page.wait_for_load_state("networkidle")
 

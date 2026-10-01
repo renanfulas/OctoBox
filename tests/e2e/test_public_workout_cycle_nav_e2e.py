@@ -125,8 +125,8 @@ def test_bottom_nav_cycles_treino_cardio_periodizacao_and_back(page: Page, live_
     treino_panel = page.locator('#workout-panel-treino')
     cardio_panel = page.locator('#workout-panel-cardio')
     periodizacao_panel = page.locator('#workout-panel-periodizacao')
-    cycle_button = page.locator('[data-workout-cycle-nav]')
-    cycle_label = page.locator('[data-cycle-label]')
+    cycle_button = page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]')
+    cycle_label = cycle_button.locator('[data-cycle-label]')
 
     # ── Estado inicial (page load, nenhum clique ainda): o painel padrao
     # servido pelo Django e' Inicio (class="is-tab-active" cravada no HTML
@@ -190,8 +190,8 @@ def test_bottom_nav_cycle_resets_to_treino_after_navigating_away(page: Page, liv
 
     page.goto(f'{live_server.url}/renan/bruno/preview-b3')
 
-    cycle_button = page.locator('[data-workout-cycle-nav]')
-    cycle_label = page.locator('[data-cycle-label]')
+    cycle_button = page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]')
+    cycle_label = cycle_button.locator('[data-cycle-label]')
     inicio_button = page.locator('[data-workout-tab-target="workout-panel-inicio"]')
     treino_panel = page.locator('#workout-panel-treino')
     cardio_panel = page.locator('#workout-panel-cardio')
@@ -238,8 +238,8 @@ def test_bottom_nav_cycle_only_treino_when_program_has_no_cardio_or_periodizatio
 
     page.goto(f'{live_server.url}/renan/bruno/preview-b3')
 
-    cycle_button = page.locator('[data-workout-cycle-nav]')
-    cycle_label = page.locator('[data-cycle-label]')
+    cycle_button = page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]')
+    cycle_label = cycle_button.locator('[data-cycle-label]')
     treino_panel = page.locator('#workout-panel-treino')
 
     # 1o clique (chegando de Inicio): aterrissa em Treino -- unico alvo do

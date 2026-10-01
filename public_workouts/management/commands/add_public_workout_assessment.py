@@ -167,9 +167,23 @@ class Command(BaseCommand):
         except UnknownPlanSlugError as exc:
             raise CommandError(str(exc)) from exc
 
+        # Gera e grava o comentario tecnico (hero da aba Avaliacoes) uma
+        # unica vez aqui, no momento do lancamento presencial — nunca em
+        # GET (ver assessment_hero_ai.py). Falha silenciosa (None) nunca
+        # impede a avaliacao de ter sido registrada com sucesso.
+        from public_workouts.assessment_hero_ai import generate_and_store_hero_commentary
+
+        hero_text = generate_and_store_hero_commentary(
+            plan_slug=plan_slug, sex=plan.assessment_sex, height_cm=plan.height_cm
+        )
+
         report = build_report(plan_slug=plan_slug, sex=plan.assessment_sex, height_cm=plan.height_cm)
 
         self.stdout.write(self.style.SUCCESS(f'Avaliacao registrada: {plan_slug} @ {measured_at.isoformat()}'))
+        if hero_text:
+            self.stdout.write(f'  Comentario (hero): {hero_text}')
+        else:
+            self.stdout.write('  Comentario (hero): nao gerado (sem ANTHROPIC_API_KEY, timeout, ou erro).')
         indicators = report['indicators'] or {}
         if indicators.get('bmi'):
             self.stdout.write(f'  IMC: {indicators["bmi"]["value"]} ({indicators["bmi"]["classification"]["label"]})')

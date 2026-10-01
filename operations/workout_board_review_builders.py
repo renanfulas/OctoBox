@@ -26,8 +26,11 @@ def build_snapshot_blocks(snapshot):
                     'movement_label': movement.get('movement_label', ''),
                     'sets': movement.get('sets'),
                     'reps': movement.get('reps'),
+                    'reps_spec': movement.get('reps_spec', ''),
                     'load_type': movement.get('load_type', ''),
                     'load_value': movement.get('load_value', ''),
+                    'load_spec': movement.get('load_spec', ''),
+                    'is_scaled_alternative': movement.get('is_scaled_alternative', False),
                     'notes': movement.get('notes', ''),
                 }
             )
@@ -38,6 +41,11 @@ def build_snapshot_blocks(snapshot):
                 'kind': block.get('kind', ''),
                 'kind_label': block.get('kind_label') or block.get('kind', ''),
                 'notes': block.get('notes', ''),
+                'timecap_min': block.get('timecap_min'),
+                'rounds': block.get('rounds'),
+                'interval_seconds': block.get('interval_seconds'),
+                'score_type': block.get('score_type', ''),
+                'format_spec': block.get('format_spec', ''),
                 'movements': normalized_movements,
             }
         )
@@ -267,9 +275,15 @@ def build_workout_diff_snapshot(*, published_snapshot, current_snapshot):
                 flattened.add(
                     (
                         movement.get('movement_label', ''),
+                        movement.get('movement_slug', ''),
                         movement.get('load_type', ''),
                         movement.get('sets'),
                         movement.get('reps'),
+                        movement.get('reps_spec', ''),
+                        movement.get('load_value', ''),
+                        movement.get('load_spec', ''),
+                        movement.get('is_scaled_alternative', False),
+                        movement.get('notes', ''),
                     )
                 )
         return flattened
@@ -314,8 +328,11 @@ def build_workout_diff_snapshot(*, published_snapshot, current_snapshot):
             for field_key, field_label in (
                 ('sets', 'sets'),
                 ('reps', 'reps'),
+                ('reps_spec', 'prescricao de repeticoes'),
                 ('load_type', 'tipo de carga'),
                 ('load_value', 'carga'),
+                ('load_spec', 'carga como prescrita'),
+                ('is_scaled_alternative', 'alternativa escalada'),
                 ('notes', 'notas'),
             ):
                 if previous_movement.get(field_key) != current_movement.get(field_key):
@@ -328,16 +345,30 @@ def build_workout_diff_snapshot(*, published_snapshot, current_snapshot):
                         'changed_fields': changed_fields,
                     }
                 )
-                if 'tipo de carga' in changed_fields or 'carga' in changed_fields:
+                if any(label in changed_fields for label in ('tipo de carga', 'carga', 'carga como prescrita', 'prescricao de repeticoes')):
                     risk_flags.append(f'Carga alterada em {movement_label}')
-                    sensitive_reasons.append(f'Prescricao de carga mudou em {movement_label}')
-        if previous_block.get('notes', '') != current_block.get('notes', ''):
+                    sensitive_reasons.append(f'Prescricao mudou em {movement_label}')
+        block_changed_fields = []
+        for field_key, field_label in (
+            ('notes', 'notas'),
+            ('timecap_min', 'time cap'),
+            ('rounds', 'rounds'),
+            ('interval_seconds', 'intervalo'),
+            ('score_type', 'criterio de score'),
+            ('format_spec', 'formato'),
+        ):
+            if previous_block.get(field_key) != current_block.get(field_key):
+                block_changed_fields.append(field_label)
+        if block_changed_fields:
             movement_changes.append(
                 {
-                    'movement_label': 'Notas do bloco',
-                    'changed_fields': ['notas'],
+                    'movement_label': current_block.get('title') or 'Dados do bloco',
+                    'changed_fields': block_changed_fields,
                 }
             )
+            if any(label != 'notas' for label in block_changed_fields):
+                risk_flags.append(f'Formato/prescricao do bloco alterado em {current_block.get("title") or "bloco"}')
+                sensitive_reasons.append(f'Formato/prescricao do bloco alterado em {current_block.get("title") or "bloco"}')
         if movement_changes:
             changed_blocks.append(
                 {

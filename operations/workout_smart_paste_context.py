@@ -5,8 +5,10 @@ ARQUIVO: contexto da superficie de Smart Paste semanal do corredor de WOD.
 from __future__ import annotations
 
 from datetime import timedelta
+from uuid import uuid4
 
 from django.urls import reverse
+from django.utils import timezone
 
 from operations.forms import (
     WeeklyWodProjectionForm,
@@ -15,11 +17,12 @@ from operations.forms import (
     WeeklyWodUndoReplicationForm,
     WorkoutCreateStoredTemplateForm,
 )
-from operations.models import ClassType, ClassSession, SessionStatus
+from operations.models import ClassType, ClassSession, SessionStatus, WorkoutProgram
 from operations.services.wod_generation_credits import get_or_create_current_ledger
 from operations.services.wod_paste_parser import load_wod_movement_dictionary
 from operations.services.wod_replication_batches import batch_can_be_undone
 from shared_support.page_payloads import attach_page_payload, build_page_assets, build_page_hero, build_page_payload
+from student_app.application.movement_references import lookup_movement_catalog_status
 from student_app.models import WeeklyWodPlan, WeeklyWodPlanStatus
 
 from .workout_corridor_navigation import build_workout_corridor_tabs
@@ -35,6 +38,13 @@ def _default_week_start(today):
     return _coming_monday(today)
 
 
+def _class_type_for_program(program):
+    if not program:
+        return ClassType.CROSS
+    valid_types = {choice for choice, _label in ClassType.choices}
+    return program.slug if program.slug in valid_types else ClassType.CROSS
+
+
 def _max_week_start(today, fallback_weeks: int = 52):
     """Retorna a segunda-feira da semana que contém a última aula agendada.
 
@@ -48,7 +58,7 @@ def _max_week_start(today, fallback_weeks: int = 52):
         .first()
     )
     if last_session is not None:
-        last_date = last_session.date() if hasattr(last_session, 'date') else last_session
+        last_date = timezone.localtime(last_session).date() if hasattr(last_session, 'tzinfo') else last_session
         # Monday of that week
         return max(_default_week_start(today), last_date - timedelta(days=last_date.weekday()))
     return today + timedelta(weeks=fallback_weeks)
@@ -83,7 +93,102 @@ def count_unresolved_smart_paste_movements(parsed_payload):
     return count
 
 
-def _decorate_preview_payload(parsed_payload):
+def list_unlinked_projection_movements(projection_preview):
+    """List movements without a catalog match or a student-facing reference link."""
+    items = []
+    if not projection_preview:
+        return items
+
+    movements = []
+    for entry in projection_preview.get('entries', []) or []:
+        if entry.get('status') != 'ready':
+            continue
+        for block in entry.get('projection_blocks', []) or []:
+            movements.extend(block.get('movements', []) or [])
+    candidate_slugs = {
+        slug
+        for movement in movements
+        if (slug := (movement.get('movement_slug') or '').strip()) and slug != 'custom'
+    }
+    catalog_status_by_slug = lookup_movement_catalog_status(candidate_slugs)
+
+    for entry in projection_preview.get('entries', []) or []:
+        if entry.get('status') != 'ready':
+            continue
+        day_label = entry.get('weekday_label') or 'Dia sem identificação'
+        for block in entry.get('projection_blocks', []) or []:
+            block_title = block.get('title') or block.get('kind') or 'Bloco sem título'
+            for movement in block.get('movements', []) or []:
+                slug = (movement.get('movement_slug') or '').strip()
+                catalog_status = catalog_status_by_slug.get(slug, {}) if slug and slug != 'custom' else {}
+                demo_video_url = catalog_status.get('demo_video_url', '')
+                has_catalog_match = bool(catalog_status.get('is_registered'))
+                if has_catalog_match and demo_video_url:
+                    continue
+                items.append({
+                    'day_label': day_label,
+                    'block_title': block_title,
+                    'movement_label': movement.get('movement_label_raw') or 'Movimento sem nome',
+                    'warning_label': (
+                        'Sem cadastro no catálogo: texto personalizado sem compatibilidade validada nem vídeo'
+                        if not has_catalog_match else
+                        'Cadastrado, mas sem vídeo demonstrativo vinculado'
+                    ),
+                    'is_custom': not has_catalog_match,
+                    'demo_video_url': demo_video_url,
+                })
+    return items
+
+
+def _build_projection_week_calendar(projection_preview, parsed_payload):
+    if not projection_preview:
+        return []
+    weekday_titles = ('Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo')
+    week_start = projection_preview.get('target_week_start')
+    entries_by_weekday = {weekday: [] for weekday in range(7)}
+    for entry in projection_preview.get('entries', []):
+        weekday = entry.get('weekday_index')
+        if isinstance(weekday, int) and 0 <= weekday <= 6:
+            entries_by_weekday[weekday].append(entry)
+    planned_weekdays = {
+        day.get('weekday')
+        for day in (parsed_payload.get('days', []) or [])
+        if isinstance(day.get('weekday'), int) and 0 <= day['weekday'] <= 6
+    }
+    result = []
+    for weekday, title in enumerate(weekday_titles):
+        entries = entries_by_weekday[weekday]
+        canceled_count = projection_preview.get('canceled_by_weekday', {}).get(weekday, 0)
+        is_planned = weekday in planned_weekdays
+        if entries and all(entry.get('status') == 'ready' for entry in entries) and canceled_count:
+            status, status_label = 'attention', 'Destinos prontos · aula(s) cancelada(s)'
+        elif entries and all(entry.get('status') == 'ready' for entry in entries):
+            status, status_label = 'ready', 'Destinos prontos'
+        elif entries:
+            status, status_label = 'attention', 'Conferir exceções'
+        elif canceled_count:
+            status, status_label = 'attention', f'{canceled_count} aula(s) cancelada(s)'
+        elif is_planned:
+            status, status_label = 'no_sessions', 'Sem aula elegível'
+        else:
+            status, status_label = 'no_workout', 'Sem treino'
+        workout_date = week_start + timedelta(days=weekday) if week_start else None
+        result.append({
+            'weekday_index': weekday,
+            'weekday_label': title,
+            'date_iso': workout_date.isoformat() if workout_date else '',
+            'date_label': workout_date.strftime('%d/%m') if workout_date else '',
+            'is_planned': is_planned,
+            'entry_count': len(entries),
+            'canceled_count': canceled_count,
+            'ready_count': sum(1 for entry in entries if entry.get('status') == 'ready'),
+            'status': status,
+            'status_label': status_label,
+        })
+    return result
+
+
+def _decorate_preview_payload(parsed_payload, *, week_start=None):
     unresolved_items = []
     auto_fixed_items = []
     total_blocks = 0
@@ -94,6 +199,11 @@ def _decorate_preview_payload(parsed_payload):
         day_unresolved_count = 0
         day_preview_movements = []
         day['day_index'] = day_index
+        weekday = day.get('weekday')
+        if week_start is not None and isinstance(weekday, int) and 0 <= weekday <= 6:
+            workout_date = week_start + timedelta(days=weekday)
+            day['date_iso'] = workout_date.isoformat()
+            day['date_label'] = workout_date.strftime('%d/%m')
         for block_index, block in enumerate(day.get('blocks', [])):
             total_blocks += 1
             block_unresolved_count = 0
@@ -152,6 +262,7 @@ def _decorate_preview_payload(parsed_payload):
         'current_unresolved_item': unresolved_items[0] if unresolved_items else None,
         'auto_fixed_count': len(auto_fixed_items),
         'auto_fixed_items': auto_fixed_items[:8],
+        'parse_errors_count': len(parsed_payload.get('parse_errors') or []),
     }
     return parsed_payload
 
@@ -198,20 +309,17 @@ def _build_page_payload(*, current_role_slug):
     return build_page_payload(
         context={
             'page_key': 'operations-workout-smart-paste',
-            'title': 'Smart Paste semanal',
+            'title': 'WOD Semana',
             'subtitle': 'Cole a semana, confira a leitura e feche um rascunho organizado.',
             'mode': 'workspace',
             'role_slug': current_role_slug,
         },
         data={
             'hero': build_page_hero(
-                eyebrow='Smart Paste',
+                eyebrow='WOD Semana',
                 title='Cole a semana. Nós organizamos os treinos.',
                 copy='Revise somente o que precisar. Depois, os WODs entram nas aulas e aguardam aprovação para aparecer aos alunos.',
-                actions=[
-                    {'label': 'Abrir editor', 'href': reverse('workout-editor-home'), 'kind': 'secondary'},
-                ],
-                aria_label='Smart Paste semanal',
+                aria_label='WOD Semana',
                 classes=['coach-hero'],
                 data_panel='coach-hero',
                 actions_slot='coach-hero-actions',
@@ -243,6 +351,8 @@ def build_weekly_wod_smart_paste_context(
     undo_form=None,
     parsed_payload=None,
     projection_preview=None,
+    projection_preview_auto_open=None,
+    projection_distribution_warning=None,
     auto_open_review_target=None,
 ):
     week_start = _default_week_start(today)
@@ -251,6 +361,7 @@ def build_weekly_wod_smart_paste_context(
     form = form or WeeklyWodSmartPasteForm(
         initial={
             'plan_id': getattr(weekly_plan, 'id', None),
+            'workout_program': getattr(weekly_plan, 'workout_program_id', None),
             'week_start': (getattr(weekly_plan, 'week_start', None) or week_start).strftime('%d/%m/%Y'),
             'label': getattr(weekly_plan, 'label', ''),
             'source_text': getattr(weekly_plan, 'source_text', ''),
@@ -259,8 +370,15 @@ def build_weekly_wod_smart_paste_context(
     projection_form = projection_form or WeeklyWodProjectionForm(
         initial={
             'plan_id': getattr(weekly_plan, 'id', None),
-            'target_week_start': week_start.strftime('%d/%m/%Y'),
-            'class_types': [ClassType.CROSS],
+            'workout_program': getattr(weekly_plan, 'workout_program_id', None),
+            'idempotency_key': uuid4(),
+            # A semana definida no WOD Semana é a âncora de toda a jornada.
+            # Antes, a distribuição usava a próxima segunda sugerida, podendo
+            # aplicar o plano em uma semana diferente sem um gesto explícito.
+            'target_week_start': (
+                getattr(weekly_plan, 'week_start', None) or week_start
+            ).strftime('%d/%m/%Y'),
+            'class_types': [_class_type_for_program(getattr(weekly_plan, 'workout_program', None))],
         }
     )
     latest_batch = weekly_plan.replication_batches.order_by('-created_at', '-id').first() if weekly_plan else None
@@ -277,7 +395,10 @@ def build_weekly_wod_smart_paste_context(
         }
     )
     parsed_payload = parsed_payload if parsed_payload is not None else getattr(weekly_plan, 'parsed_payload', {}) or {}
-    parsed_payload = _decorate_preview_payload(parsed_payload)
+    parsed_payload = _decorate_preview_payload(
+        parsed_payload,
+        week_start=getattr(weekly_plan, 'week_start', None),
+    )
     current_unresolved_item = parsed_payload.get('summary', {}).get('current_unresolved_item')
     if current_unresolved_item and not getattr(review_form, 'is_bound', False):
         review_form = WeeklyWodReviewMovementForm(
@@ -301,6 +422,8 @@ def build_weekly_wod_smart_paste_context(
         ),
         'smart_paste_form': form,
         'weekly_plan': weekly_plan,
+        'workout_programs': WorkoutProgram.objects.filter(is_active=True),
+        'selected_workout_program': getattr(weekly_plan, 'workout_program', None),
         'smart_paste_preview': parsed_payload,
         'smart_paste_days': parsed_payload.get('days', []),
         'smart_paste_review_days': [day for day in parsed_payload.get('days', []) if day.get('has_unresolved')],
@@ -311,12 +434,25 @@ def build_weekly_wod_smart_paste_context(
             and not parsed_payload.get('movement_resolution', {}).get('state')
         ),
         'smart_paste_warnings': parsed_payload.get('parse_warnings', []),
+        'smart_paste_parse_errors': parsed_payload.get('parse_errors', []),
+        'smart_paste_weekly_normalization': parsed_payload.get('weekly_normalization', {}),
+        'smart_paste_unlinked_movements': list_unlinked_projection_movements(projection_preview),
         'smart_paste_summary': parsed_payload.get('summary', {}),
         'smart_paste_movement_resolution': parsed_payload.get('movement_resolution', {}),
         'smart_paste_step': 3 if projection_preview else (2 if parsed_payload.get('days') else 1),
         'smart_paste_auto_open_review_target': auto_open_review_target or '',
         'projection_form': projection_form,
         'projection_preview': projection_preview,
+        'projection_distribution_warning': projection_distribution_warning,
+        'smart_paste_projection_week': _build_projection_week_calendar(
+            projection_preview,
+            parsed_payload,
+        ),
+        'projection_preview_auto_open': (
+            projection_preview is not None
+            if projection_preview_auto_open is None
+            else bool(projection_preview_auto_open)
+        ),
         'create_stored_template_form': WorkoutCreateStoredTemplateForm(
             initial={
                 'template_name': getattr(weekly_plan, 'label', '') or f"Template {week_start.strftime('%d/%m')}",

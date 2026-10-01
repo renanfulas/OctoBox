@@ -91,7 +91,7 @@ def detect_smartplan_text_format(raw_text: str) -> dict:
     if not raw_text or not raw_text.strip():
         return {'is_normalized': False, 'reason': REASON_MARKERS_MISSING}
 
-    if TEXT_MARKER not in raw_text:
+    if TEXT_MARKER not in raw_text or END_MARKER not in raw_text:
         return {'is_normalized': False, 'reason': REASON_MARKERS_MISSING}
 
     # Formato v2 não tem JSON — se tiver, deve usar detect_smartplan_format (v1)
