@@ -87,10 +87,17 @@ class DjangoClassGridWriter(ClassGridWriterPort):
     )
 
     def create_schedule(self, command: ClassScheduleCreateCommand) -> ClassScheduleCreateResult:
+        if not command.workout_program_id:
+            raise ValueError('Escolha a modalidade antes de criar a recorrência.')
         current_timezone = self.clock.get_current_timezone()
         created_session_ids = []
         coach = self.coach_resolver.resolve(command.coach_id)
-        workout_program = WorkoutProgram.objects.get(pk=command.workout_program_id) if command.workout_program_id else None
+        workout_program = WorkoutProgram.objects.filter(
+            pk=command.workout_program_id,
+            is_active=True,
+        ).first()
+        if workout_program is None:
+            raise ValueError('A modalidade selecionada não está ativa. Escolha outra modalidade.')
         planned_slots = build_class_grid_schedule_plan(
             start_date=command.start_date,
             end_date=command.end_date,
@@ -110,6 +117,7 @@ class DjangoClassGridWriter(ClassGridWriterPort):
         )
         existing_scheduled_ats = self.session_store.find_existing_scheduled_ats(
             title=command.title,
+            workout_program_id=command.workout_program_id,
             scheduled_ats=[slot.scheduled_at for slot in scheduled_slots],
         )
         execution_plan = build_class_grid_create_execution_plan(
@@ -169,10 +177,18 @@ class DjangoClassGridWriter(ClassGridWriterPort):
                 exclude_session_ids=[session.id],
             )
 
-        workout_program = (
-            WorkoutProgram.objects.get(pk=command.workout_program_id)
-            if command.workout_program_id else session.workout_program
-        )
+        workout_program = session.workout_program
+        if command.workout_program_id:
+            workout_program = WorkoutProgram.objects.filter(
+                pk=command.workout_program_id,
+                is_active=True,
+            ).first()
+            if workout_program is None:
+                raise ValueError('A modalidade selecionada não está ativa. Escolha outra modalidade.')
+        if workout_program is None:
+            raise ValueError('Esta aula ainda não tem modalidade. Escolha uma antes de salvar.')
+        if workout_program.pk != session.workout_program_id and hasattr(session, 'workout'):
+            raise ValueError('Esta aula já tem WOD associado. Ajuste o WOD antes de trocar a modalidade.')
         target_values = {
             'title': command.title,
             'coach': self.coach_resolver.resolve(command.coach_id),
