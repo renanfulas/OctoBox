@@ -85,20 +85,20 @@ def _intake_cta_block(safe_intake_url: str) -> str:
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
                 <tr>
                   <td style="padding:0 0 10px;">
-                    <p style="margin:0;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
+                    <p style="margin:0;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#a4afc2;font-weight:700;">
                       Próximo passo
                     </p>
-                    <p style="margin:0;font-size:17px;font-weight:700;color:#0d1320;letter-spacing:-0.01em;">
-                      Responda sua anamnese
+                    <p style="margin:0;font-size:17px;font-weight:700;color:#f3f6fb;letter-spacing:-0.01em;">
+                      Responder anamnese
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:6px 0 0;">
-                    <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#60738f;">
+                    <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#a4afc2;">
                       Link pessoal dela, de uso único — envie por WhatsApp:
                     </p>
-                    <p style="margin:0;font-size:12px;line-height:1.5;color:#3a5371;word-break:break-all;font-family:'SF Mono','Menlo','Consolas',monospace;background:#f6f7fa;padding:10px 12px;border-radius:8px;">
+                    <p style="margin:0;font-size:12px;line-height:1.5;color:#a4afc2;word-break:break-all;font-family:'SF Mono','Menlo','Consolas',monospace;background:#0a0e1a;border:1px solid #273044;padding:10px 12px;border-radius:8px;">
                       {safe_intake_url}
                     </p>
                   </td>
@@ -109,10 +109,12 @@ def _intake_cta_block(safe_intake_url: str) -> str:
 def _build_staff_new_subscription_html(
     *, email: str, tier_label: str, amount_str: str, intake_url: str, previous_status_label: str,
 ) -> str:
-    """Mesma estrutura table-based/inline-style de
-    student_identity/public_workout_notifications.py::build_login_email_html_body
-    (a "cara" do Curva ja validada em producao) — so troca o conteudo do card
-    de link magico por um resumo de venda fechada, pro staff.
+    """Paleta oficial do Curva — as mesmas custom properties documentadas
+    em static/css/public_workouts/landing.css (--curva-bg/--curva-surface/
+    --curva-accent/etc.), a fonte de verdade da marca, nao a de um e-mail
+    anterior (RT pedido explicitamente pelo usuario: "cores padrao no
+    estilo curva que esta nos documentos"). Mesma estrutura table-based/
+    inline-style de sempre — so' troca a paleta clara pela escura.
 
     `intake_url` (se presente) e' o link magico de login da PROPRIA aluna
     direto pra anamnese (/treinos/anamnese) — pensado pro staff repassar
@@ -127,11 +129,11 @@ def _build_staff_new_subscription_html(
     amount_row = (
         f"""
               <tr>
-                <td style="padding:14px 18px;border-top:1px solid rgba(13,19,32,0.06);">
-                  <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
+                <td style="padding:14px 18px;border-top:1px solid #273044;">
+                  <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#a4afc2;font-weight:700;">
                     Valor
                   </p>
-                  <p style="margin:0;font-size:17px;font-weight:700;color:#0d1320;letter-spacing:-0.01em;">
+                  <p style="margin:0;font-size:17px;font-weight:700;color:#f3f6fb;letter-spacing:-0.01em;">
                     {safe_amount}/mes
                   </p>
                 </td>
@@ -154,11 +156,11 @@ def _build_staff_new_subscription_html(
   }}
 </style>
 </head>
-<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#0d1320;-webkit-font-smoothing:antialiased;">
-  <span style="display:none !important;visibility:hidden;mso-hide:all;font-size:1px;color:#f4f5f7;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+<body style="margin:0;padding:0;background:#0a0e1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#f3f6fb;-webkit-font-smoothing:antialiased;">
+  <span style="display:none !important;visibility:hidden;mso-hide:all;font-size:1px;color:#0a0e1a;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
     Nova assinatura ativa: {safe_email} ({safe_tier}{' · ' + safe_amount if safe_amount else ''}).
   </span>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f5f7;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0e1a;">
     <tr>
       <td align="center" style="padding:40px 16px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="container" style="width:600px;max-width:100%;">
@@ -166,10 +168,10 @@ def _build_staff_new_subscription_html(
           <!-- LOGO -->
           <tr>
             <td align="left" style="padding:0 8px 24px;">
-              <span style="display:inline-block;font-weight:800;font-size:20px;letter-spacing:-0.04em;color:#0d1320;">
-                Cur<span style="color:#2451C4;">va</span>
+              <span style="display:inline-block;font-weight:800;font-size:20px;letter-spacing:-0.04em;color:#f3f6fb;">
+                Cur<span style="color:#00e5ff;">va</span>
               </span>
-              <span style="display:inline-block;margin-left:6px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#60738f;">
+              <span style="display:inline-block;margin-left:6px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#a4afc2;">
                 TREINO &amp; NUTRIÇÃO
               </span>
             </td>
@@ -177,40 +179,40 @@ def _build_staff_new_subscription_html(
 
           <!-- HERO CARD -->
           <tr>
-            <td class="card" style="background:#ffffff;border-radius:20px;padding:44px 40px;box-shadow:0 24px 60px rgba(15,23,42,0.06);border:1px solid rgba(13,19,32,0.06);">
+            <td class="card" style="background:#111827;border-radius:20px;padding:44px 40px;box-shadow:0 24px 60px rgba(0,0,0,0.35);border:1px solid #273044;">
 
               <!-- EYEBROW -->
-              <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#2451C4;font-weight:800;">
+              <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#00e5ff;font-weight:800;">
                 ✦ Nova assinatura
               </p>
 
               <!-- HEADLINE -->
-              <h1 class="h1" style="margin:0 0 18px;font-size:32px;line-height:1.08;letter-spacing:-0.04em;font-weight:800;color:#0d1320;">
+              <h1 class="h1" style="margin:0 0 18px;font-size:32px;line-height:1.08;letter-spacing:-0.04em;font-weight:800;color:#f3f6fb;">
                 Fechou! 🎉
               </h1>
 
-              <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#3a5371;">
+              <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#a4afc2;">
                 Assinatura confirmada e ativa no corredor de treinos.
               </p>
 
               <!-- RESUMO -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;border:1px solid rgba(13,19,32,0.06);border-radius:14px;overflow:hidden;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;border:1px solid #273044;border-radius:14px;overflow:hidden;">
                 <tr>
-                  <td style="background:#f4f7fb;padding:14px 18px;">
-                    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
+                  <td style="background:#151f30;padding:14px 18px;">
+                    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#a4afc2;font-weight:700;">
                       Aluno
                     </p>
-                    <p style="margin:0;font-size:17px;font-weight:700;color:#0d1320;letter-spacing:-0.01em;">
+                    <p style="margin:0;font-size:17px;font-weight:700;color:#f3f6fb;letter-spacing:-0.01em;">
                       {safe_email}
                     </p>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:14px 18px;border-top:1px solid rgba(13,19,32,0.06);">
-                    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
+                  <td style="padding:14px 18px;border-top:1px solid #273044;">
+                    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#a4afc2;font-weight:700;">
                       Plano
                     </p>
-                    <p style="margin:0;font-size:17px;font-weight:700;color:#0d1320;letter-spacing:-0.01em;">
+                    <p style="margin:0;font-size:17px;font-weight:700;color:#f3f6fb;letter-spacing:-0.01em;">
                       {safe_tier}
                     </p>
                   </td>
@@ -219,10 +221,10 @@ def _build_staff_new_subscription_html(
 
               {_intake_cta_block(safe_intake_url)}
 
-              <hr style="border:0;border-top:1px solid rgba(13,19,32,0.08);margin:0 0 20px;">
+              <hr style="border:0;border-top:1px solid #273044;margin:0 0 20px;">
 
-              <p style="margin:0;font-size:13px;line-height:1.5;color:#60738f;">
-                Status anterior: <strong style="color:#3a5371;">{safe_previous}</strong> → <strong style="color:#2451C4;">Ativo</strong>
+              <p style="margin:0;font-size:13px;line-height:1.5;color:#a4afc2;">
+                Status anterior: <strong style="color:#f3f6fb;">{safe_previous}</strong> → <strong style="color:#00e5ff;">Ativo</strong>
               </p>
 
             </td>
@@ -231,7 +233,7 @@ def _build_staff_new_subscription_html(
           <!-- FOOTER -->
           <tr>
             <td align="center" style="padding:32px 16px 8px;">
-              <p style="margin:0;font-size:12px;line-height:1.5;color:#94a3b8;">
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#a4afc2;">
                 — Curva Treino &amp; Nutrição · aviso interno, não repasse ao aluno
               </p>
             </td>
@@ -342,7 +344,7 @@ def notify_staff_new_subscription(subscription, *, previous_status: str, base_ur
         + (f'Valor: {amount_str}/mes\n' if amount_str else '')
         + f'Status anterior: {previous_status_label}\n'
         + (
-            f'\nProximo passo: responda sua anamnese — link pessoal dela, de uso '
+            f'\nProximo passo: responder anamnese — link pessoal dela, de uso '
             f'unico, repasse por WhatsApp em vez de abrir primeiro:\n{intake_url}\n'
             if intake_url else ''
         )
