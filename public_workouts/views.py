@@ -269,7 +269,8 @@ class CoachStudentRosterView(CurvaStaffLoginRequiredMixin, ListView):
             # uma vez; nao vale a complexidade nesta escala ainda.
             weekly_review = build_weekly_review(account_id=row.account_id)
             row.days_until_renewal = (
-                (row.current_period_end.date() - today).days if row.current_period_end else None
+                (timezone.localtime(row.current_period_end).date() - today).days
+                if row.current_period_end else None
             )
             risk = compute_student_risk(
                 days_since_last_workout=row.days_since_last_workout,
