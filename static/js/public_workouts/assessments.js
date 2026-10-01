@@ -716,6 +716,15 @@
     var summary = report.summary;
     var sections = [];
 
+    if (report.hero_text) {
+      sections.push(
+        '<div class="workout-assessment-hero" data-assessment-hero>' +
+          '<span class="workout-assessment-hero__eyebrow">Avaliação técnica</span>' +
+          '<p class="workout-assessment-hero__text">' + escapeHtml(report.hero_text) + '</p>' +
+        '</div>'
+      );
+    }
+
     if (isUnified) {
       sections.push(
         '<div class="workout-assessment-report-head">' +

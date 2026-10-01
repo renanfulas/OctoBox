@@ -92,6 +92,31 @@
     font-variant-numeric: tabular-nums;
 }
 
+.workout-assessment-hero {
+    padding: 18px 20px;
+    border: 1px solid var(--theme-border-soft);
+    border-left: 3px solid var(--brand);
+    border-radius: 18px;
+    background: var(--theme-surface-secondary);
+    line-height: 1.55;
+}
+
+.workout-assessment-hero__eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--brand);
+    font-size: 0.8125rem;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.workout-assessment-hero__text {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: 0.98rem;
+}
+
 .workout-assessment-empty,
 .workout-assessment-baseline {
     padding: 20px;
