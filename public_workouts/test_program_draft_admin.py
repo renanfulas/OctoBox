@@ -204,7 +204,7 @@ class GenerateAiDraftSubscriptionActionTests(TestCase):
         )
 
         with mock.patch(
-            'public_workouts.admin.generate_program_draft_payload', return_value=(None, 'claude-haiku-4-5-20251001')
+            'public_workouts.program_generation_ai.generate_program_draft_payload', return_value=(None, 'claude-haiku-4-5-20251001')
         ):
             response = self._run_action()
 
@@ -219,7 +219,7 @@ class GenerateAiDraftSubscriptionActionTests(TestCase):
         )
 
         with mock.patch(
-            'public_workouts.admin.generate_program_draft_payload',
+            'public_workouts.program_generation_ai.generate_program_draft_payload',
             return_value=(build_example_payload(), 'claude-haiku-4-5-20251001'),
         ):
             response = self._run_action()
@@ -241,7 +241,7 @@ class GenerateAiDraftSubscriptionActionTests(TestCase):
         )
 
         with mock.patch(
-            'public_workouts.admin.generate_program_draft_payload',
+            'public_workouts.program_generation_ai.generate_program_draft_payload',
             return_value=(build_example_payload(), 'claude-haiku-4-5-20251001'),
         ):
             response = self._run_action()

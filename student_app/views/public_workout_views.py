@@ -325,6 +325,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/nutrition.js',
     '/static/js/public_workouts/workout-shell.js',
     '/static/js/public_workouts/assessments.js',
+    '/static/js/public_workouts/account.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}
@@ -792,7 +793,14 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         )
         subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
         nutrition_unlocked = bool(subscription and require_nutrition_tier(subscription))
-        customer_portal_url = '/treinos/minha-conta' if subscription else None
+        # Com stripe_customer_id (1o checkout ja concluido, webhook ja fez
+        # link_stripe_ids): manda pro Customer Portal de verdade, igual ao
+        # botao "Gerenciar assinatura" de minha_conta.html (mesmo endpoint
+        # POST /treinos/billing-portal, mesmo account.js). Sem isso ainda
+        # nao ha o que gerenciar -- cai no hub /treinos/minha-conta, que
+        # mostra o proximo passo certo (ex.: retomar checkout).
+        billing_portal_available = bool(subscription and subscription.stripe_customer_id)
+        customer_portal_url = '/treinos/minha-conta' if subscription and not billing_portal_available else None
         account_email = subscription.account.email if subscription else None
     else:
         weekly_review = {'trends_by_movement': {}}
@@ -800,6 +808,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         load_history = []
         progress_snapshots = {}
         nutrition_unlocked = False
+        billing_portal_available = False
         customer_portal_url = None
         account_email = None
 
@@ -817,6 +826,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'movement_labels': build_movement_label_lookup(program),
         'student_name': plan.short_name,
         'student_photo_url': None,
+        'billing_portal_available': billing_portal_available,
         'customer_portal_url': customer_portal_url,
         'account_email': account_email,
         'nutrition_unlocked': nutrition_unlocked,
@@ -1343,10 +1353,12 @@ class PublicWorkoutPackageView(View):
 class PublicWorkoutWeeklyReviewView(View):
     """GET /renan/<slug>/revisao-semanal — Entrega 4: pega os sinais
     deterministicos de `build_weekly_review` (S/A3) e tenta transformar em
-    texto curto via `weekly_review_ai.generate_weekly_review_text` (Claude
-    Haiku). Sob demanda (a propria tela so chama isto quando o aluno clica
-    em "gerar revisao"), nunca no GET principal da pagina — custo/latencia
-    de LLM por page-load seria inaceitavel.
+    texto curto via `weekly_review_ai.get_or_create_cached_review_text`
+    (Claude Haiku, no maximo 1 chamada por conta por semana ISO — ver
+    docstring de weekly_review_ai.py). Chamado tanto pelo botao manual
+    "Gerar revisão" (aba Cargas) quanto automaticamente pelo card da aba
+    Início (weekly_review.js) — os dois leem/escrevem a MESMA linha de
+    cache pra semana corrente, nunca duplicam a chamada a IA.
 
     PONTOS CRITICOS:
     - Mesma regra de auth de PublicWorkoutPackageView: sessao de LOGIN
@@ -1368,10 +1380,10 @@ class PublicWorkoutWeeklyReviewView(View):
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
 
         from public_workouts.services import build_weekly_review
-        from public_workouts.weekly_review_ai import generate_weekly_review_text
+        from public_workouts.weekly_review_ai import get_or_create_cached_review_text
 
         review = build_weekly_review(account_id=account_id)
-        review_text = generate_weekly_review_text(review)
+        review_text = get_or_create_cached_review_text(account_id=account_id, review=review)
         return JsonResponse({'review_text': review_text}, status=200)
 
 
