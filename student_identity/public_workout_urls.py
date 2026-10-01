@@ -18,6 +18,7 @@ from .public_workout_views import (
     PublicWorkoutAccountSignOutView,
     PublicWorkoutAccountView,
     PublicWorkoutColdSignupView,
+    PublicWorkoutCustomCheckoutView,
     PublicWorkoutGoogleCallbackView,
     PublicWorkoutGoogleStartView,
     PublicWorkoutFunnelEventView,
@@ -48,6 +49,10 @@ urlpatterns = [
     path('analytics/login/', PublicWorkoutFunnelAnalyticsLoginView.as_view(), name='public-workout-funnel-analytics-login'),
     path('analytics/logout/', PublicWorkoutFunnelAnalyticsLogoutView.as_view(), name='public-workout-funnel-analytics-logout'),
     path('billing-portal', PublicWorkoutBillingPortalView.as_view(), name='public-workout-billing-portal'),
+    path(
+        'checkout-personalizado', PublicWorkoutCustomCheckoutView.as_view(),
+        name='public-workout-custom-checkout',
+    ),
     path('garantia/reembolso', PublicWorkoutRefundRequestView.as_view(), name='public-workout-refund-request'),
     path('minha-conta', PublicWorkoutAccountView.as_view(), name='public-workout-account'),
     path('minha-conta/sair', PublicWorkoutAccountSignOutView.as_view(), name='public-workout-account-signout'),

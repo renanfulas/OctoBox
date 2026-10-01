@@ -735,3 +735,105 @@ class PublicWorkoutBillingPortalViewTests(TestCase):
     def test_backup_str_includes_slug(self):
         backup = PublicWorkoutLocalStorageBackup.objects.create(plan_slug='giovanna', raw_blob={})
         self.assertIn('giovanna', str(backup))
+
+
+class PublicWorkoutCustomCheckoutViewTests(TestCase):
+    # Achado real (Rafael, cliente legado — seed_legacy_workout_accounts):
+    # assinatura ja' nasce ACTIVE mas sem stripe_customer_id. Antes desta
+    # view, o UNICO jeito de cobrar valor negociado era a acao de admin
+    # "Gerar link..." (copiar/colar no WhatsApp) -- esta view fecha o loop
+    # dentro do app. Mesmo padrao de sessao/erros de
+    # PublicWorkoutBillingPortalViewTests.
+
+    def _login(self, account):
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.id
+        )
+
+    def test_without_session_cookie_returns_401(self):
+        response = self.client.post(reverse('public-workout-custom-checkout'))
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['error'], 'nao_autenticado')
+
+    def test_cookie_for_deleted_account_returns_401(self):
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=999999)
+
+        response = self.client.post(reverse('public-workout-custom-checkout'))
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['error'], 'nao_autenticado')
+
+    def test_account_without_subscription_returns_404(self):
+        account = PublicWorkoutAccount.objects.create(email='semassinatura-custom@example.com')
+        self._login(account)
+
+        response = self.client.post(reverse('public-workout-custom-checkout'))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['error'], 'nao_aplicavel')
+
+    def test_subscription_with_stripe_customer_id_returns_404(self):
+        # Ja tem stripe_customer_id -- usa o Customer Portal normal
+        # (data-billing-portal), este caminho nao se aplica.
+        from public_workouts.billing import get_or_create_subscription, link_stripe_ids
+
+        account = PublicWorkoutAccount.objects.create(email='jatemstripe-custom@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno')
+        link_stripe_ids(subscription, customer_id='cus_789', stripe_subscription_id='sub_789')
+        self._login(account)
+
+        response = self.client.post(reverse('public-workout-custom-checkout'))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['error'], 'nao_aplicavel')
+
+    def test_subscription_without_custom_price_returns_404(self):
+        # Assinatura legada existe, mas o Renan ainda nao preencheu
+        # custom_monthly_price no admin.
+        from public_workouts.billing import get_or_create_subscription
+
+        account = PublicWorkoutAccount.objects.create(email='semvalor-custom@example.com')
+        get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno')
+        self._login(account)
+
+        response = self.client.post(reverse('public-workout-custom-checkout'))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['error'], 'valor_nao_definido')
+
+    def test_stripe_not_configured_returns_503(self):
+        from public_workouts.billing import get_or_create_subscription
+
+        account = PublicWorkoutAccount.objects.create(email='semstripe-custom@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno')
+        subscription.custom_monthly_price = 150
+        subscription.save(update_fields=['custom_monthly_price'])
+        self._login(account)
+
+        with patch('student_identity.public_workout_views.start_custom_price_subscription_checkout') as start_checkout:
+            from public_workouts.stripe_checkout import PublicWorkoutStripeNotConfiguredError
+
+            start_checkout.side_effect = PublicWorkoutStripeNotConfiguredError('sem secret key')
+            response = self.client.post(reverse('public-workout-custom-checkout'))
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()['error'], 'stripe_nao_configurado')
+
+    def test_returns_checkout_url_when_custom_price_is_set(self):
+        from public_workouts.billing import get_or_create_subscription
+
+        account = PublicWorkoutAccount.objects.create(email='comvalor-custom@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno')
+        subscription.custom_monthly_price = 150
+        subscription.save(update_fields=['custom_monthly_price'])
+        self._login(account)
+
+        with patch('student_identity.public_workout_views.start_custom_price_subscription_checkout') as start_checkout:
+            start_checkout.return_value = 'https://checkout.stripe.com/pay/cs_test_custom'
+            response = self.client.post(reverse('public-workout-custom-checkout'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['checkout_url'], 'https://checkout.stripe.com/pay/cs_test_custom')
+        _, kwargs = start_checkout.call_args
+        self.assertEqual(kwargs['subscription'], subscription)
