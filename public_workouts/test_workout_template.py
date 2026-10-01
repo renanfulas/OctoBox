@@ -67,6 +67,7 @@ def _render(
     customer_portal_url=None,
     billing_portal_available=False,
     account_email=None,
+    nutrition_unlocked=False,
 ) -> str:
     if progress_snapshots is None:
         # Template fixtures now follow the production contract: the graph
@@ -136,6 +137,7 @@ def _render(
         'customer_portal_url': customer_portal_url,
         'billing_portal_available': billing_portal_available,
         'account_email': account_email,
+        'nutrition_unlocked': nutrition_unlocked,
     })
 
 
@@ -876,22 +878,21 @@ class WorkoutTopbarAndNavTests(TestCase):
         self.assertIn('<img src="https://example.com/foto.jpg"', html)
 
     def test_bottom_nav_has_five_destinations_in_order(self):
-        # Treino nao tem mais [data-workout-tab-target] fixo -- virou o
-        # botao de ciclo (Treino/Cardio/Periodizacao, ver
-        # data-workout-cycle-nav) pedido pelo Renan, ainda assim ocupa o
-        # 3o slot visualmente entre Avaliacao e Cargas.
+        # Avaliacao e Treino nao tem mais [data-workout-tab-target] fixo --
+        # viraram botoes de ciclo (Avaliacao/Dieta e Treino/Cardio/
+        # Periodizacao, ver data-workout-cycle-nav), cada um desambiguado
+        # por data-cycle-key.
         html = _render(build_example_payload())
 
         nav_start = html.index('workout-mobile-nav')
-        fixed_order = ['workout-panel-inicio', 'workout-panel-avaliacao']
-        positions = [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in fixed_order]
-        cycle_nav_position = html.index('data-workout-cycle-nav', nav_start)
+        inicio_position = html.index('data-workout-tab-target="workout-panel-inicio"', nav_start)
+        avaliacao_cycle_position = html.index('data-cycle-key="avaliacao"', nav_start)
+        treino_cycle_position = html.index('data-cycle-key="treino"', nav_start)
         trailing_order = ['workout-panel-cargas', 'workout-panel-perfil']
-        positions += [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in trailing_order]
+        positions = [html.index(f'data-workout-tab-target="{target}"', nav_start) for target in trailing_order]
 
-        self.assertEqual(positions[:2], sorted(positions[:2]))
-        self.assertTrue(positions[1] < cycle_nav_position < positions[2])
-        self.assertEqual(positions[2:], sorted(positions[2:]))
+        self.assertTrue(inicio_position < avaliacao_cycle_position < treino_cycle_position < positions[0])
+        self.assertEqual(positions, sorted(positions))
 
     def test_inicio_panel_is_active_by_default(self):
         html = _render(build_example_payload())
@@ -964,12 +965,18 @@ class CardioPeriodizacaoCycleNavTests(TestCase):
     """Botao de ciclo "Treino" do bottom nav (pedido do Renan): um SO' slot
     alterna Treino/Cardio/Periodizacao a cada toque, em vez de 3 botoes
     fixos. Cardio/Periodizacao saem da lista de alvos quando o payload nao
-    tem esse dado (aditivo ao schema, ver schema.py)."""
+    tem esse dado (aditivo ao schema, ver schema.py).
+
+    A pagina tem um SEGUNDO botao de ciclo (Avaliacao/Dieta, ver
+    NutritionCycleNavTests abaixo) -- os regex aqui exigem
+    data-cycle-key="treino" pra nunca casar com o data-cycle-targets do
+    outro botao por engano (re.search pega o PRIMEIRO match da pagina, e
+    Avaliacao vem antes de Treino na ordem do nav)."""
 
     def test_cycle_targets_only_treino_without_cardio_or_periodization(self):
         html = _render(build_example_payload())
 
-        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        match = re.search(r'data-cycle-key="treino"\s+data-cycle-targets="([^"]*)"', html)
         self.assertIsNotNone(match)
         self.assertEqual(match.group(1), 'workout-panel-treino')
 
@@ -979,7 +986,7 @@ class CardioPeriodizacaoCycleNavTests(TestCase):
 
         html = _render(payload)
 
-        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        match = re.search(r'data-cycle-key="treino"\s+data-cycle-targets="([^"]*)"', html)
         self.assertEqual(match.group(1), 'workout-panel-treino|workout-panel-cardio')
 
     def test_cycle_targets_include_both_when_present(self):
@@ -992,8 +999,56 @@ class CardioPeriodizacaoCycleNavTests(TestCase):
 
         html = _render(payload)
 
-        match = re.search(r'data-cycle-targets="([^"]*)"', html)
+        match = re.search(r'data-cycle-key="treino"\s+data-cycle-targets="([^"]*)"', html)
         self.assertEqual(match.group(1), 'workout-panel-treino|workout-panel-cardio|workout-panel-periodizacao')
+
+
+class NutritionCycleNavTests(TestCase):
+    """Botao de ciclo "Avaliacao" do bottom nav: alterna Avaliacao -> Dieta
+    -> Avaliacao a cada toque (mesmo mecanismo do ciclo Treino acima, ver
+    data-workout-cycle-nav em workout-shell.js). Dieta sai do Perfil (onde
+    vivia antes) porque o card ficava enterrado atras de Conta/Pagamentos/
+    Tema -- agora tem visibilidade de aba de primeiro nivel, igual
+    Treino/Cardio/Periodizacao."""
+
+    def test_avaliacao_cycle_targets_avaliacao_then_dieta(self):
+        html = _render(build_example_payload())
+
+        match = re.search(r'data-cycle-key="avaliacao"\s+data-cycle-targets="([^"]*)"', html)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.group(1), 'workout-panel-avaliacao|workout-panel-dieta')
+
+    def test_dieta_panel_exists_as_sibling_of_avaliacao(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('<section id="workout-panel-dieta"', html)
+
+    def test_nutrition_card_no_longer_renders_inside_perfil(self):
+        html = _render(build_example_payload(), nutrition_unlocked=True)
+
+        perfil_start = html.index('id="workout-panel-perfil"')
+        dieta_start = html.index('id="workout-panel-dieta"')
+        perfil_html = html[perfil_start:dieta_start if dieta_start > perfil_start else len(html)]
+        self.assertNotIn('data-workout-nutrition', perfil_html)
+
+    def test_dieta_panel_shows_meal_plan_widget_when_unlocked(self):
+        html = _render(build_example_payload(), nutrition_unlocked=True)
+
+        dieta_start = html.index('id="workout-panel-dieta"')
+        dieta_end = html.index('id="workout-panel-treino"')
+        dieta_html = html[dieta_start:dieta_end]
+        self.assertIn('data-workout-nutrition', dieta_html)
+        self.assertIn('data-nutrition-url', dieta_html)
+        self.assertNotIn('Disponível nos planos Completo e Premium', dieta_html)
+
+    def test_dieta_panel_shows_upsell_when_locked(self):
+        html = _render(build_example_payload(), nutrition_unlocked=False)
+
+        dieta_start = html.index('id="workout-panel-dieta"')
+        dieta_end = html.index('id="workout-panel-treino"')
+        dieta_html = html[dieta_start:dieta_end]
+        self.assertIn('Disponível nos planos Completo e Premium', dieta_html)
+        self.assertNotIn('data-workout-nutrition', dieta_html)
 
     def test_cardio_panel_empty_without_cardio_data(self):
         html = _render(build_example_payload())

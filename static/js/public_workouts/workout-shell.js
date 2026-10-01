@@ -43,28 +43,43 @@
     });
   });
 
-  // Botao de ciclo "Treino" do bottom nav (item pedido pelo Renan): um SO'
-  // slot da nav alterna Treino -> Cardio -> Periodizacao -> Treino a cada
-  // toque, em vez de 3 botoes fixos (nav so' tem espaco pros 5 de sempre).
-  // Cardio/Periodizacao saem da lista de alvos quando o programa nao tem
-  // esse dado (data-cycle-targets vem filtrado pelo template, ver acima).
-  // Chegar de OUTRO botao sempre reseta pro primeiro estado (Treino) --
-  // so' avanca no ciclo quando o proprio botao JA esta ativo.
-  var cycleNav = document.querySelector('[data-workout-cycle-nav]');
-  var resetCycleToTreino = function () {}; // no-op se nao houver cycleNav (nunca deveria faltar)
-  if (cycleNav) {
-    var CYCLE_ICONS = {
-      treino: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg>',
-      cardio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="14.5" cy="4.5" r="1.7"/><path d="M10 9.5 12.5 8l2 3 3.5 1.5"/><path d="M12.5 8 9 10l-1.5 4"/><path d="M14.5 11 17 12.5l1 4.5"/><path d="M9 17.5l3-3"/></svg>',
-      periodizacao: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20v-7"/><path d="M9.5 20V8"/><path d="M15 20v-9"/><path d="M20 20V5"/></svg>',
-    };
-    var CYCLE_LABELS = { treino: 'Treino', cardio: 'Cardio', periodizacao: 'Periodização' };
+  // Botoes de ciclo do bottom nav (item pedido pelo Renan): cada slot
+  // alterna entre N paineis a cada toque, em vez de um botao fixo por
+  // painel (nav so' tem espaco pros 5 de sempre). Dois hoje: "Treino"
+  // (Treino -> Cardio -> Periodizacao -> Treino) e "Avaliacao" (Avaliacao ->
+  // Dieta -> Avaliacao) -- cada um com seu PROPRIO indice de ciclo (closure
+  // por botao via forEach, nunca uma variavel global compartilhada, senao
+  // avancar um ciclo atropelaria o estado do outro). Cardio/Periodizacao
+  // saem da lista de alvos do ciclo Treino quando o programa nao tem esse
+  // dado (data-cycle-targets vem filtrado pelo template, ver acima).
+  // Chegar de OUTRO botao sempre reseta o ciclo clicado pro primeiro estado
+  // -- so' avanca quando o proprio botao JA esta ativo.
+  var CYCLE_ICONS = {
+    treino: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg>',
+    cardio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="14.5" cy="4.5" r="1.7"/><path d="M10 9.5 12.5 8l2 3 3.5 1.5"/><path d="M12.5 8 9 10l-1.5 4"/><path d="M14.5 11 17 12.5l1 4.5"/><path d="M9 17.5l3-3"/></svg>',
+    periodizacao: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20v-7"/><path d="M9.5 20V8"/><path d="M15 20v-9"/><path d="M20 20V5"/></svg>',
+    avaliacao: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-10a7 7 0 0 0-14 0c0 3.5 3 7 7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>',
+    dieta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v6"/><path d="M9 2v6"/><path d="M6 8a3 3 0 0 0 3 3 3 3 0 0 0 3-3"/><path d="M9 11v11"/><path d="M17 2c-2 1-3 3-3 6s1 4 3 4"/><path d="M17 12v10"/></svg>',
+  };
+  var CYCLE_LABELS = {
+    treino: 'Treino', cardio: 'Cardio', periodizacao: 'Periodização',
+    avaliacao: 'Avaliação', dieta: 'Dieta',
+  };
+
+  function cycleKeyOf(targetId) {
+    return targetId.replace('workout-panel-', '');
+  }
+
+  // Referencia guardada por data-cycle-key="treino" (nunca "primeiro
+  // cycle-nav encontrado" — com 2+ botoes de ciclo na pagina isso seria
+  // ambiguo). Usada pelo atalho de "dia da semana" do Início, que precisa
+  // ATERRISSAR em Treino especificamente, nunca so' "avancar o ciclo"
+  // (diferente de um clique de verdade no botao).
+  var resetCycleToTreino = function () {}; // no-op se o botao nao existir (nunca deveria faltar)
+
+  document.querySelectorAll('[data-workout-cycle-nav]').forEach(function (cycleNav) {
     var cycleTargets = cycleNav.getAttribute('data-cycle-targets').split('|');
     var cycleIndex = 0;
-
-    function cycleKeyOf(targetId) {
-      return targetId.replace('workout-panel-', '');
-    }
 
     function showCycleState(index) {
       cycleIndex = index;
@@ -85,14 +100,12 @@
       showCycleState(isActive ? (cycleIndex + 1) % cycleTargets.length : 0);
     });
 
-    // Treino e' sempre cycleTargets[0] (garantido pelo template) -- usado
-    // pelo atalho de "dia da semana" do Início abaixo, que precisa
-    // ATERRISSAR em Treino especificamente, nunca so' "avancar o ciclo"
-    // (diferente de um clique de verdade no botao).
-    resetCycleToTreino = function () {
-      showCycleState(0);
-    };
-  }
+    if (cycleNav.getAttribute('data-cycle-key') === 'treino') {
+      resetCycleToTreino = function () {
+        showCycleState(0);
+      };
+    }
+  });
 
   // Atalhos que pulam telas (ex.: dia da semana em Início -> Treino + o
   // sub-dia certo). Deliberadamente FORA do NodeList `tabs` acima: um

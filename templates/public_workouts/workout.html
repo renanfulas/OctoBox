@@ -139,6 +139,26 @@ PONTOS CRITICOS:
            um `.tabs`-based #tab-avaliacoes novo (ver assessments.js). -->
     </section>
 
+    <!-- So' alcancado pelo ciclo do botao "Avaliacao" do bottom nav (mesmo
+         padrao do ciclo Treino/Cardio/Periodizacao acima) -- por isso NAO
+         tem <button> proprio fixo na nav logo abaixo, so' esta section. -->
+    <section id="workout-panel-dieta" data-workout-tab-panel>
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Nutrição</h2>
+        {% if nutrition_unlocked %}
+        <div
+          data-workout-nutrition
+          data-nutrition-url="{% url 'public-workout-meal-plan' plan_slug=plan_slug %}"
+        >
+          <span class="workout-nutrition__status" data-workout-nutrition-status aria-live="polite">Carregando…</span>
+          <div class="workout-nutrition__content" data-workout-nutrition-content hidden></div>
+        </div>
+        {% else %}
+        <p>Disponível nos planos Completo e Premium. Fale com o Renan para fazer upgrade.</p>
+        {% endif %}
+      </article>
+    </section>
+
     <section id="workout-panel-treino" data-workout-tab-panel>
       {% workout_day_selection program as workout_selection %}
       {% current_period_phase program as current_phase %}
@@ -701,22 +721,6 @@ PONTOS CRITICOS:
       </article>
 
       <article class="student-card card-decor-topstripe workout-block-card">
-        <h2>Nutrição</h2>
-        {% if nutrition_unlocked %}
-        <div
-          data-workout-nutrition
-          data-nutrition-url="{% url 'public-workout-meal-plan' plan_slug=plan_slug %}"
-        >
-          <button type="button" class="workout-load-input__save" data-workout-nutrition-generate>Ver plano alimentar</button>
-          <div class="workout-nutrition__content" data-workout-nutrition-content hidden></div>
-          <span class="workout-nutrition__status" data-workout-nutrition-status aria-live="polite"></span>
-        </div>
-        {% else %}
-        <p>Disponível nos planos Completo e Premium. Fale com o Renan para fazer upgrade.</p>
-        {% endif %}
-      </article>
-
-      <article class="student-card card-decor-topstripe workout-block-card">
         <h2>Versões do programa</h2>
         {% if program_versions %}
         <div class="operation-table-wrap">
@@ -763,14 +767,21 @@ PONTOS CRITICOS:
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-5.5h5V20"/></svg>
     Início
   </button>
-  <button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-avaliacao">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c4-3 7-6.5 7-10a7 7 0 0 0-14 0c0 3.5 3 7 7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>
-    Avaliação
+  <button
+    type="button"
+    class="workout-mobile-nav-link"
+    data-workout-cycle-nav
+    data-cycle-key="avaliacao"
+    data-cycle-targets="workout-panel-avaliacao|workout-panel-dieta"
+  >
+    <span data-cycle-icon aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-10a7 7 0 0 0-14 0c0 3.5 3 7 7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg></span>
+    <span data-cycle-label>Avaliação</span>
   </button>
   <button
     type="button"
     class="workout-mobile-nav-link"
     data-workout-cycle-nav
+    data-cycle-key="treino"
     data-cycle-targets="workout-panel-treino{% if program.cardio %}|workout-panel-cardio{% endif %}{% if program.periodization %}|workout-panel-periodizacao{% endif %}"
   >
     <span data-cycle-icon aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg></span>
