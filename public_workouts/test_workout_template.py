@@ -64,7 +64,8 @@ def _render(
     movement_labels=None,
     student_name='',
     student_photo_url=None,
-    customer_portal_url=None,
+    custom_checkout_available=False,
+    payment_setup_pending=False,
     billing_portal_available=False,
     account_email=None,
     nutrition_unlocked=False,
@@ -134,7 +135,8 @@ def _render(
         'movement_labels': movement_labels or {},
         'student_name': student_name,
         'student_photo_url': student_photo_url,
-        'customer_portal_url': customer_portal_url,
+        'custom_checkout_available': custom_checkout_available,
+        'payment_setup_pending': payment_setup_pending,
         'billing_portal_available': billing_portal_available,
         'account_email': account_email,
         'nutrition_unlocked': nutrition_unlocked,
@@ -1149,22 +1151,42 @@ class WorkoutProfilePanelTests(TestCase):
         # precisa abrir o Customer Portal direto, sem passar por /treinos/minha-conta
         # (achado do Renan: pra quem ja tem assinatura ativa, a pagina de conta
         # some no meio do caminho um CTA de "abrir programa", nao de pagamento).
-        html = _render(build_example_payload(), billing_portal_available=True, customer_portal_url='/treinos/minha-conta')
+        html = _render(build_example_payload(), billing_portal_available=True)
 
         self.assertIn('data-billing-portal', html)
-        self.assertNotIn('href="/treinos/minha-conta"', html)
+        self.assertNotIn('data-workout-start-custom-checkout', html)
         self.assertIn('Pagamentos', html)
 
-    def test_payments_falls_back_to_account_hub_without_stripe_customer_id(self):
-        html = _render(build_example_payload(), billing_portal_available=False, customer_portal_url='/treinos/minha-conta')
+    def test_payments_starts_custom_checkout_when_price_already_set(self):
+        # Achado real (Rafael, cliente legado): sem stripe_customer_id, a
+        # assinatura ja' nasce ACTIVE (seed_legacy_workout_accounts) e nunca
+        # cai nos estados de pagamento de get_customer_journey() -- o hub
+        # /treinos/minha-conta nao mostra nada sobre pagar. Depois que o
+        # Renan preenche custom_monthly_price no admin, "Pagamentos" dispara
+        # o checkout de valor negociado (POST /treinos/checkout-
+        # personalizado), nunca mais um link morto pro hub.
+        html = _render(build_example_payload(), billing_portal_available=False, custom_checkout_available=True)
 
-        self.assertIn('href="/treinos/minha-conta"', html)
+        self.assertIn('data-workout-start-custom-checkout', html)
+        self.assertNotIn('data-billing-portal', html)
+        self.assertNotIn('href="/treinos/minha-conta"', html)
+
+    def test_payments_asks_to_talk_to_renan_when_price_not_set_yet(self):
+        # Mesmo achado acima, ANTES do Renan preencher custom_monthly_price
+        # no admin -- nunca mostra um botao que chamaria a view e falharia
+        # com 404 'valor_nao_definido'.
+        html = _render(build_example_payload(), billing_portal_available=False, payment_setup_pending=True)
+
+        self.assertIn('Fale com o Renan', html)
+        self.assertNotIn('data-workout-start-custom-checkout', html)
         self.assertNotIn('data-billing-portal', html)
 
-    def test_payments_shows_unavailable_without_portal_url(self):
-        html = _render(build_example_payload(), customer_portal_url=None)
+    def test_payments_shows_unavailable_without_subscription(self):
+        html = _render(build_example_payload())
 
         self.assertIn('indisponível', html)
+        self.assertNotIn('data-billing-portal', html)
+        self.assertNotIn('data-workout-start-custom-checkout', html)
 
     def test_theme_toggle_button_present(self):
         html = _render(build_example_payload())

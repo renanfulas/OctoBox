@@ -35,7 +35,7 @@ PONTOS CRITICOS:
   mantem os sub-tabs de dia por dentro (dois `.interactive-tab-container`
   aninhados — CSS existente ja escopa por filho direto, script de tabs foi
   generalizado pra nao cruzar os dois niveis, ver <script> no fim).
-- `customer_portal_url`/`student_name`/`account_email` sao contexto OPCIONAL
+- `custom_checkout_available`/`student_name`/`account_email` sao contexto OPCIONAL
   (None-safe) — nenhuma view real os alimenta ainda, mesmo estagio de
   "fundacao, nao ligado a URL" do resto deste arquivo. Avaliacao NAO usa
   contexto Django nenhum -- e' 100% client-side via assessments.js (fetch
@@ -701,11 +701,16 @@ PONTOS CRITICOS:
             <span class="workout-profile-row__label">Pagamentos</span>
             <span aria-hidden="true">→</span>
           </button>
-          {% elif customer_portal_url %}
-          <a class="workout-profile-row" href="{{ customer_portal_url }}">
+          {% elif custom_checkout_available %}
+          <button type="button" class="workout-profile-row" data-workout-start-custom-checkout>
             <span class="workout-profile-row__label">Pagamentos</span>
-            <span aria-hidden="true">→</span>
-          </a>
+            <span class="student-status-badge">Pagar agora</span>
+          </button>
+          {% elif payment_setup_pending %}
+          <span class="workout-profile-row">
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span class="student-status-badge">Fale com o Renan</span>
+          </span>
           {% else %}
           <span class="workout-profile-row">
             <span class="workout-profile-row__label">Pagamentos</span>

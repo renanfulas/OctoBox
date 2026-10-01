@@ -796,11 +796,27 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         # Com stripe_customer_id (1o checkout ja concluido, webhook ja fez
         # link_stripe_ids): manda pro Customer Portal de verdade, igual ao
         # botao "Gerenciar assinatura" de minha_conta.html (mesmo endpoint
-        # POST /treinos/billing-portal, mesmo account.js). Sem isso ainda
-        # nao ha o que gerenciar -- cai no hub /treinos/minha-conta, que
-        # mostra o proximo passo certo (ex.: retomar checkout).
+        # POST /treinos/billing-portal, mesmo account.js).
+        #
+        # Sem stripe_customer_id: achado real (Rafael, cliente legado que
+        # ainda paga por fora) -- a assinatura ja nasce com status=ACTIVE
+        # (seed_legacy_workout_accounts), entao get_customer_journey() nunca
+        # cai nos estados payment_problem/payment_pending, e o hub /treinos/
+        # minha-conta nao mostra NADA sobre pagamento. "Pagamentos" caia num
+        # link morto pra esse hub. Agora: se o Renan ja' preencheu
+        # custom_monthly_price no admin (PublicWorkoutSubscriptionAdmin),
+        # mostra um botao de self-service que dispara POST /treinos/
+        # checkout-personalizado (PublicWorkoutCustomCheckoutView) -- fecha
+        # o loop sem ele precisar copiar/colar link no WhatsApp. Sem o valor
+        # definido ainda, mostra "Fale com o Renan" em vez de um link morto
+        # ou um botao que sempre falharia.
         billing_portal_available = bool(subscription and subscription.stripe_customer_id)
-        customer_portal_url = '/treinos/minha-conta' if subscription and not billing_portal_available else None
+        custom_checkout_available = bool(
+            subscription and not billing_portal_available and subscription.custom_monthly_price is not None
+        )
+        payment_setup_pending = bool(
+            subscription and not billing_portal_available and not custom_checkout_available
+        )
         account_email = subscription.account.email if subscription else None
     else:
         weekly_review = {'trends_by_movement': {}}
@@ -809,7 +825,8 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         progress_snapshots = {}
         nutrition_unlocked = False
         billing_portal_available = False
-        customer_portal_url = None
+        custom_checkout_available = False
+        payment_setup_pending = False
         account_email = None
 
     asset_version = public_workout_asset_version()
@@ -827,7 +844,8 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'student_name': plan.short_name,
         'student_photo_url': None,
         'billing_portal_available': billing_portal_available,
-        'customer_portal_url': customer_portal_url,
+        'custom_checkout_available': custom_checkout_available,
+        'payment_setup_pending': payment_setup_pending,
         'account_email': account_email,
         'nutrition_unlocked': nutrition_unlocked,
     })
@@ -1210,7 +1228,8 @@ class PublicWorkoutTemplatePreviewView(View):
             'movement_labels': build_movement_label_lookup(program),
             'student_name': student_name,
             'student_photo_url': student_photo_url,
-            'customer_portal_url': None,
+            'custom_checkout_available': False,
+            'payment_setup_pending': False,
             'account_email': account_email,
             # Preview nunca resolve tier/assinatura real (ver docstring da
             # view) — mesmo com sessao de login ativa, nutricao continua
