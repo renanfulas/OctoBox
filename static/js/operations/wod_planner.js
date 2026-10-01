@@ -20,7 +20,6 @@ PONTOS CRITICOS:
 
     const cells = Array.from(planner.querySelectorAll('[data-wod-planner-cell]'));
     const spotlight = planner.querySelector('[data-wod-planner-spotlight]');
-    if (!cells.length) return;
 
     const templatePickerTelemetryUrl = planner.dataset.templatePickerTelemetryUrl || '';
     const templatePicker = planner.querySelector('[data-wod-planner-template-picker]');
@@ -282,15 +281,15 @@ PONTOS CRITICOS:
             }
         }
 
-        if (event.key === 'Delete') {
-            event.preventDefault();
-            openDeleteSelectedDialog();
-            return;
-        }
-
         if ((event.key === 'd' || event.key === 'D') && clearWeekDialog) {
             event.preventDefault();
             openClearWeekDialog();
+            return;
+        }
+
+        if (event.key === 'Delete') {
+            event.preventDefault();
+            openDeleteSelectedDialog();
             return;
         }
 
