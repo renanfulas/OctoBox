@@ -136,6 +136,16 @@ class SchemaValidationTests(TestCase):
         self.assertNotIn('name', payload['days'][0]['blocks'][0]['movements'][0])
         self.assertEqual(validate_payload(payload), [])
 
+    def test_allow_load_registration_is_optional_and_boolean(self):
+        payload = build_example_payload()
+        movement = payload['days'][0]['blocks'][0]['movements'][0]
+        self.assertEqual(validate_payload(payload), [])
+        movement['allow_load_registration'] = False
+        self.assertEqual(validate_payload(payload), [])
+        movement['allow_load_registration'] = 'no'
+        errors = validate_payload(payload)
+        self.assertTrue(any('allow_load_registration' in error for error in errors))
+
     def test_movement_with_name_and_variations_passes(self):
         payload = build_example_payload()
         payload['days'][0]['blocks'][0]['movements'][0]['name'] = 'Agachamento livre'

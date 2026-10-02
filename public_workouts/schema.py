@@ -75,6 +75,13 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
     _require(isinstance(movement.get('rir_spec'), str), errors, f'{path}.rir_spec: obrigatorio, string (pode ser vazia)')
     _require(isinstance(movement.get('is_tracked'), bool), errors, f'{path}.is_tracked: obrigatorio, bool')
 
+    allow_load_registration = movement.get('allow_load_registration')
+    _require(
+        allow_load_registration is None or isinstance(allow_load_registration, bool),
+        errors,
+        f'{path}.allow_load_registration: bool ou ausente',
+    )
+
     load_type = movement.get('load_type')
     _require(load_type in LOAD_TYPES, errors, f'{path}.load_type: precisa ser um de {LOAD_TYPES}')
 

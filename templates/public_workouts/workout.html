@@ -239,6 +239,7 @@ PONTOS CRITICOS:
                 {% endwith %}
                 {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
               </div>
+              {% if movement.allow_load_registration|default_if_none:True %}
               <div class="workout-movement-load">
                 {% if load.kind == 'fixed_kg' %}{{ load.value_kg }} kg
                 {% elif load.kind == 'percentage' %}
@@ -252,7 +253,9 @@ PONTOS CRITICOS:
               <button type="button" class="workout-movement-register" data-workout-load-toggle aria-controls="workout-load-input-{{ day.day_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" aria-expanded="false">
                 <span data-workout-load-action-label>Registrar carga</span><span data-workout-load-action-icon aria-hidden="true">＋</span>
               </button>
+              {% endif %}
             </article>
+            {% if movement.allow_load_registration|default_if_none:True %}
             {% todays_load_entry load_history movement.movement_slug "top_set" as today_top_entry %}
             {% todays_load_entry load_history movement.movement_slug "warmup" as today_warmup_entry %}
             {% todays_default_load_entry load_history movement.movement_slug as today_entry %}
@@ -395,6 +398,7 @@ PONTOS CRITICOS:
               <span class="workout-load-input__status" data-workout-load-status aria-live="polite">{% if today_entry %}Já registrado hoje{% if today_entry.set_role == 'warmup' %} · aquecimento{% endif %}{% if today_entry.weight_kg is not None %}: {{ today_entry.weight_kg|unlocalize }} kg{% endif %}{% if today_entry.reps is not None %} · {{ today_entry.reps }} reps{% endif %}{% endif %}</span>
               <p class="workout-load-input__achievement" data-workout-load-achievement aria-live="polite" hidden></p>
             </div>
+            {% endif %}
             {% empty %}
             <p class="table-empty-cell">Nenhum movimento neste bloco.</p>
             {% endfor %}
