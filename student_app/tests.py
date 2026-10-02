@@ -2683,6 +2683,32 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
+    def test_first_login_autostarts_the_onboarding_wizard(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='novo@example.com')
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'data-onboarding-autostart="true"')
+
+    def test_already_onboarded_account_does_not_autostart_the_wizard(self):
+        from django.utils import timezone
+
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(
+            email='veterana@example.com', onboarding_completed_at=timezone.now(),
+        )
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'data-onboarding-autostart="false"')
+
 
 class PublicWorkoutAssessmentsEndpointTests(TestCase):
     """GET /renan/<slug>/avaliacoes.json — exige cookie assinado do dono do slug.

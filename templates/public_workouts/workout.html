@@ -63,6 +63,7 @@ PONTOS CRITICOS:
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-training.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-progress.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-assessment.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/onboarding.css' %}?v={{ asset_version }}">
 </head>
 <body data-plan-slug="{{ plan_slug }}"{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
 <main class="workout-shell">
@@ -721,6 +722,10 @@ PONTOS CRITICOS:
             <span class="workout-profile-row__label theme-toggle-label">Tema</span>
             <span class="theme-toggle-icon" aria-hidden="true"></span>
           </button>
+          <button type="button" class="workout-profile-row" data-ui="replay-onboarding">
+            <span class="workout-profile-row__label">Ver tutorial de novo</span>
+            <span aria-hidden="true">→</span>
+          </button>
         </div>
         <span class="workout-profile-row__status" data-action-status aria-live="polite"></span>
       </article>
@@ -802,6 +807,8 @@ PONTOS CRITICOS:
   </button>
 </nav>
 
+{% include 'public_workouts/_onboarding_wizard.html' %}
+
 <script src="{% static 'js/public_workouts/workout-shell.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/core/shell.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/load_tracker.js' %}?v={{ asset_version }}" defer></script>
@@ -809,5 +816,6 @@ PONTOS CRITICOS:
 <script src="{% static 'js/public_workouts/nutrition.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/assessments.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/account.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/onboarding.js' %}?v={{ asset_version }}" defer></script>
 </body>
 </html>
