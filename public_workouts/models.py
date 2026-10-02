@@ -502,6 +502,11 @@ class PublicWorkoutAccount(TimeStampedModel):
     # nunca limpa o que ja existe com string vazia (mesma pegadinha real ja
     # corrigida pro /aluno/ — PR "corrige foto do Google perdida").
     photo_url = models.URLField(blank=True, default='')
+    # Null = ainda nao viu o wizard de primeiro login (workout.html). So'
+    # marca a CONTA, nunca por slug/assinatura — trocar de plano ou de
+    # tier nao deve mandar a pessoa pelo tour de novo. "Ver tutorial de
+    # novo" (botao na aba Conta) reabre o wizard sem tocar este campo.
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
