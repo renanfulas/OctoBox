@@ -290,6 +290,14 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, f'data-max-year="{timezone.localdate().year}"', html=False)
         self.assertNotContains(response, '<span>E-mail</span>', html=False)
         self.assertContains(response, 'Seu e-mail será o mesmo validado no OAuth', html=False)
+
+    def test_mass_onboarding_explains_optional_fields_and_primary_action(self):
+        client = Client()
+        self._set_mass_onboarding_session(client)
+
+        response = client.get(reverse('student-app-onboarding'))
+
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Concluir cadastro')
         self.assertContains(response, 'Data de nascimento (opcional)')
         self.assertContains(response, 'Plano (opcional)')
