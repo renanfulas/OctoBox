@@ -224,6 +224,17 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('data-workout-load-save', html)
         self.assertIn(f"data-movement-slug=\"{build_example_payload()['days'][0]['blocks'][0]['movements'][0]['movement_slug']}\"", html)
 
+    def test_allow_load_registration_false_hides_load_controls_and_hint(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['allow_load_registration'] = False
+
+        html = _render(payload)
+
+        self.assertNotIn('workout-movement-load', html)
+        self.assertNotIn('workout-movement-register', html)
+        self.assertNotIn('data-workout-load-input', html)
+        self.assertNotIn('workout-movement-load-hint', html)
+
     def test_load_input_widget_starts_hidden_and_has_explicit_register_button(self):
         html = _render(build_example_payload())  # is_tracked=True no exemplo
 
