@@ -761,7 +761,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
     """
     plan = _get_public_workout_entry(plan_slug)
 
-    from public_workouts.models import PublicWorkoutSubscription
+    from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
     from public_workouts.progress_snapshot import build_progress_snapshots
     from public_workouts.services import (
         build_movement_label_lookup,
@@ -818,6 +818,14 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
             subscription and not billing_portal_available and not custom_checkout_available
         )
         account_email = subscription.account.email if subscription else None
+        # None = ainda nao viu o wizard de primeiro login (PublicWorkoutAccount.
+        # onboarding_completed_at) — so' dispara quando ha sessao de LOGIN de
+        # verdade (B1), nunca pro cookie de posse (B0) de quem so abriu o
+        # link: o wizard ensina a USAR a conta (registrar carga, pagamento),
+        # nao faz sentido pra quem ainda nem provou que e' dono dela.
+        show_onboarding_wizard = (
+            PublicWorkoutAccount.objects.filter(pk=account_id, onboarding_completed_at__isnull=True).exists()
+        )
     else:
         weekly_review = {'trends_by_movement': {}}
         package = {'one_rep_max_by_movement': {}}
@@ -828,6 +836,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         custom_checkout_available = False
         payment_setup_pending = False
         account_email = None
+        show_onboarding_wizard = False
 
     asset_version = public_workout_asset_version()
     html = render_to_string('public_workouts/workout.html', {
@@ -848,6 +857,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'payment_setup_pending': payment_setup_pending,
         'account_email': account_email,
         'nutrition_unlocked': nutrition_unlocked,
+        'show_onboarding_wizard': show_onboarding_wizard,
     })
     return _inject_public_workout_pwa(html, plan, asset_version)
 
@@ -1264,6 +1274,38 @@ class PublicWorkoutSignOutView(View):
         response.delete_cookie(PUBLIC_WORKOUT_OWNER_COOKIE, samesite='Lax')
         clear_public_workout_session_cookie(response)
         return response
+
+
+class PublicWorkoutOnboardingCompleteView(View):
+    """POST /renan/<slug>/onboarding — marca o wizard de primeiro login
+    como visto (workout.html, onboarding.js).
+
+    Mesmo gate de sessao de PublicWorkoutRecordLoadView (401 sem login,
+    404 se a sessao e' de outra conta): `onboarding_completed_at` e' um
+    dado da CONTA, nunca aceita sem saber com certeza qual conta esta do
+    outro lado. Idempotente por natureza (so seta se ainda None) — o
+    wizard pode chamar isto mais de uma vez (clique duplo, retry de
+    rede) sem acender `onboarding_completed_at` de novo a cada vez.
+    """
+
+    def post(self, request, plan_slug, *args, **kwargs):
+        plan = _get_public_workout_entry(plan_slug)
+
+        from django.utils import timezone
+
+        from public_workouts.models import PublicWorkoutAccount
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id is None:
+            return JsonResponse({'error': 'login necessario'}, status=401)
+
+        _confirm_login_session_owns_slug_or_404(request, plan.slug)
+
+        PublicWorkoutAccount.objects.filter(
+            pk=account_id, onboarding_completed_at__isnull=True,
+        ).update(onboarding_completed_at=timezone.now())
+        return JsonResponse({'ok': True})
 
 
 class PublicWorkoutLocalStorageBackupView(View):

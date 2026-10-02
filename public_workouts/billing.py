@@ -220,9 +220,24 @@ def reactivate_subscription(subscription, *, reason: str) -> bool:
     # `event.pk` e' unico por transicao (nunca reaproveitado numa segunda
     # chamada idempotente com subscription ja ACTIVE), entao serve de
     # versao pra chave de idempotencia do outbox.
-    from public_workouts.outbox import TOPIC_STAFF_NEW_SUBSCRIPTION, enqueue_outbox
+    from public_workouts.outbox import (
+        TOPIC_CLIENT_SUBSCRIPTION_ACTIVE,
+        TOPIC_STAFF_NEW_SUBSCRIPTION,
+        enqueue_outbox,
+    )
     enqueue_outbox(
         topic=TOPIC_STAFF_NEW_SUBSCRIPTION,
+        aggregate_type='subscription_event',
+        aggregate_id=event.pk,
+        version=1,
+    )
+    # Mesmo evento, segunda mensagem: o aviso pro PROPRIO cliente (boas-
+    # vindas numa venda nova, "acesso de volta" numa reativacao) — ver
+    # notify_client_subscription_active. Chave de idempotencia inclui o
+    # topico, entao reaproveitar event.pk como aggregate_id nao colide
+    # com a mensagem de staff acima.
+    enqueue_outbox(
+        topic=TOPIC_CLIENT_SUBSCRIPTION_ACTIVE,
         aggregate_type='subscription_event',
         aggregate_id=event.pk,
         version=1,
@@ -457,5 +472,16 @@ def mark_subscription_canceled(subscription, *, reason: str) -> bool:
         account=subscription.account,
         subscription=subscription,
         tier=subscription.tier,
+    )
+
+    # Outbox (nao chamado direto) pelo mesmo motivo do aviso de ativacao:
+    # customer.subscription.deleted chega dentro do webhook da Stripe, um
+    # envio sincrono aqui arriscaria atrasar/travar a resposta.
+    from public_workouts.outbox import TOPIC_CLIENT_SUBSCRIPTION_CANCELED, enqueue_outbox
+    enqueue_outbox(
+        topic=TOPIC_CLIENT_SUBSCRIPTION_CANCELED,
+        aggregate_type='subscription',
+        aggregate_id=subscription.pk,
+        version=1,
     )
     return True

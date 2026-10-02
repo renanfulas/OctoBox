@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -111,12 +111,12 @@ class ProgramReadyNotificationTests(TestCase):
         subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
         subscription.save(update_fields=['status'])
         program = publish_program(slug='bruno', payload=build_example_payload())
-        gateway = MagicMock()
-        with patch('public_workouts.notifications.get_student_email_gateway', return_value=gateway):
+        with patch('signup.email_sender.send_html_email') as send_html_email:
             self.assertTrue(notify_program_ready(program, base_url='https://app.example.com/'))
             self.assertTrue(notify_program_ready(program, base_url='https://app.example.com/'))
-        self.assertEqual(gateway.send.call_count, 1)
-        self.assertIn('/treinos/login?token=', gateway.send.call_args.kwargs['body'])
+        self.assertEqual(send_html_email.call_count, 1)
+        self.assertIn('/treinos/login?token=', send_html_email.call_args.kwargs['text_body'])
+        self.assertIn('/treinos/login?token=', send_html_email.call_args.kwargs['html_body'])
         self.assertTrue(PublicWorkoutProgramDelivery.objects.get(program=program).sent_at)
 
 

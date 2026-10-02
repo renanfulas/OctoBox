@@ -39,7 +39,12 @@ from public_workouts.models import (
     PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
 )
-from public_workouts.outbox import TOPIC_STAFF_NEW_SUBSCRIPTION, drain_public_workout_outbox
+from public_workouts.outbox import (
+    TOPIC_CLIENT_SUBSCRIPTION_ACTIVE,
+    TOPIC_CLIENT_SUBSCRIPTION_CANCELED,
+    TOPIC_STAFF_NEW_SUBSCRIPTION,
+    drain_public_workout_outbox,
+)
 
 
 class GetOrCreateSubscriptionTests(TestCase):
@@ -220,6 +225,48 @@ class RecordSuccessfulInvoicePaymentTests(TestCase):
 
         self.assertEqual(len(mail.outbox), 0)
 
+    @override_settings(PUBLIC_WORKOUT_PUBLIC_BASE_URL='https://app.example.com')
+    def test_activation_enqueues_a_welcome_email_to_the_client(self):
+        record_successful_invoice_payment(
+            self.subscription, stripe_invoice_id='in_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10)
+        )
+
+        self.assertEqual(PublicWorkoutOutboxMessage.objects.filter(topic=TOPIC_CLIENT_SUBSCRIPTION_ACTIVE).count(), 1)
+        drain_public_workout_outbox()
+
+        client_messages = [msg for msg in mail.outbox if 'aluno@example.com' in msg.to]
+        self.assertEqual(len(client_messages), 1)
+        self.assertIn('Bem-vinda', client_messages[0].subject)
+
+    @override_settings(PUBLIC_WORKOUT_PUBLIC_BASE_URL='https://app.example.com')
+    def test_reactivation_sends_a_different_subject_to_the_client(self):
+        self.subscription.status = PublicWorkoutSubscriptionStatus.SUSPENDED
+        self.subscription.save(update_fields=['status'])
+
+        record_successful_invoice_payment(
+            self.subscription, stripe_invoice_id='in_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10)
+        )
+        drain_public_workout_outbox()
+
+        client_messages = [msg for msg in mail.outbox if 'aluno@example.com' in msg.to]
+        self.assertEqual(len(client_messages), 1)
+        self.assertIn('reativado', client_messages[0].subject)
+
+    def test_client_welcome_email_is_skipped_without_base_url_but_staff_still_hears(self):
+        # Link de anamnese e' o UNICO conteudo acionavel do e-mail do
+        # cliente — sem PUBLIC_WORKOUT_PUBLIC_BASE_URL nao ha como montar
+        # ele, entao o envio fica retido na fila (nunca manda incompleto).
+        # O aviso de staff e' independente dessa config (degrada sozinho).
+        record_successful_invoice_payment(
+            self.subscription, stripe_invoice_id='in_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10)
+        )
+        drain_public_workout_outbox()
+
+        client_messages = [msg for msg in mail.outbox if 'aluno@example.com' in msg.to]
+        self.assertEqual(client_messages, [])
+        client_message_row = PublicWorkoutOutboxMessage.objects.get(topic=TOPIC_CLIENT_SUBSCRIPTION_ACTIVE)
+        self.assertNotEqual(client_message_row.status, PublicWorkoutOutboxStatus.SENT)
+
 
 class HandleFailedInvoicePaymentTests(TestCase):
     def setUp(self):
@@ -358,3 +405,34 @@ class MarkSubscriptionCanceledTests(TestCase):
         changed_again = mark_subscription_canceled(self.subscription, reason='segunda vez')
 
         self.assertFalse(changed_again)
+
+    def test_enqueues_a_confirmation_email_to_the_client(self):
+        mark_subscription_canceled(self.subscription, reason='teste')
+
+        self.assertEqual(
+            PublicWorkoutOutboxMessage.objects.filter(topic=TOPIC_CLIENT_SUBSCRIPTION_CANCELED).count(), 1,
+        )
+        drain_public_workout_outbox()
+
+        client_messages = [msg for msg in mail.outbox if 'aluno@example.com' in msg.to]
+        self.assertEqual(len(client_messages), 1)
+        self.assertIn('cancelada', client_messages[0].subject)
+
+    def test_cancellation_email_still_sends_without_base_url(self):
+        # Diferente do aviso de ativacao: confirmar o cancelamento nao
+        # depende de link nenhum, entao essa config faltando so' tira o
+        # CTA de reativar, nunca impede o envio.
+        mark_subscription_canceled(self.subscription, reason='teste')
+        drain_public_workout_outbox()
+
+        client_messages = [msg for msg in mail.outbox if 'aluno@example.com' in msg.to]
+        self.assertEqual(len(client_messages), 1)
+        self.assertNotIn('curva-precos', client_messages[0].body)
+
+    def test_idempotent_cancellation_does_not_enqueue_a_second_email(self):
+        mark_subscription_canceled(self.subscription, reason='primeira vez')
+        mark_subscription_canceled(self.subscription, reason='segunda vez')
+
+        self.assertEqual(
+            PublicWorkoutOutboxMessage.objects.filter(topic=TOPIC_CLIENT_SUBSCRIPTION_CANCELED).count(), 1,
+        )

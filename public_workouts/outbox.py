@@ -16,6 +16,8 @@ TOPIC_PROGRAM_READY = 'program_ready'
 TOPIC_MEAL_PLAN_READY = 'meal_plan_ready'
 TOPIC_WAITLIST_INVITE = 'waitlist_invite'
 TOPIC_STAFF_NEW_SUBSCRIPTION = 'staff_new_subscription'
+TOPIC_CLIENT_SUBSCRIPTION_ACTIVE = 'client_subscription_active'
+TOPIC_CLIENT_SUBSCRIPTION_CANCELED = 'client_subscription_canceled'
 MAX_ATTEMPTS = 5
 PROCESSING_LEASE_MINUTES = 10
 logger = logging.getLogger(__name__)
@@ -35,10 +37,12 @@ def enqueue_outbox(*, topic: str, aggregate_type: str, aggregate_id, version: in
 
 
 def _dispatch(message) -> bool:
-    # TOPIC_STAFF_NEW_SUBSCRIPTION nao usa base_url (nao carrega link
-    # magico) — checar a variavel so' pros topicos que precisam dela, pra
-    # um alerta interno de staff nunca falhar por uma config que nao lhe
-    # diz respeito.
+    base_url = str(getattr(settings, 'PUBLIC_WORKOUT_PUBLIC_BASE_URL', '') or '').strip()
+
+    # TOPIC_STAFF_NEW_SUBSCRIPTION nunca EXIGE base_url (so' usa, se
+    # presente, pra montar o link de anamnese) — um alerta interno de
+    # staff nao pode falhar por uma config que serve so' pra montar um
+    # link a mais (notify_staff_new_subscription degrada sozinho sem ela).
     if message.topic == TOPIC_STAFF_NEW_SUBSCRIPTION:
         from .models import PublicWorkoutSubscriptionEvent
         from .notifications import notify_staff_new_subscription
@@ -46,18 +50,48 @@ def _dispatch(message) -> bool:
         event = PublicWorkoutSubscriptionEvent.objects.select_related('subscription__account').get(
             pk=message.aggregate_id,
         )
-        results = notify_staff_new_subscription(event.subscription, previous_status=event.from_status)
+        results = notify_staff_new_subscription(
+            event.subscription, previous_status=event.from_status, base_url=base_url,
+        )
         # Sem rastreio por destinatario (diferente de PublicWorkoutProgramDelivery):
         # um sucesso parcial conta como entregue pra nao reenviar pra quem
         # ja recebeu a cada retry — so falha total (ou lista vazia de nada
         # a enviar, que tambem nao e falha) volta pra fila.
         return (not results) or any(status == 'sent' for status in results.values())
 
-    from .notifications import notify_meal_plan_ready, notify_program_ready, notify_waitlist_invitation
+    # TOPIC_CLIENT_SUBSCRIPTION_CANCELED tambem tolera base_url ausente —
+    # o conteudo principal (confirmar o cancelamento) nao depende de link
+    # nenhum; so o CTA de reativar fica de fora sem a config.
+    if message.topic == TOPIC_CLIENT_SUBSCRIPTION_CANCELED:
+        from .models import PublicWorkoutSubscription
+        from .notifications import notify_client_subscription_canceled
 
-    base_url = str(getattr(settings, 'PUBLIC_WORKOUT_PUBLIC_BASE_URL', '') or '').strip()
+        subscription = PublicWorkoutSubscription.objects.select_related('account').get(pk=message.aggregate_id)
+        return notify_client_subscription_canceled(subscription, base_url=base_url)
+
+    from .notifications import (
+        notify_client_subscription_active,
+        notify_meal_plan_ready,
+        notify_program_ready,
+        notify_waitlist_invitation,
+    )
+
     if not base_url:
         raise RuntimeError('PUBLIC_WORKOUT_PUBLIC_BASE_URL nao configurada')
+    # TOPIC_CLIENT_SUBSCRIPTION_ACTIVE EXIGE base_url (diferente do aviso
+    # de staff): o link de anamnese e' o conteudo principal do e-mail pra
+    # ALUNA, mandar sem ele deixaria o e-mail sem nenhuma acao possivel —
+    # melhor reter na fila (RuntimeError acima) e dar erro visivel na
+    # observabilidade do que mandar um e-mail de boas-vindas manco.
+    if message.topic == TOPIC_CLIENT_SUBSCRIPTION_ACTIVE:
+        from .models import PublicWorkoutSubscriptionEvent
+
+        event = PublicWorkoutSubscriptionEvent.objects.select_related('subscription__account').get(
+            pk=message.aggregate_id,
+        )
+        return notify_client_subscription_active(
+            event.subscription, previous_status=event.from_status, base_url=base_url,
+        )
     if message.topic == TOPIC_PROGRAM_READY:
         from .models import PublicWorkoutProgram
         return notify_program_ready(
