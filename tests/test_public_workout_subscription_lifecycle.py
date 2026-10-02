@@ -39,6 +39,7 @@ from public_workouts.models import (
     PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
 )
+from public_workouts.notifications import notify_staff_new_subscription
 from public_workouts.outbox import (
     TOPIC_CLIENT_SUBSCRIPTION_ACTIVE,
     TOPIC_CLIENT_SUBSCRIPTION_CANCELED,
@@ -266,6 +267,53 @@ class RecordSuccessfulInvoicePaymentTests(TestCase):
         self.assertEqual(client_messages, [])
         client_message_row = PublicWorkoutOutboxMessage.objects.get(topic=TOPIC_CLIENT_SUBSCRIPTION_ACTIVE)
         self.assertNotEqual(client_message_row.status, PublicWorkoutOutboxStatus.SENT)
+
+
+class NotifyStaffNewSubscriptionAmountTests(TestCase):
+    """notify_staff_new_subscription chamado direto (nao via o fluxo
+    completo de billing) — cobre o valor no assunto/HTML do aviso (pedido
+    original: "coloque no titulo o valor da assinatura") e o fallback pra
+    custom_monthly_price quando ainda nao existe PublicWorkoutPayment PAID
+    (ex.: ativacao manual, seed_legacy_workout_accounts)."""
+
+    @override_settings(PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com'])
+    def test_subject_and_html_include_the_amount_actually_charged(self):
+        account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
+        record_successful_invoice_payment(
+            subscription, stripe_invoice_id='in_1', gross_amount=Decimal('97.00'), due_date=date(2026, 3, 10),
+        )
+
+        notify_staff_new_subscription(subscription, previous_status=PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
+
+        message = mail.outbox[-1]
+        self.assertIn('R$97,00', message.subject)
+        html_body = message.alternatives[0][0]
+        self.assertIn('R$97,00', html_body)
+
+    @override_settings(PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com'])
+    def test_falls_back_to_custom_monthly_price_without_a_paid_payment_yet(self):
+        account = PublicWorkoutAccount.objects.create(email='legado@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='milene')
+        subscription.custom_monthly_price = Decimal('150.00')
+        subscription.save(update_fields=['custom_monthly_price'])
+
+        notify_staff_new_subscription(subscription, previous_status=PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
+
+        self.assertIn('R$150,00', mail.outbox[-1].subject)
+
+    @override_settings(PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com'])
+    def test_omits_the_amount_segment_when_none_is_known_yet(self):
+        # Sem pagamento PAID e sem custom_monthly_price: nao pode quebrar
+        # nem mandar "R$ " vazio/None no assunto.
+        account = PublicWorkoutAccount.objects.create(email='sempagamento@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='henrique')
+
+        notify_staff_new_subscription(subscription, previous_status=PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
+
+        subject = mail.outbox[-1].subject
+        self.assertNotIn('R$', subject)
+        self.assertIn('Essencial', subject)
 
 
 class HandleFailedInvoicePaymentTests(TestCase):
