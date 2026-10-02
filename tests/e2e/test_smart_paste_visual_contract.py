@@ -232,15 +232,25 @@ def test_wod_template_archive_dialog_has_readable_colors(page: Page, live_server
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize('theme', THEMES)
-def test_wod_planner_does_not_expose_bulk_delete_action(page: Page, live_server, e2e_owner_credentials, theme):
+def test_wod_planner_bulk_delete_action_requires_confirmation(page: Page, live_server, e2e_owner_credentials, theme):
     _login(page, live_server.url, e2e_owner_credentials)
     page.set_viewport_size(VIEWPORTS['mobile'])
     _set_theme(page, theme)
     page.goto(f'{live_server.url}/operacao/wod/planner/')
-    expect(page.get_by_role('button', name='Remover todos os WODs')).to_have_count(0)
-    expect(page.locator('#planner-clear-week-dialog')).to_have_count(0)
+    button = page.get_by_role('button', name='Remover todos os WODs')
+    expect(button).to_be_visible()
+    expect(page.locator('#planner-clear-week-dialog')).to_have_count(1)
+
     page.keyboard.press('d')
-    expect(page.locator('#planner-clear-week-dialog')).to_have_count(0)
+    dialog = page.locator('#planner-clear-week-dialog[open]')
+    expect(dialog).to_be_visible()
+    expect(dialog).to_contain_text('todas as aulas')
+    expect(dialog).to_contain_text('Não é possível desfazer')
+
+    page.get_by_role('button', name='Cancelar').click()
+    expect(page.locator('#planner-clear-week-dialog[open]')).to_have_count(0)
+    button.click()
+    expect(page.locator('#planner-clear-week-dialog[open]')).to_be_visible()
     assert _horizontal_overflow(page) <= 1
 
 
