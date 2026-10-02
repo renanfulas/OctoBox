@@ -119,6 +119,39 @@ class ProgramReadyNotificationTests(TestCase):
         self.assertIn('/treinos/login?token=', send_html_email.call_args.kwargs['html_body'])
         self.assertTrue(PublicWorkoutProgramDelivery.objects.get(program=program).sent_at)
 
+    def test_essencial_onboarding_does_not_mention_nutrition(self):
+        account = PublicWorkoutAccount.objects.create(email='so-treino@example.com')
+        subscription = get_or_create_subscription(
+            account=account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno'
+        )
+        subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        subscription.save(update_fields=['status'])
+        program = publish_program(slug='bruno', payload=build_example_payload())
+
+        with patch('signup.email_sender.send_html_email') as send_html_email:
+            notify_program_ready(program, base_url='https://app.example.com/')
+
+        # "Nutrição" sozinho aparece sempre (tagline "TREINO & NUTRIÇÃO" do
+        # wordmark) -- so' o bullet condicional do plano alimentar importa.
+        self.assertNotIn('plano alimentar', send_html_email.call_args.kwargs['html_body'])
+
+    def test_completo_onboarding_mentions_the_nutrition_tab(self):
+        # Tier com direito a nutricao (require_nutrition_tier) precisa do
+        # onboarding avisando que o plano alimentar mora na mesma tela —
+        # sem isso a aluna nunca descobre a aba Dieta sozinha.
+        account = PublicWorkoutAccount.objects.create(email='treino-e-dieta@example.com')
+        subscription = get_or_create_subscription(
+            account=account, tier=PublicWorkoutTier.COMPLETO, plan_slug='bruno'
+        )
+        subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        subscription.save(update_fields=['status'])
+        program = publish_program(slug='bruno', payload=build_example_payload())
+
+        with patch('signup.email_sender.send_html_email') as send_html_email:
+            notify_program_ready(program, base_url='https://app.example.com/')
+
+        self.assertIn('plano alimentar', send_html_email.call_args.kwargs['html_body'])
+
 
 class NewCustomerLoginGateTests(TestCase):
     def test_new_paid_program_redirects_anonymous_visitor_to_magic_login(self):
