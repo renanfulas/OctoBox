@@ -568,8 +568,109 @@ def notify_client_subscription_canceled(subscription, *, base_url: str = '') -> 
     return True
 
 
+def _build_program_ready_html(*, login_url: str, expires_in_minutes: int, has_nutrition: bool) -> str:
+    """Pra maioria das alunas, este e' o PRIMEIRO contato de verdade com o
+    produto (o e-mail de boas-vindas so pede a anamnese, ainda nao mostra
+    nada do app) — por isso leva onboarding junto do link, nao so o link.
+    Nomes de secao copiados ao pe da letra de templates/public_workouts/
+    workout.html (Dias do programa/Registrar carga/Evolucao de carga/
+    Revisao semanal/Nutricao) pra nao descrever uma tela que nao existe."""
+    safe_login_url = _html_escape(login_url)
+    nutrition_item = (
+        """
+                <tr>
+                  <td style="padding:14px 18px;border-top:1px solid #273044;">
+                    <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#f3f6fb;">🥗 Nutrição</p>
+                    <p style="margin:0;font-size:13px;line-height:1.5;color:#a4afc2;">
+                      Seu plano alimentar aparece na mesma tela, numa aba própria.
+                    </p>
+                  </td>
+                </tr>"""
+        if has_nutrition else ''
+    )
+    card_html = f"""\
+              <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#00e5ff;font-weight:800;">
+                ✦ Curva
+              </p>
+              <h1 class="h1" style="margin:0 0 18px;font-size:32px;line-height:1.08;letter-spacing:-0.04em;font-weight:800;color:#f3f6fb;">
+                Seu treino está pronto! 💪
+              </h1>
+              <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#a4afc2;">
+                Seu programa foi revisado e publicado. Toque no botão abaixo pra entrar — sem senha, sem complicação.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;">
+                <tr>
+                  <td bgcolor="#00e5ff" style="border-radius:14px;">
+                    <a href="{safe_login_url}" style="display:inline-block;padding:16px 28px;font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#06101a;text-decoration:none;border-radius:14px;">
+                      Ver meu treino →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 28px;font-size:13px;line-height:1.5;color:#a4afc2;">
+                O link vale por {expires_in_minutes} minutos. Se expirar, é só pedir outro na tela de login.
+              </p>
+
+              <hr style="border:0;border-top:1px solid #273044;margin:0 0 24px;">
+
+              <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#a4afc2;font-weight:700;">
+                Como usar o app
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #273044;border-radius:14px;overflow:hidden;">
+                <tr>
+                  <td style="background:#151f30;padding:14px 18px;">
+                    <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#f3f6fb;">📅 Dias do programa</p>
+                    <p style="margin:0;font-size:13px;line-height:1.5;color:#a4afc2;">
+                      No topo da tela, cada aba é um dia de treino — toque pra ver os exercícios daquele dia.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 18px;border-top:1px solid #273044;">
+                    <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#f3f6fb;">📝 Registrar carga</p>
+                    <p style="margin:0;font-size:13px;line-height:1.5;color:#a4afc2;">
+                      Depois de cada série, toque em "Registrar carga" e salve peso/repetições — é isso que alimenta seus gráficos.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 18px;border-top:1px solid #273044;">
+                    <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#f3f6fb;">📈 Evolução de carga</p>
+                    <p style="margin:0;font-size:13px;line-height:1.5;color:#a4afc2;">
+                      Role pra baixo e veja o gráfico de cada exercício junto com seus recordes pessoais.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 18px;border-top:1px solid #273044;">
+                    <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#f3f6fb;">🗓️ Revisão semanal</p>
+                    <p style="margin:0;font-size:13px;line-height:1.5;color:#a4afc2;">
+                      No fim da semana, toque em "Gerar revisão" pra ver um resumo do que você treinou.
+                    </p>
+                  </td>
+                </tr>{nutrition_item}
+              </table>
+
+              <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#a4afc2;">
+                Qualquer dúvida, é só responder este e-mail.
+              </p>"""
+    return _curva_email_shell(
+        title='Seu treino está pronto — Curva',
+        preheader='Seu treino foi revisado e publicado — toque pra entrar e já começar.',
+        card_html=card_html,
+        footer_text=(
+            '— Curva Treino &amp; Nutrição · Renan Fulas (CREF 155070-G/SP) · '
+            'Giovanna Fontes (CRN-3 67286)'
+        ),
+    )
+
+
 def notify_program_ready(program, *, base_url: str) -> bool:
-    """Envia uma unica vez o link autenticavel do programa publicado.
+    """Envia uma unica vez o link autenticavel do programa publicado, com
+    onboarding de como usar o app — ver docstring de
+    _build_program_ready_html pro porque do conteudo extra.
 
     A publicacao ja foi confirmada quando esta funcao roda. Falha de e-mail
     fica registrada e nunca desfaz o snapshot do treino.
@@ -578,6 +679,7 @@ def notify_program_ready(program, *, base_url: str) -> bool:
         PublicWorkoutLoginToken,
         PublicWorkoutProgramDelivery,
         PublicWorkoutSubscription,
+        PublicWorkoutTier,
     )
 
     subscription = PublicWorkoutSubscription.objects.select_related('account').filter(plan_slug=program.slug).first()
@@ -593,19 +695,31 @@ def notify_program_ready(program, *, base_url: str) -> bool:
         delivery.last_error = ''
         delivery.save(update_fields=['attempted_at', 'attempt_count', 'last_error'])
 
+    expires_in_minutes = 15
     token = PublicWorkoutLoginToken.objects.create(
         account=subscription.account,
-        expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        expires_at=timezone.now() + timezone.timedelta(minutes=expires_in_minutes),
     )
     login_url = f'{base_url.rstrip("/")}/treinos/login?token={token.token}&next=/renan/{program.slug}'
-    subject = 'Seu programa Curva esta pronto'
+    has_nutrition = subscription.tier in (PublicWorkoutTier.COMPLETO, PublicWorkoutTier.PREMIUM)
+    subject = 'Seu treino Curva está pronto! 💪'
     body = (
         'Seu programa foi revisado e publicado.\n\n'
         f'Acesse com seguranca: {login_url}\n\n'
-        'O link vale por 15 minutos. Se expirar, solicite outro na tela de login.'
+        f'O link vale por {expires_in_minutes} minutos. Se expirar, solicite outro na tela de login.\n\n'
+        'Como usar o app:\n'
+        '- Dias do programa: cada aba no topo e um dia de treino.\n'
+        '- Registrar carga: depois de cada serie, salve peso/repeticoes.\n'
+        '- Evolucao de carga: veja seus graficos e recordes mais abaixo na tela.\n'
+        '- Revisao semanal: toque em "Gerar revisao" no fim da semana.\n'
+        + ('- Nutricao: seu plano alimentar fica numa aba propria.\n' if has_nutrition else '')
+    )
+    html_body = _build_program_ready_html(
+        login_url=login_url, expires_in_minutes=expires_in_minutes, has_nutrition=has_nutrition,
     )
     try:
-        get_student_email_gateway().send(subject=subject, body=body, to_email=subscription.account.email)
+        from signup.email_sender import send_html_email
+        send_html_email(subject=subject, text_body=body, html_body=html_body, to_email=subscription.account.email)
     except Exception as exc:
         logger.exception('notify_program_ready: falha no e-mail. program=%s', program.pk)
         PublicWorkoutProgramDelivery.objects.filter(program=program).update(last_error=str(exc)[:255])
