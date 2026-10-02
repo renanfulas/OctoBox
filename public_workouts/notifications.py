@@ -72,6 +72,80 @@ def _previous_status_label(previous_status: str) -> str:
         return previous_status or '(desconhecido)'
 
 
+def _curva_email_shell(*, title: str, preheader: str, card_html: str, footer_text: str) -> str:
+    """Esqueleto comum de todo e-mail de marca Curva — table-based,
+    inline-style (compativel com Gmail/Outlook/Apple Mail), paleta
+    oficial documentada em static/css/public_workouts/landing.css
+    (--curva-bg #0a0e1a/--curva-surface #111827/--curva-accent #00e5ff/
+    --curva-text #f3f6fb/--curva-muted #a4afc2/--curva-line #273044).
+
+    `title`/`preheader` sao texto puro (escapados aqui); `card_html`/
+    `footer_text` ja chegam prontos em HTML (o chamador e' quem decide
+    o que precisa de escape ali dentro) — nao escapar de novo aqui.
+    """
+    safe_title = _html_escape(title)
+    safe_preheader = _html_escape(preheader)
+    return f"""\
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<title>{safe_title}</title>
+<style>
+  @media (max-width: 620px) {{
+    .container {{ width: 100% !important; padding: 24px 16px !important; }}
+    .card {{ padding: 28px 22px !important; }}
+    .h1 {{ font-size: 26px !important; line-height: 1.15 !important; }}
+  }}
+</style>
+</head>
+<body style="margin:0;padding:0;background:#0a0e1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#f3f6fb;-webkit-font-smoothing:antialiased;">
+  <span style="display:none !important;visibility:hidden;mso-hide:all;font-size:1px;color:#0a0e1a;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+    {safe_preheader}
+  </span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0e1a;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="container" style="width:600px;max-width:100%;">
+
+          <!-- LOGO -->
+          <tr>
+            <td align="left" style="padding:0 8px 24px;">
+              <span style="display:inline-block;font-weight:800;font-size:20px;letter-spacing:-0.04em;color:#f3f6fb;">
+                Cur<span style="color:#00e5ff;">va</span>
+              </span>
+              <span style="display:inline-block;margin-left:6px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#a4afc2;">
+                TREINO &amp; NUTRIÇÃO
+              </span>
+            </td>
+          </tr>
+
+          <!-- HERO CARD -->
+          <tr>
+            <td class="card" style="background:#111827;border-radius:20px;padding:44px 40px;box-shadow:0 24px 60px rgba(0,0,0,0.35);border:1px solid #273044;">
+{card_html}
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td align="center" style="padding:32px 16px 8px;">
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#a4afc2;">
+                {footer_text}
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+
 def _intake_cta_block(safe_intake_url: str) -> str:
     """So o link puro (sem botao) — pensado pro staff copiar e colar no
     WhatsApp, nunca clicar primeiro: o token e' de uso unico, entao abrir
@@ -140,47 +214,7 @@ def _build_staff_new_subscription_html(
               </tr>"""
         if safe_amount else ''
     )
-    return f"""\
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="x-apple-disable-message-reformatting">
-<title>Nova assinatura — Curva</title>
-<style>
-  @media (max-width: 620px) {{
-    .container {{ width: 100% !important; padding: 24px 16px !important; }}
-    .card {{ padding: 28px 22px !important; }}
-    .h1 {{ font-size: 26px !important; line-height: 1.15 !important; }}
-  }}
-</style>
-</head>
-<body style="margin:0;padding:0;background:#0a0e1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#f3f6fb;-webkit-font-smoothing:antialiased;">
-  <span style="display:none !important;visibility:hidden;mso-hide:all;font-size:1px;color:#0a0e1a;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
-    Nova assinatura ativa: {safe_email} ({safe_tier}{' · ' + safe_amount if safe_amount else ''}).
-  </span>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0e1a;">
-    <tr>
-      <td align="center" style="padding:40px 16px;">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="container" style="width:600px;max-width:100%;">
-
-          <!-- LOGO -->
-          <tr>
-            <td align="left" style="padding:0 8px 24px;">
-              <span style="display:inline-block;font-weight:800;font-size:20px;letter-spacing:-0.04em;color:#f3f6fb;">
-                Cur<span style="color:#00e5ff;">va</span>
-              </span>
-              <span style="display:inline-block;margin-left:6px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#a4afc2;">
-                TREINO &amp; NUTRIÇÃO
-              </span>
-            </td>
-          </tr>
-
-          <!-- HERO CARD -->
-          <tr>
-            <td class="card" style="background:#111827;border-radius:20px;padding:44px 40px;box-shadow:0 24px 60px rgba(0,0,0,0.35);border:1px solid #273044;">
-
+    card_html = f"""\
               <!-- EYEBROW -->
               <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#00e5ff;font-weight:800;">
                 ✦ Nova assinatura
@@ -225,26 +259,14 @@ def _build_staff_new_subscription_html(
 
               <p style="margin:0;font-size:13px;line-height:1.5;color:#a4afc2;">
                 Status anterior: <strong style="color:#f3f6fb;">{safe_previous}</strong> → <strong style="color:#00e5ff;">Ativo</strong>
-              </p>
-
-            </td>
-          </tr>
-
-          <!-- FOOTER -->
-          <tr>
-            <td align="center" style="padding:32px 16px 8px;">
-              <p style="margin:0;font-size:12px;line-height:1.5;color:#a4afc2;">
-                — Curva Treino &amp; Nutrição · aviso interno, não repasse ao aluno
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>"""
+              </p>"""
+    preheader = f'Nova assinatura ativa: {email} ({tier_label}{" · " + amount_str if amount_str else ""}).'
+    return _curva_email_shell(
+        title='Nova assinatura — Curva',
+        preheader=preheader,
+        card_html=card_html,
+        footer_text='— Curva Treino &amp; Nutrição · aviso interno, não repasse ao aluno',
+    )
 
 _OFFSET_LABELS = {
     -7: 'Seu pagamento vence em 7 dias',
@@ -365,6 +387,185 @@ def notify_staff_new_subscription(subscription, *, previous_status: str, base_ur
             )
             result[staff_email] = 'error'
     return result
+
+
+def _build_client_subscription_active_html(
+    *, tier_label: str, amount_str: str, is_new_sale: bool, intake_url: str,
+) -> str:
+    """Boas-vindas (venda nova) ou "acesso de volta" (reativacao) pro
+    PROPRIO cliente — mesmo esqueleto de _curva_email_shell, mas com um
+    BOTAO de verdade pra anamnese (diferente do aviso de staff): quem
+    recebe este e-mail e' quem deve clicar, entao nao ha risco de
+    consumir o token de uso unico antes da hora."""
+    safe_tier = _html_escape(tier_label)
+    safe_amount = _html_escape(amount_str)
+    safe_intake_url = _html_escape(intake_url)
+
+    headline = 'Bem-vinda! 🎉' if is_new_sale else 'Tudo certo de novo! 👊'
+    intro = (
+        f'Sua assinatura {safe_tier} está confirmada e ativa.' if is_new_sale
+        else 'Seu pagamento foi confirmado e seu acesso está ativo de novo.'
+    )
+    amount_line = (
+        f"""
+              <p style="margin:0 0 28px;font-size:14px;line-height:1.5;color:#a4afc2;">
+                Plano {safe_tier} · {safe_amount}/mês
+              </p>"""
+        if safe_amount else ''
+    )
+    card_html = f"""\
+              <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#00e5ff;font-weight:800;">
+                ✦ Curva
+              </p>
+              <h1 class="h1" style="margin:0 0 18px;font-size:32px;line-height:1.08;letter-spacing:-0.04em;font-weight:800;color:#f3f6fb;">
+                {headline}
+              </h1>
+              <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#a4afc2;">
+                {intro}
+              </p>{amount_line}
+              <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#a4afc2;">
+                Primeiro passo: responda sua anamnese pra gente montar o seu treino certinho.
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+                <tr>
+                  <td bgcolor="#00e5ff" style="border-radius:14px;">
+                    <a href="{safe_intake_url}" style="display:inline-block;padding:16px 28px;font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#06101a;text-decoration:none;border-radius:14px;">
+                      Responder anamnese →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0;font-size:13px;line-height:1.5;color:#a4afc2;">
+                Qualquer dúvida, é só responder este e-mail.
+              </p>"""
+    preheader = f'Sua assinatura {tier_label} está ativa — responda sua anamnese pra gente montar seu treino.'
+    return _curva_email_shell(
+        title='Bem-vinda ao Curva' if is_new_sale else 'Seu acesso foi reativado',
+        preheader=preheader,
+        card_html=card_html,
+        footer_text=(
+            '— Curva Treino &amp; Nutrição · Renan Fulas (CREF 155070-G/SP) · '
+            'Giovanna Fontes (CRN-3 67286)'
+        ),
+    )
+
+
+def notify_client_subscription_active(subscription, *, previous_status: str, base_url: str) -> bool:
+    """Boas-vindas (venda nova) ou "acesso de volta" (reativacao) pro
+    PROPRIO cliente — mesma transicao que dispara notify_staff_new_subscription
+    (PENDING_PAYMENT ou SUSPENDED/PAST_DUE -> ACTIVE), so que pro aluno,
+    nao pro staff.
+
+    Sem base_url NAO envia (skip, loga erro): diferente do aviso de
+    staff, aqui o link de anamnese e' o UNICO conteudo acionavel do
+    e-mail — mandar sem ele deixaria a aluna sem nada a fazer.
+    """
+    if not base_url:
+        logger.error(
+            'notify_client_subscription_active: base_url ausente, e-mail nao enviado. subscription=%s',
+            subscription.pk,
+        )
+        return False
+
+    from signup.email_sender import send_html_email
+    from .models import PublicWorkoutSubscriptionStatus
+
+    account = subscription.account
+    tier_label = subscription.get_tier_display()
+    amount_str = _format_brl(_latest_paid_amount(subscription))
+    is_new_sale = previous_status == PublicWorkoutSubscriptionStatus.PENDING_PAYMENT
+    intake_url = _build_intake_url(subscription, base_url=base_url)
+
+    subject = 'Bem-vinda ao Curva! Seu acesso está liberado' if is_new_sale else 'Seu acesso ao Curva foi reativado'
+    text_body = (
+        (
+            f'Sua assinatura {tier_label} esta confirmada e ativa.\n\n' if is_new_sale
+            else 'Seu pagamento foi confirmado e seu acesso esta ativo de novo.\n\n'
+        )
+        + f'Primeiro passo: responda sua anamnese pra gente montar o seu treino certinho:\n{intake_url}\n\n'
+        'Qualquer duvida, e so responder este e-mail.\n'
+    )
+    html_body = _build_client_subscription_active_html(
+        tier_label=tier_label, amount_str=amount_str, is_new_sale=is_new_sale, intake_url=intake_url,
+    )
+    try:
+        send_html_email(subject=subject, text_body=text_body, html_body=html_body, to_email=account.email)
+    except Exception:
+        logger.exception('notify_client_subscription_active: falha no e-mail. subscription=%s', subscription.pk)
+        return False
+    return True
+
+
+def _build_client_subscription_canceled_html(*, tier_label: str, resubscribe_url: str) -> str:
+    safe_tier = _html_escape(tier_label)
+    safe_resubscribe_url = _html_escape(resubscribe_url)
+    cta_block = (
+        f"""
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 0;">
+                <tr>
+                  <td bgcolor="#00e5ff" style="border-radius:14px;">
+                    <a href="{safe_resubscribe_url}" style="display:inline-block;padding:16px 28px;font-size:16px;font-weight:800;letter-spacing:-0.01em;color:#06101a;text-decoration:none;border-radius:14px;">
+                      Reativar assinatura →
+                    </a>
+                  </td>
+                </tr>
+              </table>"""
+        if safe_resubscribe_url else ''
+    )
+    card_html = f"""\
+              <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#00e5ff;font-weight:800;">
+                ✦ Curva
+              </p>
+              <h1 class="h1" style="margin:0 0 18px;font-size:32px;line-height:1.08;letter-spacing:-0.04em;font-weight:800;color:#f3f6fb;">
+                Sentimos sua falta
+              </h1>
+              <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#a4afc2;">
+                Sua assinatura {safe_tier} foi cancelada e seu acesso ao treino foi encerrado.
+              </p>
+              <p style="margin:0;font-size:13px;line-height:1.5;color:#a4afc2;">
+                Se foi engano ou mudou de ideia, pode reativar quando quiser.
+              </p>{cta_block}"""
+    return _curva_email_shell(
+        title='Assinatura cancelada — Curva',
+        preheader=f'Sua assinatura {tier_label} foi cancelada.',
+        card_html=card_html,
+        footer_text=(
+            '— Curva Treino &amp; Nutrição · Renan Fulas (CREF 155070-G/SP) · '
+            'Giovanna Fontes (CRN-3 67286)'
+        ),
+    )
+
+
+def notify_client_subscription_canceled(subscription, *, base_url: str = '') -> bool:
+    """Confirma o cancelamento pro PROPRIO cliente — cancelamento e'
+    sempre decisao do aluno ou do Stripe Customer Portal (nunca reversao
+    automatica, ver mark_subscription_canceled), mas isso nao dispensa
+    uma confirmacao clara do que mudou no acesso dele.
+
+    base_url ausente so' tira o CTA de reativar — a mensagem principal
+    (cancelamento confirmado) nao depende de link nenhum, entao NUNCA
+    deixa de enviar por essa config faltando (diferente do aviso de
+    ativacao, onde o link e' o unico conteudo acionavel).
+    """
+    from signup.email_sender import send_html_email
+
+    account = subscription.account
+    tier_label = subscription.get_tier_display()
+    resubscribe_url = f'{base_url.rstrip("/")}/treinos/#curva-precos' if base_url else ''
+
+    subject = 'Sua assinatura Curva foi cancelada'
+    text_body = (
+        f'Sua assinatura {tier_label} foi cancelada e seu acesso ao treino foi encerrado.\n\n'
+        'Se foi engano ou mudou de ideia, pode reativar quando quiser.\n'
+        + (f'{resubscribe_url}\n' if resubscribe_url else '')
+    )
+    html_body = _build_client_subscription_canceled_html(tier_label=tier_label, resubscribe_url=resubscribe_url)
+    try:
+        send_html_email(subject=subject, text_body=text_body, html_body=html_body, to_email=account.email)
+    except Exception:
+        logger.exception('notify_client_subscription_canceled: falha no e-mail. subscription=%s', subscription.pk)
+        return False
+    return True
 
 
 def notify_program_ready(program, *, base_url: str) -> bool:
@@ -492,6 +693,7 @@ def notify_waitlist_invitation(entry, *, base_url: str) -> bool:
 
 
 __all__ = [
+    'notify_client_subscription_active', 'notify_client_subscription_canceled',
     'notify_meal_plan_ready', 'notify_payment_due', 'notify_program_ready',
     'notify_staff_new_subscription', 'notify_waitlist_invitation',
 ]
