@@ -20,7 +20,6 @@ PONTOS CRITICOS:
 
     const cells = Array.from(planner.querySelectorAll('[data-wod-planner-cell]'));
     const spotlight = planner.querySelector('[data-wod-planner-spotlight]');
-    if (!cells.length) return;
 
     const templatePickerTelemetryUrl = planner.dataset.templatePickerTelemetryUrl || '';
     const templatePicker = planner.querySelector('[data-wod-planner-template-picker]');
@@ -32,6 +31,7 @@ PONTOS CRITICOS:
     const deleteSelectedDialog = document.getElementById('planner-delete-selected-dialog');
     const deleteSelectedForm = deleteSelectedDialog?.querySelector('[data-planner-delete-selected-form]');
     const deleteSelectedCopy = deleteSelectedDialog?.querySelector('[data-planner-delete-selected-copy]');
+    const clearWeekDialog = document.getElementById('planner-clear-week-dialog');
 
     planner.classList.add('is-enhanced');
 
@@ -237,6 +237,11 @@ PONTOS CRITICOS:
         }
     }
 
+    function openClearWeekDialog() {
+        if (!clearWeekDialog || typeof clearWeekDialog.showModal !== 'function') return;
+        clearWeekDialog.showModal();
+    }
+
     cells.forEach((cell) => {
         cell.addEventListener('focus', () => setFocusedCell(cell));
         cell.addEventListener('click', (event) => {
@@ -276,6 +281,11 @@ PONTOS CRITICOS:
             }
         }
 
+        if ((event.key === 'd' || event.key === 'D') && clearWeekDialog) {
+            event.preventDefault();
+            openClearWeekDialog();
+            return;
+        }
         if (event.key === 'Delete') {
             event.preventDefault();
             openDeleteSelectedDialog();
