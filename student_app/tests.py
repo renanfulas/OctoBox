@@ -2709,6 +2709,50 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
 
         self.assertContains(response, 'data-onboarding-autostart="false"')
 
+    def test_wizard_mentions_only_avaliacao_for_a_tier_without_nutrition(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutTier
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='so-treino@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account, plan_slug='bruno', tier=PublicWorkoutTier.ESSENCIAL,
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertNotContains(response, 'Avaliação &amp; Dieta')
+
+    def test_wizard_mentions_dieta_for_a_tier_with_nutrition(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutTier
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='treino-e-dieta@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account, plan_slug='bruno', tier=PublicWorkoutTier.COMPLETO,
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'Avaliação &amp; Dieta')
+
+    def test_replay_onboarding_button_is_present_even_after_completing_it(self):
+        # "Ver tutorial de novo" (aba Perfil) precisa existir pra QUALQUER
+        # conta, nao so' pra quem ainda nao viu o wizard — senao quem ja'
+        # completou nunca consegue reabrir.
+        from django.utils import timezone
+
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(
+            email='veterana2@example.com', onboarding_completed_at=timezone.now(),
+        )
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'data-ui="replay-onboarding"')
+
 
 class PublicWorkoutAssessmentsEndpointTests(TestCase):
     """GET /renan/<slug>/avaliacoes.json — exige cookie assinado do dono do slug.

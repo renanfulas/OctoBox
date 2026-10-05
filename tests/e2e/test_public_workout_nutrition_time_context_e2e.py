@@ -130,6 +130,13 @@ def _open_dieta_tab(page: Page, live_server, fixed_time: datetime.datetime, toke
     avaliacao_cycle.click()  # Inicio -> Avaliacao (1o estado do ciclo)
     avaliacao_cycle.click()  # Avaliacao -> Dieta (2o estado do ciclo)
 
+    # Contas E2E novas podem iniciar o wizard de onboarding. O backdrop cobre
+    # a página e intercepta cliques mesmo fora do fluxo que este teste valida.
+    onboarding_backdrop = page.locator('[data-onboarding-dismiss]')
+    if onboarding_backdrop.is_visible():
+        onboarding_backdrop.click()
+        expect(onboarding_backdrop).to_be_hidden()
+
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
