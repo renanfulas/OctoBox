@@ -29,7 +29,7 @@ SERVER_EVENT_TYPES = frozenset({
     'waitlist_joined',
     'cta_clicked', 'faq_opened', 'pricing_viewed', 'signup_started',
     'signup_submitted', 'signup_invalid', 'signup_failed', 'checkout_redirected',
-    'login_required', 'checkout_failed', 'payment_failed',
+    'login_required', 'checkout_failed', 'payment_failed', 'influencer_link_clicked',
 })
 logger = logging.getLogger(__name__)
 
@@ -94,11 +94,14 @@ def get_acquisition_session(request) -> PublicWorkoutAcquisitionSession | None:
     return PublicWorkoutAcquisitionSession.objects.filter(pk=session_id).first()
 
 
-def ensure_acquisition_session(request) -> tuple[PublicWorkoutAcquisitionSession | None, bool]:
+def ensure_acquisition_session(
+    request, *, partner_code: str = '',
+) -> tuple[PublicWorkoutAcquisitionSession | None, bool]:
     if not request_tracking_enabled(request):
         return None, False
     now = timezone.now()
     touch = _touch_from_request(request)
+    partner_code = _clean(partner_code, 48).lower()
     session = get_acquisition_session(request)
     created = session is None
     if session is None:
@@ -109,6 +112,8 @@ def ensure_acquisition_session(request) -> tuple[PublicWorkoutAcquisitionSession
             last_campaign=touch['campaign'], last_referrer=touch['referrer'],
             landing_variant='curva3-tracking-v1',
             offer_version=current_contract_versions()['offer_version'],
+            partner_code=partner_code,
+            partner_first_seen_at=now if partner_code else None,
             first_seen_at=now, last_seen_at=now,
         )
     else:
@@ -119,9 +124,16 @@ def ensure_acquisition_session(request) -> tuple[PublicWorkoutAcquisitionSession
             session.last_campaign = touch['campaign'] or session.last_campaign
             session.last_referrer = touch['referrer'] or session.last_referrer
         session.last_seen_at = now
-        session.save(update_fields=[
+        update_fields = [
             'last_source', 'last_medium', 'last_campaign', 'last_referrer', 'last_seen_at',
-        ])
+        ]
+        # O primeiro link de parceiro válido vence e sobrevive a visitas
+        # posteriores pela landing geral ou por links de outros parceiros.
+        if partner_code and not session.partner_code:
+            session.partner_code = partner_code
+            session.partner_first_seen_at = now
+            update_fields.extend(['partner_code', 'partner_first_seen_at'])
+        session.save(update_fields=update_fields)
     return session, created
 
 
@@ -162,6 +174,7 @@ def record_funnel_event(
     account=None,
     subscription=None,
     tier: str = '',
+    partner_code: str = '',
     client_event_id=None,
     correlation_id=None,
 ) -> PublicWorkoutFunnelEvent | None:
@@ -185,6 +198,7 @@ def record_funnel_event(
                 source=(touch.last_source or touch.first_source) if touch else '',
                 medium=(touch.last_medium or touch.first_medium) if touch else '',
                 campaign=(touch.last_campaign or touch.first_campaign) if touch else '',
+                partner_code=(partner_code or (touch.partner_code if touch else ''))[:48],
                 client_event_id=client_event_id,
                 correlation_id=correlation_id,
             )

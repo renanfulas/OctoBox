@@ -114,6 +114,7 @@ def build_experiment_report(*, at=None, window_days=90):
     for experiment in queryset:
         assignments = PublicWorkoutExperimentAssignment.objects.filter(
             experiment=experiment, assigned_at__gte=since, assigned_at__lte=at,
+            acquisition_session__partner_code='',
         ).select_related('variant').annotate(
             first_paid_at=Subquery(positive_payments.values('paid_at')[:1]),
         )

@@ -21,6 +21,7 @@
     <div><label for="cohort-days">Coorte por primeira visita</label><select name="days" id="cohort-days"><option value="7" {% if report.window_days == 7 %}selected{% endif %}>Últimos 7 dias</option><option value="30" {% if report.window_days == 30 %}selected{% endif %}>Últimos 30 dias</option><option value="90" {% if report.window_days == 90 %}selected{% endif %}>Últimos 90 dias</option></select></div>
     <button type="submit">Atualizar leitura</button>
     <a href="?days={{ report.window_days }}&amp;format=json">Exportar JSON <span aria-hidden="true">↗</span></a>
+    <a href="{% url 'public-workout-influencer-analytics-jully' %}">Painel separado da Jully <span aria-hidden="true">↗</span></a>
   </form>
 
   {% if not report.tracking_enabled %}<div class="curva-analytics-alert">A coleta está desativada. O histórico continua disponível, mas novas visitas não serão registradas.</div>{% endif %}

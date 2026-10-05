@@ -1,0 +1,51 @@
+{% extends "public_workouts/analytics_base.html" %}
+
+{% block title %}Jully · aquisição Curva{% endblock %}
+
+{% block content %}
+<div class="curva-analytics curva-influencer-analytics" data-page="influencer-analytics" data-partner="{{ report.partner_code }}">
+  <section class="curva-analytics-hero" aria-labelledby="partner-title">
+    <div>
+      <p class="curva-analytics-eyebrow">Curva · aquisição por parceria</p>
+      <h1 id="partner-title">Jully <span aria-hidden="true">×</span> Curva.</h1>
+      <p class="curva-analytics-lead">Um painel exclusivo para acompanhar as visitas e as primeiras compras que vieram pelo link da Jully.</p>
+    </div>
+    <div class="curva-analytics-hero-status">
+      <span class="curva-analytics-status-dot" aria-hidden="true"></span>
+      <div><small>Coleta</small><strong>{% if report.tracking_enabled %}Ativa{% else %}Desativada{% endif %}</strong></div>
+      <div><small>Conversão</small><strong>{{ report.conversion_days }} dias</strong></div>
+    </div>
+  </section>
+
+  <form method="get" class="curva-analytics-filters">
+    <div><label for="partner-days">Coorte por indicação</label><select name="days" id="partner-days"><option value="7" {% if report.window_days == 7 %}selected{% endif %}>Últimos 7 dias</option><option value="30" {% if report.window_days == 30 %}selected{% endif %}>Últimos 30 dias</option><option value="90" {% if report.window_days == 90 %}selected{% endif %}>Últimos 90 dias</option></select></div>
+    <button type="submit">Atualizar leitura</button>
+    <a href="?days={{ report.window_days }}&amp;format=json">Exportar JSON <span aria-hidden="true">↗</span></a>
+    <a href="{% url 'public-workout-funnel-analytics' %}">Voltar aos analytics da Curva <span aria-hidden="true">↗</span></a>
+  </form>
+
+  {% if not report.tracking_enabled %}<div class="curva-analytics-alert">A coleta está desativada. O histórico continua disponível, mas novas visitas não serão registradas.</div>{% endif %}
+  {% if not report.visitors %}<div class="curva-analytics-note">Ainda não há visitantes atribuídos à Jully neste período.</div>{% endif %}
+
+  <section class="curva-analytics-kpis curva-partner-kpis" aria-label="Indicadores da parceria da Jully">
+    <article><span>Aberturas do link</span><strong>{{ report.clicks }}</strong><small>Solicitações da página da Jully</small></article>
+    <article><span>Visitantes únicos</span><strong>{{ report.visitors }}</strong><small>{{ report.pending_visitors }} dentro da janela de conversão</small></article>
+    <article><span>Cadastros</span><strong>{{ report.signups }}</strong><small>Formulários aceitos pelo servidor</small></article>
+    <article><span>Checkouts</span><strong>{{ report.checkouts }}</strong><small>Checkout criado para a assinatura</small></article>
+    <article><span>Novos pagantes</span><strong>{{ report.paid }}</strong><small>{{ report.refunded_first_payments }} primeira(s) cobrança(s) reembolsada(s)</small></article>
+    <article><span>Receita inicial</span><strong>R$ {{ report.revenue|floatformat:2 }}</strong><small>Somente a primeira fatura paga</small></article>
+  </section>
+
+  <section class="curva-analytics-section curva-partner-summary" aria-labelledby="partner-results-title">
+    <div class="curva-analytics-heading"><div><p>Resultado da parceria</p><h2 id="partner-results-title">Conversão e comissão estimada</h2></div><span>Primeira cobrança paga dentro de {{ report.conversion_days }} dias após o primeiro acesso pelo link.</span></div>
+    <div class="curva-partner-results">
+      <article><small>Conversão até agora</small><strong>{{ report.conversion_percent|floatformat:2|default:'—' }}{% if report.conversion_percent != None %}%{% endif %}</strong></article>
+      <article><small>Conversão consolidada</small><strong>{{ report.mature_conversion_percent|floatformat:2|default:'—' }}{% if report.mature_conversion_percent != None %}%{% endif %}</strong><span>{{ report.mature_paid }} de {{ report.mature_visitors }} coortes maduras</span></article>
+      <article class="curva-partner-results__commission"><small>Comissão estimada · {{ report.commission_rate_percent }}% da primeira fatura</small><strong>R$ {{ report.commission_estimate|floatformat:2 }}</strong><span>Renovações não geram comissão. Este painel é analítico; ele não registra saldo nem faz repasse.</span></article>
+    </div>
+    <p class="curva-partner-footnote">A estimativa considera primeiras faturas pagas e exclui primeiras cobranças reembolsadas. Atribuição por cookie pode perder visitas se a pessoa trocar de navegador ou aparelho.</p>
+  </section>
+
+  <p class="curva-partner-updated">Atualizado em {{ report.generated_at|date:'d/m/Y H:i' }} · os números deste painel pertencem somente à parceria da Jully.</p>
+</div>
+{% endblock %}
