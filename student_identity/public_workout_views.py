@@ -58,7 +58,7 @@ from public_workouts.acquisition import (
     request_tracking_enabled,
 )
 from public_workouts.contracts import current_contract_versions
-from public_workouts.funnel_analytics import build_acquisition_report
+from public_workouts.funnel_analytics import build_acquisition_report, build_influencer_report
 from public_workouts.experiments import (
     assign_active_experiments,
     build_experiment_report,
@@ -193,10 +193,14 @@ class PublicWorkoutLandingView(TemplateView):
     """
 
     template_name = 'public_workouts/landing.html'
+    influencer_name = ''
+    influencer_code = ''
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['funnel_tracking_enabled'] = bool(request_tracking_enabled(self.request))
+        context['influencer_name'] = self.influencer_name
+        context['influencer_code'] = self.influencer_code
         context['experiment_assignments'] = getattr(self, 'experiment_assignments', [])
         context['testimonials'] = PublicWorkoutTestimonial.objects.filter(
             approved_at__isnull=False, published_at__isnull=False,
@@ -214,14 +218,30 @@ class PublicWorkoutLandingView(TemplateView):
         return context
 
     def get(self, request, *args, **kwargs):
-        acquisition_session, _created = ensure_acquisition_session(request)
-        assignments = assign_active_experiments(acquisition_session)
+        acquisition_session, _created = ensure_acquisition_session(
+            request, partner_code=self.influencer_code,
+        )
+        # O tráfego patrocinado é medido no painel do parceiro, fora dos
+        # experimentos de conversão das campanhas próprias da Curva.
+        assignments = assign_active_experiments(acquisition_session) if not self.influencer_code else []
         self.experiment_assignments = serialize_assignments(assignments)
         response = super().get(request, *args, **kwargs)
         if acquisition_session is not None:
             record_funnel_event('landing_viewed', acquisition_session=acquisition_session)
+            if self.influencer_code:
+                record_funnel_event(
+                    'influencer_link_clicked', acquisition_session=acquisition_session,
+                    partner_code=self.influencer_code,
+                )
         attach_acquisition_cookie(response, acquisition_session)
         return response
+
+
+class PublicWorkoutJullyLandingView(PublicWorkoutLandingView):
+    """Página da Curva atribuída ao canal da Jully."""
+
+    influencer_name = 'Jully'
+    influencer_code = 'jully'
 
 
 class PublicWorkoutFunnelEventView(View):
@@ -355,6 +375,23 @@ class PublicWorkoutFunnelAnalyticsView(PublicWorkoutAnalyticsAccessMixin, Templa
 
     def get(self, request, *args, **kwargs):
         report = self.get_report()
+        if request.GET.get('format') == 'json':
+            return JsonResponse(report)
+        return self.render_to_response(self.get_context_data(
+            report=report, analytics_username=request.analytics_username,
+        ))
+
+
+@method_decorator(never_cache, name='dispatch')
+class PublicWorkoutJullyAnalyticsView(PublicWorkoutAnalyticsAccessMixin, TemplateView):
+    """Painel autenticado com dados exclusivos da parceria da Jully."""
+
+    template_name = 'public_workouts/influencer_analytics.html'
+
+    def get(self, request, *args, **kwargs):
+        raw_days = request.GET.get('days', '30')
+        days = int(raw_days) if raw_days in ('7', '30', '90') else 30
+        report = build_influencer_report(partner_code='jully', window_days=days)
         if request.GET.get('format') == 'json':
             return JsonResponse(report)
         return self.render_to_response(self.get_context_data(

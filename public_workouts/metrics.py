@@ -54,7 +54,7 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
     at = at or timezone.now()
     since = at - timedelta(days=window_days)
     funnel_rows = PublicWorkoutFunnelEvent.objects.filter(
-        occurred_at__gte=since, event_type__in=FUNNEL_STEPS,
+        occurred_at__gte=since, event_type__in=FUNNEL_STEPS, partner_code='',
     ).values('event_type').annotate(total=Count('id'))
     funnel = {step: 0 for step in FUNNEL_STEPS}
     funnel.update({row['event_type']: row['total'] for row in funnel_rows})
@@ -142,7 +142,7 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
         retention_buckets[('healthy', 'attention', 'high_risk')[score]] += 1
 
     paid_events = PublicWorkoutFunnelEvent.objects.filter(
-        occurred_at__gte=since, event_type='invoice_paid',
+        occurred_at__gte=since, event_type='invoice_paid', partner_code='',
     )
     paid_event_count = paid_events.count()
     attributed_paid_event_count = paid_events.exclude(source='').count()
@@ -152,6 +152,7 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
     ).values('subscription__account_id').annotate(first_paid=Min('paid_at')).filter(first_paid__gte=since)
     acquired = PublicWorkoutAcquisitionSession.objects.filter(
         account_id__in=Subquery(first_payers.values('subscription__account_id')),
+        partner_code='',
     )
     sources = [
         {'source': row['first_source'], 'paid': row['paid']}

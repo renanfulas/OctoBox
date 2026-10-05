@@ -26,6 +26,8 @@ from .public_workout_views import (
     PublicWorkoutFunnelAnalyticsLoginView,
     PublicWorkoutFunnelAnalyticsLogoutView,
     PublicWorkoutLandingView,
+    PublicWorkoutJullyAnalyticsView,
+    PublicWorkoutJullyLandingView,
     PublicWorkoutLoginView,
     PublicWorkoutNutritionIntakeView,
     PublicWorkoutPrivacyView,
@@ -36,6 +38,7 @@ from .public_workout_views import (
 )
 
 urlpatterns = [
+    path('jully/', PublicWorkoutJullyLandingView.as_view(), name='public-workout-landing-jully'),
     path('', PublicWorkoutLandingView.as_view(), name='public-workout-landing'),
     path('termos', PublicWorkoutTermsView.as_view(), name='public-workout-terms'),
     path('privacidade', PublicWorkoutPrivacyView.as_view(), name='public-workout-privacy'),
@@ -46,6 +49,7 @@ urlpatterns = [
     path('cadastro', PublicWorkoutColdSignupView.as_view(), name='public-workout-cold-signup'),
     path('eventos', PublicWorkoutFunnelEventView.as_view(), name='public-workout-funnel-event'),
     path('analytics/', PublicWorkoutFunnelAnalyticsView.as_view(), name='public-workout-funnel-analytics'),
+    path('analytics/influencers/jully/', PublicWorkoutJullyAnalyticsView.as_view(), name='public-workout-influencer-analytics-jully'),
     path('analytics/login/', PublicWorkoutFunnelAnalyticsLoginView.as_view(), name='public-workout-funnel-analytics-login'),
     path('analytics/logout/', PublicWorkoutFunnelAnalyticsLogoutView.as_view(), name='public-workout-funnel-analytics-logout'),
     path('billing-portal', PublicWorkoutBillingPortalView.as_view(), name='public-workout-billing-portal'),

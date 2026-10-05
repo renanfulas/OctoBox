@@ -38,6 +38,13 @@
 .curva-brand { display: inline-block; position: relative; font-size: 33px; font-weight: 800; line-height: 1; letter-spacing: -2px; text-decoration: none; }
 .curva-brand > span { display: inline-block; color: var(--curva-accent); margin-left: 4px; font-size: 28px; }
 .curva-brand small { display: block; margin-top: 7px; font-size: 10px; line-height: 1.4; font-weight: 500; letter-spacing: 1.8px; text-transform: uppercase; color: var(--curva-muted); }
+.curva-partner-mark { display: inline-flex; align-items: center; gap: 13px; margin-bottom: 30px; padding: 10px 16px 10px 10px; border: 1px solid #32445e; border-radius: 10px; background: linear-gradient(110deg,#152239,#101725); }
+.curva-partner-mark > span:first-child { display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid #526481; border-radius: 50%; color: var(--curva-accent); font-size: 20px; font-weight: 800; }
+.curva-partner-mark div small, .curva-partner-mark div strong { display: block; }
+.curva-partner-mark div small { color: var(--curva-muted); font-size: 9px; font-weight: 700; letter-spacing: 1.6px; }
+.curva-partner-mark div strong { margin-top: 2px; font-size: 14px; font-weight: 700; }
+.curva-partner-mark div i { color: var(--curva-accent); font-style: normal; padding-inline: 3px; }
+.curva-partner-mark__label { margin-left: 7px; padding-left: 14px; border-left: 1px solid var(--curva-line); color: var(--curva-muted); font-size: 11px; }
 .curva-nav-links, .curva-nav-actions { display: flex; align-items: center; gap: 28px; font-size: 13px; font-weight: 600; }
 .curva-nav-links a, .curva-nav-actions .curva-nav-login { color: var(--curva-muted); text-decoration: none; padding-block: 12px; }
 .curva-nav-links a:hover, .curva-nav-actions .curva-nav-login:hover { color: var(--curva-text); }
@@ -295,6 +302,7 @@
   .curva-plan-guide { grid-template-columns: 1fr; gap: 10px; max-width: 480px; margin: 0 auto 32px; }
   .curva-plan-guide a { padding: 14px 18px; }
   .curva-pricing-heading { margin-bottom: 36px; text-align: left; }
+  .curva-partner-mark { margin-bottom: 22px; }
   .curva-price-card { padding: 28px; }
   .curva-price-card--highlight { padding: 27px; margin-top: 30px; }
   .curva-price-tier { font-size: 30px; }
@@ -313,6 +321,7 @@
   .curva-footer nav { width: 100%; justify-content: space-between; }
 }
 @media (max-width: 380px) {
+  .curva-partner-mark__label { display: none; }
   .curva-nav-actions { gap: 10px; }
   .curva-nav-cta span { display: none; }
   .curva-hero h1 { font-size: 45px; }
