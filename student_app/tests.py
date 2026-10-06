@@ -16,7 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
-from finance.models import Enrollment, MembershipPlan
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan
 from operations.models import Attendance, AttendanceStatus, ClassSession, ClassType, SessionStatus
 from operations.services.wod_projection import project_plan_to_sessions
 from student_app.application.cache_keys import (
@@ -194,6 +194,13 @@ class StudentAppExperienceTests(TestCase):
     def test_mass_onboarding_creates_student_and_identity(self):
         client = Client()
         link = self._set_mass_onboarding_session(client)
+        plan = MembershipPlan.objects.create(
+            name='Plano mensal de entrada',
+            price=Decimal('159.90'),
+            billing_cycle='monthly',
+            sessions_per_week=3,
+            active=True,
+        )
 
         response = client.post(
             reverse('student-app-onboarding'),
@@ -201,7 +208,7 @@ class StudentAppExperienceTests(TestCase):
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
                 'birth_date': '02/01/2000',
-                'selected_plan': '',
+                'selected_plan': str(plan.pk),
             },
             follow=False,
         )
@@ -211,6 +218,8 @@ class StudentAppExperienceTests(TestCase):
         identity = StudentIdentity.objects.get(provider_subject='provider-subject-new-mass')
         self.assertEqual(identity.email, 'novo@app.com')
         self.assertEqual(identity.student.full_name, 'Novo Aluno App')
+        enrollment = Enrollment.objects.get(student=identity.student, plan=plan)
+        self.assertEqual(enrollment.status, EnrollmentStatus.PENDING)
         membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug=get_box_runtime_slug())
         self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
         self.assertTrue(
@@ -278,9 +287,39 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'data-mask="date"', html=False)
         self.assertContains(response, '/static/js/core/forms.js', html=False)
         self.assertContains(response, 'data-min-year="1900"', html=False)
-        self.assertContains(response, 'data-max-year="2026"', html=False)
+        self.assertContains(response, f'data-max-year="{timezone.localdate().year}"', html=False)
         self.assertNotContains(response, '<span>E-mail</span>', html=False)
         self.assertContains(response, 'Seu e-mail será o mesmo validado no OAuth', html=False)
+
+    def test_mass_onboarding_explains_optional_fields_and_primary_action(self):
+        client = Client()
+        self._set_mass_onboarding_session(client)
+
+        response = client.get(reverse('student-app-onboarding'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Concluir cadastro')
+        self.assertContains(response, 'Data de nascimento (opcional)')
+        self.assertContains(response, 'Plano (opcional)')
+
+    def test_mass_onboarding_plan_choice_shows_price_cycle_and_frequency(self):
+        client = Client()
+        self._set_mass_onboarding_session(client)
+        MembershipPlan.objects.create(
+            name='Plano Bronze',
+            price=Decimal('159.90'),
+            billing_cycle='monthly',
+            sessions_per_week=3,
+            active=True,
+        )
+
+        response = client.get(reverse('student-app-onboarding'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Plano Bronze — R$ 159,90 · mensal · 3x por semana')
+        self.assertContains(response, 'matrícula pendente')
+        self.assertContains(response, 'Nenhum pagamento é feito neste passo')
+
 
     def test_mass_onboarding_rejects_invalid_phone_payload(self):
         client = Client()
@@ -304,21 +343,61 @@ class StudentAppExperienceTests(TestCase):
     def test_mass_onboarding_rejects_birth_date_after_max_year(self):
         client = Client()
         self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-birth')
+        future_year = timezone.localdate().year + 1
 
         response = client.post(
             reverse('student-app-onboarding'),
             {
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
-                'birth_date': '01/01/2027',
+                'birth_date': f'01/01/{future_year}',
                 'selected_plan': '',
             },
             follow=False,
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'O ano da data de nascimento precisa ficar entre 1900 e 2026.')
+        self.assertContains(response, f'O ano da data de nascimento precisa ser no máximo {timezone.localdate().year}.')
         self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-birth').exists())
+
+    def test_mass_onboarding_accepts_minimum_birth_date(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-minimum-birth')
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno Limite',
+                'phone': '5511888888888',
+                'birth_date': '01/01/1900',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        identity = StudentIdentity.objects.get(provider_subject='provider-subject-minimum-birth')
+        self.assertEqual(identity.student.birth_date, date(1900, 1, 1))
+
+    @freeze_time('2026-10-02')
+    def test_mass_onboarding_rejects_birth_date_later_in_the_current_year(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-day')
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno App',
+                'phone': '5511888888888',
+                'birth_date': '31/12/2026',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A data de nascimento não pode ser futura.')
+        self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-day').exists())
 
     def test_mass_onboarding_accepts_masked_phone_and_saves_clean_digits(self):
         client = Client()
@@ -419,6 +498,66 @@ class StudentAppExperienceTests(TestCase):
                 metadata__identity_id=identity.id,
             ).exists()
         )
+
+    def test_imported_lead_onboarding_preserves_birth_date_when_optional_field_is_blank(self):
+        client = Client()
+        existing_birth_date = date(1996, 4, 3)
+        student = Student.objects.create(
+            full_name='Lead Importado com Nascimento',
+            phone='5511666699999',
+            email='',
+            birth_date=existing_birth_date,
+            status=StudentStatus.LEAD,
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=student.id,
+            student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='provider-subject-imported-blank-birth-date',
+            email='lead-birth-date@app.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=student.id,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        invitation = StudentAppInvitation.objects.create(
+            student_id=student.id,
+            student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            invited_email='lead-birth-date@app.com',
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'box_root_slug': get_box_runtime_slug(),
+            'student_id': student.id,
+            'identity_id': identity.id,
+            'invitation_id': invitation.id,
+            'email': 'lead-birth-date@app.com',
+        }
+        session.save()
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': student.full_name,
+                'phone': '5511666699999',
+                'birth_date': '',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        student.refresh_from_db()
+        self.assertEqual(student.birth_date, existing_birth_date)
 
     def test_imported_lead_onboarding_persists_google_photo_url_captured_during_oauth(self):
         """Bug irmao do mass onboarding: convite individual de lead importado

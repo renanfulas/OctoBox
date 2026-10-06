@@ -162,7 +162,12 @@ class LenientDateField(forms.DateField):
         if isinstance(value, date):
             return value
         if isinstance(value, str) and any(not character.isdigit() for character in value.strip()):
-            return super().to_python(value)
+            parsed_date = super().to_python(value)
+            if parsed_date is not None and self.min_year is not None and parsed_date.year < int(self.min_year):
+                raise forms.ValidationError(self.error_messages['min_year'], code='min_year')
+            if parsed_date is not None and self.max_year is not None and parsed_date.year > int(self.max_year):
+                raise forms.ValidationError(self.error_messages['max_year'], code='max_year')
+            return parsed_date
         try:
             return parse_lenient_date_value(
                 value,
