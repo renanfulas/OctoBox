@@ -123,7 +123,7 @@
         </header>
         <div class="smart-paste-week-dialog__body">
     {% if not projection_preview.totals.sessions_creatable %}
-    <div class="smart-paste-projection-blocker" role="status">
+    <div class="smart-paste-projection-blocker" id="smart-paste-projection-blocker" role="status">
         <strong>A semana está pronta, mas ainda não há aula disponível para receber o WOD.</strong>
         <p>{% if not projection_preview.sessions_in_week_total %}Cadastre as aulas dessa semana na Grade de aulas e volte aqui para enviar os treinos.{% elif not projection_preview.totals.sessions_found and projection_preview.sessions_canceled_selected_total %}{{ projection_preview.sessions_canceled_selected_total }} aula(s) do(s) tipo(s) selecionado(s) estão canceladas e não receberão WOD. Reative essas aulas ou ajuste os tipos antes de distribuir.{% elif not projection_preview.sessions_active_in_week_total %}As {{ projection_preview.sessions_canceled_total }} aula(s) da semana estão canceladas e não receberão WOD. Reative essas aulas ou ajuste a grade antes de distribuir.{% else %}As aulas elegíveis já têm treino ou não aceitam os blocos desta colagem. Confira os detalhes abaixo e ajuste a grade ou o WOD da aula.{% endif %}</p>
         <div class="actions">
@@ -272,7 +272,7 @@
         {% endfor %}
         <input type="hidden" name="action" value="create_projection">
         <div class="actions">
-            <button class="button" type="submit" data-action="distribute-week" data-eligible="{% if projection_preview.totals.sessions_creatable %}true{% else %}false{% endif %}" {% if not projection_preview.totals.sessions_creatable or smart_paste_unlinked_movements %}disabled aria-disabled="true"{% endif %}>Distribuir WODs às aulas</button>
+            <button class="button" type="submit" data-action="distribute-week" data-eligible="{% if projection_preview.totals.sessions_creatable %}true{% else %}false{% endif %}" {% if not projection_preview.totals.sessions_creatable or smart_paste_unlinked_movements %}disabled aria-disabled="true"{% endif %}{% if not projection_preview.totals.sessions_creatable %} aria-describedby="smart-paste-projection-blocker"{% endif %}>{% if not projection_preview.totals.sessions_creatable %}Sem aulas disponíveis para distribuir{% else %}Distribuir WODs às aulas{% endif %}</button>
             <button class="button secondary" type="button" data-action="close-week-dialog">Voltar para revisar</button>
         </div>
     </form>
