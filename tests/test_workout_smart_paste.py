@@ -2163,6 +2163,8 @@ class WorkoutSmartPasteProjectionGuardTests(WorkoutFlowBaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Nenhuma aula cadastrada na semana')
+        self.assertContains(response, 'Sem aulas disponíveis para distribuir')
+        self.assertContains(response, 'disabled aria-disabled="true"')
         self.assertEqual(SessionWorkout.objects.count(), 0)
 
     def test_creation_succeeds_when_session_of_selected_type_exists(self):
