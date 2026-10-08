@@ -345,9 +345,43 @@ body[data-theme="dark"] .weekday-option {
 
 .class-grid-checkbox {
     display: flex;
-    gap: 10px;
-    align-items: center;
+    gap: 12px;
+    align-items: flex-start;
+    min-height: 48px;
+    padding: 13px 14px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 24%, var(--card-border) 76%);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--theme-surface-panel) 94%, transparent);
+    color: var(--ink);
+    line-height: 1.45;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.class-grid-planner-panel .class-grid-checkbox input {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    accent-color: var(--theme-accent-primary);
+}
+
+.class-grid-skip-existing__help {
+    margin: 8px 14px 0 46px;
     color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.class-grid-planner-panel .class-grid-checkbox:focus-within {
+    outline: 2px solid color-mix(in srgb, var(--theme-accent-primary) 66%, transparent);
+    outline-offset: 2px;
+}
+
+body[data-theme="dark"] .class-grid-planner-panel .class-grid-checkbox {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.62);
+    color: rgba(226, 232, 240, 0.92);
 }
 
 .class-grid-planner-reset-rail {

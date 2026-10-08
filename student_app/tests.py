@@ -1685,6 +1685,8 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, '3 séries · 21/15/9 reps · @ 40/25 kg')
         self.assertContains(response, 'Ver demonstração')
         self.assertContains(response, 'https://video.example.test/push-press')
+        self.assertContains(response, 'href="https://example.test/push-press"')
+        self.assertContains(response, 'target="_blank" rel="noopener noreferrer"')
         self.assertContains(response, '4 séries · 10 a 12 reps · @ 65% RM')
         self.assertContains(response, 'EMOM 10 — 1:00 rest · 10 rounds · intervalo 60 s')
 

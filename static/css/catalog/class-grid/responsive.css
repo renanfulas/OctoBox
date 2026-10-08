@@ -84,6 +84,20 @@ POR QUE ELE EXISTE:
 }
 
 @media (max-width: 640px) {
+    .class-grid-planner-panel input:not([type="checkbox"]):not([type="hidden"]),
+    .class-grid-planner-panel select,
+    .class-grid-planner-panel textarea {
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        min-height: 48px;
+        font-size: 16px;
+    }
+
+    .class-grid-planner-panel textarea {
+        min-height: 96px;
+    }
+
     .class-grid-scene .class-grid-hero {
         padding: 16px;
     }
