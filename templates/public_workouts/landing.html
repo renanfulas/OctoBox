@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Curva — Treino feito para você. Consultoria online a partir de R$97/mês.</title>
-<meta name="description" content="Saia do treino no automático. Consultoria online com treino periodizado, progresso acompanhado e nutrição individual nos planos Completo e Premium. A partir de R$97/mês.">
+<title>{% if influencer_name %}{{ influencer_name }} × Curva — Treino com direção{% else %}Curva — Treino feito para você. Consultoria online a partir de R$97/mês.{% endif %}</title>
+<meta name="description" content="{% if influencer_name %}Conheça a consultoria online da Curva pela página de indicação da {{ influencer_name }}. Treino com acompanhamento profissional a partir de R$97/mês.{% else %}Saia do treino no automático. Consultoria online com treino periodizado, progresso acompanhado e nutrição individual nos planos Completo e Premium. A partir de R$97/mês.{% endif %}">
 <meta name="theme-color" content="#0a0e1a">
 <link rel="preload" href="{% static 'fonts/manrope/manrope-latin-variable.woff2' %}" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="{% static 'css/public_workouts/landing.css' %}?v={{ static_asset_version }}-curva4">
+<link rel="stylesheet" href="{% static 'css/public_workouts/landing.css' %}?v={{ static_asset_version }}-curva5">
 </head>
-<body class="curva-landing" id="topo" data-funnel-enabled="{{ funnel_tracking_enabled|yesno:'true,false' }}" data-funnel-url="{% url 'public-workout-funnel-event' %}">
+<body class="curva-landing{% if influencer_code %} curva-landing--partner{% endif %}" id="topo" data-funnel-enabled="{{ funnel_tracking_enabled|yesno:'true,false' }}" data-funnel-url="{% url 'public-workout-funnel-event' %}" data-partner-code="{{ influencer_code }}">
 {{ experiment_assignments|json_script:"curva-experiment-assignments" }}
 <a class="curva-skip" href="#conteudo">Pular para o conteúdo</a>
 <header class="curva-nav">
@@ -23,6 +23,7 @@
 <section class="curva-hero" aria-labelledby="curva-title">
   <div class="curva-page curva-hero-grid">
     <div class="curva-hero-copy">
+      {% if influencer_name %}<div class="curva-partner-mark" aria-label="Página de indicação da {{ influencer_name }}"><span aria-hidden="true">J</span><div><small>UMA INDICAÇÃO</small><strong>{{ influencer_name }} <i aria-hidden="true">×</i> Curva</strong></div><span class="curva-partner-mark__label">Treino &amp; Nutrição</span></div>{% endif %}
       <p class="curva-eyebrow"><span class="curva-signal" aria-hidden="true"></span> Consultoria online. Acompanhamento humano.</p>
       <h1 id="curva-title">Um treino<br>feito para <em>você.</em></h1>
       <p class="curva-hero-lead">Pare de repetir uma ficha.<br>Comece a treinar com um plano para você.</p>
@@ -91,7 +92,7 @@
 
 <section class="curva-section curva-pricing" id="curva-precos" aria-labelledby="curva-pricing-title">
   <div class="curva-page">
-    <div class="curva-pricing-heading"><p class="curva-eyebrow">O PRÓXIMO PASSO É SEU</p><h2 id="curva-pricing-title">De quanto acompanhamento<br><span>você precisa hoje?</span></h2><p class="curva-section-lead">Comece pelo cuidado que faz sentido para a sua rotina.<br>Assinatura mensal. Cancele quando quiser. Garantia de 7 dias.</p></div>
+    <div class="curva-pricing-heading">{% if influencer_name %}<p class="curva-eyebrow">INDICAÇÃO DA {{ influencer_name|upper }} · CONHEÇA A CURVA</p>{% else %}<p class="curva-eyebrow">O PRÓXIMO PASSO É SEU</p>{% endif %}<h2 id="curva-pricing-title">De quanto acompanhamento<br><span>você precisa hoje?</span></h2><p class="curva-section-lead">Comece pelo cuidado que faz sentido para a sua rotina.<br>Assinatura mensal. Cancele quando quiser. Garantia de 7 dias.</p></div>
     <nav class="curva-plan-guide" aria-label="Encontre o acompanhamento para você">
       <a href="#plano-essencial"><span>Quero organizar meu treino</span><strong>Essencial <span aria-hidden="true">↓</span></strong></a>
       <a href="#plano-completo"><span>Quero treino e alimentação</span><strong>Completo <span aria-hidden="true">↓</span></strong></a>
@@ -139,6 +140,6 @@
 <section class="curva-final-cta" aria-labelledby="curva-final-title"><div class="curva-page"><p class="curva-eyebrow">SUA PRÓXIMA FASE COMEÇA COM UMA ESCOLHA</p><h2 id="curva-final-title">Mude a direção.<br><em>Construa sua curva.</em></h2><p>Um plano para o seu momento.<br>Gente de verdade para acompanhar o caminho.</p><a class="curva-button" href="#curva-precos">Escolher meu acompanhamento <span aria-hidden="true">↗</span></a><span class="curva-final-note">A partir de R$97/mês · Garantia de 7 dias</span></div></section>
 </main>
 <footer class="curva-footer"><div class="curva-page curva-footer-inner"><a class="curva-brand" href="#topo">curva<span aria-hidden="true">↗</span><small>Treino &amp; Nutrição</small></a><p>O seu esforço. A nossa direção.</p><nav aria-label="Links do rodapé"><a href="{% url 'public-workout-login' %}">Entrar</a><a href="{% url 'public-workout-terms' %}">Termos</a><a href="{% url 'public-workout-privacy' %}">Privacidade</a></nav></div></footer>
-<script src="{% static 'js/public_workouts/landing.js' %}?v={{ static_asset_version }}-curva4" defer></script>
+<script src="{% static 'js/public_workouts/landing.js' %}?v={{ static_asset_version }}-curva5" defer></script>
 </body>
 </html>

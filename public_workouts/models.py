@@ -722,6 +722,10 @@ class PublicWorkoutAcquisitionSession(models.Model):
     last_referrer = models.CharField(max_length=180, blank=True)
     landing_variant = models.CharField(max_length=40, blank=True)
     offer_version = models.CharField(max_length=40, blank=True)
+    # Parceiro e primeira indicação vivem fora dos campos UTM de campanhas
+    # próprias para que aquisição de creators não distorça CAC da Curva.
+    partner_code = models.CharField(max_length=48, blank=True, db_index=True)
+    partner_first_seen_at = models.DateTimeField(null=True, blank=True, db_index=True)
     account = models.ForeignKey(
         PublicWorkoutAccount, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
     )
@@ -780,6 +784,7 @@ class PublicWorkoutFunnelEvent(models.Model):
     source = models.CharField(max_length=80, blank=True)
     medium = models.CharField(max_length=80, blank=True)
     campaign = models.CharField(max_length=120, blank=True)
+    partner_code = models.CharField(max_length=48, blank=True, db_index=True)
     schema_version = models.PositiveSmallIntegerField(default=1)
     client_event_id = models.UUIDField(null=True, blank=True, unique=True)
     correlation_id = models.UUIDField(null=True, blank=True, db_index=True)

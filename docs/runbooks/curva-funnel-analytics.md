@@ -12,6 +12,15 @@ origem.
 Selecione coortes de 7, 30 ou 90 dias e exporte o JSON agregado pelo cockpit.
 O Django Admin serve apenas para inspecionar os registros brutos de aquisição.
 
+O painel interno exclusivo da parceria com a Jully fica em
+`/treinos/analytics/influencers/jully/`. A página de divulgação é
+`/treinos/jully/`. O painel geral mantém as sessões de parceiros fora das
+coortes, canais, experimentos e indicadores de aquisição das campanhas próprias.
+No painel da Jully, aberturas do link, visitantes, cadastros, checkouts e
+primeiros pagamentos aparecem separados. A comissão é exibida como estimativa
+de 60% da primeira fatura paga; renovações não entram. O painel não cria saldo
+financeiro nem realiza transferências.
+
 `PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED=True` é o novo padrão. Uma variável
 explícita `False` no ambiente continua desligando a coleta. O painel mostra
 um aviso nesse caso; o JavaScript deixa de enviar eventos. O rollout requer

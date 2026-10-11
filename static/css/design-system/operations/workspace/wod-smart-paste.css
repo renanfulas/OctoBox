@@ -1404,6 +1404,22 @@ body[data-theme="dark"] .smart-paste-inline-review-form label > span {
     background: var(--theme-surface-strong);
 }
 
+.smart-paste-week-dialog__actions .button:disabled,
+.smart-paste-week-dialog__actions .button[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.48;
+    filter: grayscale(0.72);
+    box-shadow: none;
+    transform: none;
+}
+
+.smart-paste-week-dialog__actions .button:disabled:hover,
+.smart-paste-week-dialog__actions .button:disabled:focus-visible,
+.smart-paste-week-dialog__actions .button:disabled:active {
+    box-shadow: none;
+    transform: none;
+}
+
 .smart-paste-week-calendar {
     display: grid;
     grid-template-columns: repeat(8, minmax(76px, 1fr));
