@@ -58,6 +58,7 @@ class StartSubscriptionCheckoutTests(TestCase):
         _, kwargs = mock_create.call_args
         self.assertEqual(kwargs['mode'], 'subscription')
         self.assertEqual(kwargs['line_items'], [{'price': 'price_123', 'quantity': 1}])
+        self.assertTrue(kwargs['allow_promotion_codes'])
         self.assertEqual(kwargs['metadata']['product'], 'coaching')
         self.assertEqual(kwargs['metadata']['public_workout_subscription_id'], str(self.subscription.pk))
         self.assertEqual(kwargs['metadata']['tier'], PublicWorkoutTier.ESSENCIAL)
@@ -106,6 +107,7 @@ class StartSubscriptionCheckoutTests(TestCase):
             _, kwargs = mock_create.call_args
             self.assertEqual(kwargs['line_items'], [{'price': expected_price_id, 'quantity': 1}])
             self.assertEqual(kwargs['metadata']['tier'], tier)
+            self.assertTrue(kwargs['allow_promotion_codes'])
 
     @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
     @patch('stripe.checkout.Session.create')
