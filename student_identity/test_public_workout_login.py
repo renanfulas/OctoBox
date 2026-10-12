@@ -10,7 +10,7 @@ POR QUE ELE EXISTE:
 from unittest.mock import Mock, patch
 
 from django.core import mail
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -122,15 +122,27 @@ class ResolveOrCreatePublicWorkoutAccountPhotoTests(TestCase):
 
 
 class RequestLoginTokenTests(TestCase):
-    def test_creates_account_and_token_and_sends_email(self):
+    def test_does_not_create_account_or_token_for_unpaid_email(self):
         token = request_login_token(email='NOVO@Example.com  ', base_url='https://octoboxfit.com.br')
 
-        self.assertEqual(PublicWorkoutAccount.objects.filter(email='novo@example.com').count(), 1)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertIn(str(token.token), mail.outbox[0].body)
-        self.assertIn('novo@example.com', mail.outbox[0].to)
+        self.assertIsNone(token)
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email='novo@example.com').exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_pending_checkout_account_cannot_request_login_link(self):
+        from public_workouts.billing import get_or_create_subscription
+        account = PublicWorkoutAccount.objects.create(email='aguardando-pagamento@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL)
+        subscription.requires_login = True
+        subscription.save(update_fields=['requires_login'])
+
+        token = request_login_token(email=account.email, base_url='https://octoboxfit.com.br')
+
+        self.assertIsNone(token)
+        self.assertFalse(PublicWorkoutLoginToken.objects.filter(account=account).exists())
 
     def test_reuses_existing_account_for_same_email(self):
+        PublicWorkoutAccount.objects.create(email='repeat@example.com')
         request_login_token(email='repeat@example.com', base_url='https://octoboxfit.com.br')
         request_login_token(email='repeat@example.com', base_url='https://octoboxfit.com.br')
 
@@ -143,6 +155,7 @@ class RequestLoginTokenTests(TestCase):
             provider_subject='sub-1',
             email='aluno-de-box@example.com',
         )
+        resolve_or_create_public_workout_account(email='aluno-de-box@example.com')
         request_login_token(email='aluno-de-box@example.com', base_url='https://octoboxfit.com.br')
 
         account = PublicWorkoutAccount.objects.get(email='aluno-de-box@example.com')
@@ -155,6 +168,7 @@ class RequestLoginTokenTests(TestCase):
             provider_subject='sub-2',
             email='original@example.com',
         )
+        resolve_or_create_public_workout_account(email='original@example.com')
         request_login_token(email='original@example.com', base_url='https://octoboxfit.com.br')
         account = PublicWorkoutAccount.objects.get(email='original@example.com')
         original_link = account.student_identity_id
@@ -167,6 +181,7 @@ class RequestLoginTokenTests(TestCase):
 
     def test_rate_limit_exceeded_after_max_requests(self):
         email = 'ratelimited@example.com'
+        PublicWorkoutAccount.objects.create(email=email)
         for _ in range(PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX):
             request_login_token(email=email, base_url='https://octoboxfit.com.br')
 
@@ -174,6 +189,7 @@ class RequestLoginTokenTests(TestCase):
             request_login_token(email=email, base_url='https://octoboxfit.com.br')
 
     def test_email_has_html_alternative_with_the_login_link(self):
+        PublicWorkoutAccount.objects.create(email='bonito@example.com')
         token = request_login_token(email='bonito@example.com', base_url='https://octoboxfit.com.br')
 
         sent = mail.outbox[0]
@@ -187,6 +203,7 @@ class RequestLoginTokenTests(TestCase):
         # Mesma convencao de build_owner_onboarding_subject (que tambem usa
         # "·" livremente): o que se evita e acento de letra pt-BR (risco de
         # encoding quebrado em cliente legado), nao pontuacao unicode.
+        PublicWorkoutAccount.objects.create(email='semacento@example.com')
         request_login_token(email='semacento@example.com', base_url='https://octoboxfit.com.br')
 
         subject = mail.outbox[0].subject
@@ -243,6 +260,7 @@ class PublicWorkoutLoginViewTests(TestCase):
         self.assertContains(response, 'Enviar link')
 
     def test_post_valid_email_sends_link_and_shows_confirmation(self):
+        PublicWorkoutAccount.objects.create(email='chegou@example.com')
         response = self.client.post(reverse('public-workout-login'), {'email': 'chegou@example.com'})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'chegou@example.com')
@@ -255,6 +273,7 @@ class PublicWorkoutLoginViewTests(TestCase):
 
     def test_post_rate_limited_shows_error(self):
         email = 'viewratelimit@example.com'
+        PublicWorkoutAccount.objects.create(email=email)
         for _ in range(PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX):
             request_login_token(email=email, base_url='https://octoboxfit.com.br')
 
@@ -263,6 +282,7 @@ class PublicWorkoutLoginViewTests(TestCase):
         self.assertContains(response, 'Muitos pedidos')
 
     def test_get_with_valid_token_sets_session_cookie(self):
+        PublicWorkoutAccount.objects.create(email='cookie@example.com')
         token = request_login_token(email='cookie@example.com', base_url='https://octoboxfit.com.br')
 
         client = Client()
@@ -285,12 +305,14 @@ class PublicWorkoutLoginViewTests(TestCase):
         self.assertContains(response, 'name="next" value="/renan/giovanna"')
 
     def test_post_carries_next_through_to_the_emailed_link(self):
+        PublicWorkoutAccount.objects.create(email='comnext@example.com')
         self.client.post(
             reverse('public-workout-login'), {'email': 'comnext@example.com', 'next': '/renan/giovanna'}
         )
         self.assertIn('next=%2Frenan%2Fgiovanna', mail.outbox[0].body)
 
     def test_get_with_valid_token_and_next_redirects_there_and_sets_cookie(self):
+        PublicWorkoutAccount.objects.create(email='volta@example.com')
         token = request_login_token(
             email='volta@example.com', base_url='https://octoboxfit.com.br', next_url='/renan/rafael'
         )
@@ -302,6 +324,7 @@ class PublicWorkoutLoginViewTests(TestCase):
         self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
     def test_get_with_valid_token_no_next_and_no_subscription_opens_account_hub(self):
+        PublicWorkoutAccount.objects.create(email='seminext@example.com')
         token = request_login_token(email='seminext@example.com', base_url='https://octoboxfit.com.br')
 
         client = Client()
@@ -313,11 +336,11 @@ class PublicWorkoutLoginViewTests(TestCase):
         # Achado real (usuario): abrir o link do e-mail direto (sem ter
         # vindo de uma pagina /renan/<slug> especifica) deixava a pessoa
         # numa tela de "login feito" sem redirecionar pra lugar nenhum.
-        token = request_login_token(email='comslugautoredirect@example.com', base_url='https://octoboxfit.com.br')
-        account = PublicWorkoutAccount.objects.get(email='comslugautoredirect@example.com')
+        account = PublicWorkoutAccount.objects.create(email='comslugautoredirect@example.com')
         PublicWorkoutSubscription.objects.create(
             account=account, plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.ACTIVE,
         )
+        token = request_login_token(email='comslugautoredirect@example.com', base_url='https://octoboxfit.com.br')
 
         client = Client()
         response = client.get(reverse('public-workout-login'), {'token': str(token.token)})
@@ -354,7 +377,9 @@ class PublicWorkoutLoginViewTests(TestCase):
             'javascript:alert(1)',
             '/renan/',
         ):
-            token = request_login_token(email=f'unsafe-{hash(unsafe_next)}@example.com', base_url='https://octoboxfit.com.br')
+            email = f'unsafe-{hash(unsafe_next)}@example.com'
+            PublicWorkoutAccount.objects.create(email=email)
+            token = request_login_token(email=email, base_url='https://octoboxfit.com.br')
 
             client = Client()
             response = client.get(reverse('public-workout-login'), {'token': str(token.token), 'next': unsafe_next})
@@ -370,6 +395,7 @@ class PublicWorkoutLoginViewTests(TestCase):
         # e continua valido, ele so nao recebeu o e-mail ainda.
         with patch('signup.email_sender.send_html_email') as send_html_email:
             send_html_email.side_effect = StudentEmailDeliveryError('smtp-down')
+            PublicWorkoutAccount.objects.create(email='canalcaiu@example.com')
 
             token = request_login_token(email='canalcaiu@example.com', base_url='https://octoboxfit.com.br')
 
@@ -504,7 +530,7 @@ class PublicWorkoutColdSignupViewTests(TestCase):
 
     def _post(self, **data):
         data.setdefault('accept_contract', '1')
-        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+        with patch('student_identity.public_workout_views.start_checkout_lead_session') as start_checkout:
             start_checkout.return_value = 'https://checkout.stripe.com/pay/cs_test_cold'
             return self.client.post(reverse('public-workout-cold-signup'), data)
 
@@ -532,34 +558,43 @@ class PublicWorkoutColdSignupViewTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['error'], 'email_ou_tier_invalido')
 
-    def test_creates_account_and_pending_payment_subscription_without_plan_slug(self):
+    def test_captures_lead_without_creating_account_or_subscription(self):
         self._post(email='novo@example.com', tier=PublicWorkoutTier.PREMIUM)
 
-        account = PublicWorkoutAccount.objects.get(email='novo@example.com')
-        subscription = account.subscription
-        self.assertEqual(subscription.tier, PublicWorkoutTier.PREMIUM)
-        self.assertEqual(subscription.status, PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
-        self.assertIsNone(subscription.plan_slug)
+        from public_workouts.models import PublicWorkoutCheckoutLead
+        lead = PublicWorkoutCheckoutLead.objects.get(email='novo@example.com')
+        self.assertEqual(lead.tier, PublicWorkoutTier.PREMIUM)
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email='novo@example.com').exists())
+        self.assertFalse(PublicWorkoutSubscription.objects.exists())
 
-    def test_attaches_session_cookie_so_visitor_is_already_logged_in(self):
+    def test_marketing_opt_in_is_separate_and_optional(self):
+        self._post(email='optin@example.com', tier=PublicWorkoutTier.COMPLETO, marketing_consent='1')
+        self._post(email='semoptin@example.com', tier=PublicWorkoutTier.COMPLETO)
+        from public_workouts.models import PublicWorkoutCheckoutLead
+        opted_in = PublicWorkoutCheckoutLead.objects.get(email='optin@example.com')
+        not_opted_in = PublicWorkoutCheckoutLead.objects.get(email='semoptin@example.com')
+        self.assertTrue(opted_in.marketing_consent)
+        self.assertIsNotNone(opted_in.marketing_consent_at)
+        self.assertFalse(not_opted_in.marketing_consent)
+        self.assertIsNone(not_opted_in.marketing_consent_at)
+
+    def test_does_not_authenticate_visitor_before_payment(self):
         response = self._post(email='novo2@example.com', tier=PublicWorkoutTier.ESSENCIAL)
 
-        self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
-        account = PublicWorkoutAccount.objects.get(email='novo2@example.com')
-        request = Mock(COOKIES={PUBLIC_WORKOUT_SESSION_COOKIE_NAME: response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME].value})
-        self.assertEqual(get_public_workout_account_id_from_request(request), account.pk)
+        self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email='novo2@example.com').exists())
 
     def test_second_signup_with_same_email_does_not_create_a_second_subscription(self):
         # RT1 (Entrega 5): duplo clique no CTA da landing nao pode duplicar.
         self._post(email='duplocheck@example.com', tier=PublicWorkoutTier.ESSENCIAL)
         self._post(email='duplocheck@example.com', tier=PublicWorkoutTier.PREMIUM)
 
-        account = PublicWorkoutAccount.objects.get(email='duplocheck@example.com')
-        self.assertEqual(PublicWorkoutSubscription.objects.filter(account=account).count(), 1)
-        self.assertEqual(account.subscription.tier, PublicWorkoutTier.PREMIUM)
+        from public_workouts.models import PublicWorkoutCheckoutLead
+        self.assertEqual(PublicWorkoutCheckoutLead.objects.filter(email='duplocheck@example.com').count(), 1)
+        self.assertEqual(PublicWorkoutCheckoutLead.objects.get(email='duplocheck@example.com').tier, PublicWorkoutTier.PREMIUM)
 
     def test_stripe_not_configured_returns_503(self):
-        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+        with patch('student_identity.public_workout_views.start_checkout_lead_session') as start_checkout:
             from public_workouts.stripe_checkout import PublicWorkoutStripeNotConfiguredError
 
             start_checkout.side_effect = PublicWorkoutStripeNotConfiguredError('sem price id')
@@ -570,20 +605,59 @@ class PublicWorkoutColdSignupViewTests(TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()['error'], 'stripe_nao_configurado')
 
-    def test_success_url_points_to_account_hub_not_back_to_login(self):
-        # Achado real: a landing promete a anamnese "antes do primeiro
-        # plano" (FAQ) mas o retorno do Stripe mandava pra /treinos/login,
-        # pagina que nem olha pro ?assinatura=sucesso — beco sem saida.
-        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+    def test_success_url_uses_payment_verification_return_endpoint(self):
+        with patch('student_identity.public_workout_views.start_checkout_lead_session') as start_checkout:
             start_checkout.return_value = 'https://checkout.stripe.com/pay/cs_test_anamnese'
             self.client.post(
                 reverse('public-workout-cold-signup'), {'email': 'vaipraanamnese@example.com', 'tier': PublicWorkoutTier.COMPLETO, 'accept_contract': '1'}
             )
 
         _, kwargs = start_checkout.call_args
-        self.assertIn(reverse('public-workout-account'), kwargs['success_url'])
-        self.assertIn('checkout=retorno', kwargs['success_url'])
-        self.assertIn('checkout=cancelado', kwargs['cancel_url'])
+        self.assertIn(reverse('public-workout-checkout-return'), kwargs['success_url'])
+        self.assertIn('session_id={CHECKOUT_SESSION_ID}', kwargs['success_url'])
+        self.assertIn('#curva-precos', kwargs['cancel_url'])
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    def test_paid_return_creates_account_but_requires_email_login(self):
+        from public_workouts.models import PublicWorkoutCheckoutLead
+        lead = PublicWorkoutCheckoutLead.objects.create(
+            email='retorno-pago@example.com', tier=PublicWorkoutTier.COMPLETO,
+            stripe_checkout_session_id='cs_paid',
+        )
+        paid_session = {
+            'status': 'complete', 'payment_status': 'paid', 'customer': 'cus_paid',
+            'subscription': 'sub_paid',
+            'metadata': {'product': 'coaching', 'public_workout_checkout_lead_id': str(lead.pk),
+                         'tier': PublicWorkoutTier.COMPLETO},
+        }
+        with patch('stripe.checkout.Session.retrieve', return_value=paid_session):
+            response = self.client.get(reverse('public-workout-checkout-return'), {'session_id': 'cs_paid'})
+
+        self.assertRedirects(response, '/treinos/login?checkout=retorno', fetch_redirect_response=False)
+        self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+        self.assertTrue(PublicWorkoutAccount.objects.filter(email=lead.email).exists())
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    def test_completed_checkout_is_resumed_before_new_tier_can_mutate_lead(self):
+        from types import SimpleNamespace
+        from public_workouts.models import PublicWorkoutCheckoutLead
+        lead = PublicWorkoutCheckoutLead.objects.create(
+            email='checkout-concluido@example.com', tier=PublicWorkoutTier.ESSENCIAL,
+            stripe_checkout_session_id='cs_already_paid',
+        )
+        with patch('stripe.checkout.Session.retrieve', return_value=SimpleNamespace(
+            id='cs_already_paid', status='complete', payment_status='paid',
+        )), patch('stripe.checkout.Session.create') as create_session:
+            response = self.client.post(reverse('public-workout-cold-signup'), {
+                'email': lead.email, 'tier': PublicWorkoutTier.PREMIUM, 'accept_contract': '1',
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['payment_complete'])
+        self.assertIn('session_id=cs_already_paid', response.json()['checkout_url'])
+        lead.refresh_from_db()
+        self.assertEqual(lead.tier, PublicWorkoutTier.ESSENCIAL)
+        create_session.assert_not_called()
 
     def test_requires_explicit_contract_acceptance(self):
         response = self.client.post(
@@ -598,13 +672,14 @@ class PublicWorkoutColdSignupViewTests(TestCase):
     def test_persists_the_accepted_contract_versions(self):
         self._post(email='contrato@example.com', tier=PublicWorkoutTier.COMPLETO)
 
-        subscription = PublicWorkoutAccount.objects.get(email='contrato@example.com').subscription
-        self.assertEqual(subscription.offer_version, 'curva-2026-09-v1')
-        self.assertEqual(subscription.service_policy_version, 'curva-service-2026-09-v1')
-        self.assertEqual(subscription.terms_version, '2026-09-20')
-        self.assertEqual(subscription.privacy_version, '2026-09-20')
-        self.assertEqual(subscription.guarantee_model, 'refund_guarantee')
-        self.assertIsNotNone(subscription.contract_accepted_at)
+        from public_workouts.models import PublicWorkoutCheckoutLead
+        lead = PublicWorkoutCheckoutLead.objects.get(email='contrato@example.com')
+        self.assertEqual(lead.offer_version, 'curva-2026-09-v1')
+        self.assertEqual(lead.service_policy_version, 'curva-service-2026-09-v1')
+        self.assertEqual(lead.terms_version, '2026-09-20')
+        self.assertEqual(lead.privacy_version, '2026-09-20')
+        self.assertEqual(lead.guarantee_model, 'refund_guarantee')
+        self.assertIsNotNone(lead.contract_accepted_at)
 
 
 class PublicWorkoutBillingPortalViewTests(TestCase):

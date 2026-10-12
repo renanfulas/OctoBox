@@ -185,8 +185,9 @@ class NewCustomerLoginGateTests(TestCase):
         self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
         checkout.assert_not_called()
 
-    @patch('student_identity.public_workout_views.start_subscription_checkout')
-    def test_abandoned_checkout_email_cannot_claim_existing_account_session(self, checkout):
+    @patch('student_identity.public_workout_views.start_checkout_lead_session')
+    def test_abandoned_checkout_email_resumes_checkout_without_account_session(self, checkout):
+        checkout.return_value = 'https://checkout.stripe.com/pay/resumed'
         account = PublicWorkoutAccount.objects.create(email='pendente-volta@example.com')
         get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL)
 
@@ -195,9 +196,9 @@ class NewCustomerLoginGateTests(TestCase):
         })
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()['login_required'])
+        self.assertEqual(response.json()['checkout_url'], 'https://checkout.stripe.com/pay/resumed')
         self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
-        checkout.assert_not_called()
+        checkout.assert_called_once()
 
     @override_settings(
         PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO='price_completo',

@@ -13,6 +13,7 @@ from .models import (
     PublicWorkoutAssessment,
     PublicWorkoutCampaignSpend,
     PublicWorkoutAcquisitionSession,
+    PublicWorkoutCheckoutLead,
     PublicWorkoutFunnelEvent,
     PublicWorkoutMealPlan,
     PublicWorkoutMealPlanDelivery,
@@ -66,6 +67,27 @@ class PublicWorkoutAcquisitionSessionAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(PublicWorkoutCheckoutLead)
+class PublicWorkoutCheckoutLeadAdmin(admin.ModelAdmin):
+    list_display = ('email', 'tier', 'marketing_consent', 'paid_at', 'created_at')
+    list_editable = ('marketing_consent',)
+    list_filter = ('tier', 'marketing_consent', 'paid_at', 'created_at')
+    search_fields = ('email',)
+    readonly_fields = [
+        field.name for field in PublicWorkoutCheckoutLead._meta.fields
+        if field.name not in ('marketing_consent', 'marketing_consent_at')
+    ]
+    ordering = ('-created_at',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        if 'marketing_consent' in form.changed_data:
+            obj.marketing_consent_at = timezone.now() if obj.marketing_consent else None
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(PublicWorkoutFunnelEvent)

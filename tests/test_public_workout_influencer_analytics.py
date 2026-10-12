@@ -67,7 +67,7 @@ class PublicWorkoutInfluencerAnalyticsTests(TestCase):
         with self.settings(
             PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_e', STRIPE_SECRET_KEY='sk_test'
         ), patch('stripe.checkout.Session.create') as create:
-            create.return_value = MagicMock(url='https://stripe.test/session')
+            create.return_value = MagicMock(id='cs_jully_checkout', url='https://stripe.test/session')
             response = self.client.post(reverse('public-workout-cold-signup'), {
                 'email': 'jully-checkout@example.com',
                 'tier': PublicWorkoutTier.ESSENCIAL,
@@ -75,9 +75,11 @@ class PublicWorkoutInfluencerAnalyticsTests(TestCase):
             })
 
         self.assertEqual(response.status_code, 200)
-        session = PublicWorkoutAcquisitionSession.objects.select_related('subscription').get()
+        session = PublicWorkoutAcquisitionSession.objects.get()
         self.assertEqual(session.partner_code, 'jully')
-        self.assertIsNotNone(session.subscription_id)
+        lead = session.checkout_leads.get(email='jully-checkout@example.com')
+        self.assertEqual(lead.stripe_checkout_session_id, 'cs_jully_checkout')
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email='jully-checkout@example.com').exists())
         self.assertEqual(
             set(PublicWorkoutFunnelEvent.objects.values_list('partner_code', flat=True)),
             {'jully'},
