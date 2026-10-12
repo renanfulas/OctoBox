@@ -97,6 +97,9 @@ def start_subscription_checkout(
         mode='subscription',
         payment_method_types=['card'],
         line_items=[{'price': price_id, 'quantity': 1}],
+        # Mostra no Stripe Checkout o campo para inserir os códigos Curva.
+        # A elegibilidade do desconto deve ser limitada no próprio Stripe.
+        allow_promotion_codes=True,
         customer_email=account.email,
         client_reference_id=str(subscription.pk),
         success_url=success_url,
