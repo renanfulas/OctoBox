@@ -17,13 +17,78 @@ from django.test import TestCase, override_settings
 from decimal import Decimal
 
 from public_workouts.billing import get_or_create_subscription
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutTier
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutCheckoutLead, PublicWorkoutTier
 from public_workouts.stripe_checkout import (
     PublicWorkoutStripeNotConfiguredError,
+    start_checkout_lead_session,
     start_custom_price_subscription_checkout,
     start_customer_portal_session,
     start_subscription_checkout,
 )
+
+
+class StartCheckoutLeadSessionTests(TestCase):
+    def setUp(self):
+        self.lead = PublicWorkoutCheckoutLead.objects.create(
+            email='lead@example.com', tier=PublicWorkoutTier.ESSENCIAL,
+        )
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_creates_subscription_checkout_with_lead_metadata_and_no_student_account(self, mock_create):
+        mock_create.return_value = MagicMock(id='cs_lead', url='https://checkout.stripe.com/cs_lead')
+
+        url = start_checkout_lead_session(
+            lead=self.lead,
+            success_url='https://octoboxfit.com.br/treinos/checkout/retorno?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='https://octoboxfit.com.br/treinos/#curva-precos',
+        )
+
+        self.assertEqual(url, 'https://checkout.stripe.com/cs_lead')
+        self.lead.refresh_from_db()
+        self.assertEqual(self.lead.stripe_checkout_session_id, 'cs_lead')
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email=self.lead.email).exists())
+        _, payload = mock_create.call_args
+        self.assertEqual(payload['metadata']['public_workout_checkout_lead_id'], str(self.lead.pk))
+        self.assertEqual(payload['subscription_data']['metadata']['product'], 'coaching')
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO='price_completo', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_completo_lead_checkout_accepts_promotion_codes(self, mock_create):
+        self.lead.tier = PublicWorkoutTier.COMPLETO
+        self.lead.save(update_fields=['tier', 'updated_at'])
+        mock_create.return_value = MagicMock(id='cs_completo', url='https://checkout.stripe.com/cs_completo')
+
+        start_checkout_lead_session(
+            lead=self.lead,
+            success_url='https://octoboxfit.com.br/treinos/checkout/retorno?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='https://octoboxfit.com.br/treinos/#curva-precos',
+        )
+
+        self.assertTrue(mock_create.call_args.kwargs['allow_promotion_codes'])
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    @patch('stripe.checkout.Session.retrieve')
+    def test_completed_paid_session_returns_to_verified_return_instead_of_creating_another(
+        self, mock_retrieve, mock_create,
+    ):
+        self.lead.stripe_checkout_session_id = 'cs_paid'
+        self.lead.save(update_fields=['stripe_checkout_session_id', 'updated_at'])
+        mock_retrieve.return_value = MagicMock(
+            id='cs_paid', status='complete', payment_status='paid',
+        )
+
+        url = start_checkout_lead_session(
+            lead=self.lead,
+            success_url='https://octoboxfit.com.br/treinos/checkout/retorno?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='https://octoboxfit.com.br/treinos/#curva-precos',
+        )
+
+        self.assertEqual(url, 'https://octoboxfit.com.br/treinos/checkout/retorno?session_id=cs_paid')
+        mock_create.assert_not_called()
+
+
 
 
 class StartSubscriptionCheckoutTests(TestCase):

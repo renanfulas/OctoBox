@@ -7,6 +7,7 @@ from django.urls import reverse
 from public_workouts.acquisition import ACQUISITION_COOKIE_NAME
 from public_workouts.models import (
     PublicWorkoutAcquisitionSession,
+    PublicWorkoutCheckoutLead,
     PublicWorkoutFunnelEvent,
     PublicWorkoutTier,
 )
@@ -121,16 +122,18 @@ class PublicWorkoutAcquisitionTests(TestCase):
             from unittest.mock import MagicMock, patch
 
             with patch('stripe.checkout.Session.create') as create:
-                create.return_value = MagicMock(url='https://stripe.test/session')
+                create.return_value = MagicMock(id='cs_acquisition', url='https://stripe.test/session')
                 response = self.client.post(reverse('public-workout-cold-signup'), {
                     'email': 'origem@example.com', 'tier': PublicWorkoutTier.ESSENCIAL,
                     'accept_contract': '1',
                 })
 
         self.assertEqual(response.status_code, 200)
-        session = PublicWorkoutAcquisitionSession.objects.select_related('account', 'subscription').get()
-        self.assertEqual(session.account.email, 'origem@example.com')
-        self.assertEqual(session.subscription.account, session.account)
+        lead = PublicWorkoutCheckoutLead.objects.select_related('acquisition_session').get()
+        session = lead.acquisition_session
+        self.assertIsNotNone(session)
+        self.assertIsNone(session.account_id)
+        self.assertIsNone(session.subscription_id)
         self.assertEqual(
             set(PublicWorkoutFunnelEvent.objects.values_list('event_type', flat=True)),
             {'landing_viewed', 'tier_selected', 'checkout_started'},

@@ -52,7 +52,7 @@ from integrations.mesh import FAILURE_KIND_NON_RETRYABLE, FAILURE_KIND_RETRYABLE
 from integrations.stripe.models import PaymentWebhookEvent
 
 from . import billing
-from .models import PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
+from .models import PublicWorkoutCheckoutLead, PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
 from .stripe_checkout import _TIER_PRICE_SETTINGS
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ def _resolve_subscription_by_stripe_id(stripe_subscription_id: str) -> PublicWor
     return PublicWorkoutSubscription.objects.filter(stripe_subscription_id=stripe_subscription_id).first()
 
 
-def _resolve_subscription_from_invoice(invoice: dict) -> PublicWorkoutSubscription | None:
+def _resolve_subscription_from_invoice(invoice: dict, *, provision_paid_lead: bool = False) -> PublicWorkoutSubscription | None:
     """Resolve inclusive quando a fatura chega antes do checkout webhook.
 
     A Stripe nao garante ordem entre endpoints/eventos. O checkout grava a
@@ -117,6 +117,29 @@ def _resolve_subscription_from_invoice(invoice: dict) -> PublicWorkoutSubscripti
     metadata = subscription_details.get('metadata') or {}
     if metadata.get('product') != 'coaching':
         return None
+    lead_id = metadata.get('public_workout_checkout_lead_id')
+    if lead_id:
+        if not provision_paid_lead:
+            return None
+        tier = metadata.get('tier')
+        setting_name = _TIER_PRICE_SETTINGS.get(tier)
+        expected_price_id = (getattr(settings, setting_name, '') or '').strip() if setting_name else ''
+        lines = (invoice.get('lines') or {}).get('data') or []
+        first_line = lines[0] if lines else {}
+        actual_price_id = (((first_line.get('pricing') or {}).get('price_details') or {}).get('price')
+                           or (first_line.get('price') or {}).get('id') or '')
+        if not expected_price_id or actual_price_id != expected_price_id:
+            logger.error('checkout lead invoice tier/price mismatch invoice=%s tier=%r price=%r',
+                         invoice.get('id'), tier, actual_price_id)
+            return None
+        try:
+            lead = PublicWorkoutCheckoutLead.objects.get(pk=int(lead_id), tier=tier)
+        except (PublicWorkoutCheckoutLead.DoesNotExist, TypeError, ValueError):
+            return None
+        return billing.provision_paid_checkout_lead(
+            lead.pk, customer_id=invoice.get('customer') or '',
+            stripe_subscription_id=stripe_subscription_id,
+        )
     # custom_price='1' (start_custom_price_subscription_checkout): o Price
     # e' ad-hoc (price_data), nunca vai bater com nenhum dos 3 Price ID
     # fixos -- divergencia esperada, nao fraude. So' o RT3 normal (tier
@@ -211,6 +234,15 @@ def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
         return  # nao e evento do corredor — o discriminador e a metadata setada no create da Session.
 
     subscription_local_id = metadata.get('public_workout_subscription_id')
+    lead_id = metadata.get('public_workout_checkout_lead_id')
+    if lead_id:
+        lead = PublicWorkoutCheckoutLead.objects.filter(pk=lead_id).first()
+        if lead is None:
+            raise ValueError(f'checkout lead {lead_id!r} nao existe. event={event.event_id}')
+        lead.stripe_customer_id = session.get('customer') or lead.stripe_customer_id
+        lead.stripe_subscription_id = session.get('subscription') or lead.stripe_subscription_id
+        lead.save(update_fields=['stripe_customer_id', 'stripe_subscription_id', 'updated_at'])
+        return
     if not subscription_local_id:
         raise ValueError(f'checkout.session.completed do corredor sem public_workout_subscription_id. event={event.event_id}')
 
@@ -259,7 +291,7 @@ def _handle_checkout_session_completed(event: PaymentWebhookEvent) -> None:
 
 def _handle_invoice_payment_succeeded(event: PaymentWebhookEvent) -> None:
     invoice = event.payload.get('data', {}).get('object', {})
-    subscription = _resolve_subscription_from_invoice(invoice)
+    subscription = _resolve_subscription_from_invoice(invoice, provision_paid_lead=True)
     if subscription is None:
         return  # nao e uma assinatura do corredor — mesma conta Stripe, tabela diferente.
 

@@ -737,6 +737,43 @@ class PublicWorkoutAcquisitionSession(models.Model):
     last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
 
 
+class PublicWorkoutCheckoutLead(TimeStampedModel):
+    """Email captured during checkout; this is not a student account."""
+
+    email = models.EmailField(db_index=True)
+    tier = models.CharField(max_length=16, choices=PublicWorkoutTier.choices)
+    acquisition_session = models.ForeignKey(
+        PublicWorkoutAcquisitionSession, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='checkout_leads',
+    )
+    account = models.ForeignKey(
+        PublicWorkoutAccount, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='checkout_leads',
+    )
+    stripe_checkout_session_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, db_index=True)
+    contract_accepted_at = models.DateTimeField(default=timezone.now)
+    offer_version = models.CharField(max_length=40, blank=True)
+    service_policy_version = models.CharField(max_length=40, blank=True)
+    terms_version = models.CharField(max_length=24, blank=True)
+    privacy_version = models.CharField(max_length=24, blank=True)
+    guarantee_model = models.CharField(max_length=24, default=PublicWorkoutGuaranteeModel.REFUND_GUARANTEE)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    marketing_consent = models.BooleanField(default=False)
+    marketing_consent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['email', 'paid_at'])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['email'], condition=models.Q(paid_at__isnull=True),
+                name='pw_checkout_lead_email_unpaid_uniq',
+            ),
+        ]
+
+
 class PublicWorkoutExperimentAssignment(models.Model):
     """Exposição estável de uma sessão a uma variante de experimento."""
 
