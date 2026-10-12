@@ -240,7 +240,11 @@ class OnboardingWorkflow:
         student.full_name = cleaned_data['full_name']
         student.phone = cleaned_data['phone']
         student.email = self.get_pending_email(pending_onboarding=pending_onboarding)
-        student.birth_date = cleaned_data.get('birth_date')
+        # O campo e opcional: deixar vazio durante a revisao nao deve apagar
+        # silenciosamente a data que o box ja conhece. Uma correcao explicita
+        # de data continua sendo salva normalmente.
+        if cleaned_data.get('birth_date') is not None:
+            student.birth_date = cleaned_data['birth_date']
         if student.status == StudentStatus.LEAD:
             student.status = StudentStatus.ACTIVE
         student.save()
