@@ -77,7 +77,7 @@ def _render(
         'movement_labels': build_movement_label_lookup(payload),
         'student_name': '',
         'student_photo_url': None,
-        'customer_portal_url': None,
+        'needs_first_checkout': False,
         'account_email': None,
     })
 

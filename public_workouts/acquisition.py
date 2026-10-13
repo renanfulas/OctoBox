@@ -26,7 +26,7 @@ SERVER_EVENT_TYPES = frozenset({
     'invoice_paid', 'checkout_canceled', 'training_intake_completed',
     'nutrition_intake_completed', 'program_published', 'meal_plan_published',
     'program_opened', 'meal_plan_opened', 'subscription_canceled',
-    'waitlist_joined',
+    'waitlist_joined', 'influencer_link_clicked',
     'cta_clicked', 'faq_opened', 'pricing_viewed', 'signup_started',
     'signup_submitted', 'signup_invalid', 'signup_failed', 'checkout_redirected',
     'login_required', 'checkout_failed', 'payment_failed', 'influencer_link_clicked',

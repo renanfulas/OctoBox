@@ -18,6 +18,9 @@ TOPIC_WAITLIST_INVITE = 'waitlist_invite'
 TOPIC_STAFF_NEW_SUBSCRIPTION = 'staff_new_subscription'
 TOPIC_CLIENT_SUBSCRIPTION_ACTIVE = 'client_subscription_active'
 TOPIC_CLIENT_SUBSCRIPTION_CANCELED = 'client_subscription_canceled'
+TOPIC_TRAINING_COMPLETED = 'training_completed'
+TOPIC_PUSH_WELCOME = 'push_welcome'
+TOPIC_PROGRAM_PUSH_READY = 'program_push_ready'
 MAX_ATTEMPTS = 5
 PROCESSING_LEASE_MINUTES = 10
 logger = logging.getLogger(__name__)
@@ -37,6 +40,50 @@ def enqueue_outbox(*, topic: str, aggregate_type: str, aggregate_id, version: in
 
 
 def _dispatch(message) -> bool:
+    if message.topic in (TOPIC_TRAINING_COMPLETED, TOPIC_PUSH_WELCOME, TOPIC_PROGRAM_PUSH_READY):
+        from .push import configured, notify_account, send
+
+        if not configured():
+            return True
+        base_url = str(getattr(settings, 'PUBLIC_WORKOUT_PUBLIC_BASE_URL', '') or '').strip()
+        if not base_url:
+            raise RuntimeError('PUBLIC_WORKOUT_PUBLIC_BASE_URL nao configurada')
+        if message.topic == TOPIC_TRAINING_COMPLETED:
+            from .models import PublicWorkoutTrainingSession
+
+            session = PublicWorkoutTrainingSession.objects.get(pk=message.aggregate_id)
+            return notify_account(
+                account_id=session.account_id, title='Treino concluído',
+                body='Sua sessão foi registrada. Bom trabalho!',
+                url=f'{base_url.rstrip("/")}/renan/{session.plan_slug}',
+                tag=f'workout-{session.pk}',
+            )
+        if message.topic == TOPIC_PROGRAM_PUSH_READY:
+            from .models import PublicWorkoutProgram, PublicWorkoutSubscription
+
+            program = PublicWorkoutProgram.objects.get(pk=message.aggregate_id)
+            account_id = PublicWorkoutSubscription.objects.filter(
+                plan_slug=program.slug,
+            ).values_list('account_id', flat=True).first()
+            if account_id is None:
+                return True
+            return notify_account(
+                account_id=account_id, title='Treino atualizado',
+                body='Seu novo programa Curva está disponível.',
+                url=f'{base_url.rstrip("/")}/renan/{program.slug}',
+                tag=f'program-{program.pk}',
+            )
+        from .models import PublicWorkoutPushSubscription
+
+        subscription = PublicWorkoutPushSubscription.objects.get(pk=message.aggregate_id)
+        if subscription.revoked_at is not None:
+            return True
+        plan_slug = str(message.payload.get('plan_slug') or '')
+        return send(
+            subscription=subscription, title='Avisos ativados',
+            body='Este dispositivo receberá atualizações importantes da Curva.',
+            url=f'{base_url.rstrip("/")}/renan/{plan_slug}', tag='curva-push-enabled',
+        )
     base_url = str(getattr(settings, 'PUBLIC_WORKOUT_PUBLIC_BASE_URL', '') or '').strip()
 
     # TOPIC_STAFF_NEW_SUBSCRIPTION nunca EXIGE base_url (so' usa, se

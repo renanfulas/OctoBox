@@ -6,7 +6,7 @@ are diagnostic only: the financial ledger is the source of paid conversion.
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import F, Min, OuterRef, Q, Subquery
+from django.db.models import Count, F, Min, OuterRef, Q, Subquery
 from django.utils import timezone
 
 from .acquisition import tracking_enabled
@@ -76,7 +76,7 @@ def build_acquisition_report(*, at=None, window_days=30, conversion_days=7):
         },
     ).filter(signal_landing_viewed__isnull=False).values(
         'id', 'account_id', 'subscription_id', 'first_seen_at', 'first_source', 'first_medium', 'first_campaign',
-        'landing_variant', 'first_paid_at', 'first_payment_status',
+        'landing_variant', 'partner_code', 'first_paid_at', 'first_payment_status',
         *('signal_' + key for key in SIGNALS),
     )
     counts = [0, 0, 0, 0]
@@ -114,13 +114,16 @@ def build_acquisition_report(*, at=None, window_days=30, conversion_days=7):
             if mature and before in seen:
                 values[0] += 1
                 values[1] += int(after not in seen and not paid and not checkout)
-        channel = (row['first_source'] or '(direto/desconhecido)', row['first_medium'],
-                   row['first_campaign'], row['landing_variant'])
-        item = channels.setdefault(channel, {'visitors': 0, 'paid': 0, 'mature_visitors': 0, 'mature_paid': 0})
-        item['visitors'] += 1
-        item['paid'] += int(paid)
-        item['mature_visitors'] += int(mature)
-        item['mature_paid'] += int(mature and paid)
+        # Parceiros ficam fora da tabela de campanhas próprias, mesmo quando
+        # o visitante também carrega UTMs de Instagram ou outra mídia.
+        if not row['partner_code']:
+            channel = (row['first_source'] or '(direto/desconhecido)', row['first_medium'],
+                       row['first_campaign'], row['landing_variant'])
+            item = channels.setdefault(channel, {'visitors': 0, 'paid': 0, 'mature_visitors': 0, 'mature_paid': 0})
+            item['visitors'] += 1
+            item['paid'] += int(paid)
+            item['mature_visitors'] += int(mature)
+            item['mature_paid'] += int(mature and paid)
     steps = []
     for index, label in enumerate(('Visitantes', 'Cadastro aceito', 'Checkout criado', 'Primeiro pagamento')):
         previous = counts[index - 1] if index else counts[0]
@@ -137,6 +140,66 @@ def build_acquisition_report(*, at=None, window_days=30, conversion_days=7):
              conversion_percent=percent(value['paid'], value['visitors']),
              mature_conversion_percent=percent(value['mature_paid'], value['mature_visitors']))
         for key, value in channels.items()
+    ]
+    influencer_rows = {}
+    partner_sessions = PublicWorkoutAcquisitionSession.objects.filter(
+        partner_code__gt='', partner_first_seen_at__gte=since,
+        partner_first_seen_at__lte=at,
+    ).annotate(
+        first_paid_at=Subquery(first_payment.values('paid_at')[:1]),
+        first_payment_status=Subquery(first_payment.values('status')[:1]),
+        first_paid_amount=Subquery(first_payment.values('gross_amount')[:1]),
+    ).values(
+        'partner_code', 'partner_first_seen_at', 'first_paid_at',
+        'first_payment_status', 'first_paid_amount',
+    )
+    for row in partner_sessions.iterator(chunk_size=1000):
+        partner = row['partner_code']
+        item = influencer_rows.setdefault(partner, {
+            'partner_code': partner, 'visitors': 0, 'paid': 0,
+            'mature_visitors': 0, 'mature_paid': 0, 'refunded_first_payments': 0,
+            'signups': 0, 'checkouts': 0, 'clicks': 0, 'revenue': 0,
+        })
+        start = row['partner_first_seen_at']
+        # A partner click from an existing customer cannot create a new-sale
+        # commission; only the account's first positive payment can convert.
+        if row['first_paid_at'] and row['first_paid_at'] < start:
+            continue
+        deadline = min(at, start + timedelta(days=conversion_days))
+        mature = start + timedelta(days=conversion_days) <= at
+        paid = row['first_paid_at'] is not None and start <= row['first_paid_at'] <= deadline
+        item['visitors'] += 1
+        item['paid'] += int(paid)
+        item['mature_visitors'] += int(mature)
+        item['mature_paid'] += int(mature and paid)
+        item['refunded_first_payments'] += int(
+            paid and row['first_payment_status'] == PublicWorkoutPaymentStatus.REFUNDED
+        )
+        if paid and row['first_payment_status'] == PublicWorkoutPaymentStatus.PAID:
+            item['revenue'] += row['first_paid_amount'] or 0
+    partner_events = PublicWorkoutFunnelEvent.objects.filter(
+        partner_code__gt='', occurred_at__gte=since, occurred_at__lte=at,
+        event_type__in=('influencer_link_clicked', 'signup_submitted', 'checkout_started'),
+    ).values('partner_code', 'event_type').annotate(
+        event_count=Count('event_id'), session_count=Count('acquisition_session_id', distinct=True),
+    )
+    for row in partner_events:
+        item = influencer_rows.setdefault(row['partner_code'], {
+            'partner_code': row['partner_code'], 'visitors': 0, 'paid': 0,
+            'mature_visitors': 0, 'mature_paid': 0, 'refunded_first_payments': 0,
+            'signups': 0, 'checkouts': 0, 'clicks': 0, 'revenue': 0,
+        })
+        if row['event_type'] == 'influencer_link_clicked':
+            item['clicks'] += row['event_count']
+        elif row['event_type'] == 'signup_submitted':
+            item['signups'] += row['session_count']
+        elif row['event_type'] == 'checkout_started':
+            item['checkouts'] += row['session_count']
+    influencer_channel_rows = [
+        {**value,
+         'conversion_percent': percent(value['paid'], value['visitors']),
+         'mature_conversion_percent': percent(value['mature_paid'], value['mature_visitors'])}
+        for value in influencer_rows.values()
     ]
     # Period coverage is intentionally separate from cohort conversion.
     own_positive_payments = positive_payments.filter(
@@ -168,6 +231,7 @@ def build_acquisition_report(*, at=None, window_days=30, conversion_days=7):
                       'not_advanced': values[1], 'not_advanced_percent': percent(values[1], values[0])}
                      for (before, after), values in observed_pairs.items()],
         'channels': sorted(channel_rows, key=lambda item: (-item['visitors'], item['source'])),
+        'influencers': sorted(influencer_channel_rows, key=lambda item: item['partner_code']),
         'coverage': {'new_payers_in_period': total_new_payers, 'linked_new_payers': linked_new_payers,
                      'linked_percent': percent(linked_new_payers, total_new_payers)},
     }

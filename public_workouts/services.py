@@ -13,10 +13,8 @@ POR QUE ELE EXISTE:
   contra esta implementacao de verdade.
 
 PONTOS CRITICOS:
-- `_validate_plan_slug` importa PUBLIC_WORKOUT_LIBRARY de dentro da funcao
-  (nao no topo do arquivo) de proposito: student_app/views/public_workout_views.py
-  vai importar `public_workouts.services` para servir o JSON, e um import
-  de modulo no topo aqui criaria import circular.
+- `_validate_plan_slug` consulta o catalogo estatico independente da view;
+  nao deve importar `student_app.views` nem modelos de TENANT_APPS.
 - get_active_program/publish_program/build_student_package/record_load
   rodam no schema `public`, SEM tenant (mesmo motivo do resto do app — ver
   models.py). Nunca importam nada de TENANT_APPS: quem monta o payload a
@@ -41,6 +39,7 @@ from django.db import models as django_models
 from django.db import transaction
 from django.utils import timezone
 
+from .catalog import PUBLIC_WORKOUT_LIBRARY
 from .formulas import (
     classify_bmi,
     classify_body_fat,
@@ -87,8 +86,6 @@ class UnknownPlanSlugError(ValueError):
 
 
 def _validate_plan_slug(plan_slug: str) -> None:
-    from student_app.views.public_workout_views import PUBLIC_WORKOUT_LIBRARY
-
     if plan_slug not in PUBLIC_WORKOUT_LIBRARY:
         raise UnknownPlanSlugError(f'Plano publico desconhecido: {plan_slug!r}')
 
@@ -435,6 +432,17 @@ def publish_program(*, slug: str, payload: dict) -> PublicWorkoutProgram:
                 topic=TOPIC_PROGRAM_READY, aggregate_type='program',
                 aggregate_id=program.pk, version=program.version,
             )
+            from public_workouts.models import PublicWorkoutPushSubscription
+            from public_workouts.outbox import TOPIC_PROGRAM_PUSH_READY
+            from public_workouts.push import configured as curva_push_configured
+
+            if curva_push_configured() and PublicWorkoutPushSubscription.objects.filter(
+                account_id=subscription.account_id, revoked_at__isnull=True,
+            ).exists():
+                enqueue_outbox(
+                    topic=TOPIC_PROGRAM_PUSH_READY, aggregate_type='program',
+                    aggregate_id=program.pk, version=program.version,
+                )
             record_funnel_event(
                 'program_published',
                 acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
@@ -1294,6 +1302,26 @@ def correct_load(
             target.save(update_fields=['is_active'])
 
     return _serialize_load_log(new_log)
+
+
+def active_correction_successor(*, account_id: int, supersedes_idempotency_key: str) -> dict | None:
+    """Encontra o registro ativo na cadeia de correções da própria conta.
+
+    Usado somente para oferecer revisão explícita após um 409. Nunca muda
+    automaticamente o alvo de uma operação idempotente já enfileirada.
+    """
+    current = PublicWorkoutLoadLog.objects.filter(
+        account_id=account_id, idempotency_key=supersedes_idempotency_key,
+    ).first()
+    seen = set()
+    while current is not None and not current.is_active:
+        if current.pk in seen:
+            return None
+        seen.add(current.pk)
+        current = PublicWorkoutLoadLog.objects.filter(
+            account_id=account_id, supersedes_id=current.pk,
+        ).order_by('-created_at', '-pk').first()
+    return _serialize_load_log(current) if current is not None else None
 
 
 def list_load_history(

@@ -31,6 +31,7 @@ POR QUE ELE EXISTE:
 from __future__ import annotations
 
 import re
+import json
 from datetime import date as _date, timedelta
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 
@@ -43,17 +44,17 @@ from django.utils.safestring import mark_safe
 from public_workouts.dashboard import (
     build_program_summary, build_week_overview, build_workout_day_selection, day_keyword, day_short_label,
 )
-from public_workouts.load_suggestion import suggest_movement_load
+from public_workouts.load_resolution import resolve_movement_load
 from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.periodization import (
     build_chart_points_from_weeks,
     current_phase_profile,
     current_week_number,
-    suggest_progressive_load_kg,
 )
 from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementEquipment
 from public_workouts.substitutions import suggest_substitutes
 from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
+from public_workouts.guided_workout import build_guided_series
 
 register = template.Library()
 
@@ -284,6 +285,17 @@ def _detect_phase(segment: str) -> str:
         if pattern.search(segment):
             return phase
     return 'plain'
+
+
+@register.simple_tag
+def guided_series(movement: dict, top_weight_kg=None, one_rep_max_by_movement=None) -> str:
+    """Serializa a prescrição do módulo guiado para o controlador do template."""
+    estimate = (one_rep_max_by_movement or {}).get(movement.get('movement_slug'))
+    one_rep_max_kg = estimate.get('value_kg') if estimate else None
+    return json.dumps(
+        build_guided_series(movement, top_weight_kg, one_rep_max_kg),
+        ensure_ascii=False, separators=(',', ':'),
+    )
 
 
 @register.filter
@@ -845,10 +857,6 @@ def periodization_phase_banner(payload: dict) -> dict:
     }
 
 
-def _round_to_nearest_load(value: float) -> float:
-    return round(value / 2.5) * 2.5
-
-
 @register.simple_tag
 def todays_logged_weight(load_history: list, movement_slug: str):
     """Último peso registrado hoje, de qualquer papel, para o aviso de salvamento."""
@@ -939,95 +947,9 @@ def todays_default_load_entry(load_history: list, movement_slug: str):
 def movement_load_display(
     movement: dict, payload: dict, phase, one_rep_max_by_movement: dict, progress_snapshots: dict | None = None
 ) -> dict:
-    """Cascata de exibição de carga do movimento — devolve um dict pronto
-    pro template só desenhar (`kind`/`value_kg`/`percentage`/
-    `show_registration_hint`), mantendo toda a lógica testável em Python
-    (mesmo padrão de `load_chart_points`). Ordem (primeira que resolver
-    ganha):
-
-    1. `load_type == 'fixed_kg'` — literal, já é kg.
-    2. `load_type == 'percentage_of_rm'` explícito — % + kg calculado
-       quando já existe 1RM pro movimento; só a % + hint sem 1RM ainda
-       (nunca só a % quando dá pra virar kg — porcentagem sozinha não é
-       acionável pro aluno).
-    3. Fase canônica ativa (`phase` não é `None`) —
-       `periodization.suggest_progressive_load_kg`, ancorado na ÚLTIMA
-       carga real registrada nesse movimento (nunca recalcula do zero
-       contra 1RM estimado, ver docstring de periodization.py).
-       `last_log` vem de `progress_snapshots[movement_slug].latest_top_set`
-       (plano curva-grafico-hierarquia-e-set-role.md, §7.5/§8.1 item 5) —
-       NUNCA mais escaneia `load_history` bruto por conta própria: até a
-       Revisão 6 daquele plano, esta função tinha uma busca de log bruto
-       PRÓPRIA (`_last_log_for_movement`), independente do 1RM/build_
-       student_package, que continuava contaminada por aquecimento mesmo
-       depois deste consumidor "parecer corrigido" — bug real, não
-       hipotético.
-    4. Sem fase canônica, ou fase canônica sem âncora ainda (bootstrap,
-       primeira vez neste movimento) — `load_suggestion.
-       suggest_movement_load`, estimativa pontual a partir do próprio
-       reps_spec/rir_spec do exercício.
-    5. Nada resolveu e não há 1RM nenhum pro movimento — "Livre" + hint de
-       registro."""
-    movement_slug = movement.get('movement_slug')
-    one_rm_estimate = (one_rep_max_by_movement or {}).get(movement_slug)
-    one_rep_max_kg = one_rm_estimate.get('value_kg') if one_rm_estimate else None
-    has_one_rep_max = one_rep_max_kg is not None
-
-    load_type = movement.get('load_type')
-    load_value = movement.get('load_value')
-
-    if load_type == 'fixed_kg':
-        return {'kind': 'fixed_kg', 'value_kg': load_value, 'percentage': None, 'show_registration_hint': False}
-
-    if load_type == 'percentage_of_rm' and load_value is not None:
-        value_kg = _round_to_nearest_load(load_value / 100 * one_rep_max_kg) if has_one_rep_max else None
-        return {
-            'kind': 'percentage',
-            'value_kg': value_kg,
-            'percentage': load_value,
-            'show_registration_hint': not has_one_rep_max,
-        }
-
-    if phase is not None:
-        # Plano curva-grafico-hierarquia-e-set-role.md (§7.5/§8.1 item 5)
-        # -- bug real achado na Revisao 6: _last_log_for_movement fazia
-        # uma busca de log BRUTO propria, independente do 1RM/snapshot, e
-        # nao se corrigia junto quando build_student_package passou a
-        # filtrar por set_role. Agora le progress_snapshot.latest_top_set
-        # (ja' elegivel -- so' top_set real, nunca aquecimento).
-        # suggest_progressive_load_kg espera um dict (`.get(...)`), nao o
-        # dataclass ProgressPoint -- conversao local, sem mudar
-        # periodization.py.
-        snapshot = (progress_snapshots or {}).get(movement_slug)
-        latest_top_set = snapshot.latest_top_set if snapshot else None
-        last_log = (
-            {
-                'weight_kg': latest_top_set.weight_kg,
-                'reps': latest_top_set.reps,
-                'rir': latest_top_set.rir,
-                'performed_on': latest_top_set.performed_on.isoformat(),
-                'program_id': latest_top_set.program_id,
-            }
-            if latest_top_set is not None else None
-        )
-        value_kg = suggest_progressive_load_kg(
-            payload=payload, current_phase=phase, last_log=last_log, one_rep_max_kg=one_rep_max_kg,
-        )
-        if value_kg is not None:
-            return {
-                'kind': 'phase_progressive',
-                'value_kg': value_kg,
-                'percentage': round(sum(phase.intensity_pct_range) / 2),
-                'show_registration_hint': False,
-            }
-
-    suggestion = suggest_movement_load(movement=movement, one_rep_max_kg=one_rep_max_kg)
-    if suggestion is not None:
-        return {
-            'kind': 'rir_estimate',
-            'value_kg': suggestion['value_kg'],
-            'percentage': None,
-            'show_registration_hint': False,
-        }
-
-    return {'kind': 'free', 'value_kg': None, 'percentage': None, 'show_registration_hint': not has_one_rep_max}
+    """Adaptador de template; a decisão de carga vive em load_resolution.py."""
+    return resolve_movement_load(
+        movement=movement, payload=payload, phase=phase,
+        one_rep_max_by_movement=one_rep_max_by_movement,
+        progress_snapshots=progress_snapshots,
+    ).as_template_dict()

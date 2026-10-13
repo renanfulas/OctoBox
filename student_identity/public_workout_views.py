@@ -377,6 +377,23 @@ class PublicWorkoutFunnelAnalyticsView(PublicWorkoutAnalyticsAccessMixin, Templa
         days = int(raw_days) if raw_days in ('7', '30', '90') else 30
         report = build_acquisition_report(window_days=days)
         report['experiments'] = build_experiment_report(window_days=days)['experiments']
+        from public_workouts.training_analytics import recent_training_sessions, training_summary
+        summary = training_summary(window_days=days)
+        report['training'] = {
+            'sessions_started': summary['sessions_started'],
+            'sessions_completed': summary['sessions_completed'],
+            'sessions_partial': summary['sessions_partial'],
+            'sessions_cancelled': summary['sessions_cancelled'],
+            'sessions_abandoned': summary['sessions_abandoned'],
+            'completion_rate': summary['completion_percent'],
+            'sets_completed': summary['sets_completed'],
+            'sets_partial': summary['sets_partial'],
+            'window_days': summary['window_days'],
+        }
+        raw_account = self.request.GET.get('account_id', '')
+        account_id = int(raw_account) if raw_account.isdigit() else None
+        report['training_account_filter'] = account_id
+        report['training_recent'] = recent_training_sessions(window_days=days, account_id=account_id)
         return report
 
     def get(self, request, *args, **kwargs):

@@ -23,6 +23,7 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 from .periodization import PHASE_TYPE_KEYS
+from .guided_prescription import validate_guided_prescription
 
 SCHEMA_VERSION = 1
 
@@ -74,6 +75,11 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
     _require(isinstance(movement.get('reps_spec'), str), errors, f'{path}.reps_spec: obrigatorio, string (pode ser vazia)')
     _require(isinstance(movement.get('rir_spec'), str), errors, f'{path}.rir_spec: obrigatorio, string (pode ser vazia)')
     _require(isinstance(movement.get('is_tracked'), bool), errors, f'{path}.is_tracked: obrigatorio, bool')
+
+    if 'guided_prescription' in movement:
+        errors.extend(validate_guided_prescription(
+            movement['guided_prescription'], path=f'{path}.guided_prescription',
+        ))
 
     allow_load_registration = movement.get('allow_load_registration')
     _require(
