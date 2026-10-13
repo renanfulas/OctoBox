@@ -33,6 +33,21 @@
     <article class="curva-analytics-kpi-primary"><span>Conversão consolidada</span><strong>{{ report.mature_conversion_percent|floatformat:2|default:'—' }}{% if report.mature_conversion_percent != None %}%{% endif %}</strong><small>{{ report.mature_paid }} de {{ report.mature_visitors }} · meta de referência: 10%</small></article>
   </section>
 
+  <section class="curva-analytics-section" aria-labelledby="training-analytics-title">
+    <div class="curva-analytics-heading"><div><p>Uso do aplicativo</p><h2 id="training-analytics-title">Treinos guiados</h2></div><span>Últimos {{ report.training.window_days }} dias</span></div>
+    <div class="curva-analytics-kpis" aria-label="Atividade de treino">
+      <article><span>Sessões iniciadas</span><strong>{{ report.training.sessions_started }}</strong><small>Evento registrado ao começar um dia de treino</small></article>
+      <article><span>Sessões concluídas</span><strong>{{ report.training.sessions_completed }}</strong><small>Conclusão confirmada pelo servidor</small></article>
+      <article><span>Treinos parciais</span><strong>{{ report.training.sessions_partial }}</strong><small>Encerramento declarado pelo aluno</small></article>
+      <article><span>Cancelados</span><strong>{{ report.training.sessions_cancelled }}</strong><small>Aluno encerrou sem concluir</small></article>
+      <article><span>Sem encerramento</span><strong>{{ report.training.sessions_abandoned }}</strong><small>Iniciadas há mais de 72h e ainda abertas; sincronização tardia pode mudar o estado</small></article>
+      <article><span>Taxa de conclusão</span><strong>{{ report.training.completion_rate|floatformat:1|default_if_none:'—' }}{% if report.training.completion_rate != None %}%{% endif %}</strong><small>Concluídas ÷ iniciadas</small></article>
+      <article><span>Séries concluídas</span><strong>{{ report.training.sets_completed }}</strong><small>Séries salvas nas sessões finalizadas</small></article>
+    </div>
+    <form method="get" class="curva-analytics-filter"><label>Conta do aluno <input type="number" name="account_id" min="1" value="{{ report.training_account_filter|default:'' }}" placeholder="ID da conta"></label><button type="submit">Filtrar sessões</button></form>
+    <div class="curva-analytics-table"><table><thead><tr><th>Aluno</th><th>Treino</th><th>Dia</th><th>Início</th><th>Estado</th><th>Séries</th></tr></thead><tbody>{% for row in report.training_recent %}<tr><th><a href="{% url 'public-workout-training-session-detail' session_id=row.id %}">{{ row.account__email }}</a></th><td>{{ row.plan_slug }} · v{{ row.program__version|default:'—' }}</td><td>{{ row.day_id }}</td><td>{{ row.started_at|date:'d/m/Y H:i' }}</td><td>{{ row.status }}</td><td>{{ row.recorded_set_count }}</td></tr>{% empty %}<tr><td colspan="6">Nenhuma sessão guiada neste período.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+
   {% if not report.visitors %}<div class="curva-analytics-note">Ainda não há visitantes medidos neste período.</div>{% elif report.mature_visitors < 100 %}<div class="curva-analytics-note">A amostra consolidada ainda está abaixo de 100 visitantes. Leia como sinal inicial, não como confirmação da meta.</div>{% endif %}
 
   <section class="curva-analytics-section" aria-labelledby="experiments-title">
@@ -62,6 +77,12 @@
   <section class="curva-analytics-section" aria-labelledby="channels-title">
     <div class="curva-analytics-heading"><div><p>Aquisição</p><h2 id="channels-title">Origem e campanha</h2></div><span>Primeiro contato atribuído à coorte selecionada.</span></div>
     <div class="curva-analytics-table"><table><thead><tr><th>Origem / mídia</th><th>Campanha / versão</th><th>Visitantes</th><th>Pagantes</th><th>Conversão</th><th>Consolidada</th></tr></thead><tbody>{% for row in report.channels %}<tr><th>{{ row.source }}<small>{{ row.medium|default:'—' }}</small></th><td>{{ row.campaign|default:'—' }}<small>{{ row.variant|default:'—' }}</small></td><td>{{ row.visitors }}</td><td>{{ row.paid }}</td><td>{{ row.conversion_percent|floatformat:2 }}%</td><td>{{ row.mature_conversion_percent|floatformat:2|default:'—' }}{% if row.mature_conversion_percent != None %}%{% endif %}</td></tr>{% empty %}<tr><td colspan="6">Sem dados de aquisição no período.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+
+  <section class="curva-analytics-section curva-influencer-analytics" aria-labelledby="influencers-title">
+    <div class="curva-analytics-heading"><div><p>Aquisição por parceiros</p><h2 id="influencers-title">Influencers</h2></div><span>Separado de campanhas próprias. Pagantes são primeiras faturas positivas atribuídas à indicação; renovações ficam fora.</span></div>
+    <div class="curva-analytics-table"><table><thead><tr><th>Parceiro</th><th>Aberturas do link</th><th>Visitantes únicos</th><th>Cadastros</th><th>Checkouts</th><th>Primeiros pagantes</th><th>Receita inicial</th><th>Conversão madura</th></tr></thead><tbody>{% for row in report.influencers %}<tr><th>{{ row.partner_code|title }}<small>parceria</small></th><td>{{ row.clicks }}</td><td>{{ row.visitors }}</td><td>{{ row.signups }}</td><td>{{ row.checkouts }}</td><td>{{ row.paid }}</td><td>R$ {{ row.revenue|floatformat:2 }}</td><td>{{ row.mature_conversion_percent|floatformat:2|default:'—' }}{% if row.mature_conversion_percent != None %}%{% endif %}</td></tr>{% empty %}<tr><td colspan="8">Nenhuma visita por link de influencer nesta janela.</td></tr>{% endfor %}</tbody></table></div>
+    <p class="curva-influencer-analytics__note">Aberturas do link contam solicitações válidas à página; visitantes únicos dependem do cookie. A receita exclui renovações e é contabilizada uma vez na visão consolidada.</p>
   </section>
 
   <div class="curva-analytics-lower-grid">
