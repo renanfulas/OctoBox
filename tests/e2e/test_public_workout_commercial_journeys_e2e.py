@@ -6,6 +6,7 @@ from playwright.sync_api import Page, expect
 from public_workouts.billing import get_or_create_subscription
 from public_workouts.models import (
     PublicWorkoutAccount,
+    PublicWorkoutCheckoutLead,
     PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
 )
@@ -29,26 +30,26 @@ def _select_plan_and_submit(page: Page, *, tier: str, email: str):
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
-def test_new_customer_accepts_contract_and_reaches_hosted_checkout_return(
+def test_new_customer_accepts_contract_and_reaches_hosted_checkout(
     page: Page, live_server, monkeypatch,
 ):
     email = 'new-commercial-e2e@example.test'
     monkeypatch.setattr(
-        'student_identity.public_workout_views.start_subscription_checkout',
-        lambda **_kwargs: _local_checkout_url(live_server),
+        'student_identity.public_workout_views.start_checkout_lead_session',
+        lambda **_kwargs: f'{live_server.url}/treinos/?checkout=hosted',
     )
     try:
         page.goto(f'{live_server.url}/treinos/')
         _select_plan_and_submit(page, tier='essencial', email=email)
-        page.wait_for_url('**/treinos/minha-conta?checkout=retorno')
+        page.wait_for_url('**/treinos/?checkout=hosted')
 
-        expect(page.locator('#journey-title')).to_have_text('Estamos confirmando sua assinatura')
-        subscription = PublicWorkoutAccount.objects.get(email=email).subscription
-        assert subscription.tier == PublicWorkoutTier.ESSENCIAL
-        assert subscription.status == PublicWorkoutSubscriptionStatus.PENDING_PAYMENT
-        assert subscription.contract_accepted_at is not None
-        assert subscription.requires_login is True
+        lead = PublicWorkoutCheckoutLead.objects.get(email=email)
+        assert lead.tier == PublicWorkoutTier.ESSENCIAL
+        assert lead.contract_accepted_at is not None
+        assert lead.paid_at is None
+        assert not PublicWorkoutAccount.objects.filter(email=email).exists()
     finally:
+        PublicWorkoutCheckoutLead.objects.filter(email=email).delete()
         PublicWorkoutAccount.objects.filter(email=email).delete()
 
 

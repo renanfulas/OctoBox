@@ -20,6 +20,14 @@ No painel da Jully, aberturas do link, visitantes, cadastros, checkouts e
 primeiros pagamentos aparecem separados. A comissão é exibida como estimativa
 de 60% da primeira fatura paga; renovações não entram. O painel não cria saldo
 financeiro nem realiza transferências.
+### Canais de influencers
+
+A página de indicação da Jully está em `/treinos/jully/`. Ela registra o código
+de parceiro em campos analíticos separados; não sobrescreve `source`, `medium`
+ou `campaign` das campanhas próprias. No cockpit, a tabela **Influencers** fica
+separada da tabela **Origem e campanha**. A visão consolidada continua contando
+pagantes uma única vez. A comissão de 60% da primeira fatura ainda não é
+transferida automaticamente pelo runtime.
 
 `PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED=True` é o novo padrão. Uma variável
 explícita `False` no ambiente continua desligando a coleta. O painel mostra
@@ -171,3 +179,43 @@ vinculada a uma assinatura é preservada ao retomar em outro navegador.
    não é garantia estatística e não substitui um teste de hipótese planejado.
 
 O rollback da coleta é a flag `False`; os dados históricos continuam legíveis.
+
+## Treino guiado e notificações
+
+O painel `/treinos/analytics/` mostra sessões guiadas iniciadas, concluídas,
+parciais, canceladas e abandonadas, taxa de conclusão, séries e as 20 sessões
+recentes na janela selecionada. A lista aceita filtro por conta e abre o detalhe
+da sessão com as séries do aluno, sob a mesma autenticação interna do Curva.
+"Sem encerramento" é calculado para sessões abertas há mais de 72 horas;
+uma sincronização offline tardia pode reclassificá-las, sem cron que feche o fato antes da chegada.
+`public_workouts/training_analytics.py` fornece a mesma agregação SQL para o
+painel e para o snapshot diário; execução fica fora do funil de aquisição.
+Quando presente, `guided_prescription` no programa publicado define estágios,
+mínimo/máximo, papéis, descanso e regra de carga. `guided_workout.py` adapta
+somente os programas antigos: faixas reconhecíveis mantêm séries opcionais;
+texto ambíguo oferece registro livre `legacy_unknown`, sem inventar contagem.
+O descanso estruturado vem da etapa; no legado permanece o padrão de 90 s.
+
+`PublicWorkoutTrainingSession` aponta para a versão imutável de
+`PublicWorkoutProgram`. Cada Top elegível e sua referência de carga são gravadas
+na mesma transação. A conclusão integral exige o mínimo prescrito; séries
+opcionais podem ficar abertas. O aluno pode encerrar como parcial, pular uma
+série ou cancelar. Correções de Top supersedem o `LoadLog` anterior e preservam
+uma revisão auditável. O GET de `/renan/<slug>/sessao` permite retomar uma
+sessão recente e nunca entra no cache do service worker. As migrations `0041`,
+`0042` e `0043` adicionam vínculo de programa, desfechos e decisões por série.
+
+O aluno autenticado encontra o aviso **Receba avisos da Curva** na home. O
+clique explícito solicita a permissão do navegador e grava a subscription do
+dispositivo na conta Curva. O aluno pode desativar os avisos neste dispositivo.
+O aviso de ativação, o de programa publicado e o de conclusão passam pela outbox Curva; o comando
+`drain_public_workout_outbox` precisa estar agendado. Instalar o PWA sozinho
+não concede permissão.
+Configure `STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY`,
+`STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY` e
+`STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT` e
+`PUBLIC_WORKOUT_PUSH_ALLOWED_HOSTS` (domínios exatos ou sufixos de host de
+provedores de push permitidos, separados por vírgula) no ambiente antes de
+ativar o botão. Sem essas configurações o aviso continua visível e informa
+que a ativação está pendente. A migration `0040_training_sessions_and_push`
+cria as tabelas de sessões, séries e dispositivos inscritos.

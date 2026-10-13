@@ -84,33 +84,107 @@ A fonte de verdade sobre como publicar é este documento + `schema.py`.
 6. **Rode o protocolo de acentuação** (grep + releitura manual, seção
    abaixo) em cima do texto visível do payload antes de considerar pronto.
 
-7. **Valide**: `public_workouts.schema.validate_payload(payload)` precisa
-   devolver lista vazia antes de publicar.
+7. **Valide e salve como rascunho**: `public_workouts.schema.validate_payload(payload)`
+   precisa devolver lista vazia. Registre o payload completo em
+   `PublicWorkoutProgramDraft` com `source=manual` e estado pendente de
+   revisão; o formulário do admin também valida o JSON ao salvar. Rascunho
+   nunca é conteúdo visível ao aluno.
 
-8. **Teste renderizado antes de publicar de verdade**: rode local
-   (`python manage.py runserver`) e abra `/renan/<slug>/preview-b3`
-   (`PublicWorkoutTemplatePreviewView`) — renderiza `workout.html` contra
-   o payload sem precisar de conta/cookie, só existe com `DEBUG=True`.
+8. **Revise antes de aprovar**: confira o payload completo, acentuação e,
+   para atualizações, o diff por dia/movimento. Atenção: `/renan/<slug>/preview-b3`
+   (`PublicWorkoutTemplatePreviewView`) renderiza somente o payload já
+   publicado e só existe com `DEBUG=True`; não é prévia de um rascunho. Uma
+   prévia visual de draft sem publicação ainda não existe no runtime. Não
+   publique uma versão de produção só para conseguir visualizá-la.
 
-9. **Publique**: `public_workouts.services.publish_program(slug=..., payload=payload)`.
-   Cria uma versão nova e ativa automaticamente, nunca edita a anterior
-   in-place. Isso NÃO exige nenhuma `PublicWorkoutAccount`/
-   `PublicWorkoutSubscription` existir antes — o programa fica acessível
-   em `/renan/<slug>` imediatamente (mesmo fluxo de "cookie de posse" que
-   os clientes legados usam), mesmo sem o e-mail do aluno ainda. Conectar
-   o login por e-mail é um passo independente e posterior.
+9. **Aprove e publique o rascunho**: use a ação “Aprovar e publicar” em
+   `PublicWorkoutProgramDraftAdmin`, que chama `approve_and_publish_draft`
+   e então `publish_program`. A aprovação cria uma nova versão imutável e
+   ativa; nunca edite uma versão existente. Use `publish_program` diretamente
+   apenas em caminhos técnicos explicitamente previstos (por exemplo,
+   testes/migrações), não para contornar a revisão humana do rascunho.
 
-10. **Confirme em produção com `curl -sI` (sem cookie nenhum)** antes de
-    testar no navegador: deve devolver `200`. Testar no navegador logo
-    depois de ter usado outras contas na mesma sessão (outro aluno já
-    logado) pode mostrar um 404 falso — é o cookie de sessão de OUTRA
-    conta bloqueando por posse (nunca revela via 403, vira 404 mesmo
-    sendo só cookie cruzado, ver `_confirm_ownership_or_404` em
-    `student_app/views/public_workout_views.py`). `curl` sem cookie é a
-    fonte da verdade nesse caso.
+10. **Confirme a publicação em produção** consultando o `PublicWorkoutProgram`
+    ativo para o slug. Faça também uma requisição sem cookie e registre o
+    status inicial e o cabeçalho `Location`: para rotas com acesso autenticado,
+    redirecionar a `/treinos/login` pode ser o comportamento esperado. Não
+    siga o redirect e trate o `200` da tela de login como prova de que o treino
+    foi servido. Testar no navegador após usar outra conta pode mostrar um 404
+    por conflito de posse; confira o redirect/cookie e faça o smoke test com a
+    conta correta antes de concluir que a publicação falhou.
 
 11. Rode a suíte antes de considerar o trabalho fechado:
     `pytest public_workouts/ student_app/tests.py -q --create-db --migrations`.
+
+### Confirmação visual após publicação (somente desenvolvimento)
+
+Rode local (`python manage.py runserver`) e abra
+`/renan/<slug>/preview-b3`. Confira visualmente que `workout.html` mostra
+os exercícios e a periodização esperados. Esse preview não altera o snapshot
+e não precisa do cookie de posse, mas consome a versão ativa publicada; ele
+não substitui a revisão prévia do rascunho.
+
+## Alterar um programa existente sem refazer o treino
+
+Para pedidos como “adicione uma série na segunda e na sexta”, trate a mudança
+como uma edição localizada do payload, não como uma nova geração do programa:
+
+1. Leia o `PublicWorkoutProgram` ativo e copie seu payload completo para um
+   rascunho separado.
+2. Identifique o dia por `day_id` e o movimento por `movement_slug`; aplique
+   apenas os campos explicitamente pedidos. Se houver ambiguidade sobre qual
+   exercício ou dia, pergunte antes de alterar.
+3. Preserve dias, movimentos, referências e metadados não envolvidos. Para
+   troca de exercício, confirme o movimento no banco de slugs verificados ou
+   valide uma nova referência conforme a skill `expert-ef`.
+4. Gere uma comparação legível entre a versão-base e o rascunho, por dia e
+   movimento. Revise esse diff junto com o payload completo e rode
+   `validate_payload` no resultado inteiro.
+5. Antes da aprovação/publicação, consulte novamente a versão ativa. Se ela
+   mudou desde a criação do rascunho, reaplique somente as alterações pedidas
+   sobre a versão atual e gere outro diff para revisão manual. O runtime ainda não guarda uma
+   referência à versão-base dentro de `PublicWorkoutProgramDraft` nem bloqueia
+   automaticamente uma aprovação obsoleta; até isso ser implementado, essa
+   conferência manual é obrigatória.
+6. Salve e revise o rascunho; só a aprovação explícita pode criar a próxima
+   versão imutável. Uma alteração pontual de séries/repetições/RIR não precisa
+   de chamada à IA.
+
+O rascunho deve guardar o payload final completo, não apenas um patch. O diff
+é uma ferramenta de revisão e economia de trabalho; `PublicWorkoutProgram`
+continua sendo a fonte publicada de verdade.
+
+## Falhas e retomada: comportamento atual
+
+| Etapa | O que acontece hoje | Como retomar com segurança |
+|---|---|---|
+| Geração por IA | A chamada é síncrona. Se falhar antes de `create_program_draft`, nenhum rascunho é salvo; a ação retorna erro. O campo `generation_error` não persiste essa tentativa nesse caminho. | Preserve o briefing estruturado e repita a geração. Não diga que o sistema retomou automaticamente. Uma fila durável de geração ainda precisa ser implementada para retomar sem repetir a chamada. |
+| Rascunho inválido | O formulário do admin valida o payload; um erro impede salvar/publicar. | Corrija o mesmo rascunho, valide novamente e confira o diff. Não gere outro treino só por erro de schema. |
+| Aprovação/publicação | `approve_and_publish_draft` e `publish_program` executam dentro de transação. A versão ativa anterior só é desativada na mesma transação que cria a nova versão. Em erro de banco ou validação, a transação reverte. O rascunho permanece pendente e pode ser corrigido/reaprovado. | Confira a versão ativa e o status do rascunho; depois de corrigir a causa, aprove o mesmo rascunho. A trava de linha impede dois cliques concorrentes de publicar o mesmo rascunho duas vezes. |
+| Aviso por e-mail | A publicação grava a mensagem na outbox na mesma transação. A entrega ocorre depois; falhas têm retry com backoff, lease expirado pode ser recuperado e após cinco tentativas a mensagem vai para `dead`. Se o gateway aceitar a mensagem e o processo cair antes de confirmar o envio localmente, um retry pode duplicar o e-mail; a outbox evita duplicar o item de trabalho, mas não promete entrega externa exatamente uma vez. | Não republique o treino para resolver e-mail. Confira `PublicWorkoutOutboxMessage`; pendentes são tentadas pelo drain, e mensagens `dead` podem ser reabertas pela ação de retry no admin após corrigir a causa. |
+| Conteúdo publicado incorretamente | Cada publicação cria snapshot/versionamento; a versão anterior não é sobrescrita. | Use `activate_program_version(slug=..., program_id=..., version=...)` para reativar a última versão boa; depois corrija o rascunho e publique outra versão. |
+
+### Melhorias de retomada ainda não implementadas
+
+Para que a automação sobreviva a timeout ou queda durante a chamada externa, a
+próxima evolução recomendada é persistir uma execução antes de chamar o
+provedor: chave idempotente, estado/etapa, snapshot do briefing, versão-base,
+contador de tentativas, lease e erro sanitizado. Uma ação de “retomar” deve
+reprocessar só a etapa incompleta. A chave idempotente deve impedir artefatos
+duplicados, não alegar que o provedor de IA nunca repetirá uma geração/custo.
+
+Também vale adicionar `base_program`/versão-base ao rascunho e bloquear a
+aprovação se o programa ativo avançou. Isso elimina a dependência da
+conferência manual descrita acima. Por fim, criar uma prévia de rascunho que
+renderize o payload pendente sem publicá-lo, protegida por autenticação de
+equipe e sem criar versão, outbox ou acesso de aluno. A rota atual `preview-b3`
+não serve para isso porque consulta `get_active_program`.
+
+Manter essas peças no Django/Postgres e reutilizar a outbox existente; o volume
+atual não justifica broker ou microserviço novo. A ordem recomendada é:
+primeiro prévia segura + diff/version-base, depois checkpoint/retry da geração
+por IA. A primeira entrega já acelera edição manual e reduz o risco de erro;
+a segunda reduz chamadas perdidas em falhas externas.
 
 ## Formato do payload (`public_workouts/schema.py`)
 

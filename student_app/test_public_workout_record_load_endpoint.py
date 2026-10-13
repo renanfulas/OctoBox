@@ -417,6 +417,20 @@ class PublicWorkoutRecordLoadEndpointTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()['active_record']['idempotency_key'], 'k-correcao-1')
+        self.assertEqual(response.json()['active_record']['weight_kg'], 90.0)
+
+        reapplied = self.client.post(
+            self._url('bruno'),
+            data=json.dumps({
+                'movement_slug': 'agachamento-livre', 'weight_kg': 91,
+                'performed_on': '2026-01-05', 'idempotency_key': 'k-reaplicada',
+                'supersedes_idempotency_key': response.json()['active_record']['idempotency_key'],
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(reapplied.status_code, 200)
+        self.assertEqual(reapplied.json()['weight_kg'], 91.0)
 
 
 class PublicWorkoutRecordLoadAchievementEndpointTests(TestCase):
