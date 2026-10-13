@@ -2486,11 +2486,9 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(payload['scope'], '/renan/')
         self.assertEqual(len(payload['icons']), 3)
 
-    def test_public_workout_service_worker_precaches_only_the_requesting_slug(self):
-        # A4 do CORDA: antes, o SW precacheava TODOS os slugs em qualquer
-        # aparelho — o celular da Giovanna guardava o %gordura do Bruno,
-        # offline. O ALLOWLIST so pode conter o slug que a propria pagina
-        # informou ao registrar (?slug=), nunca os outros.
+    def test_public_workout_service_worker_precaches_static_assets_without_plan_html(self):
+        # O manifest pode variar por slug, mas HTML de aluno nao entra no
+        # Cache Storage. O shell offline retoma a ficha salva no IndexedDB.
         other_slugs = ('bruno', 'milene', 'giovanna', 'thaislima', 'john', 'henrique', 'johnespanha')
 
         sw_response = self.client.get(reverse('public-workout-sw'), {'slug': 'juliana'})
@@ -2501,14 +2499,17 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(sw_response['Service-Worker-Allowed'], '/renan/')
         self.assertIn('/renan/juliana', sw_content)
         self.assertIn('/renan/juliana/manifest.webmanifest', sw_content)
-        self.assertIn("'/renan/juliana?source=pwa'", sw_content)
+        self.assertNotIn("'/renan/juliana?source=pwa'", sw_content)
+        self.assertNotIn("'/renan/juliana',", sw_content)
         for other_slug in other_slugs:
             self.assertNotIn(f'/renan/{other_slug}', sw_content, f'{other_slug} nao deveria estar no precache da juliana')
         self.assertIn('/renan/offline/', sw_content)
-        self.assertIn('const PAGE_CACHE', sw_content)
-        self.assertIn('normalizedWorkoutPath', sw_content)
+        self.assertNotIn('const PAGE_CACHE', sw_content)
+        self.assertIn('const validCaches = [STATIC_CACHE]', sw_content)
+        self.assertIn('return await caches.match(OFFLINE_URL', sw_content)
         self.assertEqual(offline_response.status_code, 200)
         self.assertContains(offline_response, 'Sem conexão agora.')
+        self.assertContains(offline_response, 'data-offline-open')
 
     def test_public_workout_service_worker_without_slug_precaches_no_plan_pages(self):
         # Registro sem ?slug= (ou slug desconhecido): SW generico, sem
@@ -2769,8 +2770,9 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         self.assertIn('workout-shell', content)
         self.assertIn('workout-mobile-nav', content)
         self.assertIn('/renan/bruno/manifest.webmanifest', content)
-        self.assertIn("register('/renan/sw.js?slug=", content)
-        self.assertIn('id="public-workout-install"', content)
+        self.assertIn('data-plan-slug="bruno"', content)
+        self.assertRegex(content, r'workout-pwa\.js\?v=[^"\']+')
+        self.assertIn('data-workout-install', content)
         self.assertRegex(content, r'workout-progress\.css\?v=[^"\']+')
 
     def test_falls_back_to_legacy_when_no_program_published(self):

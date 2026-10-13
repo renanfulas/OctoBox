@@ -180,11 +180,10 @@ _LEGACY_SW_REGISTRATION_SCRIPT = """
 
 
 def _inject_public_workout_pwa(html: str, plan: PublicWorkoutPlan, asset_version: str) -> str:
-    """Injeta manifest, instalacao e service worker em shells standalone.
+    """Injeta manifest, instalacao e service worker em shells legados.
 
-    O bootstrap permanece na borda da view para que tanto arquivos HTML
-    legados sem base compartilhada quanto `workout.html` mantenham seu shell
-    visual proprio sem perder instalacao e cache offline.
+    O template unificado inclui esses recursos diretamente; esta funcao
+    atende aos arquivos HTML antigos que nao compartilham uma base.
 
     Tambem injeta CSS/JS da aba Avaliacoes (public_workouts app): arquivos
     legados nao consomem `stylesheet_urls`/`app.js` do design system
@@ -396,7 +395,9 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         guided_session.program.version if guided_session is not None and guided_session.program is not None
         else next((row['version'] for row in program_versions if row['is_active']), None)
     )
+    asset_version = public_workout_asset_version()
     return render_to_string('public_workouts/workout.html', {
+        'asset_version': asset_version,
         'plan_slug': plan.slug,
         'accent_variant': plan.assessment_sex,
         'program': program,
@@ -419,7 +420,6 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
         'push_configured': curva_push_configured(),
     })
-    return _inject_public_workout_pwa(html, plan, asset_version)
 
 
 def _render_payment_blocked_html(plan: PublicWorkoutPlan) -> str:

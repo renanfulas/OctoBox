@@ -17,9 +17,8 @@ POR QUE ELE EXISTE:
 
 PONTOS CRITICOS:
 - E servido por `PublicWorkoutDetailView` para programas ativos e pelo
-  preview de desenvolvimento. A rota real injeta manifest, prompt de
-  instalacao e registro do service worker apos renderizar, preservando o
-  shell visual independente deste template.
+  preview de desenvolvimento. Manifest, prompt de instalacao e script de
+  registro do service worker fazem parte deste template.
 - NAO estende templates/public_workouts/_base.html (a base legada, com o
   sistema --accent por-plano) nem templates/student_app/layout.html (acopla
   tenant via {% load student_shell %} no sidebar/topbar — D.3 diz que
