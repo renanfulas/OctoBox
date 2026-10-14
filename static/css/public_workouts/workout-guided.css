@@ -54,6 +54,25 @@
   border-top: 1px solid color-mix(in srgb, var(--brand) 20%, transparent);
 }
 
+.workout-guided__top-target {
+  padding: .85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--theme-text-muted));
+  border-radius: 16px;
+  background: var(--theme-surface-strong);
+}
+.workout-guided__top-target summary { cursor: pointer; font-weight: 800; }
+.workout-guided__top-target summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.workout-guided__top-target-controls { display: flex; align-items: end; flex-wrap: wrap; gap: .7rem; margin-top: .8rem; }
+.workout-guided__top-target-controls label { display: grid; gap: .35rem; min-width: min(100%, 11rem); font-size: .85rem; font-weight: 700; }
+.workout-guided__top-target-controls label span { color: var(--theme-text-muted); font-size: .75rem; font-weight: 400; }
+.workout-guided__top-target-controls input {
+  width: 100%; min-height: 44px; padding: .6rem .7rem;
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--theme-text-muted));
+  border-radius: 12px; background: var(--theme-surface-panel); color: var(--theme-text-primary); font: inherit;
+}
+.workout-guided__top-target-controls input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.workout-guided__top-target-controls button { background: transparent; color: var(--theme-text-primary); border: 1px solid color-mix(in srgb, var(--brand) 45%, var(--theme-text-muted)); }
+
 .workout-guided__correction,
 .workout-guided__conflict {
   display: grid;
@@ -163,4 +182,6 @@
   .workout-guided__actions button { width: 100%; }
   .workout-guided__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .workout-guided__conflict > button { width: 100%; }
+  .workout-guided__top-target-controls > label,
+  .workout-guided__top-target-controls > button { width: 100%; }
 }

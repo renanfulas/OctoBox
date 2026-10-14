@@ -45,7 +45,7 @@ def _cleanup_guided_e2e(django_db_blocker):
     cleanup()
 
 
-def _prepare_guided_student():
+def _prepare_guided_student(stages=None):
     from public_workouts.models import (
         PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutLoginToken,
         PublicWorkoutSubscription,
@@ -61,7 +61,7 @@ def _prepare_guided_student():
             {'stage_id': 'top', 'role': 'top_set', 'min_sets': 1, 'max_sets': 2,
              'reps_min': 6, 'reps_max': 8, 'rest_seconds': 30,
              'load_rule': {'kind': 'manual'}},
-        ],
+        ] if stages is None else stages,
     }
     publish_program(slug='bruno', payload=payload)
     account = PublicWorkoutAccount.objects.create(
@@ -70,6 +70,59 @@ def _prepare_guided_student():
     PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
     token = PublicWorkoutLoginToken.objects.create(account=account, expires_at=timezone.now() + timedelta(hours=1))
     return account, token
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_student_top_target_guides_ramp_and_survives_reload(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    page.set_viewport_size({'width': 390, 'height': 844})
+    stages = [
+        {'stage_id': 'prep', 'role': 'warmup', 'min_sets': 1, 'max_sets': 1,
+         'reps_min': 8, 'reps_max': 8, 'rest_seconds': 0,
+         'load_rule': {'kind': 'percent_of_top', 'start_percent': 40, 'end_percent': 40}},
+        {'stage_id': 'feeder', 'role': 'feeder', 'min_sets': 1, 'max_sets': 1,
+         'reps_min': 6, 'reps_max': 6, 'rest_seconds': 0,
+         'load_rule': {'kind': 'percent_of_top', 'start_percent': 70, 'end_percent': 70}},
+        {'stage_id': 'top', 'role': 'top_set', 'min_sets': 1, 'max_sets': 1,
+         'reps_min': 6, 'reps_max': 6, 'rest_seconds': 0,
+         'load_rule': {'kind': 'suggested_top'}},
+    ]
+    account, token = _prepare_guided_student(stages)
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    page.locator('[data-workout-guided-start]').click()
+
+    target = page.locator('[data-workout-guided-top-target]')
+    expect(target).to_be_visible()
+    target.locator('[data-workout-guided-top-input]').fill('100')
+    target.locator('[data-workout-guided-top-apply]').click()
+    expect(page.locator('[data-workout-guided-weight]')).to_have_value('40')
+    if screenshot_path := os.environ.get('CURVA_LOAD_SCREENSHOT'):
+        page.screenshot(path=screenshot_path, full_page=True)
+    page.locator('[data-workout-guided-reps]').fill('8')
+    page.locator('[data-workout-guided-set]').click()
+
+    page.reload()
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    expect(page.locator('[data-workout-guided-weight]')).to_have_value('70')
+    page.locator('[data-workout-guided-weight]').fill('65')
+    page.locator('[data-workout-guided-reps]').fill('6')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-workout-guided-weight]')).to_have_value('100')
+    page.locator('[data-workout-guided-weight]').fill('95')
+    page.locator('[data-workout-guided-reps]').fill('6')
+    page.locator('[data-workout-guided-set]').click()
+    page.locator('[data-workout-guided-finish]').click()
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('Treino concluído')
+
+    session = PublicWorkoutTrainingSession.objects.get(account=account)
+    assert session.outcome == 'completed'
+    assert list(session.sets.order_by('set_number').values_list('weight_kg', flat=True)) == [
+        Decimal('40'), Decimal('65'), Decimal('95'),
+    ]
 
 
 @pytest.mark.e2e

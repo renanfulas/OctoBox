@@ -13,6 +13,14 @@
       <strong data-workout-guided-step></strong>
       <small data-workout-guided-source></small>
     </div>
+    <details class="workout-guided__top-target" data-workout-guided-top-target hidden>
+      <summary data-workout-guided-top-summary>Definir carga alvo da Top</summary>
+      <p>Use a carga que pretende tentar na série principal. O guia sugere a aproximação; cada carga realizada continua editável. Se não souber, siga e registre manualmente.</p>
+      <div class="workout-guided__top-target-controls">
+        <label>Carga alvo da Top <span>kg · opcional</span><input type="number" inputmode="decimal" min="0.01" max="9999.99" step="0.01" data-workout-guided-top-input></label>
+        <button type="button" data-workout-guided-top-apply>Aplicar ao guia</button>
+      </div>
+    </details>
     <div class="workout-guided__fields" data-workout-guided-fields>
       <label>Carga realizada <span>kg, se aplicável</span><input type="number" inputmode="decimal" min="0" max="9999.99" step="0.5" data-workout-guided-weight></label>
       <label>Repetições realizadas<input type="number" inputmode="numeric" min="1" max="999" step="1" data-workout-guided-reps></label>

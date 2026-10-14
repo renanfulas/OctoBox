@@ -1,6 +1,18 @@
 # Curva — plano técnico detalhado para treino guiado, cargas, offline, analytics e push
 
-**Levantamento:** 13/10/2026. **Status:** implementação local em andamento, com jornadas de navegador verificadas; PWA instalada, entrega push em aparelho e ambiente público ainda não foram homologados. Não equivale a um deploy.
+**Levantamento inicial:** 13/10/2026. As seções de execução dessa data são um registro histórico; a atualização operacional abaixo prevalece para o estado atual.
+
+## Atualização operacional em 14/10/2026
+
+O PR #327 está publicado no ambiente público. A inscrição e o recebimento de uma mensagem push direta foram confirmados pela destinatária em um iPhone com o Curva instalado. Clique na mensagem, desativação/reativação e aviso automático de conclusão de treino ainda precisam de verificação no aparelho; [o runbook de push](../runbooks/curva-push-operations.md) separa essas evidências.
+
+O gargalo de kg está nos dados de partida, não só no cálculo. Uma leitura agregada do ambiente público encontrou 16 programas ativos com 389 movimentos; nenhum usa ainda `guided_prescription` estruturado. Em 14 pares conta–programa com assinatura ativa, 344 movimentos foram avaliados: 39 tinham kg resolvido e cerca de 300 não tinham âncora utilizável. Os números variam conforme alunos registram cargas. Predominam movimentos `load_type=free` com texto legado. A resolução continua na ordem: kg fixado pelo profissional → percentual de RM válido → fase → reps/RIR reconhecíveis → última Top elegível → escolha manual.
+
+Neste ramo, o primeiro contorno operacional acrescenta um **alvo opcional da Top no treino guiado**. Sem kg automático, o aluno pode informar o peso que pretende tentar; o guia recalcula as sugestões de Prep/Feeder/Top com as regras já publicadas, respeitando o passo de arredondamento e sem substituir estágios com kg fixo. A escolha fica no snapshot local da sessão para sobreviver à retomada offline; só o peso efetivamente registrado em cada série vira fato no servidor e alimenta o histórico. O aluno pode ignorar ou apagar o alvo e registrar livremente. Isso beneficia os movimentos com séries reconhecíveis, sem inventar RM ou converter silenciosamente texto ambíguo.
+
+Ainda falta passar novos programas pelo draft com `guided_prescription` revisado pelo profissional. Os programas publicados são snapshots imutáveis; não devem ser convertidos em lote sem revisão. O teste de ponta a ponta deste novo alvo foi acrescentado, mas sua execução local depende de liberar o banco de teste PostgreSQL compartilhado. A confirmação em PWA física, os cenários de atualização entre dispositivos e a observação do analytics durante um treino real seguem como próximos portões.
+
+Na mesma leitura pública, o analytics contou 4 sessões iniciadas nos últimos 90 dias, nenhuma concluída, 1 parcial e 2 canceladas. A consulta direta dos fatos encontrou 1 série realizada em sessão ainda aberta; por isso `sets_completed=0` está coerente. Não há mensagem `training_completed` na outbox: o recebimento de push direto no iPhone não prova o disparo automático de conclusão. Fazer um treino de ensaio completo, sincronizar a fila e comparar sessão, séries, analytics e outbox é a próxima verificação operacional de baixo custo.
 
 ## Estado de execução em 13/10/2026
 
