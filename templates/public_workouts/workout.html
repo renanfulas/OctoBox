@@ -54,7 +54,7 @@ PONTOS CRITICOS:
 <!-- WebKit #237961: viewport-fit=cover pode deslocar elementos fixed no PWA instalado. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ program.program_label }}</title>
-<meta name="theme-color" content="#f4f7ff">
+<meta name="theme-color" content="#0A0E1A">
 <link rel="manifest" href="{% url 'public-workout-manifest' plan_slug=plan_slug %}">
 <link rel="stylesheet" href="{% static 'css/student_app/app.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/design-system/components/tables.css' %}?v={{ asset_version }}">
@@ -72,20 +72,22 @@ PONTOS CRITICOS:
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-guided.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-push.css' %}?v={{ asset_version }}">
 </head>
-<body data-plan-slug="{{ plan_slug }}" data-account-scope="{{ guided_account_scope }}"{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
+<body data-plan-slug="{{ plan_slug }}" data-account-scope="{{ guided_account_scope }}" data-theme="dark"{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
+<script>
+  try {
+    if (localStorage.getItem('octobox-theme') === 'light') document.body.dataset.theme = 'light';
+  } catch (error) {}
+</script>
 <main class="workout-shell">
 
   <header class="workout-topbar">
     <div class="workout-topbar-main">
       <span class="workout-avatar" aria-hidden="true">{% if student_photo_url %}<img src="{{ student_photo_url }}" alt="" width="42" height="42" loading="lazy">{% else %}{{ student_name|initial }}{% endif %}</span>
-      <strong class="workout-topbar-greeting">{% workout_greeting student_name %}</strong>
+      <div class="workout-topbar-identity">
+        <span class="workout-topbar-brand">CURVA <span aria-hidden="true">/</span> SEU ESPAÇO</span>
+        <strong class="workout-topbar-greeting">{% workout_greeting student_name %}</strong>
+      </div>
     </div>
-    <span class="workout-topbar-bell" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10 5a2 2 0 0 1 4 0 7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6"/>
-        <path d="M9 17v1a3 3 0 0 0 6 0v-1"/>
-      </svg>
-    </span>
   </header>
 
   <div class="interactive-tab-container" data-default-panel="workout-panel-inicio">
@@ -95,11 +97,18 @@ PONTOS CRITICOS:
         <span data-workout-install-copy></span>
         <button type="button" data-workout-install-button>Instalar app</button>
       </aside>
-      {% include 'public_workouts/partials/_push_prompt.html' %}
       {% program_summary program as summary %}
-      <article class="student-card card-decor-topstripe workout-summary-card">
-        <h2>{{ summary.headline }}</h2>
+      <article class="student-card workout-summary-card workout-home-hero">
+        <div class="workout-home-hero__meta">
+          <span class="workout-home-hero__eyebrow"><span aria-hidden="true"></span> SEU ESPAÇO DE TREINO</span>
+          <span class="workout-home-hero__duration">{{ program.weeks }} SEMANAS</span>
+        </div>
+        <h1>Seu treino.<br><em>Em movimento.</em></h1>
         <p>{{ summary.body }}</p>
+        <div class="workout-home-hero__footer">
+          <button type="button" class="workout-home-hero__cta" data-workout-jump-panel="workout-panel-treino">Abrir meu treino <span aria-hidden="true">↗</span></button>
+          <span class="workout-home-hero__caption">{{ summary.headline }}</span>
+        </div>
       </article>
 
       <article
@@ -141,6 +150,7 @@ PONTOS CRITICOS:
           {% endfor %}
         </div>
       </section>
+      {% include 'public_workouts/partials/_push_prompt.html' %}
     </section>
 
     <section id="workout-panel-avaliacao" class="workout-assessment-panel" data-workout-tab-panel>
@@ -173,6 +183,11 @@ PONTOS CRITICOS:
     </section>
 
     <section id="workout-panel-treino" data-workout-tab-panel>
+      <header class="workout-training-heading">
+        <span class="workout-training-heading__eyebrow">SEU PROGRAMA <span aria-hidden="true">/</span> {{ program.weeks }} SEMANAS</span>
+        <h1>Hora de treinar<span aria-hidden="true">.</span></h1>
+        <p>Escolha o dia, veja a prescrição e registre sua evolução.</p>
+      </header>
       <aside class="workout-load-sync-notice" data-workout-load-sync-notice role="alert" hidden>
         <strong>Uma carga precisa da sua decisão</strong>
         <p data-load-sync-conflict-message></p>
@@ -235,7 +250,7 @@ PONTOS CRITICOS:
             {% for movement in block.movements %}
             {% movement_load_display movement program current_phase one_rep_max_by_movement progress_snapshots as load %}
             {% guided_series movement load.value_kg one_rep_max_by_movement as guided_plan %}
-            <article class="student-card card-decor-topstripe workout-movement-card{% if movement.is_tracked %} is-load-tracked{% endif %}" data-guided-series="{{ guided_plan }}" data-movement-slug="{{ movement.movement_slug }}" data-load-kind="{{ load.kind }}" data-allow-load-registration="{% if movement.allow_load_registration|default_if_none:True %}true{% else %}false{% endif %}">
+            <article class="student-card workout-movement-card{% if movement.is_tracked %} is-load-tracked{% endif %}" data-guided-series="{{ guided_plan }}" data-movement-slug="{{ movement.movement_slug }}" data-load-kind="{{ load.kind }}" data-allow-load-registration="{% if movement.allow_load_registration|default_if_none:True %}true{% else %}false{% endif %}">
               <div class="workout-movement-copy">
                 {% if movement.reference_url %}
                 <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_name:movement_labels }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
@@ -389,8 +404,12 @@ PONTOS CRITICOS:
     </section>
 
     <section id="workout-panel-cargas" data-workout-tab-panel>
-
-      <article class="student-card card-decor-topstripe workout-block-card">
+      <header class="workout-progress-heading">
+        <span class="workout-progress-heading__eyebrow">PROGRESSO <span aria-hidden="true">/</span> SEU HISTÓRICO</span>
+        <h1>Sua evolução<span aria-hidden="true">.</span></h1>
+        <p>As cargas registradas mostram o caminho que você já percorreu.</p>
+      </header>
+      <article class="student-card card-decor-topstripe workout-block-card workout-progress-lead">
         <h2>Evolução de carga</h2>
         <p class="workout-load-section-intro">Acompanhe suas séries principais e compare o que aconteceu nos últimos 90 dias.</p>
         {% regroup load_history by movement_slug as load_history_by_movement %}
@@ -521,9 +540,10 @@ PONTOS CRITICOS:
           </div>
         {% empty %}
         <p class="workout-load-chart-empty">Registre uma série principal no painel Treino para começar a acompanhar sua evolução.</p>
+        <button type="button" class="workout-progress-first-action" data-workout-jump-panel="workout-panel-treino">Abrir treino e registrar <span aria-hidden="true">↗</span></button>
         {% endfor %}
       </article>
-      <article class="student-card card-decor-topstripe workout-block-card">
+      <article class="student-card workout-block-card">
         <h2>Seus recordes</h2>
         {% personal_record_rows load_history movement_labels as record_rows %}
         {% if record_rows %}
@@ -543,7 +563,7 @@ PONTOS CRITICOS:
         <p>Nenhuma carga registrada ainda.</p>
         {% endif %}
       </article>
-      <article class="student-card card-decor-topstripe workout-block-card">
+      <article class="student-card workout-block-card">
         <h2>Resumo do ciclo</h2>
         {% cycle_summary_rows progress_snapshots movement_labels as cycle_rows %}
         {% if cycle_rows %}
@@ -563,7 +583,7 @@ PONTOS CRITICOS:
         {% endif %}
       </article>
 <article
-        class="student-card card-decor-topstripe workout-block-card"
+        class="student-card workout-block-card"
         data-workout-weekly-review
         data-weekly-review-url="{% url 'public-workout-weekly-review' plan_slug=plan_slug %}"
       >
