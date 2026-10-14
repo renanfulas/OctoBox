@@ -111,17 +111,22 @@ def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_k
         for ordinal in range(1, count + 1):
             kind = rule['kind']
             weight = None
+            top_factor = None
             if kind == 'fixed_kg':
                 weight = rule['value_kg']
-            elif kind == 'suggested_top' and _number(top_weight_kg, minimum=0, maximum=9999.99):
-                weight = _rounded(top_weight_kg, step)
+            elif kind == 'suggested_top':
+                top_factor = 1.0
+                if _number(top_weight_kg, minimum=0, maximum=9999.99):
+                    weight = _rounded(top_weight_kg, step)
             elif kind == 'percent_of_rm' and _number(one_rep_max_kg, minimum=0, maximum=9999.99):
                 weight = _rounded(float(one_rep_max_kg) * rule['percent'] / 100, step)
-            elif kind == 'percent_of_top' and _number(top_weight_kg, minimum=0, maximum=9999.99):
+            elif kind == 'percent_of_top':
                 low = rule['start_percent']
                 high = rule['end_percent']
                 percent = (low + high) / 2 if count == 1 else low + (high - low) * (ordinal - 1) / (count - 1)
-                weight = _rounded(float(top_weight_kg) * percent / 100, step)
+                top_factor = percent / 100
+                if _number(top_weight_kg, minimum=0, maximum=9999.99):
+                    weight = _rounded(float(top_weight_kg) * top_factor, step)
             series.append({
                 'stage': stage['stage_id'], 'stage_id': stage['stage_id'],
                 'stage_ordinal': ordinal,
@@ -131,6 +136,7 @@ def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_k
                 'reps': stage.get('reps_min'), 'reps_max': stage.get('reps_max') or stage.get('reps_min'),
                 'rir_target': stage.get('rir_target'), 'rest_seconds': stage['rest_seconds'],
                 'weight_kg': weight, 'load_source': kind,
+                'top_factor': top_factor, 'rounding_step_kg': step,
             })
     return series
 

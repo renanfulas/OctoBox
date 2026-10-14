@@ -65,6 +65,7 @@ def resolve_movement_load(*, movement: dict, payload: dict, phase,
         return LoadResolution(
             'percentage', None, percentage=load_value, show_registration_hint=True,
             reason_code='rm_missing',
+            fallback_note='Ainda não há RM confiável. Defina a carga alvo da Top no guia ou registre a carga realizada.',
         )
 
     if phase is not None:

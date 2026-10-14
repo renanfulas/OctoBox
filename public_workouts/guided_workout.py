@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import math
 
-from .warmup_ramp import stage_ramp_kg
+from .warmup_ramp import stage_ramp_factors, stage_ramp_kg
 from .guided_prescription import expand_guided_prescription
 
 _SET_PREFIX = re.compile(r'^\s*\d+(?:\s*[-–]\s*\d+)?\s*[x×]', re.I)
@@ -72,12 +72,17 @@ def build_legacy_series(movement: dict, top_weight_kg=None) -> list[dict]:
             return _freeform_series()
         weights = stage_ramp_kg(stage=stage, set_count=set_count, top_weight_kg=anchor)
         role = {'prep': 'warmup', 'feeder': 'feeder', 'top': 'top_set', 'max': 'max_set'}.get(stage, 'top_set')
+        factors = stage_ramp_factors(stage=stage, set_count=set_count)
+        if role == 'top_set' and not factors:
+            factors = [1.0] * set_count
         for index in range(set_count):
             result.append({
                 'stage': stage, 'role': role, 'set_number': len(result) + 1,
                 'required': index < minimum,
                 'reps': reps_target, 'reps_max': reps_max,
                 'weight_kg': weights[index] if index < len(weights) else anchor,
+                'top_factor': factors[index] if index < len(factors) else None,
+                'rounding_step_kg': 2.5,
             })
     return result
 

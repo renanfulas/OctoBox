@@ -33,7 +33,21 @@ class GuidedPrescriptionContractTest(SimpleTestCase):
         self.assertEqual(rows[2]['rest_seconds'], 120)
 
     def test_missing_anchor_leaves_kg_editable_and_empty(self):
-        self.assertTrue(all(row['weight_kg'] is None for row in expand_guided_prescription(_guided())))
+        rows = expand_guided_prescription(_guided())
+        self.assertTrue(all(row['weight_kg'] is None for row in rows))
+        self.assertEqual([row['top_factor'] for row in rows], [.4, .55, 1.0, 1.0, 1.0])
+
+    def test_fixed_load_is_not_recalculated_from_student_top_target(self):
+        guided = _guided()
+        guided['stages'][0]['load_rule'] = {'kind': 'fixed_kg', 'value_kg': 20}
+        rows = expand_guided_prescription(guided, top_weight_kg=100)
+        self.assertEqual(rows[0]['weight_kg'], 20)
+        self.assertIsNone(rows[0]['top_factor'])
+
+    def test_legacy_ramp_exposes_same_factors_without_an_anchor(self):
+        rows = build_guided_series({'reps_spec': '2× Prep → 1× Feeder → 2× Top (6-8)'})
+        self.assertEqual([row['top_factor'] for row in rows], [.4, .55, .7, 1.0, 1.0])
+        self.assertTrue(all(row['weight_kg'] is None for row in rows))
 
     def test_decimal_last_top_is_usable_anchor(self):
         rows = expand_guided_prescription(_guided(), top_weight_kg=Decimal('100.00'))

@@ -29,6 +29,7 @@ class LoadResolutionTest(SimpleTestCase):
         self.assertIsNone(result.value_kg)
         self.assertEqual(result.reason_code, 'rm_missing')
         self.assertTrue(result.editable)
+        self.assertIn('carga alvo da Top', result.fallback_note)
 
     def test_last_top_is_reference_not_calculated_percent(self):
         top = SimpleNamespace(weight_kg=Decimal('50.00'), reps=8, rir=Decimal('2.0'),

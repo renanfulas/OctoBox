@@ -10,6 +10,11 @@
   var progress = root.querySelector('[data-workout-guided-progress]');
   var stepLabel = root.querySelector('[data-workout-guided-step]');
   var source = root.querySelector('[data-workout-guided-source]');
+  var topTargetPanel = root.querySelector('[data-workout-guided-top-target]');
+  var topTargetSummary = root.querySelector('[data-workout-guided-top-summary]');
+  var topTargetInput = root.querySelector('[data-workout-guided-top-input]');
+  var topTargetApply = root.querySelector('[data-workout-guided-top-apply]');
+  var guidedLoads = window.CurvaGuidedLoads;
   var timerLabel = root.querySelector('[data-workout-guided-timer]');
   var restTimer = window.CurvaGuidedTimer.create(timerLabel);
   var weightField = root.querySelector('[data-workout-guided-weight]');
@@ -48,6 +53,8 @@
   var lastSkipped = null;
   var current = null;
   var currentStepIdentity = null;
+  var topTargets = {};
+  var topTargetMovementIndex = null;
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
     isOnline: function () { return navigator.onLine; },
@@ -104,6 +111,7 @@
         return Object.assign({ movement_index: Number(parts[0]), set_number: Number(parts[1]) }, recordedDetails.get(item) || {});
       }),
       skipped: Array.from(skipped),
+      top_targets: topTargets,
     });
   }
 
@@ -193,7 +201,8 @@
     if (!day) return [];
     return Array.prototype.map.call(day.querySelectorAll('.workout-movement-card'), function (card) {
       var series = [];
-      try { series = JSON.parse(card.dataset.guidedSeries || '[]'); } catch (_) {}
+      try { series = JSON.parse(card.dataset.guidedSeries || '[]'); } catch (_) { series = []; }
+      series.forEach(function (row) { row.base_weight_kg = row.weight_kg; });
       var label = card.querySelector('.workout-movement-copy strong');
       return {
         slug: card.dataset.movementSlug, label: label ? label.textContent.trim() : 'Exercício',
@@ -245,6 +254,10 @@
     currentStepIdentity = nextIdentity;
     progress.textContent = state.recordedCount + ' série(s) registrada(s) · até ' + state.total + ' no guia' + pendingLabel();
     fields.hidden = !next;
+    topTargetPanel.hidden = !next || !next.movement.allowLoad || next.movement.loadKind === 'fixed_kg'
+      || !next.movement.series.some(function (row) {
+      return row.top_factor != null;
+    });
     setButton.hidden = !next;
     finishButton.hidden = !state.canFinish;
     skipButton.hidden = !next;
@@ -255,6 +268,17 @@
       stepLabel.textContent = 'Todas as séries registradas';
       source.textContent = 'Confira o treino e finalize para enviar ao Curva.';
       return;
+    }
+    if (!topTargetPanel.hidden) {
+      var target = next.movement.topTargetKg;
+      topTargetSummary.textContent = target == null
+        ? 'Definir carga alvo da Top · opcional'
+        : 'Carga alvo da Top: ' + target + ' kg · ajustar';
+      if (topTargetMovementIndex !== next.movementIndex) {
+        topTargetInput.value = target == null ? '' : target;
+        topTargetPanel.open = target == null && next.series.weight_kg == null;
+        topTargetMovementIndex = next.movementIndex;
+      }
     }
     var roles = { warmup: 'Preparação', feeder: 'Aproximação', top_set: 'Série principal', max_set: 'Série máxima', legacy_unknown: 'Série livre' };
     stepLabel.textContent = next.movement.label + ' · ' + (roles[next.series.role] || 'Série') + ' ' + next.setNumber + '/' + next.movement.series.length;
@@ -279,6 +303,9 @@
     }
     if (!next.series.load_source && next.movement.loadKind === 'percentage' && next.series.weight_kg != null) {
       source.textContent = 'Carga calculada a partir do RM; ajuste se necessário.';
+    }
+    if (next.movement.topTargetKg != null && next.series.top_factor != null) {
+      source.textContent = 'Sugestão a partir da carga alvo que você definiu para a Top; registre o peso que realizou.';
     }
     if (next.series.reps != null) {
       source.textContent += ' Meta: ' + next.series.reps
@@ -316,7 +343,15 @@
       startButton.disabled = false;
       return;
     }
+    var newSession = sessionId !== session.session_id;
+    if (newSession) topTargets = session.top_targets || {};
     sessionId = session.session_id;
+    if (newSession) topTargetMovementIndex = null;
+    Object.keys(topTargets).forEach(function (index) {
+      var movement = movements[Number(index)];
+      var target = guidedLoads.parseTarget(topTargets[index]);
+      if (movement && target != null) guidedLoads.applyTopTarget(movement, target);
+    });
     recorded = new Set((session.recorded || []).map(function (item) {
       return key(item.movement_index, item.set_number);
     }));
@@ -380,6 +415,36 @@
           startButton.disabled = false;
         });
       });
+  });
+
+  topTargetApply.addEventListener('click', function () {
+    if (!current) return;
+    var raw = topTargetInput.value.trim();
+    var target = raw ? guidedLoads.parseTarget(raw) : null;
+    if (raw && target == null) {
+      status.textContent = 'Informe uma carga alvo entre 0,01 e 9.999,99 kg, com até duas casas decimais.';
+      return;
+    }
+    var movement = current.movement;
+    var previousSuggestion = current.series.weight_kg;
+    var currentDraft = weightField.value;
+    guidedLoads.applyTopTarget(movement, target);
+    if (target == null) delete topTargets[current.movementIndex];
+    else topTargets[current.movementIndex] = target;
+    if (!currentDraft || (previousSuggestion != null && currentDraft === String(previousSuggestion))) {
+      weightField.value = current.series.weight_kg == null ? '' : current.series.weight_kg;
+    }
+    topTargetSummary.textContent = target == null
+      ? 'Definir carga alvo da Top · opcional'
+      : 'Carga alvo da Top: ' + target + ' kg · ajustar';
+    topTargetPanel.open = false;
+    paintStep();
+    status.textContent = target == null
+      ? 'Alvo pessoal removido. Você pode ajustar cada carga.'
+      : 'Sugestões de carga atualizadas neste treino. Ajuste o peso realizado em cada série.';
+    snapshot().catch(function () {
+      status.textContent = 'Sugestão aplicada, mas não foi possível guardar o alvo neste aparelho.';
+    });
   });
 
   setButton.addEventListener('click', function () {
@@ -558,6 +623,7 @@
     request('GET').then(function (result) {
       if (result.session) {
         if (saved && saved.session_id === result.session.session_id) {
+          result.session.top_targets = saved.top_targets || {};
           var union = new Map((result.session.recorded || []).concat(saved.recorded || []).map(function (item) {
             return [key(item.movement_index, item.set_number), item];
           }));
