@@ -28,6 +28,190 @@ from student_identity.delivery_gateways import StudentEmailDeliveryError, get_st
 
 logger = logging.getLogger(__name__)
 
+_STAFF_HTML_ESCAPE = (
+    ('&', '&amp;'), ('<', '&lt;'), ('>', '&gt;'), ('"', '&quot;'), ("'", '&#39;'),
+)
+
+
+def _html_escape(value) -> str:
+    """Escape minimo — duplicado de proposito de student_identity/public_workout_notifications.py
+    (mesma razao: funcao de 3 linhas sem estado, import cross-app seria acoplamento a toa)."""
+    text = '' if value is None else str(value)
+    for raw, safe in _STAFF_HTML_ESCAPE:
+        text = text.replace(raw, safe)
+    return text
+
+
+def _format_brl(amount) -> str:
+    """'R$1.234,56' — sem espaco apos o R$ (convencao pedida pro assunto do
+    aviso de nova assinatura)."""
+    if amount is None:
+        return ''
+    return f'R${amount:,.2f}'.replace(',', '_').replace('.', ',').replace('_', '.')
+
+
+def _latest_paid_amount(subscription):
+    """Valor realmente cobrado na ativacao — nunca o preco de tabela do tier,
+    pra refletir corretamente preco customizado/negociado (custom_monthly_price)."""
+    from .models import PublicWorkoutPaymentStatus
+
+    payment = subscription.payments.filter(
+        status=PublicWorkoutPaymentStatus.PAID,
+    ).order_by('-paid_at').first()
+    if payment is not None:
+        return payment.gross_amount
+    return subscription.custom_monthly_price
+
+
+def _previous_status_label(previous_status: str) -> str:
+    from .models import PublicWorkoutSubscriptionStatus
+
+    try:
+        return PublicWorkoutSubscriptionStatus(previous_status).label
+    except ValueError:
+        return previous_status or '(desconhecido)'
+
+
+def _build_staff_new_subscription_html(
+    *, email: str, tier_label: str, amount_str: str, plan_slug: str | None, previous_status_label: str,
+) -> str:
+    """Mesma estrutura table-based/inline-style de
+    student_identity/public_workout_notifications.py::build_login_email_html_body
+    (a "cara" do Curva ja validada em producao) — so troca o conteudo do card
+    de link magico por um resumo de venda fechada, pro staff."""
+    safe_email = _html_escape(email)
+    safe_tier = _html_escape(tier_label)
+    safe_amount = _html_escape(amount_str)
+    safe_slug = _html_escape(plan_slug or '(ainda nao atribuido)')
+    safe_previous = _html_escape(previous_status_label)
+    amount_row = (
+        f"""
+              <tr>
+                <td style="padding:14px 18px;border-top:1px solid rgba(13,19,32,0.06);">
+                  <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
+                    Valor
+                  </p>
+                  <p style="margin:0;font-size:17px;font-weight:700;color:#0d1320;letter-spacing:-0.01em;">
+                    {safe_amount}/mes
+                  </p>
+                </td>
+              </tr>"""
+        if safe_amount else ''
+    )
+    return f"""\
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<title>Nova assinatura — Curva</title>
+<style>
+  @media (max-width: 620px) {{
+    .container {{ width: 100% !important; padding: 24px 16px !important; }}
+    .card {{ padding: 28px 22px !important; }}
+    .h1 {{ font-size: 26px !important; line-height: 1.15 !important; }}
+  }}
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#0d1320;-webkit-font-smoothing:antialiased;">
+  <span style="display:none !important;visibility:hidden;mso-hide:all;font-size:1px;color:#f4f5f7;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+    Nova assinatura ativa: {safe_email} ({safe_tier}{' · ' + safe_amount if safe_amount else ''}).
+  </span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f5f7;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="container" style="width:600px;max-width:100%;">
+
+          <!-- LOGO -->
+          <tr>
+            <td align="left" style="padding:0 8px 24px;">
+              <span style="display:inline-block;font-weight:800;font-size:20px;letter-spacing:-0.04em;color:#0d1320;">
+                Cur<span style="color:#2451C4;">va</span>
+              </span>
+              <span style="display:inline-block;margin-left:6px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#60738f;">
+                TREINO &amp; NUTRIÇÃO
+              </span>
+            </td>
+          </tr>
+
+          <!-- HERO CARD -->
+          <tr>
+            <td class="card" style="background:#ffffff;border-radius:20px;padding:44px 40px;box-shadow:0 24px 60px rgba(15,23,42,0.06);border:1px solid rgba(13,19,32,0.06);">
+
+              <!-- EYEBROW -->
+              <p style="margin:0 0 16px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#2451C4;font-weight:800;">
+                ✦ Nova assinatura
+              </p>
+
+              <!-- HEADLINE -->
+              <h1 class="h1" style="margin:0 0 18px;font-size:32px;line-height:1.08;letter-spacing:-0.04em;font-weight:800;color:#0d1320;">
+                Fechou! 🎉
+              </h1>
+
+              <p style="margin:0 0 28px;font-size:16px;line-height:1.6;color:#3a5371;">
+                Assinatura confirmada e ativa no corredor de treinos.
+              </p>
+
+              <!-- RESUMO -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;border:1px solid rgba(13,19,32,0.06);border-radius:14px;overflow:hidden;">
+                <tr>
+                  <td style="background:#f4f7fb;padding:14px 18px;">
+                    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
+                      Aluno
+                    </p>
+                    <p style="margin:0;font-size:17px;font-weight:700;color:#0d1320;letter-spacing:-0.01em;">
+                      {safe_email}
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 18px;border-top:1px solid rgba(13,19,32,0.06);">
+                    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
+                      Plano
+                    </p>
+                    <p style="margin:0;font-size:17px;font-weight:700;color:#0d1320;letter-spacing:-0.01em;">
+                      {safe_tier}
+                    </p>
+                  </td>
+                </tr>{amount_row}
+                <tr>
+                  <td style="padding:14px 18px;border-top:1px solid rgba(13,19,32,0.06);">
+                    <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#60738f;font-weight:700;">
+                      Slug do programa
+                    </p>
+                    <p style="margin:0;font-size:14px;color:#3a5371;">
+                      {safe_slug}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <hr style="border:0;border-top:1px solid rgba(13,19,32,0.08);margin:0 0 20px;">
+
+              <p style="margin:0;font-size:13px;line-height:1.5;color:#60738f;">
+                Status anterior: <strong style="color:#3a5371;">{safe_previous}</strong> → <strong style="color:#2451C4;">Ativo</strong>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td align="center" style="padding:32px 16px 8px;">
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#94a3b8;">
+                — Curva Treino &amp; Nutrição · aviso interno, não repasse ao aluno
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
 _OFFSET_LABELS = {
     -7: 'Seu pagamento vence em 7 dias',
     -3: 'Seu pagamento vence em 3 dias',
@@ -86,19 +270,32 @@ def notify_staff_new_subscription(subscription, *, previous_status: str) -> dict
     impedir os demais de receber, nem derrubar o webhook que confirmou o
     pagamento (mesma regra do resto deste modulo).
     """
+    from signup.email_sender import send_html_email
+
     account = subscription.account
-    subject = f'Nova assinatura ativa — {account.email} ({subscription.get_tier_display()})'
+    tier_label = subscription.get_tier_display()
+    amount = _latest_paid_amount(subscription)
+    amount_str = _format_brl(amount)
+    previous_status_label = _previous_status_label(previous_status)
+
+    subject_tier = f'{tier_label} {amount_str}' if amount_str else tier_label
+    subject = f'Nova assinatura ativa — {account.email} ({subject_tier})'
     body = (
         f'Assinatura confirmada e ativa.\n\n'
         f'Aluno: {account.email}\n'
-        f'Plano: {subscription.get_tier_display()}\n'
-        f'Slug: {subscription.plan_slug or "(ainda nao atribuido)"}\n'
-        f'Status anterior: {previous_status}\n'
+        f'Plano: {tier_label}\n'
+        + (f'Valor: {amount_str}/mes\n' if amount_str else '')
+        + f'Slug: {subscription.plan_slug or "(ainda nao atribuido)"}\n'
+        f'Status anterior: {previous_status_label}\n'
+    )
+    html_body = _build_staff_new_subscription_html(
+        email=account.email, tier_label=tier_label, amount_str=amount_str,
+        plan_slug=subscription.plan_slug, previous_status_label=previous_status_label,
     )
     result = {}
     for staff_email in getattr(settings, 'PUBLIC_WORKOUT_STAFF_ALERT_EMAILS', []):
         try:
-            get_student_email_gateway().send(subject=subject, body=body, to_email=staff_email)
+            send_html_email(subject=subject, text_body=body, html_body=html_body, to_email=staff_email)
             result[staff_email] = 'sent'
         except Exception:
             logger.exception(

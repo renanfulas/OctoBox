@@ -117,3 +117,37 @@
   .prog-title{font-size:17px}
   .dp{-webkit-flex:0 0 calc((100% - 20px) / 4);flex:0 0 calc((100% - 20px) / 4)}
 }
+
+/* Identidade Curva alinhada ao produto em todas as larguras.
+   O neon marca progresso, acao e foco; superficies e texto ficam quietos. */
+body{color:var(--text)}
+.top-bar{background:rgba(7,11,19,.94);border-bottom-color:var(--border)}
+.mode-btn,.save-btn{color:#07121E}
+.stat,.dp,.tab,.glossary,.legend,.ex,.c-card,.cw-item,.period-chart,.period-tbl,.vol-tbl,.vnote,.wk-box{color:var(--text)}
+.stat-v,.ex-name,.sess-title,.gym-summary,.cw-type,.c-row>span:last-child{color:var(--text)}
+.tab.on{color:var(--text)}
+.leg-item,.ex-note,.muay-body,.chart-leg-item,.vnote{color:var(--muted)}
+.sets-tbl th,.sets-tbl td,.period-tbl td,.vol-tbl td,.c-row{border-color:var(--border)}
+.sets-tbl th,.sets-tbl td,.period-tbl th,.period-tbl td,.vol-tbl th,.vol-tbl td{background:var(--white)}
+.ex-top,.c-head,.period-tbl th,.vol-tbl th{background:var(--card)}
+.var-link{background:var(--alt);border-color:var(--border);color:var(--text)}
+.var-link:active{background:var(--card)}
+.top-bar .mode-btn{box-shadow:0 7px 20px rgba(0,229,255,.14)}
+.wk-input{color:var(--text)}
+.muay-head{background:rgba(247,184,77,.14);border-bottom-color:rgba(247,184,77,.24)}
+.muay-body{color:var(--text)}
+.b-muay,.int-badge{background:rgba(247,184,77,.15);color:#FFD37F}
+.dp.muay{border-color:rgba(247,184,77,.42)}
+.dp.muay .dt,.dp.muay .dn{color:#FFD37F}
+.b-hiit,.hiit-badge{background:rgba(255,0,200,.13);color:#FF8CE8}
+.dp.hiit-d{border-color:rgba(255,0,200,.36)}
+.dp.hiit-d .dt,.dp.hiit-d .dn{color:#FF8CE8}
+.hiit-card{background:rgba(255,0,200,.055);border-color:rgba(255,0,200,.22)}
+.hiit-head{background:rgba(255,0,200,.12);border-bottom-color:rgba(255,0,200,.2)}
+.hiit-row{border-bottom-color:rgba(255,0,200,.14)}
+.hiit-lbl,.hiit-note{color:#FF8CE8}
+.hiit-note{background:rgba(255,0,200,.08)}
+.mode-btn:focus-visible,.pdf-btn:focus-visible,.tab:focus-visible,.dp:focus-visible,.wiki-btn:focus-visible,.save-btn:focus-visible,.wk-input:focus-visible{outline:2px solid var(--brand-cyan);outline-offset:3px}
+.tracker{border:1px solid var(--accent-border);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+.save-btn{box-shadow:0 7px 20px rgba(0,229,255,.14)}
+@media(prefers-reduced-motion:reduce){.dp,.tab,.mode-btn,.pdf-btn,.save-btn{transition:none}}

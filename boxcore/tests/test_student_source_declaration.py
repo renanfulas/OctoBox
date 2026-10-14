@@ -107,7 +107,8 @@ class StudentSourceDeclarationTests(TestCase):
             actor_id=self.user.id,
         )
 
-        declarations = StudentSourceDeclaration.objects.filter(student=student).order_by('created_at')
+        # 'id' desempata created_at: no Windows dois inserts seguidos podem ter o mesmo timestamp.
+        declarations = StudentSourceDeclaration.objects.filter(student=student).order_by('created_at', 'id')
 
         self.assertEqual(first_result.student_id, student.id)
         self.assertEqual(second_result.student_id, student.id)

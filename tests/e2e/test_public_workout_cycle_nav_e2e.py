@@ -22,6 +22,12 @@ PONTOS CRITICOS:
   no payload (build_example_payload() do schema.py nao tem nenhum dos
   dois) -- sem isso o ciclo teria so 1 estado (so Treino) e nao testaria
   nada. Ver _publish_program_with_cardio_and_periodization abaixo.
+- A pagina tem um SEGUNDO botao de ciclo (Avaliacao/Dieta) desde que a
+  dieta saiu do Perfil -- todo locator de `cycle_button` aqui precisa do
+  filtro `[data-cycle-key="treino"]`, senao `page.locator('[data-workout-
+  cycle-nav]')` casa os DOIS botoes e o Playwright derruba o teste por
+  ambiguidade (strict mode violation), nunca silenciosamente pega so' o
+  primeiro.
 - Executar localmente:
     pytest tests/e2e/test_public_workout_cycle_nav_e2e.py --create-db --migrations --headed
   Em CI: ver .github/workflows/e2e-nightly.yml (so' roda no nightly, como
@@ -125,8 +131,8 @@ def test_bottom_nav_cycles_treino_cardio_periodizacao_and_back(page: Page, live_
     treino_panel = page.locator('#workout-panel-treino')
     cardio_panel = page.locator('#workout-panel-cardio')
     periodizacao_panel = page.locator('#workout-panel-periodizacao')
-    cycle_button = page.locator('[data-workout-cycle-nav]')
-    cycle_label = page.locator('[data-cycle-label]')
+    cycle_button = page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]')
+    cycle_label = cycle_button.locator('[data-cycle-label]')
 
     # ── Estado inicial (page load, nenhum clique ainda): o painel padrao
     # servido pelo Django e' Inicio (class="is-tab-active" cravada no HTML
@@ -190,8 +196,8 @@ def test_bottom_nav_cycle_resets_to_treino_after_navigating_away(page: Page, liv
 
     page.goto(f'{live_server.url}/renan/bruno/preview-b3')
 
-    cycle_button = page.locator('[data-workout-cycle-nav]')
-    cycle_label = page.locator('[data-cycle-label]')
+    cycle_button = page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]')
+    cycle_label = cycle_button.locator('[data-cycle-label]')
     inicio_button = page.locator('[data-workout-tab-target="workout-panel-inicio"]')
     treino_panel = page.locator('#workout-panel-treino')
     cardio_panel = page.locator('#workout-panel-cardio')
@@ -238,8 +244,8 @@ def test_bottom_nav_cycle_only_treino_when_program_has_no_cardio_or_periodizatio
 
     page.goto(f'{live_server.url}/renan/bruno/preview-b3')
 
-    cycle_button = page.locator('[data-workout-cycle-nav]')
-    cycle_label = page.locator('[data-cycle-label]')
+    cycle_button = page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]')
+    cycle_label = cycle_button.locator('[data-cycle-label]')
     treino_panel = page.locator('#workout-panel-treino')
 
     # 1o clique (chegando de Inicio): aterrissa em Treino -- unico alvo do
@@ -249,9 +255,57 @@ def test_bottom_nav_cycle_only_treino_when_program_has_no_cardio_or_periodizatio
     expect(treino_panel).to_be_visible()
 
     # Cliques seguintes (botao ja ativo, so' 1 alvo no ciclo): permanece em
-    # Treino -- nunca deveria mostrar um painel vazio nem travar o rotulo.
+    # Treino -- nunca deveria mostrar um painel vazio ou travar o rotulo.
     cycle_button.click()
     cycle_button.click()
 
     expect(cycle_label).to_have_text('Treino')
     expect(treino_panel).to_be_visible()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_mobile_bottom_nav_stays_in_viewport_while_training_scrolls(page: Page, live_server):
+    """A barra do PWA acompanha a tela, não o fim do documento."""
+    _publish_program_with_cardio_and_periodization('bruno')
+    page.set_viewport_size({'width': 390, 'height': 640})
+    page.goto(f'{live_server.url}/renan/bruno/preview-b3')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+
+    viewport = page.locator('meta[name="viewport"]').get_attribute('content')
+    assert 'viewport-fit=cover' not in viewport
+
+    def nav_position():
+        return page.evaluate("""() => {
+            const nav = document.querySelector('.workout-mobile-nav');
+            const rect = nav.getBoundingClientRect();
+            return {
+                top: rect.top,
+                bottom: rect.bottom,
+                viewportBottom: window.visualViewport
+                    ? window.visualViewport.offsetTop + window.visualViewport.height
+                    : window.innerHeight,
+                position: getComputedStyle(nav).position,
+                scrollY: window.scrollY,
+            };
+        }""")
+
+    initial = nav_position()
+    assert initial['position'] == 'fixed'
+    assert 8 <= initial['viewportBottom'] - initial['bottom'] <= 30
+
+    page.evaluate('window.scrollTo(0, document.scrollingElement.scrollHeight)')
+    scrolled = nav_position()
+    assert scrolled['scrollY'] > 100
+    assert abs(scrolled['top'] - initial['top']) < 2
+    assert abs(scrolled['viewportBottom'] - scrolled['bottom'] - 12) < 18
+
+    page.locator('[data-workout-tab-target="workout-panel-perfil"]').click()
+    expect(page.locator('#workout-panel-perfil')).to_be_visible()
+    page.locator('[data-workout-tab-target="workout-panel-inicio"]').click()
+    expect(page.locator('#workout-panel-inicio')).to_be_visible()
+
+    page.set_viewport_size({'width': 390, 'height': 844})
+    resized = nav_position()
+    assert 8 <= resized['viewportBottom'] - resized['bottom'] <= 30

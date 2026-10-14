@@ -17,10 +17,11 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from public_workouts.models import PublicWorkoutAccount
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
 
 from .models import StudentIdentity, StudentIdentityProvider, StudentIdentityStatus
 from .oauth_providers import OAuthProviderError
+from .public_workout_login import resolve_or_create_public_workout_account
 from .public_workout_oauth import build_public_workout_oauth_state
 from .public_workout_session import read_public_workout_session_value
 from .public_workout_views import _build_public_workout_google_provider
@@ -117,7 +118,9 @@ class PublicWorkoutGoogleCallbackViewTests(TestCase):
         self.client = Client()
 
     @patch('student_identity.public_workout_views._build_public_workout_google_provider')
-    def test_creates_account_and_sets_session_cookie_for_new_email(self, provider_factory_mock):
+    def test_does_not_create_account_for_unknown_email(self, provider_factory_mock):
+        # Contrato atual: Google so autentica quem ja pagou (conta existente). Nunca cria conta
+        # de lead/e-mail sem pagamento confirmado, e nunca seta o cookie do corredor.
         provider_factory_mock.return_value = _mock_google_provider(email='novo@example.com')
         state = build_public_workout_oauth_state(next_url='')
 
@@ -127,17 +130,50 @@ class PublicWorkoutGoogleCallbackViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        account = PublicWorkoutAccount.objects.get(email='novo@example.com')
+        self.assertContains(response, 'Não encontramos uma conta ativa')
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email='novo@example.com').exists())
+        self.assertNotIn('octobox_treinos_session', response.cookies)
+
+    @patch('student_identity.public_workout_views._build_public_workout_google_provider')
+    def test_existing_account_logs_in_and_sets_session_cookie(self, provider_factory_mock):
+        account = PublicWorkoutAccount.objects.create(email='pagou@example.com')
+        provider_factory_mock.return_value = _mock_google_provider(email='pagou@example.com')
+        state = build_public_workout_oauth_state(next_url='')
+
+        response = self.client.get(
+            reverse('public-workout-oauth-google-callback'),
+            {'code': 'oauth-code', 'state': state},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        account.refresh_from_db()
         self.assertIsNotNone(account.last_login_at)
-        self.assertIn('octobox_treinos_session', response.cookies)
         session_payload = read_public_workout_session_value(response.cookies['octobox_treinos_session'].value)
         self.assertEqual(session_payload['account_id'], account.id)
 
     @patch('student_identity.public_workout_views._build_public_workout_google_provider')
+    def test_pending_payment_account_is_not_logged_in(self, provider_factory_mock):
+        account = PublicWorkoutAccount.objects.create(email='pendente@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account, plan_slug='bruno', requires_login=True,
+            status=PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
+        )
+        provider_factory_mock.return_value = _mock_google_provider(email='pendente@example.com')
+        state = build_public_workout_oauth_state(next_url='')
+
+        response = self.client.get(
+            reverse('public-workout-oauth-google-callback'),
+            {'code': 'oauth-code', 'state': state},
+        )
+
+        self.assertContains(response, 'pagamento ainda não foi confirmado')
+        self.assertNotIn('octobox_treinos_session', response.cookies)
+
+    @patch('student_identity.public_workout_views._build_public_workout_google_provider')
     def test_stores_the_google_photo_on_the_account(self, provider_factory_mock):
-        # Renan: "usar a foto do Google... no avatar" -- confere que o
-        # callback repassa identity.photo_url pra resolve_or_create_
-        # public_workout_account, nao so' o e-mail.
+        # Renan: "usar a foto do Google... no avatar" -- o callback repassa identity.photo_url
+        # para a conta ja existente (nao so' o e-mail).
+        PublicWorkoutAccount.objects.create(email='com-foto@example.com')
         provider_factory_mock.return_value = _mock_google_provider(
             email='com-foto@example.com', photo_url='https://lh3.googleusercontent.com/a/foto-real',
         )
@@ -162,6 +198,8 @@ class PublicWorkoutGoogleCallbackViewTests(TestCase):
 
     @patch('student_identity.public_workout_views._build_public_workout_google_provider')
     def test_links_weakly_to_existing_student_identity_by_email(self, provider_factory_mock):
+        # O vinculo com a StudentIdentity e resolvido so na CRIACAO da conta (N5 do CORDA):
+        # informativo, nunca autoritativo. O login por Google nao o refaz nem escreve la.
         identity = StudentIdentity.objects.create(
             email='dupla@example.com',
             provider=StudentIdentityProvider.GOOGLE,
@@ -170,18 +208,22 @@ class PublicWorkoutGoogleCallbackViewTests(TestCase):
             box_root_slug='box-x',
             primary_box_root_slug='box-x',
         )
+        account = resolve_or_create_public_workout_account(email='dupla@example.com')
+        self.assertEqual(account.student_identity_id, identity.id)
+        identity_state = (identity.status, identity.last_authenticated_at)
         provider_factory_mock.return_value = _mock_google_provider(email='dupla@example.com')
         state = build_public_workout_oauth_state(next_url='')
 
         self.client.get(reverse('public-workout-oauth-google-callback'), {'code': 'oauth-code', 'state': state})
 
-        account = PublicWorkoutAccount.objects.get(email='dupla@example.com')
+        account.refresh_from_db()
         self.assertEqual(account.student_identity_id, identity.id)
-        # Informativo, nunca autoritativo (N5): nenhuma escrita do lado da StudentIdentity.
         identity.refresh_from_db()
+        self.assertEqual((identity.status, identity.last_authenticated_at), identity_state)
 
     @patch('student_identity.public_workout_views._build_public_workout_google_provider')
     def test_redirects_to_next_url_when_present_in_state(self, provider_factory_mock):
+        PublicWorkoutAccount.objects.create(email='vai-pro-treino@example.com')
         provider_factory_mock.return_value = _mock_google_provider(email='vai-pro-treino@example.com')
         state = build_public_workout_oauth_state(next_url='/renan/juliana')
 
@@ -191,7 +233,6 @@ class PublicWorkoutGoogleCallbackViewTests(TestCase):
         )
 
         self.assertRedirects(response, '/renan/juliana', fetch_redirect_response=False)
-
     def test_missing_state_shows_invalid_link_error_and_creates_no_account(self):
         response = self.client.get(reverse('public-workout-oauth-google-callback'), {'code': 'oauth-code'})
 

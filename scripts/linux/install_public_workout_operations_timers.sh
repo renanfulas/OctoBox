@@ -13,6 +13,7 @@ units=(
   octobox-public-workout-outbox
   octobox-public-workout-operations
   octobox-public-workout-metrics
+  octobox-signal-mesh-retries
 )
 
 for unit in "${units[@]}"; do
@@ -24,4 +25,4 @@ systemctl daemon-reload
 for unit in "${units[@]}"; do
   systemctl enable --now "${unit}.timer"
 done
-systemctl list-timers 'octobox-public-workout-*' --no-pager
+systemctl list-timers 'octobox-public-workout-*' 'octobox-signal-mesh-retries.timer' --no-pager

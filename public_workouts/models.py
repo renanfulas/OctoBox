@@ -46,6 +46,7 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import re
 import uuid
 
 from django.conf import settings
@@ -482,6 +483,11 @@ class PublicWorkoutAccount(TimeStampedModel):
     email = models.EmailField(unique=True, db_index=True)
     student_identity_id = models.IntegerField(null=True, blank=True, db_index=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
+    # So digitos (DDI+DDD+numero, ex.: '5511987654321') -- normalizado em
+    # save() abaixo. Cockpit do treinador (public_workouts/views.py) usa
+    # isto pra montar o link wa.me de "chamar aluno"; em branco, o cockpit
+    # so mostra o e-mail (nunca inventa numero).
+    whatsapp = models.CharField(max_length=20, blank=True)
     # Preenchido so' pelo login por Google (identity.photo_url em
     # oauth_providers.py) -- login por e-mail nunca tem foto pra oferecer,
     # entao resolve_or_create_public_workout_account (public_workout_login.py)
@@ -493,8 +499,97 @@ class PublicWorkoutAccount(TimeStampedModel):
     class Meta:
         ordering = ['-created_at']
 
+    def save(self, *args, **kwargs):
+        if self.whatsapp:
+            self.whatsapp = re.sub(r'\D', '', self.whatsapp)
+        super().save(*args, **kwargs)
+
     def __str__(self) -> str:
         return self.email
+
+
+class PublicWorkoutTrainingSession(TimeStampedModel):
+    """Sessao guiada do aluno Curva, separada dos eventos comerciais."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='training_sessions')
+    # A versão publicada é imutável: séries de uma sessão em andamento não
+    # mudam quando um profissional publica uma nova versão do programa.
+    program = models.ForeignKey(
+        PublicWorkoutProgram, null=True, blank=True, on_delete=models.PROTECT,
+        related_name='training_sessions',
+    )
+    start_key = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    plan_slug = models.SlugField(max_length=80, db_index=True)
+    day_id = models.CharField(max_length=32)
+    started_at = models.DateTimeField(default=timezone.now, db_index=True)
+    completed_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    ended_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    outcome = models.CharField(max_length=12, blank=True, choices=[
+        ('completed', 'Concluído'), ('partial', 'Parcial'),
+        ('cancelled', 'Cancelado'), ('abandoned', 'Abandonado'),
+    ])
+    movement_count = models.PositiveSmallIntegerField(default=0)
+    completed_set_count = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-started_at']
+        indexes = [models.Index(fields=['plan_slug', 'started_at'], name='pw_session_plan_start_idx')]
+
+
+class PublicWorkoutTrainingSet(TimeStampedModel):
+    """Fato de cada serie concluida na sessao guiada (inclui feeder/top)."""
+
+    session = models.ForeignKey(PublicWorkoutTrainingSession, on_delete=models.CASCADE, related_name='sets')
+    movement_index = models.PositiveSmallIntegerField()
+    movement_slug = models.SlugField(max_length=80)
+    set_number = models.PositiveSmallIntegerField()
+    set_role = models.CharField(max_length=16, choices=[
+        ('warmup', 'Aquecimento'), ('feeder', 'Aproximação'), ('top_set', 'Série principal'),
+        ('max_set', 'Esforço máximo'), ('legacy_unknown', 'Histórico'),
+    ])
+    status = models.CharField(max_length=12, default='performed', choices=[
+        ('performed', 'Realizada'), ('skipped', 'Pulada'),
+    ])
+    stage_id = models.CharField(max_length=32, blank=True)
+    stage_ordinal = models.PositiveSmallIntegerField(null=True, blank=True)
+    load_log = models.ForeignKey(
+        'PublicWorkoutLoadLog', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='guided_training_sets',
+    )
+    weight_kg = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    reps = models.PositiveSmallIntegerField(null=True, blank=True)
+    rir = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    completed_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['session_id', 'movement_index', 'set_number']
+        constraints = [models.UniqueConstraint(fields=['session', 'movement_index', 'set_number'], name='pw_training_set_uniq')]
+
+
+class PublicWorkoutTrainingSetRevision(models.Model):
+    """Recibo idempotente e trilha de cada correção feita pelo aluno."""
+
+    training_set = models.ForeignKey(PublicWorkoutTrainingSet, on_delete=models.CASCADE, related_name='revisions')
+    command_key = models.UUIDField(unique=True)
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)
+    created_at = models.DateTimeField(default=timezone.now)
+
+
+class PublicWorkoutPushSubscription(TimeStampedModel):
+    """Inscricao Web Push vinculada a uma conta Curva, nunca a StudentIdentity."""
+
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='push_subscriptions')
+    endpoint = models.URLField(max_length=2048, unique=True)
+    subscription = models.JSONField(default=dict)
+    user_agent = models.CharField(max_length=255, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    last_error = models.CharField(max_length=120, blank=True)
+    last_push_sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 class PublicWorkoutLoginToken(TimeStampedModel):
@@ -637,6 +732,15 @@ class PublicWorkoutSubscription(models.Model):
     )
     contract_accepted_at = models.DateTimeField(null=True, blank=True)
     contracted_price_id = models.CharField(max_length=255, blank=True)
+    # So pros legados sem Price ID fixo (nunca passaram pelo checkout dos 3
+    # planos, valor negociado individualmente): quando preenchido, o admin
+    # ganha a acao "gerar link de checkout com valor personalizado"
+    # (stripe_checkout.start_custom_price_subscription_checkout), que cria
+    # um Price ad-hoc na Stripe via price_data em vez de um dos 3 Price ID
+    # fixos de _TIER_PRICE_SETTINGS. Por isso o cross-check de tier/price
+    # (RT3, stripe_handlers._confirm_tier_price) pula a validacao quando
+    # este campo esta preenchido -- o valor real diverge de proposito.
+    custom_monthly_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
     suspended_at = models.DateTimeField(null=True, blank=True)
     canceled_at = models.DateTimeField(null=True, blank=True)
@@ -690,6 +794,10 @@ class PublicWorkoutAcquisitionSession(models.Model):
     last_referrer = models.CharField(max_length=180, blank=True)
     landing_variant = models.CharField(max_length=40, blank=True)
     offer_version = models.CharField(max_length=40, blank=True)
+    # Canal de parceiro separado de source/medium/campaign: visitas de
+    # influencers nao entram na classificacao de campanhas proprias.
+    partner_code = models.CharField(max_length=48, blank=True, db_index=True)
+    partner_first_seen_at = models.DateTimeField(null=True, blank=True, db_index=True)
     account = models.ForeignKey(
         PublicWorkoutAccount, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
     )
@@ -699,6 +807,44 @@ class PublicWorkoutAcquisitionSession(models.Model):
     )
     first_seen_at = models.DateTimeField(default=timezone.now)
     last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+
+class PublicWorkoutCheckoutLead(TimeStampedModel):
+    """Email captured during checkout; this is not a student account."""
+
+    email = models.EmailField(db_index=True)
+    tier = models.CharField(max_length=16, choices=PublicWorkoutTier.choices)
+    acquisition_session = models.ForeignKey(
+        PublicWorkoutAcquisitionSession, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='checkout_leads',
+    )
+    account = models.ForeignKey(
+        PublicWorkoutAccount, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='checkout_leads',
+    )
+    stripe_checkout_session_id = models.CharField(max_length=255, blank=True, db_index=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True, db_index=True)
+    contract_accepted_at = models.DateTimeField(default=timezone.now)
+    offer_version = models.CharField(max_length=40, blank=True)
+    service_policy_version = models.CharField(max_length=40, blank=True)
+    terms_version = models.CharField(max_length=24, blank=True)
+    privacy_version = models.CharField(max_length=24, blank=True)
+    guarantee_model = models.CharField(max_length=24, default=PublicWorkoutGuaranteeModel.REFUND_GUARANTEE)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    marketing_consent = models.BooleanField(default=False)
+    marketing_consent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['email', 'paid_at'])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['email'],
+                condition=models.Q(paid_at__isnull=True),
+                name='pw_checkout_lead_email_unpaid_uniq',
+            ),
+        ]
 
 
 class PublicWorkoutExperimentAssignment(models.Model):
@@ -748,6 +894,7 @@ class PublicWorkoutFunnelEvent(models.Model):
     source = models.CharField(max_length=80, blank=True)
     medium = models.CharField(max_length=80, blank=True)
     campaign = models.CharField(max_length=120, blank=True)
+    partner_code = models.CharField(max_length=48, blank=True, db_index=True)
     schema_version = models.PositiveSmallIntegerField(default=1)
     client_event_id = models.UUIDField(null=True, blank=True, unique=True)
     correlation_id = models.UUIDField(null=True, blank=True, db_index=True)
@@ -1168,6 +1315,33 @@ class PublicWorkoutLoadLogSetRole(models.TextChoices):
     TOP_SET = 'top_set', 'Série principal'
     MAX_SET = 'max_set', 'Esforço máximo'
     LEGACY_UNKNOWN = 'legacy_unknown', 'Histórico anterior (não classificado)'
+
+
+class PublicWorkoutWeeklyReviewCache(models.Model):
+    """1 linha por (conta, semana ISO) -- garante NO MAXIMO 1 chamada a
+    Claude Haiku por aluno por semana (weekly_review_ai.py), nunca por
+    visita a pagina. `review_text=None` e' um resultado CACHEADO valido
+    (ja tentou gerar esta semana, IA nao configurada/sem sinal/erro) --
+    distingue de "ainda nao tentou" (linha inexistente), pra nunca tentar
+    de novo so' porque o resultado anterior foi vazio."""
+
+    account = models.ForeignKey(
+        PublicWorkoutAccount, on_delete=models.CASCADE, related_name='weekly_review_cache_entries',
+    )
+    # Formato 'YYYY-Www' (ISO 8601, ex.: '2026-W39') -- string, nao par de
+    # inteiros: unique_together fica trivial e o valor e' auto-descritivo
+    # em qualquer leitura direta do banco/admin.
+    iso_week = models.CharField(max_length=8, db_index=True)
+    review_text = models.TextField(null=True, blank=True)
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['account', 'iso_week'], name='unique_weekly_review_cache_per_week'),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.account_id} · {self.iso_week}'
 
 
 class PublicWorkoutLoadLog(models.Model):

@@ -152,6 +152,7 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
     ).values('subscription__account_id').annotate(first_paid=Min('paid_at')).filter(first_paid__gte=since)
     acquired = PublicWorkoutAcquisitionSession.objects.filter(
         account_id__in=Subquery(first_payers.values('subscription__account_id')),
+        partner_code='',
     )
     sources = [
         {'source': row['first_source'], 'paid': row['paid']}
@@ -208,6 +209,9 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
     if funnel['landing_viewed'] < 30:
         growth_warnings.append('insufficient_funnel_sample')
     growth_status = 'red' if growth_blockers else ('yellow' if growth_warnings else 'green')
+    from .training_analytics import training_summary
+
+    training = training_summary(window_days=window_days, at=at)
     return {
         'schema_version': 2,
         'generated_at': at.isoformat(),
@@ -240,6 +244,15 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
             '28_days': get_capacity_projection(days=28),
         },
         'retention': {'signal_window_days': 14, 'buckets': retention_buckets},
+        'training': {
+            'sessions_started': training['sessions_started'],
+            'sessions_completed': training['sessions_completed'],
+            'sessions_partial': training['sessions_partial'],
+            'completion_rate': training['completion_ratio'],
+            'completed_sets': training['sets_completed'],
+            'partial_sets': training['sets_partial'],
+            'window_days': window_days,
+        },
         'growth_gate': {
             'status': growth_status,
             'blockers': growth_blockers,

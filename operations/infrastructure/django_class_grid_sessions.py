@@ -5,7 +5,7 @@ POR QUE ELE EXISTE:
 - separa do writer principal as operacoes ORM concretas de aula para reduzir acoplamento local.
 
 O QUE ESTE ARQUIVO FAZ:
-1. busca duplicidades do lote por titulo e horario.
+1. busca duplicidades do lote por titulo, modalidade e horario.
 2. cria aulas planejadas pela camada operacional.
 3. reidrata aulas com lock para edicao e exclusao.
 4. aplica update_fields e exclusao concreta das aulas.
@@ -18,10 +18,17 @@ from operations.models import ClassSession
 
 
 class DjangoClassGridSessionStore:
-    def find_existing_scheduled_ats(self, *, title: str, scheduled_ats: list) -> frozenset:
+    def find_existing_scheduled_ats(
+        self,
+        *,
+        title: str,
+        workout_program_id: int,
+        scheduled_ats: list,
+    ) -> frozenset:
         return frozenset(
             ClassSession.objects.filter(
                 title=title,
+                workout_program_id=workout_program_id,
                 scheduled_at__in=scheduled_ats,
             ).values_list('scheduled_at', flat=True)
         )
@@ -36,6 +43,8 @@ class DjangoClassGridSessionStore:
         capacity: int,
         status: str,
         notes: str,
+        workout_program_id: int | None = None,
+        class_type: str = 'other',
     ) -> int:
         session = ClassSession.objects.create(
             title=title,
@@ -45,6 +54,8 @@ class DjangoClassGridSessionStore:
             capacity=capacity,
             status=status,
             notes=notes,
+            workout_program_id=workout_program_id,
+            class_type=class_type,
         )
         return session.id
 

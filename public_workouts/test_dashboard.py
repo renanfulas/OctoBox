@@ -6,7 +6,9 @@ from datetime import date
 
 from django.test import SimpleTestCase
 
-from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
+from public_workouts.dashboard import (
+    build_program_summary, build_week_overview, build_workout_day_selection, day_keyword, day_short_label,
+)
 from public_workouts.schema import build_example_payload
 
 
@@ -59,6 +61,42 @@ class BuildWeekOverviewTests(SimpleTestCase):
         self.assertEqual(week[0].date, date(2026, 1, 5))
         self.assertEqual(week[-1].date, sunday)
         self.assertTrue(week[-1].is_today)
+
+
+class BuildWorkoutDaySelectionTests(SimpleTestCase):
+    def test_selects_today_instead_of_payload_order(self):
+        payload = build_example_payload()
+        tuesday = dict(payload['days'][0], day_id='ter', label='Terça — Superior')
+        payload['days'] = [payload['days'][0], tuesday]
+
+        selection = build_workout_day_selection(payload=payload, today=date(2026, 1, 6))
+
+        self.assertEqual(selection['selected_day_id'], 'ter')
+        self.assertFalse(selection['is_rest_day'])
+        self.assertIsNone(selection['next_day'])
+
+    def test_rest_day_previews_next_prescribed_day_across_week_boundary(self):
+        payload = build_example_payload()
+        monday = dict(payload['days'][0], day_id='seg', label='Segunda — Inferior')
+        thursday = dict(payload['days'][0], day_id='qui', label='Quinta — Superior B')
+        payload['days'] = [thursday, monday]
+
+        selection = build_workout_day_selection(payload=payload, today=date(2026, 1, 11))
+
+        self.assertTrue(selection['is_rest_day'])
+        self.assertEqual(selection['selected_day_id'], 'seg')
+        self.assertEqual(selection['next_day'], {
+            'day_id': 'seg', 'short_label': 'Seg', 'label': 'Inferior',
+        })
+
+    def test_empty_program_has_no_selected_day(self):
+        payload = build_example_payload()
+        payload['days'] = []
+
+        selection = build_workout_day_selection(payload=payload, today=date(2026, 1, 7))
+
+        self.assertIsNone(selection['selected_day_id'])
+        self.assertIsNone(selection['next_day'])
 
 
 class BuildProgramSummaryTests(SimpleTestCase):

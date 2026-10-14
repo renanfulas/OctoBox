@@ -14,6 +14,9 @@ from student_app.application.agenda_snapshots import get_student_agenda_snapshot
 from student_app.application.cache_telemetry import record_student_app_perf
 from student_app.application.home_snapshots import build_student_progress_days, get_student_home_rm_snapshot, get_student_home_snapshot
 from student_app.application.rm_snapshots import build_student_rm_record_map
+from student_app.application.movement_references import (
+    lookup_movement_video_metadata,
+)
 from student_app.application.results import (
     StudentPrimaryAction,
     StudentDashboardResult,
@@ -28,7 +31,6 @@ from student_app.application.results import (
 from student_app.domain.workout_prescription import build_workout_prescription
 from student_app.application.wod_snapshots import get_published_student_workout_snapshot
 from student_app.models import (
-    MovementLibrary,
     SessionWorkout,
     SessionWorkoutStatus,
     WorkoutLoadType,
@@ -77,19 +79,49 @@ def build_student_prescription_label(*, movement):
     bits = []
     sets = _movement_value(movement, 'sets')
     reps = _movement_value(movement, 'reps')
+    reps_spec = (_movement_value(movement, 'reps_spec') or '').strip()
     load_type = _movement_value(movement, 'load_type')
     load_value = _movement_value(movement, 'load_value')
+    load_spec = (_movement_value(movement, 'load_spec') or '').strip()
     if sets:
         bits.append(f'{sets} séries')
-    if reps:
+    if reps_spec:
+        bits.append(f'{reps_spec} reps')
+    elif reps:
         bits.append(f'{reps} reps')
-    if load_type == WorkoutLoadType.PERCENTAGE_OF_RM and load_value is not None:
+    if load_spec:
+        bits.append(f'@ {load_spec}')
+    elif load_type == WorkoutLoadType.PERCENTAGE_OF_RM and load_value is not None:
         bits.append(f'@ {_clean_number(load_value)}% do RM')
     elif load_type == WorkoutLoadType.FIXED_KG and load_value is not None:
         bits.append(f'@ {_clean_number(load_value)} kg')
     elif load_type == WorkoutLoadType.FREE:
         bits.append('carga livre')
     return ' · '.join(bits) or 'Sem detalhe de prescrição'
+
+
+def _build_student_block_format_label(block):
+    format_spec = (block.get('format_spec') or '').strip()
+    parts = [format_spec] if format_spec else []
+    score_labels = {
+        'for_time': 'For time',
+        'amrap': 'AMRAP',
+        'emom': 'EMOM',
+        'rounds_reps': 'Rounds e reps',
+        'load': 'Carga',
+    }
+    score_type = (block.get('score_type') or '').strip()
+    if score_type in score_labels:
+        score_label = score_labels[score_type]
+        if score_label.casefold() not in format_spec.casefold():
+            parts.append(score_label)
+    if block.get('rounds'):
+        parts.append(f"{block['rounds']} rounds")
+    if block.get('timecap_min'):
+        parts.append(f"time cap {block['timecap_min']} min")
+    if block.get('interval_seconds'):
+        parts.append(f"intervalo {block['interval_seconds']} s")
+    return ' · '.join(parts)
 
 
 def build_student_recommendation_payload(*, movement, student=None):
@@ -803,10 +835,7 @@ class GetStudentWorkoutDay:
             for slug in percentage_slugs
             if slug in rm_record_map
         } if percentage_slugs else {}
-        reference_url_by_slug = {
-            entry['slug']: entry['reference_url']
-            for entry in MovementLibrary.objects.filter(slug__in=all_slugs).values('slug', 'reference_url')
-        } if all_slugs else {}
+        movement_video_metadata_by_slug = lookup_movement_video_metadata(all_slugs)
 
         block_cards = []
         primary_recommendation = None
@@ -836,7 +865,9 @@ class GetStudentWorkoutDay:
                     base_rm_kg=recommendation_payload['base_rm_kg'],
                     percentage=recommendation_payload['percentage'],
                     is_primary_recommendation=primary_recommendation is None and recommended_load is not None,
-                    reference_url=reference_url_by_slug.get(movement['movement_slug'], ''),
+                    reference_url=movement_video_metadata_by_slug.get(movement['movement_slug'], {}).get('reference_url', ''),
+                    demo_video_url=movement_video_metadata_by_slug.get(movement['movement_slug'], {}).get('demo_video_url', ''),
+                    is_scaled_alternative=bool(movement.get('is_scaled_alternative', False)),
                 )
                 if movement_card.is_primary_recommendation:
                     primary_recommendation = movement_card
@@ -847,6 +878,7 @@ class GetStudentWorkoutDay:
                     kind_label=block['kind_label'],
                     notes=block['notes'],
                     movements=tuple(movement_cards),
+                    format_label=_build_student_block_format_label(block),
                 )
             )
 
@@ -863,6 +895,7 @@ class GetStudentWorkoutDay:
             coach_notes=workout_snapshot['coach_notes'],
             blocks=tuple(block_cards),
             is_normalized=bool(workout_snapshot.get('is_normalized', False)),
+            has_structured_content=bool(workout_snapshot.get('has_structured_content', workout_snapshot.get('blocks'))),
             primary_recommendation=primary_recommendation,
         )
         record_student_app_perf(

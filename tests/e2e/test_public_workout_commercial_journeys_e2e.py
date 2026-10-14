@@ -133,3 +133,57 @@ def test_returning_customer_enters_with_one_time_magic_link(page: Page, live_ser
         assert account.last_login_at is not None
     finally:
         account.delete()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+def test_legacy_active_customer_without_stripe_id_starts_real_checkout(
+    page: Page, live_server, monkeypatch,
+):
+    """Achado real (Rafael, cliente legado — seed_legacy_workout_accounts):
+    assinatura ja' nasce com status=ACTIVE mas SEM stripe_customer_id (nunca
+    passou pelo checkout de verdade). Antes, "Pagamentos" na aba Perfil
+    (/renan/<slug>) caia num link morto pro hub /treinos/minha-conta — o
+    hub nao mostra nada sobre pagar porque get_customer_journey() so' trata
+    status PAST_DUE/SUSPENDED/PENDING_PAYMENT, nunca "ACTIVE sem Stripe
+    nenhum ainda". Agora dispara o PRIMEIRO checkout de verdade (POST
+    /treinos/subscribe, ja existia pronto, nunca tinha sido ligado a
+    nenhuma tela)."""
+    from public_workouts.schema import build_example_payload
+    from public_workouts.services import publish_program
+
+    email = 'legado-sem-stripe-e2e@example.test'
+    publish_program(slug='bruno', payload=build_example_payload())
+    account = PublicWorkoutAccount.objects.create(email=email)
+    subscription = get_or_create_subscription(account=account, plan_slug='bruno', tier=PublicWorkoutTier.ESSENCIAL)
+    subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+    subscription.save(update_fields=['status'])
+    monkeypatch.setattr(
+        'student_identity.public_workout_views.start_subscription_checkout',
+        lambda **_kwargs: f'{live_server.url}/treinos/minha-conta?checkout=retorno',
+    )
+    try:
+        page.context.add_cookies([{
+            'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            'value': build_public_workout_session_value(account_id=account.pk),
+            'url': live_server.url,
+        }])
+        page.goto(f'{live_server.url}/renan/bruno')
+        page.locator('[data-workout-tab-target="workout-panel-perfil"]').click()
+
+        pagamentos = page.locator('[data-workout-start-checkout]')
+        expect(pagamentos).to_be_visible()
+        expect(pagamentos).to_have_attribute('data-checkout-plan-slug', 'bruno')
+        pagamentos.click()
+
+        page.wait_for_url('**/treinos/minha-conta?checkout=retorno')
+        expect(page.locator('body')).not_to_have_text('Server Error')
+
+        subscription.refresh_from_db()
+        assert subscription.status == PublicWorkoutSubscriptionStatus.ACTIVE
+        assert subscription.tier == PublicWorkoutTier.ESSENCIAL
+    finally:
+        account.delete()
+        from public_workouts.models import PublicWorkoutProgram
+
+        PublicWorkoutProgram.objects.filter(slug='bruno').delete()

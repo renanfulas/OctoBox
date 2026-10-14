@@ -1,0 +1,153 @@
+/* Revisao semanal (Entrega 4) -- texto sob demanda (botao "Gerar
+   revisao"), nunca carregado automatico no GET da pagina. */
+.workout-weekly-review__text {
+    margin: 0 0 10px;
+    line-height: 1.5;
+    color: var(--theme-text-primary, inherit);
+}
+
+.workout-weekly-review__status {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+}
+
+/* ============================================================
+ * Cardio + Periodizacao (Onda A2, fatia cardio/periodizacao) --
+ * alcancadas so' pelo ciclo do botao "Treino" do bottom nav (ver <script>
+ * no fim de workout.html), nunca tem paineis fixos na nav.
+ * ============================================================ */
+
+.workout-cardio-card {
+    display: grid;
+    gap: 10px;
+}
+
+.workout-cardio-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.workout-cardio-card__head strong {
+    font-size: 0.98rem;
+    color: var(--theme-text-primary);
+}
+
+.workout-cardio-badge {
+    background: color-mix(in srgb, var(--brand) 16%, transparent);
+    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
+}
+
+.workout-cardio-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px 16px;
+    margin: 0;
+}
+
+.workout-cardio-detail dt {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--theme-text-muted);
+}
+
+.workout-cardio-detail dd {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--theme-text-primary);
+}
+
+.workout-cardio-note {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--theme-text-secondary);
+}
+
+/* Grafico de progressao do mesociclo -- mesmo dado/logica visual do
+   app.js legado (chartData/buildChart), so' renderizado no servidor (o
+   payload ja tem altura/cor por semana prontos, ver parser.py) em vez de
+   um <script type="application/json"> + JS montando DOM no cliente. */
+.workout-period-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.workout-period-chart__col {
+    flex: 1 1 0;
+    min-width: 56px;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    border-radius: 10px;
+    padding: 4px 2px;
+}
+
+/* Semana atual em destaque -- mesmo token de --brand ja usado no
+   :focus-visible da bolinha de glossario, sem inventar paleta nova. */
+.workout-period-chart__col--current {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    background: color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+.workout-period-chart__col--current .workout-period-chart__label {
+    color: var(--brand);
+    font-weight: 800;
+}
+
+.workout-period-chart__bar-wrap {
+    height: 120px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.workout-period-chart__reps {
+    font-size: 0.66rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.workout-period-chart__bar {
+    width: 60%;
+    min-height: 4px;
+    border-radius: 6px 6px 2px 2px;
+}
+
+.workout-period-chart__focus {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.workout-period-chart__label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--theme-text-muted);
+}
+
+.workout-period-note {
+    margin: 12px 0 0;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--theme-text-secondary);
+}
+

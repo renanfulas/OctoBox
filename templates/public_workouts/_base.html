@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="{{ plan.theme_color }}">
+<meta name="theme-color" content="#0A0E1A">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,11 +19,11 @@
    vem de tokens.css. O vocabulario de badge de sessao de cada plano entra
    no bloco plan_tokens, porque cada treino nomeia os dias do seu jeito. */
 :root{
-  --accent:{{ plan.accent.base }};
-  --accent-bg:{{ plan.accent.bg }};
-  --accent-border:{{ plan.accent.border }};
-  --accent-light:{{ plan.accent.light }};
-  --accent-dark:{{ plan.accent.dark }};
+  --accent:#00E5FF;
+  --accent-bg:rgba(0,229,255,.12);
+  --accent-border:rgba(0,229,255,.28);
+  --accent-light:rgba(0,229,255,.2);
+  --accent-dark:#4A90E2;
 {% if plan.tracker_weeks %}  --tracker-weeks:{{ plan.tracker_weeks }};
 {% endif %}{% block plan_tokens %}{% endblock %}}
 </style>
@@ -99,6 +99,7 @@
 </script>
 {% block plan_data %}{% endblock %}
 <script src="/static/js/public_workouts/app.js?v={{ static_asset_version }}"></script>
+<script src="/static/js/public_workouts/assessments-report.js?v={{ static_asset_version }}"></script>
 <script src="/static/js/public_workouts/assessments.js?v={{ static_asset_version }}"></script>
 {% block extra_scripts %}{% endblock %}
 </body>

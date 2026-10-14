@@ -30,7 +30,10 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import uuid
+
 from django.conf import settings
+from django.db import transaction
 
 from .models import PublicWorkoutTier
 
@@ -47,6 +50,10 @@ class PublicWorkoutStripeNotConfiguredError(RuntimeError):
     """Levantada quando o Price ID do tier (ou PUBLIC_WORKOUT_STRIPE_PRICE_ID) nao esta configurado."""
 
 
+class PublicWorkoutCheckoutSessionError(RuntimeError):
+    """A Stripe could not safely expire a stale checkout before retry."""
+
+
 def _resolve_price_id(tier: str) -> str:
     setting_name = _TIER_PRICE_SETTINGS.get(tier)
     if setting_name is None:
@@ -57,6 +64,29 @@ def _resolve_price_id(tier: str) -> str:
             f'{setting_name} nao configurado. Defina no .env e reinicie o servidor.'
         )
     return price_id
+
+
+def get_completed_lead_checkout(*, lead):
+    """Return a completed Checkout Session before a repeated signup can mutate its lead."""
+    if not lead.stripe_checkout_session_id:
+        return None
+    import stripe
+
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key:
+        raise PublicWorkoutStripeNotConfiguredError('STRIPE_SECRET_KEY nao definida.')
+    stripe.api_key = secret_key
+    try:
+        session = stripe.checkout.Session.retrieve(lead.stripe_checkout_session_id)
+    except Exception as exc:
+        if getattr(exc, 'code', '') == 'resource_missing':
+            return None
+        raise PublicWorkoutCheckoutSessionError('Nao foi possivel verificar o checkout anterior.') from exc
+    if session.status != 'complete':
+        return None
+    if session.payment_status != 'paid':
+        raise PublicWorkoutCheckoutSessionError('O pagamento anterior ainda esta sendo processado.')
+    return session
 
 
 def start_subscription_checkout(
@@ -97,6 +127,9 @@ def start_subscription_checkout(
         mode='subscription',
         payment_method_types=['card'],
         line_items=[{'price': price_id, 'quantity': 1}],
+        # Permite resgatar cupons no plano Completo. A elegibilidade do WILLY
+        # fica limitada ao produto Curva — Completo na própria Stripe.
+        allow_promotion_codes=(subscription.tier == PublicWorkoutTier.COMPLETO),
         customer_email=account.email,
         client_reference_id=str(subscription.pk),
         success_url=success_url,
@@ -117,6 +150,152 @@ def start_subscription_checkout(
     if subscription.contracted_price_id != price_id:
         subscription.contracted_price_id = price_id
         subscription.save(update_fields=['contracted_price_id', 'updated_at'])
+    return session.url
+
+
+@transaction.atomic
+def start_checkout_lead_session(*, lead, success_url: str, cancel_url: str) -> str:
+    """Start or resume checkout without creating a student account."""
+    import stripe
+
+    # Serialize parallel submit requests for one lead: both requests must not
+    # create separate payable Stripe sessions for the same email.
+    lead = type(lead).objects.select_for_update().get(pk=lead.pk)
+
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key:
+        raise PublicWorkoutStripeNotConfiguredError('STRIPE_SECRET_KEY nao definida.')
+    stripe.api_key = secret_key
+    price_id = _resolve_price_id(lead.tier)
+    if lead.stripe_checkout_session_id:
+        try:
+            existing = stripe.checkout.Session.retrieve(lead.stripe_checkout_session_id)
+        except Exception as exc:
+            if getattr(exc, 'code', '') == 'resource_missing':
+                existing = None
+            else:
+                raise PublicWorkoutCheckoutSessionError(
+                    'Nao foi possivel verificar o checkout anterior.'
+                ) from exc
+        if existing is not None and existing.status == 'complete':
+            if existing.payment_status == 'paid':
+                return success_url.replace('{CHECKOUT_SESSION_ID}', existing.id)
+            raise PublicWorkoutCheckoutSessionError('O pagamento anterior ainda esta sendo processado.')
+        if existing is not None and existing.status == 'open':
+            existing_metadata = existing.get('metadata', {}) or {}
+            metadata_matches = all(
+                existing_metadata.get(key, '') == value
+                for key, value in {
+                    'tier': lead.tier,
+                    'offer_version': lead.offer_version,
+                    'service_policy_version': lead.service_policy_version,
+                    'terms_version': lead.terms_version,
+                    'privacy_version': lead.privacy_version,
+                    'guarantee_model': lead.guarantee_model,
+                }.items()
+            )
+            if metadata_matches and existing.url:
+                return existing.url
+            try:
+                stripe.checkout.Session.expire(lead.stripe_checkout_session_id)
+            except Exception as exc:
+                raise PublicWorkoutCheckoutSessionError(
+                    'Nao foi possivel encerrar a sessao de checkout anterior.'
+                ) from exc
+    metadata = {
+        'product': 'coaching',
+        'public_workout_checkout_lead_id': str(lead.pk),
+        'tier': lead.tier,
+        'offer_version': lead.offer_version,
+        'service_policy_version': lead.service_policy_version,
+        'terms_version': lead.terms_version,
+        'privacy_version': lead.privacy_version,
+        'guarantee_model': lead.guarantee_model,
+        'acquisition_session_id': str(lead.acquisition_session_id or ''),
+    }
+    session = stripe.checkout.Session.create(
+        mode='subscription', payment_method_types=['card'],
+        line_items=[{'price': price_id, 'quantity': 1}],
+        allow_promotion_codes=(lead.tier == PublicWorkoutTier.COMPLETO),
+        customer_email=lead.email, client_reference_id=f'lead-{lead.pk}',
+        success_url=success_url, cancel_url=cancel_url,
+        metadata=metadata, subscription_data={'metadata': metadata},
+        idempotency_key=f'public-workout-lead-{lead.pk}-{price_id[-8:]}-{uuid.uuid4().hex}',
+    )
+    lead.stripe_checkout_session_id = session.id
+    lead.save(update_fields=['stripe_checkout_session_id', 'updated_at'])
+    return session.url
+
+
+def start_custom_price_subscription_checkout(
+    *, subscription, success_url: str, cancel_url: str, acquisition_session_id=None
+) -> str:
+    """Checkout de assinatura com valor negociado (sem Price ID fixo).
+
+    Pros alunos legados que nunca passaram pelo checkout dos 3 planos
+    (Essencial/Completo/Premium) e pagam um valor combinado individualmente
+    fora da Stripe: em vez de resolver um Price ID pre-cadastrado
+    (_resolve_price_id), usa `price_data` pra criar o Price ad-hoc na hora,
+    com o valor de `subscription.custom_monthly_price`. Precisa desse campo
+    preenchido -- e' o admin (PublicWorkoutSubscriptionAdmin) quem grava,
+    nunca um valor vindo de request.
+
+    metadata['custom_price']='1' avisa stripe_handlers._confirm_tier_price
+    (RT3) pra pular o cross-check de Price ID fixo -- o real DIVERGE de
+    proposito aqui, nao e fraude.
+    """
+    import stripe
+
+    if subscription.custom_monthly_price is None:
+        raise PublicWorkoutStripeNotConfiguredError(
+            'custom_monthly_price nao definido nesta assinatura -- preencha no admin antes de gerar o link.'
+        )
+
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key:
+        raise PublicWorkoutStripeNotConfiguredError('STRIPE_SECRET_KEY nao definida.')
+    stripe.api_key = secret_key
+
+    unit_amount = int((subscription.custom_monthly_price * 100).to_integral_value())
+    account = subscription.account
+    metadata = {
+        'product': 'coaching',
+        'public_workout_subscription_id': str(subscription.pk),
+        'plan_slug': subscription.plan_slug or '',
+        'tier': subscription.tier,
+        'custom_price': '1',
+        'offer_version': subscription.offer_version or '',
+        'service_policy_version': subscription.service_policy_version or '',
+        'terms_version': subscription.terms_version or '',
+        'privacy_version': subscription.privacy_version or '',
+        'guarantee_model': subscription.guarantee_model,
+        'acquisition_session_id': str(acquisition_session_id or ''),
+    }
+
+    session = stripe.checkout.Session.create(
+        mode='subscription',
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'brl',
+                'unit_amount': unit_amount,
+                'recurring': {'interval': 'month'},
+                'product_data': {
+                    'name': f'Consultoria Curva — {subscription.plan_slug or account.email}',
+                },
+            },
+            'quantity': 1,
+        }],
+        customer_email=account.email,
+        client_reference_id=str(subscription.pk),
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata=metadata,
+        subscription_data={'metadata': metadata},
+        # inclui unit_amount na chave: valor renegociado precisa de Session
+        # nova, nunca reaproveitar a Session cacheada do valor antigo.
+        idempotency_key=f'public-workout-subscription-custom-{subscription.pk}-{unit_amount}',
+    )
     return session.url
 
 
@@ -149,6 +328,7 @@ def start_customer_portal_session(*, customer_id: str, return_url: str) -> str:
 
 __all__ = [
     'PublicWorkoutStripeNotConfiguredError',
+    'start_custom_price_subscription_checkout',
     'start_customer_portal_session',
     'start_subscription_checkout',
 ]

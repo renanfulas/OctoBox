@@ -51,6 +51,17 @@ ARQUIVO: modal expandido do calendario mensal.
                 </label>
 
                 <label>
+                    <span class="field-label">{{ page.data.schedule_form.workout_program.label }}</span>
+                    <select name="workout_program" required>
+                        {% for value, label in page.data.schedule_form.workout_program.field.choices %}
+                        <option value="{{ value }}" {% if value|stringformat:'s' == page.data.weekend_rotation_state.workout_program_id %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="meta-text">Define qual programação semanal poderá preencher estas aulas.</small>
+                    {% for error in page.data.schedule_form.workout_program.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                </label>
+
+                <label>
                     <span class="field-label">{{ page.data.schedule_form.coach.label }}</span>
                     <select name="coach">
                         {% for value, label in page.data.schedule_form.coach.field.choices %}

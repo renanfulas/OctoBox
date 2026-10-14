@@ -10,6 +10,7 @@ POR QUE ELE EXISTE:
 """
 
 from django.urls import path
+from .public_workout_training_analytics import PublicWorkoutTrainingSessionDetailView
 
 from public_workouts.stripe_handlers import public_workout_stripe_webhook_receiver
 
@@ -18,6 +19,7 @@ from .public_workout_views import (
     PublicWorkoutAccountSignOutView,
     PublicWorkoutAccountView,
     PublicWorkoutColdSignupView,
+    PublicWorkoutCheckoutReturnView,
     PublicWorkoutGoogleCallbackView,
     PublicWorkoutGoogleStartView,
     PublicWorkoutFunnelEventView,
@@ -25,6 +27,7 @@ from .public_workout_views import (
     PublicWorkoutFunnelAnalyticsLoginView,
     PublicWorkoutFunnelAnalyticsLogoutView,
     PublicWorkoutLandingView,
+    PublicWorkoutJullyLandingView,
     PublicWorkoutLoginView,
     PublicWorkoutNutritionIntakeView,
     PublicWorkoutPrivacyView,
@@ -35,6 +38,7 @@ from .public_workout_views import (
 )
 
 urlpatterns = [
+    path('jully/', PublicWorkoutJullyLandingView.as_view(), name='public-workout-landing-jully'),
     path('', PublicWorkoutLandingView.as_view(), name='public-workout-landing'),
     path('termos', PublicWorkoutTermsView.as_view(), name='public-workout-terms'),
     path('privacidade', PublicWorkoutPrivacyView.as_view(), name='public-workout-privacy'),
@@ -43,8 +47,10 @@ urlpatterns = [
     path('login/google/callback', PublicWorkoutGoogleCallbackView.as_view(), name='public-workout-oauth-google-callback'),
     path('subscribe', PublicWorkoutSubscribeView.as_view(), name='public-workout-subscribe'),
     path('cadastro', PublicWorkoutColdSignupView.as_view(), name='public-workout-cold-signup'),
+    path('checkout/retorno', PublicWorkoutCheckoutReturnView.as_view(), name='public-workout-checkout-return'),
     path('eventos', PublicWorkoutFunnelEventView.as_view(), name='public-workout-funnel-event'),
     path('analytics/', PublicWorkoutFunnelAnalyticsView.as_view(), name='public-workout-funnel-analytics'),
+    path('analytics/sessoes/<uuid:session_id>/', PublicWorkoutTrainingSessionDetailView.as_view(), name='public-workout-training-session-detail'),
     path('analytics/login/', PublicWorkoutFunnelAnalyticsLoginView.as_view(), name='public-workout-funnel-analytics-login'),
     path('analytics/logout/', PublicWorkoutFunnelAnalyticsLogoutView.as_view(), name='public-workout-funnel-analytics-logout'),
     path('billing-portal', PublicWorkoutBillingPortalView.as_view(), name='public-workout-billing-portal'),

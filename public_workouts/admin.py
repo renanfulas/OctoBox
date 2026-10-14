@@ -3,14 +3,18 @@ import json
 from django import forms
 from django.contrib import admin, messages
 from django.db import IntegrityError, models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from . import nutrition_schema, schema
+from .guided_prescription import propose_guided_prescription, validate_guided_prescription
 from .models import (
+    PublicWorkoutAccount,
     PublicWorkoutAssessment,
     PublicWorkoutCampaignSpend,
     PublicWorkoutAcquisitionSession,
+    PublicWorkoutCheckoutLead,
     PublicWorkoutFunnelEvent,
     PublicWorkoutMealPlan,
     PublicWorkoutMealPlanDelivery,
@@ -37,18 +41,14 @@ from .models import (
     PublicWorkoutWaitlistEntry,
     PublicWorkoutWaitlistStatus,
 )
-from .program_generation_ai import generate_program_draft_payload
 from .widgets import NutritionPlanEditorWidget
 from .notifications import notify_program_ready
 from .services import (
     ProgramDraftReviewError,
     approve_and_publish_draft,
-    create_program_draft,
     flag_movements_against_restrictions,
-    get_training_profile,
     publish_meal_plan,
     reject_program_draft,
-    serialize_training_profile,
 )
 
 
@@ -56,10 +56,10 @@ from .services import (
 class PublicWorkoutAcquisitionSessionAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'first_source', 'first_medium', 'last_source', 'last_medium',
-        'account', 'subscription', 'first_seen_at', 'last_seen_at',
+        'partner_code', 'account', 'subscription', 'first_seen_at', 'last_seen_at',
     )
-    list_filter = ('first_medium', 'last_medium', 'offer_version')
-    search_fields = ('id', 'first_source', 'last_source', 'first_campaign', 'last_campaign')
+    list_filter = ('partner_code', 'first_medium', 'last_medium', 'offer_version')
+    search_fields = ('id', 'partner_code', 'first_source', 'last_source', 'first_campaign', 'last_campaign')
     ordering = ('-last_seen_at',)
     readonly_fields = [field.name for field in PublicWorkoutAcquisitionSession._meta.fields]
 
@@ -70,11 +70,38 @@ class PublicWorkoutAcquisitionSessionAdmin(admin.ModelAdmin):
         return False
 
 
+@admin.register(PublicWorkoutCheckoutLead)
+class PublicWorkoutCheckoutLeadAdmin(admin.ModelAdmin):
+    list_display = ('email', 'tier', 'marketing_consent', 'paid_at', 'created_at')
+    list_editable = ('marketing_consent',)
+    list_filter = ('tier', 'marketing_consent', 'paid_at', 'created_at')
+    search_fields = ('email',)
+    readonly_fields = [
+        field.name for field in PublicWorkoutCheckoutLead._meta.fields
+        if field.name not in ('marketing_consent', 'marketing_consent_at')
+    ]
+    ordering = ('-created_at',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return super().has_change_permission(request, obj)
+
+    def save_model(self, request, obj, form, change):
+        if 'marketing_consent' in form.changed_data:
+            if obj.marketing_consent:
+                obj.marketing_consent_at = timezone.now()
+            else:
+                obj.marketing_consent_at = None
+        super().save_model(request, obj, form, change)
+
+
 @admin.register(PublicWorkoutFunnelEvent)
 class PublicWorkoutFunnelEventAdmin(admin.ModelAdmin):
-    list_display = ('event_type', 'tier', 'channel', 'source', 'campaign', 'occurred_at')
-    list_filter = ('event_type', 'tier', 'channel', 'occurred_at')
-    search_fields = ('event_id', 'source', 'campaign', 'correlation_id')
+    list_display = ('event_type', 'tier', 'partner_code', 'channel', 'source', 'campaign', 'occurred_at')
+    list_filter = ('event_type', 'tier', 'partner_code', 'channel', 'occurred_at')
+    search_fields = ('event_id', 'partner_code', 'source', 'campaign', 'correlation_id')
     ordering = ('-occurred_at',)
     readonly_fields = [field.name for field in PublicWorkoutFunnelEvent._meta.fields]
 
@@ -223,72 +250,71 @@ class AwaitingNutritionFilter(admin.SimpleListFilter):
         ).exclude(account_id__in=accounts_com_plano)
 
 
+@admin.register(PublicWorkoutAccount)
+class PublicWorkoutAccountAdmin(admin.ModelAdmin):
+    list_display = ('email', 'whatsapp', 'created_at')
+    search_fields = ('email',)
+    readonly_fields = ('created_at', 'updated_at', 'last_login_at', 'student_identity_id')
+
+
 @admin.register(PublicWorkoutSubscription)
 class PublicWorkoutSubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('account', 'tier', 'status', 'plan_slug', 'created_at')
+    list_display = ('account', 'tier', 'status', 'plan_slug', 'custom_monthly_price', 'created_at')
     list_filter = (AwaitingActivationFilter, AwaitingNutritionFilter, 'tier', 'status')
     search_fields = ('account__email', 'plan_slug')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at')
-    actions = ['generate_ai_draft']
+    actions = ['generate_ai_draft', 'generate_custom_price_checkout_link']
 
     @admin.action(description='Gerar rascunho de treino com IA')
     def generate_ai_draft(self, request, queryset):
+        from .services import generate_ai_draft_for_subscription
+
         for subscription in queryset:
-            if not subscription.plan_slug:
-                self.message_user(
-                    request, f'{subscription}: defina plan_slug antes de gerar.', level=messages.ERROR
-                )
-                continue
+            status, message = generate_ai_draft_for_subscription(subscription)
+            level = messages.SUCCESS if status == 'success' else messages.ERROR
+            self.message_user(request, f'{subscription}: {message}', level=level)
 
-            profile = get_training_profile(account_id=subscription.account_id)
-            if profile is None:
-                self.message_user(
-                    request, f'{subscription}: aluno ainda não respondeu à anamnese.', level=messages.ERROR
-                )
-                continue
+    @admin.action(description='Gerar link de checkout com valor personalizado (legado sem plano fixo)')
+    def generate_custom_price_checkout_link(self, request, queryset):
+        from .stripe_checkout import (
+            PublicWorkoutStripeNotConfiguredError,
+            start_custom_price_subscription_checkout,
+        )
 
-            training_profile_dict = serialize_training_profile(profile)
-            known_slugs = list(
-                PublicWorkoutMovement.objects.filter(status=PublicWorkoutMovementStatus.ACTIVE).values_list(
-                    'slug', flat=True
-                )
-            )
-            payload, model = generate_program_draft_payload(
-                training_profile=training_profile_dict,
-                tier=subscription.tier,
-                plan_slug=subscription.plan_slug,
-                known_movement_slugs=known_slugs,
-            )
-            if payload is None:
+        success_url = request.build_absolute_uri(reverse('public-workout-account')) + '?checkout=retorno'
+        cancel_url = request.build_absolute_uri(reverse('public-workout-account')) + '?checkout=cancelado'
+
+        for subscription in queryset:
+            if subscription.stripe_customer_id:
                 self.message_user(
                     request,
-                    f'{subscription}: geração falhou (sem chave configurada, timeout, ou saída inválida — '
-                    'ver logs). Monte manualmente como antes.',
+                    f'{subscription}: já tem stripe_customer_id (já concluiu checkout antes) — '
+                    'use o Customer Portal normal, não este link.',
                     level=messages.WARNING,
                 )
                 continue
-
+            if subscription.custom_monthly_price is None:
+                self.message_user(
+                    request,
+                    f'{subscription}: preencha "custom monthly price" antes de gerar o link.',
+                    level=messages.ERROR,
+                )
+                continue
             try:
-                create_program_draft(
-                    account_id=subscription.account_id,
-                    slug=subscription.plan_slug,
-                    payload=payload,
-                    source=PublicWorkoutProgramDraftSource.AI_GENERATED,
-                    ai_model=model,
-                    training_profile_snapshot=training_profile_dict,
+                url = start_custom_price_subscription_checkout(
+                    subscription=subscription, success_url=success_url, cancel_url=cancel_url,
                 )
-            except IntegrityError:
-                self.message_user(
-                    request,
-                    f'{subscription}: já existe rascunho pendente para este slug — revise-o antes de gerar outro.',
-                    level=messages.WARNING,
-                )
+            except PublicWorkoutStripeNotConfiguredError as exc:
+                self.message_user(request, f'{subscription}: {exc}', level=messages.ERROR)
                 continue
-
             self.message_user(
                 request,
-                f'{subscription}: rascunho gerado — revise em "Rascunhos de programa" antes de publicar.',
+                format_html(
+                    '{}: <a href="{}" target="_blank" rel="noopener">{}</a> '
+                    '(copie e envie pro aluno — expira como qualquer Checkout Session da Stripe)',
+                    subscription, url, url,
+                ),
                 level=messages.SUCCESS,
             )
 
@@ -499,8 +525,9 @@ class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
         'created_at',
         'updated_at',
         'restriction_flags_display',
+        'guided_prescription_preview',
     )
-    actions = ['approve_and_publish_action', 'reject_action']
+    actions = ['prepare_guided_prescription_action', 'approve_and_publish_action', 'reject_action']
 
     @admin.display(description='⚠ Movimentos a revisar (restrições declaradas na anamnese)')
     def restriction_flags_display(self, obj):
@@ -515,10 +542,62 @@ class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
         )
         return format_html('<ul>{}</ul>', items)
 
+    @admin.display(description='Prévia de séries guiadas para revisão')
+    def guided_prescription_preview(self, obj):
+        if not obj or not isinstance(obj.payload, dict):
+            return 'Salve o rascunho para ver as propostas.'
+        rows = []
+        for day in obj.payload.get('days', []):
+            for block in day.get('blocks', []):
+                for movement in block.get('movements', []):
+                    slug = movement.get('movement_slug', 'movimento')
+                    if movement.get('guided_prescription') is not None:
+                        rows.append((slug, 'Estruturado no JSON; confira séries, descanso e carga.'))
+                        continue
+                    proposal = propose_guided_prescription(movement)
+                    if proposal is None or validate_guided_prescription(proposal):
+                        rows.append((slug, 'Texto ambíguo: registre uma prescrição livre ou preencha guided_prescription manualmente.'))
+                    else:
+                        rows.append((slug, json.dumps({'guided_prescription': proposal}, ensure_ascii=False, indent=2)))
+        if not rows:
+            return 'Nenhum movimento no rascunho.'
+        return format_html(
+            '<p>Propostas para copiar e revisar no JSON antes da aprovação. Nada é convertido automaticamente.</p><ul>{}</ul>',
+            format_html_join('', '<li><strong>{}</strong><pre style="white-space:pre-wrap">{}</pre></li>', rows[:100]),
+        )
+
     def has_change_permission(self, request, obj=None):
         if obj is not None and obj.status != PublicWorkoutProgramDraftStatus.PENDING_REVIEW:
             return False
         return super().has_change_permission(request, obj)
+
+    @admin.action(description='Preparar séries guiadas para revisão')
+    def prepare_guided_prescription_action(self, request, queryset):
+        prepared = 0
+        unresolved = 0
+        for draft in queryset.filter(status=PublicWorkoutProgramDraftStatus.PENDING_REVIEW):
+            payload = draft.payload
+            changed = False
+            for day in payload.get('days', []):
+                for block in day.get('blocks', []):
+                    for movement in block.get('movements', []):
+                        if movement.get('guided_prescription') is not None:
+                            continue
+                        proposal = propose_guided_prescription(movement)
+                        if proposal is None or validate_guided_prescription(proposal):
+                            unresolved += 1
+                            continue
+                        movement['guided_prescription'] = proposal
+                        prepared += 1
+                        changed = True
+            if changed:
+                draft.payload = payload
+                draft.save(update_fields=['payload', 'updated_at'])
+        self.message_user(
+            request,
+            f'{prepared} movimento(s) preparados para revisão; {unresolved} precisam de edição manual. Nada foi publicado.',
+            level=messages.INFO,
+        )
 
     @admin.action(description='Aprovar e publicar')
     def approve_and_publish_action(self, request, queryset):

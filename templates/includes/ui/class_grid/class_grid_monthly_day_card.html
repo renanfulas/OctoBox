@@ -18,7 +18,7 @@
                         <strong>{{ item.starts_at|date:"H:i" }}</strong>
                         <span class="monthly-session-chip-coach">{{ item.coach_display_name }}</span>
                     </div>
-                    <span>{{ item.object.title }}</span>
+                    <span>{{ item.workout_program_name }} · {{ item.object.title }}</span>
                 </div>
             </div>
             {% endfor %}

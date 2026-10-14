@@ -28,6 +28,8 @@ from django.utils import timezone
 from student_app.brazilian_holidays import get_brazilian_holiday_name
 
 from .models import (
+    PublicWorkoutAccount,
+    PublicWorkoutCheckoutLead,
     PublicWorkoutPayment,
     PublicWorkoutPaymentNotice,
     PublicWorkoutPaymentStatus,
@@ -310,6 +312,56 @@ def get_or_create_subscription(
         # landing. Upgrade/downgrade de assinatura vigente pertence ao Portal
         # Stripe e aos respectivos webhooks.
         return subscription
+
+
+@transaction.atomic
+def provision_paid_checkout_lead(lead_id: int, *, customer_id: str = '', stripe_subscription_id: str = ''):
+    """Create the student identity only after Stripe has confirmed payment."""
+    lead = PublicWorkoutCheckoutLead.objects.select_for_update().get(pk=lead_id)
+    if lead.account_id:
+        account = lead.account
+        subscription = account.subscription
+    else:
+        account, _ = PublicWorkoutAccount.objects.get_or_create(email=lead.email.lower())
+        subscription = PublicWorkoutSubscription.objects.filter(account=account).first()
+        if subscription is None:
+            subscription = PublicWorkoutSubscription.objects.create(
+                account=account,
+                tier=lead.tier,
+                status=PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
+                requires_login=True,
+                offer_version=lead.offer_version,
+                service_policy_version=lead.service_policy_version,
+                terms_version=lead.terms_version,
+                privacy_version=lead.privacy_version,
+                guarantee_model=lead.guarantee_model,
+                contract_accepted_at=lead.contract_accepted_at,
+            )
+        elif subscription.status == PublicWorkoutSubscriptionStatus.PENDING_PAYMENT:
+            subscription.tier = lead.tier
+            subscription.requires_login = True
+            subscription.offer_version = lead.offer_version
+            subscription.service_policy_version = lead.service_policy_version
+            subscription.terms_version = lead.terms_version
+            subscription.privacy_version = lead.privacy_version
+            subscription.guarantee_model = lead.guarantee_model
+            subscription.contract_accepted_at = lead.contract_accepted_at
+            subscription.save(update_fields=[
+                'tier', 'requires_login', 'offer_version', 'service_policy_version',
+                'terms_version', 'privacy_version', 'guarantee_model', 'contract_accepted_at', 'updated_at',
+            ])
+        lead.account = account
+    if customer_id or stripe_subscription_id:
+        link_stripe_ids(subscription, customer_id=customer_id or subscription.stripe_customer_id,
+                        stripe_subscription_id=stripe_subscription_id or subscription.stripe_subscription_id)
+    if lead.acquisition_session_id:
+        from .acquisition import bind_acquisition_session
+        bind_acquisition_session(lead.acquisition_session, account=account, subscription=subscription)
+    lead.stripe_customer_id = customer_id or lead.stripe_customer_id
+    lead.stripe_subscription_id = stripe_subscription_id or lead.stripe_subscription_id
+    lead.paid_at = lead.paid_at or timezone.now()
+    lead.save(update_fields=['account', 'stripe_customer_id', 'stripe_subscription_id', 'paid_at', 'updated_at'])
+    return subscription
 
 
 def link_stripe_ids(subscription, *, customer_id: str, stripe_subscription_id: str) -> None:

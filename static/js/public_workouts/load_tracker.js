@@ -1,98 +1,39 @@
 /*
- * ARQUIVO: registro de carga do "template unico" (Onda B3 do CORDA, item 8).
- *
- * POR QUE ELE EXISTE:
- * - workout.html ja mostra a EVOLUCAO de carga (aba Historico, alimentada
- *   por load_history/one_rep_max_by_movement — ver templatetags
- *   public_workouts_extras.py::load_chart_points), mas ate aqui nao tinha
- *   como o aluno REGISTRAR a carga de hoje: so existia o endpoint HTTP
- *   (POST /renan/<slug>/carga, PublicWorkoutRecordLoadView) sem UI nenhuma
- *   chamando ele. Este arquivo e essa UI.
- * - Nao reusa static/js/public_workouts/app.js: aquele arquivo e do grid
- *   semanal client-only (.wk-input/.tp-*) das 8 paginas legadas que a
- *   Onda B3 vai apagar (item 3) — grid que nunca saia do localStorage do
- *   aparelho. Aqui o modelo e outro (backend real, um registro por data,
- *   nao uma grade fixa de 5 semanas), entao a UI tambem e outra: um input
- *   por movimento rastreado, "o que voce levantou HOJE".
- *
- * PONTOS CRITICOS (outbox em IndexedDB, item 8):
- * - Toda gravacao (clique em Salvar OU rascunho automatico em
- *   visibilitychange) primeiro entra no IndexedDB (`public-workout-outbox`,
- *   store `pending-loads`) — so DEPOIS tenta enviar. Se o envio falhar
- *   (offline, erro de rede), o registro fica no outbox e uma proxima
- *   tentativa (evento `online`, proximo load da pagina) reenvia sozinho.
- *   E o mesmo motivo de "Nenhum aluno perdeu carga" (Pronto-quando #5 da
- *   Onda B3): perder o dado seria pior que atrasar o envio.
- * - `idempotency_key` e gerada UMA VEZ, no momento em que o registro entra
- *   no outbox, e reenviada sem trocar em toda tentativa seguinte —
- *   PublicWorkoutRecordLoadView/record_load (public_workouts/services.py)
- *   usa ela pra nunca duplicar linha num reenvio. Duas gravacoes
- *   DIFERENTES (o aluno corrige o proprio numero e salva de novo) geram
- *   chaves diferentes de proposito: sao dois eventos, nao um so repetido.
- * - Limpeza no logout: ainda NAO ha rota de logout no corredor (so o
- *   cookie de posse do B0 e a sessao de login do B1, nenhum "sair"
- *   clicavel hoje) — por isso `clearOutbox` so fica exportada
- *   (`window.PublicWorkoutLoadTracker.clearOutbox`) esperando esse botao
- *   nascer, em vez de fingir que ja esta ligada a algo real.
- * - 401 (sessao de login expirou) NUNCA limpa o outbox — o registro fica
- *   guardado e tenta de novo sozinho assim que o aluno logar de novo
- *   (mesmo padrao de "sessao expirou, faca login novamente" de
- *   assessments.js, sem duplicar a logica de leitura de cookie daqui:
- *   so precisamos do redirect, nao do relatorio).
- *
- * PONTOS CRITICOS (dica de ultima carga + stepper):
- * - GET /renan/<slug>/pacote.json (PublicWorkoutPackageView, ja existe)
- *   devolve `last_top_set_by_movement` — usado so pra popular a dica "Última
- *   vez: X kg" acima do campo. 401 aqui (sem sessao ainda) so deixa a
- *   dica vazia, nunca bloqueia o registro em si (o aluno pode digitar e
- *   salvar sem nunca ter visto a dica — ela e so um atalho, nao um
- *   pre-requisito).
- * - O stepper (+/-2,5kg) edita o MESMO campo que o clique/toque direto —
- *   nao existe um segundo estado interno. Dispara o mesmo evento `input`
- *   que marca `data-dirty`, entao o rascunho automatico em
- *   visibilitychange cobre o stepper tambem, de graca.
- *
- * PONTOS CRITICOS (reps/RIR — plano curva-carga-completa-reps-rir-recorde,
- * Fase 1):
- * - O backend (record_load) ja aceitava reps/rir ha semanas; o gap era
- *   100% aqui — este arquivo nunca incluia os dois campos no payload.
- * - RIR nunca tem valor padrao nem e copiado da dica de "ultima vez"
- *   (paintHints) — inventar a percepcao de esforco do aluno e pior que
- *   nao mostrar nada. So peso/reps sao copiaveis.
- * - Parsing estrito: regex fecha o campo antes do fetch, nunca parseFloat
- *   parcial (que aceitaria "8kg" como 8). Servidor valida de novo do
- *   zero (services.py::_validate_load_values) — este arquivo NAO e a
- *   unica linha de defesa, so evita a viagem de rede pro caso comum.
- * - Trocar de exercicio (wireSubstitutePills) limpa peso/reps/RIR do
- *   widget — carregar 60kg de um movimento de barra pra um de halteres
- *   nao significa nada (achado real: o comportamento anterior deixava o
- *   valor antigo no campo depois da troca).
- * - Rascunho (store `drafts`, chave composta plano+movimento+data,
- *   IndexedDB v2) e' SEPARADO da outbox confirmada (`pending-loads`):
- *   editar (ou o auto-save de visibilitychange) so grava rascunho local,
- *   nunca um POST de "realizado". Só o clique explícito em Salvar
- *   promove rascunho -> outbox confirmada (com idempotency_key gerada
- *   na hora da promoção) e apaga o rascunho correspondente. Ao reabrir a
- *   pagina/trocar de exercicio, rascunho local prevalece sobre o eco
- *   "confirmado hoje" que o servidor pre-preencheu (ver hydrateDraft).
- * - LIMITACAO CONHECIDA, NAO RESOLVIDA NESTA RODADA: o rascunho hoje e'
- *   por (plano, movimento, data) no dispositivo — nao por CONTA. Em
- *   aparelho compartilhado por duas contas, um rascunho deixado por uma
- *   conta pode aparecer pra outra que logar depois no mesmo plano/dia.
- *   Fechar isso de verdade exige o backend expor um identificador
- *   estavel de conta pro cliente (pacote.json nao devolve isso hoje) pra
- *   namespacear a chave — decisao de produto, nao so codigo.
+ * Controlador do registro de carga do Curva.
+ * Cuida dos campos, validacao, feedback e envio ao endpoint /carga.
+ * Rascunhos e fila IndexedDB: load-storage.js.
+ * Calculadora de anilhas: load-plate-calculator.js.
+ * Transporte HTTP: load-api.js.
+ * Reenvio e conflitos da fila: load-sync.js.
+ * Somente o clique em Salvar promove um rascunho a registro confirmado.
  */
 
 (function () {
   'use strict';
 
   var body = document.body;
-  var DB_NAME = 'public-workout-outbox';
-  var DB_VERSION = 2; // v2: acrescenta o store de rascunho (ver DRAFT_STORE_NAME)
-  var STORE_NAME = 'pending-loads';
-  var DRAFT_STORE_NAME = 'drafts';
+  var loadApi = window.CurvaLoadApi;
+  // Cada login usa o próprio banco local. Dados legados sem dono conhecido
+  // permanecem no banco antigo para recuperação manual; nunca são reenviados
+  // automaticamente sob outra conta.
+  var loadStorage = window.CurvaLoadStorage.create(body.getAttribute('data-account-scope'), planSlug, todayIso);
+  var clearOutbox = loadStorage.clearOutbox;
+  var putDraft = loadStorage.putDraft;
+  var deleteDraft = loadStorage.deleteDraft;
+  var getDraft = loadStorage.getDraft;
+  var clearDrafts = loadStorage.clearDrafts;
   var DRAFT_DEBOUNCE_MS = 600;
+  var conflictNotice = document.querySelector('[data-workout-load-sync-notice]');
+  var blockedEntry = null;
+  var loadSync = window.CurvaLoadSync.create({
+    api: loadApi,
+    storage: loadStorage,
+    planSlug: planSlug,
+    isOnline: function () { return navigator.onLine; },
+    onConfirmed: reportDrainedEntry,
+    onBlocked: showBlockedEntry,
+    onDeferred: reportDeferredEntry,
+  });
 
   function planSlug() {
     return body.getAttribute('data-plan-slug') || '';
@@ -112,160 +53,6 @@
     // Fallback pra navegador sem crypto.randomUUID (raro, mas o corredor
     // roda em aparelho de aluno variado demais pra assumir suporte).
     return 'load-' + Date.now() + '-' + Math.random().toString(16).slice(2);
-  }
-
-  // Mesmo padrao de assessments.js::getCookie/postJson — nao importa aquele
-  // arquivo direto porque nem toda pagina que carrega load_tracker.js
-  // necessariamente carrega assessments.js (abas independentes).
-  function getCookie(name) {
-    var parts = (document.cookie || '').split(';');
-    for (var i = 0; i < parts.length; i++) {
-      var part = parts[i].trim();
-      if (part.indexOf(name + '=') === 0) {
-        return decodeURIComponent(part.slice(name.length + 1));
-      }
-    }
-    return '';
-  }
-
-  function postJson(url, payload) {
-    return window.fetch(url, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken'),
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: JSON.stringify(payload || {}),
-    }).then(function (response) {
-      return response.text().then(function (text) {
-        var data = {};
-        if (text) {
-          try { data = JSON.parse(text); } catch (e) { /* corpo nao-JSON */ }
-        }
-        return { ok: response.ok, status: response.status, data: data };
-      });
-    });
-  }
-
-  /* ══ OUTBOX (IndexedDB) ═══════════════════════════════════════ */
-
-  function openDb() {
-    return new Promise(function (resolve, reject) {
-      if (!window.indexedDB) { reject(new Error('sem IndexedDB')); return; }
-      var request = window.indexedDB.open(DB_NAME, DB_VERSION);
-      request.onupgradeneeded = function () {
-        var db = request.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: 'idempotency_key' });
-        }
-        // v2 (plano curva-carga-completa-reps-rir-recorde, §3.2): store
-        // separado pra rascunho -- chave composta (plano/movimento/data)
-        // porque um rascunho e' por combinacao dessas tres coisas, nao
-        // por idempotency_key (que so nasce quando o rascunho e'
-        // promovido pra confirmado, no clique em Salvar).
-        if (!db.objectStoreNames.contains(DRAFT_STORE_NAME)) {
-          db.createObjectStore(DRAFT_STORE_NAME, { keyPath: ['plan_slug', 'movement_slug', 'performed_on'] });
-        }
-      };
-      request.onblocked = function () {
-        // Outra aba da mesma origem ainda tem a versao 1 aberta -- nao
-        // forca o upgrade (fecharia a conexao da outra aba no meio do
-        // uso). A proxima tentativa (reload, ou a outra aba fechando)
-        // resolve sozinha; nunca perde rascunho/outbox por isso.
-        reject(new Error('upgrade do IndexedDB bloqueado por outra aba'));
-      };
-      request.onsuccess = function () {
-        var db = request.result;
-        db.onversionchange = function () { db.close(); };
-        resolve(db);
-      };
-      request.onerror = function () { reject(request.error); };
-    });
-  }
-
-  function withStore(storeName, mode, fn) {
-    return openDb().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction(storeName, mode);
-        var store = tx.objectStore(storeName);
-        var result = fn(store);
-        tx.oncomplete = function () { resolve(result); };
-        tx.onerror = function () { reject(tx.error); };
-      });
-    });
-  }
-
-  function queueEntry(entry) {
-    return withStore(STORE_NAME, 'readwrite', function (store) { store.put(entry); return entry; });
-  }
-
-  function removeEntry(idempotencyKey) {
-    return withStore(STORE_NAME, 'readwrite', function (store) { store.delete(idempotencyKey); });
-  }
-
-  function listEntries() {
-    return openDb().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction(STORE_NAME, 'readonly');
-        var request = tx.objectStore(STORE_NAME).getAll();
-        request.onsuccess = function () { resolve(request.result || []); };
-        request.onerror = function () { reject(request.error); };
-      });
-    });
-  }
-
-  function clearOutbox() {
-    return withStore(STORE_NAME, 'readwrite', function (store) { store.clear(); });
-  }
-
-  /* ══ RASCUNHO (IndexedDB, store separado da outbox confirmada) ══ */
-
-  function draftKey(widget) {
-    return {
-      plan_slug: planSlug(),
-      movement_slug: widget.getAttribute('data-movement-slug'),
-      performed_on: todayIso(),
-    };
-  }
-
-  function putDraft(widget, weightKg, reps, rir) {
-    var key = draftKey(widget);
-    return withStore(DRAFT_STORE_NAME, 'readwrite', function (store) {
-      store.put({
-        plan_slug: key.plan_slug,
-        movement_slug: key.movement_slug,
-        performed_on: key.performed_on,
-        weight_kg: weightKg,
-        reps: reps,
-        rir: rir,
-        saved_at: Date.now(),
-      });
-    });
-  }
-
-  function deleteDraft(widget) {
-    var key = draftKey(widget);
-    return withStore(DRAFT_STORE_NAME, 'readwrite', function (store) {
-      store.delete([key.plan_slug, key.movement_slug, key.performed_on]);
-    });
-  }
-
-  function getDraft(widget) {
-    var key = draftKey(widget);
-    return openDb().then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction(DRAFT_STORE_NAME, 'readonly');
-        var request = tx.objectStore(DRAFT_STORE_NAME).get([key.plan_slug, key.movement_slug, key.performed_on]);
-        request.onsuccess = function () { resolve(request.result || null); };
-        request.onerror = function () { reject(request.error); };
-      });
-    });
-  }
-
-  function clearDrafts() {
-    return withStore(DRAFT_STORE_NAME, 'readwrite', function (store) { store.clear(); });
   }
 
   // Persiste o rascunho ATUAL do widget (ou apaga, se os campos voltaram
@@ -346,7 +133,7 @@
     if (!widgets.length) { return; }
     var achievement = responseData && responseData.achievement;
     widgets.forEach(function (widget) {
-      widget.setAttribute('data-today-idempotency-key', entry.idempotency_key);
+      rememberTodayEntry(widget, entry);
       if (isBatch) {
         var extra = achievement
           ? (' · nova maior carga (+' + fmtNumber(achievement.delta_kg) + ' kg sobre seu recorde anterior)')
@@ -364,55 +151,83 @@
     });
   }
 
-  // Drena o outbox: tenta reenviar cada registro pendente. 401 (sessao
-  // expirada) e erro de rede param a drenagem inteira (a proxima tentativa
-  // resolve sozinha, nao adianta insistir nos seguintes agora); 400 (dado
-  // invalido — nao deveria acontecer, mas nao pode travar o outbox pra
-  // sempre) descarta so aquele registro e segue pros outros.
   function drainOutbox() {
-    var slug = planSlug();
-    if (!slug || !navigator.onLine) { return Promise.resolve(); }
+    return loadSync.drain().catch(function () {
+      // IndexedDB indisponível: a fila permanece no aparelho para nova tentativa.
+    });
+  }
 
-    return listEntries().then(function (entries) {
-      var isBatch = entries.length > 1;
-      var chain = Promise.resolve();
-      entries.forEach(function (entry) {
-        chain = chain.then(function () {
-          return postJson('/renan/' + slug + '/carga', entry).then(function (result) {
-            if (result.ok) {
-              reportDrainedEntry(entry, result.data, isBatch);
-              return removeEntry(entry.idempotency_key);
-            }
-            if (result.status === 400) { return removeEntry(entry.idempotency_key); }
-            // 409 (Fase 3 — correcao com alvo ja corrigido por outra
-            // operacao) e' permanente, nunca transitorio: retentativa
-            // infinita bloquearia o resto da fila pra sempre. Descarta.
-            // LIMITACAO CONHECIDA: se o aluno editou duas vezes offline
-            // antes de reconectar, a segunda correcao enfileirada pode
-            // colidir com a primeira quando a fila drenar em ordem e ser
-            // descartada aqui -- perde silenciosamente a segunda edicao
-            // em vez de reabrir como rascunho. Cenario raro (offline +
-            // duas edicoes em sequencia); resolver direito exigiria a
-            // fila devolver resultado por item pro chamador, nao so'
-            // drenar-e-esquecer.
-            if (result.status === 409) { return removeEntry(entry.idempotency_key); }
-            return Promise.reject(new Error('drain interrompido, status ' + result.status));
-          });
-        });
-      });
-      return chain.catch(function () { /* proxima tentativa (online/load) resolve */ });
+  function reportDeferredEntry(entry, result) {
+    widgetsForMovement(entry.movement_slug).forEach(function (widget) {
+      setStatus(widget, result.status === 401
+        ? 'Entre novamente na mesma conta para enviar este registro.'
+        : 'Registro guardado neste aparelho · envio pendente.', true);
+    });
+  }
+
+  function showBlockedEntry(entry) {
+    blockedEntry = entry;
+    widgetsForMovement(entry.movement_slug).forEach(function (widget) {
+      widget._blockedKey = entry.idempotency_key;
+      setStatus(widget, 'Correção pendente de revisão. Seus valores continuam neste aparelho.', true);
+    });
+    if (!conflictNotice) return;
+    var message = conflictNotice.querySelector('[data-load-sync-conflict-message]');
+    var reapply = conflictNotice.querySelector('[data-load-sync-reapply]');
+    var active = entry.active_record;
+    message.textContent = (entry.sync_error || 'O registro precisa de revisão.') +
+      ' Valor guardado: ' + describeEntry(entry) +
+      (active ? ' · Registro atual: ' + describeEntry(active) : '') + '.';
+    reapply.hidden = !active || !active.idempotency_key;
+    conflictNotice.hidden = false;
+  }
+
+  function hideBlockedEntry() {
+    if (blockedEntry) widgetsForMovement(blockedEntry.movement_slug).forEach(function (widget) {
+      if (widget._blockedKey === blockedEntry.idempotency_key) widget._blockedKey = null;
+    });
+    blockedEntry = null;
+    if (conflictNotice) conflictNotice.hidden = true;
+  }
+
+  function exportPendingEntries() {
+    return loadSync.listEntries().then(function (entries) {
+      var data = JSON.stringify({ exported_at: new Date().toISOString(), plan_slug: planSlug(), entries: entries }, null, 2);
+      var url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      var link = document.createElement('a');
+      link.href = url;
+      link.download = 'curva-cargas-pendentes.json';
+      link.click();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+  }
+
+  function wireConflictNotice() {
+    if (!conflictNotice) return;
+    var message = conflictNotice.querySelector('[data-load-sync-conflict-message]');
+    conflictNotice.querySelector('[data-load-sync-export]').addEventListener('click', function () {
+      exportPendingEntries().catch(function () { message.textContent = 'Não foi possível exportar. Os dados locais permanecem guardados.'; });
+    });
+    conflictNotice.querySelector('[data-load-sync-reapply]').addEventListener('click', function () {
+      if (!blockedEntry || !window.confirm('Reaplicar os valores deste aparelho sobre o registro atual do servidor?')) return;
+      loadSync.reapply(blockedEntry.idempotency_key, uuid()).then(function () {
+        hideBlockedEntry();
+        return drainOutbox();
+      }).catch(function (error) { message.textContent = error.message; });
+    });
+    conflictNotice.querySelector('[data-load-sync-discard]').addEventListener('click', function () {
+      if (!blockedEntry || !window.confirm('Descartar esta correção local e usar o registro do servidor? Você pode baixar uma cópia antes.')) return;
+      loadSync.discard(blockedEntry.idempotency_key).then(function () {
+        hideBlockedEntry();
+        return drainOutbox();
+      }).catch(function (error) { message.textContent = error.message; });
     });
   }
 
   /* ══ DICA DE ULTIMA CARGA ═══════════════════════════════════════ */
 
   function fetchLastLoadByMovement() {
-    var slug = planSlug();
-    if (!slug) { return Promise.resolve({}); }
-    return window.fetch('/renan/' + slug + '/pacote.json', { credentials: 'same-origin' })
-      .then(function (response) { return response.ok ? response.json() : {}; })
-      .then(function (data) { return data.last_top_set_by_movement || {}; })
-      .catch(function () { return {}; });
+    return loadApi.lastTopSetByMovement(planSlug());
   }
 
   function paintHints(lastLoadByMovement) {
@@ -453,6 +268,23 @@
     status.classList.toggle('workout-load-input__status--error', !!isError);
   }
 
+  function rememberTodayEntry(widget, entry) {
+    if (!widget || !entry || !entry.idempotency_key) { return; }
+    var rolePrefix = entry.set_role === 'warmup' ? 'warmup' : 'top-set';
+    var roleAttribute = 'data-today-' + rolePrefix + '-idempotency-key';
+    widget.setAttribute(roleAttribute, entry.idempotency_key);
+    widget.setAttribute('data-today-idempotency-key', entry.idempotency_key);
+    ['weight', 'reps', 'rir'].forEach(function (fieldName) {
+      var value = entry[fieldName === 'weight' ? 'weight_kg' : fieldName];
+      var attribute = 'data-today-' + rolePrefix + '-' + fieldName;
+      if (value === null || value === undefined || value === '') {
+        widget.removeAttribute(attribute);
+      } else {
+        widget.setAttribute(attribute, String(value));
+      }
+    });
+  }
+
   function buildEntryFromWidget(widget, weightKg, reps, rir) {
     // Plano curva-grafico-hierarquia-e-set-role.md (§2.3.6/§7.10):
     // set_role SEMPRE presente no payload, nunca omitido -- e' o que
@@ -480,6 +312,52 @@
     var supersedesKey = widget.getAttribute('data-today-idempotency-key');
     if (supersedesKey) { entry.supersedes_idempotency_key = supersedesKey; }
     return entry;
+  }
+
+  function syncCorrectionTargetForRole(widget) {
+    var warmupToggle = widget.querySelector('[data-workout-load-warmup-toggle]');
+    var rolePrefix = (warmupToggle && warmupToggle.checked) ? 'warmup' : 'top-set';
+    var roleAttribute = 'data-today-' + rolePrefix + '-idempotency-key';
+    var roleKey = widget.getAttribute(roleAttribute);
+    if (roleKey) {
+      widget.setAttribute('data-today-idempotency-key', roleKey);
+    } else {
+      widget.removeAttribute('data-today-idempotency-key');
+    }
+
+    var weightField = widget.querySelector('[data-workout-load-field]');
+    var repsField = widget.querySelector('[data-workout-reps-field]');
+    var weight = widget.getAttribute('data-today-' + rolePrefix + '-weight');
+    var reps = widget.getAttribute('data-today-' + rolePrefix + '-reps');
+    if (weightField) {
+      weightField.value = weight || '';
+      weightField.removeAttribute('data-dirty');
+    }
+    if (repsField) {
+      repsField.value = reps || '';
+      repsField.removeAttribute('data-dirty');
+    }
+
+    var rir = widget.getAttribute('data-today-' + rolePrefix + '-rir');
+    var rirPicker = widget.querySelector('[data-workout-rir-picker]');
+    var rirValue = rir === null ? null : parseFloat(rir);
+    var rirLabel = rirValue === null || !isFinite(rirValue)
+      ? ''
+      : (RIR_LABELS[String(rirValue)] || ('RIR ' + fmtNumber(rirValue)));
+    setRirSelection(widget, rirValue !== null && isFinite(rirValue) ? rirValue : null, rirLabel);
+    if (rirPicker) {
+      if (rir === null) { rirPicker.removeAttribute('data-today-rir'); }
+      else { rirPicker.setAttribute('data-today-rir', rir); }
+    }
+    var otherRir = widget.querySelector('[data-workout-rir-other-field]');
+    if (otherRir) {
+      var hasQuickChoice = rir !== null && widget.querySelector('[data-rir-value="' + String(rirValue) + '"]');
+      otherRir.value = rir !== null && !hasQuickChoice ? rir : '';
+      otherRir.hidden = !rir || !!hasQuickChoice;
+    }
+    var effort = widget.querySelector('[data-workout-effort]');
+    if (effort) { effort.open = rir !== null; }
+    updateSaveLabel(widget);
   }
 
   function pulseSuccess(widget) {
@@ -630,9 +508,9 @@
 
   function describeEntry(entry) {
     var parts = [];
-    if (entry.weight_kg !== null) { parts.push(fmtNumber(entry.weight_kg) + ' kg'); }
-    if (entry.reps !== null) { parts.push(entry.reps + ' reps'); }
-    if (entry.rir !== null) { parts.push('RIR ' + fmtNumber(entry.rir)); }
+    if (entry.weight_kg != null) { parts.push(fmtNumber(entry.weight_kg) + ' kg'); }
+    if (entry.reps != null) { parts.push(entry.reps + ' reps'); }
+    if (entry.rir != null) { parts.push('RIR ' + fmtNumber(entry.rir)); }
     return parts.join(' · ');
   }
 
@@ -695,7 +573,7 @@
   // assume que vai dar certo na proxima tentativa, nunca bloqueia a
   // edicao esperando confirmacao do servidor.
   function queueOfflineAndReport(widget, entry, weightField, repsField) {
-    return queueEntry(entry)
+    return loadSync.enqueue(entry)
       .then(function () {
         if (weightField) { weightField.removeAttribute('data-dirty'); }
         if (repsField) { repsField.removeAttribute('data-dirty'); }
@@ -709,6 +587,14 @@
   }
 
   function saveWidget(widget) {
+    if (widget._blockedKey) {
+      setStatus(widget, 'Revise a correção pendente antes de registrar outra carga.', true);
+      return;
+    }
+    if (document.querySelector('[data-workout-guided-active]:not([hidden])')) {
+      setStatus(widget, 'Durante o treino guiado, registre esta série no painel do guia.', true);
+      return;
+    }
     // Acha real, nao hipotetico: toque duplo (comum no celular, principalmente
     // com qualquer engasgo de tela) gerava DOIS idempotency_key diferentes --
     // a idempotencia protege reenvio da MESMA tentativa pela rede, nunca
@@ -747,7 +633,7 @@
     // IndexedDB (drainOutbox generico nao devolve resultado por item).
     var direct = (!slug || !navigator.onLine)
       ? Promise.resolve({ ok: false, status: 0, data: {} })
-      : postJson('/renan/' + slug + '/carga', entry).catch(function () { return { ok: false, status: 0, data: {} }; });
+      : loadApi.postLoad(slug, entry).catch(function () { return { ok: false, status: 0, data: {} }; });
 
     direct
       .then(function (result) {
@@ -756,7 +642,7 @@
           if (repsField) { repsField.removeAttribute('data-dirty'); }
           // A mesma chave que ja enviamos passa a ser "a de hoje" --
           // nao precisa reconsultar o servidor pra saber isso.
-          widget.setAttribute('data-today-idempotency-key', entry.idempotency_key);
+          rememberTodayEntry(widget, entry);
           var wasCorrection = !!entry.supersedes_idempotency_key;
           setStatus(widget, (wasCorrection ? 'Registro corrigido — ' : 'Registro salvo — ') + describeEntry(entry), false);
           pulseSuccess(widget);
@@ -772,8 +658,7 @@
           return deleteDraft(widget).catch(function () {});
         }
         if (result.status === 409) {
-          setStatus(widget, 'Este registro já foi atualizado em outro lugar — atualize a página para continuar.', true);
-          return;
+          return loadSync.block(entry, result);
         }
         if (result.status === 400) {
           var message = (result.data && result.data.error) || 'Dados inválidos — confira os valores antes de salvar.';
@@ -792,6 +677,9 @@
       .then(function () {
         if (saveBtn) { saveBtn.disabled = false; }
         updateSaveLabel(widget);
+      }).catch(function () {
+        if (saveBtn) saveBtn.disabled = false;
+        setStatus(widget, 'Não foi possível guardar a correção. Seus campos foram mantidos; tente novamente.', true);
       });
   }
 
@@ -822,228 +710,10 @@
     markDirty(field);
   }
 
-  /* ══ CALCULADORA DE ANILHAS (plano curva-carga-completa..., §5) ═══ */
-  // So' aparece no widget quando o template ja confirmou os dois
-  // metadados curados (movement_shows_plate_calculator) -- este modulo
-  // so' cuida da MATEMATICA e da config local, nunca decide SE aparece.
-
-  var PLATE_STORAGE_KEY = 'curva-plate-config';
-  var DEFAULT_PLATE_SIZES = [20, 15, 10, 5, 2.5, 1.25];
-  var DEFAULT_PAIRS_PER_SIZE = 4;
-  var DEFAULT_BAR_KG = 20;
-
-  function safeLocalStorage() {
-    try { return window.localStorage; } catch (e) { return null; }
-  }
-
-  function defaultPairs() {
-    var pairs = {};
-    DEFAULT_PLATE_SIZES.forEach(function (size) { pairs[size] = DEFAULT_PAIRS_PER_SIZE; });
-    return pairs;
-  }
-
-  function loadPlateConfig() {
-    var ls = safeLocalStorage();
-    if (!ls) { return { barKg: DEFAULT_BAR_KG, pairs: defaultPairs() }; }
-    try {
-      var raw = ls.getItem(PLATE_STORAGE_KEY);
-      if (!raw) { return { barKg: DEFAULT_BAR_KG, pairs: defaultPairs() }; }
-      var parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object') { return { barKg: DEFAULT_BAR_KG, pairs: defaultPairs() }; }
-      return {
-        barKg: isFinite(parsed.barKg) ? parsed.barKg : DEFAULT_BAR_KG,
-        pairs: parsed.pairs && typeof parsed.pairs === 'object' ? parsed.pairs : defaultPairs(),
-      };
-    } catch (e) { return { barKg: DEFAULT_BAR_KG, pairs: defaultPairs() }; }
-  }
-
-  function savePlateConfig(config) {
-    var ls = safeLocalStorage();
-    if (!ls) { return; }
-    try { ls.setItem(PLATE_STORAGE_KEY, JSON.stringify(config)); } catch (e) {}
-  }
-
-  // Algoritmo deterministico maior-pra-menor, respeitando pares
-  // disponiveis (plano §5.3, caso 1) -- nunca assume estoque infinito.
-  function computePlates(totalKg, barKg, pairs) {
-    if (!isFinite(totalKg) || !isFinite(barKg)) { return { status: 'invalid' }; }
-    if (totalKg < barKg - 0.01) { return { status: 'below_bar' }; }
-    if (Math.abs(totalKg - barKg) < 0.01) { return { status: 'bar_only' }; }
-
-    var perSide = Math.round(((totalKg - barKg) / 2) * 100) / 100;
-    var remaining = perSide;
-    var used = {};
-    var sizes = Object.keys(pairs).map(Number).sort(function (a, b) { return b - a; });
-    for (var i = 0; i < sizes.length; i++) {
-      var size = sizes[i];
-      var available = pairs[size] || 0;
-      var count = 0;
-      while (remaining >= size - 0.01 && count < available) {
-        remaining = Math.round((remaining - size) * 100) / 100;
-        count++;
-      }
-      if (count > 0) { used[size] = count; }
-    }
-    if (remaining > 0.01) { return { status: 'impossible' }; }
-    return { status: 'ok', used: used, perSide: perSide };
-  }
-
-  // Caso 4 do plano: quando o alvo e' impossivel com o estoque, procura o
-  // mais proximo alcancavel pra baixo/cima -- nunca arredonda escondido,
-  // so' sugere.
-  function findNearestAchievable(totalKg, barKg, pairs, direction) {
-    var step = 0.5;
-    for (var delta = step; delta <= 40; delta += step) {
-      var candidate = Math.round((totalKg + direction * delta) * 100) / 100;
-      if (candidate < barKg - 0.01) { break; }
-      var result = computePlates(candidate, barKg, pairs);
-      if (result.status === 'ok' || result.status === 'bar_only') { return candidate; }
-    }
-    return null;
-  }
-
-  function renderPlateInventoryRows(container, pairs) {
-    container.innerHTML = DEFAULT_PLATE_SIZES.map(function (size) {
-      var count = pairs[size] != null ? pairs[size] : 0;
-      return '<div class="workout-load-input__plate-row">' +
-        '<span class="workout-load-input__mini-label">' + fmtNumber(size) + ' kg</span>' +
-        '<input type="number" inputmode="numeric" step="1" min="0" class="workout-load-input__reps-field" ' +
-          'data-plate-size="' + size + '" value="' + count + '" ' +
-          'aria-label="Pares de ' + fmtNumber(size) + ' quilos disponíveis">' +
-        '</div>';
-    }).join('');
-  }
-
   function wirePlateCalculator(widget) {
-    var calc = widget.querySelector('[data-workout-plate-calculator]');
-    if (!calc) { return; }
-    var weightField = widget.querySelector('[data-workout-load-field]');
-    var targetDisplay = calc.querySelector('[data-plate-target-display]');
-    var barOptions = calc.querySelector('[data-plate-bar-options]');
-    var barOtherToggle = calc.querySelector('[data-plate-bar-other-toggle]');
-    var barOtherField = calc.querySelector('[data-plate-bar-other-field]');
-    var inventoryContainer = calc.querySelector('[data-plate-inventory]');
-    var resultEl = calc.querySelector('[data-plate-result]');
-    var checkEl = calc.querySelector('[data-plate-check]');
-    var useBtn = calc.querySelector('[data-plate-use-total]');
-    if (!weightField || !targetDisplay || !barOptions || !inventoryContainer || !resultEl || !checkEl || !useBtn) { return; }
-
-    var config = loadPlateConfig();
-    var target = 0;
-
-    function currentBarKg() {
-      var activePill = barOptions.querySelector('.is-selected');
-      if (activePill) { return parseFloat(activePill.getAttribute('data-bar-value')); }
-      var other = parseFloat((barOtherField.value || '').replace(',', '.'));
-      return isFinite(other) && other >= 0 ? other : config.barKg;
-    }
-
-    function currentPairs() {
-      var pairs = {};
-      inventoryContainer.querySelectorAll('[data-plate-size]').forEach(function (input) {
-        var size = parseFloat(input.getAttribute('data-plate-size'));
-        var count = parseInt(input.value, 10);
-        pairs[size] = isFinite(count) && count >= 0 ? count : 0;
-      });
-      return pairs;
-    }
-
-    function persistConfig() {
-      config = { barKg: currentBarKg(), pairs: currentPairs() };
-      savePlateConfig(config);
-    }
-
-    function renderResult(result, barKg, pairs) {
-      if (result.status === 'below_bar') {
-        resultEl.textContent = 'O total precisa incluir a barra (' + fmtNumber(barKg) + ' kg) — ajuste a barra ou o peso alvo.';
-        checkEl.textContent = '';
-        useBtn.hidden = true;
-        return;
-      }
-      if (result.status === 'bar_only') {
-        resultEl.textContent = 'Somente a barra.';
-        checkEl.textContent = '';
-        useBtn.hidden = false;
-        return;
-      }
-      if (result.status === 'impossible') {
-        var below = findNearestAchievable(target, barKg, pairs, -1);
-        var above = findNearestAchievable(target, barKg, pairs, 1);
-        var alternatives = [];
-        if (below !== null) { alternatives.push(fmtNumber(below) + ' kg'); }
-        if (above !== null) { alternatives.push(fmtNumber(above) + ' kg'); }
-        resultEl.textContent = 'Não é possível montar ' + fmtNumber(target) + ' kg com o estoque configurado.';
-        checkEl.textContent = alternatives.length ? ('Mais próximo: ' + alternatives.join(' ou ') + '.') : 'Ajuste o estoque de anilhas.';
-        useBtn.hidden = true;
-        return;
-      }
-      var sizes = Object.keys(result.used).map(Number).sort(function (a, b) { return b - a; });
-      var perSideParts = [];
-      sizes.forEach(function (size) {
-        for (var i = 0; i < result.used[size]; i++) { perSideParts.push(fmtNumber(size)); }
-      });
-      var totalPlatesKg = sizes.reduce(function (sum, size) { return sum + size * result.used[size] * 2; }, 0);
-      resultEl.textContent = 'De cada lado: ' + perSideParts.join(' + ') + ' kg';
-      checkEl.textContent = fmtNumber(barKg) + ' kg de barra + 2 × ' + fmtNumber(result.perSide) + ' kg = ' + fmtNumber(barKg + totalPlatesKg) + ' kg';
-      useBtn.hidden = false;
-    }
-
-    function recompute() {
-      targetDisplay.textContent = fmtNumber(target);
-      var barKg = currentBarKg();
-      var pairs = currentPairs();
-      renderResult(computePlates(target, barKg, pairs), barKg, pairs);
-    }
-
-    renderPlateInventoryRows(inventoryContainer, config.pairs);
-    barOptions.querySelectorAll('[data-bar-value]').forEach(function (pill) {
-      if (parseFloat(pill.getAttribute('data-bar-value')) === config.barKg) { pill.classList.add('is-selected'); }
-      pill.addEventListener('click', function () {
-        barOptions.querySelectorAll('[data-bar-value]').forEach(function (p) { p.classList.remove('is-selected'); });
-        pill.classList.add('is-selected');
-        barOtherField.value = '';
-        barOtherField.hidden = true;
-        persistConfig();
-        recompute();
-      });
-    });
-    if (barOtherToggle && barOtherField) {
-      barOtherToggle.addEventListener('click', function () {
-        barOtherField.hidden = !barOtherField.hidden;
-        if (!barOtherField.hidden) {
-          barOptions.querySelectorAll('[data-bar-value]').forEach(function (p) { p.classList.remove('is-selected'); });
-          barOtherField.focus();
-        }
-      });
-      barOtherField.addEventListener('input', function () { persistConfig(); recompute(); });
-    }
-    inventoryContainer.addEventListener('input', function () { persistConfig(); recompute(); });
-
-    calc.querySelectorAll('[data-plate-target-step]').forEach(function (stepBtn) {
-      var delta = parseFloat(stepBtn.getAttribute('data-plate-target-step'));
-      stepBtn.addEventListener('click', function () {
-        target = Math.max(0, Math.round((target + delta) * 100) / 100);
-        recompute();
-      });
-    });
-
-    useBtn.addEventListener('click', function () {
-      // "Usar X kg" aplica ao RASCUNHO (marca dirty, agenda o auto-save
-      // de rascunho) -- nunca salva sozinho (plano §5.2: "Nunca salva
-      // automaticamente").
-      weightField.value = target;
-      markDirty(weightField);
-      updateSaveLabel(widget);
-      scheduleDraftSave(widget);
-    });
-
-    calc.addEventListener('toggle', function () {
-      if (!calc.open) { return; }
-      // "Abrir não altera carga" -- só semeia o alvo da calculadora com o
-      // peso atual do rascunho; nada é escrito de volta até "Usar".
-      var weightParsed = parseWeightField(weightField);
-      target = weightParsed.ok && weightParsed.value !== null ? weightParsed.value : 0;
-      recompute();
+    window.CurvaPlateCalculator.wire(widget, {
+      fmtNumber: fmtNumber, parseWeightField: parseWeightField, markDirty: markDirty,
+      updateSaveLabel: updateSaveLabel, scheduleDraftSave: scheduleDraftSave,
     });
   }
 
@@ -1106,6 +776,8 @@
         // desconhecida pra este widget, entao "Salvar" cria um registro
         // novo pro movimento B (nunca corrige o A por engano).
         widget.removeAttribute('data-today-idempotency-key');
+        widget.removeAttribute('data-today-top-set-idempotency-key');
+        widget.removeAttribute('data-today-warmup-idempotency-key');
         updateSaveLabel(widget);
         // Plano §1.5: so carrega rascunho do DESTINO (nunca o que acabou
         // de ser limpo acima) -- data-movement-slug ja apontou pro novo
@@ -1164,6 +836,29 @@
     });
   }
 
+  function wireKeyboardNavBehavior() {
+    var numericInputSelector = [
+      '[data-workout-load-field]',
+      '[data-workout-reps-field]',
+      '[data-workout-rir-other-field]',
+      '[data-plate-bar-other-field]',
+    ].join(',');
+    document.addEventListener('focusin', function (event) {
+      if (event.target.matches && event.target.matches(numericInputSelector)) {
+        document.body.classList.add('workout-keyboard-open');
+      }
+    });
+    document.addEventListener('focusout', function (event) {
+      if (!event.target.matches || !event.target.matches(numericInputSelector)) { return; }
+      window.setTimeout(function () {
+        var active = document.activeElement;
+        if (!active || !active.matches || !active.matches(numericInputSelector)) {
+          document.body.classList.remove('workout-keyboard-open');
+        }
+      }, 0);
+    });
+  }
+
   function wireWidgets() {
     document.querySelectorAll('[data-workout-load-input]').forEach(function (widget) {
       var field = widget.querySelector('[data-workout-load-field]');
@@ -1177,6 +872,12 @@
       if (repsField) {
         repsField.addEventListener('input', function () {
           markDirty(repsField); updateSaveLabel(widget); scheduleDraftSave(widget);
+        });
+      }
+      var warmupToggle = widget.querySelector('[data-workout-load-warmup-toggle]');
+      if (warmupToggle) {
+        warmupToggle.addEventListener('change', function () {
+          syncCorrectionTargetForRole(widget);
         });
       }
       if (saveBtn) { saveBtn.addEventListener('click', function () { saveWidget(widget); }); }
@@ -1207,7 +908,9 @@
   function init() {
     if (!planSlug()) { return; }
     wireWidgets();
+    wireConflictNotice();
     wireShareButtons();
+    wireKeyboardNavBehavior();
     drainOutbox();
     fetchLastLoadByMovement().then(paintHints);
     document.addEventListener('visibilitychange', function () {
@@ -1228,6 +931,6 @@
     drainOutbox: drainOutbox,
     clearOutbox: clearOutbox,
     clearDrafts: clearDrafts,
-    listEntries: listEntries,
+    listEntries: loadSync.listEntries,
   };
 })();

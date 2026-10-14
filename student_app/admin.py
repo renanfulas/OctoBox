@@ -15,8 +15,16 @@ from .models import (
     StudentExerciseMax,
     WeeklyWodPlan,
     WodGenerationCreditLedger,
+    MovementLibrary,
     WorkoutWeeklyManagementCheckpoint,
 )
+
+
+@admin.register(MovementLibrary)
+class MovementLibraryAdmin(admin.ModelAdmin):
+    list_display = ('label_pt', 'slug', 'label_en', 'demo_video_url')
+    search_fields = ('slug', 'label_pt', 'label_en')
+    list_editable = ('demo_video_url',)
 
 
 @admin.register(StudentExerciseMax)

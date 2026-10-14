@@ -31,6 +31,7 @@ POR QUE ELE EXISTE:
 from __future__ import annotations
 
 import re
+import json
 from datetime import date as _date, timedelta
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 
@@ -40,19 +41,20 @@ from django.utils.formats import number_format
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from public_workouts.dashboard import build_program_summary, build_week_overview, day_keyword, day_short_label
-from public_workouts.load_suggestion import suggest_movement_load
+from public_workouts.dashboard import (
+    build_program_summary, build_week_overview, build_workout_day_selection, day_keyword, day_short_label,
+)
+from public_workouts.load_resolution import resolve_movement_load
 from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.periodization import (
     build_chart_points_from_weeks,
     current_phase_profile,
     current_week_number,
-    suggest_progressive_load_kg,
 )
 from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementEquipment
-from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.substitutions import suggest_substitutes
 from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
+from public_workouts.guided_workout import build_guided_series
 
 register = template.Library()
 
@@ -104,7 +106,14 @@ def week_overview(payload: dict, load_history=None) -> list:
         if not performed_on:
             continue
         completed_dates.add(_date.fromisoformat(performed_on) if isinstance(performed_on, str) else performed_on)
-    return build_week_overview(payload=payload, completed_dates=completed_dates)
+    return build_week_overview(payload=payload, completed_dates=completed_dates, today=timezone.localdate())
+
+
+@register.simple_tag
+def workout_day_selection(payload: dict) -> dict:
+    """Dia inicial do treino pelo calendário semanal; descanso aponta para
+    a próxima sessão para pré-visualização, com estado explícito no HTML."""
+    return build_workout_day_selection(payload=payload, today=timezone.localdate())
 
 
 @register.simple_tag
@@ -278,6 +287,17 @@ def _detect_phase(segment: str) -> str:
     return 'plain'
 
 
+@register.simple_tag
+def guided_series(movement: dict, top_weight_kg=None, one_rep_max_by_movement=None) -> str:
+    """Serializa a prescrição do módulo guiado para o controlador do template."""
+    estimate = (one_rep_max_by_movement or {}).get(movement.get('movement_slug'))
+    one_rep_max_kg = estimate.get('value_kg') if estimate else None
+    return json.dumps(
+        build_guided_series(movement, top_weight_kg, one_rep_max_kg),
+        ensure_ascii=False, separators=(',', ':'),
+    )
+
+
 @register.filter
 def reps_phases(reps_spec: str, top_weight_kg=None):
     """Quebra `reps_spec` em fases (Prep/Feeder/Top/AMRAP) quando o texto do
@@ -365,6 +385,16 @@ def _format_short_date(iso_date: str | _date) -> str:
         return iso_date
     _year, month, day = parts
     return f'{day}/{month}'
+
+
+def _format_long_date(value) -> str:
+    """Format an ISO/date value for a visible record label."""
+    if isinstance(value, _date):
+        return value.strftime('%d/%m/%Y')
+    try:
+        return _date.fromisoformat(str(value)).strftime('%d/%m/%Y')
+    except (TypeError, ValueError):
+        return str(value or '')
 
 
 def _trend(delta: float) -> str:
@@ -528,7 +558,7 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
         changed = bool(points and program_id and previous_program_id and program_id != previous_program_id)
         points.append({
             'x': x, 'y': y, 'weight_kg': point.weight_kg,
-            'performed_on': point.performed_on,
+            'performed_on': point.performed_on, 'reps': point.reps, 'rir': point.rir,
             'label': _format_short_date(point.performed_on),
             'is_program_change': changed, 'program_id': program_id,
             'week_in_program': getattr(point, 'week_in_program', None),
@@ -549,9 +579,39 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
     delta = round(float(points[-1]['weight_kg'] - points[0]['weight_kg']), 2) if len(points) > 1 else None
     has_data = len(points) > 1
     has_legacy_points = bool(legacy)
+    latest = snapshot.latest_top_set if snapshot else None
+    latest_weight = latest.weight_kg if latest else (points[-1]['weight_kg'] if points else None)
+    latest_on = latest.performed_on if latest else (points[-1]['performed_on'] if points else None)
+    latest_reps = latest.reps if latest else (points[-1]['reps'] if points else None)
+    latest_rir = latest.rir if latest else (points[-1]['rir'] if points else None)
+    if has_data and latest_weight is not None and latest_on is not None:
+        accessible_description = (
+            f'{len(points)} registros de série principal nos últimos 90 dias. '
+            f'Último registro: {number_format(float(latest_weight), decimal_pos=1, use_l10n=True)} kg '
+            f'em {_format_short_date(latest_on)}.'
+        )
+    elif points:
+        accessible_description = (
+            f'Uma série principal nos últimos 90 dias, em {_format_short_date(points[-1]["performed_on"])}. '
+            'Ainda não há pontos suficientes para comparar.'
+        )
+    elif latest_weight is not None and latest_on is not None:
+        accessible_description = (
+            'Sem séries principais na janela dos últimos 90 dias. '
+            f'Último registro: {number_format(float(latest_weight), decimal_pos=1, use_l10n=True)} kg '
+            f'em {_format_short_date(latest_on)}.'
+        )
+    elif has_legacy_points or (snapshot and snapshot.has_legacy_history):
+        accessible_description = 'Histórico anterior salvo, sem curva comparável de séries principais.'
+    else:
+        accessible_description = 'Ainda não há série principal para desenhar a curva.'
     return {
         'has_data': has_data,
         'has_chart': has_data or has_legacy_points,
+        'has_latest_top_set': latest is not None,
+        'has_recent_points': bool(points),
+        'session_points': points,
+        'has_session_points': bool(points),
         'has_legacy_history': bool(snapshot and snapshot.has_legacy_history),
         'has_legacy_points': has_legacy_points,
         'viewbox': f'0 0 {_CHART_WIDTH} {_CHART_HEIGHT + 20}',
@@ -562,7 +622,11 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
         'points': points if has_data else [],
         'legacy_points': legacy,
         'timeline_ticks': timeline_ticks,
-        'latest_weight_kg': points[-1]['weight_kg'] if points else None,
+        'latest_weight_kg': latest_weight,
+        'latest_performed_on': latest_on,
+        'latest_reps': latest_reps,
+        'latest_rir': latest_rir,
+        'accessible_description': accessible_description,
         'delta_weight_kg': delta,
         'trend': _trend(delta or 0),
         'trend_signal': snapshot.trend_signal if snapshot else 'insufficient_data',
@@ -695,8 +759,35 @@ def personal_record(entries: list[dict]) -> dict:
         'has_data': True,
         'weight_kg': best['weight_kg'],
         'performed_on': best.get('performed_on'),
+        'performed_on_label': _format_long_date(best.get('performed_on')),
         'reps': best.get('reps'),
     }
+
+
+@register.simple_tag
+def personal_record_rows(entries: list[dict], movement_labels: dict | None = None) -> list[dict]:
+    """Build only real record rows so the template can render an accurate
+    empty state when history contains warmups/legacy entries but no eligible
+    personal record. This is an in-memory projection of the already loaded
+    history and performs no database query."""
+    grouped: dict[str, list[dict]] = {}
+    for entry in entries or []:
+        slug = entry.get('movement_slug')
+        if slug:
+            grouped.setdefault(slug, []).append(entry)
+
+    rows = []
+    for movement_slug, movement_entries in grouped.items():
+        record = personal_record(movement_entries)
+        if not record['has_data']:
+            continue
+        rows.append({
+            'movement_slug': movement_slug,
+            'label': resolve_movement_display_name(movement_slug, movement_labels),
+            **record,
+        })
+    rows.sort(key=lambda row: row['label'])
+    return rows
 
 @register.filter
 def periodization_chart_points(periodization: dict | None) -> list[dict]:
@@ -750,10 +841,6 @@ def periodization_phase_banner(payload: dict) -> dict:
         'rir_target': phase.rir_target,
         'pct_mid': round(sum(phase.intensity_pct_range) / 2),
     }
-
-
-def _round_to_nearest_load(value: float) -> float:
-    return round(value / 2.5) * 2.5
 
 
 @register.simple_tag
@@ -818,98 +905,37 @@ def todays_logged_idempotency_key(load_history: list, movement_slug: str):
 
 
 @register.simple_tag
+def todays_load_entry(load_history: list, movement_slug: str, set_role: str):
+    """Return today's active entry for one explicit role.
+
+    The load widget edits either the top set or a warmup. Keeping these
+    targets separate prevents a later warmup from being corrected with the
+    top-set value shown in the form (and vice versa)."""
+    today_iso = timezone.localdate().isoformat()
+    for entry in reversed(load_history or ()):
+        if (
+            entry.get('movement_slug') == movement_slug
+            and entry.get('performed_on') == today_iso
+            and entry.get('set_role') == set_role
+        ):
+            return entry
+    return None
+
+
+@register.simple_tag
+def todays_default_load_entry(load_history: list, movement_slug: str):
+    """Prefer today's top set for the default form; otherwise use a warmup."""
+    top_set = todays_load_entry(load_history, movement_slug, 'top_set')
+    return top_set or todays_load_entry(load_history, movement_slug, 'warmup')
+
+
+@register.simple_tag
 def movement_load_display(
     movement: dict, payload: dict, phase, one_rep_max_by_movement: dict, progress_snapshots: dict | None = None
 ) -> dict:
-    """Cascata de exibição de carga do movimento — devolve um dict pronto
-    pro template só desenhar (`kind`/`value_kg`/`percentage`/
-    `show_registration_hint`), mantendo toda a lógica testável em Python
-    (mesmo padrão de `load_chart_points`). Ordem (primeira que resolver
-    ganha):
-
-    1. `load_type == 'fixed_kg'` — literal, já é kg.
-    2. `load_type == 'percentage_of_rm'` explícito — % + kg calculado
-       quando já existe 1RM pro movimento; só a % + hint sem 1RM ainda
-       (nunca só a % quando dá pra virar kg — porcentagem sozinha não é
-       acionável pro aluno).
-    3. Fase canônica ativa (`phase` não é `None`) —
-       `periodization.suggest_progressive_load_kg`, ancorado na ÚLTIMA
-       carga real registrada nesse movimento (nunca recalcula do zero
-       contra 1RM estimado, ver docstring de periodization.py).
-       `last_log` vem de `progress_snapshots[movement_slug].latest_top_set`
-       (plano curva-grafico-hierarquia-e-set-role.md, §7.5/§8.1 item 5) —
-       NUNCA mais escaneia `load_history` bruto por conta própria: até a
-       Revisão 6 daquele plano, esta função tinha uma busca de log bruto
-       PRÓPRIA (`_last_log_for_movement`), independente do 1RM/build_
-       student_package, que continuava contaminada por aquecimento mesmo
-       depois deste consumidor "parecer corrigido" — bug real, não
-       hipotético.
-    4. Sem fase canônica, ou fase canônica sem âncora ainda (bootstrap,
-       primeira vez neste movimento) — `load_suggestion.
-       suggest_movement_load`, estimativa pontual a partir do próprio
-       reps_spec/rir_spec do exercício.
-    5. Nada resolveu e não há 1RM nenhum pro movimento — "Livre" + hint de
-       registro."""
-    movement_slug = movement.get('movement_slug')
-    one_rm_estimate = (one_rep_max_by_movement or {}).get(movement_slug)
-    one_rep_max_kg = one_rm_estimate.get('value_kg') if one_rm_estimate else None
-    has_one_rep_max = one_rep_max_kg is not None
-
-    load_type = movement.get('load_type')
-    load_value = movement.get('load_value')
-
-    if load_type == 'fixed_kg':
-        return {'kind': 'fixed_kg', 'value_kg': load_value, 'percentage': None, 'show_registration_hint': False}
-
-    if load_type == 'percentage_of_rm' and load_value is not None:
-        value_kg = _round_to_nearest_load(load_value / 100 * one_rep_max_kg) if has_one_rep_max else None
-        return {
-            'kind': 'percentage',
-            'value_kg': value_kg,
-            'percentage': load_value,
-            'show_registration_hint': not has_one_rep_max,
-        }
-
-    if phase is not None:
-        # Plano curva-grafico-hierarquia-e-set-role.md (§7.5/§8.1 item 5)
-        # -- bug real achado na Revisao 6: _last_log_for_movement fazia
-        # uma busca de log BRUTO propria, independente do 1RM/snapshot, e
-        # nao se corrigia junto quando build_student_package passou a
-        # filtrar por set_role. Agora le progress_snapshot.latest_top_set
-        # (ja' elegivel -- so' top_set real, nunca aquecimento).
-        # suggest_progressive_load_kg espera um dict (`.get(...)`), nao o
-        # dataclass ProgressPoint -- conversao local, sem mudar
-        # periodization.py.
-        snapshot = (progress_snapshots or {}).get(movement_slug)
-        latest_top_set = snapshot.latest_top_set if snapshot else None
-        last_log = (
-            {
-                'weight_kg': latest_top_set.weight_kg,
-                'reps': latest_top_set.reps,
-                'rir': latest_top_set.rir,
-                'performed_on': latest_top_set.performed_on.isoformat(),
-                'program_id': latest_top_set.program_id,
-            }
-            if latest_top_set is not None else None
-        )
-        value_kg = suggest_progressive_load_kg(
-            payload=payload, current_phase=phase, last_log=last_log, one_rep_max_kg=one_rep_max_kg,
-        )
-        if value_kg is not None:
-            return {
-                'kind': 'phase_progressive',
-                'value_kg': value_kg,
-                'percentage': round(sum(phase.intensity_pct_range) / 2),
-                'show_registration_hint': False,
-            }
-
-    suggestion = suggest_movement_load(movement=movement, one_rep_max_kg=one_rep_max_kg)
-    if suggestion is not None:
-        return {
-            'kind': 'rir_estimate',
-            'value_kg': suggestion['value_kg'],
-            'percentage': None,
-            'show_registration_hint': False,
-        }
-
-    return {'kind': 'free', 'value_kg': None, 'percentage': None, 'show_registration_hint': not has_one_rep_max}
+    """Adaptador de template; a decisão de carga vive em load_resolution.py."""
+    return resolve_movement_load(
+        movement=movement, payload=payload, phase=phase,
+        one_rep_max_by_movement=one_rep_max_by_movement,
+        progress_snapshots=progress_snapshots,
+    ).as_template_dict()

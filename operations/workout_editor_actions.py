@@ -15,6 +15,8 @@ PONTOS CRITICOS:
 - manter mensagens, redirects e side effects identicos ao fluxo anterior.
 """
 
+from decimal import Decimal
+
 from django.contrib import messages
 from django.db import OperationalError, ProgrammingError, transaction
 from django.shortcuts import get_object_or_404, redirect
@@ -57,12 +59,24 @@ _BLOCK_TYPE_MAP = {
     'strength': WorkoutBlockKind.STRENGTH,
     'skill': WorkoutBlockKind.SKILL,
     'metcon': WorkoutBlockKind.METCON,
+    'mobility': WorkoutBlockKind.MOBILITY,
     'amrap': WorkoutBlockKind.METCON,
     'emom': WorkoutBlockKind.METCON,
     'for_time': WorkoutBlockKind.METCON,
     'cooldown': WorkoutBlockKind.COOLDOWN,
     'free': WorkoutBlockKind.CUSTOM,
 }
+
+
+def _load_spec_from_form(*, load_type, load_value):
+    if load_value is None:
+        return ''
+    normalized_value = format(Decimal(str(load_value)).normalize(), 'f')
+    if load_type == WorkoutLoadType.PERCENTAGE_OF_RM:
+        return f'{normalized_value}% RM'
+    if load_type == WorkoutLoadType.FIXED_KG:
+        return f'{normalized_value} kg'
+    return ''
 
 
 TEMPLATE_STORAGE_EXCEPTIONS = (OperationalError, ProgrammingError)
@@ -77,7 +91,7 @@ class CoachSessionWorkoutEditorActionsMixin:
         workout = self._get_or_create_workout()
         workout.title = form.cleaned_data['title']
         workout.coach_notes = form.cleaned_data['coach_notes']
-        if workout.status == SessionWorkoutStatus.PUBLISHED:
+        if workout.status in {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.PENDING_APPROVAL}:
             workout.status = SessionWorkoutStatus.DRAFT
             workout.approved_by = None
             workout.approved_at = None
@@ -110,7 +124,7 @@ class CoachSessionWorkoutEditorActionsMixin:
             notes=form.cleaned_data['notes'],
             sort_order=form.cleaned_data['sort_order'],
         )
-        if workout.status in {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.REJECTED}:
+        if workout.status in {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.REJECTED, SessionWorkoutStatus.PENDING_APPROVAL}:
             workout.status = SessionWorkoutStatus.DRAFT
             workout.approved_by = None
             workout.approved_at = None
@@ -130,7 +144,7 @@ class CoachSessionWorkoutEditorActionsMixin:
         workout = self._get_workout()
         block = get_object_or_404(SessionWorkoutBlock, pk=request.POST.get('block_id'), workout=workout)
         block.delete()
-        if workout.status in {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.REJECTED}:
+        if workout.status in {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.REJECTED, SessionWorkoutStatus.PENDING_APPROVAL}:
             workout.status = SessionWorkoutStatus.DRAFT
             workout.approved_by = None
             workout.approved_at = None
@@ -187,12 +201,17 @@ class CoachSessionWorkoutEditorActionsMixin:
             movement_label=form.cleaned_data['movement_label'],
             sets=form.cleaned_data['sets'],
             reps=form.cleaned_data['reps'],
+            reps_spec=str(form.cleaned_data['reps']) if form.cleaned_data['reps'] is not None else '',
             load_type=form.cleaned_data['load_type'],
             load_value=form.cleaned_data['load_value'],
+            load_spec=_load_spec_from_form(
+                load_type=form.cleaned_data['load_type'],
+                load_value=form.cleaned_data['load_value'],
+            ),
             notes=form.cleaned_data['notes'],
             sort_order=form.cleaned_data['sort_order'],
         )
-        if workout.status in {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.REJECTED}:
+        if workout.status in {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.REJECTED, SessionWorkoutStatus.PENDING_APPROVAL}:
             workout.status = SessionWorkoutStatus.DRAFT
             workout.approved_by = None
             workout.approved_at = None
@@ -216,7 +235,7 @@ class CoachSessionWorkoutEditorActionsMixin:
             block__workout=workout,
         )
         movement.delete()
-        if workout.status in {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.REJECTED}:
+        if workout.status in {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.REJECTED, SessionWorkoutStatus.PENDING_APPROVAL}:
             workout.status = SessionWorkoutStatus.DRAFT
             workout.approved_by = None
             workout.approved_at = None
@@ -244,13 +263,25 @@ class CoachSessionWorkoutEditorActionsMixin:
             block__workout=workout,
         )
         target_block = get_object_or_404(SessionWorkoutBlock, pk=form.cleaned_data['block_id'], workout=workout)
+        reps_changed = form.cleaned_data['reps'] != movement.reps
+        load_changed = (
+            form.cleaned_data['load_type'] != movement.load_type
+            or form.cleaned_data['load_value'] != movement.load_value
+        )
         movement.block = target_block
         movement.movement_slug = form.cleaned_data['movement_slug']
         movement.movement_label = form.cleaned_data['movement_label']
         movement.sets = form.cleaned_data['sets']
         movement.reps = form.cleaned_data['reps']
+        if reps_changed:
+            movement.reps_spec = str(form.cleaned_data['reps']) if form.cleaned_data['reps'] is not None else ''
         movement.load_type = form.cleaned_data['load_type']
         movement.load_value = form.cleaned_data['load_value']
+        if load_changed:
+            movement.load_spec = _load_spec_from_form(
+                load_type=form.cleaned_data['load_type'],
+                load_value=form.cleaned_data['load_value'],
+            )
         movement.notes = form.cleaned_data['notes']
         movement.sort_order = form.cleaned_data['sort_order']
         movement.save(
@@ -260,8 +291,10 @@ class CoachSessionWorkoutEditorActionsMixin:
                 'movement_label',
                 'sets',
                 'reps',
+                'reps_spec',
                 'load_type',
                 'load_value',
+                'load_spec',
                 'notes',
                 'sort_order',
                 'updated_at',
@@ -517,7 +550,11 @@ class CoachSessionWorkoutEditorActionsMixin:
             workout.coach_notes = raw_text
             workout.is_normalized = False
             workout.structured_payload = {}
-            workout.save(update_fields=['coach_notes', 'is_normalized', 'structured_payload', 'updated_at'])
+            # This may replace content that was previously published. Keep the
+            # shared student WOD snapshot key in sync with the new revision,
+            # including when the raw paste must wait for approval.
+            workout.version += 1
+            workout.save(update_fields=['coach_notes', 'is_normalized', 'structured_payload', 'version', 'updated_at'])
             _record_workout_audit(
                 actor=request.user,
                 workout=workout,
@@ -595,6 +632,11 @@ def _hydrate_workout_from_payload(*, workout, normalized_text, structured_payloa
             kind=block_kind,
             title=block_data.get('title', '')[:120],
             notes=block_data.get('scaling_notes', ''),
+            timecap_min=block_data.get('timecap_min'),
+            rounds=block_data.get('rounds'),
+            interval_seconds=block_data.get('interval_seconds'),
+            score_type=block_data.get('score_type') or '',
+            format_spec=block_data.get('format_spec') or '',
             sort_order=block_data.get('order', 1),
         )
         for movement_data in block_data.get('movements', []):
@@ -607,13 +649,22 @@ def _hydrate_workout_from_payload(*, workout, normalized_text, structured_payloa
                 load_type = WorkoutLoadType.FIXED_KG
             else:
                 load_type = WorkoutLoadType.FREE
+            reps = movement_data.get('reps')
+            reps_spec = movement_data.get('reps_spec') or (str(reps) if reps is not None else '')
+            load_spec = movement_data.get('load_spec') or _load_spec_from_form(
+                load_type=load_type,
+                load_value=load_value,
+            )
             SessionWorkoutMovement.objects.create(
                 block=block,
                 movement_slug=(movement_data.get('slug') or '')[:64],
                 movement_label=(movement_data.get('label_pt') or movement_data.get('label_en') or '')[:120],
-                reps=movement_data.get('reps'),
+                reps=reps,
+                reps_spec=reps_spec,
                 load_type=load_type,
                 load_value=load_value,
-                notes='',
+                load_spec=load_spec,
+                is_scaled_alternative=bool(movement_data.get('is_scaled_alternative', False)),
+                notes=(movement_data.get('notes') or '')[:255],
                 sort_order=movement_data.get('order', 1),
             )

@@ -40,6 +40,7 @@ import logging
 import hashlib
 
 from django.contrib.auth.hashers import check_password
+from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -48,6 +49,7 @@ from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView, View
 
+from public_workouts import billing
 from public_workouts.billing import get_or_create_subscription
 from public_workouts.acquisition import (
     attach_acquisition_cookie,
@@ -68,6 +70,7 @@ from public_workouts.capacity import get_tier_capacity
 from public_workouts.journey import get_customer_journey
 from public_workouts.models import (
     PublicWorkoutAccount,
+    PublicWorkoutCheckoutLead,
     PublicWorkoutGuaranteeModel,
     PublicWorkoutFunnelEvent,
     PublicWorkoutNutritionProfile,
@@ -76,6 +79,7 @@ from public_workouts.models import (
     PublicWorkoutProfessionalRole,
     PublicWorkoutStaffCredential,
     PublicWorkoutSubscriptionStatus,
+    PublicWorkoutSubscription,
     PublicWorkoutTier,
     PublicWorkoutTestimonial,
     PublicWorkoutWaitlistEntry,
@@ -94,7 +98,10 @@ from public_workouts.services import (
 )
 
 from public_workouts.stripe_checkout import (
+    PublicWorkoutCheckoutSessionError,
     PublicWorkoutStripeNotConfiguredError,
+    get_completed_lead_checkout,
+    start_checkout_lead_session,
     start_customer_portal_session,
     start_subscription_checkout,
 )
@@ -106,7 +113,6 @@ from .oauth_providers import GoogleOAuthProvider, OAuthProviderError
 from .public_workout_login import (
     PublicWorkoutLoginRateLimitExceeded,
     request_login_token,
-    resolve_or_create_public_workout_account,
     verify_login_token,
 )
 from .public_workout_oauth import build_public_workout_oauth_state, read_public_workout_oauth_state
@@ -192,10 +198,14 @@ class PublicWorkoutLandingView(TemplateView):
     """
 
     template_name = 'public_workouts/landing.html'
+    influencer_name = ''
+    influencer_code = ''
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['funnel_tracking_enabled'] = bool(request_tracking_enabled(self.request))
+        context['influencer_name'] = self.influencer_name
+        context['influencer_code'] = self.influencer_code
         context['experiment_assignments'] = getattr(self, 'experiment_assignments', [])
         context['testimonials'] = PublicWorkoutTestimonial.objects.filter(
             approved_at__isnull=False, published_at__isnull=False,
@@ -213,14 +223,31 @@ class PublicWorkoutLandingView(TemplateView):
         return context
 
     def get(self, request, *args, **kwargs):
-        acquisition_session, _created = ensure_acquisition_session(request)
+        acquisition_session, _created = ensure_acquisition_session(
+            request, partner_code=self.influencer_code,
+        )
         assignments = assign_active_experiments(acquisition_session)
         self.experiment_assignments = serialize_assignments(assignments)
         response = super().get(request, *args, **kwargs)
         if acquisition_session is not None:
-            record_funnel_event('landing_viewed', acquisition_session=acquisition_session)
+            record_funnel_event(
+                'landing_viewed', acquisition_session=acquisition_session,
+                partner_code=self.influencer_code,
+            )
+            if self.influencer_code:
+                record_funnel_event(
+                    'influencer_link_clicked', acquisition_session=acquisition_session,
+                    partner_code=self.influencer_code,
+                )
         attach_acquisition_cookie(response, acquisition_session)
         return response
+
+
+class PublicWorkoutJullyLandingView(PublicWorkoutLandingView):
+    """Landing Curva da Jully; mantém o checkout e o funil comercial comuns."""
+
+    influencer_name = 'Jully'
+    influencer_code = 'jully'
 
 
 class PublicWorkoutFunnelEventView(View):
@@ -350,6 +377,23 @@ class PublicWorkoutFunnelAnalyticsView(PublicWorkoutAnalyticsAccessMixin, Templa
         days = int(raw_days) if raw_days in ('7', '30', '90') else 30
         report = build_acquisition_report(window_days=days)
         report['experiments'] = build_experiment_report(window_days=days)['experiments']
+        from public_workouts.training_analytics import recent_training_sessions, training_summary
+        summary = training_summary(window_days=days)
+        report['training'] = {
+            'sessions_started': summary['sessions_started'],
+            'sessions_completed': summary['sessions_completed'],
+            'sessions_partial': summary['sessions_partial'],
+            'sessions_cancelled': summary['sessions_cancelled'],
+            'sessions_abandoned': summary['sessions_abandoned'],
+            'completion_rate': summary['completion_percent'],
+            'sets_completed': summary['sets_completed'],
+            'sets_partial': summary['sets_partial'],
+            'window_days': summary['window_days'],
+        }
+        raw_account = self.request.GET.get('account_id', '')
+        account_id = int(raw_account) if raw_account.isdigit() else None
+        report['training_account_filter'] = account_id
+        report['training_recent'] = recent_training_sessions(window_days=days, account_id=account_id)
         return report
 
     def get(self, request, *args, **kwargs):
@@ -376,8 +420,17 @@ class PublicWorkoutLoginView(View):
         token = (request.GET.get('token') or '').strip()
         next_url = _safe_public_workout_next(request.GET.get('next'))
         if not token:
-            return render(request, self.template_name, {'next_url': next_url})
+            return render(request, self.template_name, {
+                'next_url': next_url,
+                'checkout_return': request.GET.get('checkout') == 'retorno',
+            })
 
+        # GET NUNCA consome o token: scanners de e-mail e pre-visualizadores de link abrem a URL
+        # (GET) antes do aluno e gastariam o uso unico. So o POST abaixo consome. A pagina
+        # envia o POST sozinha (JS) e tem um botao "Entrar" para quem nao roda JS.
+        return render(request, self.template_name, {'confirm_token': token, 'next_url': next_url})
+
+    def _login_with_token(self, request, token, next_url):
         account = verify_login_token(token=token)
         if account is None:
             return render(request, self.template_name, {'error': 'link_invalido', 'next_url': next_url})
@@ -391,16 +444,22 @@ class PublicWorkoutLoginView(View):
         return response
 
     def post(self, request, *args, **kwargs):
+        token = (request.POST.get('token') or '').strip()
+        if token:
+            return self._login_with_token(request, token, _safe_public_workout_next(request.POST.get('next')))
+
         email = (request.POST.get('email') or '').strip().lower()
         next_url = _safe_public_workout_next(request.POST.get('next'))
         if not email or '@' not in email:
             return render(request, self.template_name, {'error': 'email_invalido', 'next_url': next_url})
 
         try:
-            request_login_token(email=email, base_url=request.build_absolute_uri('/'), next_url=next_url)
+            token = request_login_token(email=email, base_url=request.build_absolute_uri('/'), next_url=next_url)
         except PublicWorkoutLoginRateLimitExceeded:
             return render(request, self.template_name, {'error': 'muitos_pedidos', 'next_url': next_url})
 
+        # Resposta identica exista ou nao conta ativa (token None): nao revela se o e-mail
+        # tem cadastro. A orientacao de "nao chegou" fica no texto da propria tela.
         return render(request, self.template_name, {'sent_to': email})
 
 
@@ -434,9 +493,8 @@ class PublicWorkoutGoogleCallbackView(View):
     Espelha o GET com ?token= de PublicWorkoutLoginView: consome uma
     prova de identidade de uso unico (aqui, code+state do Google,
     validados pelo proprio Google e pela assinatura do state) e seta o
-    mesmo cookie do corredor. Nunca cria nem consulta StudentIdentity —
-    so a referencia fraca ja resolvida por
-    resolve_or_create_public_workout_account (N5 do CORDA).
+    mesmo cookie do corredor. A identidade Google autentica, mas nunca
+    cria a conta de um lead ou de um email sem pagamento confirmado.
     """
 
     template_name = 'treinos/login.html'
@@ -453,9 +511,19 @@ class PublicWorkoutGoogleCallbackView(View):
         except OAuthProviderError:
             return render(request, self.template_name, {'error': 'google_falhou', 'next_url': next_url})
 
-        account = resolve_or_create_public_workout_account(email=identity.email, photo_url=identity.photo_url)
+        account = PublicWorkoutAccount.objects.filter(email__iexact=identity.email).first()
+        if account is None:
+            return render(request, self.template_name, {'error': 'conta_nao_encontrada'})
+        subscription = getattr(account, 'subscription', None)
+        if (subscription is not None and subscription.requires_login
+                and subscription.status == PublicWorkoutSubscriptionStatus.PENDING_PAYMENT):
+            return render(request, self.template_name, {'error': 'pagamento_pendente'})
+        update_fields = ['last_login_at', 'updated_at']
+        if identity.photo_url and account.photo_url != identity.photo_url:
+            account.photo_url = identity.photo_url
+            update_fields.append('photo_url')
         account.last_login_at = timezone.now()
-        account.save(update_fields=['last_login_at', 'updated_at'])
+        account.save(update_fields=update_fields)
 
         if next_url:
             response = redirect(next_url)
@@ -530,19 +598,29 @@ class PublicWorkoutColdSignupView(View):
             return JsonResponse({'error': 'aceite_contrato_obrigatorio'}, status=400)
 
         acquisition_session = get_acquisition_session(request)
-        # E-mail nao prova posse. Uma conta existente — ativa, cancelada ou
-        # com checkout abandonado — precisa voltar pelo magic link antes de
-        # abrir hub, renovacao ou um novo checkout. Somente a conta criada
-        # neste POST recebe a sessao inicial de onboarding mais abaixo.
+        # Contas com pagamento confirmado continuam pelo login. Contas antigas
+        # que ficaram pendentes podem retomar o checkout sem ganhar sessão.
         account = PublicWorkoutAccount.objects.filter(email__iexact=email).first()
+        account_subscription = getattr(account, 'subscription', None) if account is not None else None
         session_account_id = get_public_workout_account_id_from_request(request)
-        owns_existing_account = account is not None and session_account_id == account.pk
-        if account is not None and not owns_existing_account:
+        owns_account = account is not None and session_account_id == account.pk
+        if account is not None and not owns_account and (
+            account_subscription is None
+            or account_subscription.status != PublicWorkoutSubscriptionStatus.PENDING_PAYMENT
+        ):
             record_funnel_event('login_required', acquisition_session=acquisition_session, tier=tier)
             response = JsonResponse({
                 'checkout_url': request.build_absolute_uri(reverse('public-workout-login')),
                 'login_required': True,
             })
+            attach_acquisition_cookie(response, acquisition_session)
+            return response
+        if owns_account and account_subscription is not None and account_subscription.status in (
+            PublicWorkoutSubscriptionStatus.ACTIVE,
+            PublicWorkoutSubscriptionStatus.PAST_DUE,
+            PublicWorkoutSubscriptionStatus.SUSPENDED,
+        ):
+            response = JsonResponse({'checkout_url': request.build_absolute_uri(reverse('public-workout-account'))})
             attach_acquisition_cookie(response, acquisition_session)
             return response
 
@@ -588,85 +666,133 @@ class PublicWorkoutColdSignupView(View):
             attach_acquisition_cookie(response, acquisition_session)
             return response
 
-        if account is None:
-            account, account_created = PublicWorkoutAccount.objects.get_or_create(email=email)
-        else:
-            account_created = False
-        if not account_created and not owns_existing_account:
-            record_funnel_event('login_required', acquisition_session=acquisition_session, tier=tier)
-            # Outra requisicao pode ter criado a conta entre a leitura acima
-            # e este ponto. Mantem a mesma fronteira de posse mesmo sob race.
-            response = JsonResponse({
-                'checkout_url': request.build_absolute_uri(reverse('public-workout-login')),
-                'login_required': True,
-            })
-            attach_acquisition_cookie(response, acquisition_session)
-            return response
-        subscription = get_or_create_subscription(account=account, tier=tier)
-        acquisition_session = bind_acquisition_session(
-            acquisition_session, account=account, subscription=subscription,
-        )
-        record_funnel_event(
-            'tier_selected', acquisition_session=acquisition_session,
-            account=account, subscription=subscription, tier=tier,
-        )
-
-        # Cliente autenticado com contrato ainda vigente administra a
-        # assinatura existente no hub; POST da landing nunca troca seu tier.
-        if subscription.status in (
-            PublicWorkoutSubscriptionStatus.ACTIVE,
-            PublicWorkoutSubscriptionStatus.PAST_DUE,
-            PublicWorkoutSubscriptionStatus.SUSPENDED,
-        ):
-            response = JsonResponse({
-                'checkout_url': request.build_absolute_uri(reverse('public-workout-account')),
-            })
-            attach_acquisition_cookie(response, acquisition_session)
-            return response
-
         contract_versions = current_contract_versions()
-        for field_name, value in contract_versions.items():
-            setattr(subscription, field_name, value)
-        subscription.guarantee_model = PublicWorkoutGuaranteeModel.REFUND_GUARANTEE
-        subscription.contract_accepted_at = timezone.now()
-        if not subscription.requires_login:
+        if owns_account and account_subscription is not None and account_subscription.status == PublicWorkoutSubscriptionStatus.CANCELED:
+            subscription = get_or_create_subscription(account=account, tier=tier)
+            for field_name, value in contract_versions.items():
+                setattr(subscription, field_name, value)
+            subscription.guarantee_model = PublicWorkoutGuaranteeModel.REFUND_GUARANTEE
+            subscription.contract_accepted_at = timezone.now()
             subscription.requires_login = True
-        subscription.save(update_fields=[
-            'requires_login', *contract_versions.keys(), 'guarantee_model',
-            'contract_accepted_at', 'updated_at',
-        ])
-
-        login_url = request.build_absolute_uri(reverse('public-workout-login'))
-        # Achado real (usuario): a landing PROMETE a anamnese "antes do
-        # primeiro plano" (FAQ), mas o success_url mandava de volta pra
-        # /treinos/login — pagina que nem olha pro ?assinatura=sucesso, so
-        # mostra o formulario de novo. O cookie de sessao ja foi anexado
-        # AQUI embaixo, antes de ir pro Stripe (SameSite=Lax sobrevive o
-        # redirect de volta, e' navegacao top-level) — entao mandar direto
-        # pra anamnese funciona sem round-trip nenhum de login.
-        account_url = request.build_absolute_uri(f"{reverse('public-workout-account')}?checkout=retorno")
+            subscription.save(update_fields=[*contract_versions, 'guarantee_model', 'contract_accepted_at', 'requires_login', 'updated_at'])
+            return_url = request.build_absolute_uri(reverse('public-workout-checkout-return'))
+            try:
+                checkout_url = start_subscription_checkout(
+                    subscription=subscription,
+                    success_url=f'{return_url}?session_id={{CHECKOUT_SESSION_ID}}',
+                    cancel_url=f"{request.build_absolute_uri(reverse('public-workout-landing'))}#curva-precos",
+                    acquisition_session_id=(acquisition_session.pk if acquisition_session else None),
+                )
+            except PublicWorkoutStripeNotConfiguredError as exc:
+                return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
+            return JsonResponse({'checkout_url': checkout_url})
+        marketing_consent = request.POST.get('marketing_consent') == '1'
+        lead, _ = PublicWorkoutCheckoutLead.objects.get_or_create(
+            email=email, paid_at__isnull=True,
+            defaults={
+                'tier': tier,
+                'acquisition_session': acquisition_session,
+                'guarantee_model': PublicWorkoutGuaranteeModel.REFUND_GUARANTEE,
+                'marketing_consent': marketing_consent,
+                'marketing_consent_at': timezone.now() if marketing_consent else None,
+                **contract_versions,
+            },
+        )
+        return_url = request.build_absolute_uri(reverse('public-workout-checkout-return'))
         try:
-            checkout_url = start_subscription_checkout(
-                subscription=subscription,
-                success_url=account_url,
-                cancel_url=f"{request.build_absolute_uri(reverse('public-workout-account'))}?checkout=cancelado",
-                acquisition_session_id=(acquisition_session.pk if acquisition_session else None),
+            completed_session = get_completed_lead_checkout(lead=lead)
+        except PublicWorkoutStripeNotConfiguredError as exc:
+            return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
+        except PublicWorkoutCheckoutSessionError as exc:
+            return JsonResponse({'error': 'checkout_anterior_pendente', 'detail': str(exc)}, status=409)
+        if completed_session is not None:
+            response = JsonResponse({
+                'checkout_url': f'{return_url}?session_id={completed_session.id}',
+                'payment_complete': True,
+            })
+            attach_acquisition_cookie(response, acquisition_session)
+            return response
+        changed = []
+        if lead.tier != tier:
+            lead.tier = tier; changed.append('tier')
+        if acquisition_session and not lead.acquisition_session_id:
+            lead.acquisition_session = acquisition_session; changed.append('acquisition_session')
+        for field_name, value in contract_versions.items():
+            if getattr(lead, field_name) != value:
+                setattr(lead, field_name, value); changed.append(field_name)
+        if marketing_consent and not lead.marketing_consent:
+            lead.marketing_consent = True
+            lead.marketing_consent_at = timezone.now()
+            changed.extend(['marketing_consent', 'marketing_consent_at'])
+        if changed:
+            lead.save(update_fields=[*changed, 'updated_at'])
+        record_funnel_event('tier_selected', acquisition_session=acquisition_session, tier=tier)
+        try:
+            checkout_url = start_checkout_lead_session(
+                lead=lead,
+                success_url=f'{return_url}?session_id={{CHECKOUT_SESSION_ID}}',
+                cancel_url=f"{request.build_absolute_uri(reverse('public-workout-landing'))}#curva-precos",
             )
         except PublicWorkoutStripeNotConfiguredError as exc:
             record_funnel_event('checkout_failed', acquisition_session=acquisition_session, tier=tier)
             return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
+        except PublicWorkoutCheckoutSessionError as exc:
+            record_funnel_event('checkout_failed', acquisition_session=acquisition_session, tier=tier)
+            return JsonResponse({'error': 'checkout_anterior_pendente', 'detail': str(exc)}, status=409)
 
         record_funnel_event(
-            'checkout_started', acquisition_session=acquisition_session,
-            account=account, subscription=subscription, tier=tier,
+            'checkout_started', acquisition_session=acquisition_session, tier=tier,
         )
         response = JsonResponse({'checkout_url': checkout_url})
         attach_acquisition_cookie(response, acquisition_session)
-        # Ja loga o visitante (attach_public_workout_session_cookie, B1) —
-        # sem isso ele precisaria de um segundo round-trip de e-mail/token
-        # so pra ver a propria fila de status depois do pagamento, e o
-        # redirect pra anamnese acima dependeria de sessao ja existir.
-        return attach_public_workout_session_cookie(response, account_id=account.pk)
+        return response
+
+
+class PublicWorkoutCheckoutReturnView(View):
+    """Verify Stripe's return server-side before creating/logging in a student."""
+
+    def get(self, request, *args, **kwargs):
+        session_id = (request.GET.get('session_id') or '').strip()
+        secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+        if not session_id or not secret_key:
+            return redirect(f"{reverse('public-workout-landing')}#curva-precos")
+        import stripe
+        stripe.api_key = secret_key
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+        except Exception:
+            logger.exception('curva_checkout_return_session_retrieve_failed')
+            return redirect(f"{reverse('public-workout-landing')}#curva-precos")
+        metadata = session.get('metadata', {}) or {}
+        if (metadata.get('product') != 'coaching' or session.get('status') != 'complete'
+                or session.get('payment_status') != 'paid'):
+            return redirect(f"{reverse('public-workout-landing')}#curva-precos")
+        lead_id = metadata.get('public_workout_checkout_lead_id')
+        if lead_id:
+            lead = PublicWorkoutCheckoutLead.objects.filter(
+                pk=lead_id, stripe_checkout_session_id=session_id,
+                tier=metadata.get('tier'),
+            ).first()
+            if lead is None:
+                return redirect(f"{reverse('public-workout-landing')}#curva-precos")
+            subscription = billing.provision_paid_checkout_lead(
+                lead.pk, customer_id=session.get('customer') or '',
+                stripe_subscription_id=session.get('subscription') or '',
+            )
+            account = subscription.account
+        else:
+            local_id = metadata.get('public_workout_subscription_id')
+            subscription = PublicWorkoutSubscription.objects.filter(pk=local_id).first()
+            if subscription is None:
+                return redirect(f"{reverse('public-workout-landing')}#curva-precos")
+            account = subscription.account
+        # Checkout proves payment, but the address typed into checkout is not
+        # proof of mailbox ownership. Require the normal email magic link
+        # before issuing an authenticated session.
+        account_id = get_public_workout_account_id_from_request(request)
+        if account_id == account.pk:
+            return redirect(f"{reverse('public-workout-account')}?checkout=retorno")
+        return redirect(f"{reverse('public-workout-login')}?checkout=retorno")
 
 
 class PublicWorkoutBillingPortalView(View):

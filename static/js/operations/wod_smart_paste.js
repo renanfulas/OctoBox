@@ -225,17 +225,28 @@ POR QUE ELE EXISTE:
 
   function restoreDayDialog(dialog) {
     var owner = dialog._smartPasteOwner;
-    if (!owner) return;
+    var returnFocus = dialog._smartPasteReturnFocus;
     dialog._smartPasteOwner = null;
+    dialog._smartPasteReturnFocus = null;
+    if (!owner) return;
     if (owner.isConnected) owner.appendChild(dialog);
     else dialog.remove();
+    if (returnFocus && returnFocus.isConnected && typeof returnFocus.focus === 'function') {
+      window.requestAnimationFrame(function () {
+        if (returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
+      });
+    }
   }
 
   function showDayDialog(dialog) {
     if (!dialog || typeof dialog.showModal !== 'function' || dialog.open) return;
     // Safari can anchor a modal inside the blurred preview card to its scroll
     // position. Put it directly under body while it is in the top layer.
-    var owner = dialog.closest('[data-smart-paste-preview-panel]');
+    var owner = dialog.closest('[data-smart-paste-preview-panel], [data-smart-paste-projection-panel]');
+    var activeElement = document.activeElement;
+    dialog._smartPasteReturnFocus = activeElement && activeElement !== document.body && !dialog.contains(activeElement)
+      ? activeElement
+      : owner && owner.querySelector('[data-action="open-week-dialog"], [data-action="open-day-dialog"]');
     if (owner) {
       dialog._smartPasteOwner = owner;
       document.body.appendChild(dialog);
@@ -334,11 +345,137 @@ POR QUE ELE EXISTE:
     });
   }
 
+  function bindProjectionDialog(scope) {
+    if (!scope) return;
+    var panel = scope.matches('[data-smart-paste-projection-panel]')
+      ? scope
+      : scope.querySelector('[data-smart-paste-projection-panel]');
+    if (!panel) return;
+    var dialog = panel.querySelector('.smart-paste-week-dialog');
+    if (!dialog) return;
+    var weekdayButtons = Array.from(dialog.querySelectorAll('[data-weekday-filter]'));
+    var weekdayCards = Array.from(dialog.querySelectorAll('[data-weekday-index]'));
+    var emptyWeekdayState = dialog.querySelector('[data-weekday-filter-empty]');
+    weekdayButtons.forEach(function (button) {
+      if (button.dataset.weekdayFilterBound === 'true') return;
+      button.dataset.weekdayFilterBound = 'true';
+      button.addEventListener('click', function () {
+        var selectedWeekday = button.dataset.weekdayFilter;
+        var visibleCards = 0;
+        weekdayButtons.forEach(function (candidate) {
+          var active = candidate === button;
+          candidate.classList.toggle('is-active', active);
+          candidate.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        weekdayCards.forEach(function (card) {
+          var visible = selectedWeekday === 'all' || card.dataset.weekdayIndex === selectedWeekday;
+          card.hidden = !visible;
+          if (visible) visibleCards += 1;
+        });
+        if (emptyWeekdayState) emptyWeekdayState.hidden = selectedWeekday === 'all' || visibleCards > 0;
+      });
+    });
+    var unlinkedAck = dialog.querySelector('[data-action="acknowledge-unlinked-movements"]');
+    var distributeButton = dialog.querySelector('[data-action="distribute-week"]');
+    if (unlinkedAck && distributeButton && distributeButton.dataset.ackBound !== 'true') {
+      distributeButton.dataset.ackBound = 'true';
+      function syncDistributionAcknowledgement() {
+        var allowed = distributeButton.dataset.eligible === 'true' && unlinkedAck.checked;
+        distributeButton.disabled = !allowed;
+        if (allowed) distributeButton.removeAttribute('aria-disabled');
+        else distributeButton.setAttribute('aria-disabled', 'true');
+      }
+      unlinkedAck.addEventListener('change', syncDistributionAcknowledgement);
+      syncDistributionAcknowledgement();
+    }
+
+    function closeDialog() {
+      if (dialog.open) dialog.close();
+    }
+
+    panel.querySelectorAll('[data-action="open-week-dialog"]').forEach(function (button) {
+      if (button.dataset.weekDialogBound === 'true') return;
+      button.dataset.weekDialogBound = 'true';
+      button.addEventListener('click', function () { showDayDialog(dialog); });
+    });
+    dialog.querySelectorAll('[data-action="close-week-dialog"]').forEach(function (button) {
+      if (button.dataset.weekDialogBound === 'true') return;
+      button.dataset.weekDialogBound = 'true';
+      button.addEventListener('click', closeDialog);
+    });
+    if (dialog.dataset.weekDialogBound !== 'true') {
+      dialog.dataset.weekDialogBound = 'true';
+      dialog.addEventListener('close', function () { restoreDayDialog(dialog); });
+      dialog.addEventListener('click', function (event) {
+        if (event.target === dialog) closeDialog();
+      });
+    }
+    if (dialog.dataset.autoOpen === 'true') {
+      dialog.dataset.autoOpen = 'false';
+      showDayDialog(dialog);
+    }
+  }
+
+  function bindConfirmationSourceGuard() {
+    var sourceField = root.querySelector('.smart-paste-form textarea[name="source_text"]');
+    var weekField = root.querySelector('.smart-paste-form [name="week_start"]');
+    var labelField = root.querySelector('.smart-paste-form [name="label"]');
+    if (!sourceField) return;
+    root.querySelectorAll('form.smart-paste-confirm-form').forEach(function (form) {
+      if (form.dataset.sourceGuardBound === 'true') return;
+      var confirmedSource = form.querySelector('input[name="source_text"]');
+      var confirmedWeek = form.querySelector('input[name="week_start"]');
+      var confirmedLabel = form.querySelector('input[name="label"]');
+      var notice = form.querySelector('[data-smart-paste-stale-source-notice]');
+      if (!confirmedSource || !notice) return;
+      var buttons = Array.prototype.slice.call(form.querySelectorAll('button[type="submit"]'));
+      buttons.forEach(function (button) {
+        button.dataset.sourceGuardBaseDisabled = button.disabled ? 'true' : 'false';
+      });
+
+      function normalizeWeek(value) {
+        var match = String(value || '').trim().match(/^(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?$/);
+        return match ? pad(match[1]) + '/' + pad(match[2]) : String(value || '').trim();
+      }
+
+      function syncState() {
+        var stale = sourceField.value !== confirmedSource.value;
+        if (weekField && confirmedWeek) {
+          stale = stale || normalizeWeek(weekField.value) !== normalizeWeek(confirmedWeek.value);
+        }
+        if (labelField && confirmedLabel) {
+          stale = stale || labelField.value !== confirmedLabel.value;
+        }
+        notice.hidden = !stale;
+        buttons.forEach(function (button) {
+          button.disabled = stale || button.dataset.sourceGuardBaseDisabled === 'true';
+          if (button.disabled) button.setAttribute('aria-disabled', 'true');
+          else button.removeAttribute('aria-disabled');
+        });
+        return stale;
+      }
+
+      sourceField.addEventListener('input', syncState);
+      if (weekField) weekField.addEventListener('input', syncState);
+      if (labelField) labelField.addEventListener('input', syncState);
+      form.addEventListener('submit', function (event) {
+        if (!syncState()) return;
+        event.preventDefault();
+        sourceField.focus();
+        notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      form.dataset.sourceGuardBound = 'true';
+      syncState();
+    });
+  }
+
   function initializeScope(scope) {
     if (!scope) return;
     scope.querySelectorAll('[data-smart-date-input]').forEach(bindSmartDateField);
     bindDayDialogs(scope);
+    bindProjectionDialog(scope);
     bindReviewQueue(scope);
+    bindConfirmationSourceGuard();
   }
 
   document.addEventListener('click', function (event) {
@@ -356,8 +493,8 @@ POR QUE ELE EXISTE:
   initializeScope(root);
 
   document.body.addEventListener('htmx:beforeSwap', function (event) {
-    if (!event.detail || !event.detail.target || !event.detail.target.matches('[data-smart-paste-preview-panel]')) return;
-    document.querySelectorAll('dialog.smart-paste-day-dialog').forEach(function (dialog) {
+    if (!event.detail || !event.detail.target || !event.detail.target.matches('[data-smart-paste-preview-panel], [data-smart-paste-projection-panel]')) return;
+    document.querySelectorAll('dialog.smart-paste-day-dialog, dialog.smart-paste-week-dialog').forEach(function (dialog) {
       if (!dialog._smartPasteOwner) return;
       if (dialog.open) dialog.close();
       restoreDayDialog(dialog);

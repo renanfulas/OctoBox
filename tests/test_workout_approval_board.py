@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+import re
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -26,6 +27,20 @@ from tests.workout_test_support import WorkoutFlowBaseTestCase
 
 
 class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
+    def test_approval_queue_is_contextual_to_calendar_and_keeps_two_primary_tabs(self):
+        self.login_as_manager()
+
+        response = self.client.get(reverse('workout-approval-board'))
+
+        self.assertEqual(response.status_code, 200)
+        tabs = response.context['workout_corridor_tabs']
+        self.assertEqual([tab['key'] for tab in tabs], ['smart_paste', 'planner'])
+        self.assertTrue(tabs[1]['is_active'])
+        content = response.content.decode()
+        self.assertEqual(len(re.findall(r'class="coach-wod-corridor-tab(?:\s|")', content)), 2)
+        self.assertContains(response, 'href="{}"'.format(reverse('workout-smart-paste')))
+        self.assertContains(response, 'href="{}"'.format(reverse('workout-planner')))
+
     def test_manager_can_approve_pending_workout(self):
         workout = SessionWorkout.objects.create(
             session=self.session,

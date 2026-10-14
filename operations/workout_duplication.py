@@ -32,6 +32,8 @@ def clone_workout_to_session(*, actor, source_workout, target_session):
         status=SessionWorkoutStatus.DRAFT,
         created_by=actor,
         version=1,
+        is_normalized=source_workout.is_normalized,
+        structured_payload=source_workout.structured_payload,
     )
     for block in source_workout.blocks.all():
         duplicated_block = SessionWorkoutBlock.objects.create(
@@ -39,6 +41,11 @@ def clone_workout_to_session(*, actor, source_workout, target_session):
             kind=block.kind,
             title=block.title,
             notes=block.notes,
+            timecap_min=block.timecap_min,
+            rounds=block.rounds,
+            interval_seconds=block.interval_seconds,
+            score_type=block.score_type,
+            format_spec=block.format_spec,
             sort_order=block.sort_order,
         )
         for movement in block.movements.all():
@@ -48,8 +55,11 @@ def clone_workout_to_session(*, actor, source_workout, target_session):
                 movement_label=movement.movement_label,
                 sets=movement.sets,
                 reps=movement.reps,
+                reps_spec=movement.reps_spec,
                 load_type=movement.load_type,
                 load_value=movement.load_value,
+                load_spec=movement.load_spec,
+                is_scaled_alternative=movement.is_scaled_alternative,
                 notes=movement.notes,
                 sort_order=movement.sort_order,
             )
@@ -93,12 +103,16 @@ def apply_workout_template_to_session(*, actor, source_workout, target_session):
             status=SessionWorkoutStatus.DRAFT,
             created_by=actor,
             version=1,
+            is_normalized=source_workout.is_normalized,
+            structured_payload=source_workout.structured_payload,
         )
         created = True
     else:
         target_workout.title = source_workout.title
         target_workout.coach_notes = source_workout.coach_notes
         target_workout.status = SessionWorkoutStatus.DRAFT
+        target_workout.is_normalized = source_workout.is_normalized
+        target_workout.structured_payload = source_workout.structured_payload
         target_workout.submitted_by = None
         target_workout.submitted_at = None
         target_workout.approved_by = None
@@ -112,6 +126,8 @@ def apply_workout_template_to_session(*, actor, source_workout, target_session):
                 'title',
                 'coach_notes',
                 'status',
+                'is_normalized',
+                'structured_payload',
                 'submitted_by',
                 'submitted_at',
                 'approved_by',
@@ -130,6 +146,11 @@ def apply_workout_template_to_session(*, actor, source_workout, target_session):
             kind=block.kind,
             title=block.title,
             notes=block.notes,
+            timecap_min=block.timecap_min,
+            rounds=block.rounds,
+            interval_seconds=block.interval_seconds,
+            score_type=block.score_type,
+            format_spec=block.format_spec,
             sort_order=block.sort_order,
         )
         for movement in block.movements.all():
@@ -139,8 +160,11 @@ def apply_workout_template_to_session(*, actor, source_workout, target_session):
                 movement_label=movement.movement_label,
                 sets=movement.sets,
                 reps=movement.reps,
+                reps_spec=movement.reps_spec,
                 load_type=movement.load_type,
                 load_value=movement.load_value,
+                load_spec=movement.load_spec,
+                is_scaled_alternative=movement.is_scaled_alternative,
                 notes=movement.notes,
                 sort_order=movement.sort_order,
             )

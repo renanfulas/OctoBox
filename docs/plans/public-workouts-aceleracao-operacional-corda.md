@@ -9,6 +9,11 @@
 - [public-workouts-go-to-market-plan.md](public-workouts-go-to-market-plan.md)
 - [public-workouts-escala-e-nutricao-corda.md](public-workouts-escala-e-nutricao-corda.md)
 
+**Plano complementar de aquisição por parceiros:**
+[curva-influencer-acquisition-and-commission-plan.md](curva-influencer-acquisition-and-commission-plan.md)
+estende as Fases 1 e 7 sem misturar influencers com campanhas próprias; a política
+de comissão definida é 60% da primeira fatura paga e 0% das recorrências.
+
 Este documento não substitui os dois planos de origem. Ele transforma a auditoria do
 runtime atual no próximo plano executável e passa a ser a autoridade para as fases de
 aceleração posteriores à primeira implementação de landing, checkout, onboarding,

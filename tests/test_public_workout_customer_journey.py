@@ -1,3 +1,4 @@
+from datetime import datetime, timezone as dt_timezone
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase, override_settings
@@ -51,6 +52,13 @@ class CustomerJourneyTests(TestCase):
         self._training_profile()
         self.account = PublicWorkoutAccount.objects.get(pk=self.account.pk)
         self.assertEqual(get_customer_journey(self.account).state, 'nutrition_intake_pending')
+
+    def test_next_charge_uses_local_date_not_utc_date_near_day_boundary(self):
+        # 2026-01-01 01:00 UTC e 2025-12-31 22:00 em America/Sao_Paulo (UTC-3):
+        # .date() direto no datetime UTC pegaria o dia errado (2026-01-01).
+        self.subscription.current_period_end = datetime(2026, 1, 1, 1, 0, tzinfo=dt_timezone.utc)
+        self.subscription.save(update_fields=['current_period_end'])
+        self.assertEqual(get_customer_journey(self.account).next_charge, '2025-12-31')
 
     def test_ready_program_is_final_state(self):
         self._activate()
@@ -152,8 +160,9 @@ class NewCustomerLoginGateTests(TestCase):
         self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
         checkout.assert_not_called()
 
-    @patch('student_identity.public_workout_views.start_subscription_checkout')
-    def test_abandoned_checkout_email_cannot_claim_existing_account_session(self, checkout):
+    @patch('student_identity.public_workout_views.start_checkout_lead_session')
+    def test_abandoned_checkout_email_resumes_checkout_without_account_session(self, checkout):
+        checkout.return_value = 'https://checkout.stripe.com/pay/resumed'
         account = PublicWorkoutAccount.objects.create(email='pendente-volta@example.com')
         get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL)
 
@@ -162,9 +171,9 @@ class NewCustomerLoginGateTests(TestCase):
         })
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()['login_required'])
+        self.assertEqual(response.json()['checkout_url'], 'https://checkout.stripe.com/pay/resumed')
         self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
-        checkout.assert_not_called()
+        checkout.assert_called_once()
 
     @override_settings(
         PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO='price_completo',
@@ -244,3 +253,36 @@ class CustomerPortalReconciliationTests(TestCase):
         subscription.refresh_from_db()
         self.assertEqual(subscription.tier, PublicWorkoutTier.ESSENCIAL)
         self.assertEqual(subscription.status, PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_e')
+    def test_custom_priced_subscription_still_reconciles_status_despite_unknown_price(self):
+        # Achado ao desenhar o valor personalizado (start_custom_price_
+        # subscription_checkout): sem este bypass, um aluno com
+        # custom_monthly_price preenchido nunca teria past_due/suspenso
+        # reconciliado aqui, porque o Price ad-hoc nunca bate com nenhum
+        # dos 3 tiers fixos -- so o TIER fica congelado (correto), o
+        # STATUS precisa continuar respondendo ao Stripe normalmente.
+        from decimal import Decimal
+
+        account = PublicWorkoutAccount.objects.create(email='legado-valor-custom@example.com')
+        subscription = get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL)
+        subscription.status = PublicWorkoutSubscriptionStatus.ACTIVE
+        subscription.stripe_subscription_id = 'sub_custom_price'
+        subscription.custom_monthly_price = Decimal('150.00')
+        subscription.save(update_fields=['status', 'stripe_subscription_id', 'custom_monthly_price'])
+        event = PaymentWebhookEvent.objects.create(
+            event_id='evt_subscription_updated_custom_price', event_type='customer.subscription.updated',
+            payload={'data': {'object': {
+                'id': 'sub_custom_price', 'status': 'past_due', 'current_period_end': 1790000000,
+                'items': {'data': [{'price': {'id': 'price_ad_hoc_custom'}}]},
+            }}},
+        )
+
+        route_public_workout_stripe_event(event)
+
+        subscription.refresh_from_db()
+        # Tier congelado (nao ha tier canonico pra reconciliar de um Price ad-hoc)...
+        self.assertEqual(subscription.tier, PublicWorkoutTier.ESSENCIAL)
+        # ...mas o status continua respondendo ao Stripe normalmente.
+        self.assertEqual(subscription.status, PublicWorkoutSubscriptionStatus.PAST_DUE)
+        self.assertIsNotNone(subscription.current_period_end)

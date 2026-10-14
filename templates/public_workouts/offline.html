@@ -5,22 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Treinos offline</title>
   <style>
-    body{margin:0;font-family:Manrope,system-ui,sans-serif;background:#f4efe6;color:#11203b;min-height:100vh;display:grid;place-items:center;padding:24px}
-    main{width:min(100%,560px);background:rgba(255,255,255,.92);border:1px solid rgba(17,32,59,.12);border-radius:28px;padding:28px;box-shadow:0 24px 60px rgba(17,32,59,.12)}
+    :root{color-scheme:dark;--curva-cyan:#00e5ff;--curva-blue:#4a90e2;--curva-magenta:#ff00c8;--curva-bg:#0a0e1a;--curva-surface:#111a2a;--curva-line:rgba(145,169,204,.2);--curva-text:#f1f6ff;--curva-muted:#9aabc4}
+    *{box-sizing:border-box}body{margin:0;font-family:Manrope,system-ui,sans-serif;background:radial-gradient(ellipse at 82% 8%,rgba(74,144,226,.15),transparent 32rem),radial-gradient(ellipse at 12% 88%,rgba(255,0,200,.06),transparent 30rem),var(--curva-bg);color:var(--curva-text);min-height:100vh;display:grid;place-items:center;padding:24px;line-height:1.55}
+    main{width:min(100%,560px);background:linear-gradient(150deg,rgba(20,31,50,.98),rgba(12,19,32,.98));border:1px solid var(--curva-line);border-radius:24px;padding:clamp(22px,5vw,32px);box-shadow:0 28px 70px rgba(0,0,0,.36)}
     h1{margin:0 0 12px;font-size:clamp(1.8rem,4vw,2.4rem)}
-    p{margin:0 0 12px;line-height:1.6;color:#52627e}
+    p{margin:0 0 12px;line-height:1.6;color:var(--curva-muted)}
     ul{margin:16px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
-    a{display:inline-flex;padding:12px 16px;border-radius:999px;background:#11203b;color:#fff;text-decoration:none;font-weight:700}
+    a{display:inline-flex;padding:12px 16px;border-radius:12px;background:var(--curva-surface);border:1px solid var(--curva-line);color:var(--curva-text);text-decoration:none;font-weight:700}
+    button{min-height:46px;padding:12px 16px;border:1px solid var(--curva-cyan);border-radius:12px;background:var(--curva-cyan);color:#07121e;font:700 1rem Manrope,system-ui;cursor:pointer;box-shadow:0 8px 24px rgba(0,229,255,.13)}
+    button:disabled{opacity:.55}button.secondary{background:transparent;color:var(--curva-text);border-color:var(--curva-line);box-shadow:none}label{display:grid;gap:5px;font-weight:700}input,select{width:100%;padding:12px;border:1px solid var(--curva-line);border-radius:12px;font:inherit;background:#09111f;color:var(--curva-text)}input:focus,select:focus{outline:2px solid rgba(0,229,255,.58);outline-offset:2px}
+    .fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}.actions{display:flex;flex-wrap:wrap;gap:8px}.card{padding:16px;border:1px solid var(--curva-line);border-radius:16px;background:rgba(9,17,31,.72);margin:16px 0}.eyebrow{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--curva-cyan);font-weight:800}
+    :where(a,button,input,select):focus-visible{outline:2px solid var(--curva-cyan);outline-offset:3px}
+    [hidden]{display:none!important}@media(max-width:480px){.fields{grid-template-columns:1fr 1fr}.fields label:last-child{grid-column:1/-1}}
   </style>
 </head>
 <body>
   <main>
     <h1>Sem conexão agora.</h1>
-    <p>Quando a internet voltar, os links públicos de treino voltam a abrir normalmente.</p>
-    <p>Se você já abriu o seu treino antes neste aparelho, tente novamente em alguns segundos.</p>
+    <p>Se esta é a sua conta neste aparelho, você pode continuar o treino salvo. Os registros serão enviados quando abrir o app com internet.</p>
+    <button type="button" data-offline-open hidden>Continuar treino salvo</button>
+    <section data-offline-guide hidden>
+      <p class="eyebrow">Treino salvo neste aparelho</p>
+      <label>Dia do treino<select data-offline-day></select></label>
+      <div class="card">
+        <strong data-offline-step></strong>
+        <p data-offline-target></p>
+        <div class="fields">
+          <label>Carga (kg)<input type="number" min="0" max="9999.99" step="0.5" inputmode="decimal" data-offline-weight></label>
+          <label>Repetições<input type="number" min="1" max="999" step="1" inputmode="numeric" data-offline-reps></label>
+          <label>RIR opcional<input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-offline-rir></label>
+        </div>
+        <div class="actions">
+          <button type="button" data-offline-start>Começar neste aparelho</button>
+          <button type="button" data-offline-set hidden>Salvar série</button>
+          <button type="button" class="secondary" data-offline-skip hidden>Pular série</button>
+          <button type="button" class="secondary" data-offline-finish hidden>Finalizar treino</button>
+          <button type="button" class="secondary" data-offline-partial hidden>Encerrar parcial</button>
+        </div>
+      </div>
+      <p role="status" aria-live="polite" data-offline-status></p>
+      <div class="actions">
+        <button type="button" class="secondary" data-offline-export>Exportar rascunho</button>
+        <button type="button" class="secondary" data-offline-delete>Apagar dados deste aparelho</button>
+      </div>
+    </section>
+    <p data-offline-empty>Quando a internet voltar, abra o app para sincronizar. Treinos que não foram abertos antes neste aparelho precisam de conexão.</p>
     <ul>
 {% for plan in plans %}      <li><a href="/renan/{{ plan.slug }}">{{ plan.short_name }}</a></li>
 {% endfor %}    </ul>
   </main>
+  <script src="/static/js/public_workouts/guided-outbox.js" defer></script>
+  <script src="/static/js/public_workouts/workout-offline.js" defer></script>
 </body>
 </html>

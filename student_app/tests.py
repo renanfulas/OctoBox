@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from freezegun import freeze_time
 
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
@@ -15,8 +16,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
-from finance.models import Enrollment, MembershipPlan
-from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan
+from operations.models import Attendance, AttendanceStatus, ClassSession, ClassType, SessionStatus
+from operations.services.wod_projection import project_plan_to_sessions
 from student_app.application.cache_keys import (
     build_student_agenda_snapshot_cache_key,
     build_student_home_snapshot_cache_key,
@@ -30,6 +32,7 @@ from student_app.models import (
     SessionWorkoutBlock,
     SessionWorkoutMovement,
     SessionWorkoutStatus,
+    MovementLibrary,
     StudentAppActivity,
     StudentAppActivityKind,
     StudentExerciseMax,
@@ -37,6 +40,7 @@ from student_app.models import (
     StudentProfileChangeRequest,
     StudentProfileChangeRequestStatus,
     StudentWorkoutView,
+    WeeklyWodPlan,
     WorkoutBlockKind,
     WorkoutLoadType,
 )
@@ -190,6 +194,13 @@ class StudentAppExperienceTests(TestCase):
     def test_mass_onboarding_creates_student_and_identity(self):
         client = Client()
         link = self._set_mass_onboarding_session(client)
+        plan = MembershipPlan.objects.create(
+            name='Plano mensal de entrada',
+            price=Decimal('159.90'),
+            billing_cycle='monthly',
+            sessions_per_week=3,
+            active=True,
+        )
 
         response = client.post(
             reverse('student-app-onboarding'),
@@ -197,7 +208,7 @@ class StudentAppExperienceTests(TestCase):
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
                 'birth_date': '02/01/2000',
-                'selected_plan': '',
+                'selected_plan': str(plan.pk),
             },
             follow=False,
         )
@@ -207,6 +218,8 @@ class StudentAppExperienceTests(TestCase):
         identity = StudentIdentity.objects.get(provider_subject='provider-subject-new-mass')
         self.assertEqual(identity.email, 'novo@app.com')
         self.assertEqual(identity.student.full_name, 'Novo Aluno App')
+        enrollment = Enrollment.objects.get(student=identity.student, plan=plan)
+        self.assertEqual(enrollment.status, EnrollmentStatus.PENDING)
         membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug=get_box_runtime_slug())
         self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
         self.assertTrue(
@@ -274,9 +287,31 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'data-mask="date"', html=False)
         self.assertContains(response, '/static/js/core/forms.js', html=False)
         self.assertContains(response, 'data-min-year="1900"', html=False)
-        self.assertContains(response, 'data-max-year="2026"', html=False)
+        self.assertContains(response, f'data-max-year="{timezone.localdate().year}"', html=False)
         self.assertNotContains(response, '<span>E-mail</span>', html=False)
         self.assertContains(response, 'Seu e-mail será o mesmo validado no OAuth', html=False)
+        self.assertContains(response, 'Concluir cadastro')
+        self.assertContains(response, 'Data de nascimento (opcional)')
+        self.assertContains(response, 'Plano (opcional)')
+
+    def test_mass_onboarding_plan_choice_shows_price_cycle_and_frequency(self):
+        client = Client()
+        self._set_mass_onboarding_session(client)
+        MembershipPlan.objects.create(
+            name='Plano Bronze',
+            price=Decimal('159.90'),
+            billing_cycle='monthly',
+            sessions_per_week=3,
+            active=True,
+        )
+
+        response = client.get(reverse('student-app-onboarding'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Plano Bronze — R$ 159,90 · mensal · 3x por semana')
+        self.assertContains(response, 'matrícula pendente')
+        self.assertContains(response, 'Nenhum pagamento é feito neste passo')
+
 
     def test_mass_onboarding_rejects_invalid_phone_payload(self):
         client = Client()
@@ -300,21 +335,61 @@ class StudentAppExperienceTests(TestCase):
     def test_mass_onboarding_rejects_birth_date_after_max_year(self):
         client = Client()
         self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-birth')
+        future_year = timezone.localdate().year + 1
 
         response = client.post(
             reverse('student-app-onboarding'),
             {
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
-                'birth_date': '01/01/2027',
+                'birth_date': f'01/01/{future_year}',
                 'selected_plan': '',
             },
             follow=False,
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'O ano da data de nascimento precisa ficar entre 1900 e 2026.')
+        self.assertContains(response, f'O ano da data de nascimento precisa ser no máximo {timezone.localdate().year}.')
         self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-birth').exists())
+
+    def test_mass_onboarding_accepts_minimum_birth_date(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-minimum-birth')
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno Limite',
+                'phone': '5511888888888',
+                'birth_date': '01/01/1900',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        identity = StudentIdentity.objects.get(provider_subject='provider-subject-minimum-birth')
+        self.assertEqual(identity.student.birth_date, date(1900, 1, 1))
+
+    @freeze_time('2026-10-02')
+    def test_mass_onboarding_rejects_birth_date_later_in_the_current_year(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-day')
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno App',
+                'phone': '5511888888888',
+                'birth_date': '31/12/2026',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A data de nascimento não pode ser futura.')
+        self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-day').exists())
 
     def test_mass_onboarding_accepts_masked_phone_and_saves_clean_digits(self):
         client = Client()
@@ -415,6 +490,66 @@ class StudentAppExperienceTests(TestCase):
                 metadata__identity_id=identity.id,
             ).exists()
         )
+
+    def test_imported_lead_onboarding_preserves_birth_date_when_optional_field_is_blank(self):
+        client = Client()
+        existing_birth_date = date(1996, 4, 3)
+        student = Student.objects.create(
+            full_name='Lead Importado com Nascimento',
+            phone='5511666699999',
+            email='',
+            birth_date=existing_birth_date,
+            status=StudentStatus.LEAD,
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=student.id,
+            student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='provider-subject-imported-blank-birth-date',
+            email='lead-birth-date@app.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=student.id,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        invitation = StudentAppInvitation.objects.create(
+            student_id=student.id,
+            student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            invited_email='lead-birth-date@app.com',
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'box_root_slug': get_box_runtime_slug(),
+            'student_id': student.id,
+            'identity_id': identity.id,
+            'invitation_id': invitation.id,
+            'email': 'lead-birth-date@app.com',
+        }
+        session.save()
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': student.full_name,
+                'phone': '5511666699999',
+                'birth_date': '',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        student.refresh_from_db()
+        self.assertEqual(student.birth_date, existing_birth_date)
 
     def test_imported_lead_onboarding_persists_google_photo_url_captured_during_oauth(self):
         """Bug irmao do mass onboarding: convite individual de lead importado
@@ -1569,6 +1704,121 @@ class StudentAppExperienceTests(TestCase):
         self.assertLessEqual(len(captured_queries), 4)
         self.assertEqual(second_result.primary_recommendation.recommended_load_kg, Decimal('55.00'))
 
+    def test_weekly_projected_workout_uses_rich_student_render_without_smartplan_flag(self):
+        MovementLibrary.objects.create(
+            slug='push-press',
+            label_pt='Push press',
+            reference_url='https://example.test/push-press',
+            demo_video_url='https://video.example.test/push-press',
+        )
+        session = ClassSession.objects.create(
+            title='Cross semanal',
+            scheduled_at=timezone.now() + timedelta(minutes=30),
+            status='open',
+            class_type=ClassType.CROSS,
+        )
+        local_session_date = timezone.localtime(session.scheduled_at).date()
+        week_start = local_session_date - timedelta(days=local_session_date.weekday())
+        weekday = local_session_date.weekday()
+        plan = WeeklyWodPlan.objects.create(
+            week_start=week_start,
+            label='Semana com metadados completos',
+            source_text='21/15/9 For time, 3 rounds, cap 12 min, intervalo 90 s.',
+            status='confirmed',
+            parsed_payload={
+                'source': 'weekly_smart_paste',
+                'days': [{
+                    'weekday': weekday,
+                    'blocks': [{
+                        'kind': 'metcon',
+                        'title': 'WOD',
+                        'notes': '',
+                        'timecap_min': 12,
+                        'rounds': 3,
+                        'interval_seconds': 90,
+                        'score_type': 'for_time',
+                        'format_spec': '21/15/9',
+                        'movements': [{
+                            'movement_slug': 'push_press',
+                            'movement_label_raw': '21/15/9 push press 40/25 kg',
+                            'sets': 3,
+                            'reps_spec': '21/15/9',
+                            'load_spec': '40/25 kg',
+                            'is_scaled_alternative': True,
+                            'notes': 'Carga por categoria.',
+                        }, {
+                            'movement_slug': 'deadlift',
+                            'movement_label_raw': 'Deadlift de 10 a 12 reps a 65% RM',
+                            'sets': 4,
+                            'reps_spec': '10 a 12',
+                            'load_spec': '65% RM',
+                            'is_scaled_alternative': False,
+                            'notes': '',
+                        }],
+                    }, {
+                        'kind': 'skill',
+                        'title': 'EMOM tecnico',
+                        'notes': '',
+                        'rounds': 10,
+                        'interval_seconds': 60,
+                        'score_type': 'emom',
+                        'format_spec': 'EMOM 10 — 1:00 rest',
+                        'movements': [],
+                    }],
+                }],
+            },
+        )
+        actor = get_user_model().objects.create_user(
+            username='weekly-projection-qa',
+            email='weekly-projection-qa@example.com',
+            password='senha-forte-123',
+        )
+        project_plan_to_sessions(
+            weekly_plan=plan,
+            target_week_start=week_start,
+            class_types=[ClassType.CROSS],
+            actor=actor,
+        )
+        workout = SessionWorkout.objects.get(session=session)
+        self.assertEqual(workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        workout.status = SessionWorkoutStatus.PUBLISHED
+        workout.save(update_fields=['status', 'updated_at'])
+
+        result = GetStudentWorkoutDay().execute(
+            student=self.student,
+            session_id=session.id,
+            box_root_slug=get_box_runtime_slug(),
+        )
+
+        self.assertFalse(result.is_normalized)
+        self.assertTrue(result.has_structured_content)
+        self.assertEqual(
+            result.blocks[0].format_label,
+            '21/15/9 · For time · 3 rounds · time cap 12 min · intervalo 90 s',
+        )
+        self.assertEqual(result.blocks[0].movements[0].prescription_label, '3 séries · 21/15/9 reps · @ 40/25 kg')
+        self.assertTrue(result.blocks[0].movements[0].is_scaled_alternative)
+        self.assertEqual(result.blocks[0].movements[0].notes, 'Carga por categoria.')
+        self.assertEqual(result.blocks[0].movements[0].reference_url, 'https://example.test/push-press')
+        self.assertEqual(result.blocks[0].movements[0].demo_video_url, 'https://video.example.test/push-press')
+        self.assertEqual(result.blocks[0].movements[1].prescription_label, '4 séries · 10 a 12 reps · @ 65% RM')
+        self.assertEqual(result.blocks[1].format_label, 'EMOM 10 — 1:00 rest · 10 rounds · intervalo 60 s')
+
+        response = self.client.get(
+            reverse('student-app-wod'),
+            {'session_id': session.id},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            '21/15/9 · For time · 3 rounds · time cap 12 min · intervalo 90 s',
+        )
+        self.assertContains(response, '3 séries · 21/15/9 reps · @ 40/25 kg')
+        self.assertContains(response, 'Ver demonstração')
+        self.assertContains(response, 'https://video.example.test/push-press')
+        self.assertContains(response, '4 séries · 10 a 12 reps · @ 65% RM')
+        self.assertContains(response, 'EMOM 10 — 1:00 rest · 10 rounds · intervalo 60 s')
+
     def test_student_dashboard_agenda_snapshot_keeps_attendance_personalized(self):
         cache.clear()
         session = ClassSession.objects.create(
@@ -2161,6 +2411,26 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertRedirects(response, reverse('student-identity-invite', kwargs={'token': token}))
 
+    def test_invite_entry_routes_group_link_to_box_invite_landing(self):
+        token = str(uuid.uuid4())
+        group_url = f'https://app.octoboxfit.com.br/aluno/auth/box-invite/{token}/'
+
+        response = self.client.post(
+            reverse('student-app-enter-invite'),
+            {'invite_token_or_url': group_url},
+        )
+
+        self.assertRedirects(response, reverse('student-identity-box-invite', kwargs={'token': token}))
+
+    def test_switch_box_ignores_external_next_url(self):
+        response = self.client.post(
+            reverse('student-app-switch-box'),
+            {'box_root_slug': get_box_runtime_slug(), 'next': 'https://evil.example.com/phish'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn('evil.example.com', response['Location'])
+
 
 class PublicWorkoutPwaTests(TestCase):
     # NOTA (Entrega 4, corte pra workout.html): esta classe nunca chama
@@ -2228,11 +2498,9 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(payload['scope'], '/renan/')
         self.assertEqual(len(payload['icons']), 3)
 
-    def test_public_workout_service_worker_precaches_only_the_requesting_slug(self):
-        # A4 do CORDA: antes, o SW precacheava TODOS os slugs em qualquer
-        # aparelho — o celular da Giovanna guardava o %gordura do Bruno,
-        # offline. O ALLOWLIST so pode conter o slug que a propria pagina
-        # informou ao registrar (?slug=), nunca os outros.
+    def test_public_workout_service_worker_precaches_assets_without_private_page(self):
+        # O cache guarda apenas assets estaticos, fallback e o manifest do
+        # slug solicitado. HTML e JSON privados continuam fora dele.
         other_slugs = ('bruno', 'milene', 'giovanna', 'thaislima', 'john', 'henrique', 'johnespanha')
 
         sw_response = self.client.get(reverse('public-workout-sw'), {'slug': 'juliana'})
@@ -2243,12 +2511,18 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(sw_response['Service-Worker-Allowed'], '/renan/')
         self.assertIn('/renan/juliana', sw_content)
         self.assertIn('/renan/juliana/manifest.webmanifest', sw_content)
-        self.assertIn("'/renan/juliana?source=pwa'", sw_content)
+        self.assertNotIn("'/renan/juliana?source=pwa'", sw_content)
         for other_slug in other_slugs:
             self.assertNotIn(f'/renan/{other_slug}', sw_content, f'{other_slug} nao deveria estar no precache da juliana')
         self.assertIn('/renan/offline/', sw_content)
-        self.assertIn('const PAGE_CACHE', sw_content)
+        self.assertNotIn('const PAGE_CACHE', sw_content)
         self.assertIn('normalizedWorkoutPath', sw_content)
+        self.assertEqual(sw_content.count("'/static/js/public_workouts/assessments-report.js'"), 1)
+        self.assertEqual(sw_content.count("'/static/js/public_workouts/assessments.js'"), 1)
+        self.assertIn("'/static/js/public_workouts/load-api.js'", sw_content)
+        self.assertIn("'/static/js/public_workouts/load-sync.js'", sw_content)
+        self.assertIn("'/static/js/public_workouts/guided-state.js'", sw_content)
+        self.assertIn("'/static/js/public_workouts/guided-sync.js'", sw_content)
         self.assertEqual(offline_response.status_code, 200)
         self.assertContains(offline_response, 'Sem conexão agora.')
 
@@ -2411,26 +2685,6 @@ class PublicWorkoutTemplatePreviewViewTests(TestCase):
         response = self.client.get('/renan/bruno/preview-b3')
 
         self.assertEqual(response.status_code, 404)
-    def test_invite_entry_routes_group_link_to_box_invite_landing(self):
-        token = str(uuid.uuid4())
-        group_url = f'https://app.octoboxfit.com.br/aluno/auth/box-invite/{token}/'
-
-        response = self.client.post(
-            reverse('student-app-enter-invite'),
-            {'invite_token_or_url': group_url},
-        )
-
-        self.assertRedirects(response, reverse('student-identity-box-invite', kwargs={'token': token}))
-
-    def test_switch_box_ignores_external_next_url(self):
-        response = self.client.post(
-            reverse('student-app-switch-box'),
-            {'box_root_slug': get_box_runtime_slug(), 'next': 'https://evil.example.com/phish'},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertNotIn('evil.example.com', response['Location'])
-
 
     @override_settings(DEBUG=True)
     def test_renders_workout_html_template_for_published_program(self):

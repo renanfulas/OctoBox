@@ -40,37 +40,41 @@ html{scroll-behavior:smooth}
 :root{
   /* Neutros. Valor dos 5 arquivos modernos; a milene e a giovanna
      estavam meio tom fora (#FAFAF7/#F4F4F2, #1a1a1a, #888, #bbb). */
-  --bg:#F6F5F2;
-  --white:#FFFFFF;
-  --card:#FAFAF8;
-  --border:#E8E6E1;
-  --alt:#F2F1EE;
-  --dark:#141414;
-  --muted:#8A8883;
-  --light:#B5B3AE;
+  --bg:#0A0E1A;
+  --white:#111A2A;
+  --card:#152033;
+  --border:rgba(145,169,204,.18);
+  --alt:#19263A;
+  --dark:#070B13;
+  --text:#F1F6FF;
+  --muted:#9AABC4;
+  --light:#788BA7;
+  --brand-cyan:#00E5FF;
+  --brand-blue:#4A90E2;
+  --brand-magenta:#FF00C8;
 
   /* Tipos de serie. --prep/--feed/--max sao identicos nos 7 arquivos.
      --top e o unico que divergia (a milene puxou pro ambar dela); um
      plano que queira repetir isso sobrescreve no bloco inline. */
-  --prep-bg:#F1EFE8;--prep-fg:#57534E;
-  --feed-bg:#FEF3C7;--feed-fg:#92400E;
-  --top-bg:#EDE9FE;--top-fg:#5B21B6;
-  --max-bg:#FEE2E2;--max-fg:#991B1B;
+  --prep-bg:#202B3D;--prep-fg:#D5DFEF;
+  --feed-bg:rgba(247,184,77,.16);--feed-fg:#FFD37F;
+  --top-bg:rgba(255,0,200,.14);--top-fg:#FF8CE8;
+  --max-bg:rgba(255,95,126,.15);--max-fg:#FF9AAE;
 
   /* Estados de dia/sessao comuns. */
-  --cardio-bg:#D1FAE5;--cardio-fg:#065F46;
-  --green-bg:#EAF3DE;--green-fg:#3A6F10;
+  --cardio-bg:rgba(41,211,152,.14);--cardio-fg:#75E7BB;
+  --green-bg:rgba(41,211,152,.14);--green-fg:#75E7BB;
 
   /* Badges de sessao do vocabulario padrao (forca/hipertrofia), com o
      mesmo valor em 5 dos 7 planos. Quem usa outro vocabulario — a
      thaislima (inf/sup/muay) e a milene (leg/core/upper/hiit) — declara
      o seu no bloco plan_tokens do proprio template. */
-  --force-bg:#DBEAFE;--force-fg:#1D4ED8;
-  --hiper-bg:#EDE9FE;--hiper-fg:#5B21B6;
+  --force-bg:rgba(74,144,226,.17);--force-fg:#9FC9FF;
+  --hiper-bg:rgba(255,0,200,.14);--hiper-fg:#FF8CE8;
 
   /* Forma. */
   --r-sm:8px;--r-md:11px;--r-lg:14px;
-  --shadow:0 1px 3px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.03);
+  --shadow:0 14px 32px rgba(0,0,0,.22),0 2px 8px rgba(0,0,0,.16);
 
   /* Semanas do tracker. O john roda mesociclo de 6 e por causa disso
      tinha um .tracker-grid proprio; agora e so trocar o token. */

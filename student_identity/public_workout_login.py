@@ -24,6 +24,7 @@ import logging
 from urllib.parse import quote
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils import timezone
 
 from shared_support.platform_cache import platform_cache
@@ -85,12 +86,12 @@ def resolve_or_create_public_workout_account(*, email: str, photo_url: str = '')
     return account
 
 
-def request_login_token(*, email: str, base_url: str, next_url: str = '') -> PublicWorkoutLoginToken:
-    """Cria (ou reusa) a conta pelo e-mail, emite token e envia o link de login.
+def request_login_token(*, email: str, base_url: str, next_url: str = '') -> PublicWorkoutLoginToken | None:
+    """Emite e envia link de login apenas para uma conta existente.
 
     Levanta PublicWorkoutLoginRateLimitExceeded se o e-mail pediu tokens
-    demais na janela. Nunca revela se a conta ja existia: a mesma resposta
-    (um token novo) sai nos dois casos.
+    demais na janela. Returns None when no eligible account exists; signup
+    and payment are handled by the checkout flow instead.
 
     `next_url` (opcional, ja validado pelo chamador — ver
     _safe_public_workout_next em public_workout_views.py) viaja dentro do
@@ -105,7 +106,19 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
         raise PublicWorkoutLoginRateLimitExceeded(normalized_email)
     platform_cache.set(rate_limit_key, attempts + 1, timeout=PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_WINDOW_SECONDS)
 
-    account = resolve_or_create_public_workout_account(email=normalized_email)
+    # Login is an authentication flow, never a signup flow. In particular,
+    # abandoned checkout leads must return to checkout and cannot mint an
+    # account/session before their first confirmed payment.
+    account = PublicWorkoutAccount.objects.filter(email__iexact=normalized_email).first()
+    if account is None:
+        return None
+    subscription = getattr(account, 'subscription', None)
+    if (
+        subscription is not None
+        and subscription.requires_login
+        and subscription.status == 'pending_payment'
+    ):
+        return None
     token = PublicWorkoutLoginToken.objects.create(
         account=account,
         expires_at=timezone.now() + timezone.timedelta(seconds=PUBLIC_WORKOUT_LOGIN_TOKEN_TTL_SECONDS),
@@ -139,17 +152,30 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
 def verify_login_token(*, token: str) -> PublicWorkoutAccount | None:
     """Consome o token se valido. None se ausente, mal formado, expirado ou ja usado."""
     try:
-        login_token = PublicWorkoutLoginToken.objects.select_related('account').get(token=token)
+        # Lock da linha do token + revalidacao sob o lock: duas aberturas simultaneas do mesmo
+        # link nunca passam as duas (a 2a espera o commit da 1a e ja ve used_at preenchido).
+        with transaction.atomic():
+            login_token = (
+                PublicWorkoutLoginToken.objects
+                .select_for_update(of=('self',))
+                .select_related('account')
+                .get(token=token)
+            )
+            if not login_token.is_valid:
+                return None
+            login_token.mark_used()
+            login_token.save(update_fields=['used_at', 'updated_at'])
     except (PublicWorkoutLoginToken.DoesNotExist, ValueError, TypeError, ValidationError):
         return None
 
-    if not login_token.is_valid:
-        return None
-
-    login_token.mark_used()
-    login_token.save(update_fields=['used_at', 'updated_at'])
-
     account = login_token.account
+    subscription = getattr(account, 'subscription', None)
+    if (
+        subscription is not None
+        and subscription.requires_login
+        and subscription.status == 'pending_payment'
+    ):
+        return None
     account.last_login_at = timezone.now()
     account.save(update_fields=['last_login_at', 'updated_at'])
 

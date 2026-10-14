@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 from django import forms
+from django.utils.formats import number_format
 from django.utils import timezone
 
 from finance.models import MembershipPlan
@@ -19,7 +20,6 @@ from students.models import Student
 
 
 MIN_STUDENT_BIRTH_DATE = date(1900, 1, 1)
-MAX_STUDENT_BIRTH_YEAR = 2026
 MIN_STUDENT_NAME_LENGTH = 5
 MIN_STUDENT_PHONE_DIGITS = 10
 MAX_STUDENT_PHONE_DIGITS = 11
@@ -154,6 +154,15 @@ class StudentExerciseMaxUpdateForm(forms.Form):
     )
 
 
+class StudentOnboardingPlanField(forms.ModelChoiceField):
+    """Mostra os detalhes que a pessoa precisa para comparar planos."""
+
+    def label_from_instance(self, plan):
+        price = number_format(plan.price, decimal_pos=2, use_l10n=True)
+        billing_cycle = plan.get_billing_cycle_display().lower()
+        return f'{plan.name} — R$ {price} · {billing_cycle} · {plan.sessions_per_week}x por semana'
+
+
 class BaseStudentOnboardingForm(forms.Form):
     full_name = forms.CharField(label='Nome completo', max_length=150)
     phone = forms.CharField(label='WhatsApp', max_length=20)
@@ -161,10 +170,9 @@ class BaseStudentOnboardingForm(forms.Form):
         label='Data de nascimento',
         required=False,
         min_year=MIN_STUDENT_BIRTH_DATE.year,
-        max_year=MAX_STUDENT_BIRTH_YEAR,
-        widget=forms.TextInput(),
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'type': 'text'}),
     )
-    selected_plan = forms.ModelChoiceField(
+    selected_plan = StudentOnboardingPlanField(
         label='Plano',
         required=False,
         queryset=MembershipPlan.objects.none(),
@@ -177,6 +185,12 @@ class BaseStudentOnboardingForm(forms.Form):
         self.identity = identity
         self.box_root_slug = box_root_slug
         self.fields['selected_plan'].queryset = MembershipPlan.objects.filter(active=True).order_by('price', 'name')
+        today = timezone.localdate()
+        birth_date_field = self.fields['birth_date']
+        birth_date_field.max_year = today.year
+        birth_date_field.error_messages['max_year'] = (
+            f'O ano da data de nascimento precisa ser no máximo {today.year}.'
+        )
         apply_text_input_attrs(
             self.fields['full_name'],
             placeholder='Ex.: Maria Souza',
@@ -196,9 +210,9 @@ class BaseStudentOnboardingForm(forms.Form):
             maxlength=10,
             pattern=r'\d{2}/\d{2}/\d{4}',
             min_year=MIN_STUDENT_BIRTH_DATE.year,
-            max_year=MAX_STUDENT_BIRTH_YEAR,
+            max_year=today.year,
         )
-        self.fields['birth_date'].help_text = 'Use o formato dd/mm/aaaa. Ano permitido: 1900 a 2026.'
+        self.fields['birth_date'].help_text = 'Opcional. Use dd/mm/aaaa; a data não pode ser futura.'
         self.fields['selected_plan'].widget.attrs.update({'autocomplete': 'off'})
 
     def clean_phone(self):
@@ -240,9 +254,9 @@ class BaseStudentOnboardingForm(forms.Form):
         if birth_date is None:
             return birth_date
         if birth_date < MIN_STUDENT_BIRTH_DATE:
-            raise forms.ValidationError('A data de nascimento precisa ser posterior a 01/01/1900.')
-        if birth_date.year > MAX_STUDENT_BIRTH_YEAR:
-            raise forms.ValidationError('O ano da data de nascimento precisa ficar entre 1900 e 2026.')
+            raise forms.ValidationError('A data de nascimento precisa ser igual ou posterior a 01/01/1900.')
+        if birth_date > timezone.localdate():
+            raise forms.ValidationError('A data de nascimento não pode ser futura.')
         return birth_date
 
 
@@ -255,6 +269,11 @@ class ImportedLeadOnboardingForm(BaseStudentOnboardingForm):
         super().__init__(*args, **kwargs)
         self.fields['full_name'].help_text = 'Já puxamos o nome do lead. Ajuste só se precisar.'
         self.fields['phone'].help_text = 'Já puxamos seu WhatsApp do box. Ajuste se estiver diferente.'
+        if self.student is not None and self.student.birth_date:
+            self.fields['birth_date'].help_text = (
+                'Já puxamos essa data do cadastro do box. Se deixar em branco, ela será mantida; '
+                'informe outra data para corrigir.'
+            )
 
 
 class StudentProfileEditForm(forms.ModelForm):

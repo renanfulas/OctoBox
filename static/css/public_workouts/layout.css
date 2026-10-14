@@ -9,14 +9,14 @@
    BODY & PAGE
    ══════════════════════════════════════════════ */
 body{
-  font-family:-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif;
-  background:var(--bg);color:var(--dark);min-height:100vh;
+  font-family:Inter,Manrope,-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif;
+  background:radial-gradient(ellipse at 84% 0%,rgba(74,144,226,.13),transparent 34rem),radial-gradient(ellipse at 12% 22%,rgba(0,229,255,.045),transparent 30rem),var(--bg);color:var(--text);min-height:100vh;
   padding-left:env(safe-area-inset-left);
   padding-right:env(safe-area-inset-right);
   padding-bottom:env(safe-area-inset-bottom);
   -webkit-text-size-adjust:100%;line-height:1.5;
 }
-.page{max-width:880px;margin:0 auto;padding:0 1.25rem 5rem}
+.page{max-width:920px;margin:0 auto;padding:0 1.25rem 5rem}
 
 /* ══════════════════════════════════════════════
    STICKY TOP BAR
@@ -30,7 +30,7 @@ body{
   -webkit-justify-content:space-between;justify-content:space-between;
   padding:.55rem 1.25rem;
   padding-top:calc(.55rem + env(safe-area-inset-top,0px));
-  border-bottom:2px solid var(--accent);
+  border-bottom:1px solid var(--border);
   margin-bottom:1.5rem;
 }
 .top-bar-left{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:8px}
@@ -41,7 +41,7 @@ body{
   gap:6px;padding:10px 18px;min-height:44px;
   border-radius:10px;border:none;
   font-size:13px;font-weight:700;font-family:inherit;
-  background:var(--accent);color:#fff;
+  background:var(--accent);color:#07121E;
   -webkit-appearance:none;appearance:none;
   white-space:nowrap;
   transition:background .12s,transform .08s;
@@ -109,7 +109,7 @@ body{
 .dp.cardio-d .dt{color:var(--green-fg)}
 .dp.rest{opacity:.35;cursor:default;pointer-events:none}
 .dn{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:3px;letter-spacing:.04em}
-.dt{font-size:10.5px;font-weight:800;color:#444}
+.dt{font-size:10.5px;font-weight:800;color:var(--text)}
 
 /* ══════════════════════════════════════════════
    TABS
@@ -118,7 +118,7 @@ body{
 .tab{
   padding:10px 18px;min-height:44px;border-radius:var(--r-sm);
   border:1px solid var(--border);font-size:13px;cursor:pointer;
-  background:var(--white);color:#666;font-family:inherit;font-weight:500;
+  background:var(--white);color:var(--muted);font-family:inherit;font-weight:600;
   -webkit-transition:all .12s;transition:all .12s;
   -webkit-appearance:none;appearance:none;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
@@ -127,7 +127,7 @@ body{
   box-shadow:var(--shadow);
 }
 .tab:active{background:var(--alt)}
-.tab.on{background:var(--dark);color:var(--white);border-color:var(--dark);font-weight:700;box-shadow:none}
+.tab.on{background:var(--dark);color:var(--text);border-color:var(--brand-cyan);font-weight:700;box-shadow:0 0 0 1px rgba(0,229,255,.08)}
 
 /* ══════════════════════════════════════════════
    SESSION

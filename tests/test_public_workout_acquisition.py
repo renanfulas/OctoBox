@@ -6,7 +6,9 @@ from django.urls import reverse
 
 from public_workouts.acquisition import ACQUISITION_COOKIE_NAME
 from public_workouts.models import (
+    PublicWorkoutAccount,
     PublicWorkoutAcquisitionSession,
+    PublicWorkoutCheckoutLead,
     PublicWorkoutFunnelEvent,
     PublicWorkoutTier,
 )
@@ -121,16 +123,20 @@ class PublicWorkoutAcquisitionTests(TestCase):
             from unittest.mock import MagicMock, patch
 
             with patch('stripe.checkout.Session.create') as create:
-                create.return_value = MagicMock(url='https://stripe.test/session')
+                create.return_value = MagicMock(id='cs_test_acquisition', url='https://stripe.test/session')
                 response = self.client.post(reverse('public-workout-cold-signup'), {
                     'email': 'origem@example.com', 'tier': PublicWorkoutTier.ESSENCIAL,
                     'accept_contract': '1',
                 })
 
         self.assertEqual(response.status_code, 200)
-        session = PublicWorkoutAcquisitionSession.objects.select_related('account', 'subscription').get()
-        self.assertEqual(session.account.email, 'origem@example.com')
-        self.assertEqual(session.subscription.account, session.account)
+        # Cadastro a frio cria so um LEAD de checkout ligado a sessao de origem; a conta e a
+        # assinatura so nascem depois do pagamento confirmado (webhook/retorno do Stripe).
+        session = PublicWorkoutAcquisitionSession.objects.get()
+        lead = PublicWorkoutCheckoutLead.objects.get(email='origem@example.com')
+        self.assertEqual(lead.acquisition_session, session)
+        self.assertEqual(lead.stripe_checkout_session_id, 'cs_test_acquisition')
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email='origem@example.com').exists())
         self.assertEqual(
             set(PublicWorkoutFunnelEvent.objects.values_list('event_type', flat=True)),
             {'landing_viewed', 'tier_selected', 'checkout_started'},

@@ -19,6 +19,7 @@ import re
 
 
 CLASS_TYPE_PATTERNS = (
+    ('hyrox', (r'\bhyrox\b',)),
     ('mobility', (r'\bmob(?:ility)?\b', r'mobilidade', r'alongamento', r'flexibilidade', r'flow')),
     ('oly', (r'halterofilia', r'\boly\b', r'olimpic[ao]?', r'weightlifting', r'clean', r'snatch')),
     ('strength', (r'forca', r'strength', r'powerlifting', r'levantamento')),

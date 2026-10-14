@@ -8,6 +8,10 @@
 <main class="curva-ops-shell">
   <header class="curva-ops-topbar">
     <a href="{% url 'public-workout-activation-queue' %}" class="curva-ops-brand">Cur<span>va</span> · operação</a>
+    <nav class="curva-ops-nav">
+      <a href="{% url 'public-workout-activation-queue' %}" aria-current="page">Fila de ativação</a>
+      <a href="{% url 'public-workout-coach-roster' %}">Alunos</a>
+    </nav>
     <div class="curva-ops-user">
       <span>{{ staff_username }}</span>
       <form method="post" action="{% url 'public-workout-staff-logout' %}">{% csrf_token %}<button type="submit">Sair</button></form>

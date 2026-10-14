@@ -79,6 +79,9 @@ def stage_ramp_kg(*, stage: str, set_count: int, top_weight_kg: float) -> list[f
     if not top_weight_kg:
         return []
 
+    # O histórico persiste kg como Decimal; a interpolação usa percentuais float.
+    top_weight_kg = float(top_weight_kg)
+
     set_count = max(1, set_count)
 
     if stage in ('top', 'max'):

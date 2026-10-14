@@ -10,7 +10,13 @@ os dois sem precisar duplicar nenhum dos dois aqui."""
 
 from django.urls import path
 
-from .views import CurvaStaffLoginView, CurvaStaffLogoutView, PublicWorkoutActivationQueueView
+from .views import (
+    CoachStudentDetailView,
+    CoachStudentRosterView,
+    CurvaStaffLoginView,
+    CurvaStaffLogoutView,
+    PublicWorkoutActivationQueueView,
+)
 
 urlpatterns = [
     path('login/curva/', CurvaStaffLoginView.as_view(), name='public-workout-staff-login'),
@@ -19,5 +25,11 @@ urlpatterns = [
         'public-workouts/ativacoes/',
         PublicWorkoutActivationQueueView.as_view(),
         name='public-workout-activation-queue',
+    ),
+    path('public-workouts/alunos/', CoachStudentRosterView.as_view(), name='public-workout-coach-roster'),
+    path(
+        'public-workouts/alunos/<int:account_id>/',
+        CoachStudentDetailView.as_view(),
+        name='public-workout-coach-student-detail',
     ),
 ]

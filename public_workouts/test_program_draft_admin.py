@@ -109,6 +109,32 @@ class PublicWorkoutProgramDraftAdminTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="_save"')
 
+    def test_pending_review_shows_guided_proposal_without_publishing_it(self):
+        payload = build_example_payload()
+        draft = create_program_draft(
+            account_id=self.account.pk, slug='bruno', payload=payload, source='manual',
+        )
+        response = self.client.get(self._change_url(draft.pk))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Propostas para copiar e revisar')
+        self.assertContains(response, 'guided_prescription')
+        draft.refresh_from_db()
+        self.assertNotIn('guided_prescription', draft.payload['days'][0]['blocks'][0]['movements'][0])
+
+    def test_prepare_guided_action_keeps_draft_pending_for_human_review(self):
+        draft = create_program_draft(
+            account_id=self.account.pk, slug='bruno', payload=build_example_payload(), source='manual',
+        )
+        response = self.client.post(self._changelist_url(), {
+            'action': 'prepare_guided_prescription_action',
+            '_selected_action': [str(draft.pk)],
+        }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        draft.refresh_from_db()
+        self.assertEqual(draft.status, PublicWorkoutProgramDraftStatus.PENDING_REVIEW)
+        self.assertIn('guided_prescription', draft.payload['days'][0]['blocks'][0]['movements'][0])
+        self.assertFalse(PublicWorkoutProgram.objects.exists())
+
     def test_approved_draft_is_not_editable(self):
         draft = create_program_draft(
             account_id=self.account.pk, slug='bruno', payload=build_example_payload(), source='manual'
@@ -204,7 +230,7 @@ class GenerateAiDraftSubscriptionActionTests(TestCase):
         )
 
         with mock.patch(
-            'public_workouts.admin.generate_program_draft_payload', return_value=(None, 'claude-haiku-4-5-20251001')
+            'public_workouts.program_generation_ai.generate_program_draft_payload', return_value=(None, 'claude-haiku-4-5-20251001')
         ):
             response = self._run_action()
 
@@ -219,7 +245,7 @@ class GenerateAiDraftSubscriptionActionTests(TestCase):
         )
 
         with mock.patch(
-            'public_workouts.admin.generate_program_draft_payload',
+            'public_workouts.program_generation_ai.generate_program_draft_payload',
             return_value=(build_example_payload(), 'claude-haiku-4-5-20251001'),
         ):
             response = self._run_action()
@@ -241,7 +267,7 @@ class GenerateAiDraftSubscriptionActionTests(TestCase):
         )
 
         with mock.patch(
-            'public_workouts.admin.generate_program_draft_payload',
+            'public_workouts.program_generation_ai.generate_program_draft_payload',
             return_value=(build_example_payload(), 'claude-haiku-4-5-20251001'),
         ):
             response = self._run_action()

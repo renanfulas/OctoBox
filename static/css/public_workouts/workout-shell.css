@@ -33,16 +33,92 @@
     --theme-accent-primary: var(--theme-accent-support);
 }
 
+/* Tema Curva: mesmas cores da familia OctoBox, isoladas da shell e dos
+   tokens globais do app autenticado. Dark e o palco padrao deste PWA. */
+body[data-plan-slug]:not([data-theme="light"]) {
+    color-scheme: dark;
+    /* `tokens.css` captura aliases de compatibilidade no :root. Redefina-os
+       nesta shell para que a tela do aluno receba a paleta Curva em cascata. */
+    --fdw-stage: var(--theme-bg-stage);
+    --fdw-stage-depth: var(--theme-bg-stage-depth);
+    --ink: var(--theme-text-primary);
+    --ink-soft: var(--theme-text-secondary);
+    --muted: var(--theme-text-muted);
+    --muted-strong: var(--theme-text-soft);
+    --theme-bg-root: #0A0E1A;
+    --theme-bg-depth: #111A2A;
+    --theme-bg-stage: linear-gradient(180deg, #090D16 0%, #0A0E1A 48%, #111A2A 100%);
+    --theme-bg-stage-depth:
+        radial-gradient(circle at 12% 10%, rgba(74,144,226,.15), transparent 27%),
+        radial-gradient(circle at 86% 12%, rgba(0,229,255,.09), transparent 24%),
+        radial-gradient(circle at 20% 84%, rgba(255,0,200,.075), transparent 25%);
+    --theme-surface: rgba(13,21,34,.9);
+    --theme-surface-secondary: rgba(17,26,42,.94);
+    --theme-surface-strong: rgba(23,35,55,.98);
+    --theme-surface-muted: rgba(9,14,24,.94);
+    --theme-surface-inverse: #F1F6FF;
+    --theme-surface-panel: linear-gradient(180deg,rgba(17,26,42,.96),rgba(13,21,34,.94));
+    --theme-surface-panel-strong: linear-gradient(155deg,#17243A,#101827);
+    --theme-surface-panel-dark: linear-gradient(180deg,#080C14,#0A101C);
+    --theme-card-surface: linear-gradient(155deg,rgba(20,31,50,.96),rgba(14,22,37,.94));
+    --theme-card-surface-strong: linear-gradient(155deg,#1A2942,#121D30);
+    --theme-card-border: rgba(145,169,204,.2);
+    --theme-card-border-strong: rgba(145,169,204,.32);
+    --theme-card-glow: rgba(0,229,255,.1);
+    --theme-card-shadow: 0 18px 42px rgba(0,0,0,.28),0 5px 14px rgba(0,0,0,.18);
+    --theme-card-shadow-lift: 0 26px 56px rgba(0,0,0,.36),0 9px 20px rgba(0,0,0,.22);
+    --theme-chrome-surface: rgba(10,14,26,.92);
+    --theme-chrome-border: rgba(145,169,204,.22);
+    --theme-chrome-glow: rgba(0,229,255,.1);
+    --theme-text-primary: #F1F6FF;
+    --theme-text-secondary: #C4D2E7;
+    --theme-text-muted: #9AABC4;
+    --theme-text-soft: #DCE7F8;
+    --theme-border-soft: rgba(145,169,204,.2);
+    --theme-border-strong: rgba(145,169,204,.34);
+    --theme-border-glow: rgba(0,229,255,.28);
+    --theme-shadow-soft: 0 12px 30px rgba(0,0,0,.26);
+    --theme-shadow-lift: 0 22px 48px rgba(0,0,0,.34);
+    --theme-shadow-xl: 0 32px 68px rgba(0,0,0,.42);
+    --theme-accent-primary: #00E5FF;
+    --theme-accent-support: #4A90E2;
+    --theme-accent-premium: #FF00C8;
+    --theme-accent-success: #29D398;
+    --theme-accent-warning: #F7B84D;
+    --theme-accent-danger: #FF5F7E;
+    --brand: var(--theme-accent-primary);
+    color: var(--theme-text-primary);
+    background: var(--theme-bg-stage-depth), var(--theme-bg-stage), var(--theme-bg-root);
+}
+
+body[data-plan-slug][data-theme="light"] {
+    color-scheme: light;
+    background: var(--theme-bg-stage-depth), var(--theme-bg-stage), var(--theme-bg-root);
+    color: var(--theme-text-primary);
+}
+
+body[data-plan-slug][data-accent-variant="premium"] { --brand: var(--theme-accent-premium); }
+body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accent-support); }
+
 /* accent_variant=None (neutro) nao precisa de override — os tokens base
    (--brand: var(--theme-accent-support) por padrao) ja servem. */
 
 .workout-shell {
-    max-width: 720px;
+    max-width: 820px;
     margin: 0 auto;
-    padding: 16px;
-    padding-bottom: 100px; /* espaco pro bottom nav fixo (item 4) nao cobrir conteudo */
+    padding: 24px 20px;
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); /* nav fixa + safe area */
     display: grid;
-    gap: 20px;
+    gap: 24px;
+}
+
+#workout-panel-inicio.is-tab-active,
+#workout-panel-treino.is-tab-active,
+#workout-panel-cargas.is-tab-active,
+#workout-panel-perfil.is-tab-active {
+    display: grid;
+    align-content: start;
+    gap: 18px;
 }
 
 /* ============================================================
@@ -57,7 +133,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 2px 2px 4px;
+    padding: 2px 2px 6px;
 }
 
 .workout-topbar-main {
@@ -66,6 +142,24 @@
     gap: 12px;
     flex: 1 1 auto;
     min-width: 0;
+}
+
+.workout-topbar-identity {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+}
+
+.workout-topbar-brand {
+    color: var(--theme-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.workout-topbar-brand span {
+    color: var(--theme-accent-primary);
+    padding-inline: 3px;
 }
 
 .workout-avatar {
@@ -108,58 +202,177 @@
     text-overflow: ellipsis;
 }
 
-.workout-topbar-bell {
-    flex: 0 0 auto;
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
+/* Abertura principal do aluno: um foco claro e uma acao direta para o treino. */
+.workout-home-hero {
+    isolation: isolate;
+    gap: 20px;
+    min-height: 304px;
+    padding: clamp(22px, 4vw, 34px);
+    border-radius: 24px;
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-border-soft));
+    background:
+        radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--theme-accent-support) 14%, transparent), transparent 42%),
+        linear-gradient(135deg, #162237 0%, #101a2b 48%, #0d1524 100%);
+    box-shadow: 0 24px 58px rgba(0, 0, 0, .24);
+}
+
+.workout-home-hero::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    width: 330px;
+    height: 330px;
+    right: -132px;
+    top: -112px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 20%, transparent);
     border-radius: 50%;
+    box-shadow: 0 0 0 44px color-mix(in srgb, var(--theme-accent-support) 3%, transparent),
+        0 0 0 88px color-mix(in srgb, var(--theme-accent-primary) 2%, transparent);
+    pointer-events: none;
+}
+
+.workout-home-hero__meta,
+.workout-home-hero__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.workout-home-hero__eyebrow,
+.workout-home-hero__duration {
     color: var(--theme-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    letter-spacing: .1em;
 }
 
-.workout-topbar-bell svg {
-    width: 21px;
-    height: 21px;
+.workout-home-hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
 }
 
-.workout-summary-card h2 {
-    margin: 0 0 6px;
-    font-size: 1.05rem;
+.workout-home-hero__eyebrow > span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-accent-primary);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--theme-accent-primary) 45%, transparent);
 }
 
-.workout-summary-card p {
+.workout-home-hero__duration {
+    padding: 7px 10px;
+    border: 1px solid var(--theme-border-strong);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-surface-strong) 78%, transparent);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-home-hero h1 {
+    position: relative;
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: clamp(2.1rem, 5vw, 3.3rem);
+    font-weight: 850;
+    letter-spacing: -.055em;
+    line-height: 1.06;
+}
+
+.workout-home-hero h1 em {
+    color: var(--theme-accent-primary);
+    font-style: normal;
+}
+
+.workout-home-hero p {
+    position: relative;
+    max-width: 54ch;
     margin: 0;
     color: var(--theme-text-secondary);
-    line-height: 1.5;
+    font-size: 1rem;
+    line-height: 1.6;
 }
 
-/* Banner de fase ativa (Treino) -- so' aparece pra cliente ja migrado pro
-   modelo canonico de periodizacao. Mesmo cartao/topstripe dos outros
-   blocos, sem paleta nova. */
-.workout-phase-banner {
-    display: grid;
-    gap: 2px;
+.workout-home-hero__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    min-height: 50px;
+    padding: 11px 18px;
+    border: 0;
+    border-radius: 13px;
+    background: var(--theme-accent-primary);
+    color: #061821;
+    font: inherit;
+    font-size: .9375rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 26px color-mix(in srgb, var(--theme-accent-primary) 14%, transparent);
+    transition: transform .2s ease, box-shadow .2s ease;
 }
 
-.workout-phase-banner strong {
-    font-size: 0.95rem;
+.workout-home-hero__cta:hover { transform: translateY(-2px); box-shadow: 0 12px 30px color-mix(in srgb, var(--theme-accent-primary) 21%, transparent); }
+.workout-home-hero__cta:focus-visible { outline: 2px solid var(--theme-text-primary); outline-offset: 3px; }
+.workout-home-hero__cta span { font-size: 1.15rem; line-height: 1; }
+
+.workout-home-hero__caption {
+    color: var(--theme-text-muted);
+    font-size: .8125rem;
+    line-height: 1.45;
+}
+
+body[data-plan-slug][data-theme="light"] .workout-home-hero {
+    background:
+        radial-gradient(circle at 88% 18%, rgba(95, 143, 247, .11), transparent 42%),
+        linear-gradient(135deg, #f8fbff 0%, #edf4fc 60%, #e9f2fb 100%);
+    box-shadow: 0 22px 48px rgba(28, 51, 85, .09);
+}
+
+body[data-plan-slug][data-theme="light"] .workout-home-hero h1 em { color: #087f9c; }
+body[data-plan-slug][data-theme="light"] .workout-home-hero__cta { background: #00cbe6; }
+
+/* Card automatico da Início com o resumo por Haiku (achado do Renan) --
+   comeca `hidden` no HTML e so aparece via JS (weekly_review.js) quando
+   ha texto de verdade pra mostrar. --brand (mesmo token do avatar/flame
+   acima) marca que este texto veio de uma leitura sobre o aluno, nao e'
+   so' descricao estatica do programa como o card anterior.
+
+   `[hidden]` sozinho NAO bastava aqui: `.student-card` ja declara
+   `display: grid` com a MESMA especificidade (0,1,0) do `[hidden]` do
+   stylesheet do proprio navegador -- empate de especificidade, a regra
+   de autor (carregada depois) vence, e o card aparecia mesmo com o
+   atributo presente. Precisa deste seletor combinado (especificidade
+   0,2,0) pra `hidden` ganhar de verdade. */
+.workout-weekly-review-hero[hidden] {
+    display: none;
+}
+
+.workout-weekly-review-hero__eyebrow {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brand);
+}
+
+.workout-weekly-review-hero .workout-weekly-review__text {
+    margin: 0;
     color: var(--theme-text-primary);
-}
-
-.workout-phase-banner__meta {
-    font-size: 0.76rem;
-    color: var(--theme-text-secondary);
-    font-variant-numeric: tabular-nums;
+    font-size: 0.98rem;
+    line-height: 1.55;
 }
 
 .workout-week-strip {
     display: grid;
     gap: 12px;
-    padding: 16px;
+    padding: 20px;
     border-radius: 20px;
     border: 1px solid var(--theme-border-soft);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent);
 }
 
 .workout-week-strip__head {
@@ -167,7 +380,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     color: var(--theme-text-muted);
 }
@@ -207,7 +420,7 @@
     border: 1px solid var(--theme-border-soft);
     background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
     color: var(--theme-text-muted);
-    font-size: 0.69rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     font-family: inherit;
 }
@@ -258,6 +471,13 @@ button.workout-week-day:focus-visible {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+body.workout-keyboard-open .workout-mobile-nav {
+    transform: translateY(calc(100% + 20px));
+    opacity: 0;
+    pointer-events: none;
 }
 
 .workout-mobile-nav-link {
@@ -267,7 +487,7 @@ button.workout-week-day:focus-visible {
     min-height: 52px;
     padding: 7px 4px;
     border-radius: 16px;
-    font-size: 0.69rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-decoration: none;
     color: var(--theme-text-muted);
@@ -289,194 +509,62 @@ button.workout-week-day:focus-visible {
     border-color: color-mix(in srgb, var(--brand) 32%, transparent);
 }
 
-/* Cards de movimento estilo WOD (Treino, item 5) — troca a tabela antiga
-   por card horizontal (nome+prescricao a esquerda, carga a direita),
-   mesmo layout de .student-wod-movement-card do app do aluno. */
-.workout-movement-list {
-    display: grid;
-    gap: 14px;
-}
-
-.workout-movement-card {
+.workout-install-prompt {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 14px;
+    margin-bottom: 16px;
     padding: 14px 16px;
-}
-
-/* Rastreado = clicavel (alterna "registrar carga de hoje", item 4 do
-   pedido do Renan) — os nao-rastreados nao tem data-workout-load-toggle,
-   ficam sem cursor/foco de proposito (nada pra abrir). */
-.workout-movement-card[data-workout-load-toggle] {
-    cursor: pointer;
-}
-
-.workout-movement-card[data-workout-load-toggle]:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-}
-
-.workout-movement-copy {
-    min-width: 0;
-    display: grid;
-    gap: 2px;
-}
-
-.workout-movement-copy strong {
-    font-size: 0.94rem;
-    font-weight: 700;
-    /* Fresh --theme-text-primary: movimentos SEM reference_url (ex.: nota
-       de cardio como "Corrida 10 min", sem link do MuscleWiki) caem no
-       <strong> puro, sem a cor propria de .workout-wiki-link (que usa
-       --brand) -- herdavam o `body { color: var(--ink) }` congelado no tom
-       claro, mesmo bug ja corrigido em outros pontos do arquivo. */
+    border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--theme-border-soft));
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--brand) 9%, var(--theme-surface-secondary));
     color: var(--theme-text-primary);
 }
 
-.workout-movement-copy span {
-    color: var(--theme-text-muted);
-    font-size: 0.8rem;
+.workout-install-prompt[hidden] {
+    display: none;
 }
 
-/* "Variação: <link>" (.ex-var do HTML legado — sugestao de exercicio
-   alternativo do treinador, ex.: "Supino com halteres" pro Supino com
-   barra). Reusa a cor de --brand do .workout-wiki-link nos links, mas fica
-   fora do <strong> — e' um dado secundario, nao o nome do movimento. */
-.workout-movement-variation a {
-    color: var(--brand);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.workout-movement-variation a:hover,
-.workout-movement-variation a:focus-visible {
-    text-decoration: underline;
-}
-
-/* "Ver variação" — mesmo espirito do card de movimento clicavel (colapsado
-   por padrao, clique revela): fica pequeno e discreto, nunca com o mesmo
-   peso visual do nome do movimento ou dos chips de fase. */
-.workout-movement-variation-toggle {
-    justify-self: start;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    color: var(--theme-text-muted);
-    font-size: 0.74rem;
-    font-weight: 600;
-    text-decoration: underline dotted;
-    text-underline-offset: 2px;
+.workout-install-prompt button {
+    flex: none;
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--brand);
+    color: #061b40;
+    font: inherit;
+    font-weight: 800;
     cursor: pointer;
 }
 
-.workout-movement-variation-toggle:hover,
-.workout-movement-variation-toggle:focus-visible {
-    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
+@media (max-width: 500px) {
+    .workout-shell { padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px)); gap: 18px; }
+    .workout-home-hero { min-height: 0; padding: 22px; gap: 18px; }
+    .workout-home-hero h1 { font-size: clamp(2rem, 10vw, 2.7rem); }
+    .workout-home-hero__footer { align-items: stretch; }
+    .workout-home-hero__cta { width: 100%; justify-content: space-between; }
+    .workout-week-strip { padding: 16px; }
+    .workout-week-strip__track { gap: 5px; }
+    .workout-week-day { min-height: 42px; border-radius: 10px; }
+    .workout-install-prompt { align-items: stretch; flex-direction: column; }
 }
 
-/* Quebra de fase (Prep/Feeder/Top/AMRAP) de reps_spec — pedido do Renan pra
-   "voltar" o padrao rico dos templates legados (colunas de sets-tbl com
-   pilula colorida por tipo de serie: .st-p/.st-f/.st-t/.st-m em
-   static/css/public_workouts/components.css). So aparece quando
-   reps_phases() acha mais de 1 fase (texto com "→") — reps_spec simples
-   ("3x12") continua na linha unica de sempre, sem pilula grande a toa. */
-.workout-phase-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 2px;
-}
+@media (min-width: 1200px) {
+    .workout-mobile-nav {
+        top: 96px;
+        bottom: auto;
+        left: calc(50% - 518px);
+        right: auto;
+        width: 84px;
+        grid-template-columns: 1fr;
+        padding: 8px;
+        border-radius: 22px;
+    }
 
-.workout-phase-row .workout-phase-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 8px;
-    border-radius: 8px;
-    font-size: 0.74rem;
-    font-weight: 600;
-    line-height: 1.3;
-    white-space: nowrap;
-}
-
-.workout-phase-row .workout-phase-chip--prep {
-    background: color-mix(in srgb, var(--theme-text-muted) 18%, transparent);
-    color: var(--theme-text-secondary);
-}
-
-.workout-phase-row .workout-phase-chip--feeder {
-    background: var(--theme-accent-warning-alpha);
-    color: color-mix(in srgb, var(--theme-accent-warning) 75%, var(--theme-text-primary) 25%);
-}
-
-.workout-phase-row .workout-phase-chip--top {
-    background: color-mix(in srgb, var(--brand) 16%, transparent);
-    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
-}
-
-.workout-phase-row .workout-phase-chip--max {
-    background: var(--theme-accent-danger-alpha);
-    color: color-mix(in srgb, var(--theme-accent-danger) 75%, var(--theme-text-primary) 25%);
-}
-
-.workout-phase-row .workout-phase-chip--plain {
-    background: color-mix(in srgb, var(--theme-text-muted) 12%, transparent);
-    color: var(--theme-text-secondary);
-}
-
-.workout-phase-note {
-    display: block;
-    margin-top: 2px;
-}
-
-/* glossary_highlight() marca Prep/Feeder/Top/AMRAP com <span
-   class="workout-glossary-term"> mesmo dentro de um chip — sem isto, a
-   palavra destacada ficaria cinza-mudo (.workout-movement-copy span pega
-   qualquer span descendente, especificidade maior que so' .workout-phase-chip)
-   em vez de herdar a cor propria do chip. */
-.workout-phase-chip .workout-glossary-term {
-    color: inherit;
-}
-
-.workout-movement-load {
-    flex: 0 0 auto;
-    text-align: right;
-    font-size: 0.8rem;
-    color: var(--theme-text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-/* Carga calculada (percentage_of_rm com 1RM, fase canonica de
-   periodizacao, ou estimativa via reps/RIR do proprio exercicio) --
-   kg em destaque, %RM como legenda pequena embaixo. Mesma disciplina de
-   paleta de .workout-load-chart-1rm (nao inventa cor nova so' pra isto). */
-.workout-movement-load__kg {
-    display: block;
-    color: var(--theme-text-primary);
-    font-size: 0.92rem;
-}
-
-.workout-movement-load__pct {
-    display: block;
-    font-size: 0.68rem;
-    color: var(--theme-text-muted);
-}
-
-/* Hint "Registre sua carga..." -- mesmo estilo textual pequeno-mudo da
-   bolinha de glossario (.workout-glossary-term), sem o clique proprio: ja
-   mora dentro do card inteiro que abre o registro de carga ao clicar. */
-/* Fica DENTRO de .workout-movement-load, nunca como irmao solto entre
-   </article> e .workout-load-input -- o JS de toggle acha o widget via
-   card.nextElementSibling (workout.html), entao qualquer elemento inserido
-   ali quebra o clique-para-revelar carga (regressao ja aconteceu 1x). */
-.workout-movement-load-hint {
-    display: block;
-    max-width: 110px;
-    margin-top: 4px;
-    font-size: 0.68rem;
-    line-height: 1.3;
-    color: var(--theme-text-muted);
-    font-style: italic;
+    .workout-mobile-nav-link {
+        min-height: 64px;
+    }
 }
 
 /* Perfil (versoes + conta) */
@@ -552,6 +640,18 @@ button.workout-week-day:focus-visible {
     color: var(--theme-text-primary);
 }
 
+.workout-profile-row__status {
+    display: block;
+    min-height: 1.2em;
+    margin: 4px 4px 0;
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-profile-row__status[data-state="error"] {
+    color: var(--theme-accent-danger);
+}
+
 /* .theme-toggle-icon (design-system/topbar.css) e' pensado pra preencher um
    botao pequeno de tamanho fixo (o .theme-toggle circular do topbar) --
    width:100%/height:100% la' faz sentido. Aqui o "botao" e' a linha INTEIRA
@@ -562,71 +662,6 @@ button.workout-week-day:focus-visible {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
-}
-
-/* Seletor de dia do Treino (item pedido pelo Renan: mesmo formato "dia +
-   palavra-chave" do card de "Sua semana" do Início, lado a lado) -- cada
-   dia vira um card proprio (nao mais .student-status-badge, que e' pensado
-   pra pilula de UMA linha so'). flex:1 1 0 divide o espaco igual entre
-   quantos dias o programa tiver (3 a 5 nos 10 reais); overflow-x:auto e'
-   so' rede de seguranca pra tela muito estreita. */
-.workout-day-nav {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 9px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-}
-
-.workout-day-tab {
-    flex: 1 1 0;
-    min-width: 64px;
-    display: grid;
-    place-items: center;
-    gap: 2px;
-    min-height: 50px;
-    padding: 8px 4px;
-    border-radius: 14px;
-    border: 1px solid var(--theme-border-soft);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
-    color: inherit;
-    font-family: inherit;
-    cursor: pointer;
-    text-align: center;
-}
-
-.workout-day-tab:hover,
-.workout-day-tab:focus-visible {
-    outline: none;
-    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
-}
-
-.workout-day-tab__day {
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--theme-text-muted);
-}
-
-.workout-day-tab__keyword {
-    max-width: 100%;
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: var(--theme-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.workout-day-tab.is-active {
-    border-color: var(--brand);
-    background: color-mix(in srgb, var(--brand) 18%, var(--theme-surface-secondary) 82%);
-}
-
-.workout-day-tab.is-active .workout-day-tab__day,
-.workout-day-tab.is-active .workout-day-tab__keyword {
-    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
 }
 
 /* Achado duas vezes em paralelo (duas sessoes, mesmo dia): so 1 dos usos de
@@ -655,18 +690,6 @@ button.workout-week-day:focus-visible {
     color: var(--theme-text-primary);
 }
 
-.workout-tracked-chip {
-    min-height: auto;
-    padding: 2px 8px;
-    font-size: 0.72rem;
-    margin-inline-start: 8px;
-    /* justify-self:start — `.workout-movement-copy` e' grid, e desde que a
-       quebra de fase (.workout-phase-row) virou irmao direto (nao mais
-       aninhado dentro do <span> de texto), esta pilula tambem virou item de
-       grid direto e teria "stretch" (padrao) esticando a largura toda. */
-    justify-self: start;
-}
-
 /* Telas pequenas (~400px): a tabela de movimentos nunca deve forcar
    scroll horizontal da PAGINA — so o wrapper .operation-table-wrap rola,
    a coluna de movimento quebra linha em vez de empurrar largura.
@@ -690,965 +713,4 @@ button.workout-week-day:focus-visible {
 
 .workout-version-row td {
     white-space: nowrap;
-}
-
-/* Painel de vidro por movimento — mesma familia visual de .card-decor-glow
-   (brilho sutil, nao animado, ja usado no dashboard), com um filete de
-   brand na borda em vez do preenchimento solido de um .student-card
-   aninhado (evita "caixa dentro de caixa"). */
-.workout-load-chart {
-    margin-top: 14px;
-    padding: 14px 16px 6px;
-    border-radius: 14px;
-    border: 1px solid var(--theme-border-soft);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 5%, var(--theme-surface-secondary) 95%), var(--theme-surface-secondary));
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.workout-load-chart.has-data:hover {
-    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
-    box-shadow: 0 0 22px color-mix(in srgb, var(--brand) 16%, transparent);
-}
-
-.workout-load-chart-head {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 8px 14px;
-    flex-wrap: wrap;
-}
-
-.workout-load-chart-head h3 {
-    flex-basis: 100%;
-}
-
-.workout-load-chart h3 {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--theme-text-muted);
-    margin: 0 0 0.4rem;
-}
-
-.workout-load-chart-current {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    font-variant-numeric: tabular-nums;
-}
-
-.workout-load-chart-current strong {
-    font-size: clamp(2rem, 8vw, 2.6rem);
-    line-height: 1;
-    font-weight: 800;
-    color: var(--brand);
-    text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
-}
-
-.workout-load-chart-unit {
-    font-size: 0.85rem;
-    color: var(--theme-text-muted);
-}
-
-.workout-load-chart-statement {
-    flex-basis: 100%;
-    margin: 0;
-    color: var(--theme-text-secondary, var(--theme-text-muted));
-    font-size: 0.9rem;
-}
-
-.workout-load-chart-context {
-    flex-basis: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8125rem;
-    color: var(--theme-text-muted);
-}
-
-.workout-load-chart-context summary,
-.workout-load-chart-siblings summary {
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-.workout-load-chart-scale-label {
-    font-size: 9px;
-    fill: var(--theme-text-muted);
-}
-
-.workout-load-chart-dot--legacy {
-    fill: var(--theme-text-muted);
-    stroke: var(--theme-surface-secondary);
-    stroke-width: 1.5;
-}
-
-.workout-load-chart-empty {
-    margin: 0.75rem 0;
-    color: var(--theme-text-muted);
-    font-size: 0.875rem;
-    line-height: 1.5;
-}
-
-.workout-load-chart-legacy-label {
-    margin: 0.25rem 0 0;
-    color: var(--theme-text-muted);
-    font-size: 0.8125rem;
-}
-
-.workout-load-chart-legacy-label span {
-    color: var(--theme-text-muted);
-}
-
-.workout-load-chart-trend {
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 999px;
-}
-
-.workout-load-chart-trend--up {
-    color: var(--theme-accent-success);
-    background: var(--theme-accent-success-alpha);
-}
-
-.workout-load-chart-trend--down {
-    color: var(--theme-accent-danger);
-    background: var(--theme-accent-danger-alpha);
-}
-
-.workout-load-chart-trend--flat {
-    color: var(--theme-text-muted);
-    background: color-mix(in srgb, var(--theme-text-muted) 14%, transparent);
-}
-
-/* 1RM estimado (Onda A3, one_rep_max.py) e sinal de tendencia
-   (build_weekly_review) — mesmos tokens de --success/--danger do trend
-   de peso acima, pra nao inventar paleta nova so pra este badge. */
-.workout-load-chart-1rm {
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-.workout-load-chart-1rm strong {
-    color: var(--theme-text-primary, inherit);
-}
-
-.workout-load-chart-signal--plateau {
-    color: var(--theme-text-muted);
-    background: color-mix(in srgb, var(--theme-text-muted) 14%, transparent);
-}
-
-.workout-load-chart-signal--declining {
-    color: var(--theme-accent-danger);
-    background: var(--theme-accent-danger-alpha);
-}
-
-.workout-load-chart-signal--improving {
-    color: var(--theme-accent-success);
-    background: var(--theme-accent-success-alpha);
-}
-
-.workout-load-chart-svg {
-    display: block;
-    width: 100%;
-    height: 120px;
-    overflow: visible;
-}
-
-.workout-load-chart-area {
-    stroke: none;
-}
-
-.workout-load-chart-line {
-    fill: none;
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--brand) 55%, transparent));
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: workout-load-line-draw 1.1s ease forwards;
-}
-
-@keyframes workout-load-line-draw {
-    to {
-        stroke-dashoffset: 0;
-    }
-}
-
-.workout-load-chart-halo {
-    fill: var(--brand);
-    opacity: 0.18;
-    filter: blur(1.5px);
-}
-
-.workout-load-chart-dot {
-    fill: var(--brand);
-    stroke: var(--theme-surface-secondary);
-    stroke-width: 1.5;
-}
-
-/* Marcador de troca de versao de programa (Pronto-quando #2, secao A3/B4
-   do CORDA) — linha tracejada vertical + ponto diferenciado no lugar
-   exato onde `program_id` muda entre duas cargas consecutivas. */
-.workout-load-chart-version-line {
-    stroke: var(--theme-text-muted);
-    stroke-width: 1;
-    stroke-dasharray: 3 3;
-    opacity: 0.55;
-}
-
-.workout-load-chart-dot--version {
-    fill: var(--theme-accent-warning, var(--brand));
-    r: 4;
-}
-
-.workout-load-chart-label {
-    font-size: 8.5px;
-    fill: var(--theme-text-muted);
-}
-
-/* "Variacao irma" (Pronto-quando #3, secao A3/B4 do CORDA) -- referencia
-   rotulada de outro movimento do MESMO movement_pattern (catalogo), nunca
-   entra no calculo de 1RM/tendencia deste grafico. Mesmo tom muted do
-   "Ainda nao ha carga..." acima, discreto de proposito -- e' contexto,
-   nao um dado do proprio movimento. */
-.workout-load-chart-siblings {
-    margin: 0.5rem 0 0;
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
-}
-
-.workout-load-chart-siblings p {
-    margin: 0.35rem 0 0;
-}
-
-.workout-load-chart-siblings a {
-    color: inherit;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .workout-load-chart-line {
-        animation: none;
-        stroke-dashoffset: 0;
-    }
-}
-
-/* Link do MuscleWiki (Onda B3, item 1) — nas paginas legadas era um botao
-   proprio (.wiki-btn/.gym-wiki, cada CSS por-plano com sua copia); aqui
-   e so o link de sempre com uma pilula em volta, na paleta compartilhada. */
-.workout-wiki-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--brand);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.workout-wiki-link:hover,
-.workout-wiki-link:focus-visible {
-    text-decoration: underline;
-}
-
-.workout-wiki-link__icon {
-    font-size: 0.85em;
-}
-
-/* Bolinha de dicionario de treino (RIR, AMRAP, Feeder, Top, Prep — ver
-   glossary_highlight em public_workouts_extras.py). O termo em si fica com
-   a cor normal do texto (nao e' um link) -- so o "ⓘ" superescrito sinaliza
-   que e' clicavel, pra nao competir visualmente com o link do MuscleWiki
-   (.workout-wiki-link, que usa --brand). */
-.workout-glossary-term {
-    position: relative;
-    display: inline;
-    cursor: pointer;
-    border-bottom: 1px dotted var(--theme-text-muted);
-}
-
-.workout-glossary-term:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-    border-radius: 2px;
-}
-
-.workout-glossary-dot {
-    color: var(--brand);
-    font-size: 0.72em;
-    margin-inline-start: 1px;
-}
-
-/* position:fixed (nao absolute) de proposito: varios ancestrais do termo
-   (.workout-movement-card, .student-card) tem overflow:hidden pro
-   card-decor-topstripe respeitar o border-radius — um tooltip position:absolute
-   ficaria cortado pelo card. Coordenadas viram inline style via JS no clique
-   (ver <script> de workout.html), calculadas com getBoundingClientRect(). */
-.workout-glossary-tip {
-    display: none;
-    position: fixed;
-    z-index: 50;
-    width: max-content;
-    max-width: 240px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid var(--theme-border-soft);
-    background: var(--theme-surface-strong);
-    box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
-    font-size: 0.78rem;
-    line-height: 1.4;
-    font-weight: 400;
-    color: var(--theme-text-secondary);
-    white-space: normal;
-}
-
-.workout-glossary-tip strong {
-    display: block;
-    margin-bottom: 3px;
-    color: var(--theme-text-primary);
-    font-size: 0.8rem;
-}
-
-.workout-glossary-term.is-open .workout-glossary-tip {
-    display: block;
-}
-
-/* Registro de carga de hoje (item 8) — linha propria logo abaixo do
-   movimento rastreado, span nas 4 colunas (D.00: reusa .operation-table-wrap
-   em vez de inventar um segundo layout de card). */
-.workout-load-input-row td {
-    padding-top: 0;
-    padding-bottom: 10px;
-    border-top: none;
-}
-
-.workout-load-input {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 12px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--brand) 6%, var(--theme-surface-secondary) 94%);
-    border: 1px solid var(--theme-border-soft);
-}
-
-/* [hidden] do HTML e a classe acima empatam em especificidade (0,1,0) --
-   sem isso, o `display:flex` da classe vence o `display:none` implicito
-   do navegador e o widget (colapsado por padrao, item 4 do pedido do
-   Renan) fica visivel mesmo com o atributo `hidden` presente. */
-.workout-load-input[hidden] {
-    display: none;
-}
-
-.workout-load-input__label {
-    font-size: 0.78rem;
-    color: var(--theme-text-muted);
-    white-space: nowrap;
-}
-
-.workout-load-input__row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.workout-load-input__field {
-    width: 84px;
-    padding: 6px 8px;
-    border-radius: 8px;
-    border: 1px solid var(--theme-border-soft);
-    background: var(--theme-surface-strong);
-    color: var(--theme-text-primary, inherit);
-    font-variant-numeric: tabular-nums;
-}
-
-.workout-load-input__save {
-    padding: 6px 14px;
-    border-radius: 8px;
-    border: 1px solid transparent;
-    background: var(--brand);
-    color: #fff;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.workout-load-input__status {
-    flex-basis: 100%;
-    font-size: 0.74rem;
-    color: var(--theme-text-muted);
-}
-
-.workout-load-input__status--error {
-    color: var(--theme-accent-danger);
-}
-
-/* Selo de recorde (Fase 4, §6.3) -- "no maximo uma transicao curta",
-   nunca confete/loop. [hidden] some completamente; a classe --visible e'
-   quem revela (JS troca as duas juntas, load_tracker.js::updateAchievementBadge). */
-.workout-load-input__achievement {
-    flex-basis: 100%;
-    margin: 0;
-    padding: 8px 10px;
-    border-radius: 8px;
-    background: var(--theme-accent-success-alpha);
-    border: 1px solid color-mix(in srgb, var(--theme-accent-success) 45%, transparent);
-    font-size: 0.78rem;
-    line-height: 1.4;
-    color: var(--theme-text-primary, inherit);
-    opacity: 0;
-    transform: translateY(-2px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.workout-load-input__achievement[hidden] {
-    display: none;
-}
-
-.workout-load-input__achievement--visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.workout-load-input__achievement strong {
-    display: block;
-    color: var(--theme-accent-success);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .workout-load-input__achievement {
-        transition: none;
-    }
-}
-
-/* Dica de ultima carga ("Última vez: 80 kg — toque pra usar") — clicavel,
-   preenche o campo sem exigir digitar de novo o mesmo numero de sempre. */
-.workout-load-input__head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-    flex-wrap: wrap;
-    width: 100%;
-}
-
-.workout-load-input__hint {
-    font-size: 0.72rem;
-    color: var(--brand);
-    cursor: pointer;
-    text-decoration: underline dotted;
-}
-
-.workout-load-input__hint:empty {
-    display: none;
-}
-
-/* Stepper +/-2,5kg — mesmo alvo de toque generoso (36px) que .wk-input
-   das paginas legadas tinha, sem herdar o resto daquele CSS (D.00: reusa
-   o PADRAO de tamanho de toque, nao o arquivo). */
-.workout-load-input__step {
-    width: 36px;
-    height: 36px;
-    flex: none;
-    border-radius: 8px;
-    border: 1px solid var(--theme-border-soft);
-    background: var(--theme-surface-strong);
-    color: var(--theme-text-primary, inherit);
-    font-size: 1.1rem;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.workout-load-input__step:active {
-    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
-}
-
-/* Confirmacao de "salvo" — pulso curto na borda, sem animacao continua
-   (mesmo respeito a prefers-reduced-motion do resto do arquivo, so que
-   aqui a transition em si ja e curta o bastante pra nao precisar de guard). */
-.workout-load-input--saved {
-    border-color: var(--theme-accent-success);
-    box-shadow: 0 0 0 3px var(--theme-accent-success-alpha);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Aba "Suas Cargas" — recorde (maior peso ja registrado) por movimento,
-   grid de cards curtos. Complementa a aba Historico (que mostra EVOLUCAO);
-   aqui e so o numero que motiva, sem grafico. */
-.workout-records-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.workout-record-card {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid var(--theme-border-soft);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--theme-surface-secondary) 94%), var(--theme-surface-secondary));
-}
-
-.workout-record-card__label {
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.workout-record-card__value {
-    font-size: 1.35rem;
-    color: var(--brand);
-    text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
-    font-variant-numeric: tabular-nums;
-}
-
-.workout-record-card__unit {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--theme-text-muted);
-    text-shadow: none;
-}
-
-.workout-record-card__date {
-    font-size: 0.7rem;
-    color: var(--theme-text-muted);
-}
-
-.workout-record-card__reps {
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
-}
-
-/* "Resumo do ciclo" (visão consolidada por movimento) reusa o mesmo
-   card de "Seus recordes" acima, mas soma tendência + 1RM -- __meta
-   agrupa os dois numa linha própria pra não competir com __reps. */
-.workout-record-card__meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 2px;
-}
-
-/* Card compartilhável -- fundação (ver templatetags::share_content_for_chart):
-   hoje só texto pro Web Share API, botão discreto no mesmo tom das
-   ações secundárias do card (Ver variações). */
-.workout-load-chart-share {
-    flex-basis: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 4px;
-}
-
-.workout-load-chart-share-button {
-    padding: 4px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--theme-border-soft);
-    background: transparent;
-    color: var(--theme-text-muted);
-    font-size: 0.74rem;
-    cursor: pointer;
-}
-
-.workout-load-chart-share-button:active {
-    background: color-mix(in srgb, var(--brand) 14%, transparent);
-}
-
-.workout-load-chart-share-status {
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
-}
-
-/* Troca de exercicio (Entrega 4) -- pills das variacoes irma dentro do
-   proprio widget de registro de carga. A pill ativa mostra qual
-   movement_slug o clique em "Salvar" vai gravar (ver
-   wireSubstitutePills em load_tracker.js); nao muda o treino
-   prescrito, so a gravacao de hoje. */
-.workout-load-input__substitutes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    flex-basis: 100%;
-}
-
-.workout-load-input__substitute-pill {
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--theme-border-soft);
-    background: var(--theme-surface-strong);
-    color: var(--theme-text-muted);
-    font-size: 0.72rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.workout-load-input__substitute-pill.is-active {
-    border-color: var(--brand);
-    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
-    color: var(--theme-text-primary, inherit);
-}
-
-/* Toggle de aquecimento -- plano curva-grafico-hierarquia-e-set-role.md,
-   §2.3.6/§7.10. Desmarcado por padrao (serie principal); "feeder"/
-   "max_set" nunca aparecem como jargao pro aluno, so' este binario. */
-.workout-load-input__warmup-toggle {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-basis: 100%;
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
-    cursor: pointer;
-}
-
-/* Reps + esforco (RIR) -- plano curva-carga-completa-reps-rir-recorde,
-   Fase 1. Mesmos tokens do resto do widget, sem cor nova: --brand pro
-   acento, --theme-surface-strong/--theme-border-soft pra superficie. */
-.workout-load-input__reps-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-basis: 100%;
-}
-
-.workout-load-input__mini-label {
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
-    white-space: nowrap;
-}
-
-.workout-load-input__reps-field {
-    width: 64px;
-    padding: 6px 8px;
-    border-radius: 8px;
-    border: 1px solid var(--theme-border-soft);
-    background: var(--theme-surface-strong);
-    color: var(--theme-text-primary, inherit);
-    font-variant-numeric: tabular-nums;
-}
-
-/* Alvo de toque um pouco menor que o stepper de peso (36px): controle
-   secundario, ajustado com menos frequencia que o peso -- ver nota no
-   plano sobre hierarquia de alvo de toque por importancia, nao um valor
-   arbitrario. Ainda dentro da faixa confortavel de toque. */
-.workout-load-input__step--mini {
-    width: 30px;
-    height: 30px;
-    font-size: 0.95rem;
-}
-
-.workout-load-input__effort {
-    flex-basis: 100%;
-}
-
-.workout-load-input__effort-summary {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-    cursor: pointer;
-    font-size: 0.78rem;
-    color: var(--theme-text-muted);
-    list-style: none;
-}
-
-.workout-load-input__effort-summary::-webkit-details-marker {
-    display: none;
-}
-
-.workout-load-input__effort-value {
-    color: var(--brand);
-    font-weight: 600;
-}
-
-.workout-load-input__effort-body {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding-top: 8px;
-}
-
-.workout-load-input__effort-question {
-    margin: 0;
-    font-size: 0.82rem;
-    color: var(--theme-text-primary, inherit);
-    font-weight: 600;
-}
-
-.workout-load-input__effort-help {
-    margin: 0;
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
-}
-
-.workout-load-input__rir-pills {
-    display: flex;
-    gap: 6px;
-}
-
-.workout-load-input__rir-pill {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--theme-border-soft);
-    background: var(--theme-surface-strong);
-    color: var(--theme-text-muted);
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-variant-numeric: tabular-nums;
-}
-
-.workout-load-input__rir-pill.is-selected {
-    border-color: var(--brand);
-    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
-    color: var(--theme-text-primary, inherit);
-}
-
-.workout-load-input__rir-other-toggle,
-.workout-load-input__rir-clear {
-    align-self: flex-start;
-    padding: 4px 2px;
-    border: none;
-    background: none;
-    color: var(--theme-text-muted);
-    font-size: 0.74rem;
-    text-decoration: underline dotted;
-    cursor: pointer;
-}
-
-.workout-load-input__rir-other-field {
-    width: 84px;
-    padding: 6px 8px;
-    border-radius: 8px;
-    border: 1px solid var(--theme-border-soft);
-    background: var(--theme-surface-strong);
-    color: var(--theme-text-primary, inherit);
-    font-variant-numeric: tabular-nums;
-}
-
-.workout-load-input__rir-other-field[hidden] {
-    display: none;
-}
-
-.workout-load-input__calculator {
-    flex-basis: 100%;
-}
-
-.workout-load-input__plate-inventory {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
-    gap: 6px;
-}
-
-.workout-load-input__plate-row {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .workout-load-input__effort[open] .workout-load-input__effort-body,
-    .workout-load-input__calculator[open] .workout-load-input__effort-body {
-        animation: workout-load-input-effort-open 0.18s ease;
-    }
-}
-
-@keyframes workout-load-input-effort-open {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* Revisao semanal (Entrega 4) -- texto sob demanda (botao "Gerar
-   revisao"), nunca carregado automatico no GET da pagina. */
-.workout-weekly-review__text {
-    margin: 0 0 10px;
-    line-height: 1.5;
-    color: var(--theme-text-primary, inherit);
-}
-
-.workout-weekly-review__status {
-    display: block;
-    margin-top: 8px;
-    font-size: 0.78rem;
-    color: var(--theme-text-muted);
-}
-
-/* ============================================================
- * Cardio + Periodizacao (Onda A2, fatia cardio/periodizacao) --
- * alcancadas so' pelo ciclo do botao "Treino" do bottom nav (ver <script>
- * no fim de workout.html), nunca tem paineis fixos na nav.
- * ============================================================ */
-
-.workout-cardio-card {
-    display: grid;
-    gap: 10px;
-}
-
-.workout-cardio-card__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.workout-cardio-card__head strong {
-    font-size: 0.98rem;
-    color: var(--theme-text-primary);
-}
-
-.workout-cardio-badge {
-    background: color-mix(in srgb, var(--brand) 16%, transparent);
-    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
-}
-
-.workout-cardio-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 8px 16px;
-    margin: 0;
-}
-
-.workout-cardio-detail dt {
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--theme-text-muted);
-}
-
-.workout-cardio-detail dd {
-    margin: 0;
-    font-size: 0.84rem;
-    color: var(--theme-text-primary);
-}
-
-.workout-cardio-note {
-    margin: 0;
-    font-size: 0.82rem;
-    line-height: 1.5;
-    color: var(--theme-text-secondary);
-}
-
-/* Grafico de progressao do mesociclo -- mesmo dado/logica visual do
-   app.js legado (chartData/buildChart), so' renderizado no servidor (o
-   payload ja tem altura/cor por semana prontos, ver parser.py) em vez de
-   um <script type="application/json"> + JS montando DOM no cliente. */
-.workout-period-chart {
-    display: flex;
-    align-items: flex-end;
-    gap: 6px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-}
-
-.workout-period-chart__col {
-    flex: 1 1 0;
-    min-width: 56px;
-    display: grid;
-    justify-items: center;
-    gap: 6px;
-    border-radius: 10px;
-    padding: 4px 2px;
-}
-
-/* Semana atual em destaque -- mesmo token de --brand ja usado no
-   :focus-visible da bolinha de glossario, sem inventar paleta nova. */
-.workout-period-chart__col--current {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-    background: color-mix(in srgb, var(--brand) 10%, transparent);
-}
-
-.workout-period-chart__col--current .workout-period-chart__label {
-    color: var(--brand);
-    font-weight: 800;
-}
-
-.workout-period-chart__bar-wrap {
-    height: 120px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-}
-
-.workout-period-chart__reps {
-    font-size: 0.66rem;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.workout-period-chart__bar {
-    width: 60%;
-    min-height: 4px;
-    border-radius: 6px 6px 2px 2px;
-}
-
-.workout-period-chart__focus {
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 0.62rem;
-    font-weight: 700;
-    white-space: nowrap;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.workout-period-chart__label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--theme-text-muted);
-}
-
-.workout-period-note {
-    margin: 12px 0 0;
-    font-size: 0.82rem;
-    line-height: 1.55;
-    color: var(--theme-text-secondary);
-}
-.workout-load-chart-head {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 8px 14px;
-    flex-wrap: wrap;
-}
-
-.workout-load-chart-head h3 { flex-basis: 100%; }
-.workout-load-chart-current { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
-.workout-load-chart-current strong {
-    font-size: clamp(2rem, 8vw, 2.6rem);
-    line-height: 1;
-    font-weight: 800;
-    color: var(--brand);
-    text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
-}
-.workout-load-chart-unit { font-size: 0.85rem; color: var(--theme-text-muted); }
-.workout-load-chart-statement { flex-basis: 100%; margin: 0; color: var(--theme-text-secondary, var(--theme-text-muted)); font-size: 0.9rem; }
-.workout-load-chart-context { flex-basis: 100%; display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; color: var(--theme-text-muted); }
-.workout-load-chart-context summary, .workout-load-chart-siblings summary { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
-.workout-load-chart-scale-label { font-size: 9px; fill: var(--theme-text-muted); }
-.workout-load-chart-dot--legacy { fill: var(--theme-text-muted); stroke: var(--theme-surface-secondary); stroke-width: 1.5; }
-.workout-load-chart-empty, .workout-load-chart-legacy-label { margin: 0.6rem 0; color: var(--theme-text-muted); font-size: 0.85rem; line-height: 1.5; }
-.workout-load-input__warmup-toggle { display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--theme-text-muted); font-size: 0.82rem; }
-.workout-load-input__warmup-toggle input { accent-color: var(--brand); }
-@media (max-width: 380px) {
-    .workout-load-chart { padding-inline: 10px; }
-    .workout-load-chart-current strong { font-size: clamp(1.8rem, 9vw, 2.2rem); }
 }
