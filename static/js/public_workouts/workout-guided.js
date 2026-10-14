@@ -55,6 +55,9 @@
     onConflict: showConflict,
     onStartMapped: function (localId, serverId) {
       if (sessionId === localId) {
+        if (currentStepIdentity && currentStepIdentity.indexOf(localId + ':') === 0) {
+          currentStepIdentity = serverId + currentStepIdentity.slice(localId.length);
+        }
         sessionId = serverId;
         snapshot();
         restTimer.remap(localId, serverId);

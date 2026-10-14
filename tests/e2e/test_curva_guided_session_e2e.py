@@ -202,6 +202,31 @@ def test_guided_start_and_set_sync_after_network_returns(page: Page, live_server
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
+def test_reconnecting_does_not_erase_a_set_being_typed(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    account, token = _prepare_guided_student()
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    page.context.set_offline(True)
+    page.locator('[data-workout-guided-start]').click()
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
+    page.locator('[data-workout-guided-weight]').fill('61.5')
+    page.locator('[data-workout-guided-reps]').fill('7')
+
+    page.context.set_offline(False)
+    page.evaluate("window.dispatchEvent(new Event('online'))")
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=15000)
+    expect(page.locator('[data-workout-guided-weight]')).to_have_value('61.5')
+    expect(page.locator('[data-workout-guided-reps]')).to_have_value('7')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('Série registrada')
+    assert PublicWorkoutTrainingSession.objects.get(account=account).sets.get().weight_kg == Decimal('61.50')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
 def test_guided_reopens_from_offline_shell_and_sends_in_order(page: Page, live_server):
     from public_workouts.models import PublicWorkoutTrainingSession
 
