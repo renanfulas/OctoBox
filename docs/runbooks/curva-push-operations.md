@@ -1,10 +1,10 @@
 # Curva: operação de notificações Web Push
 
-## Estado em 13/10/2026
+## Estado em 13/10/2026 após o deploy
 
-O PostgreSQL local recebeu as migrations até `public_workouts.0043`. O `.env` local, ignorado pelo Git, tem VAPID de desenvolvimento, hosts de push e `PUBLIC_WORKOUT_PUBLIC_BASE_URL=http://localhost:8000`; `public_workouts.push.configured()` retornou `True` na verificação anterior. Isso comprova somente configuração local, não entrega pública a um aparelho.
+O PR #322 foi publicado em `https://app.octoboxfit.com.br` no commit `1a7b7f05d21bbb0af7538e143d6733672a886bae`. O health endpoint confirmou esse SHA; `/renan/sw.js` contém os listeners `push` e `notificationclick`; as migrations `public_workouts.0040` a `.0043` estão aplicadas. O timer `octobox-public-workout-outbox.timer` está ativo.
 
-Na verificação pública de 13/10/2026, `https://app.octoboxfit.com.br/renan/bruno` ainda não servia o guia nem o controle de push e `/renan/sw.js` não tinha listener `push`. O código está no PR #322 e a homologação física depende de sua publicação. Não usar um resultado de teste local como confirmação de entrega no iPhone.
+O ambiente público tem VAPID persistente, `PUBLIC_WORKOUT_PUBLIC_BASE_URL` em HTTPS e `PUBLIC_WORKOUT_PUSH_ALLOWED_HOSTS` para Apple e FCM. A chave privada foi normalizada para um único bloco PEM válido, sem trocar o par. `public_workouts.push.configured()` retornou `True`, e o template renderizou **Ativar avisos** quando recebeu uma conta dona do plano. Ainda não havia inscrição ativa nem recebimento comprovado no iPhone. A primeira conta indicada para o ensaio estava com pagamento pendente e sem `plan_slug`; por isso não pode abrir um treino Curva como proprietária. Preparar uma conta/treino de ensaio antes de prosseguir, sem associá-la ao plano de outro aluno.
 
 ## Ativação pública
 
@@ -16,7 +16,7 @@ Na verificação pública de 13/10/2026, `https://app.octoboxfit.com.br/renan/br
 
 ## Homologação isolada no iPhone
 
-1. Após o deploy, confirmar em HTTP que `/renan/sw.js` contém os listeners `push` e `notificationclick`, e que a conta de ensaio autenticada vê o botão **Ativar avisos**. Confirmar HTTPS e `PUBLIC_WORKOUT_PUBLIC_BASE_URL` do mesmo domínio.
+1. Confirmar que a conta de ensaio tem assinatura `active` com `plan_slug` próprio e programa publicado. A tela `/renan/<slug>` deve ser desse mesmo plano. Confirmar em HTTP que `/renan/sw.js` contém os listeners `push` e `notificationclick`, e que essa conta, após login confirmado, vê o botão **Ativar avisos**. A posse de um link legado não basta para inscrever um dispositivo (PR #325). Confirmar HTTPS e `PUBLIC_WORKOUT_PUBLIC_BASE_URL` do mesmo domínio.
 2. No iPhone, abrir o Curva instalado na tela de início, entrar na conta de ensaio e tocar **Ativar avisos**. Aceitar a permissão. Não compartilhar endpoint, chaves do dispositivo nem token de login em capturas ou tickets.
 3. No servidor, verificar apenas os indicadores da conta de ensaio: uma inscrição ativa com `revoked_at` vazio, mensagem `push_welcome` em estado `sent`, `last_push_sent_at` preenchido e `last_error` vazio. O aviso **Avisos ativados** deve aparecer no aparelho; tocar nele deve abrir o mesmo domínio.
 4. Registrar uma sessão de ensaio e concluir as séries mínimas. Conferir o fato `PublicWorkoutTrainingSession.outcome=completed`, `completed_at`, a contagem de `PublicWorkoutTrainingSet(status=performed)`, uma única mensagem `training_completed` enviada e o aviso no iPhone. Repetir o comando de conclusão para provar idempotência sem duplicar a sessão nem o aviso.
@@ -26,7 +26,7 @@ Se qualquer etapa falhar, manter o resultado como **não homologado** e anotar o
 
 ## Diagnóstico
 
-- Botão ausente: verificar `configured()` e as quatro variáveis de operação; a interface mostra configuração pendente quando faltam.
+- Botão ausente: conferir primeiro a aba **Início** e a conta logada. O cartão só aparece em `/renan/<slug>` quando a conta tem uma assinatura daquele plano; sem isso, o acesso pode levar a login, pagamento pendente ou 404. Após o PR #325, a posse do link legado mostra **Entrar para ativar**, e só o login confirmado mostra **Ativar avisos**. Depois verificar `configured()` e as quatro variáveis de operação: com conta proprietária e configuração incompleta, o cartão mostra a pendência, mas não o botão. Se o HTML tem o botão e ele some no iPhone, verificar suporte a `PushManager`/`Notification` e o estado de permissão no JavaScript.
 - Inscrição rejeitada: conferir o host real do endpoint contra `PUBLIC_WORKOUT_PUSH_ALLOWED_HOSTS`. O servidor exige HTTPS e rejeita IP não público.
 - Mensagem pendente: usar `python manage.py drain_public_workout_outbox --limit 50` uma vez para diagnosticar; conferir timer e `last_error` da inscrição. A transação do treino permanece concluída mesmo se a rede push falhar.
 - Aparelho antigo após troca de VAPID: desativar avisos nele e ativar novamente; em implantação pública, planejar comunicação para nova inscrição.
