@@ -68,6 +68,8 @@ Três pacotes importados vivem em `.claude/skills/` com prefixo `octobox-` e `di
 - **Octobox Social Media Mentor** → `octobox-social-mentor-<nome>` (17 skills)
 - **Octobox Taste Design UI/UX Personality** → `octobox-taste-design-ui-ux-personality` (principal) e `octobox-taste-<variante>` (13 skills)
 
+**Roteadores de pacote:** chamar `/octobox-marketing`, `/octobox-social-mentor` ou `/octobox-taste-design-ui-ux-personality` ativa o pacote inteiro; escolha 1 a 5 skills do pacote conforme o contexto, leia o `SKILL.md` de cada e siga.
+
 **Regra de precedência:**
 - Se o usuário **chamou** uma `octobox-*` pelo nome, **só ela** vale para a tarefa.
 - Se **não chamou**, nunca dispare uma `octobox-*` por conta própria: use a skill legada equivalente (ex.: texto/copy → `copywriter-sintese`; UI/tema → `octobox-design` ou `frontend-aesthetic-director`; CSS → `css_front_end_architect`; prompts → `prompt-engineer`).
