@@ -16,6 +16,7 @@ import re
 from datetime import date, datetime, timedelta
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from types import SimpleNamespace
+from unittest import mock
 
 from django.template.loader import render_to_string
 from django.test import TestCase
@@ -207,11 +208,15 @@ class WorkoutTemplateRenderTests(TestCase):
         self.assertIn('Escolha uma carga segura', html)
         self.assertIn('Sem dados suficientes para sugerir kg', html)
 
-    def test_is_tracked_shows_chip(self):
+    def test_is_tracked_marks_card_without_extra_chip(self):
+        # Redesign Curva neon: a pilula "rastreado" saiu do card (rotulo
+        # interno, competia com os chips de fase); a curadoria do treinador
+        # continua marcada na classe do card.
         html = _render(build_example_payload())  # is_tracked=True no exemplo
 
-        self.assertIn('workout-tracked-chip', html)
-        self.assertIn('rastreado', html)
+        self.assertIn('workout-movement-card is-load-tracked', html)
+        self.assertNotIn('workout-tracked-chip', html)
+        self.assertNotIn('>rastreado<', html)
 
     def test_is_tracked_shows_load_input_row(self):
         # Item 8 da Onda B3: movimento rastreado ganha a caixinha de
@@ -545,7 +550,7 @@ class WorkoutTemplateRenderTests(TestCase):
 
         self.assertEqual(html.count('class="workout-movement-register" data-workout-load-toggle'), 2)
         self.assertEqual(html.count('class="workout-load-input" data-workout-load-input'), 2)
-        self.assertEqual(html.count('workout-tracked-chip'), 1)
+        self.assertEqual(html.count('workout-movement-card is-load-tracked'), 1)
 
     def test_history_tab_renders_without_data(self):
         # "Histórico" (nome antigo do tab combinado) virou dois paineis de
@@ -946,12 +951,15 @@ class WorkoutTopbarAndNavTests(TestCase):
 
         self.assertIn('carga registrada', html)
 
-    def test_program_summary_headline_and_body_render(self):
+    def test_program_summary_body_renders_and_label_stays_in_title(self):
+        # O hero mostra o corpo do resumo; o nome do programa fica no <title>
+        # (a legenda "Programa · N semanas" saiu do hero no redesign neon).
         html = _render(build_example_payload())
 
         self.assertIn('workout-summary-card', html)
-        self.assertIn('Programa de exemplo', html)
+        self.assertIn('<title>Programa de exemplo</title>', html)
         self.assertIn('Montado pra rodar', html)
+        self.assertNotIn('workout-home-hero__caption', html)
 
     def test_week_strip_shows_flame_icon(self):
         html = _render(build_example_payload())
@@ -974,6 +982,118 @@ class WorkoutTopbarAndNavTests(TestCase):
 
         self.assertNotIn('dia com treino', html)
         self.assertNotIn('dias com treino', html)
+
+
+def _top_set(movement_slug, weight_kg, performed_on, key):
+    return {
+        'movement_slug': movement_slug, 'weight_kg': weight_kg, 'reps': 8, 'rir': 2.0,
+        'performed_on': performed_on.isoformat(), 'program_id': '', 'week_in_program': None,
+        'idempotency_key': key, 'set_role': 'top_set',
+    }
+
+
+class WorkoutCurvaNeonTests(TestCase):
+    """Redesign "Curva neon": letreiro, semana do ciclo e a curva no hero,
+    trilha da semana, 1RM sempre visivel e o grafico marcado pro
+    workout-curve.js redesenhar no tamanho real."""
+
+    def test_topbar_shows_wordmark_instead_of_old_label(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('<span class="workout-wordmark">curva<span aria-hidden="true">.</span></span>', html)
+        self.assertNotIn('SEU ESPAÇO', html)
+
+    def test_hero_shows_current_week_of_cycle(self):
+        payload = build_example_payload()
+        payload['weeks'] = 8
+        payload['started_on'] = (timezone.localdate() - timedelta(days=15)).isoformat()
+
+        html = _render(payload)
+
+        self.assertIn('Semana <strong>3</strong> de 8', html)
+        self.assertEqual(html.count('workout-home-hero__cycle'), 1)
+        self.assertIn('<span class="is-now"></span>', html)
+
+    def test_hero_falls_back_to_program_length_before_start(self):
+        payload = build_example_payload()
+        payload['started_on'] = (timezone.localdate() + timedelta(days=3)).isoformat()
+
+        html = _render(payload)
+
+        self.assertIn('<span class="workout-home-hero__week">4 semanas</span>', html)
+        self.assertNotIn('workout-home-hero__cycle', html)
+
+    def test_hero_curve_shows_most_recent_movement_with_a_curve(self):
+        today = timezone.localdate()
+        html = _render(build_example_payload(), load_history=[
+            _top_set('agachamento-livre', 90.0, today - timedelta(days=40), 'a1'),
+            _top_set('agachamento-livre', 100.0, today - timedelta(days=10), 'a2'),
+            _top_set('supino-reto', 60.0, today - timedelta(days=30), 's1'),
+            _top_set('supino-reto', 65.0, today - timedelta(days=2), 's2'),
+        ])
+
+        hero = html[html.index('workout-home-hero'):html.index('workout-weekly-review-hero')]
+        self.assertIn('Sua curva · Supino reto', hero)
+        self.assertIn('data-curva-chart="hero"', hero)
+        self.assertIn('<strong>65,0 kg</strong>', hero)
+        self.assertIn('kg em 90 dias', hero)
+
+    def test_hero_has_no_curve_without_two_top_sets(self):
+        html = _render(build_example_payload(), load_history=[
+            _top_set('agachamento-livre', 90.0, timezone.localdate(), 'only'),
+        ])
+
+        self.assertNotIn('workout-hero-curve', html)
+
+    def test_rest_day_today_is_marked_on_the_week_trail(self):
+        wednesday = date(2026, 1, 7)  # payload de exemplo so prescreve 'seg'
+        with mock.patch('django.utils.timezone.localdate', return_value=wednesday):
+            html = _render(build_example_payload())
+
+        self.assertIn('<span class="workout-week-day is-today is-rest" title="Descanso">Qua</span>', html)
+
+    def test_one_rep_max_and_trend_are_always_visible(self):
+        today = timezone.localdate()
+        html = _render(
+            build_example_payload(),
+            load_history=[
+                _top_set('agachamento-livre', 90.0, today - timedelta(days=30), 'k1'),
+                _top_set('agachamento-livre', 100.0, today - timedelta(days=5), 'k2'),
+            ],
+            one_rep_max_by_movement={'agachamento-livre': {'value_kg': 125.0, 'confidence': 'alta', 'effective_reps': 10, 'formula': 'epley'}},
+            trends_by_movement={'agachamento-livre': {'label': 'improving'}},
+        )
+
+        self.assertNotIn('Ver detalhes', html)
+        self.assertIn('<div class="workout-load-chart-context">', html)
+        self.assertIn('1RM estimado: <strong>125,0 kg</strong>', html)
+        self.assertIn('Em evolução', html)
+        self.assertIn('data-curva-chart="axis"', html)
+
+    def test_eyebrows_are_gone_from_headings(self):
+        html = _render(build_example_payload())
+
+        self.assertNotIn('workout-training-heading__eyebrow', html)
+        self.assertNotIn('workout-progress-heading__eyebrow', html)
+        self.assertNotIn('workout-guided__eyebrow', html)
+
+    def test_every_template_asset_is_precached_by_the_service_worker(self):
+        # cache.addAll() so baixa o que esta nas tuplas: um <script>/<link>
+        # do template fora delas quebra o modo offline em silencio.
+        from student_app.views.public_workout_pwa import (
+            PUBLIC_WORKOUT_SCRIPTS, PUBLIC_WORKOUT_STYLESHEETS,
+            PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS, PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS,
+        )
+
+        html = _render(build_example_payload())
+        precached = set(
+            PUBLIC_WORKOUT_SCRIPTS + PUBLIC_WORKOUT_STYLESHEETS
+            + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS
+        )
+        assets = set(re.findall(r'(?:src|href)="(/static/[^"?]+\.(?:js|css))\?v=', html))
+
+        self.assertIn('/static/js/public_workouts/workout-curve.js', assets)
+        self.assertEqual(assets - precached, set())
 
 
 class CardioPeriodizacaoCycleNavTests(TestCase):

@@ -4,9 +4,9 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.1rem;
-  border: 1px solid color-mix(in srgb, var(--brand) 28%, transparent);
-  border-radius: 18px;
-  background: var(--theme-surface-panel);
+  border: 1px solid var(--curva-edge);
+  border-radius: 24px;
+  background: var(--theme-surface-secondary);
   color: var(--theme-text-primary);
 }
 
@@ -22,7 +22,7 @@
   min-height: 44px;
   padding: .6rem .9rem;
   border: 1px solid var(--brand);
-  border-radius: 12px;
+  border-radius: 999px;
   background: var(--brand);
   color: #071b22;
   font-weight: 800;

@@ -83,11 +83,9 @@ PONTOS CRITICOS:
   <header class="workout-topbar">
     <div class="workout-topbar-main">
       <span class="workout-avatar" aria-hidden="true">{% if student_photo_url %}<img src="{{ student_photo_url }}" alt="" width="42" height="42" loading="lazy">{% else %}{{ student_name|initial }}{% endif %}</span>
-      <div class="workout-topbar-identity">
-        <span class="workout-topbar-brand">CURVA <span aria-hidden="true">/</span> SEU ESPAÇO</span>
-        <strong class="workout-topbar-greeting">{% workout_greeting student_name %}</strong>
-      </div>
+      <strong class="workout-topbar-greeting">{% workout_greeting student_name %}</strong>
     </div>
+    <span class="workout-wordmark">curva<span aria-hidden="true">.</span></span>
   </header>
 
   <div class="interactive-tab-container" data-default-panel="workout-panel-inicio">
@@ -98,16 +96,33 @@ PONTOS CRITICOS:
         <button type="button" data-workout-install-button>Instalar app</button>
       </aside>
       {% program_summary program as summary %}
+      {% program_week_progress program as week_progress %}
+      {% hero_progress_chart progress_snapshots movement_labels as hero_curve %}
       <article class="student-card workout-summary-card workout-home-hero">
         <div class="workout-home-hero__meta">
-          <span class="workout-home-hero__eyebrow"><span aria-hidden="true"></span> SEU ESPAÇO DE TREINO</span>
-          <span class="workout-home-hero__duration">{{ program.weeks }} SEMANAS</span>
+          {% if week_progress %}
+          <span class="workout-home-hero__week">Semana <strong>{{ week_progress.current }}</strong> de {{ week_progress.total }}</span>
+          {% if week_progress.segments %}<span class="workout-home-hero__cycle" aria-hidden="true">{% for state in week_progress.segments %}<span class="is-{{ state }}"></span>{% endfor %}</span>{% endif %}
+          {% else %}
+          <span class="workout-home-hero__week">{{ program.weeks }} semana{{ program.weeks|pluralize }}</span>
+          {% endif %}
         </div>
         <h1>Seu treino.<br><em>Em movimento.</em></h1>
         <p>{{ summary.body }}</p>
+        {% if hero_curve %}
+        {% with chart=hero_curve.chart %}
+        <figure class="workout-hero-curve">
+          <figcaption>Sua curva · {{ hero_curve.label }}</figcaption>
+          {# Fallback sem JS (linha esticada, traço constante); workout-curve.js redesenha no tamanho real. #}
+          <svg class="workout-hero-curve__svg" viewBox="{{ chart.viewbox }}" preserveAspectRatio="none" role="img" aria-label="Curva de {{ hero_curve.label }}. {{ chart.accessible_description }}" data-curva-chart="hero">
+            {% localize off %}<polyline class="workout-hero-curve__line" points="{{ chart.points_attr }}"></polyline>{% endlocalize %}
+          </svg>
+          <p class="workout-hero-curve__stats"><strong>{{ chart.latest_weight_kg }} kg</strong><span>{% if chart.delta_weight_kg > 0 %}+{% endif %}{{ chart.delta_weight_kg }} kg em 90 dias</span></p>
+        </figure>
+        {% endwith %}
+        {% endif %}
         <div class="workout-home-hero__footer">
           <button type="button" class="workout-home-hero__cta" data-workout-jump-panel="workout-panel-treino">Abrir meu treino <span aria-hidden="true">↗</span></button>
-          <span class="workout-home-hero__caption">{{ summary.headline }}</span>
         </div>
       </article>
 
@@ -145,7 +160,7 @@ PONTOS CRITICOS:
             title="Ver treino de {{ day.label }}{% if day.is_complete %} · carga registrada{% endif %}"
           >{{ day.label }}</button>
           {% else %}
-          <span class="workout-week-day is-rest" title="Descanso">{{ day.label }}</span>
+          <span class="workout-week-day{% if day.is_today %} is-today{% endif %} is-rest" title="Descanso">{{ day.label }}</span>
           {% endif %}
           {% endfor %}
         </div>
@@ -184,7 +199,6 @@ PONTOS CRITICOS:
 
     <section id="workout-panel-treino" data-workout-tab-panel>
       <header class="workout-training-heading">
-        <span class="workout-training-heading__eyebrow">SEU PROGRAMA <span aria-hidden="true">/</span> {{ program.weeks }} SEMANAS</span>
         <h1>Hora de treinar<span aria-hidden="true">.</span></h1>
         <p>Escolha o dia, veja a prescrição e registre sua evolução.</p>
       </header>
@@ -277,7 +291,6 @@ PONTOS CRITICOS:
                 </span>
                 {% endif %}
                 {% endwith %}
-                {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
               </div>
               {% if movement.allow_load_registration|default_if_none:True %}
               <div class="workout-movement-load">
@@ -405,7 +418,6 @@ PONTOS CRITICOS:
 
     <section id="workout-panel-cargas" data-workout-tab-panel>
       <header class="workout-progress-heading">
-        <span class="workout-progress-heading__eyebrow">PROGRESSO <span aria-hidden="true">/</span> SEU HISTÓRICO</span>
         <h1>Sua evolução<span aria-hidden="true">.</span></h1>
         <p>As cargas registradas mostram o caminho que você já percorreu.</p>
       </header>
@@ -436,11 +448,10 @@ PONTOS CRITICOS:
               {% endif %}
               {% with estimate=chart.one_rep_max %}
               {% if estimate or chart.trend_signal != 'insufficient_data' %}
-              <details class="workout-load-chart-context">
-                <summary>Ver detalhes</summary>
+              <div class="workout-load-chart-context">
                 {% if estimate %}<span class="workout-load-chart-1rm" title="1RM estimado — confiança {{ estimate.confidence }} ({{ estimate.effective_reps }} reps efetivas, {{ estimate.formula }})">1RM estimado: <strong>{{ estimate.value_kg }} kg</strong></span>{% endif %}
                 {% if chart.trend_signal != 'insufficient_data' %}<span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--{{ chart.trend_signal }}">{% if chart.trend_signal == 'plateau' %}Platô{% elif chart.trend_signal == 'declining' %}Em queda{% else %}Em evolução{% endif %}</span>{% endif %}
-              </details>
+              </div>
               {% endif %}
               {% endwith %}
             </div>
@@ -462,6 +473,7 @@ PONTOS CRITICOS:
               preserveAspectRatio="none"
               role="img"
               aria-label="Curva de {{ group.grouper|resolve_movement_display_name:movement_labels }}. {{ chart.accessible_description }}"
+              data-curva-chart="axis"
             >
               <defs>
                 <linearGradient id="workout-load-fill-{{ forloop.counter }}" x1="0" y1="0" x2="0" y2="1">
@@ -723,6 +735,7 @@ PONTOS CRITICOS:
 {% include 'public_workouts/_onboarding_wizard.html' %}
 
 <script src="{% static 'js/public_workouts/workout-shell.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/workout-curve.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/workout-pwa.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/core/shell.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/load-storage.js' %}?v={{ asset_version }}" defer></script>

@@ -33,6 +33,22 @@
     --theme-accent-primary: var(--theme-accent-support);
 }
 
+/* Camada "Curva neon" — papeis de cor do app do aluno, nos dois temas:
+   --curva-neon (= --brand, segue a variante F/M) marca voce / agora / acao;
+   --curva-peak marca o pico (AMRAP, recorde, ultimo ponto da curva). No tema
+   claro tudo e cor chapada; halos e nucleos claros so existem no bloco
+   escuro logo abaixo. */
+body[data-plan-slug] {
+    --curva-neon: var(--brand);
+    --curva-peak: var(--theme-accent-premium);
+    --curva-edge: var(--theme-border-soft);
+    --curva-surface-raised: color-mix(in srgb, var(--theme-text-muted) 14%, var(--theme-surface-strong));
+    --curva-hero-surface:
+        radial-gradient(circle at 88% 18%, rgba(95, 143, 247, .11), transparent 42%),
+        linear-gradient(135deg, #f8fbff 0%, #edf4fc 60%, #e9f2fb 100%);
+    --curva-hero-edge: color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-border-soft));
+}
+
 /* Tema Curva: mesmas cores da familia OctoBox, isoladas da shell e dos
    tokens globais do app autenticado. Dark e o palco padrao deste PWA. */
 body[data-plan-slug]:not([data-theme="light"]) {
@@ -40,7 +56,10 @@ body[data-plan-slug]:not([data-theme="light"]) {
     /* `tokens.css` captura aliases de compatibilidade no :root. Redefina-os
        nesta shell para que a tela do aluno receba a paleta Curva em cascata. */
     --fdw-stage: var(--theme-bg-stage);
-    --fdw-stage-depth: var(--theme-bg-stage-depth);
+    /* O `body::before` fixo de design-system/tokens.css pinta o fundo inteiro
+       (sombreado azul a esquerda + magenta embaixo): igual em toda aba e em
+       qualquer rolagem. O `background` do body fica so na cor de base. */
+    --fdw-stage-depth: var(--theme-bg-stage-depth), var(--theme-bg-stage);
     --ink: var(--theme-text-primary);
     --ink-soft: var(--theme-text-secondary);
     --muted: var(--theme-text-muted);
@@ -53,8 +72,9 @@ body[data-plan-slug]:not([data-theme="light"]) {
         radial-gradient(circle at 86% 12%, rgba(0,229,255,.09), transparent 24%),
         radial-gradient(circle at 20% 84%, rgba(255,0,200,.075), transparent 25%);
     --theme-surface: rgba(13,21,34,.9);
-    --theme-surface-secondary: rgba(17,26,42,.94);
-    --theme-surface-strong: rgba(23,35,55,.98);
+    /* Superficies foscas e opacas: o neon so acende contra fundo escuro. */
+    --theme-surface-secondary: #0B111B;
+    --theme-surface-strong: #111926;
     --theme-surface-muted: rgba(9,14,24,.94);
     --theme-surface-inverse: #F1F6FF;
     --theme-surface-panel: linear-gradient(180deg,rgba(17,26,42,.96),rgba(13,21,34,.94));
@@ -71,8 +91,8 @@ body[data-plan-slug]:not([data-theme="light"]) {
     --theme-chrome-border: rgba(145,169,204,.22);
     --theme-chrome-glow: rgba(0,229,255,.1);
     --theme-text-primary: #F1F6FF;
-    --theme-text-secondary: #C4D2E7;
-    --theme-text-muted: #9AABC4;
+    --theme-text-secondary: #B6C3D8;
+    --theme-text-muted: #7F8CA3;
     --theme-text-soft: #DCE7F8;
     --theme-border-soft: rgba(145,169,204,.2);
     --theme-border-strong: rgba(145,169,204,.34);
@@ -87,8 +107,56 @@ body[data-plan-slug]:not([data-theme="light"]) {
     --theme-accent-warning: #F7B84D;
     --theme-accent-danger: #FF5F7E;
     --brand: var(--theme-accent-primary);
+    /* Neon em 4 camadas (tubo nitido, halo proximo, halo medio, nevoa): alfas
+       baixos e blur crescente dao um degrade continuo, sem degrau visivel. */
+    --curva-edge: rgba(160, 185, 225, .07);
+    --curva-surface-raised: #172133;
+    --curva-hero-surface:
+        radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--theme-accent-support) 10%, transparent), transparent 42%),
+        linear-gradient(135deg, #0F1827 0%, #0B121E 48%, #090F19 100%);
+    --curva-hero-edge: color-mix(in srgb, var(--theme-accent-primary) 22%, transparent);
+    --curva-hero-glow:
+        0 0 0 1px color-mix(in srgb, var(--theme-accent-primary) 3%, transparent),
+        0 0 18px color-mix(in srgb, var(--theme-accent-primary) 7%, transparent),
+        0 0 44px color-mix(in srgb, var(--theme-accent-primary) 3.5%, transparent),
+        inset 0 0 26px color-mix(in srgb, var(--theme-accent-primary) 3%, transparent);
+    --curva-neon-core: color-mix(in srgb, var(--curva-neon) 22%, #fff);
+    --curva-neon-glow:
+        0 0 1px var(--curva-neon),
+        0 0 5px color-mix(in srgb, var(--curva-neon) 50%, transparent),
+        0 0 12px color-mix(in srgb, var(--curva-neon) 26%, transparent),
+        0 0 22px color-mix(in srgb, var(--curva-neon) 12%, transparent);
+    --curva-neon-text-glow:
+        0 0 1px color-mix(in srgb, var(--curva-neon) 70%, transparent),
+        0 0 6px color-mix(in srgb, var(--curva-neon) 45%, transparent),
+        0 0 16px color-mix(in srgb, var(--curva-neon) 24%, transparent),
+        0 0 32px color-mix(in srgb, var(--curva-neon) 12%, transparent);
+    --curva-peak-core: color-mix(in srgb, var(--curva-peak) 16%, #fff);
+    --curva-peak-glow:
+        0 0 1px var(--curva-peak),
+        0 0 5px color-mix(in srgb, var(--curva-peak) 50%, transparent),
+        0 0 12px color-mix(in srgb, var(--curva-peak) 26%, transparent),
+        0 0 22px color-mix(in srgb, var(--curva-peak) 12%, transparent);
+    --curva-peak-text-glow:
+        0 0 1px color-mix(in srgb, var(--curva-peak) 70%, transparent),
+        0 0 6px color-mix(in srgb, var(--curva-peak) 45%, transparent),
+        0 0 16px color-mix(in srgb, var(--curva-peak) 24%, transparent),
+        0 0 32px color-mix(in srgb, var(--curva-peak) 12%, transparent);
+    /* Identidade Curva (letreiro, titulo do hero, CTA principal): sempre o
+       ciano da marca, independente da variante F/M. */
+    --curva-identity-core: color-mix(in srgb, var(--theme-accent-primary) 22%, #fff);
+    --curva-identity-glow:
+        0 0 1px var(--theme-accent-primary),
+        0 0 5px color-mix(in srgb, var(--theme-accent-primary) 50%, transparent),
+        0 0 12px color-mix(in srgb, var(--theme-accent-primary) 26%, transparent),
+        0 0 22px color-mix(in srgb, var(--theme-accent-primary) 12%, transparent);
+    --curva-identity-text-glow:
+        0 0 1px color-mix(in srgb, var(--theme-accent-primary) 70%, transparent),
+        0 0 6px color-mix(in srgb, var(--theme-accent-primary) 45%, transparent),
+        0 0 16px color-mix(in srgb, var(--theme-accent-primary) 24%, transparent),
+        0 0 32px color-mix(in srgb, var(--theme-accent-primary) 12%, transparent);
     color: var(--theme-text-primary);
-    background: var(--theme-bg-stage-depth), var(--theme-bg-stage), var(--theme-bg-root);
+    background: var(--theme-bg-root);
 }
 
 body[data-plan-slug][data-theme="light"] {
@@ -97,8 +165,14 @@ body[data-plan-slug][data-theme="light"] {
     color: var(--theme-text-primary);
 }
 
-body[data-plan-slug][data-accent-variant="premium"] { --brand: var(--theme-accent-premium); }
+/* Variante F: o --brand ja e o magenta, entao o "pico" troca pro ciano —
+   nunca a mesma cor da acao. */
+body[data-plan-slug][data-accent-variant="premium"] { --brand: var(--theme-accent-premium); --curva-peak: var(--theme-accent-primary); }
 body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accent-support); }
+
+/* Cards foscos, separados por tom: o contorno colorido fica so nos heros. */
+body[data-plan-slug] .student-card { --student-card-border: var(--curva-edge); }
+body[data-plan-slug] .card-decor-topstripe::before { display: none; }
 
 /* accent_variant=None (neutro) nao precisa de override — os tokens base
    (--brand: var(--theme-accent-support) por padrao) ja servem. */
@@ -132,6 +206,7 @@ body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accen
 .workout-topbar {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     padding: 2px 2px 6px;
 }
@@ -144,23 +219,19 @@ body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accen
     min-width: 0;
 }
 
-.workout-topbar-identity {
-    display: grid;
-    gap: 1px;
-    min-width: 0;
-}
-
-.workout-topbar-brand {
-    color: var(--theme-text-muted);
-    font-size: 0.8125rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-}
-
-.workout-topbar-brand span {
+/* A marca como letreiro: no escuro acende (camada neon no fim do arquivo). */
+.workout-wordmark {
+    flex: none;
     color: var(--theme-accent-primary);
-    padding-inline: 3px;
+    font-size: 1.375rem;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    line-height: 1;
 }
+
+.workout-wordmark span { color: var(--curva-peak); }
+
+body[data-plan-slug][data-theme="light"] .workout-wordmark { color: #087f9c; }
 
 .workout-avatar {
     width: 42px;
@@ -193,7 +264,7 @@ body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accen
 }
 
 .workout-topbar-greeting {
-    font-size: 1rem;
+    font-size: 1.0625rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--theme-text-primary);
@@ -208,11 +279,9 @@ body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accen
     gap: 20px;
     min-height: 304px;
     padding: clamp(22px, 4vw, 34px);
-    border-radius: 24px;
-    border-color: color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-border-soft));
-    background:
-        radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--theme-accent-support) 14%, transparent), transparent 42%),
-        linear-gradient(135deg, #162237 0%, #101a2b 48%, #0d1524 100%);
+    border-radius: 28px;
+    border-color: var(--curva-hero-edge);
+    background: var(--curva-hero-surface);
     box-shadow: 0 24px 58px rgba(0, 0, 0, .24);
 }
 
@@ -240,35 +309,35 @@ body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accen
     gap: 12px;
 }
 
-.workout-home-hero__eyebrow,
-.workout-home-hero__duration {
+/* "Semana 3 de 8" + barra do ciclo (dashboard.build_program_week_progress). */
+.workout-home-hero__week {
     color: var(--theme-text-secondary);
-    font-size: 0.8125rem;
-    font-weight: 800;
-    letter-spacing: .1em;
-}
-
-.workout-home-hero__eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.workout-home-hero__eyebrow > span {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--theme-accent-primary);
-    box-shadow: 0 0 14px color-mix(in srgb, var(--theme-accent-primary) 45%, transparent);
-}
-
-.workout-home-hero__duration {
-    padding: 7px 10px;
-    border: 1px solid var(--theme-border-strong);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--theme-surface-strong) 78%, transparent);
+    font-size: .9375rem;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
+
+.workout-home-hero__week strong {
+    color: var(--theme-text-primary);
+    font-weight: 800;
+}
+
+.workout-home-hero__cycle {
+    display: flex;
+    flex: 1 1 120px;
+    gap: 4px;
+    max-width: 168px;
+}
+
+.workout-home-hero__cycle > span {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--theme-text-muted) 22%, transparent);
+}
+
+.workout-home-hero__cycle > .is-done { background: var(--theme-accent-primary); opacity: .55; }
+.workout-home-hero__cycle > .is-now { background: var(--theme-accent-primary); }
 
 .workout-home-hero h1 {
     position: relative;
@@ -277,7 +346,7 @@ body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accen
     font-size: clamp(2.1rem, 5vw, 3.3rem);
     font-weight: 850;
     letter-spacing: -.055em;
-    line-height: 1.06;
+    line-height: 1;
 }
 
 .workout-home-hero h1 em {
@@ -302,7 +371,7 @@ body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accen
     min-height: 50px;
     padding: 11px 18px;
     border: 0;
-    border-radius: 13px;
+    border-radius: 999px;
     background: var(--theme-accent-primary);
     color: #061821;
     font: inherit;
@@ -310,23 +379,76 @@ body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accen
     font-weight: 800;
     cursor: pointer;
     box-shadow: 0 8px 26px color-mix(in srgb, var(--theme-accent-primary) 14%, transparent);
-    transition: transform .2s ease, box-shadow .2s ease;
+    transition: transform .18s cubic-bezier(.3, .7, .4, 1.4), box-shadow .2s ease;
 }
 
-.workout-home-hero__cta:hover { transform: translateY(-2px); box-shadow: 0 12px 30px color-mix(in srgb, var(--theme-accent-primary) 21%, transparent); }
+.workout-home-hero__cta:hover { transform: translateY(-2px); }
+.workout-home-hero__cta:active { transform: scale(.97); }
 .workout-home-hero__cta:focus-visible { outline: 2px solid var(--theme-text-primary); outline-offset: 3px; }
 .workout-home-hero__cta span { font-size: 1.15rem; line-height: 1; }
 
-.workout-home-hero__caption {
-    color: var(--theme-text-muted);
-    font-size: .8125rem;
-    line-height: 1.45;
+/* "Sua curva": o mesmo dado do grafico de Cargas, sem eixo (hero_progress_chart).
+   Seletores presos ao hero pra vencer `.workout-home-hero p`. */
+.workout-home-hero .workout-hero-curve {
+    position: relative;
+    display: grid;
+    gap: 8px;
+    margin: 2px -6px 0;
+    padding: 14px 14px 12px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--theme-bg-root) 42%, transparent);
+}
+
+.workout-home-hero .workout-hero-curve figcaption {
+    color: var(--theme-text-secondary);
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.workout-hero-curve__svg,
+.workout-curve--hero {
+    display: block;
+    width: 100%;
+    height: 84px;
+    overflow: visible;
+}
+
+.workout-hero-curve__line {
+    fill: none;
+    stroke: var(--curva-neon);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.workout-home-hero .workout-hero-curve__stats {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    max-width: none;
+    margin: 0;
+    font-size: .875rem;
+    line-height: 1.3;
+}
+
+.workout-hero-curve__stats strong {
+    color: var(--theme-text-primary);
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-hero-curve__stats span {
+    color: var(--curva-neon);
+    font-weight: 700;
+    white-space: nowrap;
 }
 
 body[data-plan-slug][data-theme="light"] .workout-home-hero {
-    background:
-        radial-gradient(circle at 88% 18%, rgba(95, 143, 247, .11), transparent 42%),
-        linear-gradient(135deg, #f8fbff 0%, #edf4fc 60%, #e9f2fb 100%);
     box-shadow: 0 22px 48px rgba(28, 51, 85, .09);
 }
 
@@ -368,11 +490,11 @@ body[data-plan-slug][data-theme="light"] .workout-home-hero__cta { background: #
 
 .workout-week-strip {
     display: grid;
-    gap: 12px;
-    padding: 20px;
-    border-radius: 20px;
-    border: 1px solid var(--theme-border-soft);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent);
+    gap: 14px;
+    padding: 18px 16px 16px;
+    border-radius: 24px;
+    border: 1px solid var(--curva-edge);
+    background: var(--theme-surface-secondary);
 }
 
 .workout-week-strip__head {
@@ -389,40 +511,72 @@ body[data-plan-slug][data-theme="light"] .workout-home-hero__cta { background: #
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: color-mix(in srgb, var(--brand) 64%, var(--theme-text-primary) 36%);
+    color: var(--theme-text-primary);
+    font-size: 1rem;
+    font-weight: 800;
 }
 
 .workout-week-strip__flame {
-    width: 13px;
-    height: 13px;
+    width: 15px;
+    height: 15px;
     flex: 0 0 auto;
-    color: var(--brand);
+    color: var(--curva-peak);
 }
 
 .workout-week-strip__score {
-    color: var(--theme-text-muted);
-    font-size: 0.75rem;
+    color: var(--theme-text-secondary);
+    font-size: 0.875rem;
     text-align: right;
 }
 
+/* Trilha da semana (a curva em miniatura): um fio atravessa os 7 dias e cada
+   dia e um no — aceso quando teve treino, anel quando e hoje, ponto quando e
+   descanso. */
 .workout-week-strip__track {
+    position: relative;
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 9px;
+}
+
+.workout-week-strip__track::before {
+    content: "";
+    position: absolute;
+    left: 7%;
+    right: 7%;
+    bottom: 10px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--curva-surface-raised);
 }
 
 .workout-week-day {
+    position: relative;
     display: grid;
-    place-items: center;
-    min-height: 46px;
-    padding: 9px 0;
-    border-radius: 14px;
-    border: 1px solid var(--theme-border-soft);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
-    color: var(--theme-text-muted);
+    justify-items: center;
+    align-content: space-between;
+    gap: 10px;
+    min-height: 58px;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: var(--theme-text-secondary);
     font-size: 0.8125rem;
     font-weight: 700;
     font-family: inherit;
+}
+
+.workout-week-day::after {
+    content: "";
+    position: relative;
+    z-index: 1;
+    width: 14px;
+    height: 14px;
+    margin-bottom: 4px;
+    border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--theme-text-muted) 45%, transparent);
+    background: var(--theme-surface-secondary);
+    transition: border-color .2s ease;
 }
 
 /* Botao (dia com treino, clicavel) vs. span (descanso, so leitura). */
@@ -430,29 +584,53 @@ button.workout-week-day {
     cursor: pointer;
 }
 
-button.workout-week-day:hover,
+button.workout-week-day:hover::after { border-color: var(--curva-neon); }
+
 button.workout-week-day:focus-visible {
-    outline: none;
-    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
-    background: color-mix(in srgb, var(--brand) 10%, var(--theme-surface-secondary) 90%);
+    outline: 2px solid var(--curva-neon);
+    outline-offset: 2px;
 }
 
 .workout-week-day.is-rest {
-    opacity: 0.5;
+    color: var(--theme-text-muted);
     cursor: default;
 }
 
-.workout-week-day.is-today {
-    border-style: dashed;
-    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
-    color: color-mix(in srgb, var(--brand) 75%, var(--theme-text-primary) 25%);
+.workout-week-day.is-rest::after {
+    width: 6px;
+    height: 6px;
+    margin-bottom: 8px;
+    border: 0;
+    background: color-mix(in srgb, var(--theme-text-muted) 40%, transparent);
 }
 
-.workout-week-day.is-complete {
-    border-style: solid;
-    border-color: color-mix(in srgb, var(--brand) 35%, transparent);
-    background: color-mix(in srgb, var(--brand) 16%, var(--theme-surface-secondary) 84%);
-    color: color-mix(in srgb, var(--brand) 75%, var(--theme-text-primary) 25%);
+.workout-week-day.is-complete { color: var(--curva-neon); }
+
+.workout-week-day.is-complete::after {
+    border-color: var(--curva-neon);
+    background: var(--curva-neon);
+}
+
+.workout-week-day.is-today { color: var(--theme-text-primary); }
+
+.workout-week-day.is-today::after {
+    width: 18px;
+    height: 18px;
+    margin-bottom: 2px;
+    border-color: var(--curva-neon);
+    background: var(--theme-bg-root);
+}
+
+.workout-week-day.is-today.is-complete::after { background: var(--curva-neon); }
+
+/* Hoje e descanso: marca onde a semana esta, sem fingir que ha treino. */
+.workout-week-day.is-today.is-rest::after {
+    width: 12px;
+    height: 12px;
+    margin-bottom: 5px;
+    border: 2px solid var(--theme-text-secondary);
+    background: var(--theme-surface-secondary);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--theme-text-secondary) 8%, transparent);
 }
 
 .workout-mobile-nav {
@@ -465,8 +643,8 @@ button.workout-week-day:focus-visible {
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 4px;
     padding: 6px;
-    border-radius: 22px;
-    border: 1px solid var(--theme-border-soft);
+    border-radius: 26px;
+    border: 1px solid var(--curva-edge);
     background: color-mix(in srgb, var(--theme-surface-secondary) 96%, var(--theme-bg-root) 4%);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(18px);
@@ -481,6 +659,7 @@ body.workout-keyboard-open .workout-mobile-nav {
 }
 
 .workout-mobile-nav-link {
+    position: relative;
     display: grid;
     place-items: center;
     gap: 3px;
@@ -495,6 +674,7 @@ body.workout-keyboard-open .workout-mobile-nav {
     background: none;
     cursor: pointer;
     font-family: inherit;
+    transition: color .2s ease;
 }
 
 .workout-mobile-nav-link svg {
@@ -503,11 +683,22 @@ body.workout-keyboard-open .workout-mobile-nav {
     display: block;
 }
 
-.workout-mobile-nav-link.is-active {
-    color: var(--theme-text-primary);
-    background: color-mix(in srgb, var(--brand) 20%, transparent);
-    border-color: color-mix(in srgb, var(--brand) 32%, transparent);
+/* Aba ativa = um tubo de neon que acende em cima do icone (sem caixa cheia). */
+.workout-mobile-nav-link::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    width: 22px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: var(--curva-neon);
+    transform: translateX(-50%) scaleX(0);
+    transition: transform .25s cubic-bezier(.3, .7, .4, 1.3);
 }
+
+.workout-mobile-nav-link.is-active { color: var(--curva-neon); }
+.workout-mobile-nav-link.is-active::before { transform: translateX(-50%) scaleX(1); }
 
 .workout-install-prompt {
     display: flex;
@@ -544,9 +735,6 @@ body.workout-keyboard-open .workout-mobile-nav {
     .workout-home-hero h1 { font-size: clamp(2rem, 10vw, 2.7rem); }
     .workout-home-hero__footer { align-items: stretch; }
     .workout-home-hero__cta { width: 100%; justify-content: space-between; }
-    .workout-week-strip { padding: 16px; }
-    .workout-week-strip__track { gap: 5px; }
-    .workout-week-day { min-height: 42px; border-radius: 10px; }
     .workout-install-prompt { align-items: stretch; flex-direction: column; }
 }
 
@@ -565,6 +753,18 @@ body.workout-keyboard-open .workout-mobile-nav {
     .workout-mobile-nav-link {
         min-height: 64px;
     }
+
+    /* Nav vertical: o tubo fica na lateral esquerda de cada aba. */
+    .workout-mobile-nav-link::before {
+        top: 50%;
+        left: -1px;
+        width: 3px;
+        height: 22px;
+        border-radius: 0 3px 3px 0;
+        transform: translateY(-50%) scaleY(0);
+    }
+
+    .workout-mobile-nav-link.is-active::before { transform: translateY(-50%) scaleY(1); }
 }
 
 /* Perfil (versoes + conta) */
@@ -590,9 +790,9 @@ body.workout-keyboard-open .workout-mobile-nav {
 .workout-signout-button {
     width: 100%;
     padding: 13px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--theme-accent-danger) 32%, transparent);
-    background: var(--theme-accent-danger-alpha);
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-danger) 35%, transparent);
+    background: transparent;
     color: color-mix(in srgb, var(--theme-accent-danger) 78%, var(--theme-text-primary) 22%);
     font: inherit;
     font-weight: 700;
@@ -713,4 +913,104 @@ body.workout-keyboard-open .workout-mobile-nav {
 
 .workout-version-row td {
     white-space: nowrap;
+}
+
+/* ============================================================
+ * Camada neon (so tema escuro): nucleo claro + halo apenas onde importa —
+ * letreiro, titulo do hero, CTA, trilha da semana, aba ativa. O resto da
+ * tela fica fosco; e o contraste que faz o neon parecer neon.
+ * ============================================================ */
+body[data-plan-slug]:not([data-theme="light"]) .workout-wordmark {
+    color: var(--curva-identity-core);
+    text-shadow: var(--curva-identity-text-glow);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-wordmark span {
+    color: var(--curva-peak-core);
+    text-shadow: var(--curva-peak-text-glow);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-avatar {
+    background: var(--theme-surface-strong);
+    border-color: transparent;
+    color: var(--curva-neon-core);
+    box-shadow: 0 0 0 2px var(--theme-bg-root), 0 0 0 3.5px var(--curva-neon), var(--curva-neon-glow);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-avatar--lg {
+    box-shadow: 0 0 0 3px var(--theme-bg-root), 0 0 0 5px var(--curva-neon), var(--curva-neon-glow);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-home-hero {
+    box-shadow: var(--curva-hero-glow), 0 24px 58px rgba(0, 0, 0, .26);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-home-hero h1 em {
+    color: var(--curva-identity-core);
+    text-shadow: var(--curva-identity-text-glow);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-home-hero__cycle > .is-now {
+    background: var(--curva-identity-core);
+    box-shadow: var(--curva-identity-glow);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-home-hero__cta {
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--curva-identity-core) 60%, transparent),
+        0 0 1px var(--theme-accent-primary),
+        0 0 12px color-mix(in srgb, var(--theme-accent-primary) 38%, transparent),
+        0 0 32px color-mix(in srgb, var(--theme-accent-primary) 16%, transparent);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-hero-curve__stats span { color: var(--curva-neon-core); }
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-hero-curve__line {
+    stroke: var(--curva-neon-core);
+    filter: drop-shadow(0 0 3px var(--curva-neon)) drop-shadow(0 0 8px color-mix(in srgb, var(--curva-neon) 45%, transparent));
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-week-strip__flame {
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--curva-peak) 60%, transparent));
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-week-day.is-complete { color: var(--curva-neon-core); }
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-week-day.is-complete::after {
+    border-color: var(--curva-neon-core);
+    box-shadow: var(--curva-neon-glow);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-week-day.is-today:not(.is-rest)::after {
+    border-color: var(--curva-neon-core);
+    box-shadow: var(--curva-neon-glow);
+    animation: workout-week-today-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes workout-week-today-pulse {
+    0%, 100% { box-shadow: var(--curva-neon-glow), 0 0 0 0 color-mix(in srgb, var(--curva-neon) 30%, transparent); }
+    50% { box-shadow: var(--curva-neon-glow), 0 0 0 7px transparent; }
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-mobile-nav {
+    background: rgba(7, 11, 18, .94);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .55);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-mobile-nav-link.is-active {
+    color: var(--curva-neon-core);
+    text-shadow: 0 0 10px color-mix(in srgb, var(--curva-neon) 40%, transparent);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-mobile-nav-link.is-active svg {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--curva-neon) 70%, transparent));
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-mobile-nav-link::before { background: var(--curva-neon-core); }
+body[data-plan-slug]:not([data-theme="light"]) .workout-mobile-nav-link.is-active::before { box-shadow: var(--curva-neon-glow); }
+
+@media (prefers-reduced-motion: reduce) {
+    body[data-plan-slug] .workout-week-day.is-today::after { animation: none; }
+    .workout-mobile-nav-link::before,
+    .workout-home-hero__cta { transition: none; }
 }
