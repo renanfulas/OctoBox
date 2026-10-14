@@ -78,6 +78,7 @@ def _prepare_guided_student(stages=None):
 def test_student_top_target_guides_ramp_and_survives_reload(page: Page, live_server):
     from public_workouts.models import PublicWorkoutTrainingSession
 
+    page.set_viewport_size({'width': 390, 'height': 844})
     stages = [
         {'stage_id': 'prep', 'role': 'warmup', 'min_sets': 1, 'max_sets': 1,
          'reps_min': 8, 'reps_max': 8, 'rest_seconds': 0,
@@ -99,6 +100,8 @@ def test_student_top_target_guides_ramp_and_survives_reload(page: Page, live_ser
     target.locator('[data-workout-guided-top-input]').fill('100')
     target.locator('[data-workout-guided-top-apply]').click()
     expect(page.locator('[data-workout-guided-weight]')).to_have_value('40')
+    if screenshot_path := os.environ.get('CURVA_LOAD_SCREENSHOT'):
+        page.screenshot(path=screenshot_path, full_page=True)
     page.locator('[data-workout-guided-reps]').fill('8')
     page.locator('[data-workout-guided-set]').click()
 

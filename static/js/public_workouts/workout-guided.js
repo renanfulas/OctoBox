@@ -252,7 +252,7 @@
     var nextIdentity = next ? sessionId + ':' + selectedDayId() + ':' + key(next.movementIndex, next.setNumber) : null;
     var sameStep = !!nextIdentity && nextIdentity === currentStepIdentity;
     currentStepIdentity = nextIdentity;
-    progress.textContent = state.recordedCount + ' série(s) registrada(s) · até ' + state.total + ' no guia' + pendingLabel();
+    progress.textContent = state.recordedCount + ' de ' + state.total + ' séries registradas' + pendingLabel();
     fields.hidden = !next;
     topTargetPanel.hidden = !next || !next.movement.allowLoad || next.movement.loadKind === 'fixed_kg'
       || !next.movement.series.some(function (row) {
@@ -305,7 +305,7 @@
       source.textContent = 'Carga calculada a partir do RM; ajuste se necessário.';
     }
     if (next.movement.topTargetKg != null && next.series.top_factor != null) {
-      source.textContent = 'Sugestão a partir da carga alvo que você definiu para a Top; registre o peso que realizou.';
+      source.textContent = 'Sua Top alvo orienta esta série. Ajuste os kg que realizou.';
     }
     if (next.series.reps != null) {
       source.textContent += ' Meta: ' + next.series.reps
