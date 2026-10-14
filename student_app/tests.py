@@ -2411,6 +2411,26 @@ class PublicWorkoutTemplatePreviewViewTests(TestCase):
         response = self.client.get('/renan/bruno/preview-b3')
 
         self.assertEqual(response.status_code, 404)
+    def test_invite_entry_routes_group_link_to_box_invite_landing(self):
+        token = str(uuid.uuid4())
+        group_url = f'https://app.octoboxfit.com.br/aluno/auth/box-invite/{token}/'
+
+        response = self.client.post(
+            reverse('student-app-enter-invite'),
+            {'invite_token_or_url': group_url},
+        )
+
+        self.assertRedirects(response, reverse('student-identity-box-invite', kwargs={'token': token}))
+
+    def test_switch_box_ignores_external_next_url(self):
+        response = self.client.post(
+            reverse('student-app-switch-box'),
+            {'box_root_slug': get_box_runtime_slug(), 'next': 'https://evil.example.com/phish'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn('evil.example.com', response['Location'])
+
 
     @override_settings(DEBUG=True)
     def test_renders_workout_html_template_for_published_program(self):

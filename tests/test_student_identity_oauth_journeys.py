@@ -97,7 +97,9 @@ class HandleStudentSpecialOauthJourneyBoxInviteLinkTest(TestCase):
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, 302)
         self.assertIn('/aluno/', response.url)
-        repository.record_box_invite_acceptance.assert_called_once_with(box_invite_link)
+        # A vaga so e consumida ao concluir o wizard, nunca no callback OAuth.
+        repository.record_box_invite_acceptance.assert_not_called()
+        repository.consume_box_invite_slot.assert_not_called()
         mock_record_event.assert_called_once()
 
     def test_success_redirects_home_and_ignores_failure_reason(self):

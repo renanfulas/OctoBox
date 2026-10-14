@@ -11,9 +11,16 @@ Mantenha enxuto: cada linha aqui custa contexto em TODA sessão.
 Para perguntas de **"onde fica X"** ou **"como funciona X"**, consulte o RAG **antes** de varrer arquivos:
 
 ```
-python manage.py search_project_knowledge "<pergunta>"      # índice SHARED no schema public
+# Windows (PowerShell) — use SEMPRE o Python do .venv; o `python` global não tem Django
+.\.venv\Scripts\python.exe manage.py search_project_knowledge "<pergunta>"
+
+# Linux / macOS
+./.venv/bin/python manage.py search_project_knowledge "<pergunta>"
 ```
 
+- Índice SHARED no schema `public`. Pré-requisito: Postgres no ar (dev local: porta **5433**).
+- Erro `ModuleNotFoundError: No module named 'django'` = você chamou o `python` global. Troque pelo do `.venv` (comando acima) — não instale Django global.
+- Se o RAG não responder (Postgres fora, índice vazio), **pare e ative antes de continuar**: suba o Postgres e reindexe com `.\.venv\Scripts\python.exe manage.py ingest_project_knowledge`.
 - Sem Postgres / offline: `.claude/skills/navigate-octobox/driver.py find "<pergunta>"`.
 - **Não** use o RAG para um símbolo que você **já conhece** — aí `Grep` é mais barato e direto.
 - Medido: para o caso frio (não sei a palavra-chave), o RAG custa ~50x menos tokens que o grep cego. Para símbolo conhecido, ~6x ou menos — então não force "RAG antes de tudo".

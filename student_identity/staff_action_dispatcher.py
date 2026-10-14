@@ -25,6 +25,7 @@ def get_student_invitation_post_action_handler(view, action: str):
     action_handlers = {
         'create-box-link': view._handle_create_box_link,
         'pause-box-link': view._handle_pause_box_link,
+        'resume-box-link': view._handle_resume_box_link,
         'send-email': view._handle_send_email,
         'open-whatsapp': view._handle_open_whatsapp,
         'approve-membership': view._handle_approve_membership,
