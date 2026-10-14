@@ -8,7 +8,7 @@ description: Roteador do pacote Octobox Marketing (51 skills de marketing: copy,
 
 ## Pacote Octobox Marketing (roteador)
 
-Chamar esta skill ativa o **pacote inteiro**. Não aplique tudo: leia o contexto do pedido, escolha **1 a 5** skills do pacote que realmente se aplicam, abra o `SKILL.md` de cada uma escolhida (pasta irmã em `.claude/skills/<nome>/`) com Read e siga as instruções delas, combinando quando fizer sentido. Diga ao usuário quais escolheu e por quê, em uma linha. Para copy de página use `octobox-copywriting` (e `octobox-copy-editing` para revisar); para oferta, `octobox-offers`; para conversão, `octobox-cro`.
+Chamar esta skill ativa o **pacote inteiro**. Não aplique tudo: leia o contexto do pedido, escolha **quantas** skills do pacote forem necessárias (uma, várias ou muitas, conforme o contexto), abra o `SKILL.md` de cada uma escolhida (pasta irmã em `.claude/skills/<nome>/`) com Read e siga as instruções delas, combinando quando fizer sentido. Diga ao usuário quais escolheu e por quê, em uma linha. Para copy de página use `octobox-copywriting` (e `octobox-copy-editing` para revisar); para oferta, `octobox-offers`; para conversão, `octobox-cro`.
 
 ### Skills do pacote
 

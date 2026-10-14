@@ -420,7 +420,7 @@ open collections could not be searched.
 
 ## Pacote Octobox Taste Design UI/UX Personality (roteador)
 
-Chamar esta skill ativa o **pacote inteiro**. Não aplique tudo: leia o contexto do pedido, escolha **1 a 5** skills do pacote que realmente se aplicam, abra o `SKILL.md` de cada uma escolhida (pasta irmã em `.claude/skills/<nome>/`) com Read e siga as instruções delas, combinando quando fizer sentido. Diga ao usuário quais escolheu e por quê, em uma linha. Esta skill principal é a base; as variantes entram só se o estilo pedido casar. Em conflito de tema visual do OctoBox, `octobox-design` vence.
+Chamar esta skill ativa o **pacote inteiro**. Não aplique tudo: leia o contexto do pedido, escolha **quantas** skills do pacote forem necessárias (uma, várias ou muitas, conforme o contexto), abra o `SKILL.md` de cada uma escolhida (pasta irmã em `.claude/skills/<nome>/`) com Read e siga as instruções delas, combinando quando fizer sentido. Diga ao usuário quais escolheu e por quê, em uma linha. Esta skill principal é a base; as variantes entram só se o estilo pedido casar. Em conflito de tema visual do OctoBox, `octobox-design` vence.
 
 ### Skills do pacote
 
