@@ -9,6 +9,7 @@ from django.utils.html import format_html, format_html_join
 
 from . import nutrition_schema, schema
 from .guided_prescription import propose_guided_prescription, validate_guided_prescription
+from .guided_draft import prepare_guided_payload
 from .models import (
     PublicWorkoutAccount,
     PublicWorkoutAssessment,
@@ -258,7 +259,29 @@ class PublicWorkoutSubscriptionAdmin(admin.ModelAdmin):
     search_fields = ('account__email', 'plan_slug')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at')
-    actions = ['generate_ai_draft', 'generate_custom_price_checkout_link']
+    actions = ['generate_ai_draft', 'create_guided_revision', 'generate_custom_price_checkout_link']
+
+    @admin.action(description='Criar rascunho guiado do programa ativo')
+    def create_guided_revision(self, request, queryset):
+        from .program_revision import ProgramRevisionError, create_guided_revision_draft
+
+        for subscription in queryset:
+            try:
+                draft, prepared, unresolved = create_guided_revision_draft(subscription_id=subscription.pk)
+            except ProgramRevisionError as exc:
+                self.message_user(request, f'{subscription}: {exc}', level=messages.ERROR)
+                continue
+            self.message_user(
+                request,
+                format_html(
+                    '{}: <a href="{}">Abrir rascunho {}</a> com {} proposta(s); '
+                    '{} movimento(s) exigem revisão manual. Nada foi publicado.',
+                    subscription,
+                    reverse('admin:public_workouts_publicworkoutprogramdraft_change', args=[draft.pk]),
+                    draft.pk, prepared, unresolved,
+                ),
+                level=messages.SUCCESS,
+            )
 
     @admin.action(description='Gerar rascunho de treino com IA')
     def generate_ai_draft(self, request, queryset):
@@ -504,12 +527,13 @@ class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
     existente e não modificado."""
 
     form = PublicWorkoutProgramDraftForm
-    list_display = ('account', 'slug', 'status', 'source', 'ai_model', 'created_at', 'reviewed_at')
+    list_display = ('account', 'slug', 'status', 'source', 'base_program', 'ai_model', 'created_at', 'reviewed_at')
     list_filter = ('status', 'source')
     search_fields = ('account__email', 'slug')
     ordering = ('-created_at',)
     readonly_fields = (
         'status',
+        'base_program',
         'ai_model',
         'generation_error',
         'training_profile_snapshot',
@@ -570,21 +594,10 @@ class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
         prepared = 0
         unresolved = 0
         for draft in queryset.filter(status=PublicWorkoutProgramDraftStatus.PENDING_REVIEW):
-            payload = draft.payload
-            changed = False
-            for day in payload.get('days', []):
-                for block in day.get('blocks', []):
-                    for movement in block.get('movements', []):
-                        if movement.get('guided_prescription') is not None:
-                            continue
-                        proposal = propose_guided_prescription(movement)
-                        if proposal is None or validate_guided_prescription(proposal):
-                            unresolved += 1
-                            continue
-                        movement['guided_prescription'] = proposal
-                        prepared += 1
-                        changed = True
-            if changed:
+            payload, added, remaining = prepare_guided_payload(draft.payload)
+            prepared += added
+            unresolved += remaining
+            if added:
                 draft.payload = payload
                 draft.save(update_fields=['payload', 'updated_at'])
         self.message_user(
