@@ -2384,19 +2384,19 @@ class PeriodizationCanonicalTreinoRenderTests(TestCase):
 
         self.assertNotIn('workout-phase-banner', html)
 
-    def test_registration_hint_renders_in_treino_tab_without_one_rep_max(self):
+    def test_missing_rm_explanation_renders_in_treino_tab(self):
         html = _render(build_example_payload())
 
-        self.assertIn('Toque em registrar para acompanhar a evolução.', html)
+        self.assertIn('Ainda não há RM confiável. Defina a carga alvo da Top no guia', html)
 
-    def test_registration_hint_absent_once_one_rep_max_exists(self):
+    def test_missing_rm_explanation_absent_once_one_rep_max_exists(self):
         payload = build_example_payload()
         movement = payload['days'][0]['blocks'][0]['movements'][0]
         one_rm = {movement['movement_slug']: {'value_kg': 100.0}}
 
         html = _render(payload, one_rep_max_by_movement=one_rm)
 
-        self.assertNotIn('Toque em registrar para acompanhar a evolução.', html)
+        self.assertNotIn('Ainda não há RM confiável.', html)
 
 
 class WeeklyReviewHeroCardTests(TestCase):
