@@ -8,7 +8,7 @@ description: Roteador do pacote Octobox Social Media Mentor (17 skills de Linked
 
 ## Pacote Octobox Social Media Mentor (roteador)
 
-Chamar esta skill ativa o **pacote inteiro**. Não aplique tudo: leia o contexto do pedido, escolha **1 a 5** skills do pacote que realmente se aplicam, abra o `SKILL.md` de cada uma escolhida (pasta irmã em `.claude/skills/<nome>/`) com Read e siga as instruções delas, combinando quando fizer sentido. Diga ao usuário quais escolheu e por quê, em uma linha. Lembrete: `reels-scripting` exige `APIFY_API_TOKEN` e `GOOGLE_AI_API_KEY`; `niche-research` exige a extensão Claude for Chrome. Avise o usuário se escolher uma delas.
+Chamar esta skill ativa o **pacote inteiro**. Não aplique tudo: leia o contexto do pedido, escolha **quantas** skills do pacote forem necessárias (uma, várias ou muitas, conforme o contexto), abra o `SKILL.md` de cada uma escolhida (pasta irmã em `.claude/skills/<nome>/`) com Read e siga as instruções delas, combinando quando fizer sentido. Diga ao usuário quais escolheu e por quê, em uma linha. Lembrete: `reels-scripting` exige `APIFY_API_TOKEN` e `GOOGLE_AI_API_KEY`; `niche-research` exige a extensão Claude for Chrome. Avise o usuário se escolher uma delas.
 
 ### Skills do pacote
 
