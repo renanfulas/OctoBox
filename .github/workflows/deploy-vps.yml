@@ -163,6 +163,9 @@ jobs:
             echo "==> Sincronizando roles..."
             "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" bootstrap_roles
 
+            echo "==> Restaurando dono do checkout após comandos como root..."
+            chown -R octobox:octobox "$APP"
+
             echo "==> Reiniciando Gunicorn..."
             systemctl restart octobox-gunicorn
 
