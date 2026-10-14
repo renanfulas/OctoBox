@@ -1,0 +1,6 @@
+{% if account_email %}
+<aside class="workout-push-prompt" data-workout-push data-public-key="{{ push_public_key }}" data-subscribe-url="{% url 'public-workout-push' plan_slug=plan_slug %}">
+  <div><strong>Receba avisos da Curva</strong><p>Você escolhe se este dispositivo recebe avisos sobre seus treinos.</p><span data-workout-push-status aria-live="polite">{% if not push_configured %}Ativação pendente da configuração de notificações.{% endif %}</span></div>
+  {% if push_configured %}<div class="workout-push-prompt__actions"><button type="button" data-workout-push-enable>Ativar avisos</button><button type="button" data-workout-push-disable hidden>Desativar neste dispositivo</button></div>{% endif %}
+</aside>
+{% endif %}

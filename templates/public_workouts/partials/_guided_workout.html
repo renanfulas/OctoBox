@@ -1,0 +1,49 @@
+<section class="workout-guided" data-workout-guided data-session-url="{% url 'public-workout-session' plan_slug=plan_slug %}" data-program-version="{{ active_program_version|default:'' }}" data-account-scope="{{ guided_account_scope }}">
+  <div class="workout-guided__intro">
+    <div>
+      <span class="workout-guided__eyebrow">Sessão Curva</span>
+      <strong>Treino guiado</strong>
+      <p data-workout-guided-status aria-live="polite">Registre cada série e acompanhe o descanso.</p>
+    </div>
+    <button type="button" data-workout-guided-start>Começar treino</button>
+  </div>
+  <div class="workout-guided__active" data-workout-guided-active hidden>
+    <div class="workout-guided__step-header">
+      <span data-workout-guided-progress></span>
+      <strong data-workout-guided-step></strong>
+      <small data-workout-guided-source></small>
+    </div>
+    <div class="workout-guided__fields" data-workout-guided-fields>
+      <label>Carga realizada <span>kg, se aplicável</span><input type="number" inputmode="decimal" min="0" max="9999.99" step="0.5" data-workout-guided-weight></label>
+      <label>Repetições realizadas<input type="number" inputmode="numeric" min="1" max="999" step="1" data-workout-guided-reps></label>
+      <label>RIR <span>opcional</span><input type="number" inputmode="decimal" min="0" max="10" step="0.5" data-workout-guided-rir></label>
+    </div>
+    <p class="workout-guided__timer" data-workout-guided-timer hidden></p>
+    <div class="workout-guided__actions">
+      <button type="button" data-workout-guided-set>Registrar série</button>
+      <button type="button" data-workout-guided-skip hidden>Pular esta série</button>
+      <button type="button" data-workout-guided-undo-skip hidden>Desfazer último pulo</button>
+      <button type="button" data-workout-guided-extra hidden>Adicionar outra série</button>
+      <button type="button" data-workout-guided-finish hidden>Finalizar treino</button>
+      <button type="button" data-workout-guided-partial>Encerrar como parcial</button>
+      <button type="button" data-workout-guided-cancel>Cancelar sessão</button>
+      <button type="button" data-workout-guided-correct-toggle hidden>Corrigir série registrada</button>
+    </div>
+    <div class="workout-guided__correction" data-workout-guided-correction hidden>
+      <label>Série a corrigir<select data-workout-guided-correct-target></select></label>
+      <div class="workout-guided__fields">
+        <label>Carga realizada <span>kg, se aplicável</span><input type="number" inputmode="decimal" min="0" max="9999.99" step="0.5" data-workout-guided-correct-weight></label>
+        <label>Repetições realizadas<input type="number" inputmode="numeric" min="1" max="999" step="1" data-workout-guided-correct-reps></label>
+        <label>RIR <span>opcional</span><input type="number" inputmode="decimal" min="0" max="10" step="0.5" data-workout-guided-correct-rir></label>
+      </div>
+      <button type="button" data-workout-guided-correct-save>Salvar correção</button>
+    </div>
+  </div>
+  <div class="workout-guided__conflict" data-workout-guided-conflict hidden>
+    <strong>Um registro precisa de atenção</strong>
+    <p data-workout-guided-conflict-message aria-live="polite"></p>
+    <button type="button" data-workout-guided-conflict-export>Exportar rascunho</button>
+    <button type="button" data-workout-guided-conflict-server>Usar registro do servidor</button>
+    <button type="button" data-workout-guided-conflict-correct hidden>Aplicar como correção</button>
+  </div>
+</section>

@@ -204,7 +204,8 @@ class WorkoutTemplateRenderTests(TestCase):
 
         html = _render(payload)
 
-        self.assertIn('Sem carga prescrita', html)
+        self.assertIn('Escolha uma carga segura', html)
+        self.assertIn('Sem dados suficientes para sugerir kg', html)
 
     def test_is_tracked_shows_chip(self):
         html = _render(build_example_payload())  # is_tracked=True no exemplo
@@ -245,7 +246,8 @@ class WorkoutTemplateRenderTests(TestCase):
     def test_register_button_controls_its_widget_without_nested_controls(self):
         html = _render(build_example_payload())
 
-        card = re.search(r'<article class="[^"]*workout-movement-card[^"]*">(.*?)</article>', html, re.S)
+        card = re.search(r'<article class="[^"]*workout-movement-card[^"]*"[^>]*>(.*?)</article>', html, re.S)
+        self.assertIsNotNone(card)
         widget_id = re.search(r'data-workout-load-toggle aria-controls="([^"]+)"', card.group(1))
         widget = re.search(r'<div id="([^"]+)" class="workout-load-input"', html)
 
@@ -1140,7 +1142,12 @@ class WorkoutAssessmentPanelTests(TestCase):
     def test_loads_assessments_script_and_stylesheet(self):
         html = _render(build_example_payload())
 
+        self.assertIn('js/public_workouts/assessments-report.js', html)
         self.assertIn('js/public_workouts/assessments.js', html)
+        self.assertLess(
+            html.index('js/public_workouts/assessments-report.js'),
+            html.index('js/public_workouts/assessments.js'),
+        )
         self.assertIn('css/public_workouts/assessments.css', html)
         self.assertIn('css/public_workouts/workout-assessment.css', html)
         self.assertIn('class="workout-assessment-panel"', html)

@@ -520,6 +520,90 @@ class PublicWorkoutAccount(TimeStampedModel):
         return self.email
 
 
+class PublicWorkoutTrainingSession(TimeStampedModel):
+    """Sessao guiada do aluno Curva, separada dos eventos comerciais."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='training_sessions')
+    # A versão publicada é imutável: séries de uma sessão em andamento não
+    # mudam quando um profissional publica uma nova versão do programa.
+    program = models.ForeignKey(
+        PublicWorkoutProgram, null=True, blank=True, on_delete=models.PROTECT,
+        related_name='training_sessions',
+    )
+    start_key = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    plan_slug = models.SlugField(max_length=80, db_index=True)
+    day_id = models.CharField(max_length=32)
+    started_at = models.DateTimeField(default=timezone.now, db_index=True)
+    completed_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    ended_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    outcome = models.CharField(max_length=12, blank=True, choices=[
+        ('completed', 'Concluído'), ('partial', 'Parcial'),
+        ('cancelled', 'Cancelado'), ('abandoned', 'Abandonado'),
+    ])
+    movement_count = models.PositiveSmallIntegerField(default=0)
+    completed_set_count = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-started_at']
+        indexes = [models.Index(fields=['plan_slug', 'started_at'], name='pw_session_plan_start_idx')]
+
+
+class PublicWorkoutTrainingSet(TimeStampedModel):
+    """Fato de cada serie concluida na sessao guiada (inclui feeder/top)."""
+
+    session = models.ForeignKey(PublicWorkoutTrainingSession, on_delete=models.CASCADE, related_name='sets')
+    movement_index = models.PositiveSmallIntegerField()
+    movement_slug = models.SlugField(max_length=80)
+    set_number = models.PositiveSmallIntegerField()
+    set_role = models.CharField(max_length=16, choices=[
+        ('warmup', 'Aquecimento'), ('feeder', 'Aproximação'), ('top_set', 'Série principal'),
+        ('max_set', 'Esforço máximo'), ('legacy_unknown', 'Histórico'),
+    ])
+    status = models.CharField(max_length=12, default='performed', choices=[
+        ('performed', 'Realizada'), ('skipped', 'Pulada'),
+    ])
+    stage_id = models.CharField(max_length=32, blank=True)
+    stage_ordinal = models.PositiveSmallIntegerField(null=True, blank=True)
+    load_log = models.ForeignKey(
+        'PublicWorkoutLoadLog', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='guided_training_sets',
+    )
+    weight_kg = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    reps = models.PositiveSmallIntegerField(null=True, blank=True)
+    rir = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    completed_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['session_id', 'movement_index', 'set_number']
+        constraints = [models.UniqueConstraint(fields=['session', 'movement_index', 'set_number'], name='pw_training_set_uniq')]
+
+
+class PublicWorkoutTrainingSetRevision(models.Model):
+    """Recibo idempotente e trilha de cada correção feita pelo aluno."""
+
+    training_set = models.ForeignKey(PublicWorkoutTrainingSet, on_delete=models.CASCADE, related_name='revisions')
+    command_key = models.UUIDField(unique=True)
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)
+    created_at = models.DateTimeField(default=timezone.now)
+
+
+class PublicWorkoutPushSubscription(TimeStampedModel):
+    """Inscricao Web Push vinculada a uma conta Curva, nunca a StudentIdentity."""
+
+    account = models.ForeignKey(PublicWorkoutAccount, on_delete=models.CASCADE, related_name='push_subscriptions')
+    endpoint = models.URLField(max_length=2048, unique=True)
+    subscription = models.JSONField(default=dict)
+    user_agent = models.CharField(max_length=255, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    last_error = models.CharField(max_length=120, blank=True)
+    last_push_sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
 class PublicWorkoutLoginToken(TimeStampedModel):
     """Token de login por e-mail do corredor de treinos.
 

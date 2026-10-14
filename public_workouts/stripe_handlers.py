@@ -121,6 +121,8 @@ def _resolve_subscription_from_invoice(invoice: dict, *, provision_paid_lead: bo
     if lead_id:
         if not provision_paid_lead:
             return None
+        # First invoice is the financial proof that may create the student.
+        # Validate the configured tier price before materializing the account.
         tier = metadata.get('tier')
         setting_name = _TIER_PRICE_SETTINGS.get(tier)
         expected_price_id = (getattr(settings, setting_name, '') or '').strip() if setting_name else ''

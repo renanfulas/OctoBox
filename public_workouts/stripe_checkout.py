@@ -66,6 +66,29 @@ def _resolve_price_id(tier: str) -> str:
     return price_id
 
 
+def get_completed_lead_checkout(*, lead):
+    """Return a completed Checkout Session before a repeated signup can mutate its lead."""
+    if not lead.stripe_checkout_session_id:
+        return None
+    import stripe
+
+    secret_key = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip()
+    if not secret_key:
+        raise PublicWorkoutStripeNotConfiguredError('STRIPE_SECRET_KEY nao definida.')
+    stripe.api_key = secret_key
+    try:
+        session = stripe.checkout.Session.retrieve(lead.stripe_checkout_session_id)
+    except Exception as exc:
+        if getattr(exc, 'code', '') == 'resource_missing':
+            return None
+        raise PublicWorkoutCheckoutSessionError('Nao foi possivel verificar o checkout anterior.') from exc
+    if session.status != 'complete':
+        return None
+    if session.payment_status != 'paid':
+        raise PublicWorkoutCheckoutSessionError('O pagamento anterior ainda esta sendo processado.')
+    return session
+
+
 def start_subscription_checkout(
     *, subscription, success_url: str, cancel_url: str, acquisition_session_id=None
 ) -> str:

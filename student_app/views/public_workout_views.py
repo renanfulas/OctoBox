@@ -5,8 +5,8 @@ POR QUE ELE EXISTE:
 - separa os links publicos sem login da fronteira autenticada do app do aluno.
 
 O QUE ESTE ARQUIVO FAZ:
-1. entrega paginas HTML publicas dos treinos compartilhados.
-2. publica manifest, service worker e fallback offline do PWA publico.
+1. entrega paginas HTML e endpoints do corredor Curva.
+2. reexporta temporariamente catalogo, acesso e views PWA para URLs legadas.
 
 PONTOS CRITICOS:
 - roda no schema `public` sem tenant (ver PUBLIC_SCHEMA_PATHS em
@@ -24,498 +24,35 @@ PONTOS CRITICOS:
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
-from pathlib import Path
 
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
+from django.middleware.csrf import get_token
 from django.shortcuts import redirect
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 from django.views.generic import View
 
-from .base import (
-    STUDENT_APP_APPLE_TOUCH_ICON,
-    STUDENT_APP_ICON_192,
-    STUDENT_APP_ICON_512,
-    STUDENT_APP_ICON_MASKABLE_512,
+from public_workouts.catalog import (
+    PublicWorkoutAccent, PublicWorkoutPlan, PUBLIC_WORKOUT_LIBRARY,
+    _TAB_TREINO, _TAB_AVALIACOES,
 )
-
-
-PUBLIC_WORKOUT_SCOPE = '/renan/'
-PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
-
-# B0 (CORDA docs/plans/public-workouts-produtizacao-corda.md) — cookie
-# assinado que prova posse do link, nao identidade de verdade (isso so
-# chega na Onda B1, com PublicWorkoutAccount). Setado por
-# PublicWorkoutDetailView na primeira visita a /renan/<slug>; conferido por
-# PublicWorkoutAssessmentsView antes de devolver dado de saude. Sem cookie,
-# ou cookie de outro slug: 404, nunca 403 (403 confirmaria que o slug existe).
-PUBLIC_WORKOUT_OWNER_COOKIE = 'renan_slug'
-PUBLIC_WORKOUT_OWNER_COOKIE_SALT = 'public_workouts.owner_slug'
-PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 ano
-
-# R1 do CORDA: corrigir o codigo do A4 nao apaga as copias ja gravadas nos
-# aparelhos com PWA instalado. So um VERSION novo expurga. Bump manual e
-# deliberado — nao depende do mtime dos assets estaticos, que nao mudam
-# nesta correcao. Bumpar de novo sempre que uma correcao de seguranca
-# precisar forcar a troca de cache em todos os aparelhos.
-# Bump para 3 (Entrega 4, corte pra workout.html): o HTML que /renan/<slug>
-# devolve mudou de arquivo por-cliente pra template unico — sem isto, o
-# service worker ja instalado nos aparelhos dos 10 clientes continua
-# servindo a pagina legada em cache, offline, indefinidamente.
-# Bump para 4 (botao de nutricao): novo asset (nutrition.js) entrou em
-# PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS abaixo — sem bump, PWA ja
-# instalado no aparelho do aluno nunca baixa o script novo (mesmo motivo
-# do bump anterior). Bump 4->5 (plano curva-grafico-hierarquia-e-set-
-# role.md, §7.10): load_tracker.js passa a enviar set_role sempre.
-PUBLIC_WORKOUT_CACHE_EPOCH = 6
-PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
-PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
-PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
-PUBLIC_WORKOUT_APPLE_TOUCH_ICON = STUDENT_APP_APPLE_TOUCH_ICON
-
-# Assets estaticos que o service worker pre-carrega no install.
-# Caminhos SEM hash de proposito: o ManifestStaticFilesStorage mantem o
-# arquivo original ao lado do hasheado, e o PWA de /aluno/ ja depende disso
-# em producao (ver pwa_views.py).
-# CUIDADO: cache.addAll() rejeita o install INTEIRO se um item der 404 —
-# uma entrada errada aqui mata o modo offline de todos os alunos.
-PUBLIC_WORKOUT_STATIC_ASSETS: tuple[str, ...] = (
-    PUBLIC_WORKOUT_ICON_192,
-    PUBLIC_WORKOUT_ICON_512,
-    PUBLIC_WORKOUT_ICON_MASKABLE_512,
-    PUBLIC_WORKOUT_APPLE_TOUCH_ICON,
-    '/static/images/student-app-icon.svg',
+from .public_workout_pwa import (
+    PUBLIC_WORKOUT_SCOPE, PUBLIC_WORKOUT_OFFLINE_URL, PUBLIC_WORKOUT_CACHE_EPOCH,
+    PUBLIC_WORKOUT_ICON_192, PUBLIC_WORKOUT_ICON_512,
+    PUBLIC_WORKOUT_ICON_MASKABLE_512, PUBLIC_WORKOUT_APPLE_TOUCH_ICON,
+    PUBLIC_WORKOUT_STATIC_ASSETS, PUBLIC_WORKOUT_STYLESHEETS, PUBLIC_WORKOUT_SCRIPTS,
+    PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS, PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS,
+    public_workout_asset_version, PublicWorkoutManifestView,
+    PublicWorkoutServiceWorkerView, PublicWorkoutOfflineView,
 )
-
-
-@dataclass(frozen=True)
-class PublicWorkoutAccent:
-    """Rampa de accent do aluno — o UNICO eixo legitimo de branding.
-
-    Todo o resto dos tokens (neutros, raio, sombra, badges de serie) e
-    compartilhado. Os arquivos divergem no NOME da familia (--accent nos
-    5 modernos, --amber na milene, --blue na giovanna) mas nao no papel.
-    """
-
-    base: str
-    bg: str
-    border: str
-    light: str
-    dark: str
-
-
-@dataclass(frozen=True)
-class PublicWorkoutPlan:
-    """Configuracao de um treino publico.
-
-    CONGELADO — mexer aqui causa dano silencioso:
-    - `slug` esta em links ja distribuidos aos alunos (ver public_urls.py).
-    - `store_key` e o namespace do localStorage: trocar apaga o historico
-      de carga que o aluno digitou, sem aviso e sem backup.
-    - `title` alimenta o manifest e `short_name` e derivado dele.
-    """
-
-    slug: str
-    title: str
-    theme_color: str
-    background_color: str
-    template_file: str
-    accent: PublicWorkoutAccent
-    tabs: tuple[tuple[str, str], ...]
-    tracker_weeks: int = 0
-    store_key: str | None = None
-    # Constantes do aluno usadas pela aba Avaliacoes (public_workouts app)
-    # para estimar %gordura (formula US Navy) e classificar RCQ — nao mudam
-    # entre avaliacoes, por isso vivem na config do plano, nao no banco.
-    # None desativa BF%/RCQ no relatorio (so IMC e circunferencias aparecem).
-    assessment_sex: str | None = None
-    height_cm: float | None = None
-
-    @property
-    def short_name(self) -> str:
-        # Derivacao preservada: o teste do manifest assere 'Juliana'.
-        return self.title.replace('Treino ', '')[:12]
-
-    @property
-    def manifest_url(self) -> str:
-        return f'/renan/{self.slug}/manifest.webmanifest'
-
-
-_TAB_TREINO = ('treino', 'Treinos')
-_TAB_CARDIO = ('cardio', 'Cardio')
-_TAB_PERIOD = ('period', 'Periodização')
-_TAB_AVALIACOES = ('avaliacoes', 'Avaliações')
-
-PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
-    plan.slug: plan
-    for plan in (
-        PublicWorkoutPlan(
-            slug='juliana',
-            title='Treino Juliana',
-            theme_color='#0f172a',
-            background_color='#f5efe4',
-            template_file='juliana.html',
-            accent=PublicWorkoutAccent('#E11D48', '#FFF1F2', '#FECDD3', '#FBD7DF', '#BE123C'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD, _TAB_AVALIACOES),
-            tracker_weeks=5,
-            store_key='juliana_alves_v3',  # gitleaks:allow — namespace de localStorage, nao segredo
-        ),
-        PublicWorkoutPlan(
-            slug='bruno',
-            title='Treino Bruno',
-            theme_color='#11203b',
-            background_color='#f4efe6',
-            template_file='bruno.html',
-            accent=PublicWorkoutAccent('#EA580C', '#FFF7ED', '#FED7AA', '#FFEDD5', '#C2410C'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO, ('nutri', 'Nutrição'), _TAB_PERIOD, _TAB_AVALIACOES),
-            tracker_weeks=5,
-            store_key='bruno_cutting_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
-        ),
-        PublicWorkoutPlan(
-            slug='milene',
-            title='Treino Milene',
-            theme_color='#1a1a1a',
-            background_color='#fafaf7',
-            template_file='milene.html',
-            accent=PublicWorkoutAccent('#D97706', '#FFFBEB', '#FDE68A', '#FEF3C7', '#92400E'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
-            tracker_weeks=5,
-            store_key='milene_geraldes_treino',  # gitleaks:allow — namespace de localStorage, nao segredo
-        ),
-        PublicWorkoutPlan(
-            slug='giovanna',
-            title='Treino Giovanna',
-            theme_color='#172017',
-            background_color='#f8faf7',
-            template_file='giovanna.html',
-            # A giovanna so declara 3 degraus (--blue/-bg/-border), e sao os
-            # mesmos valores do henrique. Os dois faltantes vem dele.
-            accent=PublicWorkoutAccent('#2563EB', '#EFF6FF', '#BFDBFE', '#DBEAFE', '#1D4ED8'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
-            tracker_weeks=5,
-            # store_key novo: esta pagina nunca teve tracker, entao nao ha
-            # historico anterior para preservar.
-            store_key='giovanna_fontes_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
-        ),
-        PublicWorkoutPlan(
-            slug='thaislima',
-            title='Treino Thais Lima',
-            theme_color='#111111',
-            background_color='#f6f5f2',
-            template_file='thaislima.html',
-            accent=PublicWorkoutAccent('#7C3AED', '#F5F3FF', '#DDD6FE', '#EDE9FE', '#5B21B6'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_AVALIACOES),
-            tracker_weeks=5,
-            store_key='thais_lima_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
-        ),
-        PublicWorkoutPlan(
-            slug='john',
-            title='Treino John',
-            theme_color='#111111',
-            background_color='#f6f5f2',
-            template_file='john.html',
-            accent=PublicWorkoutAccent('#0891B2', '#ECFEFF', '#A5F3FC', '#CFFAFE', '#0E7490'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD, _TAB_AVALIACOES),
-            tracker_weeks=6,  # unico plano com mesociclo de 6 semanas
-            store_key='john_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
-        ),
-        PublicWorkoutPlan(
-            slug='henrique',
-            title='Treino Henrique',
-            theme_color='#141414',
-            background_color='#f6f5f2',
-            template_file='henrique.html',
-            accent=PublicWorkoutAccent('#2563EB', '#EFF6FF', '#BFDBFE', '#DBEAFE', '#1D4ED8'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_PERIOD, _TAB_AVALIACOES),
-            tracker_weeks=5,
-            store_key='henrique_santos_souza_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
-        ),
-        PublicWorkoutPlan(
-            slug='johnespanha',
-            title='Treino John Espanha',
-            theme_color='#141414',
-            background_color='#fdf2f8',
-            template_file='johnespanha.html',
-            accent=PublicWorkoutAccent('#DB2777', '#FDF2F8', '#FBCFE8', '#FCE7F3', '#BE185D'),
-            tabs=(_TAB_TREINO, _TAB_CARDIO, _TAB_AVALIACOES),
-            tracker_weeks=5,
-            store_key='john_espanha_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
-            # NAO convertido para o design system compartilhado: chegou em
-            # main (PR #170/#171) depois desta refatoracao, ainda no formato
-            # monolitico antigo (CSS/JS proprios embutidos no arquivo). Os
-            # campos acima entram na PUBLIC_WORKOUT_LIBRARY so para manter o
-            # manifest/service-worker corretos; renderiza como pagina
-            # autocontida, igual os outros 7 rendiam antes desta PR.
-        ),
-        PublicWorkoutPlan(
-            slug='franciele',
-            title='Treino Franciele',
-            theme_color='#241b2e',
-            background_color='#faf6f3',
-            template_file='franciele.html',
-            accent=PublicWorkoutAccent('#A21CAF', '#FDF4FF', '#F5D0FE', '#FAE8FF', '#86198F'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
-            tracker_weeks=4,
-            store_key='franciele_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
-            assessment_sex='F',
-            height_cm=173,
-        ),
-        PublicWorkoutPlan(
-            slug='rafael',
-            title='Treino Rafael',
-            theme_color='#0e2933',
-            background_color='#f4fbfc',
-            template_file='rafael.html',
-            accent=PublicWorkoutAccent('#0891B2', '#ECFEFF', '#A5F3FC', '#CFFAFE', '#0E7490'),
-            tabs=(_TAB_TREINO, _TAB_PERIOD, _TAB_AVALIACOES),
-            tracker_weeks=4,
-            store_key='rafael_v1',  # gitleaks:allow — namespace de localStorage, nao segredo
-            assessment_sex='M',
-            height_cm=175,
-        ),
-    )
-}
-
-
-# Ordem importa: tokens antes de tudo, mobile por ultimo (sobrescreve).
-# Estes MESMOS caminhos vao para o ALLOWLIST do service worker, entao
-# precisam ser planos (sem {% static %}): o allowlist nao sabe resolver
-# nome hasheado do ManifestStaticFilesStorage.
-PUBLIC_WORKOUT_STYLESHEETS: tuple[str, ...] = (
-    '/static/css/public_workouts/tokens.css',
-    '/static/css/public_workouts/layout.css',
-    '/static/css/public_workouts/components.css',
-    '/static/css/public_workouts/tracker.css',
-    '/static/css/public_workouts/period.css',
-    '/static/css/public_workouts/install-prompt.css',
-    '/static/css/public_workouts/assessments.css',
-    '/static/css/public_workouts/mobile.css',
+from .public_workout_access import (
+    PUBLIC_WORKOUT_OWNER_COOKIE, PUBLIC_WORKOUT_OWNER_COOKIE_SALT,
+    PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE, _synthesize_public_workout_plan,
+    _get_public_workout_entry, _confirm_subscription_active_or_404,
+    _confirm_ownership_or_404, _confirm_login_session_owns_slug_or_404,
+    get_public_workout_owner_slug,
 )
-
-PUBLIC_WORKOUT_SCRIPTS: tuple[str, ...] = (
-    '/static/js/public_workouts/app.js',
-    '/static/js/public_workouts/assessments.js',
-)
-
-# Entrega 4 — exclusivos de workout.html (template unico, ver <head>/fim do
-# proprio arquivo). NAO entram em PUBLIC_WORKOUT_STYLESHEETS/_SCRIPTS de
-# proposito: aquelas duas tuplas tambem alimentam `stylesheet_urls` no
-# contexto de `_render_legacy_template_html` (os arquivos legados fazem
-# `{% for url in stylesheet_urls %}` no proprio <head>) — misturar aqui
-# vazaria <link>/<script> de workout.html pras paginas legadas, que nao os
-# usam. Só entram no precache do service worker (PublicWorkoutServiceWorkerView),
-# que precisa dos dois conjuntos juntos pra qualquer pagina abrir offline.
-PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS: tuple[str, ...] = (
-    '/static/css/student_app/app.css',
-    '/static/css/design-system/components/tables.css',
-    '/static/css/design-system/components/interactive-tabs.css',
-    '/static/css/design-system/neon.css',
-    '/static/css/public_workouts/workout-shell.css',
-    '/static/css/public_workouts/workout-training.css',
-    '/static/css/public_workouts/workout-progress.css',
-    '/static/css/public_workouts/workout-assessment.css',
-)
-
-PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
-    '/static/js/core/shell.js',
-    '/static/js/public_workouts/load_tracker.js',
-    '/static/js/public_workouts/weekly_review.js',
-    '/static/js/public_workouts/nutrition.js',
-    '/static/js/public_workouts/workout-shell.js',
-    '/static/js/public_workouts/assessments.js',
-    '/static/js/public_workouts/account.js',
-)
-
-_ASSET_VERSION_CACHE: dict[str, str] = {}
-
-
-def public_workout_asset_version() -> str:
-    """Versao usada no ?v= dos assets e no nome do cache do service worker.
-
-    ATENCAO: `STATIC_ASSET_VERSION` esta SEMPRE definida em settings, com
-    valor '1' quando o ambiente nao seta nada — e nenhum deploy seta
-    (`RENDER_GIT_COMMIT` era do Render, e o projeto migrou para VPS). Ou
-    seja: na producao de hoje o ?v= fica congelado em 1 para sempre, o
-    cache do navegador nunca invalida e o service worker nunca troca de
-    versao. Enquanto o CSS era inline isso nao aparecia, porque o estilo
-    chegava junto com o HTML. Agora que e arquivo externo, apareceria.
-
-    Quando o ambiente define a variavel de verdade, respeitamos. Caso
-    contrario caimos no mtime dos proprios assets, que muda sozinho a
-    cada deploy que altere um arquivo.
-    """
-    configured = getattr(settings, 'STATIC_ASSET_VERSION', '1')
-    if configured and configured != '1':
-        return configured
-
-    if 'value' in _ASSET_VERSION_CACHE and not settings.DEBUG:
-        return _ASSET_VERSION_CACHE['value']
-
-    base_dir = Path(settings.BASE_DIR)
-    mtimes = []
-    for url in (
-        PUBLIC_WORKOUT_STYLESHEETS + PUBLIC_WORKOUT_SCRIPTS
-        + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS
-        + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS
-    ):
-        path = base_dir / url.lstrip('/')
-        if path.exists():
-            mtimes.append(int(path.stat().st_mtime))
-    version = str(max(mtimes, default=1))
-    _ASSET_VERSION_CACHE['value'] = version
-    return version
-
-
-def _synthesize_public_workout_plan(slug: str) -> PublicWorkoutPlan | None:
-    """Fallback pra slug que NAO esta em PUBLIC_WORKOUT_LIBRARY mas TEM
-    PublicWorkoutProgram ativo publicado (ex.: aprovado via
-    services.approve_and_publish_draft — pipeline de anamnese+IA). Sem
-    isto, um aluno novo aprovado por esse fluxo cairia em 404 em
-    /renan/<slug> ate alguem editar este dict a mao e fazer deploy — gap
-    real ja' documentado em
-    docs/plans/public-workouts-produtizacao-corda.md:155,158 ("trocar a
-    fonte dos slugs de dict para query em PublicWorkoutProgram").
-
-    So' sintetiza tema GENERICO (nunca uma das paletas artesanais dos 10
-    clientes legados) — branding fino por aluno continua sendo trabalho
-    editorial de quem, se/quando quiser, adicionar a entrada de verdade
-    neste dict depois. `template_file` fica vazio de proposito: so' e' lido
-    quando o slug esta' em `_legacy_template_slugs()` (kill switch por env
-    var), que nunca contem um slug que nao veio deste dict primeiro — um
-    slug sintetizado aqui sempre renderiza pelo template unico
-    (workout.html), nunca pelo caminho legado.
-
-    Retorna None (nunca levanta) quando nem o dict nem o banco conhecem o
-    slug — `_get_public_workout_entry` decide o 404, esta funcao so'
-    resolve a origem do dado."""
-    from public_workouts.services import get_active_program
-
-    if get_active_program(slug=slug) is None:
-        return None
-
-    return PublicWorkoutPlan(
-        slug=slug,
-        title=f'Treino {slug.capitalize()}',
-        theme_color='#0f172a',
-        background_color='#f5efe4',
-        template_file='',
-        accent=PublicWorkoutAccent('#2451C4', '#EAF0FD', '#BFDBFE', '#DBEAFE', '#1B3A96'),
-        tabs=(_TAB_TREINO, _TAB_AVALIACOES),
-        tracker_weeks=0,
-        store_key=f'{slug}_v1',
-    )
-
-
-def _get_public_workout_entry(plan_slug: str) -> PublicWorkoutPlan:
-    normalized_slug = (plan_slug or '').strip().lower()
-    plan = PUBLIC_WORKOUT_LIBRARY.get(normalized_slug)
-    if plan is None:
-        # Query extra (indexada por slug) so' acontece pro caso ausente do
-        # dict em memoria — custo aceito: corredor de baixo trafego, e o
-        # caminho comum (slug real, nos 10 legados ou ja' sintetizado antes)
-        # nunca chega aqui.
-        plan = _synthesize_public_workout_plan(normalized_slug)
-    if plan is None:
-        raise Http404('Treino publico nao encontrado.')
-    return plan
-
-
-def _confirm_subscription_active_or_404(plan_slug: str) -> None:
-    """P0 do acesso pago pro fluxo de cadastro a frio + Stripe (achado
-    real: ate aqui NADA checava isto — uma assinatura SUSPENDED/PAST_DUE/
-    CANCELED continuava vendo o treino inteiro).
-
-    So' bloqueia quando EXISTE uma PublicWorkoutSubscription pra este slug
-    E ela nao esta ACTIVE — nunca quando nao existe assinatura nenhuma.
-    Isso e' deliberado, nao um buraco: os 10 clientes legados (seed_legacy_
-    workout_accounts) "sao clientes pagantes reais hoje, so que fora do
-    fluxo de checkout Stripe deste corredor" (docstring do proprio
-    comando) — pagam o Renan por fora, nunca tiveram (nem deveriam ter)
-    o acesso deles condicionado a um `PublicWorkoutSubscription.status`
-    que o fluxo Stripe deste corredor nem administra pra eles. O gate so'
-    se aplica a quem de fato passou pelo checkout Stripe (cadastro a frio
-    ou assinatura de legado) e tem uma linha de assinatura pra checar.
-    Nunca 404 vira 403 (mesma razao de sempre em todo este arquivo: 403
-    confirmaria que a conta existe).
-
-    Roda pra QUALQUER visita, com sessao de login ou so' com o cookie de
-    posse B0 — chamada de dentro de _confirm_login_session_owns_slug_or_404
-    (cobre a maioria dos endpoints) e direto por quem usa o cookie B0 em
-    vez de sessao (PublicWorkoutDownloadPdfView).
-
-    Import tardio pelo mesmo motivo de _confirm_login_session_owns_slug_or_404
-    logo abaixo (ciclo com public_workouts).
-    """
-    from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
-
-    subscription = PublicWorkoutSubscription.objects.filter(plan_slug=plan_slug).first()
-    if subscription is not None and subscription.status != PublicWorkoutSubscriptionStatus.ACTIVE:
-        raise Http404('Treino publico nao encontrado.')
-
-
-def _confirm_ownership_or_404(request, plan_slug: str) -> None:
-    """B3 (CORDA) item 5 — "identidade da sessao dona do slug, senao 404".
-
-    So entra em jogo quando ha sessao de LOGIN ativa (PublicWorkoutAccount,
-    Onda B1) — visitante anonimo continua no fluxo B0 de posse por cookie,
-    sem mudanca (fase B de login obrigatorio ainda nao esta ligada, Onda
-    B3 fases B/C). Com sessao ativa: aluno A logado abrindo o slug do
-    aluno B tem que receber 404, nunca o treino nem 403 (403 confirmaria
-    que o slug existe — mesma regra do cookie de posse do B0).
-
-    Separada de _confirm_subscription_active_or_404 de proposito (achado
-    real, feedback do Renan): posse errada continua 404 silencioso (nunca
-    revela que o slug de OUTRA pessoa existe), mas pagamento pendente do
-    PROPRIO dono nao devia ser silencioso — a pessoa que chega com o link
-    certo E' o dono (mesma logica de posse-prova-identidade de sempre
-    neste arquivo), entao PublicWorkoutDetailView mostra uma tela
-    explicando o bloqueio e como resolver, em vez de 404 (ver mais abaixo).
-    Os endpoints de API/sub-recurso continuam so' com
-    _confirm_login_session_owns_slug_or_404 (404 direto, sem tela — nao
-    fazem sentido pra visualizacao humana).
-
-    Import tardio (nao no topo do arquivo): mesmo motivo de
-    _validate_plan_slug em public_workouts/services.py — este modulo e
-    importado por public_workouts (PUBLIC_WORKOUT_LIBRARY), um import de
-    public_workouts aqui no topo criaria ciclo.
-    """
-    from public_workouts.models import PublicWorkoutSubscription
-    from student_identity.public_workout_session import get_public_workout_account_id_from_request
-
-    account_id = get_public_workout_account_id_from_request(request)
-    if account_id is None:
-        return
-
-    owns_slug = PublicWorkoutSubscription.objects.filter(account_id=account_id, plan_slug=plan_slug).exists()
-    if not owns_slug:
-        raise Http404('Treino publico nao encontrado.')
-
-
-def _confirm_login_session_owns_slug_or_404(request, plan_slug: str) -> None:
-    """Combina as duas checagens acima (status ACTIVE + posse) pros
-    endpoints de API/sub-recurso — 404 direto pras duas, sem tela (nao sao
-    paginas que um humano le, ver docstring de _confirm_ownership_or_404).
-    """
-    _confirm_subscription_active_or_404(plan_slug)
-    _confirm_ownership_or_404(request, plan_slug)
-
-
-def get_public_workout_owner_slug(request) -> str | None:
-    """Le o cookie de posse do B0 (ver PUBLIC_WORKOUT_OWNER_COOKIE acima).
-
-    None se ausente ou com assinatura adulterada — nunca levanta. Usado
-    por toda view que precisa confirmar "este navegador visitou este
-    slug antes" (avaliacoes.json, upload de backup do localStorage).
-
-    `get_signed_cookie` com `default=` ja absorve BadSignature/KeyError
-    internamente (ver django.http.request.HttpRequest.get_signed_cookie) —
-    nao precisa de try/except aqui, ele nunca levanta com default setado.
-    """
-    return request.get_signed_cookie(
-        PUBLIC_WORKOUT_OWNER_COOKIE, salt=PUBLIC_WORKOUT_OWNER_COOKIE_SALT, default=None
-    )
 
 
 # Presente em qualquer pagina que estenda public_workouts/_base.html —
@@ -643,11 +180,10 @@ _LEGACY_SW_REGISTRATION_SCRIPT = """
 
 
 def _inject_public_workout_pwa(html: str, plan: PublicWorkoutPlan, asset_version: str) -> str:
-    """Injeta manifest, instalacao e service worker em shells standalone.
+    """Injeta manifest, instalacao e service worker em shells legados.
 
-    O bootstrap permanece na borda da view para que tanto arquivos HTML
-    legados sem base compartilhada quanto `workout.html` mantenham seu shell
-    visual proprio sem perder instalacao e cache offline.
+    O template unificado inclui esses recursos diretamente; esta funcao
+    atende aos arquivos HTML antigos que nao compartilham uma base.
 
     Tambem injeta CSS/JS da aba Avaliacoes (public_workouts app): arquivos
     legados nao consomem `stylesheet_urls`/`app.js` do design system
@@ -691,6 +227,12 @@ def _inject_public_workout_pwa(html: str, plan: PublicWorkoutPlan, asset_version
             1,
         )
 
+    if 'assessments-report.js' not in html:
+        html = html.replace(
+            '</body>',
+            f'<script src="/static/js/public_workouts/assessments-report.js?v={asset_version}"></script>\n</body>',
+            1,
+        )
     if 'assessments.js' not in html:
         html = html.replace(
             '</body>',
@@ -762,6 +304,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
     plan = _get_public_workout_entry(plan_slug)
 
     from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+    from public_workouts.push import configured as curva_push_configured
     from public_workouts.progress_snapshot import build_progress_snapshots
     from public_workouts.services import (
         build_movement_label_lookup,
@@ -776,6 +319,15 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
     program = get_active_program(slug=plan.slug)
     if program is None or plan.slug in _legacy_template_slugs():
         return _render_legacy_template_html(plan_slug)
+
+    guided_session = None
+    if account_id is not None:
+        from public_workouts.training_sessions import active_session
+
+        guided_session = active_session(account_id=account_id, plan_slug=plan.slug)
+        if guided_session is not None and guided_session.program is not None:
+            # A ficha publicada depois do início não muda as séries em andamento.
+            program = guided_session.program.payload
 
     if account_id is not None:
         # only_active=True: esta lista alimenta o TEMPLATE (curva,
@@ -838,13 +390,19 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         account_email = None
         show_onboarding_wizard = False
 
+    program_versions = list_program_versions(slug=plan.slug)
+    active_program_version = (
+        guided_session.program.version if guided_session is not None and guided_session.program is not None
+        else next((row['version'] for row in program_versions if row['is_active']), None)
+    )
     asset_version = public_workout_asset_version()
-    html = render_to_string('public_workouts/workout.html', {
+    return render_to_string('public_workouts/workout.html', {
         'asset_version': asset_version,
         'plan_slug': plan.slug,
         'accent_variant': plan.assessment_sex,
         'program': program,
-        'program_versions': list_program_versions(slug=plan.slug),
+        'program_versions': program_versions,
+        'active_program_version': active_program_version,
         'load_history': load_history,
         'progress_snapshots': progress_snapshots,
         'one_rep_max_by_movement': package['one_rep_max_by_movement'],
@@ -856,10 +414,12 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'custom_checkout_available': custom_checkout_available,
         'payment_setup_pending': payment_setup_pending,
         'account_email': account_email,
+        'guided_account_scope': account_id or '',
         'nutrition_unlocked': nutrition_unlocked,
         'show_onboarding_wizard': show_onboarding_wizard,
+        'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
+        'push_configured': curva_push_configured(),
     })
-    return _inject_public_workout_pwa(html, plan, asset_version)
 
 
 def _render_payment_blocked_html(plan: PublicWorkoutPlan) -> str:
@@ -943,11 +503,16 @@ class PublicWorkoutDetailView(View):
         )
         if blocking_subscription:
             response = HttpResponse(_render_payment_blocked_html(plan))
+            response['Cache-Control'] = 'private, no-store'
             if account_id is not None and not had_session:
                 attach_public_workout_session_cookie(response, account_id=account_id)
             return response
 
+        # O cliente do PWA envia POSTs JSON para sessão/push via cookie CSRF.
+        # Força o cookie também nas páginas renderizadas por render_to_string.
+        get_token(request)
         response = HttpResponse(_render_public_workout_html(plan_slug, account_id=account_id))
+        response['Cache-Control'] = 'private, no-store'
         opened_subscription = PublicWorkoutSubscription.objects.select_related('account').filter(
             plan_slug=plan.slug, account_id=account_id,
         ).first()
@@ -1016,6 +581,7 @@ class PublicWorkoutPreviewView(View):
 
     def get(self, request, plan_slug, *args, **kwargs):
         from public_workouts.progress_snapshot import build_progress_snapshots
+        from public_workouts.push import configured as curva_push_configured
         from public_workouts.services import (
             build_movement_label_lookup,
             build_student_package,
@@ -1067,11 +633,14 @@ class PublicWorkoutPreviewView(View):
 
             account_email = PublicWorkoutAccount.objects.filter(pk=account_id).values_list('email', flat=True).first()
 
+        program_versions = list_program_versions(slug=plan_slug)
+        active_program_version = next((row['version'] for row in program_versions if row['is_active']), None)
         html = render_to_string('public_workouts/workout.html', {
             'asset_version': public_workout_asset_version(),
             'program': program,
             'accent_variant': program.get('accent_variant'),
-            'program_versions': list_program_versions(slug=plan_slug),
+            'program_versions': program_versions,
+            'active_program_version': active_program_version,
             'load_history': load_history,
             'progress_snapshots': progress_snapshots,
             'one_rep_max_by_movement': one_rep_max_by_movement,
@@ -1079,6 +648,8 @@ class PublicWorkoutPreviewView(View):
             'plan_slug': plan_slug,
             'movement_labels': build_movement_label_lookup(program),
             'account_email': account_email,
+            'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
+            'push_configured': curva_push_configured(),
         })
         response = HttpResponse(html)
         response.set_signed_cookie(
@@ -1091,94 +662,6 @@ class PublicWorkoutPreviewView(View):
             secure=not settings.DEBUG,
         )
         return response
-
-
-class PublicWorkoutManifestView(View):
-    def get(self, request, plan_slug, *args, **kwargs):
-        entry = _get_public_workout_entry(plan_slug)
-        manifest = {
-            'id': f'/renan/{entry.slug}',
-            'name': entry.title,
-            'short_name': entry.short_name,
-            'description': f'{entry.title} no formato rapido do OctoBox.',
-            'start_url': f'/renan/{entry.slug}?source=pwa',
-            'scope': PUBLIC_WORKOUT_SCOPE,
-            'display': 'standalone',
-            'orientation': 'portrait',
-            'background_color': entry.background_color,
-            'theme_color': entry.theme_color,
-            'icons': [
-                {
-                    'src': PUBLIC_WORKOUT_ICON_192,
-                    'sizes': '192x192',
-                    'type': 'image/png',
-                    'purpose': 'any',
-                },
-                {
-                    'src': PUBLIC_WORKOUT_ICON_512,
-                    'sizes': '512x512',
-                    'type': 'image/png',
-                    'purpose': 'any',
-                },
-                {
-                    'src': PUBLIC_WORKOUT_ICON_MASKABLE_512,
-                    'sizes': '512x512',
-                    'type': 'image/png',
-                    'purpose': 'maskable',
-                },
-            ],
-        }
-        return HttpResponse(json.dumps(manifest), content_type='application/manifest+json')
-
-
-class PublicWorkoutServiceWorkerView(View):
-    def get(self, request, *args, **kwargs):
-        # A4 do CORDA: o precache nao pode mais trazer TODOS os slugs (isso
-        # e o que faz o aparelho de um aluno guardar o dado de outro,
-        # offline). Resolve em runtime, a partir do slug que a propria
-        # pagina registrante informa via ?slug= (ver data-plan-slug em
-        # _base.html e no head legado). Slug ausente ou desconhecido: SW
-        # generico, sem nenhuma pagina de plano no precache.
-        requested_slug = (request.GET.get('slug') or '').strip().lower()
-        plan_slugs = (requested_slug,) if requested_slug in PUBLIC_WORKOUT_LIBRARY else ()
-        js = render_to_string(
-            'public_workouts/sw.js',
-            {
-                'asset_version': public_workout_asset_version(),
-                'cache_epoch': PUBLIC_WORKOUT_CACHE_EPOCH,
-                'offline_url': PUBLIC_WORKOUT_OFFLINE_URL,
-                'app_scope': PUBLIC_WORKOUT_SCOPE,
-                'plan_slugs': plan_slugs,
-                # CSS e JS compartilhados entram no precache: sem eles a
-                # pagina abre offline sem estilo e sem tracker. Inclui os
-                # dois conjuntos (legado + workout.html, Entrega 4) porque
-                # o precache e' um so pra qualquer pagina que o SW cubra —
-                # so os <link>/<script> de CADA TEMPLATE ficam separados
-                # (ver comentario de PUBLIC_WORKOUT_UNIFIED_TEMPLATE_*).
-                'static_asset_urls': (
-                    PUBLIC_WORKOUT_STYLESHEETS
-                    + PUBLIC_WORKOUT_SCRIPTS
-                    + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS
-                    + PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS
-                    + PUBLIC_WORKOUT_STATIC_ASSETS
-                ),
-            },
-        )
-        response = HttpResponse(js, content_type='application/javascript')
-        response['Service-Worker-Allowed'] = PUBLIC_WORKOUT_SCOPE
-        return response
-
-
-class PublicWorkoutOfflineView(View):
-    def get(self, request, *args, **kwargs):
-        # A lista de alunos sai da biblioteca, nao de copy fixa: a versao
-        # anterior citava so 4 nomes e linkava /renan/juliana, entao quem
-        # entrou depois (thaislima, john, henrique) ficava de fora.
-        html = render_to_string(
-            'public_workouts/offline.html',
-            {'plans': tuple(PUBLIC_WORKOUT_LIBRARY.values())},
-        )
-        return HttpResponse(html)
 
 
 class PublicWorkoutTemplatePreviewView(View):
@@ -1577,6 +1060,7 @@ class PublicWorkoutRecordLoadView(View):
             LoadCorrectionConflictError,
             LoadCorrectionNotFoundError,
             LoadValueError,
+            active_correction_successor,
             correct_load,
             record_load,
         )
@@ -1628,7 +1112,10 @@ class PublicWorkoutRecordLoadView(View):
                     **set_role_kwargs,
                 )
         except LoadCorrectionConflictError as exc:
-            return JsonResponse({'error': str(exc)}, status=409)
+            current = active_correction_successor(
+                account_id=account_id, supersedes_idempotency_key=supersedes_key,
+            )
+            return JsonResponse({'error': str(exc), 'active_record': current}, status=409)
         except (LoadValueError, LoadCorrectionNotFoundError, ValueError) as exc:
             return JsonResponse({'error': str(exc)}, status=400)
 

@@ -1,4 +1,5 @@
-from unittest.mock import patch
+from datetime import datetime, timezone as dt_timezone
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -51,6 +52,13 @@ class CustomerJourneyTests(TestCase):
         self._training_profile()
         self.account = PublicWorkoutAccount.objects.get(pk=self.account.pk)
         self.assertEqual(get_customer_journey(self.account).state, 'nutrition_intake_pending')
+
+    def test_next_charge_uses_local_date_not_utc_date_near_day_boundary(self):
+        # 2026-01-01 01:00 UTC e 2025-12-31 22:00 em America/Sao_Paulo (UTC-3):
+        # .date() direto no datetime UTC pegaria o dia errado (2026-01-01).
+        self.subscription.current_period_end = datetime(2026, 1, 1, 1, 0, tzinfo=dt_timezone.utc)
+        self.subscription.save(update_fields=['current_period_end'])
+        self.assertEqual(get_customer_journey(self.account).next_charge, '2025-12-31')
 
     def test_ready_program_is_final_state(self):
         self._activate()

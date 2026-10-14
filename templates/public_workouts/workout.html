@@ -17,9 +17,8 @@ POR QUE ELE EXISTE:
 
 PONTOS CRITICOS:
 - E servido por `PublicWorkoutDetailView` para programas ativos e pelo
-  preview de desenvolvimento. A rota real injeta manifest, prompt de
-  instalacao e registro do service worker apos renderizar, preservando o
-  shell visual independente deste template.
+  preview de desenvolvimento. Manifest, prompt de instalacao e script de
+  registro do service worker fazem parte deste template.
 - NAO estende templates/public_workouts/_base.html (a base legada, com o
   sistema --accent por-plano) nem templates/student_app/layout.html (acopla
   tenant via {% load student_shell %} no sidebar/topbar — D.3 diz que
@@ -52,20 +51,28 @@ PONTOS CRITICOS:
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- WebKit #237961: viewport-fit=cover pode deslocar elementos fixed no PWA instalado. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ program.program_label }}</title>
+<meta name="theme-color" content="#f4f7ff">
+<link rel="manifest" href="{% url 'public-workout-manifest' plan_slug=plan_slug %}">
 <link rel="stylesheet" href="{% static 'css/student_app/app.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/design-system/components/tables.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/design-system/components/interactive-tabs.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/design-system/neon.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/assessments.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-shell.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/onboarding.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-loads.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-program-extras.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-nutrition.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-training.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-progress.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-assessment.css' %}?v={{ asset_version }}">
-<link rel="stylesheet" href="{% static 'css/public_workouts/onboarding.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-guided.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-push.css' %}?v={{ asset_version }}">
 </head>
-<body data-plan-slug="{{ plan_slug }}"{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
+<body data-plan-slug="{{ plan_slug }}" data-account-scope="{{ guided_account_scope }}"{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
 <main class="workout-shell">
 
   <header class="workout-topbar">
@@ -84,6 +91,11 @@ PONTOS CRITICOS:
   <div class="interactive-tab-container" data-default-panel="workout-panel-inicio">
 
     <section id="workout-panel-inicio" class="is-tab-active" data-workout-tab-panel>
+      <aside class="workout-install-prompt" data-workout-install hidden>
+        <span data-workout-install-copy></span>
+        <button type="button" data-workout-install-button>Instalar app</button>
+      </aside>
+      {% include 'public_workouts/partials/_push_prompt.html' %}
       {% program_summary program as summary %}
       <article class="student-card card-decor-topstripe workout-summary-card">
         <h2>{{ summary.headline }}</h2>
@@ -161,6 +173,15 @@ PONTOS CRITICOS:
     </section>
 
     <section id="workout-panel-treino" data-workout-tab-panel>
+      <aside class="workout-load-sync-notice" data-workout-load-sync-notice role="alert" hidden>
+        <strong>Uma carga precisa da sua decisão</strong>
+        <p data-load-sync-conflict-message></p>
+        <div class="workout-load-sync-notice__actions">
+          <button type="button" data-load-sync-reapply>Reaplicar meus valores</button>
+          <button type="button" data-load-sync-export>Baixar cópia</button>
+          <button type="button" data-load-sync-discard>Usar registro do servidor</button>
+        </div>
+      </aside>
       {% workout_day_selection program as workout_selection %}
       {% current_period_phase program as current_phase %}
       {% periodization_phase_banner program as phase_banner %}
@@ -195,6 +216,8 @@ PONTOS CRITICOS:
         {% endfor %}
       </nav>
 
+      {% include 'public_workouts/partials/_guided_workout.html' %}
+
       <div class="interactive-tab-container"{% if workout_selection.selected_day_id %} data-default-panel="workout-day-{{ workout_selection.selected_day_id }}"{% endif %}>
         {% if not program.days %}
         <p class="workout-training-empty is-tab-active" role="status">Seu treinador ainda não publicou os dias deste programa.</p>
@@ -210,8 +233,9 @@ PONTOS CRITICOS:
           {% for block in day.blocks %}
           <div class="workout-movement-list">
             {% for movement in block.movements %}
-            <article class="student-card card-decor-topstripe workout-movement-card{% if movement.is_tracked %} is-load-tracked{% endif %}">
-              {% movement_load_display movement program current_phase one_rep_max_by_movement progress_snapshots as load %}
+            {% movement_load_display movement program current_phase one_rep_max_by_movement progress_snapshots as load %}
+            {% guided_series movement load.value_kg one_rep_max_by_movement as guided_plan %}
+            <article class="student-card card-decor-topstripe workout-movement-card{% if movement.is_tracked %} is-load-tracked{% endif %}" data-guided-series="{{ guided_plan }}" data-movement-slug="{{ movement.movement_slug }}" data-load-kind="{{ load.kind }}" data-allow-load-registration="{% if movement.allow_load_registration|default_if_none:True %}true{% else %}false{% endif %}">
               <div class="workout-movement-copy">
                 {% if movement.reference_url %}
                 <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_name:movement_labels }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
@@ -248,8 +272,9 @@ PONTOS CRITICOS:
                   {% else %}{{ load.percentage }}% RM{% endif %}
                 {% elif load.kind == 'phase_progressive' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong> <span class="workout-movement-load__pct">{{ load.percentage }}% RM</span>
                 {% elif load.kind == 'rir_estimate' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong>
-                {% else %}<strong class="workout-movement-load__free">Sem carga prescrita</strong>{% endif %}
-                {% if load.show_registration_hint %}<span class="workout-movement-load-hint">Toque em registrar para acompanhar a evolução.</span>{% endif %}
+                {% elif load.kind == 'last_observed' %}<strong class="workout-movement-load__kg">Referência · {{ load.value_kg }} kg</strong>
+                {% else %}<strong class="workout-movement-load__free">Escolha uma carga segura</strong>{% endif %}
+                {% if load.fallback_note %}<span class="workout-movement-load-hint">{{ load.fallback_note }}</span>{% elif load.show_registration_hint %}<span class="workout-movement-load-hint">Toque em registrar para acompanhar a evolução.</span>{% endif %}
               </div>
               <button type="button" class="workout-movement-register" data-workout-load-toggle aria-controls="workout-load-input-{{ day.day_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" aria-expanded="false">
                 <span data-workout-load-action-label>Registrar carga</span><span data-workout-load-action-icon aria-hidden="true">＋</span>
@@ -260,145 +285,7 @@ PONTOS CRITICOS:
             {% todays_load_entry load_history movement.movement_slug "top_set" as today_top_entry %}
             {% todays_load_entry load_history movement.movement_slug "warmup" as today_warmup_entry %}
             {% todays_default_load_entry load_history movement.movement_slug as today_entry %}
-            <div id="workout-load-input-{{ day.day_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="workout-load-input" data-workout-load-input data-movement-slug="{{ movement.movement_slug }}" data-program-id="{{ program.program_id }}" hidden
-              {% if today_entry.idempotency_key %}data-today-idempotency-key="{{ today_entry.idempotency_key }}"{% endif %}
-              {% if today_top_entry.idempotency_key %}data-today-top-set-idempotency-key="{{ today_top_entry.idempotency_key }}"{% endif %}
-              {% if today_warmup_entry.idempotency_key %}data-today-warmup-idempotency-key="{{ today_warmup_entry.idempotency_key }}"{% endif %}
-              {% if today_top_entry.weight_kg is not None %}data-today-top-set-weight="{{ today_top_entry.weight_kg|unlocalize }}"{% endif %}
-              {% if today_top_entry.reps is not None %}data-today-top-set-reps="{{ today_top_entry.reps }}"{% endif %}
-              {% if today_top_entry.rir is not None %}data-today-top-set-rir="{{ today_top_entry.rir|unlocalize }}"{% endif %}
-              {% if today_warmup_entry.weight_kg is not None %}data-today-warmup-weight="{{ today_warmup_entry.weight_kg|unlocalize }}"{% endif %}
-              {% if today_warmup_entry.reps is not None %}data-today-warmup-reps="{{ today_warmup_entry.reps }}"{% endif %}
-              {% if today_warmup_entry.rir is not None %}data-today-warmup-rir="{{ today_warmup_entry.rir|unlocalize }}"{% endif %}
-              data-movement-label="{{ movement|movement_name:movement_labels }}"
-            >
-              {% with siblings=movement.movement_slug|sibling_variations %}
-              {% if siblings %}
-              <div class="workout-load-input__substitutes" data-workout-substitute-pills>
-                <button type="button" class="workout-load-input__substitute-pill is-active" data-substitute-slug="{{ movement.movement_slug }}">{{ movement|movement_name:movement_labels }}</button>
-                {% for sibling in siblings %}
-                <button type="button" class="workout-load-input__substitute-pill" data-substitute-slug="{{ sibling.slug }}">{{ sibling.label_pt }}</button>
-                {% endfor %}
-              </div>
-              {% endif %}
-              {% endwith %}
-              <div class="workout-load-input__head">
-                <span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
-                <span class="workout-load-input__hint" data-workout-load-hint></span>
-              </div>
-              <div class="workout-load-input__row">
-                <button type="button" class="workout-load-input__step" data-workout-load-step="-2.5" aria-label="Diminuir 2,5 kg">−</button>
-                <input
-                  type="number"
-                  inputmode="decimal"
-                  step="2.5"
-                  min="0"
-                  placeholder="kg"
-                  class="workout-load-input__field"
-                  data-workout-load-field
-                  {% if today_entry.weight_kg is not None %}value="{{ today_entry.weight_kg|unlocalize }}"{% endif %}
-                  aria-label="Carga de hoje em {{ movement|movement_name:movement_labels }}, em quilos"
-                >
-                <button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>
-                <button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
-              </div>
-              <label class="workout-load-input__warmup-toggle">
-                <input type="checkbox" data-workout-load-warmup-toggle{% if today_entry.set_role == 'warmup' %} checked{% endif %}>
-                Foi aquecimento (não entra na sua evolução)
-              </label>
-              <div class="workout-load-input__reps-row">
-                <span class="workout-load-input__mini-label">Repetições</span>
-                <button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="-1" aria-label="Diminuir uma repetição">−</button>
-                <input
-                  type="number"
-                  inputmode="numeric"
-                  step="1"
-                  min="1"
-                  max="999"
-                  placeholder="reps"
-                  class="workout-load-input__reps-field"
-                  data-workout-reps-field
-                    {% if today_entry.reps is not None %}value="{{ today_entry.reps }}"{% endif %}
-                  aria-label="Repetições feitas de {{ movement|movement_name:movement_labels }}"
-                >
-                <button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="1" aria-label="Aumentar uma repetição">+</button>
-              </div>
-              <details class="workout-load-input__effort" data-workout-effort{% if today_rir is not None %} open{% endif %}>
-                <summary class="workout-load-input__effort-summary">
-                  <span>Esforço · opcional</span>
-                  <span class="workout-load-input__effort-value" data-workout-effort-value></span>
-                </summary>
-                <div class="workout-load-input__effort-body">
-                  <p class="workout-load-input__effort-question">Quantas repetições ainda conseguiria fazer?</p>
-                  <p class="workout-load-input__effort-help">Uma estimativa de quantas faltavam para chegar ao seu limite. Também chamado RIR.</p>
-                  <div
-                    class="workout-load-input__rir-pills"
-                    data-workout-rir-picker
-                    {% if today_entry.rir is not None %}data-today-rir="{{ today_entry.rir|unlocalize }}"{% endif %}
-                    role="radiogroup"
-                    aria-label="Repetições em reserva"
-                  >
-                    {% for value in "01234" %}
-                    <button type="button" class="workout-load-input__rir-pill" data-rir-value="{{ value }}" role="radio" aria-checked="false">{{ value }}{% if value == "4" %}+{% endif %}</button>
-                    {% endfor %}
-                  </div>
-                  <button type="button" class="workout-load-input__rir-other-toggle" data-workout-rir-other-toggle>Outro valor</button>
-                  <input
-                    type="number"
-                    inputmode="decimal"
-                    step="0.5"
-                    min="0"
-                    max="99.9"
-                    placeholder="RIR"
-                    class="workout-load-input__rir-other-field"
-                    data-workout-rir-other-field
-                    hidden
-                    aria-label="Outro valor de esforço (RIR)"
-                  >
-                  <button type="button" class="workout-load-input__rir-clear" data-workout-rir-clear>Não informar</button>
-                </div>
-              </details>
-              {% if movement.movement_slug|movement_shows_plate_calculator %}
-              <details class="workout-load-input__calculator" data-workout-plate-calculator>
-                <summary class="workout-load-input__effort-summary"><span>Montar anilhas</span></summary>
-                <div class="workout-load-input__effort-body">
-                  <div class="workout-load-input__row">
-                    <button type="button" class="workout-load-input__step workout-load-input__step--mini" data-plate-target-step="-2.5" aria-label="Diminuir 2,5 kg no alvo da calculadora">−</button>
-                    <span class="workout-load-input__mini-num" data-plate-target-display>0</span>
-                    <span class="workout-load-input__mini-label">kg (alvo)</span>
-                    <button type="button" class="workout-load-input__step workout-load-input__step--mini" data-plate-target-step="2.5" aria-label="Aumentar 2,5 kg no alvo da calculadora">+</button>
-                  </div>
-                  <div class="workout-load-input__reps-row">
-                    <span class="workout-load-input__mini-label">Barra</span>
-                    <div class="workout-load-input__rir-pills" data-plate-bar-options>
-                      <button type="button" class="workout-load-input__rir-pill" data-bar-value="20">20</button>
-                      <button type="button" class="workout-load-input__rir-pill" data-bar-value="15">15</button>
-                      <button type="button" class="workout-load-input__rir-pill" data-bar-value="10">10</button>
-                    </div>
-                    <button type="button" class="workout-load-input__rir-other-toggle" data-plate-bar-other-toggle>Outro</button>
-                  </div>
-                  <input
-                    type="number"
-                    inputmode="decimal"
-                    step="0.5"
-                    min="0"
-                    placeholder="peso da barra"
-                    class="workout-load-input__rir-other-field"
-                    data-plate-bar-other-field
-                    hidden
-                    aria-label="Outro peso de barra"
-                  >
-                  <p class="workout-load-input__effort-help">Anilhas disponíveis por lado (pares):</p>
-                  <div class="workout-load-input__plate-inventory" data-plate-inventory></div>
-                  <p class="workout-load-input__effort-question" data-plate-result></p>
-                  <p class="workout-load-input__effort-help" data-plate-check></p>
-                  <button type="button" class="workout-load-input__save" data-plate-use-total hidden>Usar esse peso</button>
-                </div>
-              </details>
-              {% endif %}
-              <span class="workout-load-input__status" data-workout-load-status aria-live="polite">{% if today_entry %}Já registrado hoje{% if today_entry.set_role == 'warmup' %} · aquecimento{% endif %}{% if today_entry.weight_kg is not None %}: {{ today_entry.weight_kg|unlocalize }} kg{% endif %}{% if today_entry.reps is not None %} · {{ today_entry.reps }} reps{% endif %}{% endif %}</span>
-              <p class="workout-load-input__achievement" data-workout-load-achievement aria-live="polite" hidden></p>
-            </div>
+            {% include 'public_workouts/partials/_load_widget.html' %}
             {% endif %}
             {% empty %}
             <p class="table-empty-cell">Nenhum movimento neste bloco.</p>
@@ -814,12 +701,25 @@ PONTOS CRITICOS:
 {% include 'public_workouts/_onboarding_wizard.html' %}
 
 <script src="{% static 'js/public_workouts/workout-shell.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/workout-pwa.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/core/shell.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/load-storage.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/load-plate-calculator.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/load-api.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/load-sync.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/load_tracker.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/weekly_review.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/nutrition.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/assessments-report.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/assessments.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/account.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/onboarding.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-outbox.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-api.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-sync.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-timer.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-state.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/workout-guided.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/workout-push.js' %}?v={{ asset_version }}" defer></script>
 </body>
 </html>

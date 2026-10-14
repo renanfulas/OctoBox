@@ -1,0 +1,466 @@
+/* Registro de carga de hoje (item 8) — linha propria logo abaixo do
+   movimento rastreado, span nas 4 colunas (D.00: reusa .operation-table-wrap
+   em vez de inventar um segundo layout de card). */
+.workout-load-sync-notice {
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--theme-accent-danger);
+    border-radius: 12px;
+    background: var(--theme-surface-secondary);
+    color: var(--theme-text-primary);
+}
+
+.workout-load-sync-notice[hidden],
+.workout-load-sync-notice__actions [hidden] {
+    display: none;
+}
+
+.workout-load-sync-notice p {
+    margin: 6px 0 12px;
+    line-height: 1.45;
+}
+
+.workout-load-sync-notice__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.workout-load-sync-notice__actions button {
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 8px;
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary);
+    cursor: pointer;
+}
+
+.workout-load-input-row td {
+    padding-top: 0;
+    padding-bottom: 10px;
+    border-top: none;
+}
+
+.workout-load-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--brand) 6%, var(--theme-surface-secondary) 94%);
+    border: 1px solid var(--theme-border-soft);
+}
+
+/* [hidden] do HTML e a classe acima empatam em especificidade (0,1,0) --
+   sem isso, o `display:flex` da classe vence o `display:none` implicito
+   do navegador e o widget (colapsado por padrao, item 4 do pedido do
+   Renan) fica visivel mesmo com o atributo `hidden` presente. */
+.workout-load-input[hidden] {
+    display: none;
+}
+
+.workout-load-input__label {
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+    white-space: nowrap;
+}
+
+.workout-load-input__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.workout-load-input__field {
+    width: 84px;
+    min-height: 44px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary, inherit);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-input__save {
+    min-height: 44px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.workout-load-input__status {
+    flex-basis: 100%;
+    font-size: 0.74rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-load-input__status--error {
+    color: var(--theme-accent-danger);
+}
+
+/* Selo de recorde (Fase 4, §6.3) -- "no maximo uma transicao curta",
+   nunca confete/loop. [hidden] some completamente; a classe --visible e'
+   quem revela (JS troca as duas juntas, load_tracker.js::updateAchievementBadge). */
+.workout-load-input__achievement {
+    flex-basis: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--theme-accent-success-alpha);
+    border: 1px solid color-mix(in srgb, var(--theme-accent-success) 45%, transparent);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--theme-text-primary, inherit);
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.workout-load-input__achievement[hidden] {
+    display: none;
+}
+
+.workout-load-input__achievement--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.workout-load-input__achievement strong {
+    display: block;
+    color: var(--theme-accent-success);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workout-load-input__achievement {
+        transition: none;
+    }
+}
+
+/* Dica de ultima carga ("Última vez: 80 kg — toque pra usar") — clicavel,
+   preenche o campo sem exigir digitar de novo o mesmo numero de sempre. */
+.workout-load-input__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.workout-load-input__hint {
+    font-size: 0.72rem;
+    color: var(--brand);
+    cursor: pointer;
+    text-decoration: underline dotted;
+}
+
+.workout-load-input__hint:empty {
+    display: none;
+}
+
+/* Stepper +/-2,5kg — mesmo alvo de toque generoso (36px) que .wk-input
+   das paginas legadas tinha, sem herdar o resto daquele CSS (D.00: reusa
+   o PADRAO de tamanho de toque, nao o arquivo). */
+.workout-load-input__step {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary, inherit);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.workout-load-input__step:active {
+    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
+}
+
+/* Confirmacao de "salvo" — pulso curto na borda, sem animacao continua
+   (mesmo respeito a prefers-reduced-motion do resto do arquivo, so que
+   aqui a transition em si ja e curta o bastante pra nao precisar de guard). */
+.workout-load-input--saved {
+    border-color: var(--theme-accent-success);
+    box-shadow: 0 0 0 3px var(--theme-accent-success-alpha);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Aba "Suas Cargas" — recorde (maior peso ja registrado) por movimento,
+   grid de cards curtos. Complementa a aba Historico (que mostra EVOLUCAO);
+   aqui e so o numero que motiva, sem grafico. */
+.workout-records-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.workout-record-card {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--theme-border-soft);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--theme-surface-secondary) 94%), var(--theme-surface-secondary));
+}
+
+.workout-record-card__label {
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.workout-record-card__value {
+    font-size: 1.35rem;
+    color: var(--brand);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-record-card__unit {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--theme-text-muted);
+    text-shadow: none;
+}
+
+.workout-record-card__date {
+    font-size: 0.7rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-record-card__reps {
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+}
+
+/* "Resumo do ciclo" (visão consolidada por movimento) reusa o mesmo
+   card de "Seus recordes" acima, mas soma tendência + 1RM -- __meta
+   agrupa os dois numa linha própria pra não competir com __reps. */
+.workout-record-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+/* Troca de exercicio (Entrega 4) -- pills das variacoes irma dentro do
+   proprio widget de registro de carga. A pill ativa mostra qual
+   movement_slug o clique em "Salvar" vai gravar (ver
+   wireSubstitutePills em load_tracker.js); nao muda o treino
+   prescrito, so a gravacao de hoje. */
+.workout-load-input__substitutes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex-basis: 100%;
+}
+
+.workout-load-input__substitute-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.workout-load-input__substitute-pill.is-active {
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
+    color: var(--theme-text-primary, inherit);
+}
+
+/* Toggle de aquecimento -- plano curva-grafico-hierarquia-e-set-role.md,
+   §2.3.6/§7.10. Desmarcado por padrao (serie principal); "feeder"/
+   "max_set" nunca aparecem como jargao pro aluno, so' este binario. */
+.workout-load-input__warmup-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-basis: 100%;
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+    cursor: pointer;
+}
+
+.workout-load-input__warmup-toggle input {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    margin: 0;
+    accent-color: var(--brand);
+}
+
+/* Reps + esforco (RIR) -- plano curva-carga-completa-reps-rir-recorde,
+   Fase 1. Mesmos tokens do resto do widget, sem cor nova: --brand pro
+   acento, --theme-surface-strong/--theme-border-soft pra superficie. */
+.workout-load-input__reps-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-basis: 100%;
+}
+
+.workout-load-input__mini-label {
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+    white-space: nowrap;
+}
+
+.workout-load-input__reps-field {
+    width: 64px;
+    min-height: 40px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary, inherit);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Alvo de toque um pouco menor que o stepper de peso (36px): controle
+   secundario, ajustado com menos frequencia que o peso -- ver nota no
+   plano sobre hierarquia de alvo de toque por importancia, nao um valor
+   arbitrario. Ainda dentro da faixa confortavel de toque. */
+.workout-load-input__step--mini {
+    width: 30px;
+    height: 30px;
+    font-size: 0.95rem;
+}
+
+.workout-load-input__effort {
+    flex-basis: 100%;
+}
+
+.workout-load-input__effort-summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--theme-text-muted);
+    list-style: none;
+}
+
+.workout-load-input__effort-summary::-webkit-details-marker {
+    display: none;
+}
+
+.workout-load-input__effort-value {
+    color: var(--brand);
+    font-weight: 600;
+}
+
+.workout-load-input__effort-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 8px;
+}
+
+.workout-load-input__effort-question {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--theme-text-primary, inherit);
+    font-weight: 600;
+}
+
+.workout-load-input__effort-help {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--theme-text-muted);
+}
+
+.workout-load-input__rir-pills {
+    display: flex;
+    gap: 6px;
+}
+
+.workout-load-input__rir-pill {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-input__rir-pill.is-selected {
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 14%, var(--theme-surface-strong) 86%);
+    color: var(--theme-text-primary, inherit);
+}
+
+.workout-load-input__rir-other-toggle,
+.workout-load-input__rir-clear {
+    align-self: flex-start;
+    padding: 4px 2px;
+    border: none;
+    background: none;
+    color: var(--theme-text-muted);
+    font-size: 0.74rem;
+    text-decoration: underline dotted;
+    cursor: pointer;
+}
+
+.workout-load-input__rir-other-field {
+    width: 84px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-soft);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary, inherit);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-load-input__rir-other-field[hidden] {
+    display: none;
+}
+
+.workout-load-input__calculator {
+    flex-basis: 100%;
+}
+
+.workout-load-input__plate-inventory {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 6px;
+}
+
+.workout-load-input__plate-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .workout-load-input__effort[open] .workout-load-input__effort-body,
+    .workout-load-input__calculator[open] .workout-load-input__effort-body {
+        animation: workout-load-input-effort-open 0.18s ease;
+    }
+}
+
+@keyframes workout-load-input-effort-open {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

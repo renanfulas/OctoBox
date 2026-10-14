@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
+from django.utils import timezone
+
 from .models import (
     PublicWorkoutMealPlan,
     PublicWorkoutProgram,
@@ -51,7 +53,10 @@ def get_customer_journey(account) -> CustomerJourney:
         'tier': subscription.tier,
         'needs_nutrition': subscription.tier in (PublicWorkoutTier.COMPLETO, PublicWorkoutTier.PREMIUM),
         'can_manage_billing': bool(subscription.stripe_customer_id),
-        'next_charge': subscription.current_period_end.date().isoformat() if subscription.current_period_end else '',
+        'next_charge': (
+            timezone.localtime(subscription.current_period_end).date().isoformat()
+            if subscription.current_period_end else ''
+        ),
         'monthly_price': {
             PublicWorkoutTier.ESSENCIAL: 'R$ 97/mês',
             PublicWorkoutTier.COMPLETO: 'R$ 267/mês',

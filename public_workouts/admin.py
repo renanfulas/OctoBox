@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from . import nutrition_schema, schema
+from .guided_prescription import propose_guided_prescription, validate_guided_prescription
 from .models import (
     PublicWorkoutAccount,
     PublicWorkoutAssessment,
@@ -55,10 +56,10 @@ from .services import (
 class PublicWorkoutAcquisitionSessionAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'first_source', 'first_medium', 'last_source', 'last_medium',
-        'account', 'subscription', 'first_seen_at', 'last_seen_at',
+        'partner_code', 'account', 'subscription', 'first_seen_at', 'last_seen_at',
     )
-    list_filter = ('first_medium', 'last_medium', 'offer_version')
-    search_fields = ('id', 'first_source', 'last_source', 'first_campaign', 'last_campaign')
+    list_filter = ('partner_code', 'first_medium', 'last_medium', 'offer_version')
+    search_fields = ('id', 'partner_code', 'first_source', 'last_source', 'first_campaign', 'last_campaign')
     ordering = ('-last_seen_at',)
     readonly_fields = [field.name for field in PublicWorkoutAcquisitionSession._meta.fields]
 
@@ -92,9 +93,9 @@ class PublicWorkoutCheckoutLeadAdmin(admin.ModelAdmin):
 
 @admin.register(PublicWorkoutFunnelEvent)
 class PublicWorkoutFunnelEventAdmin(admin.ModelAdmin):
-    list_display = ('event_type', 'tier', 'channel', 'source', 'campaign', 'occurred_at')
-    list_filter = ('event_type', 'tier', 'channel', 'occurred_at')
-    search_fields = ('event_id', 'source', 'campaign', 'correlation_id')
+    list_display = ('event_type', 'tier', 'partner_code', 'channel', 'source', 'campaign', 'occurred_at')
+    list_filter = ('event_type', 'tier', 'partner_code', 'channel', 'occurred_at')
+    search_fields = ('event_id', 'partner_code', 'source', 'campaign', 'correlation_id')
     ordering = ('-occurred_at',)
     readonly_fields = [field.name for field in PublicWorkoutFunnelEvent._meta.fields]
 
@@ -518,8 +519,9 @@ class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
         'created_at',
         'updated_at',
         'restriction_flags_display',
+        'guided_prescription_preview',
     )
-    actions = ['approve_and_publish_action', 'reject_action']
+    actions = ['prepare_guided_prescription_action', 'approve_and_publish_action', 'reject_action']
 
     @admin.display(description='⚠ Movimentos a revisar (restrições declaradas na anamnese)')
     def restriction_flags_display(self, obj):
@@ -534,10 +536,62 @@ class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
         )
         return format_html('<ul>{}</ul>', items)
 
+    @admin.display(description='Prévia de séries guiadas para revisão')
+    def guided_prescription_preview(self, obj):
+        if not obj or not isinstance(obj.payload, dict):
+            return 'Salve o rascunho para ver as propostas.'
+        rows = []
+        for day in obj.payload.get('days', []):
+            for block in day.get('blocks', []):
+                for movement in block.get('movements', []):
+                    slug = movement.get('movement_slug', 'movimento')
+                    if movement.get('guided_prescription') is not None:
+                        rows.append((slug, 'Estruturado no JSON; confira séries, descanso e carga.'))
+                        continue
+                    proposal = propose_guided_prescription(movement)
+                    if proposal is None or validate_guided_prescription(proposal):
+                        rows.append((slug, 'Texto ambíguo: registre uma prescrição livre ou preencha guided_prescription manualmente.'))
+                    else:
+                        rows.append((slug, json.dumps({'guided_prescription': proposal}, ensure_ascii=False, indent=2)))
+        if not rows:
+            return 'Nenhum movimento no rascunho.'
+        return format_html(
+            '<p>Propostas para copiar e revisar no JSON antes da aprovação. Nada é convertido automaticamente.</p><ul>{}</ul>',
+            format_html_join('', '<li><strong>{}</strong><pre style="white-space:pre-wrap">{}</pre></li>', rows[:100]),
+        )
+
     def has_change_permission(self, request, obj=None):
         if obj is not None and obj.status != PublicWorkoutProgramDraftStatus.PENDING_REVIEW:
             return False
         return super().has_change_permission(request, obj)
+
+    @admin.action(description='Preparar séries guiadas para revisão')
+    def prepare_guided_prescription_action(self, request, queryset):
+        prepared = 0
+        unresolved = 0
+        for draft in queryset.filter(status=PublicWorkoutProgramDraftStatus.PENDING_REVIEW):
+            payload = draft.payload
+            changed = False
+            for day in payload.get('days', []):
+                for block in day.get('blocks', []):
+                    for movement in block.get('movements', []):
+                        if movement.get('guided_prescription') is not None:
+                            continue
+                        proposal = propose_guided_prescription(movement)
+                        if proposal is None or validate_guided_prescription(proposal):
+                            unresolved += 1
+                            continue
+                        movement['guided_prescription'] = proposal
+                        prepared += 1
+                        changed = True
+            if changed:
+                draft.payload = payload
+                draft.save(update_fields=['payload', 'updated_at'])
+        self.message_user(
+            request,
+            f'{prepared} movimento(s) preparados para revisão; {unresolved} precisam de edição manual. Nada foi publicado.',
+            level=messages.INFO,
+        )
 
     @admin.action(description='Aprovar e publicar')
     def approve_and_publish_action(self, request, queryset):

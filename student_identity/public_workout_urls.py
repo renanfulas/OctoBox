@@ -10,6 +10,7 @@ POR QUE ELE EXISTE:
 """
 
 from django.urls import path
+from .public_workout_training_analytics import PublicWorkoutTrainingSessionDetailView
 
 from public_workouts.stripe_handlers import public_workout_stripe_webhook_receiver
 
@@ -52,6 +53,7 @@ urlpatterns = [
     path('eventos', PublicWorkoutFunnelEventView.as_view(), name='public-workout-funnel-event'),
     path('analytics/', PublicWorkoutFunnelAnalyticsView.as_view(), name='public-workout-funnel-analytics'),
     path('analytics/influencers/jully/', PublicWorkoutJullyAnalyticsView.as_view(), name='public-workout-influencer-analytics-jully'),
+    path('analytics/sessoes/<uuid:session_id>/', PublicWorkoutTrainingSessionDetailView.as_view(), name='public-workout-training-session-detail'),
     path('analytics/login/', PublicWorkoutFunnelAnalyticsLoginView.as_view(), name='public-workout-funnel-analytics-login'),
     path('analytics/logout/', PublicWorkoutFunnelAnalyticsLogoutView.as_view(), name='public-workout-funnel-analytics-logout'),
     path('billing-portal', PublicWorkoutBillingPortalView.as_view(), name='public-workout-billing-portal'),

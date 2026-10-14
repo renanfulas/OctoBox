@@ -522,6 +522,41 @@ class PublicWorkoutSubscribeViewTests(TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()['error'], 'stripe_nao_configurado')
 
+    def test_returns_checkout_url_on_success(self):
+        # Achado real (Rafael, cliente legado): este e' o caminho feliz que
+        # o botao "Pagamentos" de workout.html (data-workout-start-checkout,
+        # account.js) depende -- faltava cobertura do proprio 200 antes
+        # desta sessao, so' os 3 caminhos de erro acima tinham teste.
+        account = PublicWorkoutAccount.objects.create(email='comstripe@example.com')
+        self._login(account)
+
+        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+            start_checkout.return_value = 'https://checkout.stripe.com/pay/cs_test_rafael'
+            response = self.client.post(reverse('public-workout-subscribe'), {'plan_slug': 'rafael'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['checkout_url'], 'https://checkout.stripe.com/pay/cs_test_rafael')
+
+    def test_preserves_existing_legacy_subscription_tier_instead_of_forcing_essencial(self):
+        # get_or_create_subscription(tier=ESSENCIAL) so' define o tier na
+        # CRIACAO -- uma assinatura legada ja existente (ex.: Rafael em
+        # Completo) nao pode ser rebaixada so' por passar por este endpoint.
+        from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutTier
+
+        account = PublicWorkoutAccount.objects.create(email='completo@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account, plan_slug='rafael', tier=PublicWorkoutTier.COMPLETO,
+        )
+        self._login(account)
+
+        with patch('student_identity.public_workout_views.start_subscription_checkout') as start_checkout:
+            start_checkout.return_value = 'https://checkout.stripe.com/pay/cs_test_rafael'
+            response = self.client.post(reverse('public-workout-subscribe'), {'plan_slug': 'rafael'})
+
+        self.assertEqual(response.status_code, 200)
+        account.subscription.refresh_from_db()
+        self.assertEqual(account.subscription.tier, PublicWorkoutTier.COMPLETO)
+
 
 class PublicWorkoutColdSignupViewTests(TestCase):
     # Entrega 5, Fase 2 (docs/plans/public-workouts-escala-e-nutricao-corda.md,
