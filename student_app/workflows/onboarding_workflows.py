@@ -63,6 +63,10 @@ class OnboardingCompletionResult:
         return self.status == 'ok'
 
 
+class _BoxInviteLinkUnavailable(Exception):
+    """Sem vaga no link do grupo no momento de concluir o cadastro (forca rollback)."""
+
+
 class OnboardingWorkflow:
     def __init__(self, *, identity_repository=None):
         self.identity_repository = identity_repository or DjangoStudentIdentityRepository()
@@ -145,6 +149,19 @@ class OnboardingWorkflow:
                     # Sem repassar aqui, o photo_url capturado no OAuth se perdia.
                     photo_url=pending_onboarding.get('photo_url', ''),
                 )
+                # Vaga do link do grupo consumida so aqui (cadastro concluido), de forma atomica.
+                # Se o link acabou entre o OAuth e agora, o rollback do savepoint desfaz o
+                # Student/identity recem-criados.
+                box_invite_link_id = pending_onboarding.get('box_invite_link_id')
+                if box_invite_link_id and not self.identity_repository.consume_box_invite_slot(box_invite_link_id):
+                    raise _BoxInviteLinkUnavailable()
+        except _BoxInviteLinkUnavailable:
+            return OnboardingCompletionResult(
+                student=None,
+                identity=None,
+                status='invite_link_unavailable',
+                error_message='Este link do grupo não está mais disponível. Peça um link novo ao seu box.',
+            )
         except IdentitySaveConflictError as exc:
             # Onda 3: 'email-conflict' e deterministico e comum (o e-mail do Google/Apple
             # ja tem cadastro ativo neste box) — save_identity checa e levanta ANTES de

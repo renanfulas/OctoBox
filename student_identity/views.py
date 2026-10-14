@@ -242,7 +242,7 @@ class StudentOAuthCallbackView(StudentSignInView):
         # CENTER LAYER (docs/architecture/center-layer.md):
         # Resolve o tenant ANTES de qualquer query TENANT_APPS abaixo.
         # Estrategias em ordem (primeira que resolver vence):
-        #   1. invite_token (invitation OU link em massa)
+        #   1. invite_token (invitation OU link do grupo)
         #   2. provider_subject -> existing identity
         #   3. email -> existing identity (so se houver 1 candidate)
         # Sem isso, AuthenticateStudentWithProvider.execute() chama
@@ -454,7 +454,7 @@ class StudentBoxInviteLandingView(TemplateView):
                     action='student_box_invite_landing.rate_limited',
                     target_model='student_identity.StudentBoxInviteLink',
                     target_label=hashlib.sha256(str(self.kwargs.get('token', '')).encode()).hexdigest()[:16],
-                    description='Landing de link em massa do aluno bloqueada por rajada.',
+                    description='Landing de link do grupo do aluno bloqueada por rajada.',
                     metadata={
                         'ip_hash': hashlib.sha256(resolve_student_client_ip(request).encode()).hexdigest()[:8],
                         'path': request.path,
@@ -487,7 +487,7 @@ class StudentBoxInviteLandingView(TemplateView):
                 target_model='student_identity.StudentBoxInviteLink',
                 target_id=str(box_invite_link.id),
                 target_label=box_invite_link.box_root_slug,
-                description='Landing do link em massa visualizada.',
+                description='Landing do link do grupo visualizada.',
                 metadata={
                     'box_root_slug': box_invite_link.box_root_slug,
                     'box_invite_link_id': box_invite_link.id,
@@ -502,7 +502,7 @@ class StudentBoxInviteLandingView(TemplateView):
                     action='student_box_invite_landing.invalid_token_accessed',
                     target_model='student_identity.StudentBoxInviteLink',
                     target_label=_token_hash,
-                    description='Tentativa de abrir link em massa inexistente.',
+                    description='Tentativa de abrir link do grupo inexistente.',
                     metadata={
                         'box_root_slug': get_box_runtime_slug(),
                         'token_hash': _token_hash,

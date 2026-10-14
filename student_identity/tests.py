@@ -276,7 +276,8 @@ class StudentIdentityFlowTests(TestCase):
         pending = self.client.session.get('student_pending_onboarding', {})
         self.assertEqual(pending.get('journey'), StudentOnboardingJourney.MASS_BOX_INVITE)
         link.refresh_from_db()
-        self.assertEqual(link.use_count, 1)
+        # Vaga so e consumida ao concluir o wizard; abandonar apos o OAuth nao gasta vaga.
+        self.assertEqual(link.use_count, 0)
         self.assertTrue(
             AuditEvent.objects.filter(
                 action='student_onboarding.mass_box_invite.oauth_completed',
@@ -1124,7 +1125,7 @@ class StudentIdentityFlowTests(TestCase):
         response = self.client.get(reverse('student-invitation-operations'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Pulso do corredor')
+        self.assertContains(response, 'Resumo deste convite')
         self.assertContains(response, 'Próxima melhor ação: atacar visitas -&gt; oauth concluído')
         self.assertContains(response, 'O grupo está clicando, mas pouca gente está entrando com Google ou Apple.')
 
@@ -1157,9 +1158,9 @@ class StudentIdentityFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Prioridade do dia')
-        self.assertContains(response, 'Trabalhar a fila quente do WhatsApp')
+        self.assertContains(response, 'Trabalhar a fila de mensagens do WhatsApp')
         self.assertContains(response, 'Aluno Box')
-        self.assertContains(response, 'Enviar mensagem')
+        self.assertContains(response, 'Enviar por WhatsApp')
 
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
     def test_owner_can_send_student_invitation_email_from_operations_screen(self):
@@ -1688,7 +1689,7 @@ class StudentIdentityFlowTests(TestCase):
         self.assertIsNotNone(link)
         self.assertIsNone(link.revoked_at)
         messages = list(response.context['messages'])
-        self.assertTrue(any('Link em massa' in str(message) for message in messages))
+        self.assertTrue(any('link do grupo' in str(message).lower() for message in messages))
 
     def test_create_box_link_action_revokes_previous_active_link(self):
         owner = get_user_model().objects.create_superuser(
@@ -1911,6 +1912,48 @@ class StudentIdentityFlowTests(TestCase):
         self.assertTrue(
             StudentIdentity.objects.filter(student_id=lead.id, provider_subject='google-claim-lead').exists()
         )
+
+    def _mass_onboarding(self, *, link, subject, phone):
+        from student_app.workflows.onboarding_workflows import OnboardingWorkflow
+
+        return OnboardingWorkflow().complete_mass_onboarding(
+            pending_onboarding={
+                'box_root_slug': get_box_runtime_slug(),
+                'provider': StudentIdentityProvider.GOOGLE,
+                'provider_subject': subject,
+                'email': f'{subject}@example.com',
+                'box_invite_link_id': link.id,
+            },
+            cleaned_data={'full_name': 'Aluno Link Grupo', 'phone': phone, 'birth_date': None, 'selected_plan': None},
+        )
+
+    def test_complete_mass_onboarding_consumes_one_slot(self):
+        link = StudentBoxInviteLink.objects.create(
+            box_root_slug=get_box_runtime_slug(),
+            expires_at=timezone.now() + timedelta(days=3),
+            max_uses=5,
+        )
+
+        result = self._mass_onboarding(link=link, subject='google-slot-ok', phone='5511933330001')
+
+        self.assertTrue(result.is_success, result.error_message)
+        link.refresh_from_db()
+        self.assertEqual(link.use_count, 1)
+
+    def test_complete_mass_onboarding_rolls_back_when_link_is_full(self):
+        link = StudentBoxInviteLink.objects.create(
+            box_root_slug=get_box_runtime_slug(),
+            expires_at=timezone.now() + timedelta(days=3),
+            max_uses=1,
+            use_count=1,
+        )
+
+        result = self._mass_onboarding(link=link, subject='google-slot-full', phone='5511933330002')
+
+        self.assertFalse(result.is_success)
+        self.assertEqual(result.status, 'invite_link_unavailable')
+        self.assertFalse(Student.objects.filter(phone='5511933330002').exists())
+        self.assertFalse(StudentIdentity.objects.filter(provider_subject='google-slot-full').exists())
 
     def test_mass_invite_form_allows_claimable_lead_phone(self):
         from student_app.forms import MassInviteOnboardingForm
@@ -2238,6 +2281,50 @@ class StudentIdentityFlowTests(TestCase):
         self.assertEqual(first_response.status_code, 200)
         self.assertEqual(second_response.status_code, 200)
         self.assertEqual(StudentInvitationDeliveryEvent.objects.filter(provider_event_id=webhook_id).count(), 1)
+
+
+class BoxInviteSlotConsumptionTests(TestCase):
+    def _link(self, **kwargs):
+        defaults = dict(
+            box_root_slug=get_box_runtime_slug(),
+            expires_at=timezone.now() + timedelta(days=3),
+            max_uses=2,
+        )
+        defaults.update(kwargs)
+        return StudentBoxInviteLink.objects.create(**defaults)
+
+    def test_consume_slot_never_exceeds_max_uses(self):
+        repo = DjangoStudentIdentityRepository()
+        link = self._link(max_uses=2)
+
+        results = [repo.consume_box_invite_slot(link.id) for _ in range(4)]
+
+        self.assertEqual(results, [True, True, False, False])
+        link.refresh_from_db()
+        self.assertEqual(link.use_count, 2)
+
+    def test_creating_a_new_link_revokes_a_paused_one_so_it_cannot_come_back(self):
+        repo = DjangoStudentIdentityRepository()
+        paused = self._link(paused_at=timezone.now())
+
+        new_link = repo.create_or_replace_box_invite_link(
+            box_root_slug=paused.box_root_slug, expires_in_days=30, max_uses=200, actor_id=None,
+        )
+
+        paused.refresh_from_db()
+        self.assertIsNotNone(paused.revoked_at)
+        self.assertNotEqual(new_link.id, paused.id)
+
+    def test_consume_slot_refuses_paused_revoked_or_expired_links(self):
+        repo = DjangoStudentIdentityRepository()
+        paused = self._link(paused_at=timezone.now())
+        revoked = self._link(revoked_at=timezone.now())
+        expired = self._link(expires_at=timezone.now() - timedelta(hours=1))
+
+        for link in (paused, revoked, expired):
+            self.assertFalse(repo.consume_box_invite_slot(link.id))
+            link.refresh_from_db()
+            self.assertEqual(link.use_count, 0)
 
 
 class StudentDevTokenLoginTests(TestCase):
