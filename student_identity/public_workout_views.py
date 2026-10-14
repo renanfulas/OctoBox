@@ -451,7 +451,7 @@ class PublicWorkoutLoginView(View):
             response = redirect(effective_next)
         else:
             response = render(request, self.template_name, {'logged_in_as': account.email})
-        attach_public_workout_session_cookie(response, account_id=account.id)
+        attach_public_workout_session_cookie(response, account_id=account.id, identity_verified=True)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -536,7 +536,7 @@ class PublicWorkoutGoogleCallbackView(View):
             response = redirect(next_url)
         else:
             response = render(request, self.template_name, {'logged_in_as': account.email})
-        attach_public_workout_session_cookie(response, account_id=account.id)
+        attach_public_workout_session_cookie(response, account_id=account.id, identity_verified=True)
         return response
 
 

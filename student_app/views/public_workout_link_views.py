@@ -63,4 +63,4 @@ class StudentPublicWorkoutLinkView(StudentIdentityRequiredMixin, View):
         else:
             destination = '/treinos/minha-conta'
         response = HttpResponseRedirect(destination)
-        return attach_public_workout_session_cookie(response, account_id=account.pk)
+        return attach_public_workout_session_cookie(response, account_id=account.pk, identity_verified=True)
