@@ -65,6 +65,10 @@ class CurvaPushIntegrationTest(TestCase):
         self.assertEqual(login.status_code, 302)
         page = self.client.get('/renan/bruno')
         self.assertContains(page, 'data-workout-push-enable')
+        self.assertContains(page, 'data-workout-push-profile-enable')
+        self.assertContains(page, 'data-workout-push-disable')
+        self.assertContains(page, 'data-workout-install-status')
+        self.assertContains(page, 'data-workout-push-home')
 
         response = self.client.post(
             reverse('public-workout-push', kwargs={'plan_slug': 'bruno'}),

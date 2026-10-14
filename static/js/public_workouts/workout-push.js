@@ -3,10 +3,14 @@
 
   var box = document.querySelector('[data-workout-push]');
   if (!box) return;
-  var enable = box.querySelector('[data-workout-push-enable]');
-  var disable = box.querySelector('[data-workout-push-disable]');
-  var status = box.querySelector('[data-workout-push-status]');
-  if (!enable) return;
+  var home = document.querySelector('[data-workout-push-home]');
+  var profile = document.querySelector('[data-workout-push-profile]');
+  var enableButtons = [box.querySelector('[data-workout-push-enable]'),
+    profile && profile.querySelector('[data-workout-push-profile-enable]')].filter(Boolean);
+  var disable = profile && profile.querySelector('[data-workout-push-disable]');
+  var statuses = [box.querySelector('[data-workout-push-status]'),
+    profile && profile.querySelector('[data-workout-push-profile-status]')].filter(Boolean);
+  if (!enableButtons.length || !disable) return;
   var url = box.dataset.subscribeUrl;
   var key = box.dataset.publicKey;
   var optOutKey = 'curva-push-optout:' + location.pathname;
@@ -51,22 +55,31 @@
     });
   }
 
+  function setStatus(message) {
+    statuses.forEach(function (status) { status.textContent = message; });
+  }
+
+  function setEnableDisabled(disabled) {
+    enableButtons.forEach(function (button) { button.disabled = disabled; });
+  }
+
   function paint(isActive) {
-    enable.hidden = isActive;
+    if (home) home.hidden = isActive;
+    enableButtons.forEach(function (button) { button.hidden = isActive; });
     disable.hidden = !isActive;
-    status.textContent = isActive
+    setStatus(isActive
       ? 'Avisos ativos neste dispositivo.'
-      : 'Avisos desativados neste dispositivo.';
+      : 'Avisos desativados neste dispositivo.');
   }
 
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-    status.textContent = 'Este navegador não oferece avisos push para a Curva.';
-    enable.hidden = true;
+    if (home) home.hidden = true;
+    setStatus('Este navegador não oferece avisos push para a Curva.');
     return;
   }
   if (Notification.permission === 'denied') {
-    status.textContent = 'Permissão bloqueada. Altere nas configurações do site.';
-    enable.disabled = true;
+    setStatus('Permissão bloqueada. Altere nas configurações do site.');
+    setEnableDisabled(true);
   }
 
   navigator.serviceWorker.getRegistration(appBase).then(function (registration) {
@@ -82,14 +95,15 @@
       }).then(function () { paint(false); });
     }
     if (subscription) {
-      enable.hidden = true;
+      if (home) home.hidden = true;
+      enableButtons.forEach(function (button) { button.hidden = true; });
       disable.hidden = false;
       return server('POST', { subscription: subscription.toJSON() })
         .then(function () {
           paint(true);
-          if (Notification.permission === 'denied') status.textContent = 'Permissão bloqueada. Desative este dispositivo ou altere a configuração do site.';
+          if (Notification.permission === 'denied') setStatus('Permissão bloqueada. Desative este dispositivo ou altere a configuração do site.');
         }).catch(function () {
-          status.textContent = 'Este dispositivo pode estar associado a outra conta. Desative os avisos aqui e ative novamente.';
+          setStatus('Este dispositivo pode estar associado a outra conta. Desative os avisos aqui e ative novamente.');
         });
     }
     if (state.registration && Notification.permission === 'granted' && optedIn() && !optOut() && key) {
@@ -100,18 +114,22 @@
       }).then(function () {
         paint(true);
       }).catch(function () {
-        status.textContent = 'Não foi possível renovar os avisos. Toque em ativar novamente.';
+        paint(false);
+        setStatus('Não foi possível renovar os avisos. Toque em ativar novamente.');
       });
     }
     paint(false);
     if (Notification.permission === 'denied') {
-      status.textContent = 'Permissão bloqueada. Altere nas configurações do site.';
+      setStatus('Permissão bloqueada. Altere nas configurações do site.');
     }
-  }).catch(function () { status.textContent = 'Não foi possível consultar o estado dos avisos.'; });
+  }).catch(function () {
+    paint(false);
+    setStatus('Não foi possível consultar o estado dos avisos.');
+  });
 
-  enable.addEventListener('click', function () {
-    enable.disabled = true;
-    status.textContent = 'Ativando avisos…';
+  function activate() {
+    setEnableDisabled(true);
+    setStatus('Ativando avisos…');
     navigator.serviceWorker.register(appBase + 'sw.js', { scope: appBase })
       .then(function (registration) {
         return Notification.requestPermission().then(function (permission) {
@@ -129,9 +147,12 @@
         optedIn(true);
         paint(true);
       }).catch(function (error) {
-        status.textContent = error.message;
-      }).finally(function () { enable.disabled = false; });
-  });
+        setStatus(error.message);
+      }).finally(function () {
+        setEnableDisabled(Notification.permission === 'denied');
+      });
+  }
+  enableButtons.forEach(function (button) { button.addEventListener('click', activate); });
 
   disable.addEventListener('click', function () {
     disable.disabled = true;
@@ -144,7 +165,7 @@
         var endpoint = subscription.endpoint;
         return subscription.unsubscribe().then(function () { return server('DELETE', { endpoint: endpoint }); });
       }).then(function () { paint(false); })
-      .catch(function (error) { status.textContent = error.message; })
+      .catch(function (error) { setStatus(error.message); })
       .finally(function () { disable.disabled = false; });
   });
 }());
