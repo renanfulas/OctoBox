@@ -126,16 +126,18 @@ def _open_dieta_tab(page: Page, live_server, fixed_time: datetime.datetime, toke
     page.clock.install(time=fixed_time)
     page.goto(f'{live_server.url}/treinos/login?token={token}')
 
+    # Contas E2E novas podem iniciar o wizard de onboarding. Ele cobre a
+    # página e intercepta cliques fora do fluxo que este teste valida.
+    wizard = page.locator('[data-onboarding-wizard]')
+    onboarding_close = wizard.get_by_role('button', name='Fechar tutorial')
+    if wizard.get_attribute('data-onboarding-autostart') == 'true':
+        expect(onboarding_close).to_be_visible()
+        onboarding_close.click()
+        expect(wizard).to_be_hidden()
+
     avaliacao_cycle = page.locator('[data-workout-cycle-nav][data-cycle-key="avaliacao"]')
     avaliacao_cycle.click()  # Inicio -> Avaliacao (1o estado do ciclo)
     avaliacao_cycle.click()  # Avaliacao -> Dieta (2o estado do ciclo)
-
-    # Contas E2E novas podem iniciar o wizard de onboarding. O backdrop cobre
-    # a página e intercepta cliques mesmo fora do fluxo que este teste valida.
-    onboarding_backdrop = page.locator('[data-onboarding-dismiss]')
-    if onboarding_backdrop.is_visible():
-        onboarding_backdrop.click()
-        expect(onboarding_backdrop).to_be_hidden()
 
 
 @pytest.mark.e2e
