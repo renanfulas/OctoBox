@@ -631,6 +631,7 @@ def create_program_draft(
     source: str,
     ai_model: str = '',
     training_profile_snapshot: dict | None = None,
+    base_program_id: int | None = None,
 ) -> PublicWorkoutProgramDraft:
     """Cria um rascunho PENDING_REVIEW — NUNCA chama publish_program daqui
     (D.2, frase 2 continua valendo: nada vira PublicWorkoutProgram sem
@@ -657,6 +658,7 @@ def create_program_draft(
             source=source,
             ai_model=ai_model,
             training_profile_snapshot=training_profile_snapshot or {},
+            base_program_id=base_program_id,
         )
 
 
@@ -742,6 +744,14 @@ def approve_and_publish_draft(*, draft_id: int, reviewed_by) -> PublicWorkoutPro
             raise ProgramDraftReviewError(
                 f'rascunho {draft_id} nao esta pendente de revisao (status={draft.status!r})'
             )
+        if draft.base_program_id is not None:
+            base_program = PublicWorkoutProgram.objects.select_for_update().filter(
+                pk=draft.base_program_id, slug=draft.slug,
+            ).first()
+            if base_program is None or not base_program.is_active:
+                raise ProgramDraftReviewError(
+                    'A versão de origem deixou de ser ativa. Refaça a revisão a partir do programa atual.'
+                )
 
         payload = dict(draft.payload)
         payload['program_id'] = _resolve_stable_program_id(slug=draft.slug)
