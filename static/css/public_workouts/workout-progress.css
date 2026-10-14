@@ -1,5 +1,71 @@
 /* Gráficos e métricas de evolução de carga do template unificado. */
 
+.workout-progress-heading {
+    display: grid;
+    gap: 5px;
+    padding: 4px 2px 8px;
+}
+
+.workout-progress-heading__eyebrow {
+    color: var(--theme-text-muted);
+    font-size: .8125rem;
+    font-weight: 800;
+    letter-spacing: .11em;
+}
+
+.workout-progress-heading__eyebrow span,
+.workout-progress-heading h1 span { color: var(--theme-accent-premium); }
+
+.workout-progress-heading h1 {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: clamp(1.9rem, 4.5vw, 2.65rem);
+    font-weight: 850;
+    letter-spacing: -.045em;
+    line-height: 1.13;
+}
+
+.workout-progress-heading p {
+    margin: 0;
+    color: var(--theme-text-secondary);
+    font-size: .9375rem;
+    line-height: 1.55;
+}
+
+.workout-progress-first-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    justify-self: start;
+    min-height: 48px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--brand);
+    color: #061821;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.workout-progress-first-action:focus-visible { outline: 2px solid var(--theme-text-primary); outline-offset: 3px; }
+
+#workout-panel-cargas [data-workout-weekly-review-generate] {
+    justify-self: start;
+    min-height: 44px;
+    padding: 8px 14px;
+    border: 1px solid var(--theme-border-strong);
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-primary);
+    box-shadow: none;
+}
+
+@media (max-width: 520px) {
+    .workout-progress-first-action { width: 100%; }
+    #workout-panel-cargas [data-workout-weekly-review-generate] { width: 100%; }
+}
+
 /* Painel de vidro por movimento — mesma familia visual de .card-decor-glow
    (brilho sutil, nao animado, ja usado no dashboard), com um filete de
    brand na borda em vez do preenchimento solido de um .student-card

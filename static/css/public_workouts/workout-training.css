@@ -1,6 +1,38 @@
 /* Estilos do fluxo de Treino do template publico unificado.
    Mantido separado do shell e dos componentes historicos de Avaliacao. */
 
+.workout-training-heading {
+    display: grid;
+    gap: 5px;
+    padding: 4px 2px 8px;
+}
+
+.workout-training-heading__eyebrow {
+    color: var(--theme-text-muted);
+    font-size: .8125rem;
+    font-weight: 800;
+    letter-spacing: .11em;
+}
+
+.workout-training-heading__eyebrow span,
+.workout-training-heading h1 span { color: var(--theme-accent-premium); }
+
+.workout-training-heading h1 {
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: clamp(1.9rem, 4.5vw, 2.65rem);
+    font-weight: 850;
+    letter-spacing: -.045em;
+    line-height: 1.13;
+}
+
+.workout-training-heading p {
+    margin: 0;
+    color: var(--theme-text-secondary);
+    font-size: .9375rem;
+    line-height: 1.55;
+}
+
 /* Banner de fase ativa (Treino) -- so' aparece pra cliente ja migrado pro
    modelo canonico de periodizacao. Mesmo cartao/topstripe dos outros
    blocos, sem paleta nova. */
@@ -24,15 +56,16 @@
    composição que se reorganiza em telas estreitas. */
 .workout-movement-list {
     display: grid;
-    gap: 14px;
+    gap: 16px;
 }
 
 .workout-movement-card {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px 16px;
-    padding: 14px 16px;
+    gap: 16px 20px;
+    padding: 22px;
+    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
 }
 
 .workout-movement-copy {
@@ -42,8 +75,8 @@
 }
 
 .workout-movement-copy strong {
-    font-size: 0.94rem;
-    font-weight: 700;
+    font-size: 1.0625rem;
+    font-weight: 800;
     /* Fresh --theme-text-primary: movimentos SEM reference_url (ex.: nota
        de cardio como "Corrida 10 min", sem link do MuscleWiki) caem no
        <strong> puro, sem a cor propria de .workout-wiki-link (que usa
@@ -171,8 +204,8 @@
 .workout-movement-load {
     flex: 0 0 auto;
     min-width: 112px;
-    max-width: 150px;
-    padding: 9px 11px;
+    max-width: 180px;
+    padding: 11px 12px;
     border-radius: 12px;
     border: 1px solid var(--theme-border-soft);
     background: color-mix(in srgb, var(--theme-surface-strong) 62%, transparent);
@@ -219,7 +252,7 @@
 .workout-day-nav {
     display: flex;
     flex-wrap: nowrap;
-    gap: 9px;
+    gap: 10px;
     overflow-x: auto;
     padding-bottom: 4px;
 }
@@ -230,8 +263,8 @@
     display: grid;
     place-items: center;
     gap: 2px;
-    min-height: 58px;
-    padding: 8px 4px;
+    min-height: 62px;
+    padding: 9px 8px;
     border-radius: 14px;
     border: 1px solid var(--theme-border-soft);
     background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
@@ -266,8 +299,8 @@
 }
 
 .workout-day-tab.is-active {
-    border-color: var(--brand);
-    background: color-mix(in srgb, var(--brand) 18%, var(--theme-surface-secondary) 82%);
+    border-color: color-mix(in srgb, var(--brand) 48%, var(--theme-border-soft));
+    background: color-mix(in srgb, var(--brand) 11%, var(--theme-surface-secondary) 89%);
 }
 
 .workout-day-tab.is-active .workout-day-tab__day,
@@ -282,19 +315,22 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: var(--brand);
+    color: var(--theme-text-primary);
     text-decoration: none;
     font-weight: 600;
 }
 
 .workout-wiki-link:hover,
 .workout-wiki-link:focus-visible {
+    color: var(--brand);
     text-decoration: underline;
 }
 
 .workout-wiki-link__icon {
     font-size: 0.85em;
 }
+
+.workout-movement-copy .workout-wiki-link__icon { color: var(--brand); }
 
 /* Bolinha de dicionario de treino (RIR, AMRAP, Feeder, Top, Prep — ver
    glossary_highlight em public_workouts_extras.py). O termo em si fica com
@@ -357,13 +393,13 @@
 /* Ação explícita de registro. O artigo mantém links e outros controles
    independentes, sem semântica de botão no contêiner. */
 .workout-movement-card.is-load-tracked {
-    border-color: color-mix(in srgb, var(--brand) 20%, var(--theme-border-soft) 80%);
+    border-color: color-mix(in srgb, var(--brand) 17%, var(--theme-border-soft) 83%);
 }
 
 .workout-movement-register {
     grid-column: 1 / -1;
     justify-self: start;
-    min-height: 40px;
+    min-height: 44px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -433,7 +469,8 @@
 }
 
 @media (max-width: 520px) {
-    .workout-movement-card { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 14px; }
+    .workout-training-heading { padding-top: 0; }
+    .workout-movement-card { grid-template-columns: minmax(0, 1fr) auto; gap: 14px; padding: 18px; }
     .workout-movement-load { grid-column: 1 / -1; grid-row: 2; width: 100%; max-width: none; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
     .workout-movement-load-hint { max-width: 55%; text-align: right; }
     .workout-movement-register { grid-column: 1 / -1; width: 100%; justify-content: center; }

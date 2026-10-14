@@ -33,16 +33,92 @@
     --theme-accent-primary: var(--theme-accent-support);
 }
 
+/* Tema Curva: mesmas cores da familia OctoBox, isoladas da shell e dos
+   tokens globais do app autenticado. Dark e o palco padrao deste PWA. */
+body[data-plan-slug]:not([data-theme="light"]) {
+    color-scheme: dark;
+    /* `tokens.css` captura aliases de compatibilidade no :root. Redefina-os
+       nesta shell para que a tela do aluno receba a paleta Curva em cascata. */
+    --fdw-stage: var(--theme-bg-stage);
+    --fdw-stage-depth: var(--theme-bg-stage-depth);
+    --ink: var(--theme-text-primary);
+    --ink-soft: var(--theme-text-secondary);
+    --muted: var(--theme-text-muted);
+    --muted-strong: var(--theme-text-soft);
+    --theme-bg-root: #0A0E1A;
+    --theme-bg-depth: #111A2A;
+    --theme-bg-stage: linear-gradient(180deg, #090D16 0%, #0A0E1A 48%, #111A2A 100%);
+    --theme-bg-stage-depth:
+        radial-gradient(circle at 12% 10%, rgba(74,144,226,.15), transparent 27%),
+        radial-gradient(circle at 86% 12%, rgba(0,229,255,.09), transparent 24%),
+        radial-gradient(circle at 20% 84%, rgba(255,0,200,.075), transparent 25%);
+    --theme-surface: rgba(13,21,34,.9);
+    --theme-surface-secondary: rgba(17,26,42,.94);
+    --theme-surface-strong: rgba(23,35,55,.98);
+    --theme-surface-muted: rgba(9,14,24,.94);
+    --theme-surface-inverse: #F1F6FF;
+    --theme-surface-panel: linear-gradient(180deg,rgba(17,26,42,.96),rgba(13,21,34,.94));
+    --theme-surface-panel-strong: linear-gradient(155deg,#17243A,#101827);
+    --theme-surface-panel-dark: linear-gradient(180deg,#080C14,#0A101C);
+    --theme-card-surface: linear-gradient(155deg,rgba(20,31,50,.96),rgba(14,22,37,.94));
+    --theme-card-surface-strong: linear-gradient(155deg,#1A2942,#121D30);
+    --theme-card-border: rgba(145,169,204,.2);
+    --theme-card-border-strong: rgba(145,169,204,.32);
+    --theme-card-glow: rgba(0,229,255,.1);
+    --theme-card-shadow: 0 18px 42px rgba(0,0,0,.28),0 5px 14px rgba(0,0,0,.18);
+    --theme-card-shadow-lift: 0 26px 56px rgba(0,0,0,.36),0 9px 20px rgba(0,0,0,.22);
+    --theme-chrome-surface: rgba(10,14,26,.92);
+    --theme-chrome-border: rgba(145,169,204,.22);
+    --theme-chrome-glow: rgba(0,229,255,.1);
+    --theme-text-primary: #F1F6FF;
+    --theme-text-secondary: #C4D2E7;
+    --theme-text-muted: #9AABC4;
+    --theme-text-soft: #DCE7F8;
+    --theme-border-soft: rgba(145,169,204,.2);
+    --theme-border-strong: rgba(145,169,204,.34);
+    --theme-border-glow: rgba(0,229,255,.28);
+    --theme-shadow-soft: 0 12px 30px rgba(0,0,0,.26);
+    --theme-shadow-lift: 0 22px 48px rgba(0,0,0,.34);
+    --theme-shadow-xl: 0 32px 68px rgba(0,0,0,.42);
+    --theme-accent-primary: #00E5FF;
+    --theme-accent-support: #4A90E2;
+    --theme-accent-premium: #FF00C8;
+    --theme-accent-success: #29D398;
+    --theme-accent-warning: #F7B84D;
+    --theme-accent-danger: #FF5F7E;
+    --brand: var(--theme-accent-primary);
+    color: var(--theme-text-primary);
+    background: var(--theme-bg-stage-depth), var(--theme-bg-stage), var(--theme-bg-root);
+}
+
+body[data-plan-slug][data-theme="light"] {
+    color-scheme: light;
+    background: var(--theme-bg-stage-depth), var(--theme-bg-stage), var(--theme-bg-root);
+    color: var(--theme-text-primary);
+}
+
+body[data-plan-slug][data-accent-variant="premium"] { --brand: var(--theme-accent-premium); }
+body[data-plan-slug][data-accent-variant="support"] { --brand: var(--theme-accent-support); }
+
 /* accent_variant=None (neutro) nao precisa de override — os tokens base
    (--brand: var(--theme-accent-support) por padrao) ja servem. */
 
 .workout-shell {
-    max-width: 720px;
+    max-width: 820px;
     margin: 0 auto;
-    padding: 16px;
+    padding: 24px 20px;
     padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); /* nav fixa + safe area */
     display: grid;
-    gap: 20px;
+    gap: 24px;
+}
+
+#workout-panel-inicio.is-tab-active,
+#workout-panel-treino.is-tab-active,
+#workout-panel-cargas.is-tab-active,
+#workout-panel-perfil.is-tab-active {
+    display: grid;
+    align-content: start;
+    gap: 18px;
 }
 
 /* ============================================================
@@ -57,7 +133,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 2px 2px 4px;
+    padding: 2px 2px 6px;
 }
 
 .workout-topbar-main {
@@ -66,6 +142,24 @@
     gap: 12px;
     flex: 1 1 auto;
     min-width: 0;
+}
+
+.workout-topbar-identity {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+}
+
+.workout-topbar-brand {
+    color: var(--theme-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.workout-topbar-brand span {
+    color: var(--theme-accent-primary);
+    padding-inline: 3px;
 }
 
 .workout-avatar {
@@ -108,31 +202,136 @@
     text-overflow: ellipsis;
 }
 
-.workout-topbar-bell {
-    flex: 0 0 auto;
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
+/* Abertura principal do aluno: um foco claro e uma acao direta para o treino. */
+.workout-home-hero {
+    isolation: isolate;
+    gap: 20px;
+    min-height: 304px;
+    padding: clamp(22px, 4vw, 34px);
+    border-radius: 24px;
+    border-color: color-mix(in srgb, var(--theme-accent-primary) 24%, var(--theme-border-soft));
+    background:
+        radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--theme-accent-support) 14%, transparent), transparent 42%),
+        linear-gradient(135deg, #162237 0%, #101a2b 48%, #0d1524 100%);
+    box-shadow: 0 24px 58px rgba(0, 0, 0, .24);
+}
+
+.workout-home-hero::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    width: 330px;
+    height: 330px;
+    right: -132px;
+    top: -112px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 20%, transparent);
     border-radius: 50%;
+    box-shadow: 0 0 0 44px color-mix(in srgb, var(--theme-accent-support) 3%, transparent),
+        0 0 0 88px color-mix(in srgb, var(--theme-accent-primary) 2%, transparent);
+    pointer-events: none;
+}
+
+.workout-home-hero__meta,
+.workout-home-hero__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.workout-home-hero__eyebrow,
+.workout-home-hero__duration {
     color: var(--theme-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    letter-spacing: .1em;
 }
 
-.workout-topbar-bell svg {
-    width: 21px;
-    height: 21px;
+.workout-home-hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
 }
 
-.workout-summary-card h2 {
-    margin: 0 0 6px;
-    font-size: 1.05rem;
+.workout-home-hero__eyebrow > span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--theme-accent-primary);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--theme-accent-primary) 45%, transparent);
 }
 
-.workout-summary-card p {
+.workout-home-hero__duration {
+    padding: 7px 10px;
+    border: 1px solid var(--theme-border-strong);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-surface-strong) 78%, transparent);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-home-hero h1 {
+    position: relative;
+    margin: 0;
+    color: var(--theme-text-primary);
+    font-size: clamp(2.1rem, 5vw, 3.3rem);
+    font-weight: 850;
+    letter-spacing: -.055em;
+    line-height: 1.06;
+}
+
+.workout-home-hero h1 em {
+    color: var(--theme-accent-primary);
+    font-style: normal;
+}
+
+.workout-home-hero p {
+    position: relative;
+    max-width: 54ch;
     margin: 0;
     color: var(--theme-text-secondary);
-    line-height: 1.5;
+    font-size: 1rem;
+    line-height: 1.6;
 }
+
+.workout-home-hero__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    min-height: 50px;
+    padding: 11px 18px;
+    border: 0;
+    border-radius: 13px;
+    background: var(--theme-accent-primary);
+    color: #061821;
+    font: inherit;
+    font-size: .9375rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 26px color-mix(in srgb, var(--theme-accent-primary) 14%, transparent);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.workout-home-hero__cta:hover { transform: translateY(-2px); box-shadow: 0 12px 30px color-mix(in srgb, var(--theme-accent-primary) 21%, transparent); }
+.workout-home-hero__cta:focus-visible { outline: 2px solid var(--theme-text-primary); outline-offset: 3px; }
+.workout-home-hero__cta span { font-size: 1.15rem; line-height: 1; }
+
+.workout-home-hero__caption {
+    color: var(--theme-text-muted);
+    font-size: .8125rem;
+    line-height: 1.45;
+}
+
+body[data-plan-slug][data-theme="light"] .workout-home-hero {
+    background:
+        radial-gradient(circle at 88% 18%, rgba(95, 143, 247, .11), transparent 42%),
+        linear-gradient(135deg, #f8fbff 0%, #edf4fc 60%, #e9f2fb 100%);
+    box-shadow: 0 22px 48px rgba(28, 51, 85, .09);
+}
+
+body[data-plan-slug][data-theme="light"] .workout-home-hero h1 em { color: #087f9c; }
+body[data-plan-slug][data-theme="light"] .workout-home-hero__cta { background: #00cbe6; }
 
 /* Card automatico da Início com o resumo por Haiku (achado do Renan) --
    comeca `hidden` no HTML e so aparece via JS (weekly_review.js) quando
@@ -170,10 +369,10 @@
 .workout-week-strip {
     display: grid;
     gap: 12px;
-    padding: 16px;
+    padding: 20px;
     border-radius: 20px;
     border: 1px solid var(--theme-border-soft);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+    background: color-mix(in srgb, var(--theme-surface-secondary) 90%, transparent);
 }
 
 .workout-week-strip__head {
@@ -181,7 +380,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     color: var(--theme-text-muted);
 }
@@ -221,7 +420,7 @@
     border: 1px solid var(--theme-border-soft);
     background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
     color: var(--theme-text-muted);
-    font-size: 0.69rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     font-family: inherit;
 }
@@ -288,7 +487,7 @@ body.workout-keyboard-open .workout-mobile-nav {
     min-height: 52px;
     padding: 7px 4px;
     border-radius: 16px;
-    font-size: 0.69rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-decoration: none;
     color: var(--theme-text-muted);
@@ -323,6 +522,10 @@ body.workout-keyboard-open .workout-mobile-nav {
     color: var(--theme-text-primary);
 }
 
+.workout-install-prompt[hidden] {
+    display: none;
+}
+
 .workout-install-prompt button {
     flex: none;
     padding: 10px 14px;
@@ -336,6 +539,14 @@ body.workout-keyboard-open .workout-mobile-nav {
 }
 
 @media (max-width: 500px) {
+    .workout-shell { padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px)); gap: 18px; }
+    .workout-home-hero { min-height: 0; padding: 22px; gap: 18px; }
+    .workout-home-hero h1 { font-size: clamp(2rem, 10vw, 2.7rem); }
+    .workout-home-hero__footer { align-items: stretch; }
+    .workout-home-hero__cta { width: 100%; justify-content: space-between; }
+    .workout-week-strip { padding: 16px; }
+    .workout-week-strip__track { gap: 5px; }
+    .workout-week-day { min-height: 42px; border-radius: 10px; }
     .workout-install-prompt { align-items: stretch; flex-direction: column; }
 }
 
@@ -343,7 +554,7 @@ body.workout-keyboard-open .workout-mobile-nav {
     .workout-mobile-nav {
         top: 96px;
         bottom: auto;
-        left: calc(50% - 472px);
+        left: calc(50% - 518px);
         right: auto;
         width: 84px;
         grid-template-columns: 1fr;
