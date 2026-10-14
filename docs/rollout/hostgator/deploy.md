@@ -18,12 +18,12 @@ sudo OCTOBOX_BRANCH=main bash /srv/octobox/app/scripts/linux/deploy_octobox.sh
 ## O que o script faz, em ordem
 
 1. **Backup pré-deploy** do PostgreSQL (`pg_dump` via `backup_postgres.sh`) → grava o caminho em `/srv/octobox/shared/deploy-state/last_backup_path`.
-2. `git fetch` + `checkout main` + **`pull --ff-only`** (não force-push; falha se houver divergência).
+2. Corrige o dono do checkout para `octobox` e executa `git fetch` + `checkout main` + **`pull --ff-only`** (não force-push; falha se houver divergência).
 3. `pip install -r requirements.txt` na venv `/srv/octobox/venv`.
 4. **`manage.py migrate` + `collectstatic --noinput` + `check`** (lendo `/srv/octobox/shared/octobox.env`).
 5. Ajusta permissões de `staticfiles/`.
 6. **`systemctl restart octobox-gunicorn`** + confirma `is-active`.
-7. **Healthcheck:** `curl https://app.octoboxfit.com.br/api/v1/health/`.
+7. Grava o SHA novo em `deploy-state/deployed_sha` e faz o **healthcheck**: `curl https://app.octoboxfit.com.br/api/v1/health/`. O campo `deployed_sha` deve refletir o commit recém-implantado.
 8. Registra `previous_commit` e `current_commit` em `deploy-state/` (é isso que o rollback usa).
 
 ## Validar
