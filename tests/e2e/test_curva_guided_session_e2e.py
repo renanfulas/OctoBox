@@ -20,8 +20,21 @@ _MOVEMENT_SLUG = 'curva-guided-e2e-squat'
 def _cleanup_guided_e2e(django_db_blocker):
     def cleanup():
         with django_db_blocker.unblock():
-            from public_workouts.models import PublicWorkoutAccount, PublicWorkoutMovement, PublicWorkoutProgram
+            from public_workouts.models import (
+                PublicWorkoutAccount, PublicWorkoutMovement, PublicWorkoutOutboxMessage,
+                PublicWorkoutProgram, PublicWorkoutTrainingSession,
+            )
 
+            program_ids = PublicWorkoutProgram.objects.filter(slug='bruno', program_id='guided-e2e-2026').values_list('pk', flat=True)
+            session_ids = PublicWorkoutTrainingSession.objects.filter(
+                account__email__in=(_EMAIL, _OTHER_EMAIL),
+            ).values_list('pk', flat=True)
+            PublicWorkoutOutboxMessage.objects.filter(
+                aggregate_type='program', aggregate_id__in=[str(pk) for pk in program_ids],
+            ).delete()
+            PublicWorkoutOutboxMessage.objects.filter(
+                aggregate_type='training_session', aggregate_id__in=[str(pk) for pk in session_ids],
+            ).delete()
             PublicWorkoutAccount.objects.filter(email=_EMAIL).delete()
             PublicWorkoutAccount.objects.filter(email=_OTHER_EMAIL).delete()
             PublicWorkoutProgram.objects.filter(slug='bruno', program_id='guided-e2e-2026').delete()
@@ -136,6 +149,12 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
     expect(page.locator('[data-workout-guided-source]')).to_contain_text('6–8 repetições')
     page.locator('[data-workout-guided-weight]').fill('50')
     page.locator('[data-workout-guided-reps]').fill('7')
+    # O GET de atualização pode chegar enquanto o aluno digita. O mesmo
+    # passo não deve apagar a carga nem as repetições antes do envio.
+    with page.expect_response(lambda response: response.request.method == 'GET' and '/sessao' in response.url):
+        page.evaluate("window.dispatchEvent(new Event('online'))")
+    expect(page.locator('[data-workout-guided-weight]')).to_have_value('50')
+    expect(page.locator('[data-workout-guided-reps]')).to_have_value('7')
     page.locator('[data-workout-guided-set]').click()
     expect(page.locator('[data-workout-guided-finish]')).to_be_visible()
     expect(page.locator('[data-workout-guided-timer]')).to_contain_text('Descanso')
@@ -258,6 +277,26 @@ def test_offline_start_conflict_preserves_export_and_opens_new_program(page: Pag
     page.context.set_offline(False)
     page.evaluate("window.dispatchEvent(new Event('online'))")
     expect(page.locator('[data-workout-guided-conflict]')).to_be_visible(timeout=15000)
+    # A visita à ficha nova não pode apagar a versão necessária para retomar
+    # ou exportar o treino que ainda está na fila local.
+    old_plan_version = page.evaluate("""async () => {
+        const scope = localStorage.getItem('curva-guided-scope:bruno');
+        return (await window.CurvaGuidedOutbox.restorePlan(scope)).program_version;
+    }""")
+    page.reload()
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    expect(page.locator('[data-workout-guided-conflict]')).to_be_visible(timeout=15000)
+    preserved = page.evaluate("""async () => {
+        const scope = localStorage.getItem('curva-guided-scope:bruno');
+        return {
+            plan: await window.CurvaGuidedOutbox.restorePlan(scope),
+            pending: await window.CurvaGuidedOutbox.list(scope),
+            current: document.querySelector('[data-workout-guided]').dataset.programVersion,
+        };
+    }""")
+    assert preserved['plan']['program_version'] == old_plan_version
+    assert str(preserved['current']) != str(old_plan_version)
+    assert preserved['pending']
     with page.expect_download() as download:
         page.locator('[data-workout-guided-conflict-export]').click()
     assert download.value.suggested_filename == 'curva-treino-pendente.json'

@@ -50,8 +50,12 @@ def _cleanup_published_programs_after_e2e(django_db_blocker):
     """
     yield
     with django_db_blocker.unblock():
-        from public_workouts.models import PublicWorkoutProgram
+        from public_workouts.models import PublicWorkoutOutboxMessage, PublicWorkoutProgram
 
+        ids = PublicWorkoutProgram.objects.filter(slug='bruno').values_list('pk', flat=True)
+        PublicWorkoutOutboxMessage.objects.filter(
+            aggregate_type='program', aggregate_id__in=[str(pk) for pk in ids],
+        ).delete()
         PublicWorkoutProgram.objects.filter(slug='bruno').delete()
 
 
@@ -309,3 +313,15 @@ def test_mobile_bottom_nav_stays_in_viewport_while_training_scrolls(page: Page, 
     page.set_viewport_size({'width': 390, 'height': 844})
     resized = nav_position()
     assert 8 <= resized['viewportBottom'] - resized['bottom'] <= 30
+
+    # O teclado do guia não deve cobrir os campos nem deixar a barra sobre ele.
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    page.locator('[data-workout-guided-active]').evaluate('(panel) => { panel.hidden = false; }')
+    guided_field = page.locator('[data-workout-guided-weight]')
+    guided_field.focus()
+    expect(page.locator('body')).to_have_class(re.compile(r'workout-keyboard-open'))
+    assert page.locator('.workout-mobile-nav').evaluate(
+        '(nav) => getComputedStyle(nav).pointerEvents') == 'none'
+    guided_field.blur()
+    expect(page.locator('body')).not_to_have_class(re.compile(r'workout-keyboard-open'))
+    assert nav_position()['position'] == 'fixed'

@@ -39,7 +39,9 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # Bump 9->10: relatório, API de carga e estado guiado ganharam assets
 # obrigatórios; PWA instalada precisa baixar o HTML e o precache novos.
 # Bump 10->11: coordenadores de sincronização de carga/guia entram no HTML.
-PUBLIC_WORKOUT_CACHE_EPOCH = 11
+# Bump 11->12: a retomada local e a barra com teclado precisam trocar os
+# scripts já guardados em instalações antigas, mesmo com versão estática fixa.
+PUBLIC_WORKOUT_CACHE_EPOCH = 12
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512

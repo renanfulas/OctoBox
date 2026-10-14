@@ -15,8 +15,12 @@ from playwright.sync_api import Page, expect
 def _cleanup_published_programs_after_e2e(django_db_blocker):
     yield
     with django_db_blocker.unblock():
-        from public_workouts.models import PublicWorkoutProgram
+        from public_workouts.models import PublicWorkoutOutboxMessage, PublicWorkoutProgram
 
+        ids = PublicWorkoutProgram.objects.filter(slug='bruno').values_list('pk', flat=True)
+        PublicWorkoutOutboxMessage.objects.filter(
+            aggregate_type='program', aggregate_id__in=[str(pk) for pk in ids],
+        ).delete()
         PublicWorkoutProgram.objects.filter(slug='bruno').delete()
 
 

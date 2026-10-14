@@ -47,6 +47,47 @@ class GuidedTrainingSessionIntegrationTest(TestCase):
         self.assertEqual(completed.outcome, 'completed')
         self.assertEqual(PublicWorkoutTrainingSet.objects.filter(session=session).count(), 2)
 
+    def test_analytics_reconciles_completed_partial_and_cancelled_with_recorded_facts(self):
+        complete = start_session(account_id=self.account.pk, plan_slug='guiado', day_id='seg')
+        for number in (1, 2):
+            record_set(
+                account_id=self.account.pk, plan_slug='guiado', session_id=complete.pk,
+                movement_index=0, set_number=number, movement_slug='agachamento-livre',
+                role='top_set', weight=Decimal('50.00'), reps=7, rir=Decimal('2.0'),
+            )
+        finish_session(account_id=self.account.pk, plan_slug='guiado', session_id=complete.pk)
+        finish_session(account_id=self.account.pk, plan_slug='guiado', session_id=complete.pk)
+
+        partial = start_session(account_id=self.account.pk, plan_slug='guiado', day_id='seg')
+        record_set(
+            account_id=self.account.pk, plan_slug='guiado', session_id=partial.pk,
+            movement_index=0, set_number=1, movement_slug='agachamento-livre',
+            role='top_set', weight=Decimal('40.00'), reps=7, rir=Decimal('3.0'),
+        )
+        finish_session(account_id=self.account.pk, plan_slug='guiado', session_id=partial.pk, partial=True)
+
+        cancelled = start_session(account_id=self.account.pk, plan_slug='guiado', day_id='seg')
+        cancel_session(account_id=self.account.pk, plan_slug='guiado', session_id=cancelled.pk)
+        ongoing = start_session(account_id=self.account.pk, plan_slug='guiado', day_id='seg')
+
+        summary = training_summary(window_days=7)
+        facts = PublicWorkoutTrainingSet.objects.filter(status='performed')
+        self.assertEqual(summary['sessions_started'], 4)
+        self.assertEqual(summary['sessions_completed'], 1)
+        self.assertEqual(summary['sessions_partial'], 1)
+        self.assertEqual(summary['sessions_cancelled'], 1)
+        self.assertEqual(summary['sessions_abandoned'], 0)
+        self.assertEqual(summary['sets_completed'], facts.filter(session=complete).count())
+        self.assertEqual(summary['sets_partial'], facts.filter(session=partial).count())
+        self.assertEqual(summary['completion_ratio'], 0.25)
+        rows = {row['id']: row for row in recent_training_sessions(window_days=7)}
+        self.assertEqual(rows[complete.pk]['status'], 'Concluído')
+        self.assertEqual(rows[complete.pk]['recorded_set_count'], 2)
+        self.assertEqual(rows[partial.pk]['status'], 'Parcial')
+        self.assertEqual(rows[partial.pk]['recorded_set_count'], 1)
+        self.assertEqual(rows[cancelled.pk]['status'], 'Cancelado')
+        self.assertEqual(rows[ongoing.pk]['status'], 'Em andamento')
+
     def test_cannot_complete_before_minimum(self):
         session = start_session(account_id=self.account.pk, plan_slug='guiado', day_id='seg')
         with self.assertRaises(TrainingSessionConflict):

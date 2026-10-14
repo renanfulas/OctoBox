@@ -47,6 +47,7 @@
   var lastFreeformIndex = null;
   var lastSkipped = null;
   var current = null;
+  var currentStepIdentity = null;
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
     isOnline: function () { return navigator.onLine; },
@@ -230,11 +231,15 @@
   }
 
   function paintStep() {
+    var draft = { weight: weightField.value, reps: repsField.value, rir: rirField.value };
     var state = window.CurvaGuidedState.project(
       movements, recorded, skipped, sync.pendingCount(), lastSkipped, lastFreeformIndex
     );
     var next = state.next;
     current = next;
+    var nextIdentity = next ? sessionId + ':' + selectedDayId() + ':' + key(next.movementIndex, next.setNumber) : null;
+    var sameStep = !!nextIdentity && nextIdentity === currentStepIdentity;
+    currentStepIdentity = nextIdentity;
     progress.textContent = state.recordedCount + ' série(s) registrada(s) · até ' + state.total + ' no guia' + pendingLabel();
     fields.hidden = !next;
     setButton.hidden = !next;
@@ -281,9 +286,10 @@
     else if (next.series.required === false) source.textContent += ' Série opcional dentro da faixa prescrita.';
     if (!next.movement.allowLoad && next.series.reps == null) source.textContent += ' Toque em registrar ao concluir a série.';
     weightField.closest('label').hidden = !next.movement.allowLoad;
-    weightField.value = next.movement.allowLoad && next.series.weight_kg != null ? next.series.weight_kg : '';
-    repsField.value = '';
-    rirField.value = '';
+    weightField.value = sameStep ? draft.weight
+      : (next.movement.allowLoad && next.series.weight_kg != null ? next.series.weight_kg : '');
+    repsField.value = sameStep ? draft.reps : '';
+    rirField.value = sameStep ? draft.rir : '';
   }
 
   function activate(session) {

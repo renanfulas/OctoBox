@@ -842,6 +842,12 @@
       '[data-workout-reps-field]',
       '[data-workout-rir-other-field]',
       '[data-plate-bar-other-field]',
+      '[data-workout-guided-weight]',
+      '[data-workout-guided-reps]',
+      '[data-workout-guided-rir]',
+      '[data-workout-guided-correct-weight]',
+      '[data-workout-guided-correct-reps]',
+      '[data-workout-guided-correct-rir]',
       '#workout-panel-avaliacao input[type="number"]',
       '#workout-panel-avaliacao textarea',
     ].join(',');

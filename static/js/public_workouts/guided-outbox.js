@@ -84,7 +84,37 @@
   }
 
   function savePlan(scope, plan) {
-    return transact(scope, 'state', 'readwrite', 'put', { key: 'plan', plan: plan });
+    return open(scope).then(function (db) {
+      return new Promise(function (resolve, reject) {
+        // A leitura e a escrita compartilham a transação com a fila: outra aba
+        // não pode trocar a ficha entre a verificação e a gravação.
+        var tx = db.transaction(['state', 'commands'], 'readwrite');
+        var state = tx.objectStore('state');
+        var oldPlan = state.get('plan');
+        var active = state.get('active');
+        var pending = tx.objectStore('commands').count();
+        var completed = 0;
+        var saved = false;
+        function decide() {
+          completed += 1;
+          if (completed !== 3) return;
+          var currentVersion = oldPlan.result && oldPlan.result.plan && oldPlan.result.plan.program_version;
+          var activeVersion = active.result && active.result.snapshot && active.result.snapshot.program_version;
+          var incomingVersion = String(plan.program_version);
+          var protectedVersion = currentVersion != null ? currentVersion : activeVersion;
+          if ((active.result || pending.result) &&
+              (protectedVersion == null || String(protectedVersion) !== incomingVersion)) return;
+          state.put({ key: 'plan', plan: plan });
+          saved = true;
+        }
+        oldPlan.onsuccess = decide;
+        active.onsuccess = decide;
+        pending.onsuccess = decide;
+        tx.onerror = function () { db.close(); reject(tx.error); };
+        tx.onabort = function () { db.close(); reject(tx.error || new Error('Plano local não foi salvo.')); };
+        tx.oncomplete = function () { db.close(); resolve(saved); };
+      });
+    });
   }
 
   function restorePlan(scope) {

@@ -44,7 +44,7 @@ def _dispatch(message) -> bool:
         from .push import configured, notify_account, send
 
         if not configured():
-            return True
+            raise RuntimeError('push nao configurado; mensagem retida para nova tentativa')
         base_url = str(getattr(settings, 'PUBLIC_WORKOUT_PUBLIC_BASE_URL', '') or '').strip()
         if not base_url:
             raise RuntimeError('PUBLIC_WORKOUT_PUBLIC_BASE_URL nao configurada')
