@@ -14,7 +14,11 @@
 .workout-push-prompt p { margin: .35rem 0; color: var(--theme-text-secondary); }
 .workout-push-prompt [data-workout-push-status] { color: var(--theme-text-muted); font-size: .85rem; }
 .workout-push-prompt__actions { display: flex; gap: .5rem; flex-wrap: wrap; }
-.workout-push-prompt button {
+.workout-push-prompt button,
+.workout-push-prompt__actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   padding: .6rem .9rem;
   border: 1px solid var(--brand);
@@ -23,12 +27,14 @@
   color: #071b22;
   font-weight: 800;
   cursor: pointer;
+  text-decoration: none;
 }
 .workout-push-prompt button[data-workout-push-disable] {
   background: transparent;
   color: var(--theme-text-primary);
 }
-.workout-push-prompt button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.workout-push-prompt button:focus-visible,
+.workout-push-prompt__actions a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .workout-push-prompt [hidden] { display: none; }
 
 @media (max-width: 560px) {

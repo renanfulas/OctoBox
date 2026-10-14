@@ -9,7 +9,7 @@ POR QUE ELE EXISTE:
 
 from unittest.mock import Mock, patch
 
-from django.core import mail
+from django.core import mail, signing
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -34,10 +34,12 @@ from .public_workout_login import (
 )
 from .public_workout_session import (
     PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+    PUBLIC_WORKOUT_SESSION_SALT,
     attach_public_workout_session_cookie,
     build_public_workout_session_value,
     clear_public_workout_session_cookie,
     get_public_workout_account_id_from_request,
+    get_verified_public_workout_account_id_from_request,
     read_public_workout_session_value,
 )
 
@@ -293,6 +295,7 @@ class PublicWorkoutLoginViewTests(TestCase):
         session_value = read_public_workout_session_value(response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME].value)
         account = PublicWorkoutAccount.objects.get(email='cookie@example.com')
         self.assertEqual(session_value['account_id'], account.id)
+        self.assertIs(session_value['identity_verified'], True)
 
     def test_get_with_invalid_token_shows_error_and_sets_no_cookie(self):
         client = Client()
@@ -407,6 +410,29 @@ class PublicWorkoutSessionTests(TestCase):
     def test_build_and_read_round_trip(self):
         value = build_public_workout_session_value(account_id=42)
         self.assertEqual(read_public_workout_session_value(value)['account_id'], 42)
+        self.assertIs(read_public_workout_session_value(value)['identity_verified'], False)
+
+    def test_only_explicit_login_marks_identity_verified(self):
+        from django.test import RequestFactory
+
+        request = RequestFactory().get('/renan/bruno')
+        request.COOKIES[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=42)
+        self.assertIsNone(get_verified_public_workout_account_id_from_request(request))
+
+        request.COOKIES[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=42, identity_verified=True,
+        )
+        self.assertEqual(get_verified_public_workout_account_id_from_request(request), 42)
+
+    def test_old_signed_cookie_does_not_gain_verified_identity(self):
+        from django.test import RequestFactory
+
+        request = RequestFactory().get('/renan/bruno')
+        request.COOKIES[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = signing.dumps(
+            {'account_id': 42}, salt=PUBLIC_WORKOUT_SESSION_SALT, compress=True,
+        )
+        self.assertEqual(get_public_workout_account_id_from_request(request), 42)
+        self.assertIsNone(get_verified_public_workout_account_id_from_request(request))
 
     def test_read_empty_value_returns_none(self):
         self.assertIsNone(read_public_workout_session_value(''))

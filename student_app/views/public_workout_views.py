@@ -285,7 +285,9 @@ def _legacy_template_slugs() -> frozenset[str]:
     return getattr(settings, 'PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS', frozenset())
 
 
-def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None) -> str:
+def _render_public_workout_html(
+    plan_slug: str, *, account_id: int | None = None, push_identity_verified: bool = False,
+) -> str:
     """Renderiza `/renan/<slug>` — Entrega 4: template unico
     (`public_workouts/workout.html`) quando o slug tem `PublicWorkoutProgram`
     ativo e nao esta na lista de escape; senao cai no arquivo legado
@@ -419,6 +421,7 @@ def _render_public_workout_html(plan_slug: str, *, account_id: int | None = None
         'show_onboarding_wizard': show_onboarding_wizard,
         'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
         'push_configured': curva_push_configured(),
+        'push_identity_verified': push_identity_verified,
     })
 
 
@@ -478,6 +481,7 @@ class PublicWorkoutDetailView(View):
         from student_identity.public_workout_session import (
             attach_public_workout_session_cookie,
             get_public_workout_account_id_from_request,
+            get_verified_public_workout_account_id_from_request,
         )
 
         account_id = get_public_workout_account_id_from_request(request)
@@ -511,7 +515,11 @@ class PublicWorkoutDetailView(View):
         # O cliente do PWA envia POSTs JSON para sessão/push via cookie CSRF.
         # Força o cookie também nas páginas renderizadas por render_to_string.
         get_token(request)
-        response = HttpResponse(_render_public_workout_html(plan_slug, account_id=account_id))
+        verified_account_id = get_verified_public_workout_account_id_from_request(request)
+        response = HttpResponse(_render_public_workout_html(
+            plan_slug, account_id=account_id,
+            push_identity_verified=verified_account_id is not None and verified_account_id == account_id,
+        ))
         response['Cache-Control'] = 'private, no-store'
         opened_subscription = PublicWorkoutSubscription.objects.select_related('account').filter(
             plan_slug=plan.slug, account_id=account_id,

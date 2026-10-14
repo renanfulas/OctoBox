@@ -5,7 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views import View
 
-from student_identity.public_workout_session import get_public_workout_account_id_from_request
+from student_identity.public_workout_session import get_verified_public_workout_account_id_from_request
 from student_app.views.public_workout_request import json_payload
 from student_app.views.public_workout_access import (
     _confirm_login_session_owns_slug_or_404,
@@ -22,7 +22,7 @@ class PublicWorkoutPushSubscriptionView(View):
 
     def _account(self, request, plan_slug):
         plan = _get_public_workout_entry(plan_slug)
-        account_id = get_public_workout_account_id_from_request(request)
+        account_id = get_verified_public_workout_account_id_from_request(request)
         if account_id is None:
             return None, JsonResponse({'error': 'login necessario'}, status=401)
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
