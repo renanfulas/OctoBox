@@ -406,6 +406,7 @@
       if (receipt) {
         if (receipt.sync === 'saved') { status.classList.add('is-saved'); status.textContent = '✓ Salvo'; }
         else if (receipt.sync === 'local') { status.classList.add('is-local'); status.textContent = 'Salvo no aparelho'; }
+        else if (receipt.sync === 'blocked') { status.classList.add('is-blocked'); status.textContent = 'Não foi aceito'; }
         else status.textContent = 'Salvando…';
       }
       var next = q('[data-guided-next]', section);

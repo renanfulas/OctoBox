@@ -179,6 +179,7 @@ html.guided-focus-open { overflow: hidden; }
 .guided-ring__status { display: inline-flex; gap: 4px; align-items: center; font-size: .875rem; font-weight: 700; color: var(--gf-muted); }
 .guided-ring__status.is-saved { color: var(--gf-success); }
 .guided-ring__status.is-local { color: var(--gf-warning); }
+.guided-ring__status.is-blocked { color: var(--gf-danger); }
 .guided-ring.is-beat .guided-ring__receipt, .guided-ring.is-beat .guided-ring__status,
 .guided-ring.is-go .guided-ring__receipt, .guided-ring.is-go .guided-ring__status { display: none; }
 

@@ -14,6 +14,17 @@ from playwright.sync_api import Page, expect
 _EMAIL = 'curva-guided-e2e@example.test'
 _OTHER_EMAIL = 'curva-guided-other-e2e@example.test'
 _MOVEMENT_SLUG = 'curva-guided-e2e-squat'
+# Conta quantas vezes a página abre o banco local do guia (guided-outbox.js).
+_COUNT_OUTBOX_OPENS = """
+(() => {
+  const open = IDBFactory.prototype.open;
+  window.__curvaOutboxOpens = 0;
+  IDBFactory.prototype.open = function (name) {
+    if (String(name).startsWith('curva-guided:')) window.__curvaOutboxOpens += 1;
+    return open.apply(this, arguments);
+  };
+})();
+"""
 
 
 @pytest.fixture(autouse=True)
@@ -257,6 +268,68 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
     assert session.outcome == 'completed'
     assert session.completed_set_count == 1
     assert PublicWorkoutLoadLog.objects.get(account=account, is_active=True).weight_kg == Decimal('50.00')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_guided_online_set_is_one_request_with_local_receipt(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    account, token = _prepare_guided_student()
+    page.add_init_script(_COUNT_OUTBOX_OPENS)
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+    sent = []
+    page.on('request', lambda request: sent.append(request.method) if request.url.endswith('/renan/bruno/sessao') else None)
+    page.locator('[data-workout-guided-weight]').fill('50')
+    page.locator('[data-workout-guided-reps]').fill('7')
+    page.locator('[data-workout-guided-set]').click()
+    # Gravação local primeiro; o ✓ só chega com a resposta daquela série.
+    expect(page.locator('[data-guided-receipt-status]')).to_have_text('✓ Salvo')
+    page.wait_for_timeout(600)
+    assert sent == ['POST'], 'série online: 1 POST e nenhum GET /sessao depois'
+    # As ~9 transações da série (fila, lease, lista, envio, remoção...) reaproveitam a conexão.
+    assert page.evaluate('() => window.__curvaOutboxOpens') == 1, 'o banco local abre uma vez por página'
+    session = PublicWorkoutTrainingSession.objects.get(account=account)
+    assert session.sets.get().weight_kg == Decimal('50.00')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_guided_set_survives_tab_closed_before_post_returns(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    account, token = _prepare_guided_student()
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+
+    def hold_set(route):
+        # O POST da série nunca sai: a aba fecha antes da resposta.
+        if route.request.method == 'POST' and (route.request.post_data_json or {}).get('action') == 'set':
+            return
+        route.continue_()
+
+    page.route('**/renan/bruno/sessao', hold_set)
+    page.locator('[data-workout-guided-weight]').fill('57.5')
+    page.locator('[data-workout-guided-reps]').fill('7')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-guided-receipt-status]')).to_have_text('Salvo no aparelho')
+    context = page.context
+    page.close()
+    assert not PublicWorkoutTrainingSession.objects.get(account=account).sets.exists()
+
+    reopened = context.new_page()
+    reopened.goto(f'{live_server.url}/renan/bruno')
+    # O lease da aba morta expira (~12 s) e a nova aba envia a série da fila.
+    expect(reopened.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=30000)
+    session = PublicWorkoutTrainingSession.objects.get(account=account)
+    assert session.sets.get().weight_kg == Decimal('57.50')
 
 
 @pytest.mark.e2e

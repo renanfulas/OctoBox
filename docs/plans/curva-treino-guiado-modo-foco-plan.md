@@ -1,6 +1,6 @@
 <!--
 ARQUIVO: plano de arquitetura, UI/UX e performance do "modo foco" do treino guiado da Curva.
-STATUS: ondas 1 e 2 implementadas em 14/10/2026 e portadas para o main em 15/10/2026, com a carga alvo da Top (#328); onda 3 parcial.
+STATUS: ondas 1, 2 e 3 implementadas em 14/10/2026 e portadas para o main em 15/10/2026, com a carga alvo da Top (#328) (ver "Estado da implementação"); onda 4 em aberto.
 ESCOPO: execução do treino guiado no corredor /renan/<slug> (template unificado workout.html).
 DEPENDE DE: fundação do guiado já no checkout (sessão versionada, comandos, outbox IndexedDB) —
   ver curva-treino-guiado-plano-tecnico-rag.md e curva-treino-guiado-analytics-push-plano-critico.md.
@@ -23,16 +23,28 @@ O protótipo foi validado pelo produto antes da implementação. O que existe no
 | Relógio | [`guided-timer.js`](../../static/js/public_workouts/guided-timer.js) | Horário final e total por sessão, pular, +30 s e `onEnd` único. |
 | View | [`guided-focus.js`](../../static/js/public_workouts/guided-focus.js) | `<dialog>`, telas, folhas, rascunho por série e eventos `guided:*`. Sem fetch nem IndexedDB. |
 | Controlador | [`workout-guided.js`](../../static/js/public_workouts/workout-guided.js) | Comandos, fila, cursor e view model. Não pinta a execução. |
+| Sincronização | [`guided-sync.js`](../../static/js/public_workouts/guided-sync.js) | Opção `writeAhead`: `set`/`skip`/`unskip` gravam na fila antes do POST; `onSent` por comando; `applyQueued` dobra a fila na retomada. |
 | Marcação | [`_guided_workout.html`](../../templates/public_workouts/partials/_guided_workout.html), [`_guided_focus.html`](../../templates/public_workouts/partials/_guided_focus.html) | Lançador na aba Treino; o `<dialog>` fica no fim do `<body>`. |
 | Estilo | [`workout-guided.css`](../../static/css/public_workouts/workout-guided.css), [`workout-guided-focus.css`](../../static/css/public_workouts/workout-guided-focus.css) | Tokens locais em `.guided-focus`. |
 
 **Desvios do plano, com motivo:**
 
 - **Sem flag de ativação.** O guiado não tinha flag, e manter o painel antigo e o modo foco em paralelo dobraria o controlador. A reversão é pelo commit.
-- **Onda 3 parcial.**
-  - A transição otimista ficou pronta: o descanso começa no toque, e o recibo vai de "Salvando…" para "✓ Salvo" ou "Salvo no aparelho". Se o servidor recusar, a série volta para a tela com o erro.
+- **Onda 3 concluída.**
+  - A transição otimista ficou pronta: o descanso começa no toque.
   - O "refresh apaga digitação" foi resolvido pelo desenho: o rascunho mora na view, indexado pela série.
-  - A gravação local antes do envio (write-ahead) ainda não foi feita.
+  - **Gravação local antes do envio (write-ahead).** O controlador liga `writeAhead: true` no `CurvaGuidedSync.create`. `set`, `skip` e `unskip` entram na fila IndexedDB e só depois drenam; `deliver` devolve `{ queued: true, local: true }` sem esperar o POST. Com a opção desligada, `deliver` é o de antes. Sem IndexedDB, cai no POST direto.
+  - **Recibo em três passos:** "Salvando…" até a fila gravar, "Salvo no aparelho" e "✓ Salvo" quando o POST daquela série volta (`onSent`). O recibo só avança, nunca volta.
+  - **Recusa do servidor (4xx) não desfaz mais a série.** O comando fica bloqueado na fila, sem perda e sem enviar os seguintes. O recibo mostra "Não foi aceito" e o aviso "Resolver" leva ao painel de conflito. Antes, online, a série voltava para a tela de exercício.
+  - **1 requisição por série online.** A drenagem disparada pelo write-ahead não faz `GET /sessao` quando só enviou recibos simples (`set`, `skip`, `unskip`, `correct`). O GET continua depois de `start` mapeado, encerramento, atraso (fila de antes, falha de rede), reconexão, `visibilitychange` e resolução de conflito.
+  - **Encerrar ou corrigir logo depois de uma série espera o envio em curso** (`idle()`) e vai direto ao servidor. Assim o encerramento online não aparece como "encerrado neste aparelho".
+  - **Sem ruído a cada série:** "Tudo enviado ao Curva" e o contador "aguardando envio" (`backlogCount()`) só contam atraso real, não o envio em curso.
+  - **Aba fechada logo após o toque:** a série já está na fila. Na reabertura, `applyQueued` dobra séries, correções e pulos da fila sobre a sessão, mesmo sem o snapshot, e a drenagem reenvia uma vez. O servidor devolve `created: false` para a mesma série com os mesmos valores.
+  - **Corrida corrigida no caminho:** uma leitura da fila tirada antes de uma gravação não apaga essa gravação de `pending` (versão por gravação). Sem isso, a série 2 gravada durante o envio da série 1 podia receber "✓ Salvo" antes de sair.
+  - **Custo conhecido, resolvido em 15/10/2026:** cada série online faz 9 transações IndexedDB (fila, snapshot, lease, lista, mapa de sessão, remoção, lista, release, lista), 3 delas antes do POST. `guided-outbox.js` abria uma conexão em cada uma. Agora guarda uma conexão por escopo (`Promise<IDBDatabase>`, banco `'curva-guided:' + scope`).
+    - A conexão é descartada em `versionchange` (fechando, para não travar outra aba nem o "Apagar dados" do shell offline), em `close`, em erro de abertura, em erro de transação e no `pagehide`. Se `transaction()` acusar conexão fechada sem evento, reabre uma vez. A API de `window.CurvaGuidedOutbox` não mudou.
+    - Medição no e2e (Chromium, servidor local, mediana de 5): as aberturas caíram de 18 para 1 por página e de 9 para 0 por série. Com CPU 4× (aproximação de celular médio), o tempo do toque ao início do POST caiu de 65 para 50 ms, e do toque ao "✓ Salvo", de 105 para 84 ms.
+    - Sem limitar a CPU, abrir o banco no desktop é barato, e a diferença some no ruído do POST: 17 → 17 ms até o POST e 49 → 52 ms até o "✓ Salvo", com o próprio POST variando de 25 a 35 ms. A limitação de CPU não simula o armazenamento lento de um celular real, então o ganho num aparelho não foi medido.
 - **Ajuste de cópia:** em prescrição estruturada, a meta só mostra RIR quando a etapa define `rir_target`. Assim o aquecimento não herda o RIR do texto do programa.
 
 **Verificação:**
@@ -58,6 +70,16 @@ O protótipo foi validado pelo produto antes da implementação. O que existe no
   - e2e 10/10, duas vezes seguidas, incluindo os testes novos do `main` (carga alvo da Top e reconexão durante a digitação) adaptados ao modo foco;
   - capturas reais a 390 px pelos ganchos `CURVA_LOAD_SCREENSHOT` e `CURVA_GUIDED_SCREENSHOT`.
 
+- **Onda 3 (write-ahead):**
+  - 43 testes Node passaram, 10 deles novos em `tests/js/curva_guided_sync.test.js`. Eles cobrem: 1 POST sem GET com sessão ativa; ordem de toques rápidos; toque duplo vira um comando só; aba morta com o POST no ar; 4xx bloqueando sem perder nem enviar os seguintes; série gravada durante a drenagem; `start` mapeado com GET; falha de rede com nova tentativa; encerramento esperando o envio em curso; opção desligada igual ao antigo; `applyQueued`.
+  - 910 testes Python da Curva passaram (`public_workouts/`, `student_app/tests.py`, `tests/test_public_workout_access_split.py`).
+  - O e2e passou em 10/10 cenários. Dois são novos: a série online gera exatamente 1 requisição (`POST`) e o recibo chega a "✓ Salvo"; a aba fechada com o POST da série ainda no ar não perde a série, e a próxima aba envia depois que o lease da aba morta expira (~12 s).
+  - Foi portada sobre o porte do `main` (branch `claude/curva-guiado-write-ahead`, empilhada no #333). Na retomada, `applyQueued` passa a carregar também os `top_targets` do snapshot.
+- **Conexão reaproveitada (15/10/2026):**
+  - 55 testes Node passaram, 12 deles novos em `tests/js/curva_guided_outbox.test.js`, com um IndexedDB falso. Eles cobrem: uma conexão para a série inteira; chamadas simultâneas antes da primeira abertura; um banco por conta; reabertura depois de `versionchange`, `close`, erro de abertura, conexão fechada sem evento, erro de transação e `pagehide`; sequência da fila e lease por dono iguais aos de antes.
+  - Os testes de reaproveitamento falham na versão anterior, e os de semântica passam nas duas.
+  - O e2e passou em 10/10 cenários. O da série online agora também exige 1 abertura do banco por página; com o `guided-outbox.js` anterior, ele falha com 18 aberturas.
+  - No porte, o `savePlan` protegido do `main` (que lê ficha, snapshot e fila na mesma transação) passou a usar a conexão compartilhada, sem o `db.close()` no fim.
 - **Também ficaram pendentes:**
   - PWA instalada no iPhone, indo ao MuscleWiki e voltando;
   - fila offline em aparelho real;
