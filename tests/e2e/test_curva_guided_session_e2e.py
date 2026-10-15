@@ -57,6 +57,35 @@ def _prepare_guided_student():
     return account, token
 
 
+def _start_guided(page: Page):
+    page.locator('[data-workout-guided-start]').click()
+    # A contagem 3-2-1 do modo foco aceita um toque para começar na hora.
+    page.locator('[data-guided-countdown-skip]').click()
+
+
+def _wait_for_offline_scope(page: Page):
+    # wait_for_function com string avalia via eval na página e a CSP (sem
+    # 'unsafe-eval') bloqueia; page.evaluate passa pelo protocolo do navegador.
+    from playwright.sync_api import Error as PlaywrightError
+
+    page.wait_for_url('**/renan/bruno**')
+    for _ in range(100):
+        try:
+            if page.evaluate("() => !!localStorage.getItem('curva-guided-scope:bruno')"):
+                return
+        except PlaywrightError:
+            pass  # o login ainda pode estar redirecionando
+        page.wait_for_timeout(100)
+    raise AssertionError('o guia não salvou a ficha offline neste aparelho')
+
+
+def _finish_from_summary(page: Page):
+    # "Finalizar" mora no resumo; "Ver treino todo" leva até ele a qualquer momento.
+    page.locator('[data-guided-open-sheet]').click()
+    page.locator('[data-guided-open-summary]').click()
+    page.locator('[data-workout-guided-finish]').click()
+
+
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
@@ -113,6 +142,8 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
     expect(page.locator('[data-workout-guided-start]')).to_be_visible()
     page.locator('[data-workout-guided-start]').click()
     expect(page.locator('[data-workout-guided-active]')).to_be_visible()
+    # Contagem completa: 3, 2, 1, GO e a tela do exercício.
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=8000)
     if screenshot_path := os.environ.get('CURVA_GUIDED_SCREENSHOT'):
         page.screenshot(path=screenshot_path, full_page=True)
     from public_workouts.schema import build_example_payload
@@ -129,21 +160,23 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
         ],
     }
     publish_program(slug='bruno', payload=newer)
+    # Recarregar com o modo foco aberto (#treino-guiado) volta direto ao exercício,
+    # na versão do programa em que a sessão começou.
     page.reload()
-    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
-    expect(page.locator('[data-workout-guided-source]')).to_contain_text('6–8 repetições')
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+    expect(page.locator('[data-guided-meta]')).to_contain_text('6–8 reps')
     page.locator('[data-workout-guided-weight]').fill('50')
     page.locator('[data-workout-guided-reps]').fill('7')
     page.locator('[data-workout-guided-set]').click()
-    expect(page.locator('[data-workout-guided-finish]')).to_be_visible()
     expect(page.locator('[data-workout-guided-timer]')).to_contain_text('Descanso')
+    expect(page.locator('[data-guided-receipt]')).to_contain_text('50 kg')
 
     page.reload()
-    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     expect(page.locator('[data-workout-guided-active]')).to_be_visible()
-    expect(page.locator('[data-workout-guided-finish]')).to_be_visible()
-    page.locator('[data-workout-guided-finish]').click()
+    expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
+    _finish_from_summary(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Treino concluído')
+    expect(page.locator('[data-guided-screen="finished"]')).to_contain_text('Treino registrado no Curva')
 
     session = PublicWorkoutTrainingSession.objects.get(account=account)
     assert session.outcome == 'completed'
@@ -161,17 +194,18 @@ def test_guided_start_and_set_sync_after_network_returns(page: Page, live_server
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('52.5')
     page.locator('[data-workout-guided-reps]').fill('7')
     page.locator('[data-workout-guided-set]').click()
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('salva neste aparelho')
+    expect(page.locator('[data-guided-receipt-status]')).to_contain_text('Salvo no aparelho')
 
     page.context.set_offline(False)
     page.evaluate("window.dispatchEvent(new Event('online'))")
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=15000)
-    page.locator('[data-workout-guided-finish]').click()
+    _finish_from_summary(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Treino concluído')
     session = PublicWorkoutTrainingSession.objects.get(account=account)
     assert session.outcome == 'completed'
@@ -186,7 +220,7 @@ def test_guided_reopens_from_offline_shell_and_sends_in_order(page: Page, live_s
 
     account, token = _prepare_guided_student()
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
-    page.wait_for_function("!!localStorage.getItem('curva-guided-scope:bruno')")
+    _wait_for_offline_scope(page)
     page.evaluate("async () => { await navigator.serviceWorker.ready; }")
     page.context.set_offline(True)
     page.reload()
@@ -211,9 +245,9 @@ def test_guided_reopens_from_offline_shell_and_sends_in_order(page: Page, live_s
         # Chromium pode devolver a página já aberta do cache HTTP durante a
         # segunda navegação offline; o guia deve restaurar o mesmo rascunho.
         page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+        page.locator('[data-guided-resume]').click()
         expect(page.locator('[data-workout-guided-active]')).to_be_visible()
-        expect(page.locator('[data-workout-guided-finish]')).to_be_visible()
-        page.locator('[data-workout-guided-finish]').click()
+        _finish_from_summary(page)
         expect(page.locator('[data-workout-guided-status]')).to_contain_text('pendente de envio')
     page.context.set_offline(False)
     page.reload()
@@ -235,7 +269,7 @@ def test_offline_start_conflict_preserves_export_and_opens_new_program(page: Pag
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('47.5')
     page.locator('[data-workout-guided-reps]').fill('7')
@@ -255,7 +289,9 @@ def test_offline_start_conflict_preserves_export_and_opens_new_program(page: Pag
     publish_program(slug='bruno', payload=newer)
     page.context.set_offline(False)
     page.evaluate("window.dispatchEvent(new Event('online'))")
-    expect(page.locator('[data-workout-guided-conflict]')).to_be_visible(timeout=15000)
+    # Com o modo foco aberto, o conflito chega como aviso fixo que leva à ficha.
+    page.locator('[data-guided-toast-action]').click(timeout=15000)
+    expect(page.locator('[data-workout-guided-conflict]')).to_be_visible()
     with page.expect_download() as download:
         page.locator('[data-workout-guided-conflict-export]').click()
     assert download.value.suggested_filename == 'curva-treino-pendente.json'
@@ -278,7 +314,7 @@ def test_queued_training_waits_for_same_account_login(page: Page, live_server):
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('57.5')
     page.locator('[data-workout-guided-reps]').fill('7')
@@ -315,7 +351,7 @@ def test_two_tabs_drain_one_local_queue_without_duplicate_top(page: Page, live_s
     second.goto(f'{live_server.url}/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('60')
     page.locator('[data-workout-guided-reps]').fill('7')
@@ -347,7 +383,7 @@ def test_account_switch_does_not_send_queued_sets_to_another_student(page: Page,
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('62.5')
     page.locator('[data-workout-guided-reps]').fill('7')

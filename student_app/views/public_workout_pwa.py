@@ -104,6 +104,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS: tuple[str, ...] = (
     '/static/css/public_workouts/workout-progress.css',
     '/static/css/public_workouts/workout-assessment.css',
     '/static/css/public_workouts/workout-guided.css',
+    '/static/css/public_workouts/workout-guided-focus.css',
     '/static/css/public_workouts/workout-push.css',
 )
 
@@ -126,6 +127,9 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/guided-sync.js',
     '/static/js/public_workouts/guided-timer.js',
     '/static/js/public_workouts/guided-state.js',
+    '/static/js/public_workouts/guided-format.js',
+    '/static/js/public_workouts/guided-ring.js',
+    '/static/js/public_workouts/guided-focus.js',
     '/static/js/public_workouts/workout-offline.js',
     '/static/js/public_workouts/workout-pwa.js',
     '/static/js/public_workouts/workout-push.js',

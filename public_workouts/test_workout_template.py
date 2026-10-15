@@ -1124,6 +1124,61 @@ class WorkoutModuleAssetTests(TestCase):
         self.assertNotIn('data-workout-load-toggle tabindex="0" role="button"', html)
 
 
+class GuidedFocusTemplateTests(TestCase):
+    """Modo foco: plano curva-treino-guiado-modo-foco-plan.md. Cobre a marcação e
+    a ordem dos módulos; a interação fica no e2e e nos testes node em tests/js."""
+
+    def test_focus_dialog_lives_outside_tab_panels(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('data-guided-focus', html)
+        self.assertEqual(html.count('data-guided-focus '), 1)
+        # Um <dialog> dentro de painel display:none não aparece na top layer.
+        self.assertGreater(html.index('<dialog class="guided-focus"'), html.index('</main>'))
+        for screen in ('countdown', 'exercise', 'rest', 'review', 'summary', 'finished'):
+            self.assertIn(f'data-guided-screen="{screen}"', html)
+        self.assertIn('data-guided-open-sheet', html)
+        self.assertIn('Ver treino todo', html)
+        self.assertIn('data-guided-skip-rest', html)
+
+    def test_launcher_replaces_inline_execution_panel(self):
+        html = _render(build_example_payload())
+
+        self.assertIn('data-workout-guided-start', html)
+        self.assertIn('data-guided-resume', html)
+        self.assertNotIn('data-workout-guided-correct-target', html)
+
+    def test_movement_card_exposes_label_and_musclewiki_link_for_the_guide(self):
+        payload = build_example_payload()
+        movement = payload['days'][0]['blocks'][0]['movements'][0]
+        movement['reference_url'] = 'https://musclewiki.com/exercise/barbell-bench-press'
+        html = _render(payload)
+
+        self.assertIn('data-reference-url="https://musclewiki.com/exercise/barbell-bench-press"', html)
+        self.assertIn('data-movement-label="', html)
+
+    def test_focus_modules_load_in_dependency_order(self):
+        html = _render(build_example_payload())
+
+        order = [
+            'js/public_workouts/guided-timer.js', 'js/public_workouts/guided-state.js',
+            'js/public_workouts/guided-format.js', 'js/public_workouts/guided-ring.js',
+            'js/public_workouts/guided-focus.js', 'js/public_workouts/workout-guided.js',
+        ]
+        positions = [html.index(path) for path in order]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn('css/public_workouts/workout-guided-focus.css', html)
+
+    def test_focus_assets_are_precached_for_offline_reopen(self):
+        from student_app.views.public_workout_pwa import (
+            PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS, PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS,
+        )
+
+        for path in ('guided-format.js', 'guided-ring.js', 'guided-focus.js'):
+            self.assertIn(f'/static/js/public_workouts/{path}', PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS)
+        self.assertIn('/static/css/public_workouts/workout-guided-focus.css', PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS)
+
+
 class WorkoutProfilePanelTests(TestCase):
     def test_payments_opens_billing_portal_directly_when_available(self):
         # Aluno com stripe_customer_id (1o checkout ja concluido): "Pagamentos"
