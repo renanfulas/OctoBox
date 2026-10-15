@@ -26,6 +26,9 @@ from public_workouts.services import publish_program
 )
 class CurvaPushIntegrationTest(TestCase):
     def setUp(self):
+        from shared_support.platform_cache import platform_cache
+
+        platform_cache.clear()
         self.account = PublicWorkoutAccount.objects.create(email='push-curva@example.test')
         PublicWorkoutSubscription.objects.create(account=self.account, plan_slug='bruno')
         self.subscription = {
@@ -44,7 +47,9 @@ class CurvaPushIntegrationTest(TestCase):
         publish_program(slug='bruno', payload=build_example_payload())
         page = self.client.get('/renan/bruno')
         self.assertEqual(page.status_code, 200)
-        self.assertContains(page, 'Entrar para ativar')
+        # Quem só tem o link recebe a confirmação por código, que vai para o
+        # e-mail da conta — nunca o botão que vincula o aparelho direto.
+        self.assertContains(page, 'Confirmar e-mail para ativar')
         self.assertNotContains(page, 'data-workout-push-enable')
 
         response = self.client.post(
@@ -76,6 +81,61 @@ class CurvaPushIntegrationTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PublicWorkoutPushSubscription.objects.filter(account=self.account).count(), 1)
+
+    def _verification(self, payload):
+        return self.client.post(
+            reverse('public-workout-push-verification', kwargs={'plan_slug': 'bruno'}),
+            data=json.dumps(payload), content_type='application/json',
+        )
+
+    def _push(self):
+        return self.client.post(
+            reverse('public-workout-push', kwargs={'plan_slug': 'bruno'}),
+            data=json.dumps({'subscription': self.subscription}), content_type='application/json',
+        )
+
+    def test_logged_student_confirms_code_inside_app_and_can_activate_push(self):
+        from django.core import mail
+        from student_identity.public_workout_login import login_code_for_token
+
+        publish_program(slug='bruno', payload=build_example_payload())
+        self.client.get('/renan/bruno')  # sessão já aberta, sem identidade verificada
+        self.assertEqual(self._push().status_code, 401)
+
+        sent = self._verification({'action': 'send'})
+        self.assertEqual(sent.status_code, 200)
+        self.assertEqual(sent.json()['sent_to'], 'pu•••@example.test')
+        self.assertEqual(mail.outbox[-1].to, ['push-curva@example.test'])
+        token = PublicWorkoutLoginToken.objects.filter(account=self.account).latest('created_at')
+        code = login_code_for_token(token.token)
+        self.assertIn(code, mail.outbox[-1].body)
+
+        confirmed = self._verification({'action': 'confirm', 'code': code})
+        self.assertEqual(confirmed.status_code, 200)
+        page = self.client.get('/renan/bruno')
+        self.assertContains(page, 'data-workout-push-enable')
+        self.assertNotContains(page, 'Confirmar e-mail para ativar')
+        self.assertEqual(self._push().status_code, 200)
+        self.assertEqual(PublicWorkoutPushSubscription.objects.filter(account=self.account).count(), 1)
+
+    def test_wrong_code_keeps_device_unverified(self):
+        from student_identity.public_workout_login import login_code_for_token
+
+        publish_program(slug='bruno', payload=build_example_payload())
+        self.client.get('/renan/bruno')
+        self._verification({'action': 'send'})
+        token = PublicWorkoutLoginToken.objects.filter(account=self.account).latest('created_at')
+        wrong = str((int(login_code_for_token(token.token)) + 1) % 1_000_000).zfill(6)
+
+        response = self._verification({'action': 'confirm', 'code': wrong})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error'], 'codigo_invalido')
+        self.assertEqual(self._push().status_code, 401)
+
+    def test_verification_requires_an_open_session(self):
+        response = self._verification({'action': 'send'})
+        self.assertEqual(response.status_code, 401)
+        self.assertFalse(PublicWorkoutLoginToken.objects.exists())
 
     def test_publishing_program_queues_push_after_device_opt_in(self):
         subscribe(account_id=self.account.pk, data=self.subscription)

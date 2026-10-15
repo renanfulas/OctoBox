@@ -26,10 +26,14 @@ from public_workouts.models import (
 from .delivery_gateways import StudentEmailDeliveryError
 from .models import StudentIdentity
 from .public_workout_login import (
+    PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX,
     PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX,
+    PublicWorkoutLoginCodeAttemptsExceeded,
     PublicWorkoutLoginRateLimitExceeded,
+    login_code_for_token,
     request_login_token,
     resolve_or_create_public_workout_account,
+    verify_login_code,
     verify_login_token,
 )
 from .public_workout_session import (
@@ -255,7 +259,94 @@ class VerifyLoginTokenTests(TestCase):
         self.assertIsNone(verify_login_token(token='nao-e-um-uuid'))
 
 
+class VerifyLoginCodeTests(TestCase):
+    """Código digitado no app instalado (o link do e-mail abre fora dele)."""
+
+    def setUp(self):
+        from shared_support.platform_cache import platform_cache
+
+        platform_cache.clear()
+        self.account = PublicWorkoutAccount.objects.create(email='codigo@example.com')
+        self.token = PublicWorkoutLoginToken.objects.create(
+            account=self.account, expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+        self.code = login_code_for_token(self.token.token)
+
+    def test_code_has_six_digits_and_is_stable_per_token(self):
+        self.assertRegex(self.code, r'^\d{6}$')
+        self.assertEqual(login_code_for_token(self.token.token), self.code)
+        other = PublicWorkoutLoginToken.objects.create(
+            account=self.account, expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+        self.assertNotEqual(login_code_for_token(other.token), self.code)
+
+    def test_matching_code_consumes_token_and_returns_account(self):
+        result = verify_login_code(account_id=self.account.id, code=f' {self.code[:3]} {self.code[3:]} ')
+
+        self.assertEqual(result.id, self.account.id)
+        self.token.refresh_from_db()
+        self.assertIsNotNone(self.token.used_at)
+
+    def test_code_cannot_be_used_twice(self):
+        self.assertIsNotNone(verify_login_code(account_id=self.account.id, code=self.code))
+        self.assertIsNone(verify_login_code(account_id=self.account.id, code=self.code))
+
+    def test_code_only_counts_for_tokens_of_the_logged_account(self):
+        other = PublicWorkoutAccount.objects.create(email='outra-conta@example.com')
+        other_token = PublicWorkoutLoginToken.objects.create(
+            account=other, expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+
+        self.assertIsNone(verify_login_code(account_id=self.account.id, code=login_code_for_token(other_token.token)))
+        other_token.refresh_from_db()
+        self.assertIsNone(other_token.used_at)
+
+    def test_expired_token_code_is_rejected(self):
+        self.token.expires_at = timezone.now() - timezone.timedelta(minutes=1)
+        self.token.save(update_fields=['expires_at'])
+
+        self.assertIsNone(verify_login_code(account_id=self.account.id, code=self.code))
+
+    def test_attempts_are_limited_per_account(self):
+        wrong = str((int(self.code) + 1) % 1_000_000).zfill(6)
+        for _ in range(PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX):
+            self.assertIsNone(verify_login_code(account_id=self.account.id, code=wrong))
+
+        with self.assertRaises(PublicWorkoutLoginCodeAttemptsExceeded):
+            verify_login_code(account_id=self.account.id, code=self.code)
+        self.token.refresh_from_db()
+        self.assertIsNone(self.token.used_at)
+
+    def test_pending_payment_account_is_rejected(self):
+        from public_workouts.billing import get_or_create_subscription
+
+        subscription = get_or_create_subscription(account=self.account, tier=PublicWorkoutTier.ESSENCIAL)
+        subscription.requires_login = True
+        subscription.save(update_fields=['requires_login'])
+
+        self.assertIsNone(verify_login_code(account_id=self.account.id, code=self.code))
+
+    def test_login_email_carries_the_same_code_as_the_link(self):
+        token = request_login_token(email=self.account.email, base_url='https://octoboxfit.com.br')
+
+        sent = mail.outbox[-1]
+        code = login_code_for_token(token.token)
+        self.assertIn(code, sent.body)
+        self.assertIn(code, sent.alternatives[0][0])
+        self.assertIn(str(token.token), sent.body)
+
+
 class PublicWorkoutLoginViewTests(TestCase):
+    def test_google_errors_have_a_message_on_the_login_screen(self):
+        for error, text in (
+            ('conta_nao_encontrada', 'Não encontramos uma conta da Curva'),
+            ('pagamento_pendente', 'ainda não foi confirmado'),
+        ):
+            from django.template.loader import render_to_string
+
+            html = render_to_string('treinos/login.html', {'error': error})
+            self.assertIn(text, html)
+
     def test_get_without_token_shows_form(self):
         response = self.client.get(reverse('public-workout-login'))
         self.assertEqual(response.status_code, 200)

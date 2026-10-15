@@ -41,7 +41,9 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # Bump 10->11: coordenadores de sincronização de carga/guia entram no HTML.
 # Bump 11->12: a retomada local e a barra com teclado precisam trocar os
 # scripts já guardados em instalações antigas, mesmo com versão estática fixa.
-PUBLIC_WORKOUT_CACHE_EPOCH = 12
+# Bump 12->13: a confirmação de e-mail por código para ativar avisos mudou
+# workout-push.js/css; o app instalado é justamente onde o aluno precisa dela.
+PUBLIC_WORKOUT_CACHE_EPOCH = 13
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
