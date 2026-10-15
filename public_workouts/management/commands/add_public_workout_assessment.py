@@ -25,6 +25,14 @@ FONTE DO %GORDURA (prioridade, da mais pra menos precisa):
 4. Nenhum dos anteriores: o relatorio cai pra estimativa por fita (US Navy),
    calculada em tempo real a partir de pescoco/cintura/quadril.
 
+SEXO E ALTURA (--sex F|M, --height cm):
+- ficam gravados na avaliacao e dao ao aluno o relatorio completo (IMC, RCQ,
+  %gordura com classificacao) — o mesmo da Franciele, que tem os dois no
+  catalogo fixo. So precisa informar na 1a vez: as avaliacoes seguintes
+  herdam o ultimo valor gravado. O catalogo, quando declara, sempre vence.
+- dobras cutaneas EXIGEM o sexo conhecido: a formula de Jackson-Pollock e
+  diferente pra homem e mulher. Antes caia na masculina sem avisar.
+
 EXEMPLO (medida por fita):
   python manage.py add_public_workout_assessment rafael --date 2026-09-06 \\
       --weight 70 --pescoco 38 --cintura 82 --peito 98 --braco 34 \\
@@ -40,6 +48,12 @@ EXEMPLO (dobras — 7 pontos, mulher):
       --braco 30.75 --coxa 51.15 --panturrilha 33.75 \\
       --dobra-triceps 20 --dobra-iliaca 13 --dobra-coxa 27 --dobra-subescapular 13 \\
       --dobra-abdomen 26 --dobra-peitoral 8 --dobra-axilar 15
+
+EXEMPLO (dobras — aluno sem sexo/altura no catalogo, 1a avaliacao):
+  python manage.py add_public_workout_assessment <slug> --date 2026-10-15 \\
+      --sex F --height 165 --weight 61 --age 31 --cintura 70 --quadril 96 \\
+      --dobra-triceps 18 --dobra-iliaca 12 --dobra-coxa 24 --dobra-subescapular 11 \\
+      --dobra-abdomen 20 --dobra-peitoral 7 --dobra-axilar 10
 """
 
 from __future__ import annotations
@@ -48,12 +62,14 @@ from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
 
-from public_workouts.formulas import (
-    Sex,
-    estimate_body_fat_jackson_pollock_3site,
-    estimate_body_fat_jackson_pollock_7site,
+from public_workouts.services import (
+    AssessmentValueError,
+    UnknownPlanSlugError,
+    build_report,
+    record_assessment,
+    resolve_assessment_profile,
+    skinfold_body_fat,
 )
-from public_workouts.services import UnknownPlanSlugError, build_report, record_assessment
 
 _MEASUREMENT_FLAGS = ('pescoco', 'cintura', 'abdomen', 'quadril', 'ombro', 'peito', 'braco', 'coxa', 'panturrilha')
 _SKINFOLD_FLAGS = ('triceps', 'subescapular', 'abdomen', 'iliaca', 'coxa', 'peitoral', 'axilar')
@@ -67,6 +83,16 @@ class Command(BaseCommand):
         parser.add_argument('--date', dest='measured_at', required=True, help='Data da avaliacao, formato AAAA-MM-DD')
         parser.add_argument('--weight', dest='weight_kg', type=float, default=None, help='Peso em kg')
         parser.add_argument('--age', dest='age', type=float, default=None, help='Idade — so usada no calculo de dobras cutaneas')
+        parser.add_argument(
+            '--sex',
+            dest='sex',
+            choices=('F', 'M'),
+            default=None,
+            help='Sexo do aluno (F/M) — obrigatorio pra dobras quando o catalogo nao declara; fica gravado',
+        )
+        parser.add_argument(
+            '--height', dest='height_cm', type=float, default=None, help='Altura em cm (IMC) — fica gravada'
+        )
         parser.add_argument(
             '--bodyfat',
             dest='body_fat_percent',
@@ -113,46 +139,28 @@ class Command(BaseCommand):
         body_fat_percent = options['body_fat_percent']
         body_fat_source = options['body_fat_source'] if body_fat_percent is not None else ''
 
-        if body_fat_percent is None and options['age']:
-            sex = plan.assessment_sex or Sex.MALE
-            septet = (
-                skinfolds.get('peitoral'),
-                skinfolds.get('axilar'),
-                skinfolds.get('triceps'),
-                skinfolds.get('subescapular'),
-                skinfolds.get('abdomen'),
-                skinfolds.get('iliaca'),
-                skinfolds.get('coxa'),
+        # Catalogo fixo vence; senao --sex/--height; senao o ultimo valor
+        # gravado nas avaliacoes anteriores deste aluno.
+        if options['sex'] and plan.assessment_sex and options['sex'] != plan.assessment_sex:
+            raise CommandError(
+                f'--sex {options["sex"]} contradiz o catalogo de {plan_slug!r} ({plan.assessment_sex}).'
             )
-            if all(v is not None for v in septet):
-                computed = estimate_body_fat_jackson_pollock_7site(
-                    sex=sex,
-                    age=options['age'],
-                    chest_mm=septet[0],
-                    midaxillary_mm=septet[1],
-                    triceps_mm=septet[2],
-                    subscapular_mm=septet[3],
-                    abdomen_mm=septet[4],
-                    suprailiac_mm=septet[5],
-                    thigh_mm=septet[6],
-                )
-                if computed is not None:
-                    body_fat_percent = computed
-                    body_fat_source = 'skinfold_jp7'
+        profile = resolve_assessment_profile(
+            plan_slug=plan_slug,
+            plan_sex=plan.assessment_sex or options['sex'],
+            plan_height_cm=plan.height_cm or options['height_cm'],
+        )
+        sex, height_cm = profile['sex'], profile['height_cm']
 
-            if body_fat_percent is None:
-                trio = (
-                    (skinfolds.get('triceps'), skinfolds.get('iliaca'), skinfolds.get('coxa'))
-                    if sex == Sex.FEMALE
-                    else (skinfolds.get('peitoral'), skinfolds.get('abdomen'), skinfolds.get('coxa'))
+        if body_fat_percent is None and options['age'] and skinfolds:
+            if not sex:
+                raise CommandError(
+                    f'Informe --sex F ou --sex M: {plan_slug!r} ainda nao tem sexo registrado e a formula '
+                    'de dobras cutaneas e diferente pra homem e mulher.'
                 )
-                if all(v is not None for v in trio):
-                    computed = estimate_body_fat_jackson_pollock_3site(
-                        sex=sex, age=options['age'], fold_a_mm=trio[0], fold_b_mm=trio[1], fold_c_mm=trio[2]
-                    )
-                    if computed is not None:
-                        body_fat_percent = computed
-                        body_fat_source = 'skinfold_jp3'
+            body_fat_percent, body_fat_source = skinfold_body_fat(sex=sex, age=options['age'], skinfolds=skinfolds)
+            if body_fat_percent is None:
+                body_fat_source = ''
 
         try:
             record_assessment(
@@ -163,8 +171,10 @@ class Command(BaseCommand):
                 body_fat_source=body_fat_source,
                 measurements=measurements,
                 notes=notes,
+                sex=sex or '',
+                height_cm=height_cm,
             )
-        except UnknownPlanSlugError as exc:
+        except (UnknownPlanSlugError, AssessmentValueError) as exc:
             raise CommandError(str(exc)) from exc
 
         # Gera e grava o comentario tecnico (hero da aba Avaliacoes) uma
@@ -173,11 +183,9 @@ class Command(BaseCommand):
         # impede a avaliacao de ter sido registrada com sucesso.
         from public_workouts.assessment_hero_ai import generate_and_store_hero_commentary
 
-        hero_text = generate_and_store_hero_commentary(
-            plan_slug=plan_slug, sex=plan.assessment_sex, height_cm=plan.height_cm
-        )
+        hero_text = generate_and_store_hero_commentary(plan_slug=plan_slug, sex=sex, height_cm=height_cm)
 
-        report = build_report(plan_slug=plan_slug, sex=plan.assessment_sex, height_cm=plan.height_cm)
+        report = build_report(plan_slug=plan_slug, sex=sex, height_cm=height_cm)
 
         self.stdout.write(self.style.SUCCESS(f'Avaliacao registrada: {plan_slug} @ {measured_at.isoformat()}'))
         if hero_text:

@@ -1199,8 +1199,18 @@ class PublicWorkoutRecordAssessmentView(View):
         if not weight_kg and not measurements and not skinfolds:
             return JsonResponse({'error': 'informe weight_kg, measurements ou skinfolds'}, status=400)
 
-        from public_workouts.services import AssessmentValueError, has_presencial_skinfold_assessment, record_assessment
+        from public_workouts.services import (
+            AssessmentValueError,
+            has_presencial_skinfold_assessment,
+            record_assessment,
+            resolve_assessment_profile,
+        )
 
+        # Sexo/altura do aluno (catalogo ou ultima avaliacao presencial): vao
+        # gravados nesta avaliacao tambem, pra o relatorio continuar completo.
+        profile = resolve_assessment_profile(
+            plan_slug=plan.slug, plan_sex=plan.assessment_sex, plan_height_cm=plan.height_cm
+        )
         body_fat_kwargs = {}
         notes = payload.get('notes', '')
         if skinfolds is not None:
@@ -1227,11 +1237,23 @@ class PublicWorkoutRecordAssessmentView(View):
                 return JsonResponse({'error': 'age e as dobras precisam ser numeros'}, status=400)
             if age_value <= 0 or any(v <= 0 for v in fold_values.values()):
                 return JsonResponse({'error': 'age e as dobras devem ser numeros positivos'}, status=400)
+            # A formula muda com o sexo; antes caia na masculina sem avisar.
+            # A avaliacao presencial (que libera esta secao) registra o sexo.
+            if not profile['sex']:
+                return JsonResponse(
+                    {
+                        'error': (
+                            'sexo ainda nao registrado — peca ao treinador para completar '
+                            'sua avaliacao presencial antes de lancar dobras'
+                        )
+                    },
+                    status=409,
+                )
 
-            from public_workouts.formulas import Sex, estimate_body_fat_jackson_pollock_7site
+            from public_workouts.formulas import estimate_body_fat_jackson_pollock_7site
 
             computed_bf = estimate_body_fat_jackson_pollock_7site(
-                sex=plan.assessment_sex or Sex.MALE,
+                sex=profile['sex'],
                 age=age_value,
                 chest_mm=fold_values['peitoral'],
                 midaxillary_mm=fold_values['axilar'],
@@ -1257,6 +1279,8 @@ class PublicWorkoutRecordAssessmentView(View):
                 weight_kg=_decimal_or_none(weight_kg),
                 measurements=measurements,
                 notes=notes,
+                sex=profile['sex'] or '',
+                height_cm=profile['height_cm'],
                 **body_fat_kwargs,
             )
         except (AssessmentValueError, ValueError) as exc:

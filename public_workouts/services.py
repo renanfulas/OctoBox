@@ -30,6 +30,7 @@ PONTOS CRITICOS:
 from __future__ import annotations
 
 import logging
+import re
 from datetime import date
 from decimal import Decimal
 
@@ -41,11 +42,14 @@ from django.utils import timezone
 
 from .catalog import PUBLIC_WORKOUT_LIBRARY
 from .formulas import (
+    Sex,
     classify_bmi,
     classify_body_fat,
     classify_whr,
     compute_bmi,
     compute_whr,
+    estimate_body_fat_jackson_pollock_3site,
+    estimate_body_fat_jackson_pollock_7site,
     estimate_body_fat_navy,
 )
 
@@ -107,10 +111,16 @@ def record_assessment(
     body_fat_source: str = '',
     measurements: dict | None = None,
     notes: str = '',
+    sex: str = '',
+    height_cm=None,
 ) -> dict:
     _validate_plan_slug(plan_slug)
     if weight_kg is not None and weight_kg <= 0:
         raise AssessmentValueError(f'weight_kg deve ser positivo: {weight_kg!r}')
+    if sex and sex not in _VALID_SEXES:
+        raise AssessmentValueError(f"sex deve ser 'F' ou 'M': {sex!r}")
+    if height_cm is not None and not 0 < height_cm < 300:
+        raise AssessmentValueError(f'height_cm fora da faixa: {height_cm!r}')
     # Mesma normalizacao de record_load (performed_on) — .objects.create()
     # NAO converte string pra date no atributo em memoria (so' na escrita
     # SQL); sem isso, _serialize() abaixo quebra em .isoformat() quando o
@@ -125,6 +135,8 @@ def record_assessment(
         body_fat_source=body_fat_source,
         measurements=measurements or {},
         notes=notes,
+        sex=sex or '',
+        height_cm=height_cm,
     )
     return _serialize(assessment)
 
@@ -134,6 +146,79 @@ def list_assessments(*, plan_slug: str):
 
 
 _PRESENCIAL_SKINFOLD_SOURCES = ('skinfold_jp7', 'skinfold_jp3')
+_VALID_SEXES = (Sex.FEMALE, Sex.MALE)
+SKINFOLD_KEYS = ('peitoral', 'axilar', 'triceps', 'subescapular', 'abdomen', 'iliaca', 'coxa')
+
+
+def assessment_profile(assessments) -> dict:
+    """Sexo e altura mais recentes gravados nas avaliacoes (lista em ordem de
+    `measured_at`). Cada campo e resolvido sozinho: a ultima avaliacao pode
+    ter so o sexo e uma anterior, a altura."""
+    sex, height_cm = '', None
+    for assessment in reversed(assessments):
+        if not sex and assessment.sex:
+            sex = assessment.sex
+        if height_cm is None and assessment.height_cm is not None:
+            height_cm = _num(assessment.height_cm)
+        if sex and height_cm is not None:
+            break
+    return {'sex': sex or None, 'height_cm': height_cm}
+
+
+def resolve_assessment_profile(*, plan_slug: str, plan_sex: str | None, plan_height_cm) -> dict:
+    """Sexo/altura que valem pra este aluno: o catalogo fixo vence (hoje so
+    Franciele e Rafael), senao o que ficou gravado na avaliacao mais recente."""
+    stored = assessment_profile(list_assessments(plan_slug=plan_slug))
+    return {
+        'sex': plan_sex or stored['sex'],
+        'height_cm': _num(plan_height_cm) if plan_height_cm else stored['height_cm'],
+    }
+
+
+_SKINFOLD_NOTE_RE = re.compile(r'Dobras \(mm\):\s*([^\n]+)')
+_SKINFOLD_VALUE_RE = re.compile(r'([a-z]+)=(\d+(?:\.\d+)?)')
+
+
+def parse_skinfold_note(notes: str) -> dict:
+    """Dobras gravadas no texto da avaliacao — "Dobras (mm): triceps=20.0, ...",
+    formato escrito tanto pelo comando presencial quanto pela autoavaliacao
+    (as dobras nunca tiveram coluna propria)."""
+    match = _SKINFOLD_NOTE_RE.search(notes or '')
+    if not match:
+        return {}
+    return {key: float(value) for key, value in _SKINFOLD_VALUE_RE.findall(match.group(1))}
+
+
+def skinfold_body_fat(*, sex: str, age: float, skinfolds: dict) -> tuple[float | None, str]:
+    """%gordura por dobras cutaneas: 7 pontos de Jackson-Pollock quando as 7
+    estao presentes (mais preciso), senao os 3 pontos do sexo (triceps/
+    iliaca/coxa na mulher, peitoral/abdomen/coxa no homem). `(None, '')` sem
+    dobras suficientes ou com resultado fora da faixa fisiologica."""
+    septet = tuple(skinfolds.get(key) for key in SKINFOLD_KEYS)
+    if all(value is not None for value in septet):
+        body_fat = estimate_body_fat_jackson_pollock_7site(
+            sex=sex,
+            age=age,
+            chest_mm=septet[0],
+            midaxillary_mm=septet[1],
+            triceps_mm=septet[2],
+            subscapular_mm=septet[3],
+            abdomen_mm=septet[4],
+            suprailiac_mm=septet[5],
+            thigh_mm=septet[6],
+        )
+        if body_fat is not None:
+            return body_fat, 'skinfold_jp7'
+
+    trio_keys = ('triceps', 'iliaca', 'coxa') if sex == Sex.FEMALE else ('peitoral', 'abdomen', 'coxa')
+    trio = tuple(skinfolds.get(key) for key in trio_keys)
+    if all(value is not None for value in trio):
+        body_fat = estimate_body_fat_jackson_pollock_3site(
+            sex=sex, age=age, fold_a_mm=trio[0], fold_b_mm=trio[1], fold_c_mm=trio[2]
+        )
+        if body_fat is not None:
+            return body_fat, 'skinfold_jp3'
+    return None, ''
 
 
 def has_presencial_skinfold_assessment(*, plan_slug: str) -> bool:
@@ -176,8 +261,10 @@ def _delta(first: float | None, last: float | None) -> float | None:
 def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) -> dict:
     """Monta o payload completo consumido pela aba Avaliacoes e pelo relatorio.
 
-    `sex`/`height_cm` vem da config do plano (PublicWorkoutPlan), nao do
-    banco — sao constantes do aluno, nao variam por avaliacao.
+    `sex`/`height_cm` vem da config do plano (PublicWorkoutPlan) quando ela
+    declara; senao, do que ficou gravado na avaliacao mais recente
+    (`assessment_profile`) — e o que da o relatorio completo (IMC, RCQ,
+    %gordura) a todo aluno avaliado por dobras, nao so aos do catalogo.
     """
     assessments = list_assessments(plan_slug=plan_slug)
     serialized = [_serialize(a) for a in assessments]
@@ -193,6 +280,9 @@ def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) ->
         }
 
     first, last = assessments[0], assessments[-1]
+    profile = assessment_profile(assessments)
+    sex = sex or profile['sex']
+    height_cm = height_cm or profile['height_cm']
 
     measurement_keys = sorted({key for a in assessments for key in a.measurements})
     measurement_deltas = {}
