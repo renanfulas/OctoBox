@@ -30,4 +30,8 @@ paths = [
   # acima precisa de um padrao proprio aqui pra cobrir qualquer test_*.py
   # futuro do mesmo jeito, sem editar este arquivo de novo a cada PR.
   '''(^|[\\/])public_workouts[\\/]test_[^/\\\\]*\.py$''',
+  # Evals de skills (.claude/skills/<skill>/evals/) colam chaves falsas de
+  # proposito (ex.: 'sk_live_123abc') para testar que o agente recusa usar
+  # segredo colado no chat — fixture de avaliacao, nao credencial real.
+  '''(^|[\\/])\.claude[\\/]skills[\\/][^/\\\\]+[\\/]evals[\\/].*$''',
 ]
