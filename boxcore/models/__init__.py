@@ -45,6 +45,7 @@ from .operations import (
     LeadImportProcessingMode,
     LeadImportSourceType,
     SessionStatus,
+    WorkoutProgram,
 )
 from .students import HealthIssueStatus, Student, StudentGender, StudentStatus
 
@@ -72,6 +73,7 @@ __all__ = [
     'PaymentMethod',
     'PaymentStatus',
     'SessionStatus',
+    'WorkoutProgram',
     'Student',
     'StudentGender',
     'HealthIssueStatus',

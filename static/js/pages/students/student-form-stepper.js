@@ -183,11 +183,13 @@ async function generatePaymentLink(paymentId) {
 
     btn.disabled = true;
 
+    btn.removeAttribute('title');
+
     try {
         const response = await fetch(`/api/v1/finance/payment-link/${paymentId}/`);
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
 
-        if (data.url) {
+        if (response.ok && data.url) {
             await navigator.clipboard.writeText(data.url);
             if (label) {
                 label.textContent = 'Link copiado!';
@@ -204,10 +206,17 @@ async function generatePaymentLink(paymentId) {
                 btn.disabled = false;
             }, 3000);
         } else {
-            throw new Error('URL nao encontrada');
+            // A API ja devolve uma mensagem de negocio pronta pro usuario final
+            // (pagamento ja quitado, muitas tentativas, gateway fora do ar) —
+            // deixamos ela acessivel no title em vez de so dizer "Erro".
+            throw new Error(data.error || 'Nao foi possivel gerar o link agora.');
         }
     } catch (err) {
         console.error('Erro ao gerar link:', err);
+        // title fica disponivel no hover (desktop); em touch o operador ainda
+        // ve o motivo no toast/mensagem que a proxima acao (recarregar a lista)
+        // dispara, mas o rotulo curto evita quebrar o layout do botao.
+        btn.title = err.message || 'Nao foi possivel gerar o link agora. Tente de novo.';
         if (label) {
             label.textContent = 'Erro';
         } else {
@@ -219,7 +228,8 @@ async function generatePaymentLink(paymentId) {
             } else {
                 btn.textContent = originalText;
             }
+            btn.removeAttribute('title');
             btn.disabled = false;
-        }, 3000);
+        }, 4500);
     }
 }

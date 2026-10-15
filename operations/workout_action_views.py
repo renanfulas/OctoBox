@@ -192,6 +192,14 @@ class WorkoutOperationalMemoryCreateView(OperationBaseView, View):
 class WorkoutWeeklyCheckpointUpdateView(OperationBaseView, View):
     allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
 
+    def get(self, request, *args, **kwargs):
+        # Esta view so existe para o POST do formulario de checkpoint semanal.
+        # Sem este get(), um F5, um "voltar" do navegador ou um link salvo
+        # crashava com 500 (ImproperlyConfigured: TemplateResponseMixin
+        # requires 'template_name') em vez de simplesmente levar de volta
+        # para onde o checkpoint e preenchido.
+        return _redirect_to_workout_surface(request)
+
     def post(self, request, *args, **kwargs):
         with wod_action_timer(request, action='weekly_checkpoint'):
             form = WorkoutWeeklyCheckpointForm(request.POST)

@@ -6,7 +6,7 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. traduz status de convite, membership e entregas para texto e tom visual.
-2. monta a leitura pronta do link em massa ativo.
+2. monta a leitura pronta do link do grupo ativo.
 3. encapsula pequenas heuristicas de apresentacao para a tela operacional.
 """
 
@@ -172,7 +172,7 @@ class StudentInvitationOperationsPresenter:
 
     def build_stalled_reason_label(self, delivery) -> str:
         if delivery is None:
-            return 'Sem handoff de WhatsApp ainda.'
+            return 'Nenhuma mensagem de WhatsApp enviada ainda.'
         mapping = {
             StudentInvitationDeliveryStatus.BOUNCED: 'E-mail devolvido. Falta enviar mensagem no WhatsApp.',
             StudentInvitationDeliveryStatus.COMPLAINED: 'Aluno reclamou do e-mail. Falta seguir pelo WhatsApp.',
@@ -235,23 +235,23 @@ class StudentInvitationOperationsPresenter:
         if invitation.is_expired:
             return 'Gere um novo convite antes de reenviar.'
         if not invitation.invited_email:
-            return 'Use Enviar mensagem no WhatsApp. Quando o aluno entrar, o e-mail dele sincroniza com o cadastro.'
+            return 'Use Enviar por WhatsApp. Quando o aluno entrar, o e-mail dele sincroniza com o cadastro.'
         if delivery is None:
-            return 'Se quiser acelerar, use Enviar mensagem no WhatsApp com o link pronto.'
+            return 'Se quiser acelerar, use Enviar por WhatsApp com o link pronto.'
         if delivery.status == StudentInvitationDeliveryStatus.DELIVERED:
             return 'E-mail entregue. Se o aluno não responder, acompanhe pelo WhatsApp.'
         if delivery.status == StudentInvitationDeliveryStatus.DELAYED:
-            return 'E-mail atrasado. Para acelerar, use Enviar mensagem no WhatsApp.'
+            return 'E-mail atrasado. Para acelerar, use Enviar por WhatsApp.'
         if delivery.status == StudentInvitationDeliveryStatus.BOUNCED:
-            return 'Bounce detectado. Use Enviar mensagem no WhatsApp com o link do convite.'
+            return 'Bounce detectado. Use Enviar por WhatsApp com o link do convite.'
         if delivery.status == StudentInvitationDeliveryStatus.COMPLAINED:
-            return 'Complaint detectado. Não reenvie por e-mail; use Enviar mensagem no WhatsApp.'
+            return 'Complaint detectado. Não reenvie por e-mail; use Enviar por WhatsApp.'
         if delivery.status == StudentInvitationDeliveryStatus.SUPPRESSED:
-            return 'Endereco suprimido pelo provedor. Use Enviar mensagem no WhatsApp para seguir com o convite.'
+            return 'Endereco suprimido pelo provedor. Use Enviar por WhatsApp para seguir com o convite.'
         if delivery.status == StudentInvitationDeliveryStatus.FAILED:
-            return 'Falha transacional. Se precisar destravar agora, use Enviar mensagem no WhatsApp.'
+            return 'Falha transacional. Se precisar destravar agora, use Enviar por WhatsApp.'
         if delivery.status == StudentInvitationDeliveryStatus.SENT:
-            return 'E-mail em rota. Se quiser acelerar, use Enviar mensagem no WhatsApp.'
+            return 'E-mail em rota. Se quiser acelerar, use Enviar por WhatsApp.'
         return 'Revise o status antes de escolher o próximo canal.'
 
     def build_email_action_recommendation_tone(self, *, invitation, delivery) -> str:
@@ -279,8 +279,8 @@ class StudentInvitationOperationsPresenter:
 
     def build_empty_journey_copy(self, *, journey: str) -> str:
         copy_by_journey = {
-            StudentOnboardingJourney.MASS_BOX_INVITE: 'Copie o link em massa e publique no grupo oficial do box com uma chamada curta para entrar com Google ou Apple.',
+            StudentOnboardingJourney.MASS_BOX_INVITE: 'Copie o link do grupo e publique no grupo oficial do box com uma chamada curta para entrar com Google ou Apple.',
             StudentOnboardingJourney.IMPORTED_LEAD_INVITE: 'A recepção pode começar pelos leads mais quentes usando o botão de 1 clique no WhatsApp.',
-            StudentOnboardingJourney.REGISTERED_STUDENT_INVITE: 'Escolha alguns alunos já cadastrados e dispare convites diretos para abrir este corredor.',
+            StudentOnboardingJourney.REGISTERED_STUDENT_INVITE: 'Escolha alguns alunos já cadastrados e dispare convites diretos para começar este tipo de convite.',
         }
-        return copy_by_journey.get(journey, 'Comece gerando volume neste corredor para o painel aprender.')
+        return copy_by_journey.get(journey, 'Comece gerando volume neste tipo de convite para o painel aprender.')

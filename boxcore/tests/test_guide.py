@@ -276,7 +276,7 @@ class GuideViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Convites operacionais prontos.')
-        self.assertContains(response, 'Gerar convite do app do aluno')
+        self.assertContains(response, 'Gerar convite individual')
         self.assertContains(
             response,
             admin_changelist_url('student_identity', 'studentappinvitation'),
@@ -436,9 +436,9 @@ class GuideViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Bounce')
-        self.assertContains(response, 'Bounce detectado. Use Enviar mensagem no WhatsApp com o link do convite.')
+        self.assertContains(response, 'Bounce detectado. Use Enviar por WhatsApp com o link do convite.')
         self.assertNotContains(response, 'Enviar e-mail')
-        self.assertContains(response, 'Enviar mensagem')
+        self.assertContains(response, 'Enviar por WhatsApp')
 
     def test_student_invitation_operations_shows_complaint_recommendation(self):
         self.client.force_login(self.user)
@@ -467,7 +467,7 @@ class GuideViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Complaint')
-        self.assertContains(response, 'Complaint detectado. Não reenvie por e-mail; use Enviar mensagem no WhatsApp.')
+        self.assertContains(response, 'Complaint detectado. Não reenvie por e-mail; use Enviar por WhatsApp.')
         self.assertNotContains(response, 'Enviar e-mail')
 
     def test_student_invitation_operations_shows_whatsapp_handoff_status(self):

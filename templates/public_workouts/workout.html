@@ -1,0 +1,754 @@
+{% load static l10n public_workouts_extras %}<!DOCTYPE html>
+<!--
+ARQUIVO: prototipo do "template unico" (Onda B3 do CORDA — fundacao visual).
+
+POR QUE ELE EXISTE:
+- renderiza QUALQUER payload valido pelo contrato de public_workouts/schema.py
+  usando os primitives compartilhados do design system (.student-card,
+  .student-status-badge, tables.css, interactive-tabs.css) em vez dos 8 CSS
+  por-plano que a Onda B3 real vai apagar. Nao depende de dado publicado de
+  verdade (Onda A2) pra existir: os testes renderizam contra o payload de
+  exemplo (public_workouts/schema.py::build_example_payload).
+- Estrutura de 5 telas (Inicio/Avaliacao/Treino/Cargas/Perfil) pedida pelo
+  Renan pra aproximar o layout do app do aluno de box -- REIMPLEMENTADA do
+  zero aqui (topbar, semana, nav), nunca importando os templates/CSS do
+  student_app (ver PONTOS CRITICOS). So os TOKENS de cor (--theme-*, ja
+  usados no resto deste arquivo) sao compartilhados.
+
+PONTOS CRITICOS:
+- E servido por `PublicWorkoutDetailView` para programas ativos e pelo
+  preview de desenvolvimento. Manifest, prompt de instalacao e script de
+  registro do service worker fazem parte deste template.
+- NAO estende templates/public_workouts/_base.html (a base legada, com o
+  sistema --accent por-plano) nem templates/student_app/layout.html (acopla
+  tenant via {% load student_shell %} no sidebar/topbar — D.3 diz que
+  templates/student_app/** e so leitura pra este produto).
+- Resumo do programa (tela Inicio) e TEXTO DETERMINISTICO
+  (dashboard.py::build_program_summary), sem chamada de IA — decisao do
+  Renan: monta o espaco pronto pra plugar Haiku depois sem custo de API
+  nem decisao de cache nesta entrega.
+- "Sua semana" usa `day_id` como abreviacao real do dia (seg/ter/qua/...) —
+  e assim que o parser da Onda A2 sempre gerou os 10 programas reais,
+  nao precisa de selecao manual de dia da semana.
+- Avaliacao/Cargas/Perfil sao paineis de NIVEL SUPERIOR (bottom nav), Treino
+  mantem os sub-tabs de dia por dentro (dois `.interactive-tab-container`
+  aninhados — CSS existente ja escopa por filho direto, script de tabs foi
+  generalizado pra nao cruzar os dois niveis, ver <script> no fim).
+- `custom_checkout_available`/`student_name`/`account_email` sao contexto OPCIONAL
+  (None-safe) — nenhuma view real os alimenta ainda, mesmo estagio de
+  "fundacao, nao ligado a URL" do resto deste arquivo. Avaliacao NAO usa
+  contexto Django nenhum -- e' 100% client-side via assessments.js (fetch
+  de avaliacoes.json), igual aos 10 templates legados.
+- Reconciliado nesta sessao com um SEGUNDO redesign concorrente (chips de
+  fase Feeder/Top/AMRAP + glossario inline, `reps_phases`/`glossary_highlight`)
+  que chegou em cima do primeiro — a legenda em balao/`highlight_set_stages`
+  desta sessao foi DESCARTADA em favor da versao deles (mais completa, ja
+  validada pelo Renan). O que sobrevive desta sessao: nome PT-BR do
+  exercicio (`movement_labels`/`resolve_movement_display_name`), stepper
+  ±2,5kg + dica de ultima carga no widget de registro de carga, secao
+  "Seus recordes" no topo do painel Cargas.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<!-- WebKit #237961: viewport-fit=cover pode deslocar elementos fixed no PWA instalado. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ program.program_label }}</title>
+<meta name="theme-color" content="#0A0E1A">
+<link rel="manifest" href="{% url 'public-workout-manifest' plan_slug=plan_slug %}">
+<link rel="stylesheet" href="{% static 'css/student_app/app.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/design-system/components/tables.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/design-system/components/interactive-tabs.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/design-system/neon.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/assessments.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-shell.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/onboarding.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-loads.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-program-extras.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-nutrition.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-training.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-progress.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-assessment.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-guided.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-guided-focus.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-push.css' %}?v={{ asset_version }}">
+</head>
+<body data-plan-slug="{{ plan_slug }}" data-account-scope="{{ guided_account_scope }}" data-theme="dark"{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
+<script>
+  try {
+    if (localStorage.getItem('octobox-theme') === 'light') document.body.dataset.theme = 'light';
+  } catch (error) {}
+</script>
+<main class="workout-shell">
+
+  <header class="workout-topbar">
+    <div class="workout-topbar-main">
+      <span class="workout-avatar" aria-hidden="true">{% if student_photo_url %}<img src="{{ student_photo_url }}" alt="" width="42" height="42" loading="lazy">{% else %}{{ student_name|initial }}{% endif %}</span>
+      <div class="workout-topbar-identity">
+        <span class="workout-topbar-brand">CURVA <span aria-hidden="true">/</span> SEU ESPAÇO</span>
+        <strong class="workout-topbar-greeting">{% workout_greeting student_name %}</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="interactive-tab-container" data-default-panel="workout-panel-inicio">
+
+    <section id="workout-panel-inicio" class="is-tab-active" data-workout-tab-panel>
+      <aside class="workout-install-prompt" data-workout-install hidden>
+        <span data-workout-install-copy></span>
+        <button type="button" data-workout-install-button>Instalar app</button>
+      </aside>
+      {% program_summary program as summary %}
+      <article class="student-card workout-summary-card workout-home-hero">
+        <div class="workout-home-hero__meta">
+          <span class="workout-home-hero__eyebrow"><span aria-hidden="true"></span> SEU ESPAÇO DE TREINO</span>
+          <span class="workout-home-hero__duration">{{ program.weeks }} SEMANAS</span>
+        </div>
+        <h1>Seu treino.<br><em>Em movimento.</em></h1>
+        <p>{{ summary.body }}</p>
+        <div class="workout-home-hero__footer">
+          <button type="button" class="workout-home-hero__cta" data-workout-jump-panel="workout-panel-treino">Abrir meu treino <span aria-hidden="true">↗</span></button>
+          <span class="workout-home-hero__caption">{{ summary.headline }}</span>
+        </div>
+      </article>
+
+      <article
+        class="student-card card-decor-topstripe workout-weekly-review-hero"
+        data-workout-weekly-review
+        data-weekly-review-url="{% url 'public-workout-weekly-review' plan_slug=plan_slug %}"
+        data-workout-weekly-review-silent-empty
+        hidden
+      >
+        <span class="workout-weekly-review-hero__eyebrow">Revisão da semana</span>
+        <p class="workout-weekly-review__text" data-workout-weekly-review-text hidden></p>
+      </article>
+
+      {% week_overview program load_history as week_days %}
+      <section class="workout-week-strip" aria-label="Sua semana">
+        <div class="workout-week-strip__head">
+          <span class="workout-week-strip__title">
+            <svg class="workout-week-strip__flame" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2c.4 3.2-1.6 4.8-3 6.2C7.4 9.8 6 11.4 6 14a6 6 0 0 0 12 0c0-2.2-1-3.8-2-5-.4 1-1 1.6-1.8 1.8.6-2.2-.4-4.6-2.2-5.8z"/>
+            </svg>
+            Sua semana
+          </span>
+          {% week_streak_label week_days as streak %}
+          {% if streak %}<span class="workout-week-strip__score">{{ streak }}</span>{% endif %}
+        </div>
+        <div class="workout-week-strip__track">
+          {% for day in week_days %}
+          {% if day.has_program %}
+          <button
+            type="button"
+            class="workout-week-day{% if day.is_today %} is-today{% endif %}{% if day.is_complete %} is-complete{% endif %}"
+            data-workout-jump-panel="workout-panel-treino"
+            data-workout-jump-day="workout-tab-{{ day.day_id }}"
+            title="Ver treino de {{ day.label }}{% if day.is_complete %} · carga registrada{% endif %}"
+          >{{ day.label }}</button>
+          {% else %}
+          <span class="workout-week-day is-rest" title="Descanso">{{ day.label }}</span>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+      {% include 'public_workouts/partials/_push_prompt.html' %}
+    </section>
+
+    <section id="workout-panel-avaliacao" class="workout-assessment-panel" data-workout-tab-panel>
+      <!-- Conteudo 100% montado por assessments.js (silhueta SVG, gauges de
+           IMC/RCQ/%gordura com bola+gradiente, grafico de peso, timeline,
+           formulario de lancamento) -- mesmo script/CSS ja usado nos 10
+           templates legados (student_app/tests.py ja cobre o comportamento
+           deles). mountPanel() detecta este id e monta aqui em vez de criar
+           um `.tabs`-based #tab-avaliacoes novo (ver assessments.js). -->
+    </section>
+
+    <!-- So' alcancado pelo ciclo do botao "Avaliacao" do bottom nav (mesmo
+         padrao do ciclo Treino/Cardio/Periodizacao acima) -- por isso NAO
+         tem <button> proprio fixo na nav logo abaixo, so' esta section. -->
+    <section id="workout-panel-dieta" data-workout-tab-panel>
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Nutrição</h2>
+        {% if nutrition_unlocked %}
+        <div
+          data-workout-nutrition
+          data-nutrition-url="{% url 'public-workout-meal-plan' plan_slug=plan_slug %}"
+        >
+          <span class="workout-nutrition__status" data-workout-nutrition-status aria-live="polite">Carregando…</span>
+          <div class="workout-nutrition__content" data-workout-nutrition-content hidden></div>
+        </div>
+        {% else %}
+        <p>Disponível nos planos Completo e Premium. Fale com o Renan para fazer upgrade.</p>
+        {% endif %}
+      </article>
+    </section>
+
+    <section id="workout-panel-treino" data-workout-tab-panel>
+      <header class="workout-training-heading">
+        <span class="workout-training-heading__eyebrow">SEU PROGRAMA <span aria-hidden="true">/</span> {{ program.weeks }} SEMANAS</span>
+        <h1>Hora de treinar<span aria-hidden="true">.</span></h1>
+        <p>Escolha o dia, veja a prescrição e registre sua evolução.</p>
+      </header>
+      <aside class="workout-load-sync-notice" data-workout-load-sync-notice role="alert" hidden>
+        <strong>Uma carga precisa da sua decisão</strong>
+        <p data-load-sync-conflict-message></p>
+        <div class="workout-load-sync-notice__actions">
+          <button type="button" data-load-sync-reapply>Reaplicar meus valores</button>
+          <button type="button" data-load-sync-export>Baixar cópia</button>
+          <button type="button" data-load-sync-discard>Usar registro do servidor</button>
+        </div>
+      </aside>
+      {% workout_day_selection program as workout_selection %}
+      {% current_period_phase program as current_phase %}
+      {% periodization_phase_banner program as phase_banner %}
+      {% if phase_banner.visible %}
+      <article class="student-card card-decor-topstripe workout-phase-banner">
+        <span class="workout-phase-banner__eyebrow">Foco geral da semana</span>
+        <strong>Semana {{ phase_banner.week_number }} de {{ phase_banner.total_weeks }} · {{ phase_banner.phase_label }}</strong>
+        <span class="workout-phase-banner__meta">{{ phase_banner.reps_min }}–{{ phase_banner.reps_max }} reps · RIR {{ phase_banner.rir_target }} · ~{{ phase_banner.pct_mid }}% RM</span>
+        <span class="workout-phase-banner__note">A prescrição de cada exercício continua sendo a referência principal.</span>
+      </article>
+      {% endif %}
+      {% if workout_selection.is_rest_day and workout_selection.next_day %}
+      <aside class="workout-rest-note" role="status">
+        <span class="workout-rest-note__eyebrow">Hoje é dia de descanso</span>
+        <span>Próximo treino: <strong>{{ workout_selection.next_day.short_label }} · {{ workout_selection.next_day.label }}</strong></span>
+      </aside>
+      {% endif %}
+      <nav class="workout-day-nav" role="tablist" aria-label="Dias do programa" data-workout-tab-nav>
+        {% for day in program.days %}
+        <button
+          type="button"
+          class="workout-day-tab{% if day.day_id == workout_selection.selected_day_id %} is-active{% endif %}"
+          data-workout-tab-target="workout-day-{{ day.day_id }}"
+          role="tab"
+          id="workout-tab-{{ day.day_id }}"
+          aria-controls="workout-day-{{ day.day_id }}"
+          aria-selected="{% if day.day_id == workout_selection.selected_day_id %}true{% else %}false{% endif %}"
+        >
+          <span class="workout-day-tab__day">{{ day.day_id|day_short }}</span>
+          <span class="workout-day-tab__keyword">{% day_workout_keyword day %}</span>
+        </button>
+        {% endfor %}
+      </nav>
+
+      {% include 'public_workouts/partials/_guided_workout.html' %}
+
+      <div class="interactive-tab-container"{% if workout_selection.selected_day_id %} data-default-panel="workout-day-{{ workout_selection.selected_day_id }}"{% endif %}>
+        {% if not program.days %}
+        <p class="workout-training-empty is-tab-active" role="status">Seu treinador ainda não publicou os dias deste programa.</p>
+        {% endif %}
+        {% for day in program.days %}
+        <section
+          class="workout-day-panel{% if day.day_id == workout_selection.selected_day_id %} is-tab-active{% endif %}"
+          id="workout-day-{{ day.day_id }}"
+          role="tabpanel"
+          aria-labelledby="workout-tab-{{ day.day_id }}"
+          data-workout-tab-panel
+        >
+          {% for block in day.blocks %}
+          <div class="workout-movement-list">
+            {% for movement in block.movements %}
+            {% movement_load_display movement program current_phase one_rep_max_by_movement progress_snapshots as load %}
+            {% guided_series movement load.value_kg one_rep_max_by_movement as guided_plan %}
+            <article class="student-card workout-movement-card{% if movement.is_tracked %} is-load-tracked{% endif %}" data-guided-series="{{ guided_plan }}" data-movement-slug="{{ movement.movement_slug }}" data-movement-label="{{ movement|movement_name:movement_labels }}" data-reference-url="{{ movement.reference_url|default:'' }}" data-rir-spec="{{ movement.rir_spec|default:'' }}" data-load-kind="{{ load.kind }}" data-allow-load-registration="{% if movement.allow_load_registration|default_if_none:True %}true{% else %}false{% endif %}">
+              <div class="workout-movement-copy">
+                {% if movement.reference_url %}
+                <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_name:movement_labels }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
+                {% else %}
+                <strong>{{ movement|movement_name:movement_labels }}</strong>
+                {% endif %}
+                {% if movement.variations %}
+                <button type="button" class="workout-movement-variation-toggle" data-workout-variation-toggle aria-controls="workout-variation-{{ day.day_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" aria-expanded="false" aria-label="Mostrar variação de {{ movement|movement_name:movement_labels }}">Ver variação</button>
+                <span id="workout-variation-{{ day.day_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="workout-movement-variation" data-workout-variation hidden>Variação:
+                  {% for variation in movement.variations %}<a href="{{ variation.reference_url }}" target="_blank" rel="noopener">{{ variation.label }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+                </span>
+                {% endif %}
+                {% with phases=movement.reps_spec|reps_phases:load.value_kg %}
+                {% if phases %}
+                <div class="workout-phase-row">
+                  {% for phase in phases %}
+                  <span class="workout-phase-chip workout-phase-chip--{{ phase.phase }}">{{ phase.text }}</span>
+                  {% endfor %}
+                </div>
+                {% if movement.rir_spec %}<span class="workout-phase-note">{{ movement.rir_spec|glossary_highlight }}</span>{% endif %}
+                {% else %}
+                <span>
+                  {{ movement.reps_spec|glossary_highlight }}{% if movement.rir_spec %} · {{ movement.rir_spec|glossary_highlight }}{% endif %}
+                </span>
+                {% endif %}
+                {% endwith %}
+                {% if movement.is_tracked %}<span class="student-status-badge workout-tracked-chip">rastreado</span>{% endif %}
+              </div>
+              {% if movement.allow_load_registration|default_if_none:True %}
+              <div class="workout-movement-load">
+                {% if load.kind == 'fixed_kg' %}{{ load.value_kg }} kg
+                {% elif load.kind == 'percentage' %}
+                  {% if load.value_kg %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong> <span class="workout-movement-load__pct">{{ load.percentage }}% RM</span>
+                  {% else %}{{ load.percentage }}% RM{% endif %}
+                {% elif load.kind == 'phase_progressive' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong> <span class="workout-movement-load__pct">{{ load.percentage }}% RM</span>
+                {% elif load.kind == 'rir_estimate' %}<strong class="workout-movement-load__kg">≈{{ load.value_kg }} kg</strong>
+                {% elif load.kind == 'last_observed' %}<strong class="workout-movement-load__kg">Referência · {{ load.value_kg }} kg</strong>
+                {% else %}<strong class="workout-movement-load__free">Escolha uma carga segura</strong>{% endif %}
+                {% if load.fallback_note %}<span class="workout-movement-load-hint">{{ load.fallback_note }}</span>{% elif load.show_registration_hint %}<span class="workout-movement-load-hint">Toque em registrar para acompanhar a evolução.</span>{% endif %}
+              </div>
+              <button type="button" class="workout-movement-register" data-workout-load-toggle aria-controls="workout-load-input-{{ day.day_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" aria-expanded="false">
+                <span data-workout-load-action-label>Registrar carga</span><span data-workout-load-action-icon aria-hidden="true">＋</span>
+              </button>
+              {% endif %}
+            </article>
+            {% if movement.allow_load_registration|default_if_none:True %}
+            {% todays_load_entry load_history movement.movement_slug "top_set" as today_top_entry %}
+            {% todays_load_entry load_history movement.movement_slug "warmup" as today_warmup_entry %}
+            {% todays_default_load_entry load_history movement.movement_slug as today_entry %}
+            {% include 'public_workouts/partials/_load_widget.html' %}
+            {% endif %}
+            {% empty %}
+            <p class="table-empty-cell">Nenhum movimento neste bloco.</p>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </section>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Cardio/Periodizacao (Onda A2, fatia cardio/periodizacao) -- so'
+         existem se o HTML legado original tinha essas abas (parser.py::
+         parse_cardio_tab/parse_periodization_tab, formato de aba dedicada,
+         nao o cardio embutido por dia). Alcancadas so' pelo ciclo do botao
+         "Treino" do bottom nav (item pedido pelo Renan), nunca tem icone
+         proprio fixo -- por isso NAO tem <button> correspondente na nav
+         logo abaixo, so' esta section. -->
+    <section id="workout-panel-cardio" data-workout-tab-panel>
+      {% if program.cardio %}
+      <div class="workout-movement-list">
+        {% for session in program.cardio.sessions %}
+        <article class="student-card card-decor-topstripe workout-cardio-card">
+          <div class="workout-cardio-card__head">
+            <strong>{{ session.title }}</strong>
+            {% if session.badge %}<span class="student-status-badge workout-cardio-badge">{{ session.badge }}</span>{% endif %}
+          </div>
+          {% if session.details %}
+          <dl class="workout-cardio-details">
+            {% for detail in session.details %}
+            <div class="workout-cardio-detail"><dt>{{ detail.label }}</dt><dd>{{ detail.value }}</dd></div>
+            {% endfor %}
+          </dl>
+          {% endif %}
+          {% if session.note %}<p class="workout-cardio-note">{{ session.note }}</p>{% endif %}
+        </article>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    <section id="workout-panel-periodizacao" data-workout-tab-panel>
+      {% if program.periodization %}
+      {% with chart_points=program.periodization|periodization_chart_points current_week=program|current_period_week_number %}
+      {% if chart_points %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Progressão do mesociclo</h2>
+        <div class="workout-period-chart">
+          {% for point in chart_points %}
+          <div class="workout-period-chart__col{% if point.week_number and point.week_number == current_week %} workout-period-chart__col--current{% endif %}">
+            <div class="workout-period-chart__bar-wrap">
+              <span class="workout-period-chart__reps" style="color:{{ point.fg }}">{{ point.reps }}</span>
+              <div class="workout-period-chart__bar" style="height:{{ point.h }}%;background:{{ point.color }}"></div>
+            </div>
+            <span class="workout-period-chart__focus" style="background:{{ point.bg }};color:{{ point.fg }}">{{ point.focus }}</span>
+            <span class="workout-period-chart__label">{{ point.label }}{% if point.week_number and point.week_number == current_week %} · agora{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </article>
+      {% endif %}
+      {% endwith %}
+
+      {% if program.periodization.weeks_table %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Semana a semana</h2>
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Semana</th><th scope="col">Foco</th><th scope="col">Reps</th><th scope="col">Diretriz de carga</th></tr>
+            </thead>
+            <tbody>
+              {% for row in program.periodization.weeks_table %}
+              <tr><td>{{ row.week }}</td><td>{{ row.focus }}</td><td>{{ row.reps }}</td><td>{{ row.guidance }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      {% endif %}
+      {% if program.periodization.note %}<p class="workout-period-note">{{ program.periodization.note }}</p>{% endif %}
+
+      {% if program.periodization.volume_table %}
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Volume por grupo muscular</h2>
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Grupo muscular</th><th scope="col">Séries/sem</th><th scope="col">Frequência</th><th scope="col">Onde</th></tr>
+            </thead>
+            <tbody>
+              {% for row in program.periodization.volume_table %}
+              <tr><td>{{ row.muscle_group }}</td><td>{{ row.sets_per_week }}</td><td>{{ row.frequency }}</td><td>{{ row.where }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+      {% endif %}
+      {% endif %}
+    </section>
+
+    <section id="workout-panel-cargas" data-workout-tab-panel>
+      <header class="workout-progress-heading">
+        <span class="workout-progress-heading__eyebrow">PROGRESSO <span aria-hidden="true">/</span> SEU HISTÓRICO</span>
+        <h1>Sua evolução<span aria-hidden="true">.</span></h1>
+        <p>As cargas registradas mostram o caminho que você já percorreu.</p>
+      </header>
+      <article class="student-card card-decor-topstripe workout-block-card workout-progress-lead">
+        <h2>Evolução de carga</h2>
+        <p class="workout-load-section-intro">Acompanhe suas séries principais e compare o que aconteceu nos últimos 90 dias.</p>
+        {% regroup load_history by movement_slug as load_history_by_movement %}
+        {% for group in load_history_by_movement %}
+          {% progress_chart_for_movement group.grouper progress_snapshots as chart %}
+          <div class="workout-load-chart{% if chart.has_data %} has-data{% endif %}" data-workout-progress-card>
+            <div class="workout-load-chart-head">
+              <h3>{{ group.grouper|resolve_movement_display_name:movement_labels }}</h3>
+              {% if chart.latest_weight_kg is not None %}
+              <div class="workout-load-chart-latest">
+                <span class="workout-load-chart-latest__label">Última série principal</span>
+                <span class="workout-load-chart-current">
+                  <strong>{{ chart.latest_weight_kg }}</strong><span class="workout-load-chart-unit">kg</span>
+                </span>
+                <span class="workout-load-chart-latest__meta">
+                  {% if chart.latest_reps %}{{ chart.latest_reps }} reps{% endif %}{% if chart.latest_rir is not None %}{% if chart.latest_reps %} · {% endif %}RIR {{ chart.latest_rir }}{% endif %}{% if chart.latest_performed_on %}{% if chart.latest_reps or chart.latest_rir is not None %} · {% endif %}{{ chart.latest_performed_on|date:"d/m/Y" }}{% endif %}
+                </span>
+              </div>
+              {% endif %}
+              {% if chart.trend_signal != 'insufficient_data' %}
+              <p class="workout-load-chart-statement">
+                {% if chart.trend_signal == 'improving' %}Sua série principal está evoluindo com consistência.{% elif chart.trend_signal == 'plateau' %}Sua série principal está estável nas últimas semanas.{% elif chart.trend_signal == 'declining' %}Sua série principal pede atenção nas últimas semanas.{% endif %}
+              </p>
+              {% endif %}
+              {% with estimate=chart.one_rep_max %}
+              {% if estimate or chart.trend_signal != 'insufficient_data' %}
+              <details class="workout-load-chart-context">
+                <summary>Ver detalhes</summary>
+                {% if estimate %}<span class="workout-load-chart-1rm" title="1RM estimado — confiança {{ estimate.confidence }} ({{ estimate.effective_reps }} reps efetivas, {{ estimate.formula }})">1RM estimado: <strong>{{ estimate.value_kg }} kg</strong></span>{% endif %}
+                {% if chart.trend_signal != 'insufficient_data' %}<span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--{{ chart.trend_signal }}">{% if chart.trend_signal == 'plateau' %}Platô{% elif chart.trend_signal == 'declining' %}Em queda{% else %}Em evolução{% endif %}</span>{% endif %}
+              </details>
+              {% endif %}
+              {% endwith %}
+            </div>
+            {% if chart.latest_weight_kg is None and chart.latest_legacy_weight_kg is not None %}
+            <div class="workout-load-chart-legacy-value">
+              <span class="workout-load-chart-legacy-value__label">Último registro anterior</span>
+              <strong>{{ chart.latest_legacy_weight_kg }} <span>kg</span></strong>
+              <time datetime="{{ chart.latest_legacy_performed_on_iso }}">{{ chart.latest_legacy_date_label }}</time>
+              <span class="workout-load-chart-legacy-value__note">Sem classificação · não entra na curva comparável</span>
+            </div>
+            {% endif %}
+            {% if chart.has_data %}
+            <span class="workout-load-chart-trend workout-load-chart-trend--{{ chart.trend }}">{% if chart.delta_weight_kg > 0 %}+{% endif %}{{ chart.delta_weight_kg }} kg nos últimos 90 dias</span>
+            {% endif %}
+            {% if chart.has_chart %}
+            <svg
+              class="workout-load-chart-svg"
+              viewBox="{{ chart.viewbox }}"
+              preserveAspectRatio="none"
+              role="img"
+              aria-label="Curva de {{ group.grouper|resolve_movement_display_name:movement_labels }}. {{ chart.accessible_description }}"
+            >
+              <defs>
+                <linearGradient id="workout-load-fill-{{ forloop.counter }}" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.32" />
+                  <stop offset="100%" style="stop-color:var(--brand);stop-opacity:0" />
+                </linearGradient>
+                <linearGradient id="workout-load-stroke-{{ forloop.counter }}" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.55" />
+                  <stop offset="100%" style="stop-color:var(--brand);stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              {% localize off %}
+              {% if chart.has_data %}<polygon class="workout-load-chart-area" points="{{ chart.area_points_attr }}" fill="url(#workout-load-fill-{{ forloop.counter }})"></polygon>
+              <polyline class="workout-load-chart-line" points="{{ chart.points_attr }}" pathLength="1" stroke="url(#workout-load-stroke-{{ forloop.counter }})"></polyline>{% endif %}
+              {% for point in chart.points %}
+              {% if point.is_program_change %}
+              <line
+                class="workout-load-chart-version-line"
+                x1="{{ point.x }}" y1="0"
+                x2="{{ point.x }}" y2="{{ chart.baseline_y }}"
+              ></line>
+              {% endif %}
+              <circle class="workout-load-chart-halo" cx="{{ point.x }}" cy="{{ point.y }}" r="7"></circle>
+              <circle class="workout-load-chart-dot{% if point.is_program_change %} workout-load-chart-dot--version{% endif %}" cx="{{ point.x }}" cy="{{ point.y }}" r="3">
+                {% if point.is_program_change %}<title>Novo programa a partir daqui: {{ point.program_id }}{% if point.week_in_program %} (semana {{ point.week_in_program }}){% endif %}</title>{% endif %}
+              </circle>
+              {% endfor %}
+              {% for point in chart.legacy_points %}
+              <circle class="workout-load-chart-dot--legacy" cx="{{ point.x }}" cy="{{ point.y }}" r="3"><title>Registro anterior: {{ point.weight_kg }} kg em {{ point.label }}</title></circle>
+              {% endfor %}
+              {% for tick in chart.timeline_ticks %}<text class="workout-load-chart-label" text-anchor="{{ tick.anchor }}" x="{{ tick.x }}" y="{{ chart.label_y }}">{{ tick.label }}</text>{% endfor %}
+              <text class="workout-load-chart-scale-label" text-anchor="end" x="43" y="10">{{ chart.scale_max }} kg</text>
+              <text class="workout-load-chart-scale-label" text-anchor="end" x="43" y="{{ chart.baseline_y }}">{{ chart.scale_min }} kg</text>
+              {% endlocalize %}
+            </svg>
+            {% if chart.has_legacy_points %}<p class="workout-load-chart-legacy-label"><span aria-hidden="true">●</span> Registros anteriores, sem classificação</p>{% endif %}
+            {% endif %}
+            {% if not chart.has_data %}
+              {% if chart.session_points %}
+              <p class="workout-load-chart-empty">Você já tem uma série principal recente. Registre outra para começar a comparar sua evolução.</p>
+              {% elif chart.has_latest_top_set %}
+              <p class="workout-load-chart-empty">Sua última série principal foi registrada há mais de 90 dias. Registre novamente para retomar a curva; sua carga mais recente continua acima.</p>
+              {% elif chart.has_legacy_history %}
+              <p class="workout-load-chart-empty">Seu histórico anterior está salvo, mas ainda não é comparável. Registre uma série principal para iniciar sua curva.</p>
+              {% else %}
+              <p class="workout-load-chart-empty">Séries de aquecimento não entram na evolução. Registre sua primeira série principal para começar.</p>
+              {% endif %}
+            {% endif %}
+            {% if chart.has_session_points %}
+            <details class="workout-load-chart-sessions">
+              <summary>Ver registros recentes <span>({{ chart.session_points|length }})</span></summary>
+              <p class="workout-load-chart-sessions__note">Cada linha mostra a série principal efetiva daquele dia nos últimos 90 dias.</p>
+              <ol>
+                {% for point in chart.session_points reversed %}
+                <li>
+                  <time datetime="{{ point.performed_on|date:'Y-m-d' }}">{{ point.performed_on|date:"d/m/Y" }}</time>
+                  <strong>{{ point.weight_kg }} kg</strong>
+                  <span>{% if point.reps %}{{ point.reps }} reps{% endif %}{% if point.rir is not None %}{% if point.reps %} · {% endif %}RIR {{ point.rir }}{% endif %}</span>
+                </li>
+                {% endfor %}
+              </ol>
+            </details>
+            {% endif %}
+            {% with siblings=group.grouper|sibling_variations %}
+            {% if siblings %}
+            <details class="workout-load-chart-siblings"><summary>Ver variações</summary><p>Variação: {% for sibling in siblings %}{% if sibling.reference_url %}<a href="{{ sibling.reference_url }}" target="_blank" rel="noopener">{{ sibling.label_pt }}</a>{% else %}{{ sibling.label_pt }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p></details>
+            {% endif %}
+            {% endwith %}
+            {% share_content_for_chart chart group.grouper|resolve_movement_display_name:movement_labels as share %}
+            {% if share.text %}
+            <div class="workout-load-chart-share">
+              <button type="button" class="workout-load-chart-share-button" data-workout-share data-share-title="{{ share.title }}" data-share-text="{{ share.text }}">Compartilhar</button>
+              <span class="workout-load-chart-share-status" data-workout-share-status aria-live="polite"></span>
+            </div>
+            {% endif %}
+          </div>
+        {% empty %}
+        <p class="workout-load-chart-empty">Registre uma série principal no painel Treino para começar a acompanhar sua evolução.</p>
+        <button type="button" class="workout-progress-first-action" data-workout-jump-panel="workout-panel-treino">Abrir treino e registrar <span aria-hidden="true">↗</span></button>
+        {% endfor %}
+      </article>
+      <article class="student-card workout-block-card">
+        <h2>Seus recordes</h2>
+        {% personal_record_rows load_history movement_labels as record_rows %}
+        {% if record_rows %}
+        <div class="workout-records-grid">
+          {% for record in record_rows %}
+          <div class="workout-record-card" data-workout-record-card>
+            <span class="workout-record-card__label">{{ record.label }}</span>
+            <strong class="workout-record-card__value">{{ record.weight_kg }} <span class="workout-record-card__unit">kg</span></strong>
+            {% if record.reps %}<span class="workout-record-card__reps">{{ record.reps }} reps</span>{% endif %}
+            <span class="workout-record-card__date">Maior carga em {{ record.performed_on_label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% elif load_history %}
+        <p>Seu histórico está salvo. Séries de aquecimento e registros anteriores não contam como recorde.</p>
+        {% else %}
+        <p>Nenhuma carga registrada ainda.</p>
+        {% endif %}
+      </article>
+      <article class="student-card workout-block-card">
+        <h2>Resumo do ciclo</h2>
+        {% cycle_summary_rows progress_snapshots movement_labels as cycle_rows %}
+        {% if cycle_rows %}
+        <div class="workout-records-grid">
+          {% for row in cycle_rows %}
+          <div class="workout-record-card">
+            <span class="workout-record-card__label">{{ row.label }}</span>
+            <div class="workout-record-card__meta">
+              {% if row.trend_signal != 'insufficient_data' %}<span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--{{ row.trend_signal }}">{% if row.trend_signal == 'plateau' %}Platô{% elif row.trend_signal == 'declining' %}Em queda{% else %}Em evolução{% endif %}</span>{% else %}<span class="workout-record-card__date">Mais registros necessários para comparar</span>{% endif %}
+              {% if row.one_rep_max %}<span class="workout-record-card__date">1RM {{ row.one_rep_max.value_kg }} kg</span>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        {% if load_history %}<p>Registre uma série principal atual para começar seu resumo do ciclo.</p>{% else %}<p>Registre suas cargas pra ver o resumo deste ciclo.</p>{% endif %}
+        {% endif %}
+      </article>
+<article
+        class="student-card workout-block-card"
+        data-workout-weekly-review
+        data-weekly-review-url="{% url 'public-workout-weekly-review' plan_slug=plan_slug %}"
+      >
+        <h2>Revisão semanal</h2>
+        <p class="workout-weekly-review__text" data-workout-weekly-review-text hidden></p>
+        <button type="button" class="workout-load-input__save" data-workout-weekly-review-generate>Gerar revisão</button>
+        <span class="workout-weekly-review__status" data-workout-weekly-review-status aria-live="polite"></span>
+      </article>
+    </section>
+
+    <section id="workout-panel-perfil" data-workout-tab-panel>
+      <div class="workout-profile-header">
+        <span class="workout-avatar workout-avatar--lg" aria-hidden="true">{% if student_photo_url %}<img src="{{ student_photo_url }}" alt="" width="72" height="72" loading="lazy">{% else %}{{ student_name|initial }}{% endif %}</span>
+        {% if student_name %}<strong class="workout-profile-header__name">{{ student_name }}</strong>{% endif %}
+        {% if account_email %}<span class="workout-profile-header__email">{{ account_email }}</span>{% endif %}
+      </div>
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Conta</h2>
+        <div class="workout-profile-list">
+          <span class="workout-profile-row">
+            <span class="workout-profile-row__label">Dados pessoais</span>
+            <span>{{ account_email|default:"—" }}</span>
+          </span>
+          {% if billing_portal_available %}
+          <button type="button" class="workout-profile-row" data-billing-portal>
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span aria-hidden="true">→</span>
+          </button>
+          {% elif custom_checkout_available %}
+          <button type="button" class="workout-profile-row" data-workout-start-custom-checkout>
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span class="student-status-badge">Pagar agora</span>
+          </button>
+          {% elif payment_setup_pending %}
+          <span class="workout-profile-row">
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span class="student-status-badge">Fale com o Renan</span>
+          </span>
+          {% else %}
+          <span class="workout-profile-row">
+            <span class="workout-profile-row__label">Pagamentos</span>
+            <span class="student-status-badge">indisponível</span>
+          </span>
+          {% endif %}
+          <button type="button" class="workout-profile-row" data-ui="theme-toggle">
+            <span class="workout-profile-row__label theme-toggle-label">Tema</span>
+            <span class="theme-toggle-icon" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="workout-profile-row" data-ui="replay-onboarding">
+            <span class="workout-profile-row__label">Ver tutorial de novo</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        <span class="workout-profile-row__status" data-action-status aria-live="polite"></span>
+      </article>
+
+      {% include 'public_workouts/partials/_profile_app_settings.html' %}
+
+      <article class="student-card card-decor-topstripe workout-block-card">
+        <h2>Versões do programa</h2>
+        {% if program_versions %}
+        <div class="operation-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Versão</th>
+                <th scope="col">Programa</th>
+                <th scope="col">Início</th>
+                <th scope="col">Semanas</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for version in program_versions %}
+              <tr class="workout-version-row">
+                <td>v{{ version.version }}</td>
+                <td>{{ version.program_label }}</td>
+                <td>{{ version.started_on }}</td>
+                <td>{{ version.weeks }}</td>
+                <td>
+                  {% if version.is_active %}<span class="student-status-badge">ativa</span>
+                  {% else %}<span class="student-status-badge">inativa</span>{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p>Nenhuma versão publicada ainda.</p>
+        {% endif %}
+      </article>
+
+      <button type="button" class="workout-signout-button" data-workout-signout data-signout-url="{% url 'public-workout-signout' plan_slug=plan_slug %}">Sair da conta</button>
+    </section>
+
+  </div>
+
+</main>
+
+<nav class="workout-mobile-nav" aria-label="Navegação" data-workout-tab-nav>
+  <button type="button" class="workout-mobile-nav-link is-active" data-workout-tab-target="workout-panel-inicio">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-5.5h5V20"/></svg>
+    Início
+  </button>
+  <button
+    type="button"
+    class="workout-mobile-nav-link"
+    data-workout-cycle-nav
+    data-cycle-key="avaliacao"
+    data-cycle-targets="workout-panel-avaliacao|workout-panel-dieta"
+  >
+    <span data-cycle-icon aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-10a7 7 0 0 0-14 0c0 3.5 3 7 7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg></span>
+    <span data-cycle-label>Avaliação</span>
+  </button>
+  <button
+    type="button"
+    class="workout-mobile-nav-link"
+    data-workout-cycle-nav
+    data-cycle-key="treino"
+    data-cycle-targets="workout-panel-treino{% if program.cardio %}|workout-panel-cardio{% endif %}{% if program.periodization %}|workout-panel-periodizacao{% endif %}"
+  >
+    <span data-cycle-icon aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg></span>
+    <span data-cycle-label>Treino</span>
+  </button>
+  <button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-cargas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11 13 15 21 7"/><path d="M15 7h6v6"/></svg>
+    Cargas
+  </button>
+  <button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-perfil">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+    Perfil
+  </button>
+</nav>
+
+{% include 'public_workouts/_onboarding_wizard.html' %}
+
+{% include 'public_workouts/partials/_guided_focus.html' %}
+
+<script src="{% static 'js/public_workouts/workout-shell.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/workout-pwa.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/core/shell.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/load-storage.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/load-plate-calculator.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/load-api.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/load-sync.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/load_tracker.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/weekly_review.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/nutrition.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/assessments-report.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/assessments.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/account.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/onboarding.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-outbox.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-api.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-sync.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-timer.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-state.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-loads.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-format.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-ring.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-focus.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/workout-guided.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/workout-push.js' %}?v={{ asset_version }}" defer></script>
+</body>
+</html>

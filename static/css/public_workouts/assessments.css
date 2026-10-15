@@ -1,0 +1,198 @@
+/*
+ * ARQUIVO: estilo da aba Avaliacoes (relatorio estilo bioimpedancia).
+ *
+ * POR QUE ELE EXISTE:
+ * - reusa --accent/--accent-bg/etc (definidos em _base.html por plano) com
+ *   fallback fixo, entao funciona tanto nos planos convertidos quanto no
+ *   johnespanha (legado, sem tokens de accent proprios).
+ * - cores de classificacao (good/warning/risk) sao FIXAS (verde/ambar/
+ *   vermelho) independente do accent do aluno — sao sinal de saude, nao
+ *   de marca.
+ */
+
+/* Tema escuro (so' o template unico/workout.html tem toggle de tema —
+   as paginas legadas que tambem carregam este CSS nunca setam
+   body[data-theme="dark"], entao este bloco fica inerte la, sem risco de
+   regressao). --white/--dark/--border/--muted nunca tiveram valor de tema
+   nenhum antes (_base.html so' define --accent/--accent-bg/--accent-dark
+   por plano) -- os cards do relatorio ficavam brancos fixos com o resto da
+   pagina escuro. */
+body[data-theme="dark"] {
+  --white: var(--theme-surface-strong);
+  --dark: var(--theme-text-primary);
+  --border: var(--theme-border-soft);
+  --muted: var(--theme-text-muted);
+}
+
+.assess-wrap{display:flex;flex-direction:column;gap:16px}
+
+.assess-empty{
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:12px;
+  padding:2rem 1.25rem;text-align:center;color:var(--muted,#888);font-size:13px;line-height:1.6;
+}
+
+/* ══ TIRA DE RESUMO (IMC / RCQ / %Gordura) ══ */
+.assess-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.assess-card{
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:12px;
+  padding:.85rem 1rem;display:flex;flex-direction:column;gap:6px;
+}
+.assess-card-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#888);font-weight:700}
+.assess-card-value{font-size:21px;font-weight:700;color:var(--dark,#1a1a1a)}
+.assess-card-note{font-size:10px;color:var(--muted,#888)}
+.assess-card-delta{font-size:10.5px;font-weight:700}
+.assess-card-delta--up{color:#B91C1C}
+.assess-card-delta--down{color:#3A6F10}
+
+.assess-badge{display:inline-flex;align-self:flex-start;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px}
+.assess-badge--good{background:#EAF3DE;color:#3A6F10}
+.assess-badge--warning{background:#FEF3C7;color:#92400E}
+.assess-badge--risk{background:#FEE2E2;color:#991B1B}
+.assess-badge--neutral{background:var(--accent-bg,#ECFEFF);color:var(--accent-dark,#0E7490)}
+
+.assess-gauge{position:relative;height:6px;border-radius:99px;margin-top:2px;
+  background:linear-gradient(to right,#3A6F10 0 34%,#D97706 34% 66%,#B91C1C 66% 100%)}
+.assess-gauge-marker{
+  position:absolute;top:-3px;width:12px;height:12px;border-radius:50%;
+  background:#fff;border:3px solid var(--dark,#1a1a1a);transform:translateX(-50%);
+}
+
+/* ══ SILHUETA CENTRAL ══ */
+.assess-body{
+  background:
+    radial-gradient(120% 90% at 50% 0%, var(--accent-bg,#ECFEFF) 0%, transparent 60%),
+    var(--white,#fff);
+  border:1px solid var(--border,#e8e8e5);border-radius:16px;
+  padding:1.25rem .75rem;display:flex;justify-content:center;overflow:hidden;
+}
+.assess-silhouette{width:100%;max-width:440px;height:auto;display:block}
+
+/* Corpo: preenchimento em degradê do accent do aluno + contorno fino.
+   Antes eram 4 <line> retas (stick figure) sem preenchimento. */
+.assess-body-shape circle,
+.assess-body-shape path{
+  fill:url(#pw-body-fill);
+  stroke:var(--accent,#0891B2);stroke-width:1.4;stroke-opacity:.42;
+  stroke-linejoin:round;
+}
+
+/* Marcador: halo suave + ponto solido com anel branco, pra destacar do
+   corpo sem competir com o texto. */
+.assess-dot-halo{fill:var(--accent,#0891B2);opacity:.2}
+.assess-dot{fill:var(--accent,#0891B2);stroke:var(--white,#fff);stroke-width:2}
+.assess-dot-line{
+  fill:none;stroke:var(--accent,#0891B2);stroke-opacity:.38;
+  stroke-width:1.25;stroke-linejoin:round;stroke-linecap:round;
+}
+
+.assess-label-title{
+  font-size:8.5px;font-weight:700;fill:var(--muted,#888);
+  text-transform:uppercase;letter-spacing:.09em;
+}
+.assess-label-value{font-size:13px;font-weight:800;fill:var(--dark,#1a1a1a)}
+.assess-label-delta{font-size:9.5px;font-weight:700}
+.assess-label-delta--up{fill:#B91C1C}
+.assess-label-delta--down{fill:#3A6F10}
+
+/* Entrada escalonada: cada medida aparece em sequencia ao abrir a aba. */
+.assess-mark{animation:pw-mark-in .5s cubic-bezier(.22,.85,.3,1) both}
+@keyframes pw-mark-in{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .assess-mark{animation:none}
+}
+
+/* ══ MEDIDAS (lista acessivel, espelha a silhueta) ══ */
+.assess-measurements{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.assess-measure{
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:10px;
+  padding:.6rem .75rem;
+}
+.assess-measure-label{font-size:10px;color:var(--muted,#888);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.assess-measure-value{font-size:15px;font-weight:700}
+.assess-measure-delta{font-size:11px;font-weight:600;margin-left:4px}
+.assess-measure-delta--up{color:#B91C1C}
+.assess-measure-delta--down{color:#3A6F10}
+
+/* ══ TIMELINE ══ */
+.assess-timeline{display:flex;flex-direction:column;gap:6px}
+.assess-timeline-row{
+  display:flex;justify-content:space-between;gap:10px;padding:.6rem .85rem;
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:9px;font-size:12px;
+}
+.assess-timeline-date{font-weight:700;color:var(--dark,#1a1a1a)}
+.assess-timeline-meta{color:var(--muted,#888)}
+
+/* ══ GRAFICO DE EVOLUCAO DE PESO ══ */
+.assess-chart{background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:12px;padding:1rem}
+.assess-chart-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#888);margin-bottom:.6rem}
+.assess-chart svg{width:100%;height:120px;overflow:visible}
+.assess-chart-line{fill:none;stroke:var(--accent,#0891B2);stroke-width:2.5}
+.assess-chart-dot{fill:var(--accent,#0891B2)}
+.assess-chart-label{font-size:8.5px;fill:var(--muted,#888)}
+
+.assess-source-note{font-size:10px;color:var(--muted,#888);font-style:italic}
+
+/* ══ FORMULARIO DE AUTOAVALIACAO (escrita — POST /renan/<slug>/avaliacoes) ══
+ * Mesma logica de toque de tracker.css (.wk-input): 16px de fonte evita o
+ * zoom automatico do Safari iOS em foco, min-height 44px e alvo de toque.
+ */
+.assess-form-card{
+  background:var(--white,#fff);border:1px solid var(--border,#e8e8e5);border-radius:16px;
+  padding:1.1rem 1rem;display:flex;flex-direction:column;gap:.9rem;
+}
+.assess-form-title{font-size:14px;font-weight:800;color:var(--dark,#1a1a1a)}
+.assess-form-sub{font-size:11.5px;color:var(--muted,#888);margin-top:2px;line-height:1.5}
+
+.assess-form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.6rem}
+.assess-form-grid--secondary{margin-top:.6rem}
+
+.assess-field{display:flex;flex-direction:column;gap:4px}
+.assess-field-label{font-size:10px;font-weight:700;color:var(--muted,#888);text-transform:uppercase;letter-spacing:.05em}
+.assess-field-input-wrap{position:relative;display:flex;align-items:center}
+.assess-field-suffix{position:absolute;right:10px;font-size:11px;color:var(--muted,#888);pointer-events:none}
+
+.assess-field input,
+.assess-field textarea{
+  width:100%;border:1px solid var(--border,#e8e8e5);border-radius:9px;
+  padding:9px 10px;font-size:16px;
+  font-family:inherit;color:var(--dark,#1a1a1a);background:var(--white,#fff);
+  outline:none;-webkit-appearance:none;appearance:none;min-height:44px;
+}
+.assess-field-input-wrap input{padding-right:30px}
+.assess-field input:focus,
+.assess-field textarea:focus{border-color:var(--accent,#0891B2);box-shadow:0 0 0 2px var(--accent-bg,rgba(8,145,178,.18))}
+.assess-field textarea{min-height:60px;resize:vertical}
+.assess-field--notes{grid-column:1/-1}
+
+.assess-form-more{border-top:1px dashed var(--border,#e8e8e5);padding-top:.7rem}
+.assess-form-more summary{font-size:11.5px;font-weight:700;color:var(--accent,#0891B2);cursor:pointer;list-style:none}
+.assess-form-more summary::-webkit-details-marker{display:none}
+.assess-form-more summary::marker{content:''}
+
+.assess-form-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.assess-form-submit{
+  padding:10px 20px;min-height:44px;border-radius:9px;border:none;
+  background:var(--accent,#0891B2);color:var(--white,#fff);
+  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+  -webkit-appearance:none;appearance:none;transition:background .12s,opacity .12s;
+}
+.assess-form-submit:active{background:var(--accent-dark,#0E7490)}
+.assess-form-submit:disabled{opacity:.6;cursor:default}
+
+.assess-form-feedback{font-size:12px;font-weight:600}
+.assess-form-feedback--success{color:#3A6F10}
+.assess-form-feedback--error{color:#B91C1C}
+.assess-form-feedback a{color:inherit;text-decoration:underline}
+
+@media(max-width:600px){
+  .assess-summary{grid-template-columns:1fr}
+  .assess-form-grid{grid-template-columns:repeat(2,1fr)}
+  /* O SVG escala junto com a largura da tela, entao no celular o texto do
+     rotulo cairia pra ~6px. Como o tamanho e em unidades do viewBox, subir
+     a fonte aqui devolve legibilidade sem quebrar o layout — "PANTURRILHA"
+     a 11px ainda cabe nas 116 unidades reservadas pra coluna. */
+  .assess-body{padding:1rem .35rem}
+  .assess-label-title{font-size:11px;letter-spacing:.06em}
+  .assess-label-value{font-size:16px}
+  .assess-label-delta{font-size:12px}
+}

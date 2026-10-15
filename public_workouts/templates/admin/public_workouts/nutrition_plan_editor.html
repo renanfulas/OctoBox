@@ -1,0 +1,10 @@
+<input type="hidden" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+<div class="nutrition-editor" data-nutrition-editor data-input-id="{{ widget.attrs.id }}">
+  <div class="nutrition-editor__targets" data-nutrition-targets></div>
+  <div class="nutrition-editor__meals" data-nutrition-meals></div>
+  <button type="button" class="button" data-add-meal>+ Adicionar refeição</button>
+  <details class="nutrition-editor__technical">
+    <summary>Diagnóstico técnico do payload</summary>
+    <pre data-nutrition-preview></pre>
+  </details>
+</div>

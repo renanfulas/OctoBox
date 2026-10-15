@@ -16,6 +16,9 @@
 @media only screen and (max-width:430px){
   .page{padding:0 .75rem calc(5rem + env(safe-area-inset-bottom,0px))}
   .top-bar{padding:.5rem .75rem;padding-top:calc(.5rem + env(safe-area-inset-top,0px));margin-bottom:1.15rem}
+  .top-bar-actions{gap:6px}
+  .pdf-btn{padding:0;width:40px;min-width:40px;justify-content:center}
+  .pdf-btn .pdf-label{display:none}
 
   .prog-title{font-size:19px}
   .prog-sub{font-size:11px}

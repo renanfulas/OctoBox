@@ -77,6 +77,7 @@ Cada um tem um banner `> STATUS:` no topo do próprio arquivo com a evidência.
 | Plano | Nota |
 |---|---|
 | [signal-mesh-retry-scheduler-runbook.md](signal-mesh-retry-scheduler-runbook.md) | Ligado à frente "Hardening de pagamentos — P1 sweep de dead-letter do Stripe" no `in-flight-board.md` — **snapshot de 2026-06-20/21, confirmar se ainda é real antes de continuar** |
+| [public-workouts-aceleracao-operacional-corda.md](public-workouts-aceleracao-operacional-corda.md) | Implementação e QA técnico concluídos em 2026-09-21; aguarda 28 dias de snapshots e 14 dias verdes consecutivos antes de escalar mídia. Esta é a autoridade de gate para Curva, não os planos GTM/nutrição anteriores. |
 
 ## Aberto — próximo passo conhecido
 

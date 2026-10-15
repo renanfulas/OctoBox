@@ -63,6 +63,8 @@ slug | aliases (separados por vírgula)
 | `handstand_walk` | handstand walk, hsw, hw |
 | `ring_dip` | ring dip, rd |
 | `bar_dip` | bar dip, dip |
+| `box_dip` | box dip, box dips, dips no banco, dips na caixa |
+| `kipping_swing` | kipping swing, kipping, kip swing |
 | `rope_climb` | rope climb, rc, subida na corda, corda |
 | `l_sit` | l sit, l-sit |
 | `pistol_squat` | pistol squat, pistol, pistol sq |
@@ -120,7 +122,7 @@ slug | aliases (separados por vírgula)
 | `step_up` | step up, step-up |
 | `broad_jump` | broad jump, salto horizontal |
 | `shuttle_run` | shuttle run, sr, vai e vem |
-| `wall_walk` | wall walk, ww |
+| `wall_walk` | wall walk, wall walks, ww |
 | `bear_crawl` | bear crawl, arrastar |
 
 ---

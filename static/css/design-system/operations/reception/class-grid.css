@@ -151,6 +151,31 @@ ARQUIVO: grade de aulas e leitura rápida da recepção.
     gap: 12px;
 }
 
+.reception-attendance-list {
+    display: grid;
+    gap: 8px;
+}
+
+.reception-attendance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--theme-accent-support-alpha) 14%, var(--theme-border-soft) 86%);
+    background: color-mix(in srgb, var(--theme-surface-panel) 94%, white 6%);
+}
+
+.reception-attendance-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--theme-text-primary);
+}
+
 body[data-theme="dark"] .reception-grid-board,
 body[data-theme="dark"] .reception-grade-card {
     background:
@@ -194,6 +219,15 @@ body[data-theme="dark"] .reception-grade-card .finance-alert-stat strong {
 
 body[data-theme="dark"] .reception-grade-card .finance-alert-stat .operation-mini-label {
     color: color-mix(in srgb, var(--theme-text-muted) 88%, white 12%);
+}
+
+body[data-theme="dark"] .reception-attendance-row {
+    border-color: color-mix(in srgb, var(--theme-accent-support-alpha) 16%, var(--theme-border-soft) 84%);
+    background: color-mix(in srgb, rgba(10, 18, 31, 0.9) 92%, transparent 8%);
+}
+
+body[data-theme="dark"] .reception-attendance-name {
+    color: var(--theme-text-primary);
 }
 
 body[data-theme="dark"] .reception-grid-board .operation-empty-card {

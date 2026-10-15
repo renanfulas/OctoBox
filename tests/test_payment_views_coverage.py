@@ -74,10 +74,22 @@ class PaymentEntryViewsTests(TestCase):
         resp = self.client.get(reverse('api-v1-payment-link', args=[self.payment.pk]))
         self.assertEqual(resp.status_code, 429)
 
-    @patch('api.v1.finance_views.create_checkout_session', side_effect=RuntimeError('boom'))
-    def test_payment_link_gateway_error_returns_500(self, _mock):
+    @patch('api.v1.finance_views.checkout_rate_limit_exceeded', return_value=False)
+    @patch('api.v1.finance_views.create_checkout_session', side_effect=RuntimeError('boom: detalhe interno da stripe'))
+    def test_payment_link_gateway_error_returns_502_without_leaking_detail(self, _mock, _mock_rate_limit):
+        # Sem o mock de checkout_rate_limit_exceeded, este teste e' order-dependent:
+        # o guard usa platform_cache global (nao particionado por teste, de proposito
+        # — conta Stripe unica), e outros testes que batem no mesmo endpoint sem
+        # mockar o rate-limit vao consumindo a cota real ate estourar 429 aqui.
         resp = self.client.get(reverse('api-v1-payment-link', args=[self.payment.pk]))
-        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(resp.status_code, 502)
+        self.assertNotIn('boom', resp.json()['error'])
+
+    @patch('api.v1.finance_views.create_checkout_session', side_effect=ValueError('Pagamento ja consta como PAGO no banco de dados.'))
+    def test_payment_link_business_error_returns_400_with_message(self, _mock):
+        resp = self.client.get(reverse('api-v1-payment-link', args=[self.payment.pk]))
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('PAGO', resp.json()['error'])
 
     # ── PaymentBulkActionView (branches no-op) ─────────────────────────────
     def test_bulk_mark_paid_is_noop_when_already_paid(self):

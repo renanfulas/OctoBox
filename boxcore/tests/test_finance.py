@@ -279,6 +279,28 @@ class FinanceCenterTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
 
+    def test_finance_center_can_export_xlsx(self):
+        """Achado B5 do relatorio de simulacao de 30 dias: a rota devolvia
+        404 cru para xlsx (so csv e pdf estavam implementados)."""
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('finance-report-export', args=['xlsx']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        from io import BytesIO
+
+        from openpyxl import load_workbook
+
+        workbook = load_workbook(BytesIO(response.content))
+        sheet = workbook.active
+        cell_values = [cell.value for row in sheet.iter_rows() for cell in row]
+        self.assertIn('Aluno', cell_values)
+        self.assertIn('Paula Nunes', cell_values)
+
     def test_finance_center_hides_priority_rail_when_all_whatsapp_contacts_are_blocked(self):
         self.client.force_login(self.user)
         WhatsAppContact.objects.create(

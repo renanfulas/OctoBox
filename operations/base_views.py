@@ -46,7 +46,10 @@ class RoleOperationRedirectView(LoginRequiredMixin, View):
 class ManagerWorkspaceAvailabilityMixin:
     def dispatch(self, request, *args, **kwargs):
         if not is_manager_workspace_enabled():
-            raise Http404()
+            raise Http404(
+                'O espaço de trabalho do Manager está desativado neste box. '
+                'Peça para o Owner habilitar em Configurações, ou fale com o suporte.'
+            )
         return super().dispatch(request, *args, **kwargs)
 
 

@@ -179,7 +179,7 @@ POR QUE ELE EXISTE:
     // If target lives inside a <dialog>, open the dialog first
     var parentDialog = reviewTarget.closest('dialog');
     if (parentDialog && !parentDialog.open) {
-      parentDialog.showModal();
+      showDayDialog(parentDialog);
     }
     var parentBlock = reviewTarget.closest('[data-dialog-block]');
     if (parentBlock) {
@@ -191,7 +191,12 @@ POR QUE ELE EXISTE:
     if (reviewTarget.tagName === 'DETAILS') {
       reviewTarget.open = true;
     }
-    reviewTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var scrollBody = reviewTarget.closest('.smart-paste-day-dialog__body');
+    if (scrollBody) {
+      scrollBody.scrollTop += reviewTarget.getBoundingClientRect().top - scrollBody.getBoundingClientRect().top - 16;
+    } else {
+      reviewTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     var focusField = reviewTarget.querySelector('input:not([type=hidden]), textarea, select');
     if (focusField) {
       window.setTimeout(function () { focusField.focus(); }, 180);
@@ -213,9 +218,40 @@ POR QUE ELE EXISTE:
       if (surface) surface.setAttribute('aria-expanded', isActive ? 'true' : 'false');
       if (detail) detail.hidden = !isActive;
     });
-    if (activeBlock && typeof activeBlock.scrollIntoView === 'function') {
-      activeBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (activeBlock) {
+      body.scrollTop += activeBlock.getBoundingClientRect().top - body.getBoundingClientRect().top;
     }
+  }
+
+  function restoreDayDialog(dialog) {
+    var owner = dialog._smartPasteOwner;
+    var returnFocus = dialog._smartPasteReturnFocus;
+    dialog._smartPasteOwner = null;
+    dialog._smartPasteReturnFocus = null;
+    if (!owner) return;
+    if (owner.isConnected) owner.appendChild(dialog);
+    else dialog.remove();
+    if (returnFocus && returnFocus.isConnected && typeof returnFocus.focus === 'function') {
+      window.requestAnimationFrame(function () {
+        if (returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
+      });
+    }
+  }
+
+  function showDayDialog(dialog) {
+    if (!dialog || typeof dialog.showModal !== 'function' || dialog.open) return;
+    // Safari can anchor a modal inside the blurred preview card to its scroll
+    // position. Put it directly under body while it is in the top layer.
+    var owner = dialog.closest('[data-smart-paste-preview-panel], [data-smart-paste-projection-panel]');
+    var activeElement = document.activeElement;
+    dialog._smartPasteReturnFocus = activeElement && activeElement !== document.body && !dialog.contains(activeElement)
+      ? activeElement
+      : owner && owner.querySelector('[data-action="open-week-dialog"], [data-action="open-day-dialog"]');
+    if (owner) {
+      dialog._smartPasteOwner = owner;
+      document.body.appendChild(dialog);
+    }
+    dialog.showModal();
   }
 
   function clearFocusedBlock(body) {
@@ -240,16 +276,6 @@ POR QUE ELE EXISTE:
 
   function bindReviewQueue(scope) {
     if (!scope) return;
-    scope.querySelectorAll('[data-smart-paste-review-jump]').forEach(function (link) {
-      if (link.dataset.smartPasteReviewJumpBound === 'true') return;
-      link.dataset.smartPasteReviewJumpBound = 'true';
-      link.addEventListener('click', function (event) {
-        var href = link.getAttribute('href') || '';
-        if (!href.startsWith('#')) return;
-        event.preventDefault();
-        openReviewTarget(href);
-      });
-    });
     var previewPanel = scope.matches('[data-smart-paste-preview-panel]') ? scope : scope.querySelector('[data-smart-paste-preview-panel]');
     if (previewPanel) {
       var autoOpenTarget = previewPanel.dataset.smartPasteAutoOpenTarget || '';
@@ -271,7 +297,7 @@ POR QUE ELE EXISTE:
         if (dialog && typeof dialog.showModal === 'function') {
           var body = dialog.querySelector('.smart-paste-day-dialog__body');
           if (body) clearFocusedBlock(body);
-          dialog.showModal();
+          showDayDialog(dialog);
         }
       });
     });
@@ -304,39 +330,11 @@ POR QUE ELE EXISTE:
         clearFocusedBlock(body);
       });
     });
-    // Copy day text to clipboard for GPT
-    scope.querySelectorAll('[data-action="copy-gpt-text"]').forEach(function (btn) {
-      if (btn.dataset.copyGptBound === 'true') return;
-      btn.dataset.copyGptBound = 'true';
-      btn.addEventListener('click', function () {
-        var footer = btn.closest('footer');
-        if (!footer) return;
-        var source = footer.querySelector('[data-gpt-source]');
-        if (!source) return;
-        var text = source.value.trim();
-        var feedback = btn.dataset.feedback || 'Copiado!';
-        var original = btn.textContent;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function () {
-            btn.textContent = feedback;
-            btn.disabled = true;
-            window.setTimeout(function () {
-              btn.textContent = original;
-              btn.disabled = false;
-            }, 2000);
-          });
-        } else {
-          source.select();
-          document.execCommand('copy');
-          btn.textContent = feedback;
-          window.setTimeout(function () { btn.textContent = original; }, 2000);
-        }
-      });
-    });
     // Close dialog on backdrop click
     scope.querySelectorAll('.smart-paste-day-dialog').forEach(function (dialog) {
       if (dialog.dataset.backdropBound === 'true') return;
       dialog.dataset.backdropBound = 'true';
+      dialog.addEventListener('close', function () { restoreDayDialog(dialog); });
       dialog.addEventListener('click', function (e) {
         if (e.target === dialog) {
           var body = dialog.querySelector('.smart-paste-day-dialog__body');
@@ -347,14 +345,161 @@ POR QUE ELE EXISTE:
     });
   }
 
+  function bindProjectionDialog(scope) {
+    if (!scope) return;
+    var panel = scope.matches('[data-smart-paste-projection-panel]')
+      ? scope
+      : scope.querySelector('[data-smart-paste-projection-panel]');
+    if (!panel) return;
+    var dialog = panel.querySelector('.smart-paste-week-dialog');
+    if (!dialog) return;
+    var weekdayButtons = Array.from(dialog.querySelectorAll('[data-weekday-filter]'));
+    var weekdayCards = Array.from(dialog.querySelectorAll('[data-weekday-index]'));
+    var emptyWeekdayState = dialog.querySelector('[data-weekday-filter-empty]');
+    weekdayButtons.forEach(function (button) {
+      if (button.dataset.weekdayFilterBound === 'true') return;
+      button.dataset.weekdayFilterBound = 'true';
+      button.addEventListener('click', function () {
+        var selectedWeekday = button.dataset.weekdayFilter;
+        var visibleCards = 0;
+        weekdayButtons.forEach(function (candidate) {
+          var active = candidate === button;
+          candidate.classList.toggle('is-active', active);
+          candidate.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        weekdayCards.forEach(function (card) {
+          var visible = selectedWeekday === 'all' || card.dataset.weekdayIndex === selectedWeekday;
+          card.hidden = !visible;
+          if (visible) visibleCards += 1;
+        });
+        if (emptyWeekdayState) emptyWeekdayState.hidden = selectedWeekday === 'all' || visibleCards > 0;
+      });
+    });
+    var unlinkedAck = dialog.querySelector('[data-action="acknowledge-unlinked-movements"]');
+    var distributeButton = dialog.querySelector('[data-action="distribute-week"]');
+    if (unlinkedAck && distributeButton && distributeButton.dataset.ackBound !== 'true') {
+      distributeButton.dataset.ackBound = 'true';
+      function syncDistributionAcknowledgement() {
+        var allowed = distributeButton.dataset.eligible === 'true' && unlinkedAck.checked;
+        distributeButton.disabled = !allowed;
+        if (allowed) distributeButton.removeAttribute('aria-disabled');
+        else distributeButton.setAttribute('aria-disabled', 'true');
+      }
+      unlinkedAck.addEventListener('change', syncDistributionAcknowledgement);
+      syncDistributionAcknowledgement();
+    }
+
+    function closeDialog() {
+      if (dialog.open) dialog.close();
+    }
+
+    panel.querySelectorAll('[data-action="open-week-dialog"]').forEach(function (button) {
+      if (button.dataset.weekDialogBound === 'true') return;
+      button.dataset.weekDialogBound = 'true';
+      button.addEventListener('click', function () { showDayDialog(dialog); });
+    });
+    dialog.querySelectorAll('[data-action="close-week-dialog"]').forEach(function (button) {
+      if (button.dataset.weekDialogBound === 'true') return;
+      button.dataset.weekDialogBound = 'true';
+      button.addEventListener('click', closeDialog);
+    });
+    if (dialog.dataset.weekDialogBound !== 'true') {
+      dialog.dataset.weekDialogBound = 'true';
+      dialog.addEventListener('close', function () { restoreDayDialog(dialog); });
+      dialog.addEventListener('click', function (event) {
+        if (event.target === dialog) closeDialog();
+      });
+    }
+    if (dialog.dataset.autoOpen === 'true') {
+      dialog.dataset.autoOpen = 'false';
+      showDayDialog(dialog);
+    }
+  }
+
+  function bindConfirmationSourceGuard() {
+    var sourceField = root.querySelector('.smart-paste-form textarea[name="source_text"]');
+    var weekField = root.querySelector('.smart-paste-form [name="week_start"]');
+    var labelField = root.querySelector('.smart-paste-form [name="label"]');
+    if (!sourceField) return;
+    root.querySelectorAll('form.smart-paste-confirm-form').forEach(function (form) {
+      if (form.dataset.sourceGuardBound === 'true') return;
+      var confirmedSource = form.querySelector('input[name="source_text"]');
+      var confirmedWeek = form.querySelector('input[name="week_start"]');
+      var confirmedLabel = form.querySelector('input[name="label"]');
+      var notice = form.querySelector('[data-smart-paste-stale-source-notice]');
+      if (!confirmedSource || !notice) return;
+      var buttons = Array.prototype.slice.call(form.querySelectorAll('button[type="submit"]'));
+      buttons.forEach(function (button) {
+        button.dataset.sourceGuardBaseDisabled = button.disabled ? 'true' : 'false';
+      });
+
+      function normalizeWeek(value) {
+        var match = String(value || '').trim().match(/^(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?$/);
+        return match ? pad(match[1]) + '/' + pad(match[2]) : String(value || '').trim();
+      }
+
+      function syncState() {
+        var stale = sourceField.value !== confirmedSource.value;
+        if (weekField && confirmedWeek) {
+          stale = stale || normalizeWeek(weekField.value) !== normalizeWeek(confirmedWeek.value);
+        }
+        if (labelField && confirmedLabel) {
+          stale = stale || labelField.value !== confirmedLabel.value;
+        }
+        notice.hidden = !stale;
+        buttons.forEach(function (button) {
+          button.disabled = stale || button.dataset.sourceGuardBaseDisabled === 'true';
+          if (button.disabled) button.setAttribute('aria-disabled', 'true');
+          else button.removeAttribute('aria-disabled');
+        });
+        return stale;
+      }
+
+      sourceField.addEventListener('input', syncState);
+      if (weekField) weekField.addEventListener('input', syncState);
+      if (labelField) labelField.addEventListener('input', syncState);
+      form.addEventListener('submit', function (event) {
+        if (!syncState()) return;
+        event.preventDefault();
+        sourceField.focus();
+        notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      form.dataset.sourceGuardBound = 'true';
+      syncState();
+    });
+  }
+
   function initializeScope(scope) {
     if (!scope) return;
     scope.querySelectorAll('[data-smart-date-input]').forEach(bindSmartDateField);
-    bindReviewQueue(scope);
     bindDayDialogs(scope);
+    bindProjectionDialog(scope);
+    bindReviewQueue(scope);
+    bindConfirmationSourceGuard();
   }
 
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-action="use-custom-movement"]');
+    if (!button || (!root.contains(button) && !button.closest('dialog.smart-paste-day-dialog'))) return;
+    var form = button.closest('form');
+    var slugField = form && form.querySelector('[name="movement_slug"]');
+    if (!slugField) return;
+    slugField.value = 'custom';
+    slugField.dispatchEvent(new Event('input', { bubbles: true }));
+    button.textContent = 'Nome original será mantido';
+    button.setAttribute('aria-pressed', 'true');
+  });
+
   initializeScope(root);
+
+  document.body.addEventListener('htmx:beforeSwap', function (event) {
+    if (!event.detail || !event.detail.target || !event.detail.target.matches('[data-smart-paste-preview-panel], [data-smart-paste-projection-panel]')) return;
+    document.querySelectorAll('dialog.smart-paste-day-dialog, dialog.smart-paste-week-dialog').forEach(function (dialog) {
+      if (!dialog._smartPasteOwner) return;
+      if (dialog.open) dialog.close();
+      restoreDayDialog(dialog);
+    });
+  });
 
   document.body.addEventListener('htmx:afterSwap', function (event) {
     initializeScope(event.target);

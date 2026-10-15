@@ -36,6 +36,8 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
+from shared_support.platform_cache import platform_cache
+
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,34 @@ class StripeNotConfiguredError(RuntimeError):
 
 class InvalidMagicTokenError(RuntimeError):
     """Levantado quando o magic-token e invalido, expirado ou ja consumido."""
+
+
+def is_launch_promo_code(code: str) -> bool:
+    """True se `code` bate com a campanha "1o mes gratis" configurada.
+
+    Comparacao case-insensitive contra STRIPE_LAUNCH_PROMO_CODE. Vazio nas
+    settings (campanha desligada) sempre retorna False.
+    """
+    configured = (getattr(settings, 'STRIPE_LAUNCH_PROMO_CODE', '') or '').strip().upper()
+    if not configured:
+        return False
+    return (code or '').strip().upper() == configured
+
+
+def _resolve_launch_promotion_code_id(pending_signup) -> str:
+    """ID real da Stripe Promotion Code ("promo_...") a aplicar, ou ''.
+
+    Restrito ao plano MENSAL de proposito: o cupom da campanha e
+    "100% off, duration=once" — no plano ANUAL isso zeraria a fatura do ANO
+    inteiro em vez de so o primeiro mes.
+    """
+    from .models import PendingSignupPlan
+
+    if pending_signup.plan != PendingSignupPlan.MONTHLY.value:
+        return ''
+    if not is_launch_promo_code(pending_signup.promo_code):
+        return ''
+    return (getattr(settings, 'STRIPE_LAUNCH_PROMOTION_CODE_ID', '') or '').strip()
 
 
 def _resolve_price_id(plan: str) -> str:
@@ -103,7 +133,7 @@ def create_checkout_session(pending_signup, request):
         reverse('signup-checkout-canceled') + '?' + urlencode({'pending': pending_signup.pk}),
     )
 
-    session = stripe.checkout.Session.create(
+    session_kwargs = dict(
         mode='subscription',
         payment_method_types=['card'],
         line_items=[{'price': price_id, 'quantity': 1}],
@@ -111,7 +141,6 @@ def create_checkout_session(pending_signup, request):
         client_reference_id=str(pending_signup.pk),
         success_url=success_url,
         cancel_url=cancel_url,
-        allow_promotion_codes=False,
         metadata={
             'pending_signup_id': str(pending_signup.pk),
             'plan': pending_signup.plan,
@@ -130,6 +159,17 @@ def create_checkout_session(pending_signup, request):
         # apontando pro price_id ANTIGO, silenciosamente, ate a chave expirar.
         idempotency_key=f'pending-signup-{pending_signup.pk}-{pending_signup.plan}-{price_id[-8:]}',
     )
+
+    # Cupom de campanha ("1o mes gratis") aplicado automaticamente via link
+    # (?promo=...), sem o cliente digitar nada. `discounts` e `allow_promotion_codes`
+    # sao mutuamente exclusivos na API da Stripe — so um dos dois vai no payload.
+    launch_promotion_code_id = _resolve_launch_promotion_code_id(pending_signup)
+    if launch_promotion_code_id:
+        session_kwargs['discounts'] = [{'promotion_code': launch_promotion_code_id}]
+    else:
+        session_kwargs['allow_promotion_codes'] = False
+
+    session = stripe.checkout.Session.create(**session_kwargs)
 
     pending_signup.stripe_session_id = session.id
     pending_signup.save(update_fields=['stripe_session_id', 'updated_at'])
@@ -171,6 +211,15 @@ def query_stripe_session_status(session_id: str):
     stripe.api_key = secret_key
     try:
         session = stripe.checkout.Session.retrieve(session_id)
+        # stripe-python >= ~13: StripeObject nao suporta mais .get() estilo
+        # dict (AttributeError: 'get' is a dict method, but a Session is not
+        # a dict). Convertido uma vez aqui pra manter os .get(...) abaixo
+        # funcionando sem reescrever cada acesso. Achado em produção
+        # (2026-09-10): CheckoutSuccessView 500 em toda sessão paga de
+        # verdade, porque os testes mockam retrieve() com um dict puro e
+        # nunca exercitam um StripeObject real.
+        if hasattr(session, 'to_dict'):
+            session = session.to_dict()
     except Exception as exc:
         logger.warning('query_stripe_session_status: falha ao consultar session=%s: %s', session_id, exc)
         return None
@@ -268,6 +317,23 @@ def verify_magic_token(token: str):
     return pending
 
 
+def peek_expired_magic_token_pending_id(token: str) -> int | None:
+    """pk do PendingSignup de um token com assinatura valida, ignorando a idade.
+
+    So para a tela de "link expirou": quem tem o token assinado (so enviado ao e-mail do
+    dono) pode pedir um novo. Token adulterado/vazio devolve None — nunca confia no pk sem
+    assinatura valida.
+    """
+    if not token:
+        return None
+    try:
+        data = signing.loads(token, salt=_MAGIC_TOKEN_SALT)
+    except signing.BadSignature:
+        return None
+    pk = data.get('pk') if isinstance(data, dict) else None
+    return pk if isinstance(pk, int) else None
+
+
 def send_onboarding_email(pending_signup, *, activation_url: str) -> bool:
     """Envia email de ativacao com HTML + texto fallback.
 
@@ -315,6 +381,47 @@ def send_onboarding_email(pending_signup, *, activation_url: str) -> bool:
         logger.exception('send_onboarding_email: erro inesperado ao enviar email')
         return False
     return True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Reenvio self-service do email de ativacao (achado S4 do relatorio de
+# simulacao de 30 dias: cliente que pagou e cujo email de ativacao falhou
+# ficava sem NENHUM caminho na tela — so quem tinha acesso ao Django admin
+# do operador conseguia reenviar, e nem havia acao pronta pra isso).
+# ─────────────────────────────────────────────────────────────────────────────
+
+RESEND_ACTIVATION_PER_SIGNUP_COOLDOWN_SECONDS = 45
+RESEND_ACTIVATION_PER_SIGNUP_MAX = 3
+RESEND_ACTIVATION_PER_SIGNUP_WINDOW_SECONDS = 3600
+RESEND_ACTIVATION_PER_IP_MAX = 20
+RESEND_ACTIVATION_PER_IP_WINDOW_SECONDS = 3600
+
+
+def resend_activation_rate_limit_exceeded(request, *, pending_id) -> bool:
+    """Guard contra spam de reenvio (double-click, script) e enumeracao de
+    pending_id por IP. platform_cache de proposito: o checkout de Early
+    Adopter roda fora de qualquer schema de box (mesmo motivo documentado em
+    shared_support/platform_cache.py para o anti-card-testing de checkout).
+    """
+    cooldown_key = f'octo_signup_resend_cooldown_{pending_id}'
+    if platform_cache.get(cooldown_key):
+        return True
+
+    count_key = f'octo_signup_resend_count_{pending_id}'
+    attempts = platform_cache.get(count_key, 0)
+    if attempts >= RESEND_ACTIVATION_PER_SIGNUP_MAX:
+        return True
+
+    ip = request.META.get('REMOTE_ADDR')
+    ip_key = f'octo_signup_resend_ip_{ip}'
+    ip_attempts = platform_cache.get(ip_key, 0)
+    if ip_attempts >= RESEND_ACTIVATION_PER_IP_MAX:
+        return True
+
+    platform_cache.set(cooldown_key, True, timeout=RESEND_ACTIVATION_PER_SIGNUP_COOLDOWN_SECONDS)
+    platform_cache.set(count_key, attempts + 1, timeout=RESEND_ACTIVATION_PER_SIGNUP_WINDOW_SECONDS)
+    platform_cache.set(ip_key, ip_attempts + 1, timeout=RESEND_ACTIVATION_PER_IP_WINDOW_SECONDS)
+    return False
 
 
 # ─────────────────────────────────────────────────────────────────────────────

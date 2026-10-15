@@ -1,0 +1,24 @@
+{% comment %}
+Lançador do treino guiado: começa ou retoma a sessão. A execução acontece no
+modo foco (_guided_focus.html), incluído no fim do <body> de workout.html.
+O conflito de fila fica aqui porque precisa continuar visível com o modo foco fechado.
+{% endcomment %}
+<section class="workout-guided" data-workout-guided data-session-url="{% url 'public-workout-session' plan_slug=plan_slug %}" data-program-version="{{ active_program_version|default:'' }}" data-account-scope="{{ guided_account_scope }}">
+  <div class="workout-guided__intro">
+    <div class="workout-guided__copy">
+      <h2 class="workout-guided__title" data-guided-launch-title>Treino guiado</h2>
+      <p class="workout-guided__text" data-guided-launch-text>Uma série por vez, com a carga sugerida e o descanso cronometrado.</p>
+      <p class="workout-guided__meta" data-guided-launch-meta hidden></p>
+      <p class="workout-guided__status" data-workout-guided-status aria-live="polite"></p>
+    </div>
+    <button type="button" class="workout-guided__cta" data-workout-guided-start>Começar treino guiado</button>
+    <button type="button" class="workout-guided__cta" data-guided-resume hidden>Voltar ao treino</button>
+  </div>
+  <div class="workout-guided__conflict" data-workout-guided-conflict hidden>
+    <strong>Um registro precisa de atenção</strong>
+    <p data-workout-guided-conflict-message aria-live="polite"></p>
+    <button type="button" data-workout-guided-conflict-export>Exportar rascunho</button>
+    <button type="button" data-workout-guided-conflict-server>Usar registro do servidor</button>
+    <button type="button" data-workout-guided-conflict-correct hidden>Aplicar como correção</button>
+  </div>
+</section>

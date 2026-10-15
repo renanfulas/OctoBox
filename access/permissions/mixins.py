@@ -57,28 +57,6 @@ class RoleRequiredMixin:
                 self.allowed_roles,
                 getattr(request, 'path', None),
             )
-            try:
-                logfile = 'playwright_debug.log'
-                with open(logfile, 'a', encoding='utf-8') as f:
-                    f.write('\n---- PLAYWRIGHT DEBUG ----\n')
-                    f.write(f'user_authenticated={getattr(request.user, "is_authenticated", False)}\n')
-                    f.write(f'user_id={getattr(getattr(request, "user", None), "pk", None)}\n')
-                    f.write(f'role_slug={getattr(role, "slug", None)}\n')
-                    f.write(f'path={getattr(request, "path", None)}\n')
-                    f.write('COOKIES:\n')
-                    for key, value in request.COOKIES.items():
-                        f.write(f'  {key}={value}\n')
-                    f.write('HEADERS:\n')
-                    for key, value in request.META.items():
-                        if key.startswith('HTTP_'):
-                            f.write(f'  {key}={value}\n')
-            except Exception:
-                ACCESS_LOGGER.exception(
-                    'permission_debug_logging_failed user_id=%s path=%s',
-                    getattr(getattr(request, 'user', None), 'pk', None),
-                    getattr(request, 'path', None),
-                )
-
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse(
                     {

@@ -532,6 +532,7 @@ body.simplified .sets-tbl-wrap{display:none}
 <div class="tabs">
   <button class="tab on" onclick="goTab('treino',this)">Treinos</button>
   <button class="tab" onclick="goTab('cardio',this)">Cardio</button>
+  <button class="tab" onclick="goTab('avaliacoes',this)">Avaliações</button>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════
@@ -1352,8 +1353,9 @@ function goDay(id,el){
   document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.remove('on');if(i===0)t.classList.add('on')});
 }
 function showTab(t){
-  document.getElementById('tab-treino').style.display=t==='treino'?'block':'none';
-  document.getElementById('tab-cardio').style.display=t==='cardio'?'block':'none';
+  document.querySelectorAll('[id^="tab-"]').forEach(function(panel){
+    panel.style.display = panel.id === 'tab-' + t ? 'block' : 'none';
+  });
 }
 function goTab(t,el){
   showTab(t);

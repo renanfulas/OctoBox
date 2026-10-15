@@ -6,6 +6,8 @@ from unittest.mock import patch
 
 from freezegun import freeze_time
 
+from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.test import Client, TestCase, override_settings
@@ -14,8 +16,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
-from finance.models import Enrollment, MembershipPlan
-from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan
+from operations.models import Attendance, AttendanceStatus, ClassSession, ClassType, SessionStatus
+from operations.services.wod_projection import project_plan_to_sessions
 from student_app.application.cache_keys import (
     build_student_agenda_snapshot_cache_key,
     build_student_home_snapshot_cache_key,
@@ -29,6 +32,7 @@ from student_app.models import (
     SessionWorkoutBlock,
     SessionWorkoutMovement,
     SessionWorkoutStatus,
+    MovementLibrary,
     StudentAppActivity,
     StudentAppActivityKind,
     StudentExerciseMax,
@@ -36,6 +40,7 @@ from student_app.models import (
     StudentProfileChangeRequest,
     StudentProfileChangeRequestStatus,
     StudentWorkoutView,
+    WeeklyWodPlan,
     WorkoutBlockKind,
     WorkoutLoadType,
 )
@@ -90,6 +95,7 @@ class StudentAppExperienceTests(TestCase):
         *,
         provider_subject='provider-subject-new-mass',
         email='novo@app.com',
+        photo_url='',
     ):
         link = StudentBoxInviteLink.objects.create(
             box_root_slug=get_box_runtime_slug(),
@@ -104,6 +110,7 @@ class StudentAppExperienceTests(TestCase):
             'provider_subject': provider_subject,
             'email': email,
             'box_invite_link_id': link.id,
+            'photo_url': photo_url,
         }
         session.save()
         return link
@@ -187,6 +194,13 @@ class StudentAppExperienceTests(TestCase):
     def test_mass_onboarding_creates_student_and_identity(self):
         client = Client()
         link = self._set_mass_onboarding_session(client)
+        plan = MembershipPlan.objects.create(
+            name='Plano mensal de entrada',
+            price=Decimal('159.90'),
+            billing_cycle='monthly',
+            sessions_per_week=3,
+            active=True,
+        )
 
         response = client.post(
             reverse('student-app-onboarding'),
@@ -194,7 +208,7 @@ class StudentAppExperienceTests(TestCase):
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
                 'birth_date': '02/01/2000',
-                'selected_plan': '',
+                'selected_plan': str(plan.pk),
             },
             follow=False,
         )
@@ -204,6 +218,8 @@ class StudentAppExperienceTests(TestCase):
         identity = StudentIdentity.objects.get(provider_subject='provider-subject-new-mass')
         self.assertEqual(identity.email, 'novo@app.com')
         self.assertEqual(identity.student.full_name, 'Novo Aluno App')
+        enrollment = Enrollment.objects.get(student=identity.student, plan=plan)
+        self.assertEqual(enrollment.status, EnrollmentStatus.PENDING)
         membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug=get_box_runtime_slug())
         self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
         self.assertTrue(
@@ -225,6 +241,37 @@ class StudentAppExperienceTests(TestCase):
             ).exists()
         )
 
+    def test_mass_onboarding_persists_google_photo_url_captured_during_oauth(self):
+        """Bug: a foto do Google era perdida no wizard de onboarding em massa.
+
+        handle_student_special_oauth_journey (mass box invite) desvia para o
+        wizard ANTES de oauth_actions._maybe_update_photo_url rodar, e
+        save_identity() so persistia photo_url quando ele vinha explicito no
+        payload da sessao. Sem isso, o aluno completava o cadastro via Google
+        e nunca ganhava avatar.
+        """
+        client = Client()
+        self._set_mass_onboarding_session(
+            client,
+            provider_subject='provider-subject-mass-photo',
+            photo_url='https://example.com/mass-google-photo.jpg',
+        )
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno Com Foto',
+                'phone': '5511888899999',
+                'birth_date': '02/01/2000',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        identity = StudentIdentity.objects.get(provider_subject='provider-subject-mass-photo')
+        self.assertEqual(identity.photo_url, 'https://example.com/mass-google-photo.jpg')
+
     def test_mass_onboarding_renders_hardened_input_attrs(self):
         client = Client()
         self._set_mass_onboarding_session(client)
@@ -240,9 +287,39 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'data-mask="date"', html=False)
         self.assertContains(response, '/static/js/core/forms.js', html=False)
         self.assertContains(response, 'data-min-year="1900"', html=False)
-        self.assertContains(response, 'data-max-year="2026"', html=False)
+        self.assertContains(response, f'data-max-year="{timezone.localdate().year}"', html=False)
         self.assertNotContains(response, '<span>E-mail</span>', html=False)
         self.assertContains(response, 'Seu e-mail será o mesmo validado no OAuth', html=False)
+
+    def test_mass_onboarding_explains_optional_fields_and_primary_action(self):
+        client = Client()
+        self._set_mass_onboarding_session(client)
+
+        response = client.get(reverse('student-app-onboarding'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Concluir cadastro')
+        self.assertContains(response, 'Data de nascimento (opcional)')
+        self.assertContains(response, 'Plano (opcional)')
+
+    def test_mass_onboarding_plan_choice_shows_price_cycle_and_frequency(self):
+        client = Client()
+        self._set_mass_onboarding_session(client)
+        MembershipPlan.objects.create(
+            name='Plano Bronze',
+            price=Decimal('159.90'),
+            billing_cycle='monthly',
+            sessions_per_week=3,
+            active=True,
+        )
+
+        response = client.get(reverse('student-app-onboarding'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Plano Bronze — R$ 159,90 · mensal · 3x por semana')
+        self.assertContains(response, 'matrícula pendente')
+        self.assertContains(response, 'Nenhum pagamento é feito neste passo')
+
 
     def test_mass_onboarding_rejects_invalid_phone_payload(self):
         client = Client()
@@ -260,27 +337,67 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Informe um WhatsApp valido com DDD.')
+        self.assertContains(response, 'Informe um WhatsApp válido com DDD.')
         self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-invalid-phone').exists())
 
     def test_mass_onboarding_rejects_birth_date_after_max_year(self):
         client = Client()
         self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-birth')
+        future_year = timezone.localdate().year + 1
 
         response = client.post(
             reverse('student-app-onboarding'),
             {
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
-                'birth_date': '01/01/2027',
+                'birth_date': f'01/01/{future_year}',
                 'selected_plan': '',
             },
             follow=False,
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'O ano da data de nascimento precisa ficar entre 1900 e 2026.')
+        self.assertContains(response, f'O ano da data de nascimento precisa ser no máximo {timezone.localdate().year}.')
         self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-birth').exists())
+
+    def test_mass_onboarding_accepts_minimum_birth_date(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-minimum-birth')
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno Limite',
+                'phone': '5511888888888',
+                'birth_date': '01/01/1900',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        identity = StudentIdentity.objects.get(provider_subject='provider-subject-minimum-birth')
+        self.assertEqual(identity.student.birth_date, date(1900, 1, 1))
+
+    @freeze_time('2026-10-02')
+    def test_mass_onboarding_rejects_birth_date_later_in_the_current_year(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-day')
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno App',
+                'phone': '5511888888888',
+                'birth_date': '31/12/2026',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A data de nascimento não pode ser futura.')
+        self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-day').exists())
 
     def test_mass_onboarding_accepts_masked_phone_and_saves_clean_digits(self):
         client = Client()
@@ -381,6 +498,134 @@ class StudentAppExperienceTests(TestCase):
                 metadata__identity_id=identity.id,
             ).exists()
         )
+
+    def test_imported_lead_onboarding_preserves_birth_date_when_optional_field_is_blank(self):
+        client = Client()
+        existing_birth_date = date(1996, 4, 3)
+        student = Student.objects.create(
+            full_name='Lead Importado com Nascimento',
+            phone='5511666699999',
+            email='',
+            birth_date=existing_birth_date,
+            status=StudentStatus.LEAD,
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=student.id,
+            student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='provider-subject-imported-blank-birth-date',
+            email='lead-birth-date@app.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=student.id,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        invitation = StudentAppInvitation.objects.create(
+            student_id=student.id,
+            student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            invited_email='lead-birth-date@app.com',
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'box_root_slug': get_box_runtime_slug(),
+            'student_id': student.id,
+            'identity_id': identity.id,
+            'invitation_id': invitation.id,
+            'email': 'lead-birth-date@app.com',
+        }
+        session.save()
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': student.full_name,
+                'phone': '5511666699999',
+                'birth_date': '',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        student.refresh_from_db()
+        self.assertEqual(student.birth_date, existing_birth_date)
+
+    def test_imported_lead_onboarding_persists_google_photo_url_captured_during_oauth(self):
+        """Bug irmao do mass onboarding: convite individual de lead importado
+        tambem desvia para o wizard antes de _maybe_update_photo_url rodar, e
+        a identity ja existe (criada no convite) — nao passa por
+        save_identity(). Sem repassar photo_url aqui, o avatar do Google
+        nunca era aplicado nesse fluxo.
+        """
+        client = Client()
+        student = Student.objects.create(
+            full_name='Lead Com Foto',
+            phone='5511666677788',
+            email='',
+            status=StudentStatus.LEAD,
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=student.id, student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='provider-subject-imported-lead-photo',
+            email='leadphoto@app.com',
+            status=StudentIdentityStatus.ACTIVE,
+            photo_url='',
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=student.id,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        client.cookies['octobox_student_session'] = build_student_session_value(
+            identity_id=identity.id,
+            box_root_slug=get_box_runtime_slug(),
+        )
+        invitation = StudentAppInvitation.objects.create(
+            student_id=student.id, student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            invited_email='leadphoto@app.com',
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'box_root_slug': get_box_runtime_slug(),
+            'student_id': student.id,
+            'identity_id': identity.id,
+            'invitation_id': invitation.id,
+            'email': 'leadphoto@app.com',
+            'photo_url': 'https://example.com/lead-google-photo.jpg',
+        }
+        session.save()
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Lead Com Foto Atualizado',
+                'phone': '5511666677788',
+                'birth_date': '06/05/1999',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        identity.refresh_from_db()
+        self.assertEqual(identity.photo_url, 'https://example.com/lead-google-photo.jpg')
 
     def test_onboarding_redirects_to_login_when_session_is_missing(self):
         client = Client()
@@ -550,7 +795,11 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Você já tem uma reserva ativa. Só pode reservar a próxima aula depois que a atual terminar.')
+        # A mensagem precisa apontar qual aula esta bloqueando (nome + horario),
+        # nao so dizer "voce ja tem uma reserva ativa" sem indicar qual — achado
+        # do relatorio de simulacao de 30 dias ("e claro mas nao oferece saida").
+        self.assertContains(response, 'Você já tem uma reserva ativa em Primeira aula')
+        self.assertContains(response, 'Cancele-a para reservar esta, ou espere ela terminar.')
         self.assertFalse(Attendance.objects.filter(student=self.student, session=second_session).exists())
 
     def test_confirm_attendance_blocks_booking_beyond_tomorrow(self):
@@ -726,6 +975,44 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'class="student-agenda-card"', html=False)
         self.assertContains(response, 'class="student-session-actions"', html=False)
         self.assertContains(response, 'Cancele até 2h antes sem perder crédito.')
+
+    def test_student_can_open_next_month_and_find_published_wod(self):
+        today = timezone.localdate()
+        next_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1)
+        session_date = next_month + timedelta(days=7)
+        session = ClassSession.objects.create(
+            title='Cross do próximo mês',
+            scheduled_at=timezone.make_aware(datetime.combine(session_date, datetime.min.time().replace(hour=10))),
+            status=SessionStatus.SCHEDULED,
+        )
+        SessionWorkout.objects.create(
+            session=session,
+            title='Treino publicado da próxima semana',
+            status=SessionWorkoutStatus.PUBLISHED,
+        )
+
+        month_response = self.client.get(reverse('student-app-grade'), {
+            'month': next_month.strftime('%Y-%m'),
+        })
+        self.assertEqual(month_response.status_code, 200)
+        self.assertEqual(month_response.context['student_visible_month'], next_month)
+        self.assertContains(month_response, 'Próximo mês')
+        self.assertContains(month_response, 'WOD disponível')
+        self.assertContains(month_response, f'?session_id={session.id}')
+
+        day_response = self.client.get(reverse('student-app-grade'), {
+            'month': next_month.strftime('%Y-%m'),
+            'date': session_date.isoformat(),
+        })
+        self.assertEqual(day_response.status_code, 200)
+        self.assertEqual(day_response.context['student_selected_date'], session_date)
+        self.assertContains(day_response, 'Treino publicado da próxima semana')
+
+    def test_invalid_student_month_falls_back_to_current_month(self):
+        response = self.client.get(reverse('student-app-grade'), {'month': 'not-a-month'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['student_visible_month'], timezone.localdate().replace(day=1))
 
     def test_cancel_attendance_sets_booking_as_canceled_until_one_hour_before_class(self):
         session = ClassSession.objects.create(
@@ -998,7 +1285,7 @@ class StudentAppExperienceTests(TestCase):
         )
 
         self.assertContains(response, 'class="student-progress-day student-day-filter is-selected"', html=False)
-        self.assertContains(response, 'Você já tem uma reserva ativa. Libere a próxima só depois que essa aula terminar.')
+        self.assertContains(response, 'Você já tem uma reserva ativa em outro horário. Cancele-a na grade para liberar esta aula.')
 
     def test_student_canceled_booking_shows_reservar_novamente(self):
         session = ClassSession.objects.create(
@@ -1424,6 +1711,121 @@ class StudentAppExperienceTests(TestCase):
         # 4: MovementLibrary IN lookup (E.4 — links de referencia por slug)
         self.assertLessEqual(len(captured_queries), 4)
         self.assertEqual(second_result.primary_recommendation.recommended_load_kg, Decimal('55.00'))
+
+    def test_weekly_projected_workout_uses_rich_student_render_without_smartplan_flag(self):
+        MovementLibrary.objects.create(
+            slug='push-press',
+            label_pt='Push press',
+            reference_url='https://example.test/push-press',
+            demo_video_url='https://video.example.test/push-press',
+        )
+        session = ClassSession.objects.create(
+            title='Cross semanal',
+            scheduled_at=timezone.now() + timedelta(minutes=30),
+            status='open',
+            class_type=ClassType.CROSS,
+        )
+        local_session_date = timezone.localtime(session.scheduled_at).date()
+        week_start = local_session_date - timedelta(days=local_session_date.weekday())
+        weekday = local_session_date.weekday()
+        plan = WeeklyWodPlan.objects.create(
+            week_start=week_start,
+            label='Semana com metadados completos',
+            source_text='21/15/9 For time, 3 rounds, cap 12 min, intervalo 90 s.',
+            status='confirmed',
+            parsed_payload={
+                'source': 'weekly_smart_paste',
+                'days': [{
+                    'weekday': weekday,
+                    'blocks': [{
+                        'kind': 'metcon',
+                        'title': 'WOD',
+                        'notes': '',
+                        'timecap_min': 12,
+                        'rounds': 3,
+                        'interval_seconds': 90,
+                        'score_type': 'for_time',
+                        'format_spec': '21/15/9',
+                        'movements': [{
+                            'movement_slug': 'push_press',
+                            'movement_label_raw': '21/15/9 push press 40/25 kg',
+                            'sets': 3,
+                            'reps_spec': '21/15/9',
+                            'load_spec': '40/25 kg',
+                            'is_scaled_alternative': True,
+                            'notes': 'Carga por categoria.',
+                        }, {
+                            'movement_slug': 'deadlift',
+                            'movement_label_raw': 'Deadlift de 10 a 12 reps a 65% RM',
+                            'sets': 4,
+                            'reps_spec': '10 a 12',
+                            'load_spec': '65% RM',
+                            'is_scaled_alternative': False,
+                            'notes': '',
+                        }],
+                    }, {
+                        'kind': 'skill',
+                        'title': 'EMOM tecnico',
+                        'notes': '',
+                        'rounds': 10,
+                        'interval_seconds': 60,
+                        'score_type': 'emom',
+                        'format_spec': 'EMOM 10 — 1:00 rest',
+                        'movements': [],
+                    }],
+                }],
+            },
+        )
+        actor = get_user_model().objects.create_user(
+            username='weekly-projection-qa',
+            email='weekly-projection-qa@example.com',
+            password=None,
+        )
+        project_plan_to_sessions(
+            weekly_plan=plan,
+            target_week_start=week_start,
+            class_types=[ClassType.CROSS],
+            actor=actor,
+        )
+        workout = SessionWorkout.objects.get(session=session)
+        self.assertEqual(workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        workout.status = SessionWorkoutStatus.PUBLISHED
+        workout.save(update_fields=['status', 'updated_at'])
+
+        result = GetStudentWorkoutDay().execute(
+            student=self.student,
+            session_id=session.id,
+            box_root_slug=get_box_runtime_slug(),
+        )
+
+        self.assertFalse(result.is_normalized)
+        self.assertTrue(result.has_structured_content)
+        self.assertEqual(
+            result.blocks[0].format_label,
+            '21/15/9 · For time · 3 rounds · time cap 12 min · intervalo 90 s',
+        )
+        self.assertEqual(result.blocks[0].movements[0].prescription_label, '3 séries · 21/15/9 reps · @ 40/25 kg')
+        self.assertTrue(result.blocks[0].movements[0].is_scaled_alternative)
+        self.assertEqual(result.blocks[0].movements[0].notes, 'Carga por categoria.')
+        self.assertEqual(result.blocks[0].movements[0].reference_url, 'https://example.test/push-press')
+        self.assertEqual(result.blocks[0].movements[0].demo_video_url, 'https://video.example.test/push-press')
+        self.assertEqual(result.blocks[0].movements[1].prescription_label, '4 séries · 10 a 12 reps · @ 65% RM')
+        self.assertEqual(result.blocks[1].format_label, 'EMOM 10 — 1:00 rest · 10 rounds · intervalo 60 s')
+
+        response = self.client.get(
+            reverse('student-app-wod'),
+            {'session_id': session.id},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            '21/15/9 · For time · 3 rounds · time cap 12 min · intervalo 90 s',
+        )
+        self.assertContains(response, '3 séries · 21/15/9 reps · @ 40/25 kg')
+        self.assertContains(response, 'Ver demonstração')
+        self.assertContains(response, 'https://video.example.test/push-press')
+        self.assertContains(response, '4 séries · 10 a 12 reps · @ 65% RM')
+        self.assertContains(response, 'EMOM 10 — 1:00 rest · 10 rounds · intervalo 60 s')
 
     def test_student_dashboard_agenda_snapshot_keeps_attendance_personalized(self):
         cache.clear()
@@ -2017,8 +2419,37 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertRedirects(response, reverse('student-identity-invite', kwargs={'token': token}))
 
+    def test_invite_entry_routes_group_link_to_box_invite_landing(self):
+        token = str(uuid.uuid4())
+        group_url = f'https://app.octoboxfit.com.br/aluno/auth/box-invite/{token}/'
+
+        response = self.client.post(
+            reverse('student-app-enter-invite'),
+            {'invite_token_or_url': group_url},
+        )
+
+        self.assertRedirects(response, reverse('student-identity-box-invite', kwargs={'token': token}))
+
+    def test_switch_box_ignores_external_next_url(self):
+        response = self.client.post(
+            reverse('student-app-switch-box'),
+            {'box_root_slug': get_box_runtime_slug(), 'next': 'https://evil.example.com/phish'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn('evil.example.com', response['Location'])
+
 
 class PublicWorkoutPwaTests(TestCase):
+    # NOTA (Entrega 4, corte pra workout.html): esta classe nunca chama
+    # publish_program, entao PublicWorkoutProgram.objects fica vazio pra
+    # todo slug testado aqui — _render_public_workout_html cai sempre no
+    # fallback legado (_render_legacy_template_html), igual sempre foi.
+    # Os testes abaixo continuam validos SEM alteracao por isso. A
+    # cobertura do caminho novo (workout.html com programa ativo) fica em
+    # PublicWorkoutDetailViewCutoverTests, mais abaixo, que publica de
+    # verdade antes de testar.
+
     def test_public_workout_pages_are_open_without_login(self):
         juliana_response = self.client.get('/renan/juliana')
         bruno_response = self.client.get('/renan/bruno')
@@ -2075,8 +2506,12 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(payload['scope'], '/renan/')
         self.assertEqual(len(payload['icons']), 3)
 
-    def test_public_workout_service_worker_and_offline_route_are_available(self):
-        sw_response = self.client.get(reverse('public-workout-sw'))
+    def test_public_workout_service_worker_precaches_static_assets_without_plan_html(self):
+        # O manifest pode variar por slug, mas HTML de aluno nao entra no
+        # Cache Storage. O shell offline retoma a ficha salva no IndexedDB.
+        other_slugs = ('bruno', 'milene', 'giovanna', 'thaislima', 'john', 'henrique', 'johnespanha')
+
+        sw_response = self.client.get(reverse('public-workout-sw'), {'slug': 'juliana'})
         offline_response = self.client.get(reverse('public-workout-offline'))
         sw_content = sw_response.content.decode('utf-8')
 
@@ -2084,32 +2519,31 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(sw_response['Service-Worker-Allowed'], '/renan/')
         self.assertIn('/renan/juliana', sw_content)
         self.assertIn('/renan/juliana/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/bruno', sw_content)
-        self.assertIn('/renan/bruno/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/milene', sw_content)
-        self.assertIn('/renan/milene/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/giovanna', sw_content)
-        self.assertIn('/renan/giovanna/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/thaislima', sw_content)
-        self.assertIn('/renan/thaislima/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/john', sw_content)
-        self.assertIn('/renan/john/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/henrique', sw_content)
-        self.assertIn('/renan/henrique/manifest.webmanifest', sw_content)
-        self.assertIn('/renan/johnespanha', sw_content)
-        self.assertIn('/renan/johnespanha/manifest.webmanifest', sw_content)
+        self.assertNotIn("'/renan/juliana?source=pwa'", sw_content)
+        self.assertNotIn("'/renan/juliana',", sw_content)
+        for other_slug in other_slugs:
+            self.assertNotIn(f'/renan/{other_slug}', sw_content, f'{other_slug} nao deveria estar no precache da juliana')
         self.assertIn('/renan/offline/', sw_content)
-        self.assertIn('const PAGE_CACHE', sw_content)
-        self.assertIn('normalizedWorkoutPath', sw_content)
-        self.assertIn("'/renan/juliana?source=pwa'", sw_content)
-        self.assertIn("'/renan/milene?source=pwa'", sw_content)
-        self.assertIn("'/renan/giovanna?source=pwa'", sw_content)
-        self.assertIn("'/renan/thaislima?source=pwa'", sw_content)
-        self.assertIn("'/renan/john?source=pwa'", sw_content)
-        self.assertIn("'/renan/henrique?source=pwa'", sw_content)
-        self.assertIn("'/renan/johnespanha?source=pwa'", sw_content)
+        self.assertNotIn('const PAGE_CACHE', sw_content)
+        self.assertIn('const validCaches = [STATIC_CACHE]', sw_content)
+        self.assertIn('return await caches.match(OFFLINE_URL', sw_content)
         self.assertEqual(offline_response.status_code, 200)
         self.assertContains(offline_response, 'Sem conexão agora.')
+        self.assertContains(offline_response, 'data-offline-open')
+
+    def test_public_workout_service_worker_without_slug_precaches_no_plan_pages(self):
+        # Registro sem ?slug= (ou slug desconhecido): SW generico, sem
+        # nenhuma pagina de plano no precache — nunca "todas por seguranca".
+        all_slugs = (
+            'juliana', 'bruno', 'milene', 'giovanna', 'thaislima', 'john', 'henrique', 'johnespanha',
+        )
+
+        sw_response = self.client.get(reverse('public-workout-sw'))
+        sw_content = sw_response.content.decode('utf-8')
+
+        self.assertEqual(sw_response.status_code, 200)
+        for slug in all_slugs:
+            self.assertNotIn(f'/renan/{slug}', sw_content)
 
     def test_public_workout_page_renders_install_cta(self):
         response = self.client.get('/renan/juliana')
@@ -2119,22 +2553,36 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'beforeinstallprompt')
         self.assertContains(response, 'Adicionar à Tela de Início')
 
-    def test_juliana_week_order_reflects_legs_program(self):
+    def test_juliana_week_order_reflects_quad_frequency_program(self):
         response = self.client.get('/renan/juliana')
+        content = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
+
+        # Ordem estrutural das sessoes de treino no DOM (id do dia), nao a
+        # copy do strip semanal — pega sessao fora de ordem mesmo que o
+        # rotulo visual continue certo, e resiste a redacao mudar.
+        day_ids = ('id="ter"', 'id="qua"', 'id="qui"', 'id="sab"')
+        for day_id in day_ids:
+            self.assertIn(day_id, content)
+        positions = [content.index(day_id) for day_id in day_ids]
+        self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem ter->sab')
+
         self.assertContains(response, "goDay('qua',this)")
-        self.assertContains(response, '<div class="dn">Seg</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Ter</div><div class="dt">Quad Força</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qua</div><div class="dt">Sup Força</div>', html=True)
-        self.assertContains(response, '<div class="dn">Qui</div><div class="dt">Glúteo</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sex</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, '<div class="dn">Sáb</div><div class="dt">Braço</div>', html=True)
-        self.assertContains(response, '<div class="dn">Dom</div><div class="dt">Rest</div>', html=True)
-        self.assertContains(response, 'Terça · ~58 min + 20 min bike leve · Quadríceps, Panturrilha, Core')
-        self.assertContains(response, 'Quarta · ~58 min + 10-15 min esteira HIIT · Peito, Costas, Ombro, Abdômen')
-        self.assertContains(response, 'Quinta · ~58 min · Posterior de coxa, Glúteo, Quadríceps')
-        self.assertContains(response, 'Sábado · ~60 min + 20-30 min cardio pesado · Costas, Peito, Bíceps, Tríceps, Ombro medial')
+
+        # Restricoes explicitamente pedidas pela cliente: quadriceps em alta
+        # frequencia (2x/semana) com os sets exatos pedidos (5 series de
+        # extensora na terca, sumo + metodo contraste na quinta) — se alguem
+        # reduzir o volume por engano, esse teste quebra. Mantido sob o
+        # limite do ADR-012 (assertContains de copy <= 8 por metodo).
+        self.assertContains(response, '5× Top (12-15) · pausa 1s no topo')
+        self.assertContains(response, 'Agachamento sumô com halteres')
+        self.assertContains(response, 'Cadeira extensora (pesado + leve)')
+        self.assertContains(response, 'Panturrilha no Smith')
+
+        # Cardio 4x/semana pedido explicitamente (2 dias de 20min + 2 dias
+        # de 30min), fora dos dois dias de quadriceps pesados.
+        self.assertContains(response, '4 sessões · 100 min')
 
     def test_henrique_week_order_reflects_split_and_required_back_exercises(self):
         response = self.client.get('/renan/henrique')
@@ -2186,6 +2634,419 @@ class PublicWorkoutPwaTests(TestCase):
         # 1x escada/HIIT por semana, pedido explicitamente pela cliente.
         self.assertContains(response, 'Escada / HIIT')
 
+    def test_visiting_the_page_sets_the_csrf_cookie(self):
+        # Regressao: nenhum template deste corredor usa {% csrf_token %},
+        # entao sem a chamada explicita a get_token() (PublicWorkoutDetailView)
+        # o cookie CSRF nunca nascia — qualquer POST feito por JS depois
+        # (autoavaliacao online, assessments.js) levava 403 em producao,
+        # mesmo com sessao de login valida.
+        response = self.client.get('/renan/giovanna')
+
+        self.assertIn(settings.CSRF_COOKIE_NAME, response.cookies)
+
+
+class PublicWorkoutSignOutViewTests(TestCase):
+    """POST /renan/<slug>/sair — "Sair da conta" da tela Perfil (fundacao B3).
+
+    So apaga o cookie de posse (B0) — o corredor ainda nao tem login de
+    sessao de verdade (ver docstring de PublicWorkoutSignOutView).
+    """
+
+    def test_clears_owner_cookie_and_redirects_to_offline(self):
+        self.client.get('/renan/giovanna')  # seta o cookie do dono
+        self.assertIn('renan_slug', self.client.cookies)
+
+        response = self.client.post('/renan/giovanna/sair')
+
+        self.assertRedirects(response, '/renan/offline/')
+        self.assertEqual(self.client.cookies['renan_slug'].value, '')
+
+    def test_get_is_not_allowed(self):
+        # Acao com efeito colateral (apaga cookie) -- so POST, nunca GET
+        # (evita logout acidental via prefetch/crawler).
+        response = self.client.get('/renan/giovanna/sair')
+
+        self.assertEqual(response.status_code, 405)
+
+
+class PublicWorkoutTemplatePreviewViewTests(TestCase):
+    """GET /renan/<slug>/preview-b3 — preview de desenvolvimento do
+    template unico (workout.html, Onda B3), so' com DEBUG=True. Existe pra
+    nao depender de gerar HTML na mao via `manage.py shell` toda vez (ver
+    docstring de PublicWorkoutTemplatePreviewView) — nunca serve trafego de
+    aluno de verdade, entao o teste mais importante daqui e' justamente
+    confirmar que fica 404 fora de DEBUG."""
+
+    def _publish(self, slug='bruno'):
+        from public_workouts.schema import build_example_payload
+        from public_workouts.services import publish_program
+
+        publish_program(slug=slug, payload=build_example_payload())
+
+    @override_settings(DEBUG=False)
+    def test_returns_404_outside_debug_even_when_published(self):
+        self._publish()
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        self.assertEqual(response.status_code, 404)
+
+    @override_settings(DEBUG=True)
+    def test_renders_workout_html_template_for_published_program(self):
+        self._publish()
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn('workout-shell', content)
+        self.assertIn('workout-mobile-nav', content)
+        self.assertIn('Programa de exemplo', content)  # program_label do build_example_payload
+
+    @override_settings(DEBUG=True)
+    def test_returns_404_when_program_not_yet_published(self):
+        # bruno existe em PUBLIC_WORKOUT_LIBRARY mas ninguem chamou
+        # publish_program nesta base de teste.
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        self.assertEqual(response.status_code, 404)
+
+    @override_settings(DEBUG=True)
+    def test_returns_404_for_unknown_slug(self):
+        response = self.client.get('/renan/nao-existe/preview-b3')
+
+        self.assertEqual(response.status_code, 404)
+
+    @override_settings(DEBUG=True)
+    def test_never_requires_owner_cookie(self):
+        # Diferente da rota real (/renan/<slug>), o preview nao depende do
+        # cookie B0 -- e' uma ferramenta de dev, nao a experiencia do aluno.
+        self._publish()
+        self.assertNotIn('renan_slug', self.client.cookies)
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(DEBUG=True)
+    def test_uses_real_account_photo_and_email_when_session_is_active(self):
+        # Renan: "usar a foto do Google... no avatar" -- unica forma de
+        # conferir isso antes do corte de producao real (rota ainda nao
+        # existe, ver docstring de PublicWorkoutTemplatePreviewView).
+        from public_workouts.models import PublicWorkoutAccount
+        from student_identity.public_workout_session import (
+            PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            build_public_workout_session_value,
+        )
+
+        self._publish()
+        account = PublicWorkoutAccount.objects.create(
+            email='comfoto@example.com', photo_url='https://lh3.googleusercontent.com/a/foto-preview',
+        )
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.id,
+        )
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        content = response.content.decode('utf-8')
+        self.assertIn('https://lh3.googleusercontent.com/a/foto-preview', content)
+        self.assertIn('comfoto@example.com', content)
+
+    @override_settings(DEBUG=True)
+    def test_falls_back_to_plan_name_without_photo_when_no_session(self):
+        self._publish()
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        content = response.content.decode('utf-8')
+        self.assertNotIn('googleusercontent', content)
+
+
+class PublicWorkoutDetailViewCutoverTests(TestCase):
+    """GET /renan/<slug> — Entrega 4: corte pra workout.html quando o slug
+    tem PublicWorkoutProgram ativo (docs/plans/
+    public-workouts-produtizacao-corda.md, tabela de status da Frente B).
+
+    Publica de verdade em cada teste (mesmo padrao de
+    PublicWorkoutTemplatePreviewViewTests._publish) — sem isso,
+    get_active_program devolve None e o fallback legado mascararia
+    qualquer bug do caminho novo, exatamente como acontece em
+    PublicWorkoutPwaTests (nenhum publish_program la, de proposito)."""
+
+    def _publish(self, slug='bruno'):
+        from public_workouts.schema import build_example_payload
+        from public_workouts.services import publish_program
+
+        publish_program(slug=slug, payload=build_example_payload())
+
+    def test_renders_workout_html_when_program_is_active(self):
+        self._publish('bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode('utf-8')
+        self.assertIn('workout-shell', content)
+        self.assertIn('workout-mobile-nav', content)
+        self.assertIn('/renan/bruno/manifest.webmanifest', content)
+        self.assertIn('data-plan-slug="bruno"', content)
+        self.assertRegex(content, r'workout-pwa\.js\?v=[^"\']+')
+        self.assertIn('data-workout-install', content)
+        self.assertRegex(content, r'workout-progress\.css\?v=[^"\']+')
+
+    def test_falls_back_to_legacy_when_no_program_published(self):
+        # giovanna: nenhum publish_program chamado nesta base de teste —
+        # comportamento identico ao de sempre (PublicWorkoutPwaTests).
+        response = self.client.get('/renan/giovanna')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('workout-shell', response.content.decode('utf-8'))
+
+    @override_settings(PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS=frozenset({'bruno'}))
+    def test_legacy_escape_hatch_wins_even_with_active_program(self):
+        # Kill switch de rollout (PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS):
+        # mesmo com programa publicado, slug listado continua no legado.
+        self._publish('bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('workout-shell', response.content.decode('utf-8'))
+
+    def test_visitor_without_any_account_gets_empty_load_data(self):
+        # Ninguem visitou ainda, nenhuma PublicWorkoutSubscription existe
+        # pra 'bruno' nesta base de teste — account_id fica None, a pagina
+        # nao pode quebrar, so degrada Cargas/revisao/1RM pra vazio.
+        self._publish('bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nenhuma carga registrada ainda.')
+
+    def test_visitor_auto_logs_in_when_a_subscription_already_exists(self):
+        # Achado da varredura: os clientes legados nunca passaram por
+        # /treinos/login (seed_legacy_workout_accounts so cria a conta e a
+        # PublicWorkoutSubscription). Sem sessao B1 propria ainda, a
+        # primeira visita resolve a conta pela subscription do slug e ja
+        # estabelece a sessao — sem isso, POST /carga ficaria 401 pra
+        # sempre pra quem nunca logou.
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+        from student_identity.public_workout_session import PUBLIC_WORKOUT_SESSION_COOKIE_NAME
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='bruno@example.com')
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+
+    def test_first_login_autostarts_the_onboarding_wizard(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='novo@example.com')
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'data-onboarding-autostart="true"')
+
+    def test_already_onboarded_account_does_not_autostart_the_wizard(self):
+        from django.utils import timezone
+
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(
+            email='veterana@example.com', onboarding_completed_at=timezone.now(),
+        )
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'data-onboarding-autostart="false"')
+
+    def test_wizard_mentions_only_avaliacao_for_a_tier_without_nutrition(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutTier
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='so-treino@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account, plan_slug='bruno', tier=PublicWorkoutTier.ESSENCIAL,
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertNotContains(response, 'Avaliação &amp; Dieta')
+
+    def test_wizard_mentions_dieta_for_a_tier_with_nutrition(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutTier
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='treino-e-dieta@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account, plan_slug='bruno', tier=PublicWorkoutTier.COMPLETO,
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'Avaliação &amp; Dieta')
+
+    def test_replay_onboarding_button_is_present_even_after_completing_it(self):
+        # "Ver tutorial de novo" (aba Perfil) precisa existir pra QUALQUER
+        # conta, nao so' pra quem ainda nao viu o wizard — senao quem ja'
+        # completou nunca consegue reabrir.
+        from django.utils import timezone
+
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(
+            email='veterana2@example.com', onboarding_completed_at=timezone.now(),
+        )
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'data-ui="replay-onboarding"')
+
+
+class PublicWorkoutAssessmentsEndpointTests(TestCase):
+    """GET /renan/<slug>/avaliacoes.json — exige cookie assinado do dono do slug.
+
+    B0 do CORDA (docs/plans/public-workouts-produtizacao-corda.md): antes,
+    endpoint publico sem nenhuma verificacao — dado de saude (peso,
+    %gordura, circunferencias) em URL cujo slug e o primeiro nome do aluno.
+    Visitar /renan/<slug> seta o cookie que autoriza a leitura a seguir.
+    """
+
+    def test_returns_404_without_owner_cookie(self):
+        # A vulnerabilidade original: bater direto no endpoint, sem nunca
+        # ter aberto a pagina do plano. Precisa continuar 404.
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_for_cookie_of_another_slug(self):
+        self.client.get('/renan/giovanna')  # seta o cookie de giovanna
+        response = self.client.get('/renan/rafael/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_for_tampered_cookie(self):
+        # Cookie com valor solto, sem passar pela assinatura de
+        # set_signed_cookie — simula adulteracao. signing.BadSignature tem
+        # que virar 404, nunca 500.
+        self.client.cookies['renan_slug'] = 'giovanna'
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_empty_shape_for_plan_without_assessments(self):
+        self.client.get('/renan/giovanna')  # seta o cookie do dono
+        response = self.client.get('/renan/giovanna/avaliacoes.json')
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(
+            payload,
+            {
+                'assessments': [],
+                'summary': None,
+                'indicators': None,
+                'skinfold_self_report_unlocked': False,
+                'hero_text': None,
+            },
+        )
+
+    def test_returns_404_for_unknown_plan_slug(self):
+        response = self.client.get('/renan/nao-existe/avaliacoes.json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_indicators_once_an_assessment_exists(self):
+        from public_workouts.services import record_assessment
+
+        record_assessment(
+            plan_slug='rafael',
+            measured_at='2026-01-01',
+            weight_kg=70,
+            measurements={'cintura': 82, 'pescoco': 38},
+        )
+        self.client.get('/renan/rafael')  # seta o cookie do dono
+        response = self.client.get('/renan/rafael/avaliacoes.json')
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload['assessments']), 1)
+        self.assertIsNotNone(payload['indicators']['bmi'])
+        self.assertIsNotNone(payload['indicators']['body_fat_percent'])
+
+    def test_endpoint_present_on_converted_and_legacy_pages(self):
+        # giovanna usa o design system compartilhado; johnespanha continua
+        # autocontido — os dois precisam do mesmo endpoint de leitura.
+        for slug in ('giovanna', 'johnespanha', 'rafael'):
+            response = self.client.get(f'/renan/{slug}')
+            self.assertContains(response, 'assessments.js')
+            self.assertContains(response, "goTab('avaliacoes',this)")
+
+
+class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
+    """POST /renan/<slug>/backup-carga — item 1.7 / F-B, Onda B1 do CORDA.
+
+    Mesma trava de posse do B0: sem o cookie do dono, 404. O blob e salvo
+    bruto, sem parsing de estrutura interna (so precisa ser um objeto JSON).
+    """
+
+    def test_returns_404_without_owner_cookie(self):
+        response = self.client.post(
+            '/renan/giovanna/backup-carga',
+            data='{"reps": []}',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_returns_404_for_cookie_of_another_slug(self):
+        self.client.get('/renan/giovanna')  # seta o cookie de giovanna
+        response = self.client.post(
+            '/renan/rafael/backup-carga',
+            data='{"reps": []}',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_saves_raw_blob_as_is_for_owner(self):
+        from public_workouts.models import PublicWorkoutLocalStorageBackup
+
+        self.client.get('/renan/giovanna')  # seta o cookie do dono
+        blob = {'sessions': [{'date': '2026-01-05', 'weight': 42}], 'anything': 'nao normalizado'}
+        response = self.client.post(
+            '/renan/giovanna/backup-carga',
+            data=json.dumps(blob),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        backup = PublicWorkoutLocalStorageBackup.objects.get(plan_slug='giovanna')
+        self.assertEqual(backup.raw_blob, blob)
+        self.assertEqual(backup.store_key, 'giovanna_fontes_v1')
+
+    def test_rejects_malformed_json(self):
+        self.client.get('/renan/giovanna')
+        response = self.client.post(
+            '/renan/giovanna/backup-carga',
+            data='isso nao e json',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_rejects_non_object_json(self):
+        self.client.get('/renan/giovanna')
+        response = self.client.post(
+            '/renan/giovanna/backup-carga',
+            data='[1, 2, 3]',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+
 
 class PublicWorkoutContentSignatureTests(TestCase):
     """Trava o CONTEUDO das paginas publicas, nao o markup.
@@ -2217,7 +3078,7 @@ class PublicWorkoutContentSignatureTests(TestCase):
 
         updating = os.environ.get('UPDATE_PUBLIC_WORKOUT_GOLDEN') == '1'
         slugs = iter_slugs()
-        self.assertEqual(len(slugs), 8, 'esperado 8 planos publicos em PUBLIC_WORKOUT_LIBRARY')
+        self.assertEqual(len(slugs), 10, 'esperado 10 planos publicos em PUBLIC_WORKOUT_LIBRARY')
 
         for slug in slugs:
             with self.subTest(slug=slug):

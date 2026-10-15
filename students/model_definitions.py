@@ -80,9 +80,11 @@ class Student(TimeStampedModel):
     source_resolution_method = models.CharField(max_length=24, choices=SOURCE_RESOLUTION_METHOD_CHOICES, blank=True)
     source_resolution_reason = models.CharField(max_length=64, blank=True)
     source_captured_at = models.DateTimeField(null=True, blank=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     source_captured_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='captured_students',
@@ -149,13 +151,26 @@ class Student(TimeStampedModel):
         em public (SHARED_APPS) e search_path inclui public — verdade
         em todos os fluxos de tenant atuais.
 
-        Retorna a StudentIdentity ACTIVE mais recente, ou None.
+        BUG CORRIGIDO: student_id e um IntegerField sem constraint (Sprint 2),
+        e cada box/tenant tem sua propria sequence de Student.id comecando do 1.
+        Sem escopo por box, o filtro batia em QUALQUER StudentIdentity do
+        sistema com o mesmo numero — inclusive de outro box — e trazia nome
+        e foto (photo_url) de um aluno completamente diferente. box_root_slug
+        historicamente guarda o schema_name do tenant (get_box_runtime_slug()),
+        entao filtrar por ele restringe a busca ao box do Student atual.
+
+        Retorna a StudentIdentity ACTIVE mais recente NESTE box, ou None.
         """
         try:
+            from shared_support.box_runtime import get_box_runtime_slug
             from student_identity.models import StudentIdentity, StudentIdentityStatus
             return (
                 StudentIdentity.objects
-                .filter(student_id=self.id, status=StudentIdentityStatus.ACTIVE)
+                .filter(
+                    student_id=self.id,
+                    status=StudentIdentityStatus.ACTIVE,
+                    box_root_slug=get_box_runtime_slug(),
+                )
                 .order_by('-last_authenticated_at', '-id')
                 .first()
             )
@@ -179,9 +194,11 @@ class StudentSourceDeclaration(TimeStampedModel):
     declared_source_channel = models.CharField(max_length=32, blank=True)
     declared_source_response_id = models.CharField(max_length=120, blank=True, db_index=True)
     captured_at = models.DateTimeField(db_index=True)
+    # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
+    # comentario completo em dashboard/models.py.
     captured_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='captured_student_source_declarations',

@@ -15,12 +15,13 @@ PONTOS CRITICOS:
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db import connection
 from django.db.models import Q
 from django.utils import timezone
 
-from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
+from control.models import Membership
 from operations.domain import build_class_grid_session_policy
-from operations.models import ClassSession, SessionStatus
+from operations.models import ClassSession, SessionStatus, WorkoutProgram
 from shared_support.form_inputs import (
     LenientDateField,
     LenientTimeField,
@@ -43,9 +44,25 @@ WEEKDAY_CHOICES = (
 
 
 def _get_class_coach_queryset():
+    """Usuarios elegiveis para o campo Coach da grade.
+
+    Achado B2/B3 do relatorio de simulacao de 30 dias: antes filtrava so por
+    Group (groups__name__in=...), mas Group/auth_user vivem no schema
+    `public` — sem filtro por box, qualquer usuario com o Group Coach em
+    QUALQUER box aparecia na lista de TODOS os boxes (vazamento entre
+    tenants). Alem disso o papel "de verdade" vem de Membership (e o que o
+    checkout/onboarding cria) — o Group podia nao existir ou estar
+    dessincronizado, escondendo coaches legitimos.
+    Filtra por Membership do box ATIVO (connection.schema_name) em vez de
+    Group. is_superuser continua elegivel em qualquer box de proposito
+    (suporte/DEV multi-box).
+    """
     user_model = get_user_model()
     return user_model.objects.filter(
-        Q(is_superuser=True) | Q(groups__name__in=(ROLE_COACH, ROLE_MANAGER, ROLE_OWNER)),
+        Q(is_superuser=True) | Q(
+            memberships__box__schema_name=connection.schema_name,
+            memberships__role__in=(Membership.Role.COACH, Membership.Role.MANAGER, Membership.Role.OWNER),
+        ),
         is_active=True,
     ).distinct().order_by('first_name', 'username')
 
@@ -57,7 +74,9 @@ class ClassGridFilterForm(forms.Form):
         widget=forms.TextInput(attrs={'type': 'month'}),
     )
     coach = forms.ModelChoiceField(
-        queryset=_get_class_coach_queryset(),
+        # Placeholder no import do modulo: a queryset real (escopada pelo box
+        # ativo) e montada em __init__, por instancia/request — nunca aqui.
+        queryset=get_user_model().objects.none(),
         required=False,
         label='Coach',
         empty_label='Todos os coaches',
@@ -70,6 +89,10 @@ class ClassGridFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # A queryset do campo `coach` e escopada por box ativo (connection.schema_name
+        # no momento da chamada) — precisa ser recalculada por instancia/request, nao
+        # herdada do valor congelado no import do modulo (que seria sempre 'public').
+        self.fields['coach'].queryset = _get_class_coach_queryset()
         self.fields['reference_month'].initial = timezone.localdate().strftime('%Y-%m')
         apply_text_input_attrs(self.fields['reference_month'], maxlength=7)
 
@@ -211,6 +234,7 @@ class ClassScheduleRecurringForm(forms.ModelForm):
         model = ClassSession
         fields = [
             'title',
+            'workout_program',
             'coach',
             'start_date',
             'end_date',
@@ -228,6 +252,13 @@ class ClassScheduleRecurringForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['workout_program'].queryset = WorkoutProgram.objects.filter(is_active=True)
+        self.fields['workout_program'].empty_label = 'Selecione a modalidade'
+        self.fields['workout_program'].required = True
+        self.fields['workout_program'].label = 'Modalidade da aula'
+        self.fields['workout_program'].help_text = (
+            'Escolha a trilha que receberá o SmartPaste; o nome da aula é apenas para identificação.'
+        )
         self.fields['title'].label = 'Nome da aula'
         self.fields['duration_minutes'].label = 'Duração em minutos'
         self.fields['capacity'].label = 'Capacidade da turma'
@@ -261,6 +292,12 @@ class ClassScheduleRecurringForm(forms.ModelForm):
     def clean_weekdays(self):
         weekdays = self.cleaned_data.get('weekdays') or []
         return [int(value) for value in weekdays]
+
+    def clean_workout_program(self):
+        program = self.cleaned_data.get('workout_program')
+        if program is None:
+            raise forms.ValidationError('Escolha a modalidade que receberá a programação semanal.')
+        return program
 
     def clean_duration_minutes(self):
         duration_minutes = self.cleaned_data.get('duration_minutes')
@@ -323,6 +360,7 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         model = ClassSession
         fields = [
             'title',
+            'workout_program',
             'coach',
             'start_time',
             'duration_minutes',
@@ -345,6 +383,11 @@ class ClassSessionQuickEditForm(forms.ModelForm):
             else None
         )
         self.fields['coach'].queryset = _get_class_coach_queryset()
+        self.fields['workout_program'].queryset = WorkoutProgram.objects.filter(is_active=True)
+        self.fields['workout_program'].empty_label = 'Selecione a modalidade'
+        self.fields['workout_program'].required = True
+        self.fields['workout_program'].label = 'Modalidade da aula'
+        self.fields['workout_program'].help_text = 'A modalidade controla qual SmartPaste pode ser distribuído para esta aula.'
         self.fields['title'].label = 'Nome da aula'
         self.fields['coach'].label = 'Coach responsável pela aula'
         self.fields['duration_minutes'].label = 'Duração em minutos'
@@ -370,6 +413,18 @@ class ClassSessionQuickEditForm(forms.ModelForm):
         cleaned_data = super().clean()
         start_time = cleaned_data.get('start_time')
         selected_status = cleaned_data.get('status')
+        selected_program = cleaned_data.get('workout_program')
+
+        if (
+            self.instance.pk
+            and selected_program is not None
+            and selected_program.pk != self.instance.workout_program_id
+            and hasattr(self.instance, 'workout')
+        ):
+            self.add_error(
+                'workout_program',
+                'Esta aula já tem WOD associado. Ajuste o WOD antes de trocar a modalidade.',
+            )
 
         if self.instance.pk:
             session_policy = build_class_grid_session_policy(
@@ -388,3 +443,9 @@ class ClassSessionQuickEditForm(forms.ModelForm):
                 timezone.get_current_timezone(),
             )
         return cleaned_data
+
+    def clean_workout_program(self):
+        program = self.cleaned_data.get('workout_program')
+        if program is None:
+            raise forms.ValidationError('Escolha a modalidade que receberá a programação semanal.')
+        return program

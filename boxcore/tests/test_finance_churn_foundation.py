@@ -494,7 +494,8 @@ class FinanceChurnFoundationTests(TestCase):
         self.assertEqual(follow_up.outcome_status, FinanceFollowUpOutcomeStatus.FAILED)
         self.assertIn('Follow-ups financeiros avaliados: 1', stdout.getvalue())
 
-    def test_financial_churn_foundation_sorts_by_operational_priority(self):
+    @patch('catalog.finance_snapshot.ai.recommendation.resolve_high_signal_holdout', return_value=False)
+    def test_financial_churn_foundation_sorts_by_operational_priority(self, _mock_holdout):
         inactive = Student.objects.create(full_name='Alice Inativa', phone='5511910000006', status='inactive')
         high_signal = Student.objects.create(full_name='Beto Alerta', phone='5511910000007', status='active')
         watch = Student.objects.create(full_name='Caio Observa', phone='5511910000008', status='active')

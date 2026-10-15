@@ -227,5 +227,38 @@ class HandlePauseBoxLinkTest(unittest.TestCase):
         self.assertEqual(result, REDIRECT_SENTINEL)
 
 
+@patch('student_identity.staff_invite_actions.redirect', return_value=REDIRECT_SENTINEL)
+@patch('student_identity.staff_invite_actions.messages')
+@patch('student_identity.staff_invite_actions.get_box_runtime_slug', return_value='academia-x')
+@patch('student_identity.staff_invite_actions.StudentBoxInviteLink')
+class HandleResumeBoxLinkTest(unittest.TestCase):
+    """L1: _handle_resume_box_link — "Pausar" agora tem volta."""
+
+    def test_link_not_paused_or_not_found_shows_error(self, mock_model, _slug, mock_messages, _redirect):
+        mock_model.objects.filter.return_value.first.return_value = None
+
+        result = _InviteView().get()._handle_resume_box_link(_make_request())
+
+        mock_messages.error.assert_called_once()
+        self.assertEqual(result, REDIRECT_SENTINEL)
+        # So procura links deste box, nao revogados E atualmente pausados.
+        filter_kwargs = mock_model.objects.filter.call_args.kwargs
+        self.assertEqual(filter_kwargs['box_root_slug'], 'academia-x')
+        self.assertTrue(filter_kwargs['revoked_at__isnull'])
+        self.assertFalse(filter_kwargs['paused_at__isnull'])
+
+    def test_resumes_link_clearing_paused_at(self, mock_model, _slug, mock_messages, _redirect):
+        link = MagicMock()
+        link.paused_at = 'ontem'
+        mock_model.objects.filter.return_value.first.return_value = link
+
+        result = _InviteView().get()._handle_resume_box_link(_make_request())
+
+        self.assertIsNone(link.paused_at)
+        self.assertIn('paused_at', link.save.call_args.kwargs['update_fields'])
+        mock_messages.success.assert_called_once()
+        self.assertEqual(result, REDIRECT_SENTINEL)
+
+
 if __name__ == '__main__':
     unittest.main()

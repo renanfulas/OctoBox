@@ -22,11 +22,12 @@ from django.utils import timezone
 from django.views.generic import ListView, View
 
 from access.permissions import RoleRequiredMixin
+from access.roles import ROLE_DEV, ROLE_MANAGER, ROLE_OWNER
 from integrations.stripe.models import PaymentWebhookEvent, PaymentWebhookStatus
 
 
 class WebhookPanelView(LoginRequiredMixin, RoleRequiredMixin, ListView):
-    allowed_roles = ('owner', 'manager', 'dev')
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_DEV)
     template_name = 'integrations/webhook_panel.html'
     context_object_name = 'events'
     paginate_by = 50
@@ -53,7 +54,7 @@ class WebhookPanelView(LoginRequiredMixin, RoleRequiredMixin, ListView):
 
 
 class WebhookRetryView(LoginRequiredMixin, RoleRequiredMixin, View):
-    allowed_roles = ('owner', 'manager', 'dev')
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_DEV)
 
     def post(self, request, pk):
         event = get_object_or_404(PaymentWebhookEvent, pk=pk, status=PaymentWebhookStatus.FAILED)

@@ -23,6 +23,9 @@ fi
 : "${OCTOBOX_BACKUP_REMOTE:=}"
 : "${OCTOBOX_BACKUP_REMOTE_PREFIX:=octoboxfit-production}"
 : "${OCTOBOX_ENV_BACKUP_RETENTION_DAYS:=180}"
+# Segundo destino opcional (ex.: gdrive:pasta) — vazio = so o remote primario,
+# mesmo comportamento de sempre. Mesma variavel do backup_and_sync_postgres.sh.
+: "${OCTOBOX_BACKUP_REMOTE_SECONDARY:=}"
 
 ENV_FILE="${OCTOBOX_APP_HOME}/shared/octobox.env"
 STATE_DIR="${OCTOBOX_APP_HOME}/shared/deploy-state"
@@ -78,11 +81,22 @@ printf '%s\n' "${remote_target}" > "${LAST_ENV_REMOTE_FILE}"
 find "${BACKUP_DIR}" -maxdepth 1 -type f -name 'octobox-env-*.age' -mtime +"$((OCTOBOX_ENV_BACKUP_RETENTION_DAYS - 1))" -delete
 rclone delete "${OCTOBOX_BACKUP_REMOTE}/${OCTOBOX_BACKUP_REMOTE_PREFIX}/env-secrets" --min-age "${OCTOBOX_ENV_BACKUP_RETENTION_DAYS}d"
 
+remote_secondary_target=""
+if [[ -n "${OCTOBOX_BACKUP_REMOTE_SECONDARY}" ]]; then
+  remote_secondary_target="${OCTOBOX_BACKUP_REMOTE_SECONDARY}/${OCTOBOX_BACKUP_REMOTE_PREFIX}/env-secrets/${backup_name}"
+  echo "Destino remoto secundario: ${remote_secondary_target}"
+  rclone copyto "${backup_path}" "${remote_secondary_target}"
+  rclone delete "${OCTOBOX_BACKUP_REMOTE_SECONDARY}/${OCTOBOX_BACKUP_REMOTE_PREFIX}/env-secrets" --min-age "${OCTOBOX_ENV_BACKUP_RETENTION_DAYS}d"
+fi
+
 echo
 echo "Backup do env cifrado e sincronizado."
 echo "Resumo final:"
 echo "- backup local: ${backup_path}"
 echo "- backup remoto: ${remote_target}"
+if [[ -n "${remote_secondary_target}" ]]; then
+  echo "- backup remoto (secundario): ${remote_secondary_target}"
+fi
 echo "- retencao: ${OCTOBOX_ENV_BACKUP_RETENTION_DAYS} dias"
 echo "- lembrete: a chave PRIVADA age para decifrar este arquivo NAO esta na VPS."
 echo "  Ela deve estar no cofre de senhas do time (ver docs/rollout/hostgator/backup-env-secrets.md)."

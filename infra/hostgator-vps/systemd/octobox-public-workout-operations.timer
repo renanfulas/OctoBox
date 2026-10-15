@@ -1,0 +1,11 @@
+[Unit]
+Description=Reconcile Curva work items hourly
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=1h
+Persistent=true
+Unit=octobox-public-workout-operations.service
+
+[Install]
+WantedBy=timers.target
