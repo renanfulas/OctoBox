@@ -591,7 +591,7 @@
       setStatus(widget, 'Revise a correção pendente antes de registrar outra carga.', true);
       return;
     }
-    if (document.querySelector('[data-workout-guided-active]:not([hidden])')) {
+    if (document.querySelector('[data-workout-guided][data-guided-session-active]')) {
       setStatus(widget, 'Durante o treino guiado, registre esta série no painel do guia.', true);
       return;
     }
