@@ -8,6 +8,14 @@ O ambiente público tem VAPID persistente, `PUBLIC_WORKOUT_PUBLIC_BASE_URL` em H
 
 Uma conta de ensaio com plano próprio inscreveu um iPhone instalado. O envio isolado para essa inscrição foi aceito pelo gateway, e a destinatária confirmou o recebimento no aparelho. Portanto, inscrição e entrega de uma mensagem direta estão homologadas nesse iPhone. Continuam sem comprovação no aparelho: clique que abre o treino, desativação e reativação, envio automático após concluir uma sessão e Android. Não confundir o recibo do gateway com exibição no dispositivo: a confirmação da destinatária é a evidência desta entrega.
 
+## Homologação real em 15/10/2026
+
+No plano de ensaio `giovanna`, a sessão de quinta-feira foi concluída com **seis séries realizadas em seis exercícios**. O registro `PublicWorkoutTrainingSession` tem `outcome=completed` e `completed_at`; a linha do analytics mostra **Concluído** e seis séries. A outbox criou uma única mensagem `training_completed`, processada como `sent` na primeira tentativa e sem erro. O gateway aceitou o envio para as duas inscrições ativas dessa conta; isso não permite afirmar que são dois aparelhos físicos distintos.
+
+A destinatária confirmou que o aviso automático **Treino concluído** apareceu na Central de Notificações do iPhone e que tocar nele abriu o Curva no plano `giovanna`. Ela também confirmou que o aviso **Avisos ativados** chegou após a inscrição mais recente. Um único envio de diagnóstico para essa inscrição, com o iPhone bloqueado, apareceu na tela bloqueada. Assim, criação do fato de treino, analytics, outbox, gateway, exibição e abertura do aviso automático estão homologados nesse iPhone.
+
+O aviso automático não foi percebido como banner no momento da chegada, embora a entrega imediata e os banners estivessem ativados e não houvesse Foco declarado. Ele estava na Central, e o aviso de diagnóstico posterior apareceu na tela bloqueada. O motivo dessa diferença de apresentação permanece **não determinado**; não tratar a ausência de banner, isoladamente, como falha de entrega. Android e o ciclo completo de desativação/reativação ainda precisam de ensaio próprio.
+
 ## Ativação pública
 
 1. Guardar um par VAPID persistente no gestor de segredos do servidor. Usar `STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY`, `STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY` (PEM com `\n` entre linhas) e `STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT=mailto:...`. Trocar a chave depois de inscrições ativas exige nova inscrição dos dispositivos.
