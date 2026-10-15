@@ -6,7 +6,7 @@ O PR #322 foi publicado em `https://app.octoboxfit.com.br` no commit `1a7b7f05d2
 
 O ambiente público tem VAPID persistente, `PUBLIC_WORKOUT_PUBLIC_BASE_URL` em HTTPS e `PUBLIC_WORKOUT_PUSH_ALLOWED_HOSTS` para Apple e FCM. A chave privada foi normalizada para um único bloco PEM válido, sem trocar o par. `public_workouts.push.configured()` retornou `True`. O PR #327 (`15f83a21e4dcef5b1040535b06c6c3365c3a7bb2`) levou os controles de instalação e avisos para **Perfil** após a ativação; o convite inicial continua em **Início** enquanto a ação ainda cabe ao aluno.
 
-Uma conta de ensaio com plano próprio inscreveu um iPhone instalado. O envio isolado para essa inscrição foi aceito pelo gateway, e a destinatária confirmou o recebimento no aparelho. Portanto, inscrição e entrega de uma mensagem direta estão homologadas nesse iPhone. Continuam sem comprovação no aparelho: clique que abre o treino, desativação e reativação, envio automático após concluir uma sessão e Android. Não confundir o recibo do gateway com exibição no dispositivo: a confirmação da destinatária é a evidência desta entrega.
+Uma conta de ensaio com plano próprio inscreveu um iPhone instalado. O envio isolado para essa inscrição foi aceito pelo gateway, e a destinatária confirmou o recebimento no aparelho. Essa foi a primeira comprovação de inscrição e entrega direta; a validação posterior do fluxo automático está registrada abaixo. Não confundir o recibo do gateway com exibição no dispositivo: a confirmação da destinatária é a evidência desta entrega.
 
 ## Homologação real em 15/10/2026
 
