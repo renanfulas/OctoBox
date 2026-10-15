@@ -1,0 +1,7 @@
+interface:
+  display_name: "OctoBox Design"
+  short_description: "Luxo Futurista 2050 for OctoBox UI"
+  default_prompt: "Use $octobox-design to design or implement an OctoBox interface using the official Luxo Futurista 2050 theme with performance-first discipline."
+
+policy:
+  allow_implicit_invocation: true
