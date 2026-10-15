@@ -80,6 +80,32 @@ class GuidedPrescriptionContractTest(SimpleTestCase):
         self.assertEqual((proposal['stages'][0]['min_sets'], proposal['stages'][0]['max_sets']), (2, 3))
         self.assertEqual(validate_guided_prescription(proposal), [])
 
+    def test_stage_first_pilot_preserves_split_prep_and_optional_amrap(self):
+        movement = {'reps_spec': 'Preparat. 2x 10 / 6 → Feeder 1x 10 → Top Set 3x 8-12 → AMRAP 1x Opcional'}
+        original = deepcopy(movement)
+        proposal = propose_guided_prescription(movement)
+        self.assertEqual(movement, original)
+        self.assertEqual(validate_guided_prescription(proposal), [])
+        rows = expand_guided_prescription(proposal, top_weight_kg=100)
+        self.assertEqual([row['role'] for row in rows],
+                         ['warmup', 'warmup', 'feeder', 'top_set', 'top_set', 'top_set', 'max_set'])
+        self.assertEqual([row['reps'] for row in rows], [10, 6, 10, 8, 8, 8, None])
+        self.assertEqual([row['required'] for row in rows], [True] * 6 + [False])
+        self.assertEqual([row['weight_kg'] for row in rows], [40.0, 55.0, 70.0, 100, 100, 100, 100])
+
+    def test_stage_first_range_and_progressive_prep_are_reviewable(self):
+        movement = {'reps_spec': 'Preparat. 2x Progressivo → Feeder 1x 8-10 → Top Set 2-3x 8-12'}
+        proposal = propose_guided_prescription(movement)
+        self.assertEqual(validate_guided_prescription(proposal), [])
+        self.assertEqual([(stage['min_sets'], stage['max_sets']) for stage in proposal['stages']],
+                         [(2, 2), (1, 1), (2, 3)])
+        self.assertIsNone(proposal['stages'][0]['reps_min'])
+
+    def test_stage_first_duration_and_extra_instructions_stay_freeform(self):
+        for spec in ('Top Set 2-3x 30-45 s', 'Top Set 3x 8-12 → 1x dropset',
+                     'Feeder 1x 8-10 Opcional'):
+            self.assertIsNone(propose_guided_prescription({'reps_spec': spec}))
+
     def test_non_scalar_payload_does_not_crash_validator(self):
         guided = _guided()
         guided['stages'][0]['role'] = []

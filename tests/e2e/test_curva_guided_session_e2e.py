@@ -2,6 +2,7 @@
 
 import os
 import json
+from copy import deepcopy
 from datetime import timedelta
 from decimal import Decimal
 
@@ -14,6 +15,19 @@ from playwright.sync_api import Page, expect
 _EMAIL = 'curva-guided-e2e@example.test'
 _OTHER_EMAIL = 'curva-guided-other-e2e@example.test'
 _MOVEMENT_SLUG = 'curva-guided-e2e-squat'
+_SECOND_MOVEMENT_SLUG = 'curva-guided-e2e-row'
+_THIRD_MOVEMENT_SLUG = 'curva-guided-e2e-press'
+# Conta quantas vezes a página abre o banco local do guia (guided-outbox.js).
+_COUNT_OUTBOX_OPENS = """
+(() => {
+  const open = IDBFactory.prototype.open;
+  window.__curvaOutboxOpens = 0;
+  IDBFactory.prototype.open = function (name) {
+    if (String(name).startsWith('curva-guided:')) window.__curvaOutboxOpens += 1;
+    return open.apply(this, arguments);
+  };
+})();
+"""
 
 
 @pytest.fixture(autouse=True)
@@ -39,13 +53,15 @@ def _cleanup_guided_e2e(django_db_blocker):
             PublicWorkoutAccount.objects.filter(email=_OTHER_EMAIL).delete()
             PublicWorkoutProgram.objects.filter(slug='bruno', program_id='guided-e2e-2026').delete()
             PublicWorkoutMovement.objects.filter(slug=_MOVEMENT_SLUG).delete()
+            PublicWorkoutMovement.objects.filter(slug=_SECOND_MOVEMENT_SLUG).delete()
+            PublicWorkoutMovement.objects.filter(slug=_THIRD_MOVEMENT_SLUG).delete()
 
     cleanup()
     yield
     cleanup()
 
 
-def _prepare_guided_student(stages=None):
+def _prepare_guided_student(stages=None, *, freeform_count=0):
     from public_workouts.models import (
         PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutLoginToken,
         PublicWorkoutSubscription,
@@ -63,6 +79,14 @@ def _prepare_guided_student(stages=None):
              'load_rule': {'kind': 'manual'}},
         ] if stages is None else stages,
     }
+    if freeform_count:
+        first = payload['days'][0]['blocks'][0]['movements'][0]
+        first.pop('guided_prescription')
+        first['reps_spec'] = ''
+        for slug in (_SECOND_MOVEMENT_SLUG, _THIRD_MOVEMENT_SLUG)[:freeform_count - 1]:
+            extra = deepcopy(first)
+            extra['movement_slug'] = slug
+            payload['days'][0]['blocks'][0]['movements'].append(extra)
     publish_program(slug='bruno', payload=payload)
     account = PublicWorkoutAccount.objects.create(
         email=_EMAIL, onboarding_completed_at=timezone.now(),
@@ -70,6 +94,87 @@ def _prepare_guided_student(stages=None):
     PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
     token = PublicWorkoutLoginToken.objects.create(account=account, expires_at=timezone.now() + timedelta(hours=1))
     return account, token
+
+
+def _start_guided(page: Page):
+    page.locator('[data-workout-guided-start]').click()
+    # A contagem 3-2-1 do modo foco aceita um toque para começar na hora.
+    page.locator('[data-guided-countdown-skip]').click()
+
+
+def _wait_for_offline_scope(page: Page):
+    # wait_for_function com string avalia via eval na página e a CSP (sem
+    # 'unsafe-eval') bloqueia; page.evaluate passa pelo protocolo do navegador.
+    from playwright.sync_api import Error as PlaywrightError
+
+    page.wait_for_url('**/renan/bruno**')
+    for _ in range(100):
+        try:
+            if page.evaluate("() => !!localStorage.getItem('curva-guided-scope:bruno')"):
+                return
+        except PlaywrightError:
+            pass  # o login ainda pode estar redirecionando
+        page.wait_for_timeout(100)
+    raise AssertionError('o guia não salvou a ficha offline neste aparelho')
+
+
+def _finish_from_summary(page: Page):
+    # "Finalizar" mora no resumo; "Ver treino todo" leva até ele a qualquer momento.
+    page.locator('[data-guided-open-sheet]').click()
+    page.locator('[data-guided-open-summary]').click()
+    page.locator('[data-workout-guided-finish]').click()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_freeform_summary_requires_each_exercise_and_records_partial(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    account, token = _prepare_guided_student(freeform_count=3)
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    page.locator('[data-workout-guided-weight]').fill('50')
+    page.locator('[data-workout-guided-reps]').fill('8')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-guided-receipt-status]')).to_have_text('✓ Salvo')
+    page.locator('[data-guided-open-sheet]').click()
+    page.locator('[data-guided-open-summary]').click()
+    summary = page.locator('[data-guided-screen="summary"]')
+    expect(summary.locator('[data-guided-title]')).to_have_text('Faltam 2 exercícios sem registro para finalizar')
+    expect(summary.locator('[data-workout-guided-finish]')).to_be_hidden()
+    expect(summary.locator('[data-workout-guided-partial]')).to_be_visible()
+    summary.locator('[data-workout-guided-partial]').click()
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('parcial')
+    session = PublicWorkoutTrainingSession.objects.get(account=account)
+    assert session.outcome == 'partial'
+    assert session.completed_set_count == 1
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_offline_freeform_finish_requires_each_exercise(page: Page, live_server):
+    _, token = _prepare_guided_student(freeform_count=2)
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    _wait_for_offline_scope(page)
+    page.evaluate("async () => { await navigator.serviceWorker.ready; }")
+    page.context.set_offline(True)
+    page.reload()
+    page.locator('[data-offline-open]').click()
+    page.locator('[data-offline-start]').click()
+    expect(page.locator('[data-offline-status]')).to_contain_text('Início salvo')
+    page.locator('[data-offline-weight]').fill('50')
+    page.locator('[data-offline-reps]').fill('8')
+    page.locator('[data-offline-set]').click()
+    expect(page.locator('[data-offline-status]')).to_contain_text('Série salva')
+    expect(page.locator('[data-offline-finish]')).to_be_hidden()
+    expect(page.locator('[data-offline-partial]')).to_be_visible()
+    page.locator('[data-offline-weight]').fill('45')
+    page.locator('[data-offline-reps]').fill('8')
+    page.locator('[data-offline-set]').click()
+    expect(page.locator('[data-offline-finish]')).to_be_visible()
 
 
 @pytest.mark.e2e
@@ -93,20 +198,21 @@ def test_student_top_target_guides_ramp_and_survives_reload(page: Page, live_ser
     account, token = _prepare_guided_student(stages)
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
 
     target = page.locator('[data-workout-guided-top-target]')
     expect(target).to_be_visible()
     target.locator('[data-workout-guided-top-input]').fill('100')
     target.locator('[data-workout-guided-top-apply]').click()
     expect(page.locator('[data-workout-guided-weight]')).to_have_value('40')
+    expect(page.locator('[data-guided-weight-source]')).to_contain_text('Top alvo')
     if screenshot_path := os.environ.get('CURVA_LOAD_SCREENSHOT'):
         page.screenshot(path=screenshot_path, full_page=True)
     page.locator('[data-workout-guided-reps]').fill('8')
     page.locator('[data-workout-guided-set]').click()
 
+    # O modo foco reabre sozinho (#treino-guiado) e o alvo vem do aparelho.
     page.reload()
-    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     expect(page.locator('[data-workout-guided-weight]')).to_have_value('70')
     page.locator('[data-workout-guided-weight]').fill('65')
     page.locator('[data-workout-guided-reps]').fill('6')
@@ -181,6 +287,8 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
     expect(page.locator('[data-workout-guided-start]')).to_be_visible()
     page.locator('[data-workout-guided-start]').click()
     expect(page.locator('[data-workout-guided-active]')).to_be_visible()
+    # Contagem completa: 3, 2, 1, GO e a tela do exercício.
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=8000)
     if screenshot_path := os.environ.get('CURVA_GUIDED_SCREENSHOT'):
         page.screenshot(path=screenshot_path, full_page=True)
     from public_workouts.schema import build_example_payload
@@ -197,9 +305,11 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
         ],
     }
     publish_program(slug='bruno', payload=newer)
+    # Recarregar com o modo foco aberto (#treino-guiado) volta direto ao exercício,
+    # na versão do programa em que a sessão começou.
     page.reload()
-    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
-    expect(page.locator('[data-workout-guided-source]')).to_contain_text('6–8 repetições')
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+    expect(page.locator('[data-guided-meta]')).to_contain_text('6–8 reps')
     page.locator('[data-workout-guided-weight]').fill('50')
     page.locator('[data-workout-guided-reps]').fill('7')
     # O GET de atualização pode chegar enquanto o aluno digita. O mesmo
@@ -209,20 +319,82 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
     expect(page.locator('[data-workout-guided-weight]')).to_have_value('50')
     expect(page.locator('[data-workout-guided-reps]')).to_have_value('7')
     page.locator('[data-workout-guided-set]').click()
-    expect(page.locator('[data-workout-guided-finish]')).to_be_visible()
     expect(page.locator('[data-workout-guided-timer]')).to_contain_text('Descanso')
+    expect(page.locator('[data-guided-receipt]')).to_contain_text('50 kg')
 
     page.reload()
-    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     expect(page.locator('[data-workout-guided-active]')).to_be_visible()
-    expect(page.locator('[data-workout-guided-finish]')).to_be_visible()
-    page.locator('[data-workout-guided-finish]').click()
+    expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
+    _finish_from_summary(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Treino concluído')
+    expect(page.locator('[data-guided-screen="finished"]')).to_contain_text('Treino registrado no Curva')
 
     session = PublicWorkoutTrainingSession.objects.get(account=account)
     assert session.outcome == 'completed'
     assert session.completed_set_count == 1
     assert PublicWorkoutLoadLog.objects.get(account=account, is_active=True).weight_kg == Decimal('50.00')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_guided_online_set_is_one_request_with_local_receipt(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    account, token = _prepare_guided_student()
+    page.add_init_script(_COUNT_OUTBOX_OPENS)
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+    sent = []
+    page.on('request', lambda request: sent.append(request.method) if request.url.endswith('/renan/bruno/sessao') else None)
+    page.locator('[data-workout-guided-weight]').fill('50')
+    page.locator('[data-workout-guided-reps]').fill('7')
+    page.locator('[data-workout-guided-set]').click()
+    # Gravação local primeiro; o ✓ só chega com a resposta daquela série.
+    expect(page.locator('[data-guided-receipt-status]')).to_have_text('✓ Salvo')
+    page.wait_for_timeout(600)
+    assert sent == ['POST'], 'série online: 1 POST e nenhum GET /sessao depois'
+    # As ~9 transações da série (fila, lease, lista, envio, remoção...) reaproveitam a conexão.
+    assert page.evaluate('() => window.__curvaOutboxOpens') == 1, 'o banco local abre uma vez por página'
+    session = PublicWorkoutTrainingSession.objects.get(account=account)
+    assert session.sets.get().weight_kg == Decimal('50.00')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_guided_set_survives_tab_closed_before_post_returns(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    account, token = _prepare_guided_student()
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+
+    def hold_set(route):
+        # O POST da série nunca sai: a aba fecha antes da resposta.
+        if route.request.method == 'POST' and (route.request.post_data_json or {}).get('action') == 'set':
+            return
+        route.continue_()
+
+    page.route('**/renan/bruno/sessao', hold_set)
+    page.locator('[data-workout-guided-weight]').fill('57.5')
+    page.locator('[data-workout-guided-reps]').fill('7')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-guided-receipt-status]')).to_have_text('Salvo no aparelho')
+    context = page.context
+    page.close()
+    assert not PublicWorkoutTrainingSession.objects.get(account=account).sets.exists()
+
+    reopened = context.new_page()
+    reopened.goto(f'{live_server.url}/renan/bruno')
+    # O lease da aba morta expira (~12 s) e a nova aba envia a série da fila.
+    expect(reopened.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=30000)
+    session = PublicWorkoutTrainingSession.objects.get(account=account)
+    assert session.sets.get().weight_kg == Decimal('57.50')
 
 
 @pytest.mark.e2e
@@ -235,17 +407,18 @@ def test_guided_start_and_set_sync_after_network_returns(page: Page, live_server
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('52.5')
     page.locator('[data-workout-guided-reps]').fill('7')
     page.locator('[data-workout-guided-set]').click()
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('salva neste aparelho')
+    expect(page.locator('[data-guided-receipt-status]')).to_contain_text('Salvo no aparelho')
 
     page.context.set_offline(False)
     page.evaluate("window.dispatchEvent(new Event('online'))")
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=15000)
-    page.locator('[data-workout-guided-finish]').click()
+    _finish_from_summary(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Treino concluído')
     session = PublicWorkoutTrainingSession.objects.get(account=account)
     assert session.outcome == 'completed'
@@ -262,7 +435,7 @@ def test_reconnecting_does_not_erase_a_set_being_typed(page: Page, live_server):
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('61.5')
     page.locator('[data-workout-guided-reps]').fill('7')
@@ -285,7 +458,7 @@ def test_guided_reopens_from_offline_shell_and_sends_in_order(page: Page, live_s
 
     account, token = _prepare_guided_student()
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
-    page.wait_for_function("!!localStorage.getItem('curva-guided-scope:bruno')")
+    _wait_for_offline_scope(page)
     page.evaluate("async () => { await navigator.serviceWorker.ready; }")
     page.context.set_offline(True)
     page.reload()
@@ -310,9 +483,9 @@ def test_guided_reopens_from_offline_shell_and_sends_in_order(page: Page, live_s
         # Chromium pode devolver a página já aberta do cache HTTP durante a
         # segunda navegação offline; o guia deve restaurar o mesmo rascunho.
         page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+        page.locator('[data-guided-resume]').click()
         expect(page.locator('[data-workout-guided-active]')).to_be_visible()
-        expect(page.locator('[data-workout-guided-finish]')).to_be_visible()
-        page.locator('[data-workout-guided-finish]').click()
+        _finish_from_summary(page)
         expect(page.locator('[data-workout-guided-status]')).to_contain_text('pendente de envio')
     page.context.set_offline(False)
     page.reload()
@@ -334,7 +507,7 @@ def test_offline_start_conflict_preserves_export_and_opens_new_program(page: Pag
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('47.5')
     page.locator('[data-workout-guided-reps]').fill('7')
@@ -354,6 +527,8 @@ def test_offline_start_conflict_preserves_export_and_opens_new_program(page: Pag
     publish_program(slug='bruno', payload=newer)
     page.context.set_offline(False)
     page.evaluate("window.dispatchEvent(new Event('online'))")
+    # Com o modo foco aberto, o conflito chega como aviso fixo que leva à ficha.
+    page.locator('[data-guided-toast-action]').click(timeout=15000)
     expect(page.locator('[data-workout-guided-conflict]')).to_be_visible(timeout=15000)
     # A visita à ficha nova não pode apagar a versão necessária para retomar
     # ou exportar o treino que ainda está na fila local.
@@ -397,7 +572,7 @@ def test_queued_training_waits_for_same_account_login(page: Page, live_server):
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('57.5')
     page.locator('[data-workout-guided-reps]').fill('7')
@@ -434,7 +609,7 @@ def test_two_tabs_drain_one_local_queue_without_duplicate_top(page: Page, live_s
     second.goto(f'{live_server.url}/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('60')
     page.locator('[data-workout-guided-reps]').fill('7')
@@ -466,7 +641,7 @@ def test_account_switch_does_not_send_queued_sets_to_another_student(page: Page,
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
-    page.locator('[data-workout-guided-start]').click()
+    _start_guided(page)
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
     page.locator('[data-workout-guided-weight]').fill('62.5')
     page.locator('[data-workout-guided-reps]').fill('7')

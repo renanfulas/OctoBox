@@ -41,7 +41,13 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # Bump 10->11: coordenadores de sincronização de carga/guia entram no HTML.
 # Bump 11->12: a retomada local e a barra com teclado precisam trocar os
 # scripts já guardados em instalações antigas, mesmo com versão estática fixa.
-PUBLIC_WORKOUT_CACHE_EPOCH = 12
+# Bump 12->13: modo foco do treino guiado (guided-format/ring/focus e CSS
+# próprio) e guided-loads.js, que faltava no precache, viram obrigatórios.
+# Bump 13->14: write-ahead do guiado (onda 3) e conexão IndexedDB reaproveitada
+# trocam guided-sync/outbox/focus e workout-guided já guardados no aparelho.
+# Bump 14->15: a confirmação de e-mail por código para ativar avisos mudou
+# workout-push.js/css; o app instalado é justamente onde o aluno precisa dela.
+PUBLIC_WORKOUT_CACHE_EPOCH = 15
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -105,6 +111,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS: tuple[str, ...] = (
     '/static/css/public_workouts/workout-progress.css',
     '/static/css/public_workouts/workout-assessment.css',
     '/static/css/public_workouts/workout-guided.css',
+    '/static/css/public_workouts/workout-guided-focus.css',
     '/static/css/public_workouts/workout-push.css',
 )
 
@@ -128,6 +135,10 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/guided-sync.js',
     '/static/js/public_workouts/guided-timer.js',
     '/static/js/public_workouts/guided-state.js',
+    '/static/js/public_workouts/guided-loads.js',
+    '/static/js/public_workouts/guided-format.js',
+    '/static/js/public_workouts/guided-ring.js',
+    '/static/js/public_workouts/guided-focus.js',
     '/static/js/public_workouts/workout-offline.js',
     '/static/js/public_workouts/workout-pwa.js',
     '/static/js/public_workouts/workout-push.js',

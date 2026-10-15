@@ -1119,6 +1119,10 @@ REGRA:
     .topbar {
         padding: 11px 14px;
         border-radius: 24px;
+        /* No celular a barra tem 3 linhas (busca, acoes, alertas) e fixa cobria ~30% da tela,
+           escondendo formularios ao rolar. Aqui ela rola junto com a pagina. */
+        position: relative;
+        top: auto;
     }
 }
 

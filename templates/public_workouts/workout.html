@@ -70,6 +70,7 @@ PONTOS CRITICOS:
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-progress.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-assessment.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-guided.css' %}?v={{ asset_version }}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/workout-guided-focus.css' %}?v={{ asset_version }}">
 <link rel="stylesheet" href="{% static 'css/public_workouts/workout-push.css' %}?v={{ asset_version }}">
 </head>
 <body data-plan-slug="{{ plan_slug }}" data-account-scope="{{ guided_account_scope }}" data-theme="dark"{% if accent_variant == 'F' %} data-accent-variant="premium"{% elif accent_variant == 'M' %} data-accent-variant="support"{% endif %}>
@@ -250,7 +251,7 @@ PONTOS CRITICOS:
             {% for movement in block.movements %}
             {% movement_load_display movement program current_phase one_rep_max_by_movement progress_snapshots as load %}
             {% guided_series movement load.value_kg one_rep_max_by_movement as guided_plan %}
-            <article class="student-card workout-movement-card{% if movement.is_tracked %} is-load-tracked{% endif %}" data-guided-series="{{ guided_plan }}" data-movement-slug="{{ movement.movement_slug }}" data-load-kind="{{ load.kind }}" data-allow-load-registration="{% if movement.allow_load_registration|default_if_none:True %}true{% else %}false{% endif %}">
+            <article class="student-card workout-movement-card{% if movement.is_tracked %} is-load-tracked{% endif %}" data-guided-series="{{ guided_plan }}" data-movement-slug="{{ movement.movement_slug }}" data-movement-label="{{ movement|movement_name:movement_labels }}" data-reference-url="{{ movement.reference_url|default:'' }}" data-rir-spec="{{ movement.rir_spec|default:'' }}" data-load-kind="{{ load.kind }}" data-allow-load-registration="{% if movement.allow_load_registration|default_if_none:True %}true{% else %}false{% endif %}">
               <div class="workout-movement-copy">
                 {% if movement.reference_url %}
                 <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_name:movement_labels }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
@@ -722,6 +723,8 @@ PONTOS CRITICOS:
 
 {% include 'public_workouts/_onboarding_wizard.html' %}
 
+{% include 'public_workouts/partials/_guided_focus.html' %}
+
 <script src="{% static 'js/public_workouts/workout-shell.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/workout-pwa.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/core/shell.js' %}?v={{ asset_version }}" defer></script>
@@ -742,6 +745,9 @@ PONTOS CRITICOS:
 <script src="{% static 'js/public_workouts/guided-timer.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/guided-state.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/guided-loads.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-format.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-ring.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-focus.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/workout-guided.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/workout-push.js' %}?v={{ asset_version }}" defer></script>
 </body>

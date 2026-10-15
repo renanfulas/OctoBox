@@ -60,6 +60,24 @@ Runtime real e testes vencem qualquer doc.
 - Segurança: **defesa/hardening** → `security_performance_engineer` · **ataque/forense** → `white_hat_hacker`.
 - Arquitetura: **sistema/escala** → `software-architecture-chief` · **banco** → `octobox-sql-architect`.
 
+## Skills `octobox-*` (pacotes novos) vs. skills legadas
+
+Três pacotes importados vivem em `.claude/skills/` com prefixo `octobox-` e `disable-model-invocation: true` (a descrição **não** entra no contexto; só rodam quando o usuário chama `/nome`):
+
+- **Octobox Marketing** → `octobox-<nome>` (51 skills: `octobox-copywriting`, `octobox-cro`, `octobox-emails`, `octobox-ads`…)
+- **Octobox Social Media Mentor** → `octobox-social-mentor-<nome>` (17 skills)
+- **Octobox Taste Design UI/UX Personality** → `octobox-taste-design-ui-ux-personality` (principal) e `octobox-taste-<variante>` (13 skills)
+
+**Roteadores de pacote:** chamar `/octobox-marketing`, `/octobox-social-mentor` ou `/octobox-taste-design-ui-ux-personality` ativa o pacote inteiro; escolha quantas skills do pacote o contexto exigir, leia o `SKILL.md` de cada e siga.
+
+**Regra de precedência:**
+- Se o usuário **chamou** uma `octobox-*` pelo nome, **só ela** vale para a tarefa.
+- Se **não chamou**, nunca dispare uma `octobox-*` por conta própria: use a skill legada equivalente (ex.: texto/copy → `copywriter-sintese`; UI/tema → `octobox-design` ou `frontend-aesthetic-director`; CSS → `css_front_end_architect`; prompts → `prompt-engineer`).
+
+**Pré-requisitos externos (lembrar o usuário ao usar):**
+- `octobox-social-mentor-reels-scripting` exige as variáveis `APIFY_API_TOKEN` e `GOOGLE_AI_API_KEY`.
+- `octobox-social-mentor-niche-research` exige a extensão Claude for Chrome.
+
 ## Gotchas de runtime que você precisa saber
 
 - **Só roda em PostgreSQL.** `django-tenants` não tem caminho SQLite — `migrate`/`runserver` em SQLite quebra com `'DatabaseWrapper' object has no attribute 'set_schema'`. Cluster dev local: porta 5433 (ver memória `octobox-local-postgres-cluster`).

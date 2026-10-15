@@ -39,6 +39,10 @@
       <p class="error">Muitos pedidos seguidos. Espere alguns minutos e tente de novo.</p>
     {% elif error == 'conta_nao_ativa' %}
       <p class="error">Ainda não há uma conta de aluno ativa para esse e-mail. Se o checkout ficou incompleto, <a href="{% url 'public-workout-landing' %}#curva-precos">volte aos planos</a> e continue o pagamento. Se acabou de pagar, aguarde a confirmação e tente novamente.</p>
+    {% elif error == 'conta_nao_encontrada' %}
+      <p class="error">Não encontramos uma conta da Curva com esse e-mail do Google. Entre com o e-mail usado na compra.</p>
+    {% elif error == 'pagamento_pendente' %}
+      <p class="error">O pagamento desta conta ainda não foi confirmado. Se acabou de pagar, aguarde a confirmação e tente novamente.</p>
     {% elif error == 'google_falhou' or error == 'google_indisponivel' %}
       <p class="error">Não deu pra entrar com o Google agora. Tente de novo ou use seu e-mail abaixo.</p>
     {% endif %}
