@@ -7,6 +7,8 @@ POR QUE ELE EXISTE:
   Onda B3). Cobre tambem o rate limit (S1) e a regra de uso unico (D.5/S3).
 """
 
+import threading
+import uuid
 from unittest.mock import Mock, patch
 
 from django.core import mail, signing
@@ -239,10 +241,31 @@ class VerifyLoginTokenTests(TestCase):
         )
 
         first = verify_login_token(token=str(token.token))
+        token.refresh_from_db()
+        first_used_at = token.used_at
         second = verify_login_token(token=str(token.token))
 
         self.assertIsNotNone(first)
         self.assertIsNone(second)
+        token.refresh_from_db()
+        self.assertEqual(token.used_at, first_used_at)
+
+    def test_pending_payment_account_is_refused_and_token_stays_unused(self):
+        account = PublicWorkoutAccount.objects.create(email='pendingverify@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account,
+            plan_slug='bruno',
+            requires_login=True,
+            status=PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
+        )
+        token = PublicWorkoutLoginToken.objects.create(
+            account=account,
+            expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+
+        self.assertIsNone(verify_login_token(token=str(token.token)))
+        token.refresh_from_db()
+        self.assertIsNone(token.used_at)
 
     def test_expired_token_returns_none(self):
         account = PublicWorkoutAccount.objects.create(email='expiredverify@example.com')
@@ -334,6 +357,88 @@ class VerifyLoginCodeTests(TestCase):
         self.assertIn(code, sent.body)
         self.assertIn(code, sent.alternatives[0][0])
         self.assertIn(str(token.token), sent.body)
+
+
+def _run_in_own_connection(fn):
+    """Roda fn numa thread com conexao propria e autocommit de verdade, fora da
+    transacao do TestCase (que as outras conexoes nao enxergam). Mesma tecnica
+    de tests/test_background_jobs_schema.py — TransactionTestCase nao serve
+    aqui porque o flush nao conhece os schemas de tenant."""
+    outcome = {}
+
+    def _target():
+        from django.db import connection as thread_connection
+        try:
+            outcome['value'] = fn()
+        except BaseException as exc:
+            outcome['error'] = exc
+        finally:
+            thread_connection.close()
+
+    thread = threading.Thread(target=_target)
+    thread.start()
+    return thread, outcome
+
+
+def _joined_value(thread, outcome, *, timeout=5.0):
+    thread.join(timeout=timeout)
+    if 'error' in outcome:
+        raise outcome['error']
+    return outcome.get('value')
+
+
+class VerifyLoginTokenRowLockTests(TestCase):
+    """Dois cliques simultaneos no mesmo link. Sem a trava da linha, os dois
+    leem o token ainda nao usado e os dois abrem sessao."""
+
+    def setUp(self):
+        email = f'lock-{uuid.uuid4().hex[:12]}@example.com'
+
+        def _create():
+            account = PublicWorkoutAccount.objects.create(email=email)
+            login_token = PublicWorkoutLoginToken.objects.create(
+                account=account,
+                expires_at=timezone.now() + timezone.timedelta(minutes=15),
+            )
+            return account.id, str(login_token.token)
+
+        self.account_id, self.token = _joined_value(*_run_in_own_connection(_create))
+        self.addCleanup(lambda: _joined_value(*_run_in_own_connection(
+            lambda: PublicWorkoutAccount.objects.filter(id=self.account_id).delete()
+        )))
+
+    def test_second_concurrent_click_waits_for_lock_and_gets_none(self):
+        # O primeiro clique para dentro do mark_used(), com a linha ja travada e
+        # sem commit; o segundo entra nesse intervalo.
+        first_click_inside = threading.Event()
+        release_first_click = threading.Event()
+        mark_used_calls = []
+        original_mark_used = PublicWorkoutLoginToken.mark_used
+
+        def _pause_first_click(login_token):
+            mark_used_calls.append(login_token.pk)
+            if len(mark_used_calls) == 1:
+                first_click_inside.set()
+                release_first_click.wait(timeout=5.0)
+            original_mark_used(login_token)
+
+        with patch.object(PublicWorkoutLoginToken, 'mark_used', _pause_first_click):
+            first_thread, first_outcome = _run_in_own_connection(lambda: verify_login_token(token=self.token))
+            try:
+                self.assertTrue(first_click_inside.wait(timeout=5.0), 'primeiro clique nao chegou no mark_used')
+                second_thread, second_outcome = _run_in_own_connection(lambda: verify_login_token(token=self.token))
+                second_thread.join(timeout=0.5)
+                second_waited_for_lock = second_thread.is_alive()
+            finally:
+                release_first_click.set()
+                first_thread.join(timeout=5.0)
+            second_account = _joined_value(second_thread, second_outcome)
+        first_account = _joined_value(first_thread, first_outcome)
+
+        self.assertEqual(first_account.id, self.account_id)
+        self.assertIsNone(second_account)
+        self.assertTrue(second_waited_for_lock, 'segundo clique nao esperou a trava da linha do token')
+        self.assertEqual(len(mark_used_calls), 1)
 
 
 class PublicWorkoutLoginViewTests(TestCase):

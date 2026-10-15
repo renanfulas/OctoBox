@@ -175,21 +175,32 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
 
 
 def verify_login_token(*, token: str) -> PublicWorkoutAccount | None:
-    """Consome o token se valido. None se ausente, mal formado, expirado ou ja usado."""
-    try:
-        login_token = PublicWorkoutLoginToken.objects.select_related('account').get(token=token)
-    except (PublicWorkoutLoginToken.DoesNotExist, ValueError, TypeError, ValidationError):
-        return None
+    """Consome o token se valido. None se ausente, mal formado, expirado ou ja usado.
 
-    if not login_token.is_valid:
-        return None
+    A linha do token fica travada entre a leitura e o mark_used(): dois cliques
+    simultaneos no mesmo link nao abrem duas sessoes — o segundo espera o
+    primeiro commitar e ja le o token como usado.
+    """
+    with transaction.atomic():
+        try:
+            login_token = (
+                PublicWorkoutLoginToken.objects
+                .select_for_update(of=('self',))
+                .select_related('account')
+                .get(token=token)
+            )
+        except (PublicWorkoutLoginToken.DoesNotExist, ValueError, TypeError, ValidationError):
+            return None
 
-    account = login_token.account
-    subscription = getattr(account, 'subscription', None)
-    if subscription is not None and subscription.requires_login and subscription.status == 'pending_payment':
-        return None
-    login_token.mark_used()
-    login_token.save(update_fields=['used_at', 'updated_at'])
+        if not login_token.is_valid:
+            return None
+
+        account = login_token.account
+        subscription = getattr(account, 'subscription', None)
+        if subscription is not None and subscription.requires_login and subscription.status == 'pending_payment':
+            return None
+        login_token.mark_used()
+        login_token.save(update_fields=['used_at', 'updated_at'])
 
     account.last_login_at = timezone.now()
     account.save(update_fields=['last_login_at', 'updated_at'])

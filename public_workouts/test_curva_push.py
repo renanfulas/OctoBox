@@ -1,6 +1,7 @@
 """Inscrição, outbox e contrato com o gateway Web Push, sem envio externo."""
 
 from datetime import timedelta
+from decimal import Decimal
 import json
 from unittest.mock import patch
 
@@ -12,10 +13,14 @@ from public_workouts.models import (
     PublicWorkoutAccount, PublicWorkoutOutboxMessage, PublicWorkoutOutboxStatus, PublicWorkoutPushSubscription,
     PublicWorkoutLoginToken, PublicWorkoutSubscription,
 )
-from public_workouts.outbox import TOPIC_PROGRAM_PUSH_READY, TOPIC_PUSH_WELCOME, drain_public_workout_outbox, enqueue_outbox
+from public_workouts.outbox import (
+    TOPIC_PROGRAM_PUSH_READY, TOPIC_PUSH_WELCOME, TOPIC_TRAINING_COMPLETED,
+    _dispatch, drain_public_workout_outbox, enqueue_outbox,
+)
 from public_workouts.push import configured, send as send_push, subscribe
 from public_workouts.schema import build_example_payload
 from public_workouts.services import publish_program
+from public_workouts.training_sessions import finish_session, record_set, start_session
 
 
 @override_settings(
@@ -141,6 +146,35 @@ class CurvaPushIntegrationTest(TestCase):
         subscribe(account_id=self.account.pk, data=self.subscription)
         publish_program(slug='bruno', payload=build_example_payload())
         self.assertTrue(PublicWorkoutOutboxMessage.objects.filter(topic=TOPIC_PROGRAM_PUSH_READY).exists())
+
+    @override_settings(PUBLIC_WORKOUT_PUBLIC_BASE_URL='https://curva.example.test')
+    @patch('public_workouts.push.notify_account', return_value=True)
+    def test_real_completion_queues_one_account_scoped_notification(self, notify):
+        subscribe(account_id=self.account.pk, data=self.subscription)
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['guided_prescription'] = {
+            'version': 1, 'stages': [
+                {'stage_id': 'top', 'role': 'top_set', 'min_sets': 1, 'max_sets': 1,
+                 'reps_min': 6, 'reps_max': 8, 'rest_seconds': 90,
+                 'load_rule': {'kind': 'suggested_top'}},
+            ],
+        }
+        publish_program(slug='bruno', payload=payload)
+        session = start_session(account_id=self.account.pk, plan_slug='bruno', day_id='seg')
+        record_set(
+            account_id=self.account.pk, plan_slug='bruno', session_id=session.pk,
+            movement_index=0, set_number=1, movement_slug='agachamento-livre',
+            role='top_set', weight=Decimal('50.00'), reps=7, rir=None,
+        )
+        finish_session(account_id=self.account.pk, plan_slug='bruno', session_id=session.pk)
+        finish_session(account_id=self.account.pk, plan_slug='bruno', session_id=session.pk)
+        messages = PublicWorkoutOutboxMessage.objects.filter(
+            topic=TOPIC_TRAINING_COMPLETED, aggregate_id=str(session.pk),
+        )
+        self.assertEqual(messages.count(), 1)
+        self.assertTrue(_dispatch(messages.get()))
+        self.assertEqual(notify.call_args.kwargs['account_id'], self.account.pk)
+        self.assertEqual(notify.call_args.kwargs['url'], 'https://curva.example.test/renan/bruno')
 
     def test_other_account_cannot_claim_live_device(self):
         subscribe(account_id=self.account.pk, data=self.subscription)
