@@ -62,9 +62,27 @@
 
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
+    // set/skip/unskip vão para a fila local antes do POST (onda 3 do modo foco).
+    writeAhead: true,
     isOnline: function () { return navigator.onLine; },
     hasActiveSession: function () { return !!sessionId; },
-    onConflict: showConflict,
+    onConflict: function (command) {
+      var payload = command.payload;
+      var setKey = payload.action === 'set' ? key(payload.movement_index, payload.set_number) : null;
+      if (setKey && recorded.has(setKey) && setSync.has(setKey)) {
+        setSync.set(setKey, 'blocked');
+        render();
+      }
+      showConflict(command);
+    },
+    onSent: function (payload) {
+      if (payload.session_id !== sessionId || (payload.action !== 'set' && payload.action !== 'correct')) return;
+      var setKey = key(payload.movement_index, payload.set_number);
+      if (!setSync.has(setKey)) return;
+      setSync.set(setKey, 'saved');
+      if (payload.action === 'set') status.textContent = 'Série registrada no Curva.';
+      render();
+    },
     onStartMapped: function (localId, serverId) {
       if (sessionId === localId) {
         sessionId = serverId;
@@ -94,8 +112,11 @@
       if (result.cleared) {
         startLocal = false;
         setSync.forEach(function (value, setKey) { if (value === 'local') setSync.set(setKey, 'saved'); });
-        status.textContent = 'Tudo enviado ao Curva.';
-        if (focus.isOpen()) focus.toast('Tudo enviado ao Curva');
+        // Só avisa quando havia atraso; a série online já virou "✓ Salvo" no recibo.
+        if (result.backlog) {
+          status.textContent = 'Tudo enviado ao Curva.';
+          if (focus.isOpen()) focus.toast('Tudo enviado ao Curva');
+        }
       }
       render();
     },
@@ -105,7 +126,7 @@
           : 'Envio pendente: ' + error.message);
     },
   });
-  var commandOrder = window.CurvaGuidedSync.commandOrder;
+  var applyQueued = window.CurvaGuidedSync.applyQueued;
   var deliver = sync.deliver;
   var drain = sync.drain;
 
@@ -144,9 +165,14 @@
     return keys.length ? keys[keys.length - 1] : null;
   }
 
+  // Fila por write-ahead online é envio em curso, não espera pela internet.
+  function waitsForNetwork(result) {
+    return result.queued && !(result.local && navigator.onLine);
+  }
+
   function syncText() {
     if (startLocal) return 'Treino iniciado neste aparelho · confirmamos ao voltar a internet';
-    var pending = sync.pendingCount();
+    var pending = sync.backlogCount();
     if (!pending) return '';
     return pending + (pending > 1 ? ' registros aguardando' : ' registro aguardando') + ' envio · ficam salvos neste aparelho';
   }
@@ -584,8 +610,8 @@
       reps: detail.reps == null ? '' : String(detail.reps),
       rir: detail.rir == null ? '' : String(detail.rir),
     };
-    // Transição otimista: o descanso começa no toque; o recibo só vira "Salvo"
-    // com a resposta do servidor ou "Salvo no aparelho" quando entra na fila.
+    // Transição otimista: o descanso começa no toque. O recibo vai de "Salvando…"
+    // a "Salvo no aparelho" quando a fila local grava e a "✓ Salvo" com o servidor.
     recorded.add(setKey);
     recordedDetails.set(setKey, { weight_kg: detail.weight, reps: detail.reps, rir: detail.rir });
     setSync.set(setKey, 'saving');
@@ -602,11 +628,17 @@
       ? 'Série registrada. Descanso de ' + format.spokenDuration(restSeconds) + '.'
       : 'Série registrada.');
     deliver(payload).then(function (result) {
-      setSync.set(setKey, result.queued ? 'local' : 'saved');
-      status.textContent = result.queued ? 'Série salva neste aparelho. Enviaremos ao voltar a internet.' : 'Série registrada no Curva.';
+      // O envio pode ter confirmado (onSent) antes desta volta: o recibo só avança.
+      if (setSync.get(setKey) === 'saving') {
+        setSync.set(setKey, result.queued ? 'local' : 'saved');
+        status.textContent = !result.queued ? 'Série registrada no Curva.'
+          : (waitsForNetwork(result) ? 'Série salva neste aparelho. Enviaremos ao voltar a internet.'
+            : 'Série salva no aparelho. Enviando ao Curva…');
+      }
       render();
-      return snapshot();
-    }).catch(function (error) {
+      // A série já está na fila; um snapshot que falhe não a desfaz (applyQueued cobre a retomada).
+      snapshot().catch(function () {});
+    }, function (error) {
       recorded.delete(setKey);
       recordedDetails.delete(setKey);
       setSync.delete(setKey);
@@ -632,7 +664,7 @@
       lastSkipped = setKey;
       skipped.add(setKey);
       clearFocusIfDone();
-      status.textContent = result.queued
+      status.textContent = waitsForNetwork(result)
         ? 'Pulo salvo neste aparelho; ainda não confirmado no Curva.'
         : (step.series.required ? 'Série pulada. Encerre como parcial para registrar o treino.' : 'Série opcional pulada.');
       screen = nextScreenAfterSet();
@@ -662,7 +694,7 @@
       var next = project().next;
       focusIndex = next && next.movementIndex === movementIndex ? null : movementIndex;
       screen = 'exercise';
-      status.textContent = result.queued ? 'Desfazer salvo neste aparelho; envio pendente.' : 'Série disponível novamente.';
+      status.textContent = waitsForNetwork(result) ? 'Desfazer salvo neste aparelho; envio pendente.' : 'Série disponível novamente.';
       render();
       return snapshot();
     }).catch(function (error) { focus.error(error.message); status.textContent = error.message; });
@@ -887,6 +919,7 @@
       drain();
       return;
     }
+    if (saved) saved = applyQueued(saved, commands);
     if (saved && commands.some(function (item) { return item.payload.action === 'start'; })) {
       startLocal = true;
       activate(saved, { open: location.hash === '#treino-guiado' });
@@ -900,17 +933,10 @@
           var union = new Map((result.session.recorded || []).concat(saved.recorded || []).map(function (item) {
             return [key(item.movement_index, item.set_number), item];
           }));
-          result.session.recorded = Array.from(union.values());
-          var serverSkipped = new Set(result.session.skipped || []);
-          commands.slice().sort(commandOrder).forEach(function (item) {
-            var payload = item.payload;
-            var itemKey = key(payload.movement_index, payload.set_number);
-            if (payload.action === 'skip') serverSkipped.add(itemKey);
-            if (payload.action === 'unskip') serverSkipped.delete(itemKey);
-          });
-          result.session.skipped = Array.from(serverSkipped);
-          result.session.focus_movement_index = saved.focus_movement_index;
-          result.session.top_targets = saved.top_targets || {};
+          result.session = applyQueued(Object.assign({}, result.session, {
+            recorded: Array.from(union.values()), focus_movement_index: saved.focus_movement_index,
+            top_targets: saved.top_targets || {},
+          }), commands);
         }
         activate(result.session, { open: location.hash === '#treino-guiado' });
       } else if (location.hash === '#treino-guiado') {
