@@ -43,7 +43,9 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # scripts já guardados em instalações antigas, mesmo com versão estática fixa.
 # Bump 12->13: modo foco do treino guiado (guided-format/ring/focus e CSS
 # próprio) e guided-loads.js, que faltava no precache, viram obrigatórios.
-PUBLIC_WORKOUT_CACHE_EPOCH = 13
+# Bump 13->14: write-ahead do guiado (onda 3) e conexão IndexedDB reaproveitada
+# trocam guided-sync/outbox/focus e workout-guided já guardados no aparelho.
+PUBLIC_WORKOUT_CACHE_EPOCH = 14
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
