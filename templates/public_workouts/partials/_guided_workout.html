@@ -1,50 +1,18 @@
+{% comment %}
+Lançador do treino guiado: começa ou retoma a sessão. A execução acontece no
+modo foco (_guided_focus.html), incluído no fim do <body> de workout.html.
+O conflito de fila fica aqui porque precisa continuar visível com o modo foco fechado.
+{% endcomment %}
 <section class="workout-guided" data-workout-guided data-session-url="{% url 'public-workout-session' plan_slug=plan_slug %}" data-program-version="{{ active_program_version|default:'' }}" data-account-scope="{{ guided_account_scope }}">
   <div class="workout-guided__intro">
-    <div>
-      <strong>Treino guiado</strong>
-      <p data-workout-guided-status aria-live="polite">Registre cada série e acompanhe o descanso.</p>
+    <div class="workout-guided__copy">
+      <h2 class="workout-guided__title" data-guided-launch-title>Treino guiado</h2>
+      <p class="workout-guided__text" data-guided-launch-text>Uma série por vez, com a carga sugerida e o descanso cronometrado.</p>
+      <p class="workout-guided__meta" data-guided-launch-meta hidden></p>
+      <p class="workout-guided__status" data-workout-guided-status aria-live="polite"></p>
     </div>
-    <button type="button" data-workout-guided-start>Começar treino</button>
-  </div>
-  <div class="workout-guided__active" data-workout-guided-active hidden>
-    <div class="workout-guided__step-header">
-      <span data-workout-guided-progress></span>
-      <strong data-workout-guided-step></strong>
-      <small data-workout-guided-source></small>
-    </div>
-    <details class="workout-guided__top-target" data-workout-guided-top-target hidden>
-      <summary data-workout-guided-top-summary>Definir carga alvo da Top</summary>
-      <p>Use a carga que pretende tentar na série principal. O guia sugere a aproximação; cada carga realizada continua editável. Se não souber, siga e registre manualmente.</p>
-      <div class="workout-guided__top-target-controls">
-        <label>Carga alvo da Top <span>kg · opcional</span><input type="number" inputmode="decimal" min="0.01" max="9999.99" step="0.01" data-workout-guided-top-input></label>
-        <button type="button" data-workout-guided-top-apply>Aplicar ao guia</button>
-      </div>
-    </details>
-    <div class="workout-guided__fields" data-workout-guided-fields>
-      <label>Carga realizada <span>kg, se aplicável</span><input type="number" inputmode="decimal" min="0" max="9999.99" step="0.5" data-workout-guided-weight></label>
-      <label>Repetições realizadas<input type="number" inputmode="numeric" min="1" max="999" step="1" data-workout-guided-reps></label>
-      <label>RIR <span>opcional</span><input type="number" inputmode="decimal" min="0" max="10" step="0.5" data-workout-guided-rir></label>
-    </div>
-    <p class="workout-guided__timer" data-workout-guided-timer hidden></p>
-    <div class="workout-guided__actions">
-      <button type="button" data-workout-guided-set>Registrar série</button>
-      <button type="button" data-workout-guided-skip hidden>Pular esta série</button>
-      <button type="button" data-workout-guided-undo-skip hidden>Desfazer último pulo</button>
-      <button type="button" data-workout-guided-extra hidden>Adicionar outra série</button>
-      <button type="button" data-workout-guided-finish hidden>Finalizar treino</button>
-      <button type="button" data-workout-guided-partial>Encerrar como parcial</button>
-      <button type="button" data-workout-guided-cancel>Cancelar sessão</button>
-      <button type="button" data-workout-guided-correct-toggle hidden>Corrigir série registrada</button>
-    </div>
-    <div class="workout-guided__correction" data-workout-guided-correction hidden>
-      <label>Série a corrigir<select data-workout-guided-correct-target></select></label>
-      <div class="workout-guided__fields">
-        <label>Carga realizada <span>kg, se aplicável</span><input type="number" inputmode="decimal" min="0" max="9999.99" step="0.5" data-workout-guided-correct-weight></label>
-        <label>Repetições realizadas<input type="number" inputmode="numeric" min="1" max="999" step="1" data-workout-guided-correct-reps></label>
-        <label>RIR <span>opcional</span><input type="number" inputmode="decimal" min="0" max="10" step="0.5" data-workout-guided-correct-rir></label>
-      </div>
-      <button type="button" data-workout-guided-correct-save>Salvar correção</button>
-    </div>
+    <button type="button" class="workout-guided__cta" data-workout-guided-start>Começar treino guiado</button>
+    <button type="button" class="workout-guided__cta" data-guided-resume hidden>Voltar ao treino</button>
   </div>
   <div class="workout-guided__conflict" data-workout-guided-conflict hidden>
     <strong>Um registro precisa de atenção</strong>

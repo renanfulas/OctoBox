@@ -1,5 +1,6 @@
-/* O guia é um único passo de execução; estilos locais, sem alterar o card global.
-   É o hero do Treino: mesmo fundo e mesmo contorno de neon fraco do hero da Início. */
+/* Lançador do treino guiado (começar / voltar ao treino) e aviso de conflito da fila.
+   A execução vive no modo foco: workout-guided-focus.css. É o hero do Treino:
+   mesmo fundo e mesmo contorno de neon fraco do hero da Início. */
 .workout-guided {
   padding: clamp(1.15rem, 3vw, 1.7rem);
   margin: 0;
@@ -14,136 +15,33 @@ body[data-plan-slug]:not([data-theme="light"]) .workout-guided {
   box-shadow: var(--curva-hero-glow), 0 18px 38px rgba(0, 0, 0, .26);
 }
 
-.workout-guided__intro,
-.workout-guided__actions {
+.workout-guided__intro {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
 
-.workout-guided__actions { justify-content: flex-start; flex-wrap: wrap; }
+.workout-guided__copy { display: grid; gap: .35rem; min-width: 0; }
 
-.workout-guided__step-header > span {
-  display: block;
-  margin-bottom: .3rem;
-  color: var(--brand);
-  font-size: .8125rem;
-  font-weight: 800;
-  letter-spacing: .11em;
-  text-transform: uppercase;
-}
-
-.workout-guided strong {
-  display: block;
-  font-size: clamp(1.15rem, 3vw, 1.45rem);
-  line-height: 1.2;
-}
-
-.workout-guided__intro strong {
-  font-size: 1.375rem;
+.workout-guided__title {
+  margin: 0;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  line-height: 1.15;
   letter-spacing: -.02em;
 }
 
-.workout-guided p,
-.workout-guided__step-header small {
-  display: block;
-  margin: .4rem 0 0;
+.workout-guided__text,
+.workout-guided__meta,
+.workout-guided__status {
+  margin: 0;
   color: var(--theme-text-secondary);
   line-height: 1.45;
 }
 
-.workout-guided__active {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid color-mix(in srgb, var(--brand) 20%, transparent);
-}
-
-.workout-guided__top-target {
-  padding: .85rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--theme-text-muted));
-  border-radius: 16px;
-  background: var(--theme-surface-strong);
-}
-.workout-guided__top-target summary { cursor: pointer; font-weight: 800; }
-.workout-guided__top-target summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
-.workout-guided__top-target-controls { display: flex; align-items: end; flex-wrap: wrap; gap: .7rem; margin-top: .8rem; }
-.workout-guided__top-target-controls label { display: grid; gap: .35rem; min-width: min(100%, 11rem); font-size: .85rem; font-weight: 700; }
-.workout-guided__top-target-controls label span { color: var(--theme-text-muted); font-size: .75rem; font-weight: 400; }
-.workout-guided__top-target-controls input {
-  width: 100%; min-height: 44px; padding: .6rem .7rem;
-  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--theme-text-muted));
-  border-radius: 12px; background: var(--theme-surface-panel); color: var(--theme-text-primary); font: inherit;
-}
-.workout-guided__top-target-controls input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.workout-guided__top-target-controls button { background: transparent; color: var(--theme-text-primary); border: 1px solid color-mix(in srgb, var(--brand) 45%, var(--theme-text-muted)); }
-
-.workout-guided__correction,
-.workout-guided__conflict {
-  display: grid;
-  gap: .85rem;
-  margin-top: 1rem;
-  padding: 1rem;
-  border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--theme-text-muted));
-  border-radius: 16px;
-  background: var(--theme-surface-strong);
-}
-
-.workout-guided__correction > label { display: grid; gap: .4rem; font-weight: 700; }
-.workout-guided__correction select {
-  width: 100%;
-  min-height: 44px;
-  padding: .6rem .7rem;
-  border: 1px solid color-mix(in srgb, var(--brand) 35%, var(--theme-text-muted));
-  border-radius: 12px;
-  background: var(--theme-surface-panel);
-  color: var(--theme-text-primary);
-  font: inherit;
-}
-.workout-guided__correction select:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.workout-guided__conflict { border-color: color-mix(in srgb, #d87939 65%, var(--theme-text-muted)); }
-.workout-guided__conflict > button { justify-self: start; }
-
-.workout-guided__fields {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .7rem;
-}
-
-.workout-guided__fields label {
-  display: grid;
-  align-content: start;
-  gap: .35rem;
-  min-width: 0;
-  color: var(--theme-text-primary);
-  font-size: .85rem;
-  font-weight: 700;
-}
-
-.workout-guided__fields label span {
-  color: var(--theme-text-muted);
-  font-size: .75rem;
-  font-weight: 400;
-}
-
-.workout-guided__fields input {
-  width: 100%;
-  min-height: 44px;
-  padding: .6rem .7rem;
-  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--theme-text-muted));
-  border-radius: 12px;
-  background: var(--theme-surface-strong);
-  color: var(--theme-text-primary);
-  font: inherit;
-}
-
-.workout-guided__fields input:focus-visible,
-.workout-guided button:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
-}
+.workout-guided__meta { color: var(--theme-text-primary); font-weight: 700; font-variant-numeric: tabular-nums; }
+.workout-guided__status:empty { display: none; }
+.workout-guided__status { font-size: .9rem; }
 
 .workout-guided button {
   min-height: 48px;
@@ -152,20 +50,22 @@ body[data-plan-slug]:not([data-theme="light"]) .workout-guided {
   border-radius: 999px;
   background: var(--brand);
   color: #071b22;
+  font: inherit;
   font-weight: 800;
   cursor: pointer;
 }
 
-.workout-guided__intro > button {
+.workout-guided__cta {
   flex: 0 0 auto;
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 13%, transparent);
-  transition: transform .18s cubic-bezier(.3, .7, .4, 1.4), box-shadow .2s ease;
+  min-height: 52px;
+  font-size: 1rem;
+  transition: transform .12s ease;
 }
 
-.workout-guided__intro > button:hover { transform: translateY(-2px); }
-.workout-guided__intro > button:active { transform: scale(.97); }
+.workout-guided__cta:active { transform: scale(.97); }
+.workout-guided button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
 
-body[data-plan-slug]:not([data-theme="light"]) .workout-guided__intro > button {
+body[data-plan-slug]:not([data-theme="light"]) .workout-guided__cta {
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--curva-neon-core) 60%, transparent),
     0 0 1px var(--curva-neon),
@@ -174,30 +74,27 @@ body[data-plan-slug]:not([data-theme="light"]) .workout-guided__intro > button {
 }
 
 .workout-guided button:disabled { cursor: wait; opacity: .6; }
-.workout-guided__actions [data-workout-guided-skip],
-.workout-guided__actions [data-workout-guided-extra],
-.workout-guided__actions [data-workout-guided-partial] {
-  background: transparent;
-  color: var(--theme-text-primary);
-  border: 1px solid color-mix(in srgb, var(--brand) 45%, var(--theme-text-muted));
+
+.workout-guided__conflict {
+  display: grid;
+  gap: .85rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, #d87939 65%, var(--theme-text-muted));
+  border-radius: 16px;
+  background: var(--theme-surface-strong);
 }
-.workout-guided__actions [data-workout-guided-cancel],
-.workout-guided__actions [data-workout-guided-correct-toggle],
-.workout-guided__actions [data-workout-guided-undo-skip] {
-  background: transparent;
-  color: var(--theme-text-primary);
-  border: 1px solid color-mix(in srgb, var(--brand) 45%, var(--theme-text-muted));
-}
-.workout-guided__timer { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+
+.workout-guided__conflict p { margin: 0; color: var(--theme-text-secondary); }
+.workout-guided__conflict > button { justify-self: start; }
 .workout-guided [hidden] { display: none; }
 
 @media (max-width: 560px) {
-  .workout-guided__intro,
-  .workout-guided__actions { align-items: stretch; flex-direction: column; }
-  .workout-guided__intro > button,
-  .workout-guided__actions button { width: 100%; }
-  .workout-guided__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workout-guided__intro { align-items: stretch; flex-direction: column; }
+  .workout-guided__cta,
   .workout-guided__conflict > button { width: 100%; }
-  .workout-guided__top-target-controls > label,
-  .workout-guided__top-target-controls > button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workout-guided__cta { transition: none; }
 }
