@@ -14,6 +14,17 @@ from playwright.sync_api import Page, expect
 _EMAIL = 'curva-guided-e2e@example.test'
 _OTHER_EMAIL = 'curva-guided-other-e2e@example.test'
 _MOVEMENT_SLUG = 'curva-guided-e2e-squat'
+# Conta quantas vezes a página abre o banco local do guia (guided-outbox.js).
+_COUNT_OUTBOX_OPENS = """
+(() => {
+  const open = IDBFactory.prototype.open;
+  window.__curvaOutboxOpens = 0;
+  IDBFactory.prototype.open = function (name) {
+    if (String(name).startsWith('curva-guided:')) window.__curvaOutboxOpens += 1;
+    return open.apply(this, arguments);
+  };
+})();
+"""
 
 
 @pytest.fixture(autouse=True)
@@ -266,6 +277,7 @@ def test_guided_online_set_is_one_request_with_local_receipt(page: Page, live_se
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
+    page.add_init_script(_COUNT_OUTBOX_OPENS)
     page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
@@ -279,6 +291,8 @@ def test_guided_online_set_is_one_request_with_local_receipt(page: Page, live_se
     expect(page.locator('[data-guided-receipt-status]')).to_have_text('✓ Salvo')
     page.wait_for_timeout(600)
     assert sent == ['POST'], 'série online: 1 POST e nenhum GET /sessao depois'
+    # As ~9 transações da série (fila, lease, lista, envio, remoção...) reaproveitam a conexão.
+    assert page.evaluate('() => window.__curvaOutboxOpens') == 1, 'o banco local abre uma vez por página'
     session = PublicWorkoutTrainingSession.objects.get(account=account)
     assert session.sets.get().weight_kg == Decimal('50.00')
 

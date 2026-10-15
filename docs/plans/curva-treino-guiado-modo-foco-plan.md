@@ -41,7 +41,10 @@ O protótipo foi validado pelo produto antes da implementação. O que existe no
   - **Sem ruído a cada série:** "Tudo enviado ao Curva" e o contador "aguardando envio" (`backlogCount()`) só contam atraso real, não o envio em curso.
   - **Aba fechada logo após o toque:** a série já está na fila. Na reabertura, `applyQueued` dobra séries, correções e pulos da fila sobre a sessão, mesmo sem o snapshot, e a drenagem reenvia uma vez. O servidor devolve `created: false` para a mesma série com os mesmos valores.
   - **Corrida corrigida no caminho:** uma leitura da fila tirada antes de uma gravação não apaga essa gravação de `pending` (versão por gravação). Sem isso, a série 2 gravada durante o envio da série 1 podia receber "✓ Salvo" antes de sair.
-  - **Custo conhecido:** antes do POST, a drenagem faz três transações IndexedDB (lease, lista, mapa de sessão), e `guided-outbox.js` abre conexão em cada uma. Isso atrasa o "✓ Salvo", não o descanso. Reaproveitar a conexão fica como melhoria.
+  - **Custo conhecido, resolvido em 15/10/2026:** cada série online faz 9 transações IndexedDB (fila, snapshot, lease, lista, mapa de sessão, remoção, lista, release, lista), 3 delas antes do POST. `guided-outbox.js` abria uma conexão em cada uma. Agora guarda uma conexão por escopo (`Promise<IDBDatabase>`, banco `'curva-guided:' + scope`).
+    - A conexão é descartada em `versionchange` (fechando, para não travar outra aba nem o "Apagar dados" do shell offline), em `close`, em erro de abertura, em erro de transação e no `pagehide`. Se `transaction()` acusar conexão fechada sem evento, reabre uma vez. A API de `window.CurvaGuidedOutbox` não mudou.
+    - Medição no e2e (Chromium, servidor local, mediana de 5): as aberturas caíram de 18 para 1 por página e de 9 para 0 por série. Com CPU 4× (aproximação de celular médio), o tempo do toque ao início do POST caiu de 65 para 50 ms, e do toque ao "✓ Salvo", de 105 para 84 ms.
+    - Sem limitar a CPU, abrir o banco no desktop é barato, e a diferença some no ruído do POST: 17 → 17 ms até o POST e 49 → 52 ms até o "✓ Salvo", com o próprio POST variando de 25 a 35 ms. A limitação de CPU não simula o armazenamento lento de um celular real, então o ganho num aparelho não foi medido.
 - **Ajuste de cópia:** em prescrição estruturada, a meta só mostra RIR quando a etapa define `rir_target`. Assim o aquecimento não herda o RIR do texto do programa.
 
 **Verificação:**
@@ -72,6 +75,11 @@ O protótipo foi validado pelo produto antes da implementação. O que existe no
   - 910 testes Python da Curva passaram (`public_workouts/`, `student_app/tests.py`, `tests/test_public_workout_access_split.py`).
   - O e2e passou em 10/10 cenários. Dois são novos: a série online gera exatamente 1 requisição (`POST`) e o recibo chega a "✓ Salvo"; a aba fechada com o POST da série ainda no ar não perde a série, e a próxima aba envia depois que o lease da aba morta expira (~12 s).
   - Foi portada sobre o porte do `main` (branch `claude/curva-guiado-write-ahead`, empilhada no #333). Na retomada, `applyQueued` passa a carregar também os `top_targets` do snapshot.
+- **Conexão reaproveitada (15/10/2026):**
+  - 55 testes Node passaram, 12 deles novos em `tests/js/curva_guided_outbox.test.js`, com um IndexedDB falso. Eles cobrem: uma conexão para a série inteira; chamadas simultâneas antes da primeira abertura; um banco por conta; reabertura depois de `versionchange`, `close`, erro de abertura, conexão fechada sem evento, erro de transação e `pagehide`; sequência da fila e lease por dono iguais aos de antes.
+  - Os testes de reaproveitamento falham na versão anterior, e os de semântica passam nas duas.
+  - O e2e passou em 10/10 cenários. O da série online agora também exige 1 abertura do banco por página; com o `guided-outbox.js` anterior, ele falha com 18 aberturas.
+  - No porte, o `savePlan` protegido do `main` (que lê ficha, snapshot e fila na mesma transação) passou a usar a conexão compartilhada, sem o `db.close()` no fim.
 - **Também ficaram pendentes:**
   - PWA instalada no iPhone, indo ao MuscleWiki e voltando;
   - fila offline em aparelho real;
