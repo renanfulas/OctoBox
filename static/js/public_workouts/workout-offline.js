@@ -85,6 +85,9 @@
     }
     document.querySelector('.fields').hidden = !current;
     var requiredMissing = day.movements.some(function (movement, movementIndex) {
+      if (movement.freeform && !saved.recorded.some(function (row) {
+        return row.movement_index === movementIndex;
+      })) return true;
       return movement.series.some(function (series, index) {
         return series.required && !saved.recorded.some(function (row) {
           return row.movement_index === movementIndex && row.set_number === index + 1;
