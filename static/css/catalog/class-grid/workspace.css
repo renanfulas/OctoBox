@@ -347,7 +347,14 @@ body[data-theme="dark"] .weekday-option {
     display: flex;
     gap: 10px;
     align-items: center;
+    min-width: 0;
     color: var(--muted);
+}
+
+.class-grid-checkbox span {
+    flex: 1 1 0%;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .class-grid-planner-reset-rail {
