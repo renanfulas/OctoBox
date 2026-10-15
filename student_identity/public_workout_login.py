@@ -20,11 +20,16 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 from urllib.parse import quote
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare
 
 from shared_support.platform_cache import platform_cache
 
@@ -45,12 +50,39 @@ PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX = 3
 PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 900
 
 
+# Código digitado no próprio app: o link do e-mail abre fora do app instalado
+# (no iPhone, Safari e o app da tela inicial não compartilham cookies), então
+# quem já está logado confirma a identidade sem sair dele.
+PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX = 5
+PUBLIC_WORKOUT_LOGIN_CODE_WINDOW_SECONDS = 900
+PUBLIC_WORKOUT_LOGIN_CODE_CANDIDATES = 5
+
+
 class PublicWorkoutLoginRateLimitExceeded(Exception):
+    pass
+
+
+class PublicWorkoutLoginCodeAttemptsExceeded(Exception):
     pass
 
 
 def _rate_limit_key(email: str) -> str:
     return f'octo_pwl_rl_{email}'
+
+
+def _code_attempts_key(account_id: int) -> str:
+    return f'octo_pwl_code_{account_id}'
+
+
+def login_code_for_token(token) -> str:
+    """Código de 6 dígitos derivado do token por HMAC com a SECRET_KEY.
+
+    O mesmo e-mail carrega o link e o código; derivar do token evita coluna
+    nova e herda validade, uso único e expiração do próprio token."""
+    digest = hmac.new(
+        settings.SECRET_KEY.encode(), f'curva-login-code:{token}'.encode(), hashlib.sha256,
+    ).hexdigest()
+    return str(int(digest[:12], 16) % 1_000_000).zfill(6)
 
 
 def _resolve_student_identity_id(*, email: str) -> int | None:
@@ -128,11 +160,12 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
     from signup.email_sender import send_html_email
 
     expires_in_minutes = PUBLIC_WORKOUT_LOGIN_TOKEN_TTL_SECONDS // 60
+    code = login_code_for_token(token.token)
     try:
         send_html_email(
             subject=build_login_email_subject(),
-            text_body=build_login_email_body(login_url=login_url, expires_in_minutes=expires_in_minutes),
-            html_body=build_login_email_html_body(login_url=login_url, expires_in_minutes=expires_in_minutes),
+            text_body=build_login_email_body(login_url=login_url, expires_in_minutes=expires_in_minutes, code=code),
+            html_body=build_login_email_html_body(login_url=login_url, expires_in_minutes=expires_in_minutes, code=code),
             to_email=normalized_email,
         )
     except StudentEmailDeliveryError:
@@ -142,23 +175,79 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
 
 
 def verify_login_token(*, token: str) -> PublicWorkoutAccount | None:
-    """Consome o token se valido. None se ausente, mal formado, expirado ou ja usado."""
-    try:
-        login_token = PublicWorkoutLoginToken.objects.select_related('account').get(token=token)
-    except (PublicWorkoutLoginToken.DoesNotExist, ValueError, TypeError, ValidationError):
-        return None
+    """Consome o token se valido. None se ausente, mal formado, expirado ou ja usado.
 
-    if not login_token.is_valid:
-        return None
+    A linha do token fica travada entre a leitura e o mark_used(): dois cliques
+    simultaneos no mesmo link nao abrem duas sessoes — o segundo espera o
+    primeiro commitar e ja le o token como usado.
+    """
+    with transaction.atomic():
+        try:
+            login_token = (
+                PublicWorkoutLoginToken.objects
+                .select_for_update(of=('self',))
+                .select_related('account')
+                .get(token=token)
+            )
+        except (PublicWorkoutLoginToken.DoesNotExist, ValueError, TypeError, ValidationError):
+            return None
 
-    account = login_token.account
-    subscription = getattr(account, 'subscription', None)
-    if subscription is not None and subscription.requires_login and subscription.status == 'pending_payment':
-        return None
-    login_token.mark_used()
-    login_token.save(update_fields=['used_at', 'updated_at'])
+        if not login_token.is_valid:
+            return None
+
+        account = login_token.account
+        subscription = getattr(account, 'subscription', None)
+        if subscription is not None and subscription.requires_login and subscription.status == 'pending_payment':
+            return None
+        login_token.mark_used()
+        login_token.save(update_fields=['used_at', 'updated_at'])
 
     account.last_login_at = timezone.now()
     account.save(update_fields=['last_login_at', 'updated_at'])
 
+    return account
+
+
+def verify_login_code(*, account_id: int, code) -> PublicWorkoutAccount | None:
+    """Consome o token cujo código bate, só entre os tokens da conta já logada.
+
+    Quem chama já resolveu `account_id` pelo cookie do aparelho: o código não
+    procura conta, só prova que esta conta lê o próprio e-mail. Tentativas são
+    limitadas por conta; o token casado é travado na linha para duas
+    confirmações simultâneas não passarem as duas. None se não bater, se o
+    token expirou/foi usado ou se a assinatura ainda aguarda pagamento.
+    """
+    attempts_key = _code_attempts_key(account_id)
+    attempts = platform_cache.get(attempts_key, 0)
+    if attempts >= PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX:
+        raise PublicWorkoutLoginCodeAttemptsExceeded(account_id)
+    platform_cache.set(attempts_key, attempts + 1, timeout=PUBLIC_WORKOUT_LOGIN_CODE_WINDOW_SECONDS)
+
+    normalized = ''.join(char for char in str(code or '') if char.isdigit())
+    if len(normalized) != 6:
+        return None
+    with transaction.atomic():
+        candidates = list(
+            PublicWorkoutLoginToken.objects
+            .select_for_update(of=('self',))
+            .select_related('account')
+            .filter(account_id=account_id, used_at__isnull=True, expires_at__gt=timezone.now())
+            .order_by('-created_at')[:PUBLIC_WORKOUT_LOGIN_CODE_CANDIDATES]
+        )
+        login_token = next(
+            (item for item in candidates if constant_time_compare(login_code_for_token(item.token), normalized)),
+            None,
+        )
+        if login_token is None:
+            return None
+        account = login_token.account
+        subscription = getattr(account, 'subscription', None)
+        if subscription is not None and subscription.requires_login and subscription.status == 'pending_payment':
+            return None
+        login_token.mark_used()
+        login_token.save(update_fields=['used_at', 'updated_at'])
+
+    account.last_login_at = timezone.now()
+    account.save(update_fields=['last_login_at', 'updated_at'])
+    platform_cache.delete(attempts_key)
     return account

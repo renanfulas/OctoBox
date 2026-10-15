@@ -7,6 +7,8 @@ POR QUE ELE EXISTE:
   Onda B3). Cobre tambem o rate limit (S1) e a regra de uso unico (D.5/S3).
 """
 
+import threading
+import uuid
 from unittest.mock import Mock, patch
 
 from django.core import mail, signing
@@ -26,10 +28,14 @@ from public_workouts.models import (
 from .delivery_gateways import StudentEmailDeliveryError
 from .models import StudentIdentity
 from .public_workout_login import (
+    PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX,
     PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX,
+    PublicWorkoutLoginCodeAttemptsExceeded,
     PublicWorkoutLoginRateLimitExceeded,
+    login_code_for_token,
     request_login_token,
     resolve_or_create_public_workout_account,
+    verify_login_code,
     verify_login_token,
 )
 from .public_workout_session import (
@@ -235,10 +241,31 @@ class VerifyLoginTokenTests(TestCase):
         )
 
         first = verify_login_token(token=str(token.token))
+        token.refresh_from_db()
+        first_used_at = token.used_at
         second = verify_login_token(token=str(token.token))
 
         self.assertIsNotNone(first)
         self.assertIsNone(second)
+        token.refresh_from_db()
+        self.assertEqual(token.used_at, first_used_at)
+
+    def test_pending_payment_account_is_refused_and_token_stays_unused(self):
+        account = PublicWorkoutAccount.objects.create(email='pendingverify@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account,
+            plan_slug='bruno',
+            requires_login=True,
+            status=PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
+        )
+        token = PublicWorkoutLoginToken.objects.create(
+            account=account,
+            expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+
+        self.assertIsNone(verify_login_token(token=str(token.token)))
+        token.refresh_from_db()
+        self.assertIsNone(token.used_at)
 
     def test_expired_token_returns_none(self):
         account = PublicWorkoutAccount.objects.create(email='expiredverify@example.com')
@@ -255,7 +282,176 @@ class VerifyLoginTokenTests(TestCase):
         self.assertIsNone(verify_login_token(token='nao-e-um-uuid'))
 
 
+class VerifyLoginCodeTests(TestCase):
+    """Código digitado no app instalado (o link do e-mail abre fora dele)."""
+
+    def setUp(self):
+        from shared_support.platform_cache import platform_cache
+
+        platform_cache.clear()
+        self.account = PublicWorkoutAccount.objects.create(email='codigo@example.com')
+        self.token = PublicWorkoutLoginToken.objects.create(
+            account=self.account, expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+        self.code = login_code_for_token(self.token.token)
+
+    def test_code_has_six_digits_and_is_stable_per_token(self):
+        self.assertRegex(self.code, r'^\d{6}$')
+        self.assertEqual(login_code_for_token(self.token.token), self.code)
+        other = PublicWorkoutLoginToken.objects.create(
+            account=self.account, expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+        self.assertNotEqual(login_code_for_token(other.token), self.code)
+
+    def test_matching_code_consumes_token_and_returns_account(self):
+        result = verify_login_code(account_id=self.account.id, code=f' {self.code[:3]} {self.code[3:]} ')
+
+        self.assertEqual(result.id, self.account.id)
+        self.token.refresh_from_db()
+        self.assertIsNotNone(self.token.used_at)
+
+    def test_code_cannot_be_used_twice(self):
+        self.assertIsNotNone(verify_login_code(account_id=self.account.id, code=self.code))
+        self.assertIsNone(verify_login_code(account_id=self.account.id, code=self.code))
+
+    def test_code_only_counts_for_tokens_of_the_logged_account(self):
+        other = PublicWorkoutAccount.objects.create(email='outra-conta@example.com')
+        other_token = PublicWorkoutLoginToken.objects.create(
+            account=other, expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+
+        self.assertIsNone(verify_login_code(account_id=self.account.id, code=login_code_for_token(other_token.token)))
+        other_token.refresh_from_db()
+        self.assertIsNone(other_token.used_at)
+
+    def test_expired_token_code_is_rejected(self):
+        self.token.expires_at = timezone.now() - timezone.timedelta(minutes=1)
+        self.token.save(update_fields=['expires_at'])
+
+        self.assertIsNone(verify_login_code(account_id=self.account.id, code=self.code))
+
+    def test_attempts_are_limited_per_account(self):
+        wrong = str((int(self.code) + 1) % 1_000_000).zfill(6)
+        for _ in range(PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX):
+            self.assertIsNone(verify_login_code(account_id=self.account.id, code=wrong))
+
+        with self.assertRaises(PublicWorkoutLoginCodeAttemptsExceeded):
+            verify_login_code(account_id=self.account.id, code=self.code)
+        self.token.refresh_from_db()
+        self.assertIsNone(self.token.used_at)
+
+    def test_pending_payment_account_is_rejected(self):
+        from public_workouts.billing import get_or_create_subscription
+
+        subscription = get_or_create_subscription(account=self.account, tier=PublicWorkoutTier.ESSENCIAL)
+        subscription.requires_login = True
+        subscription.save(update_fields=['requires_login'])
+
+        self.assertIsNone(verify_login_code(account_id=self.account.id, code=self.code))
+
+    def test_login_email_carries_the_same_code_as_the_link(self):
+        token = request_login_token(email=self.account.email, base_url='https://octoboxfit.com.br')
+
+        sent = mail.outbox[-1]
+        code = login_code_for_token(token.token)
+        self.assertIn(code, sent.body)
+        self.assertIn(code, sent.alternatives[0][0])
+        self.assertIn(str(token.token), sent.body)
+
+
+def _run_in_own_connection(fn):
+    """Roda fn numa thread com conexao propria e autocommit de verdade, fora da
+    transacao do TestCase (que as outras conexoes nao enxergam). Mesma tecnica
+    de tests/test_background_jobs_schema.py — TransactionTestCase nao serve
+    aqui porque o flush nao conhece os schemas de tenant."""
+    outcome = {}
+
+    def _target():
+        from django.db import connection as thread_connection
+        try:
+            outcome['value'] = fn()
+        except BaseException as exc:
+            outcome['error'] = exc
+        finally:
+            thread_connection.close()
+
+    thread = threading.Thread(target=_target)
+    thread.start()
+    return thread, outcome
+
+
+def _joined_value(thread, outcome, *, timeout=5.0):
+    thread.join(timeout=timeout)
+    if 'error' in outcome:
+        raise outcome['error']
+    return outcome.get('value')
+
+
+class VerifyLoginTokenRowLockTests(TestCase):
+    """Dois cliques simultaneos no mesmo link. Sem a trava da linha, os dois
+    leem o token ainda nao usado e os dois abrem sessao."""
+
+    def setUp(self):
+        email = f'lock-{uuid.uuid4().hex[:12]}@example.com'
+
+        def _create():
+            account = PublicWorkoutAccount.objects.create(email=email)
+            login_token = PublicWorkoutLoginToken.objects.create(
+                account=account,
+                expires_at=timezone.now() + timezone.timedelta(minutes=15),
+            )
+            return account.id, str(login_token.token)
+
+        self.account_id, self.token = _joined_value(*_run_in_own_connection(_create))
+        self.addCleanup(lambda: _joined_value(*_run_in_own_connection(
+            lambda: PublicWorkoutAccount.objects.filter(id=self.account_id).delete()
+        )))
+
+    def test_second_concurrent_click_waits_for_lock_and_gets_none(self):
+        # O primeiro clique para dentro do mark_used(), com a linha ja travada e
+        # sem commit; o segundo entra nesse intervalo.
+        first_click_inside = threading.Event()
+        release_first_click = threading.Event()
+        mark_used_calls = []
+        original_mark_used = PublicWorkoutLoginToken.mark_used
+
+        def _pause_first_click(login_token):
+            mark_used_calls.append(login_token.pk)
+            if len(mark_used_calls) == 1:
+                first_click_inside.set()
+                release_first_click.wait(timeout=5.0)
+            original_mark_used(login_token)
+
+        with patch.object(PublicWorkoutLoginToken, 'mark_used', _pause_first_click):
+            first_thread, first_outcome = _run_in_own_connection(lambda: verify_login_token(token=self.token))
+            try:
+                self.assertTrue(first_click_inside.wait(timeout=5.0), 'primeiro clique nao chegou no mark_used')
+                second_thread, second_outcome = _run_in_own_connection(lambda: verify_login_token(token=self.token))
+                second_thread.join(timeout=0.5)
+                second_waited_for_lock = second_thread.is_alive()
+            finally:
+                release_first_click.set()
+                first_thread.join(timeout=5.0)
+            second_account = _joined_value(second_thread, second_outcome)
+        first_account = _joined_value(first_thread, first_outcome)
+
+        self.assertEqual(first_account.id, self.account_id)
+        self.assertIsNone(second_account)
+        self.assertTrue(second_waited_for_lock, 'segundo clique nao esperou a trava da linha do token')
+        self.assertEqual(len(mark_used_calls), 1)
+
+
 class PublicWorkoutLoginViewTests(TestCase):
+    def test_google_errors_have_a_message_on_the_login_screen(self):
+        for error, text in (
+            ('conta_nao_encontrada', 'Não encontramos uma conta da Curva'),
+            ('pagamento_pendente', 'ainda não foi confirmado'),
+        ):
+            from django.template.loader import render_to_string
+
+            html = render_to_string('treinos/login.html', {'error': error})
+            self.assertIn(text, html)
+
     def test_get_without_token_shows_form(self):
         response = self.client.get(reverse('public-workout-login'))
         self.assertEqual(response.status_code, 200)

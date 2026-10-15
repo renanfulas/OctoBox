@@ -1,0 +1,23 @@
+{
+  "skill_name": "copywriter-sintese",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "escreve 5 ganchos de reels pra mim, sou personal e atendo mulheres de 35 a 50 anos que querem emagrecer mas não conseguem ir na academia todo dia por causa de filho e trabalho",
+      "expected_output": "5 ganchos com ângulos diferentes (fala + texto na tela), específicos para a rotina da leitora, sem promessa de prazo, sem clichês de lançamento, com favorita indicada.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "preciso de um email pra mandar pros donos de box que fizeram o trial de 14 dias do nosso sistema de gestão e não assinaram. o plano custa R$ 197/mês. o sistema faz check-in por app, cobrança recorrente automática e mostra os alunos que estão sumindo",
+      "expected_output": "E-mail com assunto + pré-cabeçalho, abertura em cena ou afirmação forte, mecanismo do problema ligado às funcionalidades, CTA de baixo atrito, P.S., sem dados inventados.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "revisa essa página de vendas da minha consultoria online de nutrição e me diz o que tá ruim, depois reescreve:\n\n\"Transforme sua relação com a comida! 🍏 Chegou a hora de você conquistar o corpo dos seus sonhos com uma alimentação equilibrada e saudável. Com a minha consultoria exclusiva, você vai aprender a comer de forma inteligente, sem dietas restritivas e sem passar fome. Meu método único já ajudou centenas de pessoas a emagrecerem de forma definitiva. São 3 meses de acompanhamento completo com plano alimentar personalizado, suporte no WhatsApp e muito mais! Não perca essa oportunidade incrível de mudar de vida. Vagas limitadas! Clique no botão abaixo e garanta já a sua vaga!\"\n\nsou nutricionista, CRN ativo, atendo há 6 anos, a consultoria custa R$ 590 os 3 meses",
+      "expected_output": "Os 3 problemas que mais custam conversão em ordem de impacto, reescrita completa com estrutura de página para celular, sem 'centenas' inventado, escassez com razão ou removida, marcadores para provas pendentes.",
+      "files": []
+    }
+  ]
+}

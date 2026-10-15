@@ -47,6 +47,32 @@ class GuidedTrainingSessionIntegrationTest(TestCase):
         self.assertEqual(completed.outcome, 'completed')
         self.assertEqual(PublicWorkoutTrainingSet.objects.filter(session=session).count(), 2)
 
+    def test_optional_amrap_is_not_required_to_complete(self):
+        payload = build_example_payload()
+        payload['days'][0]['blocks'][0]['movements'][0]['guided_prescription'] = {
+            'version': 1, 'stages': [
+                {'stage_id': 'top', 'role': 'top_set', 'min_sets': 1, 'max_sets': 1,
+                 'reps_min': 6, 'reps_max': 8, 'rest_seconds': 90,
+                 'load_rule': {'kind': 'suggested_top'}},
+                {'stage_id': 'max', 'role': 'max_set', 'min_sets': 0, 'max_sets': 1,
+                 'reps_min': None, 'reps_max': None, 'rest_seconds': 90,
+                 'load_rule': {'kind': 'suggested_top'}},
+            ],
+        }
+        publish_program(slug='optional-amrap', payload=payload)
+        session = start_session(account_id=self.account.pk, plan_slug='optional-amrap', day_id='seg')
+        record_set(
+            account_id=self.account.pk, plan_slug='optional-amrap', session_id=session.pk,
+            movement_index=0, set_number=1, movement_slug='agachamento-livre',
+            role='top_set', weight=Decimal('50.00'), reps=7, rir=None,
+        )
+        ended, created = finish_session(
+            account_id=self.account.pk, plan_slug='optional-amrap', session_id=session.pk,
+        )
+        self.assertTrue(created)
+        self.assertEqual(ended.outcome, 'completed')
+        self.assertEqual(ended.completed_set_count, 1)
+
     def test_analytics_reconciles_completed_partial_and_cancelled_with_recorded_facts(self):
         complete = start_session(account_id=self.account.pk, plan_slug='guiado', day_id='seg')
         for number in (1, 2):

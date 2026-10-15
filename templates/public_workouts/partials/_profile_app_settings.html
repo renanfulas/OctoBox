@@ -12,7 +12,7 @@
     <div class="workout-device-settings__row" data-workout-push-profile>
       <div class="workout-device-settings__copy">
         <strong>Notificações</strong>
-        <span data-workout-push-profile-status aria-live="polite">{% if not push_configured %}Ativação pendente da configuração de notificações.{% elif not push_identity_verified %}Entre na sua conta Curva para vincular este dispositivo com segurança.{% else %}Verificando avisos…{% endif %}</span>
+        <span data-workout-push-profile-status aria-live="polite">{% if not push_configured %}Ativação pendente da configuração de notificações.{% elif not push_identity_verified %}Para vincular este dispositivo, confirme seu e-mail com um código.{% else %}Verificando avisos…{% endif %}</span>
       </div>
       <div class="workout-device-settings__actions">
         {% if push_configured %}
@@ -20,7 +20,7 @@
           <button type="button" data-workout-push-profile-enable hidden>Ativar avisos</button>
           <button type="button" data-workout-push-disable hidden>Desativar avisos</button>
           {% else %}
-          <a href="{% url 'public-workout-login' %}?next=/renan/{{ plan_slug }}">Entrar para ativar</a>
+          {% include 'public_workouts/partials/_push_verify.html' with verify_id='profile' %}
           {% endif %}
         {% endif %}
       </div>

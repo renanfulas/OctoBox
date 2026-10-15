@@ -1,11 +1,21 @@
 (function () {
   'use strict';
 
+  // Uma conexão por escopo vive com a página: com o write-ahead, cada série online
+  // faz ~9 transações e abrir o banco em cada uma atrasava o recibo.
+  var connections = {};
+
+  function drop(scope, connection, db) {
+    if (connections[scope] === connection) delete connections[scope];
+    if (db) db.close();
+  }
+
   // O banco é particionado pelo identificador da conta autenticada. A fila
   // nunca é drenada sob outra sessão, mesmo em aparelho compartilhado.
   function open(scope) {
     if (!scope || !window.indexedDB) return Promise.reject(new Error('Armazenamento local indisponível.'));
-    return new Promise(function (resolve, reject) {
+    if (connections[scope]) return connections[scope];
+    var connection = new Promise(function (resolve, reject) {
       var request = indexedDB.open('curva-guided:' + scope, 2);
       request.onupgradeneeded = function () {
         if (!request.result.objectStoreNames.contains('commands')) {
@@ -16,48 +26,77 @@
         }
       };
       request.onsuccess = function () {
-        request.result.onversionchange = function () { request.result.close(); };
-        resolve(request.result);
+        var db = request.result;
+        // Outra aba subindo a versão ou "Apagar dados" do shell offline: solta já.
+        db.onversionchange = function () { drop(scope, connection, db); };
+        // Fechada pelo navegador (ex.: iOS derruba o servidor do IndexedDB).
+        db.onclose = function () { drop(scope, connection); };
+        resolve(db);
       };
       request.onerror = function () { reject(request.error); };
     });
+    connections[scope] = connection;
+    connection.catch(function () { drop(scope, connection); });
+    return connection;
   }
 
-  function transact(scope, storeName, mode, method, value) {
-    return open(scope).then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction(storeName, mode);
-        var request = tx.objectStore(storeName)[method](value);
-        var result;
-        request.onsuccess = function () { result = request.result; };
-        tx.onerror = function () { db.close(); reject(tx.error); };
-        tx.onabort = function () { db.close(); reject(tx.error || new Error('Gravação local cancelada.')); };
-        tx.oncomplete = function () { db.close(); resolve(result); };
+  // `work` monta os pedidos na transação e devolve quem lê o resultado no fim.
+  function run(scope, storeNames, mode, abortMessage, work) {
+    function attempt(retry) {
+      var connection = open(scope);
+      return connection.then(function (db) {
+        var tx;
+        try {
+          tx = db.transaction(storeNames, mode);
+        } catch (error) {
+          drop(scope, connection, db);
+          // A conexão guardada fechou sem evento: reabre uma vez.
+          if (retry && error && error.name === 'InvalidStateError') return attempt(false);
+          throw error;
+        }
+        return new Promise(function (resolve, reject) {
+          var read;
+          tx.onerror = function (event) { drop(scope, connection, db); reject(tx.error || event.target.error); };
+          tx.onabort = function () { drop(scope, connection, db); reject(tx.error || new Error(abortMessage)); };
+          tx.oncomplete = function () { resolve(read ? read() : undefined); };
+          read = work(tx);
+        });
       });
+    }
+    return attempt(true);
+  }
+
+  // Sair da página não deixa conexão aberta no bfcache; a volta reabre sob demanda.
+  window.addEventListener('pagehide', function () {
+    Object.keys(connections).forEach(function (scope) {
+      var connection = connections[scope];
+      connection.then(function (db) { drop(scope, connection, db); }, function () {});
+    });
+  });
+
+  function transact(scope, storeName, mode, method, value) {
+    return run(scope, storeName, mode, 'Gravação local cancelada.', function (tx) {
+      var request = tx.objectStore(storeName)[method](value);
+      return function () { return request.result; };
     });
   }
 
   function queue(scope, command) {
-    return open(scope).then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction(['commands', 'state'], 'readwrite');
-        var commands = tx.objectStore('commands');
-        var state = tx.objectStore('state');
-        if (command.sequence != null) {
+    return run(scope, ['commands', 'state'], 'readwrite', 'Fila local cancelada.', function (tx) {
+      var commands = tx.objectStore('commands');
+      var state = tx.objectStore('state');
+      if (command.sequence != null) {
+        commands.put(command);
+      } else {
+        var request = state.get('next-sequence');
+        request.onsuccess = function () {
+          var next = request.result ? request.result.value : 1;
+          command.sequence = next;
+          state.put({ key: 'next-sequence', value: next + 1 });
           commands.put(command);
-        } else {
-          var request = state.get('next-sequence');
-          request.onsuccess = function () {
-            var next = request.result ? request.result.value : 1;
-            command.sequence = next;
-            state.put({ key: 'next-sequence', value: next + 1 });
-            commands.put(command);
-          };
-        }
-        tx.onerror = function () { db.close(); reject(tx.error); };
-        tx.onabort = function () { db.close(); reject(tx.error || new Error('Fila local cancelada.')); };
-        tx.oncomplete = function () { db.close(); resolve(command); };
-      });
+        };
+      }
+      return function () { return command; };
     });
   }
 
@@ -84,36 +123,31 @@
   }
 
   function savePlan(scope, plan) {
-    return open(scope).then(function (db) {
-      return new Promise(function (resolve, reject) {
-        // A leitura e a escrita compartilham a transação com a fila: outra aba
-        // não pode trocar a ficha entre a verificação e a gravação.
-        var tx = db.transaction(['state', 'commands'], 'readwrite');
-        var state = tx.objectStore('state');
-        var oldPlan = state.get('plan');
-        var active = state.get('active');
-        var pending = tx.objectStore('commands').count();
-        var completed = 0;
-        var saved = false;
-        function decide() {
-          completed += 1;
-          if (completed !== 3) return;
-          var currentVersion = oldPlan.result && oldPlan.result.plan && oldPlan.result.plan.program_version;
-          var activeVersion = active.result && active.result.snapshot && active.result.snapshot.program_version;
-          var incomingVersion = String(plan.program_version);
-          var protectedVersion = currentVersion != null ? currentVersion : activeVersion;
-          if ((active.result || pending.result) &&
-              (protectedVersion == null || String(protectedVersion) !== incomingVersion)) return;
-          state.put({ key: 'plan', plan: plan });
-          saved = true;
-        }
-        oldPlan.onsuccess = decide;
-        active.onsuccess = decide;
-        pending.onsuccess = decide;
-        tx.onerror = function () { db.close(); reject(tx.error); };
-        tx.onabort = function () { db.close(); reject(tx.error || new Error('Plano local não foi salvo.')); };
-        tx.oncomplete = function () { db.close(); resolve(saved); };
-      });
+    // A leitura e a escrita compartilham a transação com a fila: outra aba
+    // não pode trocar a ficha entre a verificação e a gravação.
+    return run(scope, ['state', 'commands'], 'readwrite', 'Plano local não foi salvo.', function (tx) {
+      var state = tx.objectStore('state');
+      var oldPlan = state.get('plan');
+      var active = state.get('active');
+      var pending = tx.objectStore('commands').count();
+      var completed = 0;
+      var saved = false;
+      function decide() {
+        completed += 1;
+        if (completed !== 3) return;
+        var currentVersion = oldPlan.result && oldPlan.result.plan && oldPlan.result.plan.program_version;
+        var activeVersion = active.result && active.result.snapshot && active.result.snapshot.program_version;
+        var incomingVersion = String(plan.program_version);
+        var protectedVersion = currentVersion != null ? currentVersion : activeVersion;
+        if ((active.result || pending.result) &&
+            (protectedVersion == null || String(protectedVersion) !== incomingVersion)) return;
+        state.put({ key: 'plan', plan: plan });
+        saved = true;
+      }
+      oldPlan.onsuccess = decide;
+      active.onsuccess = decide;
+      pending.onsuccess = decide;
+      return function () { return saved; };
     });
   }
 
@@ -136,40 +170,29 @@
   }
 
   function acquireLease(scope, owner, ttlMs) {
-    return open(scope).then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction('state', 'readwrite');
-        var store = tx.objectStore('state');
-        var granted = false;
-        var request = store.get('drain-lease');
-        request.onsuccess = function () {
-          var now = Date.now();
-          var lease = request.result;
-          if (!lease || lease.until <= now || lease.owner === owner) {
-            store.put({ key: 'drain-lease', owner: owner, until: now + ttlMs });
-            granted = true;
-          }
-        };
-        tx.onerror = function () { db.close(); reject(tx.error); };
-        tx.onabort = function () { db.close(); reject(tx.error || new Error('Lease local cancelado.')); };
-        tx.oncomplete = function () { db.close(); resolve(granted); };
-      });
+    return run(scope, 'state', 'readwrite', 'Lease local cancelado.', function (tx) {
+      var store = tx.objectStore('state');
+      var granted = false;
+      var request = store.get('drain-lease');
+      request.onsuccess = function () {
+        var now = Date.now();
+        var lease = request.result;
+        if (!lease || lease.until <= now || lease.owner === owner) {
+          store.put({ key: 'drain-lease', owner: owner, until: now + ttlMs });
+          granted = true;
+        }
+      };
+      return function () { return granted; };
     });
   }
 
   function releaseLease(scope, owner) {
-    return open(scope).then(function (db) {
-      return new Promise(function (resolve, reject) {
-        var tx = db.transaction('state', 'readwrite');
-        var store = tx.objectStore('state');
-        var request = store.get('drain-lease');
-        request.onsuccess = function () {
-          if (request.result && request.result.owner === owner) store.delete('drain-lease');
-        };
-        tx.onerror = function () { db.close(); reject(tx.error); };
-        tx.onabort = function () { db.close(); reject(tx.error || new Error('Lease local cancelado.')); };
-        tx.oncomplete = function () { db.close(); resolve(); };
-      });
+    return run(scope, 'state', 'readwrite', 'Lease local cancelado.', function (tx) {
+      var store = tx.objectStore('state');
+      var request = store.get('drain-lease');
+      request.onsuccess = function () {
+        if (request.result && request.result.owner === owner) store.delete('drain-lease');
+      };
     });
   }
 
