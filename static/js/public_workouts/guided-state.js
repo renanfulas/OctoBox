@@ -1,4 +1,11 @@
-/* Projeção pura do progresso do treino guiado. Não escreve DOM nem estado persistido. */
+/* Projeção pura do progresso do treino guiado. Não escreve DOM nem estado persistido.
+ *
+ * `next` é sempre a primeira série pendente na ordem da prescrição. O cursor
+ * `focusIndex` (salto pela lista "Ver treino todo") só muda `current`: pular para
+ * um exercício não marca nada como pulado, e quando o exercício focado fica sem
+ * pendência o chamador limpa o cursor e o guia volta para a primeira pendente.
+ * Concluído = todas as obrigatórias registradas e ao menos uma série feita.
+ */
 (function () {
   'use strict';
 
@@ -6,26 +13,74 @@
     return movementIndex + ':' + setNumber;
   }
 
-  function project(movements, recorded, skipped, pendingCount, lastSkipped, lastFreeformIndex) {
+  function movementStatus(done, required, requiredDone, skipped, pending) {
+    if (done > 0 && requiredDone === required) return 'done';
+    if (!pending && !done) return 'skipped';
+    if (!pending) return 'incomplete';
+    if (done || skipped) return 'started';
+    return 'pending';
+  }
+
+  function project(movements, recorded, skipped, pendingCount, lastSkipped, lastFreeformIndex, options) {
     var total = 0;
     var next = null;
     var requiredMissing = false;
+    var missing = 0;
+    var focusIndex = options && options.focusIndex != null ? options.focusIndex : null;
 
-    movements.forEach(function (movement, movementIndex) {
+    var overview = movements.map(function (movement, movementIndex) {
+      var done = 0;
+      var required = 0;
+      var requiredDone = 0;
+      var skippedCount = 0;
+      var pending = [];
       movement.series.forEach(function (series, index) {
         var setNumber = index + 1;
         var setKey = key(movementIndex, setNumber);
+        var isRecorded = recorded.has(setKey);
         total += 1;
-        if (series.required && !recorded.has(setKey)) requiredMissing = true;
-        if (!next && !recorded.has(setKey) && !skipped.has(setKey)) {
-          next = { movement: movement, movementIndex: movementIndex, setNumber: setNumber, series: series };
+        if (series.required) {
+          required += 1;
+          if (isRecorded) requiredDone += 1;
+          else { requiredMissing = true; missing += 1; }
         }
+        if (isRecorded) done += 1;
+        else if (skipped.has(setKey)) skippedCount += 1;
+        else pending.push({ movement: movement, movementIndex: movementIndex, setNumber: setNumber, series: series });
       });
+      if (!next && pending.length) next = pending[0];
+      return {
+        index: movementIndex,
+        status: movementStatus(done, required, requiredDone, skippedCount, pending.length),
+        done: done, total: movement.series.length, skipped: skippedCount,
+        firstPending: pending[0] || null, pending: pending,
+      };
     });
+
+    var current = next;
+    if (focusIndex !== null && overview[focusIndex] && overview[focusIndex].firstPending) {
+      current = overview[focusIndex].firstPending;
+    }
+    var upNext = null;
+    if (current) {
+      var sameMovement = overview[current.movementIndex].pending;
+      upNext = sameMovement[sameMovement.indexOf(current) + 1] || null;
+      if (!upNext) {
+        overview.some(function (item) {
+          if (item.index === current.movementIndex || !item.firstPending) return false;
+          upNext = item.firstPending;
+          return true;
+        });
+      }
+    }
 
     return {
       next: next,
+      current: current,
+      upNext: upNext,
+      overview: overview,
       total: total,
+      missing: missing,
       recordedCount: recorded.size,
       pendingCount: pendingCount,
       requiredMissing: requiredMissing,
