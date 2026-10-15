@@ -1,3 +1,94 @@
+/* Confirmação de e-mail por código para quem já está logado (_push_verify.html).
+ * O push exige identidade verificada; o link do e-mail abre fora do app
+ * instalado, então o código é digitado aqui e o cookie verificado nasce no
+ * próprio app. Depois de confirmar, a página recarrega já com "Ativar avisos". */
+(function () {
+  'use strict';
+
+  var NOTICE_KEY = 'curva-push-verified';
+  var MESSAGES = {
+    muitos_pedidos: 'Muitos pedidos seguidos. Espere alguns minutos e tente de novo.',
+    conta_nao_ativa: 'Sua assinatura ainda não está ativa para receber o código.',
+    muitas_tentativas: 'Muitas tentativas. Peça um novo código daqui a alguns minutos.',
+    codigo_invalido: 'Código incorreto ou vencido. Confira o e-mail mais recente.',
+  };
+
+  function cookie(name) {
+    var item = (document.cookie || '').split(';').map(function (part) { return part.trim(); })
+      .find(function (part) { return part.indexOf(name + '=') === 0; });
+    return item ? decodeURIComponent(item.slice(name.length + 1)) : '';
+  }
+
+  function post(url, body) {
+    return fetch(url, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': cookie('csrftoken') },
+      body: JSON.stringify(body),
+    }).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (data) {
+        return { status: response.status, data: data };
+      });
+    });
+  }
+
+  try {
+    window.CurvaPushVerifiedNotice = sessionStorage.getItem(NOTICE_KEY) === '1';
+    sessionStorage.removeItem(NOTICE_KEY);
+  } catch (_) { window.CurvaPushVerifiedNotice = false; }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-workout-push-verify]'), function (block) {
+    var url = block.dataset.verifyUrl;
+    var send = block.querySelector('[data-workout-push-verify-send]');
+    var form = block.querySelector('[data-workout-push-verify-form]');
+    var input = block.querySelector('[data-workout-push-verify-code]');
+    var resend = block.querySelector('[data-workout-push-verify-resend]');
+    var submit = form.querySelector('button[type="submit"]');
+    var holder = block.closest('[data-workout-push-home], [data-workout-push-profile]');
+    var status = holder && holder.querySelector('[aria-live]');
+
+    function say(text) { if (status) status.textContent = text; }
+
+    function requestCode(button) {
+      button.disabled = true;
+      say('Enviando código…');
+      post(url, { action: 'send' }).then(function (result) {
+        if (result.status !== 200) {
+          say(MESSAGES[result.data.error] || 'Não foi possível enviar o código agora. Tente de novo.');
+          return;
+        }
+        send.hidden = true;
+        form.hidden = false;
+        say('Enviamos um código para ' + result.data.sent_to + '. Digite aqui, sem sair do app.');
+        input.focus();
+      }).catch(function () {
+        say('Sem conexão. Tente de novo quando a internet voltar.');
+      }).finally(function () { button.disabled = false; });
+    }
+
+    send.addEventListener('click', function () { requestCode(send); });
+    resend.addEventListener('click', function () { requestCode(resend); });
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var code = input.value.replace(/\D/g, '');
+      if (code.length !== 6) { say('Digite os 6 dígitos do código.'); input.focus(); return; }
+      submit.disabled = true;
+      say('Confirmando…');
+      post(url, { action: 'confirm', code: code }).then(function (result) {
+        if (result.status === 200) {
+          try { sessionStorage.setItem(NOTICE_KEY, '1'); } catch (_) { /* aviso é só conforto */ }
+          location.reload();
+          return;
+        }
+        say(MESSAGES[result.data.error] || 'Não foi possível confirmar agora. Tente de novo.');
+        submit.disabled = false;
+      }).catch(function () {
+        say('Sem conexão. Tente de novo quando a internet voltar.');
+        submit.disabled = false;
+      });
+    });
+  });
+}());
+
 (function () {
   'use strict';
 
@@ -67,6 +158,11 @@
     if (home) home.hidden = isActive;
     enableButtons.forEach(function (button) { button.hidden = isActive; });
     disable.hidden = !isActive;
+    if (!isActive && window.CurvaPushVerifiedNotice) {
+      window.CurvaPushVerifiedNotice = false;
+      setStatus('E-mail confirmado. Toque em "Ativar avisos" para receber os avisos neste aparelho.');
+      return;
+    }
     setStatus(isActive
       ? 'Avisos ativos neste dispositivo.'
       : 'Avisos desativados neste dispositivo.');
