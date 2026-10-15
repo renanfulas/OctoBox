@@ -6,7 +6,7 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. resolve a jornada a partir do invite token.
-2. trata link em massa do box.
+2. trata link do grupo do box.
 3. trata convite individual de lead importado.
 4. registra eventos do funil ligados a cada jornada.
 
@@ -77,7 +77,7 @@ def handle_student_special_oauth_journey(
         # quebrada: o link e a fonte de verdade do box-alvo. Manter so o gate
         # de "link ainda aceita usos".
         if not box_invite_link.can_accept:
-            return _redirect_with_message(request, 'error', 'Este link em massa não está mais disponível para novos cadastros.')
+            return _redirect_with_message(request, 'error', 'Este link do grupo não está mais disponível para novos cadastros.')
         # Sprint 4: ativar o tenant do link como contexto ativo para que
         # operacoes tenant-aware downstream (AuditEvent, ContentType, etc.)
         # encontrem suas tabelas no schema correto. /aluno/auth/ esta em
@@ -94,7 +94,7 @@ def handle_student_special_oauth_journey(
             )
             return response
         # Onda 1 (docs/plans/student-login-magic-link-bugs-corda.md): so um motivo de
-        # falha significa "aluno realmente novo" neste link em massa — 'invite-not-found'
+        # falha significa "aluno realmente novo" neste link do grupo — 'invite-not-found'
         # (o token do link nunca bate com uma StudentAppInvitation). Qualquer outro motivo
         # (ex.: 'box-root-mismatch', quando o aluno ja tem StudentIdentity em outro box)
         # NAO deve cair no wizard de onboarding — antes disso acontecia e o wizard tentava
@@ -104,7 +104,9 @@ def handle_student_special_oauth_journey(
         # mensagem que ja existe pra esse motivo — igual ao branch de convite individual.
         if result.failure_reason and result.failure_reason != 'invite-not-found':
             return None
-        repository.record_box_invite_acceptance(box_invite_link)
+        # A vaga do link NAO e consumida aqui: quem abre o OAuth e abandona o wizard nao deve
+        # gastar uma vaga. O consumo atomico acontece em
+        # OnboardingWorkflow.complete_mass_onboarding, ao concluir o cadastro.
         payload = {
             'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
             'box_root_slug': box_invite_link.box_root_slug,
@@ -131,7 +133,7 @@ def handle_student_special_oauth_journey(
             target_model='student_identity.StudentBoxInviteLink',
             target_id=str(box_invite_link.id),
             target_label=box_invite_link.box_root_slug,
-            description='OAuth concluído para link em massa do box.',
+            description='OAuth concluído para link do grupo do box.',
             metadata={
                 'box_root_slug': box_invite_link.box_root_slug,
                 'box_invite_link_id': box_invite_link.id,

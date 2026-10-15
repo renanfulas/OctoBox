@@ -317,6 +317,23 @@ def verify_magic_token(token: str):
     return pending
 
 
+def peek_expired_magic_token_pending_id(token: str) -> int | None:
+    """pk do PendingSignup de um token com assinatura valida, ignorando a idade.
+
+    So para a tela de "link expirou": quem tem o token assinado (so enviado ao e-mail do
+    dono) pode pedir um novo. Token adulterado/vazio devolve None — nunca confia no pk sem
+    assinatura valida.
+    """
+    if not token:
+        return None
+    try:
+        data = signing.loads(token, salt=_MAGIC_TOKEN_SALT)
+    except signing.BadSignature:
+        return None
+    pk = data.get('pk') if isinstance(data, dict) else None
+    return pk if isinstance(pk, int) else None
+
+
 def send_onboarding_email(pending_signup, *, activation_url: str) -> bool:
     """Envia email de ativacao com HTML + texto fallback.
 

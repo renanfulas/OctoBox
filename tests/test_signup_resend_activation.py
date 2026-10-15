@@ -17,9 +17,12 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
+from freezegun import freeze_time
 
 from shared_support.platform_cache import platform_cache
 from signup.models import PendingSignup, PendingSignupPlan, PendingSignupStatus
+from signup.services import generate_magic_token
+from signup.views import ResendActivationEmailView
 
 
 def _make_pending(*, status: str = PendingSignupStatus.PAID) -> PendingSignup:
@@ -39,49 +42,50 @@ class ResendActivationEmailViewTests(TestCase):
     def _url(self, pending):
         return reverse('signup-resend-activation', args=[pending.pk])
 
-    def test_returns_404_for_nonexistent_pending(self):
-        response = self.client.post(reverse('signup-resend-activation', args=[999_999]))
-        self.assertEqual(response.status_code, 404)
-
-    def test_returns_409_when_already_activated(self):
-        pending = _make_pending(status=PendingSignupStatus.ACTIVATED)
-
-        response = self.client.post(self._url(pending))
-
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.json()['code'], 'already-activated')
-
-    def test_returns_409_when_not_paid_yet(self):
-        pending = _make_pending(status=PendingSignupStatus.PENDING)
-
-        response = self.client.post(self._url(pending))
-
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.json()['code'], 'not-paid-yet')
-
-    @patch('signup.views.send_onboarding_email', return_value=True)
-    def test_resends_email_for_paid_pending(self, mock_send):
-        pending = _make_pending(status=PendingSignupStatus.PAID)
-
-        response = self.client.post(self._url(pending))
-
+    def _assert_generic(self, response):
         self.assertEqual(response.status_code, 200)
         body = response.json()
-        self.assertTrue(body['ok'])
-        self.assertIn(pending.email, body['message'])
-        mock_send.assert_called_once()
-        _, kwargs = mock_send.call_args
-        self.assertIn(f'/onboarding/', kwargs['activation_url'])
+        self.assertEqual(body, {'ok': True, 'message': ResendActivationEmailView.GENERIC_MESSAGE})
+        self.assertNotIn('@', body['message'])
 
-    @patch('signup.views.send_onboarding_email', return_value=False)
-    def test_returns_502_when_email_gateway_fails(self, _mock_send):
+    @patch('signup.views.send_onboarding_email', return_value=True)
+    def test_nonexistent_pending_gets_same_generic_answer(self, mock_send):
+        response = self.client.post(reverse('signup-resend-activation', args=[999_999]))
+
+        self._assert_generic(response)
+        mock_send.assert_not_called()
+
+    @patch('signup.views.send_onboarding_email', return_value=True)
+    def test_already_activated_gets_same_generic_answer_and_sends_nothing(self, mock_send):
+        pending = _make_pending(status=PendingSignupStatus.ACTIVATED)
+
+        self._assert_generic(self.client.post(self._url(pending)))
+        mock_send.assert_not_called()
+
+    @patch('signup.views.send_onboarding_email', return_value=True)
+    def test_not_paid_yet_gets_same_generic_answer_and_sends_nothing(self, mock_send):
+        pending = _make_pending(status=PendingSignupStatus.PENDING)
+
+        self._assert_generic(self.client.post(self._url(pending)))
+        mock_send.assert_not_called()
+
+    @patch('signup.views.send_onboarding_email', return_value=True)
+    def test_resends_email_for_paid_pending_without_echoing_the_address(self, mock_send):
         pending = _make_pending(status=PendingSignupStatus.PAID)
 
         response = self.client.post(self._url(pending))
 
-        self.assertEqual(response.status_code, 502)
-        self.assertEqual(response.json()['code'], 'send-failed')
+        self._assert_generic(response)
+        self.assertNotIn(pending.email, response.content.decode())
+        mock_send.assert_called_once()
+        _, kwargs = mock_send.call_args
+        self.assertIn('/onboarding/', kwargs['activation_url'])
 
+    @patch('signup.views.send_onboarding_email', return_value=False)
+    def test_email_gateway_failure_looks_the_same_to_the_caller(self, _mock_send):
+        pending = _make_pending(status=PendingSignupStatus.PAID)
+
+        self._assert_generic(self.client.post(self._url(pending)))
     @patch('signup.views.send_onboarding_email', return_value=True)
     def test_second_request_within_cooldown_is_rate_limited(self, _mock_send):
         pending = _make_pending(status=PendingSignupStatus.PAID)
@@ -92,6 +96,36 @@ class ResendActivationEmailViewTests(TestCase):
         self.assertEqual(first.status_code, 200)
         self.assertEqual(second.status_code, 429)
         self.assertEqual(second.json()['code'], 'rate-limited')
+
+
+class ExpiredOnboardingLinkResendTests(TestCase):
+    def setUp(self):
+        platform_cache.clear()
+
+    def _expired_token(self, pending):
+        with freeze_time('2026-01-01 12:00:00'):
+            token = generate_magic_token(pending)
+        return token
+
+    def test_expired_token_page_offers_resend_button_for_that_signup(self):
+        pending = _make_pending(status=PendingSignupStatus.PAID)
+        token = self._expired_token(pending)
+
+        with freeze_time('2026-02-01 12:00:00'):
+            response = self.client.get(reverse('signup-onboarding', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-resend-activation')
+        self.assertContains(response, reverse('signup-resend-activation', args=[pending.pk]))
+
+    def test_tampered_token_does_not_get_a_resend_button(self):
+        pending = _make_pending(status=PendingSignupStatus.PAID)
+        token = self._expired_token(pending) + 'x'
+
+        response = self.client.get(reverse('signup-onboarding', kwargs={'token': token}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'data-resend-activation')
 
 
 class CheckoutSuccessResendPanelRenderingTests(TestCase):
