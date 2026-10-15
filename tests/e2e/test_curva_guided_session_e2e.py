@@ -2,6 +2,7 @@
 
 import os
 import json
+from copy import deepcopy
 from datetime import timedelta
 from decimal import Decimal
 
@@ -14,6 +15,8 @@ from playwright.sync_api import Page, expect
 _EMAIL = 'curva-guided-e2e@example.test'
 _OTHER_EMAIL = 'curva-guided-other-e2e@example.test'
 _MOVEMENT_SLUG = 'curva-guided-e2e-squat'
+_SECOND_MOVEMENT_SLUG = 'curva-guided-e2e-row'
+_THIRD_MOVEMENT_SLUG = 'curva-guided-e2e-press'
 # Conta quantas vezes a página abre o banco local do guia (guided-outbox.js).
 _COUNT_OUTBOX_OPENS = """
 (() => {
@@ -50,13 +53,15 @@ def _cleanup_guided_e2e(django_db_blocker):
             PublicWorkoutAccount.objects.filter(email=_OTHER_EMAIL).delete()
             PublicWorkoutProgram.objects.filter(slug='bruno', program_id='guided-e2e-2026').delete()
             PublicWorkoutMovement.objects.filter(slug=_MOVEMENT_SLUG).delete()
+            PublicWorkoutMovement.objects.filter(slug=_SECOND_MOVEMENT_SLUG).delete()
+            PublicWorkoutMovement.objects.filter(slug=_THIRD_MOVEMENT_SLUG).delete()
 
     cleanup()
     yield
     cleanup()
 
 
-def _prepare_guided_student(stages=None):
+def _prepare_guided_student(stages=None, *, freeform_count=0):
     from public_workouts.models import (
         PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutLoginToken,
         PublicWorkoutSubscription,
@@ -74,6 +79,14 @@ def _prepare_guided_student(stages=None):
              'load_rule': {'kind': 'manual'}},
         ] if stages is None else stages,
     }
+    if freeform_count:
+        first = payload['days'][0]['blocks'][0]['movements'][0]
+        first.pop('guided_prescription')
+        first['reps_spec'] = ''
+        for slug in (_SECOND_MOVEMENT_SLUG, _THIRD_MOVEMENT_SLUG)[:freeform_count - 1]:
+            extra = deepcopy(first)
+            extra['movement_slug'] = slug
+            payload['days'][0]['blocks'][0]['movements'].append(extra)
     publish_program(slug='bruno', payload=payload)
     account = PublicWorkoutAccount.objects.create(
         email=_EMAIL, onboarding_completed_at=timezone.now(),
@@ -110,6 +123,58 @@ def _finish_from_summary(page: Page):
     page.locator('[data-guided-open-sheet]').click()
     page.locator('[data-guided-open-summary]').click()
     page.locator('[data-workout-guided-finish]').click()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_freeform_summary_requires_each_exercise_and_records_partial(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    account, token = _prepare_guided_student(freeform_count=3)
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    page.locator('[data-workout-guided-weight]').fill('50')
+    page.locator('[data-workout-guided-reps]').fill('8')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-guided-receipt-status]')).to_have_text('✓ Salvo')
+    page.locator('[data-guided-open-sheet]').click()
+    page.locator('[data-guided-open-summary]').click()
+    summary = page.locator('[data-guided-screen="summary"]')
+    expect(summary.locator('[data-guided-title]')).to_have_text('Faltam 2 exercícios sem registro para finalizar')
+    expect(summary.locator('[data-workout-guided-finish]')).to_be_hidden()
+    expect(summary.locator('[data-workout-guided-partial]')).to_be_visible()
+    summary.locator('[data-workout-guided-partial]').click()
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('parcial')
+    session = PublicWorkoutTrainingSession.objects.get(account=account)
+    assert session.outcome == 'partial'
+    assert session.completed_set_count == 1
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_offline_freeform_finish_requires_each_exercise(page: Page, live_server):
+    _, token = _prepare_guided_student(freeform_count=2)
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    _wait_for_offline_scope(page)
+    page.evaluate("async () => { await navigator.serviceWorker.ready; }")
+    page.context.set_offline(True)
+    page.reload()
+    page.locator('[data-offline-open]').click()
+    page.locator('[data-offline-start]').click()
+    expect(page.locator('[data-offline-status]')).to_contain_text('Início salvo')
+    page.locator('[data-offline-weight]').fill('50')
+    page.locator('[data-offline-reps]').fill('8')
+    page.locator('[data-offline-set]').click()
+    expect(page.locator('[data-offline-status]')).to_contain_text('Série salva')
+    expect(page.locator('[data-offline-finish]')).to_be_hidden()
+    expect(page.locator('[data-offline-partial]')).to_be_visible()
+    page.locator('[data-offline-weight]').fill('45')
+    page.locator('[data-offline-reps]').fill('8')
+    page.locator('[data-offline-set]').click()
+    expect(page.locator('[data-offline-finish]')).to_be_visible()
 
 
 @pytest.mark.e2e
