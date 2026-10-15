@@ -13,8 +13,9 @@ POR QUE ELE EXISTE:
   contra esta implementacao de verdade.
 
 PONTOS CRITICOS:
-- `_validate_plan_slug` consulta o catalogo estatico independente da view;
-  nao deve importar `student_app.views` nem modelos de TENANT_APPS.
+- `_validate_plan_slug` consulta o catalogo estatico e, fora dele, o
+  programa ativo no banco — independente da view; nao deve importar
+  `student_app.views` nem modelos de TENANT_APPS.
 - get_active_program/publish_program/build_student_package/record_load
   rodam no schema `public`, SEM tenant (mesmo motivo do resto do app — ver
   models.py). Nunca importam nada de TENANT_APPS: quem monta o payload a
@@ -89,8 +90,18 @@ class UnknownPlanSlugError(ValueError):
     pass
 
 
+def is_known_plan_slug(plan_slug: str) -> bool:
+    """Catalogo fixo OU aluno com programa ativo publicado — o mesmo criterio
+    de `_synthesize_public_workout_plan` na view: aluno novo, aprovado pelo
+    fluxo de anamnese (ex.: giulia, willy), existe so no banco. Sem isto a
+    pagina dele abria, mas nenhuma avaliacao podia ser lancada."""
+    if plan_slug in PUBLIC_WORKOUT_LIBRARY:
+        return True
+    return get_active_program(slug=plan_slug) is not None
+
+
 def _validate_plan_slug(plan_slug: str) -> None:
-    if plan_slug not in PUBLIC_WORKOUT_LIBRARY:
+    if not is_known_plan_slug(plan_slug):
         raise UnknownPlanSlugError(f'Plano publico desconhecido: {plan_slug!r}')
 
 
@@ -175,14 +186,16 @@ def resolve_assessment_profile(*, plan_slug: str, plan_sex: str | None, plan_hei
     }
 
 
-_SKINFOLD_NOTE_RE = re.compile(r'Dobras \(mm\):\s*([^\n]+)')
+# "Dobras (mm): triceps=20.0, ..." (comando presencial e autoavaliacao) ou
+# "Dobras cutâneas JP7 em mm: peitoral=10, ..." (avaliacoes inseridas direto
+# no banco, como as de giulia/willy em 12/10/2026).
+_SKINFOLD_NOTE_RE = re.compile(r'Dobras[^:\n]*:\s*([^\n]+)')
 _SKINFOLD_VALUE_RE = re.compile(r'([a-z]+)=(\d+(?:\.\d+)?)')
 
 
 def parse_skinfold_note(notes: str) -> dict:
-    """Dobras gravadas no texto da avaliacao — "Dobras (mm): triceps=20.0, ...",
-    formato escrito tanto pelo comando presencial quanto pela autoavaliacao
-    (as dobras nunca tiveram coluna propria)."""
+    """Dobras gravadas no texto da avaliacao (as dobras nunca tiveram coluna
+    propria) — aceita os dois formatos acima."""
     match = _SKINFOLD_NOTE_RE.search(notes or '')
     if not match:
         return {}

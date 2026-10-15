@@ -62,10 +62,12 @@ from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
 
+from public_workouts.catalog import PUBLIC_WORKOUT_LIBRARY
 from public_workouts.services import (
     AssessmentValueError,
     UnknownPlanSlugError,
     build_report,
+    is_known_plan_slug,
     record_assessment,
     resolve_assessment_profile,
     skinfold_body_fat,
@@ -79,7 +81,7 @@ class Command(BaseCommand):
     help = 'Registra uma avaliacao fisica (peso/medidas) de um plano do corredor publico de treinos.'
 
     def add_arguments(self, parser):
-        parser.add_argument('plan_slug', help='Slug do plano em PUBLIC_WORKOUT_LIBRARY (ex.: rafael)')
+        parser.add_argument('plan_slug', help='Slug do aluno (catalogo ou programa ativo, ex.: rafael, giulia)')
         parser.add_argument('--date', dest='measured_at', required=True, help='Data da avaliacao, formato AAAA-MM-DD')
         parser.add_argument('--weight', dest='weight_kg', type=float, default=None, help='Peso em kg')
         parser.add_argument('--age', dest='age', type=float, default=None, help='Idade — so usada no calculo de dobras cutaneas')
@@ -121,12 +123,13 @@ class Command(BaseCommand):
         except ValueError as exc:
             raise CommandError(f'Data invalida: {options["measured_at"]!r} (use AAAA-MM-DD)') from exc
 
-        from student_app.views.public_workout_views import PUBLIC_WORKOUT_LIBRARY
-
-        try:
-            plan = PUBLIC_WORKOUT_LIBRARY[plan_slug]
-        except KeyError as exc:
-            raise CommandError(f'Plano publico desconhecido: {plan_slug!r}') from exc
+        # Catalogo fixo ou aluno novo com programa ativo (fora do catalogo, sem
+        # sexo/altura fixos — vem de --sex/--height ou da avaliacao anterior).
+        if not is_known_plan_slug(plan_slug):
+            raise CommandError(f'Plano publico desconhecido: {plan_slug!r}')
+        plan = PUBLIC_WORKOUT_LIBRARY.get(plan_slug)
+        plan_sex = plan.assessment_sex if plan else None
+        plan_height_cm = plan.height_cm if plan else None
 
         measurements = {flag: options[flag] for flag in _MEASUREMENT_FLAGS if options[flag] is not None}
 
@@ -141,14 +144,12 @@ class Command(BaseCommand):
 
         # Catalogo fixo vence; senao --sex/--height; senao o ultimo valor
         # gravado nas avaliacoes anteriores deste aluno.
-        if options['sex'] and plan.assessment_sex and options['sex'] != plan.assessment_sex:
-            raise CommandError(
-                f'--sex {options["sex"]} contradiz o catalogo de {plan_slug!r} ({plan.assessment_sex}).'
-            )
+        if options['sex'] and plan_sex and options['sex'] != plan_sex:
+            raise CommandError(f'--sex {options["sex"]} contradiz o catalogo de {plan_slug!r} ({plan_sex}).')
         profile = resolve_assessment_profile(
             plan_slug=plan_slug,
-            plan_sex=plan.assessment_sex or options['sex'],
-            plan_height_cm=plan.height_cm or options['height_cm'],
+            plan_sex=plan_sex or options['sex'],
+            plan_height_cm=plan_height_cm or options['height_cm'],
         )
         sex, height_cm = profile['sex'], profile['height_cm']
 
