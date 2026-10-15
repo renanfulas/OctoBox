@@ -4,7 +4,8 @@
  * `focusIndex` (salto pela lista "Ver treino todo") só muda `current`: pular para
  * um exercício não marca nada como pulado, e quando o exercício focado fica sem
  * pendência o chamador limpa o cursor e o guia volta para a primeira pendente.
- * Concluído = todas as obrigatórias registradas e ao menos uma série feita.
+ * Concluído = todas as obrigatórias registradas, ao menos uma série por
+ * exercício livre e ao menos uma série feita no treino.
  */
 (function () {
   'use strict';
@@ -26,6 +27,8 @@
     var next = null;
     var requiredMissing = false;
     var missing = 0;
+    var missingRequiredSets = 0;
+    var missingFreeformMovements = 0;
     var focusIndex = options && options.focusIndex != null ? options.focusIndex : null;
 
     var overview = movements.map(function (movement, movementIndex) {
@@ -42,12 +45,17 @@
         if (series.required) {
           required += 1;
           if (isRecorded) requiredDone += 1;
-          else { requiredMissing = true; missing += 1; }
+          else { requiredMissing = true; missing += 1; missingRequiredSets += 1; }
         }
         if (isRecorded) done += 1;
         else if (skipped.has(setKey)) skippedCount += 1;
         else pending.push({ movement: movement, movementIndex: movementIndex, setNumber: setNumber, series: series });
       });
+      if (movement.freeform && done === 0 && required === 0) {
+        requiredMissing = true;
+        missing += 1;
+        missingFreeformMovements += 1;
+      }
       if (!next && pending.length) next = pending[0];
       return {
         index: movementIndex,
@@ -81,6 +89,8 @@
       overview: overview,
       total: total,
       missing: missing,
+      missingRequiredSets: missingRequiredSets,
+      missingFreeformMovements: missingFreeformMovements,
       recordedCount: recorded.size,
       pendingCount: pendingCount,
       requiredMissing: requiredMissing,
