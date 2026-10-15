@@ -48,8 +48,8 @@ def validate_guided_prescription(value, *, path='guided_prescription') -> list[s
         if not isinstance(role, str) or role not in ROLES:
             errors.append(f'{prefix}.role: papel inválido')
         minimum, maximum = stage.get('min_sets'), stage.get('max_sets')
-        if not isinstance(minimum, int) or isinstance(minimum, bool) or not 1 <= minimum <= 30:
-            errors.append(f'{prefix}.min_sets: inteiro entre 1 e 30')
+        if not isinstance(minimum, int) or isinstance(minimum, bool) or not 0 <= minimum <= 30:
+            errors.append(f'{prefix}.min_sets: inteiro entre 0 e 30')
         if not isinstance(maximum, int) or isinstance(maximum, bool) or not 1 <= maximum <= 30:
             errors.append(f'{prefix}.max_sets: inteiro entre 1 e 30')
         if isinstance(minimum, int) and isinstance(maximum, int) and minimum > maximum:
@@ -143,7 +143,12 @@ def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_k
 
 def propose_guided_prescription(movement: dict) -> dict | None:
     """Gera proposta para revisão; não altera o draft nem publica automaticamente."""
+    from .guided_text_proposal import propose_stage_first_text
     from .guided_workout import build_legacy_series
+
+    stage_first = propose_stage_first_text(movement)
+    if stage_first is not None:
+        return stage_first
 
     rows = build_legacy_series(movement)
     if not rows or rows[0]['role'] == 'legacy_unknown':
