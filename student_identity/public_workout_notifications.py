@@ -42,26 +42,41 @@ def build_login_email_subject() -> str:
     return 'Curva · Seu link de acesso ao treino'
 
 
-def build_login_email_body(*, login_url: str, expires_in_minutes: int) -> str:
+def build_login_email_body(*, login_url: str, expires_in_minutes: int, code: str = '') -> str:
     """Corpo em texto plano — fallback obrigatorio (nem todo cliente renderiza HTML).
     Texto com acentuacao correta (so o subject fica sem acento — ver docstring
-    do modulo)."""
+    do modulo). `code` e' o mesmo acesso para digitar dentro do app instalado,
+    onde o link do e-mail abre fora dele."""
+    code_lines = (
+        f'Se estiver no app da Curva, digite este código: {code}\n'
+        '\n'
+    ) if code else ''
     return (
         'Toque no link abaixo para entrar no seu treino:\n'
         '\n'
         f'{login_url}\n'
         '\n'
+        f'{code_lines}'
         f'Vale por {expires_in_minutes} minutos. Se você não pediu esse link, ignore este e-mail.\n'
         '\n'
         '— Curva Treino & Nutrição\n'
     )
 
 
-def build_login_email_html_body(*, login_url: str, expires_in_minutes: int) -> str:
+def build_login_email_html_body(*, login_url: str, expires_in_minutes: int, code: str = '') -> str:
     """Versao HTML — mesma estrutura table-based/inline-style ja validada em
     producao por build_owner_onboarding_html_body (signup/notifications.py),
     paleta trocada pro azul da marca Curva."""
     safe_url = _html_escape(login_url)
+    code_block = f"""
+              <!-- CODE -->
+              <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#60738f;">
+                Está no app da Curva? Digite este código:
+              </p>
+              <p style="margin:0 0 28px;font-size:30px;line-height:1.1;letter-spacing:0.2em;font-weight:800;color:#0d1320;">
+                {_html_escape(code)}
+              </p>
+""" if code else ''
     return f"""\
 <!doctype html>
 <html lang="pt-BR">
@@ -130,7 +145,7 @@ def build_login_email_html_body(*, login_url: str, expires_in_minutes: int) -> s
                   </td>
                 </tr>
               </table>
-
+{code_block}
               <!-- INFO -->
               <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#60738f;">
                 O link vale por {expires_in_minutes} minutos. Se preferir, copie e cole no navegador:

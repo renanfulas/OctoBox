@@ -208,15 +208,20 @@
   }
 
   function summaryModel(state) {
-    var freeformMissing = state.overview.some(function (item, index) { return movements[index].freeform && item.done === 0; });
-    var missing = state.missing + (freeformMissing ? 1 : 0);
+    var missingParts = [];
+    if (state.missingRequiredSets) {
+      missingParts.push(state.missingRequiredSets + (state.missingRequiredSets === 1 ? ' série obrigatória' : ' séries obrigatórias'));
+    }
+    if (state.missingFreeformMovements) {
+      missingParts.push(state.missingFreeformMovements + (state.missingFreeformMovements === 1 ? ' exercício sem registro' : ' exercícios sem registro'));
+    }
     return {
-      title: !missing ? 'Treino concluído'
-        : (state.missing === 1 || (!state.missing && freeformMissing) ? 'Falta 1 série obrigatória' : 'Faltam ' + missing + ' séries obrigatórias'),
+      title: !state.missing ? (state.recordedCount ? 'Treino pronto para finalizar' : 'Registre ao menos uma série')
+        : (state.missing === 1 ? 'Falta ' : 'Faltam ') + missingParts.join(' e ') + ' para finalizar',
       minutes: elapsedMinutes(), sets: state.recordedCount,
       doneMovements: state.overview.filter(function (item) { return item.status === 'done'; }).length,
       totalMovements: state.overview.length,
-      canFinish: state.canFinish && !freeformMissing,
+      canFinish: state.canFinish,
       hasPending: !!state.next,
     };
   }

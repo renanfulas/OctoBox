@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.db import IntegrityError, transaction
+from django.db.models import F
 from django.utils import timezone
 
 from student_identity.application.results import (
@@ -225,9 +226,10 @@ class DjangoStudentIdentityRepository:
         now = timezone.now()
         (
             StudentBoxInviteLink.objects
+            # Inclui links pausados: "Gerar novo link" substitui TODOS os do box. Antes o pausado
+            # sobrevivia e, ao ser retomado, voltava a funcionar ao lado do link novo.
             .filter(
                 box_root_slug=box_root_slug,
-                paused_at__isnull=True,
                 revoked_at__isnull=True,
                 expires_at__gt=now,
             )
@@ -242,11 +244,26 @@ class DjangoStudentIdentityRepository:
         return _box_invite_link_record(link)
 
     @transaction.atomic
+    def consume_box_invite_slot(self, link_id: int) -> bool:
+        """Consome 1 vaga do link do grupo, atomicamente (um UPDATE condicional no banco).
+
+        Duas requests simultaneas nunca passam de max_uses: o WHERE reavalia use_count < max_uses
+        no momento do UPDATE. Devolve False se o link acabou/pausou/revogou/expirou.
+        """
+        now = timezone.now()
+        updated = StudentBoxInviteLink.objects.filter(
+            pk=link_id,
+            paused_at__isnull=True,
+            revoked_at__isnull=True,
+            expires_at__gt=now,
+            use_count__lt=F('max_uses'),
+        ).update(use_count=F('use_count') + 1, updated_at=now)
+        return updated == 1
+
+    @transaction.atomic
     def record_box_invite_acceptance(self, link: StudentBoxInviteLink) -> StudentBoxInviteLink:
-        StudentBoxInviteLink.objects.filter(pk=link.pk).update(
-            use_count=link.use_count + 1,
-            updated_at=timezone.now(),
-        )
+        # Mantido por compatibilidade; sem leitura-modificacao-escrita em Python.
+        self.consume_box_invite_slot(link.pk)
         return StudentBoxInviteLink.objects.get(pk=link.pk)
 
     @transaction.atomic
