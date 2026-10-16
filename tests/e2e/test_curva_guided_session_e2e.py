@@ -30,6 +30,25 @@ _COUNT_OUTBOX_OPENS = """
 """
 
 
+# Anota a frequência de cada bipe do modo foco e quantas vezes o áudio é religado.
+_SPY_AUDIO = """
+(() => {
+  window.__curvaBeeps = [];
+  window.__curvaAudioResumes = 0;
+  const Real = window.AudioContext;
+  window.AudioContext = class extends Real {
+    resume() { window.__curvaAudioResumes += 1; return super.resume(); }
+    createOscillator() {
+      const osc = super.createOscillator();
+      const start = osc.start.bind(osc);
+      osc.start = (...args) => { window.__curvaBeeps.push(Math.round(osc.frequency.value)); return start(...args); };
+      return osc;
+    }
+  };
+})();
+"""
+
+
 @pytest.fixture(autouse=True)
 def _cleanup_guided_e2e(django_db_blocker):
     def cleanup():
@@ -360,6 +379,39 @@ def test_guided_online_set_is_one_request_with_local_receipt(page: Page, live_se
     assert page.evaluate('() => window.__curvaOutboxOpens') == 1, 'o banco local abre uma vez por página'
     session = PublicWorkoutTrainingSession.objects.get(account=account)
     assert session.sets.get().weight_kg == Decimal('50.00')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_rest_end_beeps_by_default_and_student_can_mute(page: Page, live_server):
+    _account, token = _prepare_guided_student([
+        {'stage_id': 'top', 'role': 'top_set', 'min_sets': 2, 'max_sets': 2,
+         'reps_min': 6, 'reps_max': 8, 'rest_seconds': 4, 'load_rule': {'kind': 'manual'}},
+    ])
+    page.add_init_script(_SPY_AUDIO)
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+    # Aluno que nunca mexeu no painel: som ligado, e o toque em "Iniciar" já religou o áudio.
+    assert page.locator('[data-guided-sound]').get_attribute('aria-checked') == 'true'
+    assert page.evaluate('() => window.__curvaAudioResumes') >= 1
+
+    page.evaluate('() => { window.__curvaBeeps = []; }')
+    page.locator('[data-workout-guided-weight]').fill('50')
+    page.locator('[data-workout-guided-reps]').fill('7')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
+    # Descanso de 4 s: bipes curtos no 3-2-1 e o tom de "Valendo" no fim.
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=10_000)
+    beeps = page.evaluate('() => window.__curvaBeeps')
+    assert 660 in beeps and beeps[-1] == 990, beeps
+
+    page.locator('[data-guided-open-sheet]').click()
+    page.locator('[data-guided-sound]').click()
+    assert page.locator('[data-guided-sound]').get_attribute('aria-checked') == 'false'
+    assert page.evaluate("() => localStorage.getItem('curva-guided-sound')") == '0'
 
 
 @pytest.mark.e2e
