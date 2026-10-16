@@ -47,7 +47,9 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # trocam guided-sync/outbox/focus e workout-guided já guardados no aparelho.
 # Bump 14->15: a confirmação de e-mail por código para ativar avisos mudou
 # workout-push.js/css; o app instalado é justamente onde o aluno precisa dela.
-PUBLIC_WORKOUT_CACHE_EPOCH = 15
+# Bump 15->16: camada neon Curva — HTML novo (hero com a curva, letreiro) e
+# workout-curve.js entram no precache.
+PUBLIC_WORKOUT_CACHE_EPOCH = 16
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -125,6 +127,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/weekly_review.js',
     '/static/js/public_workouts/nutrition.js',
     '/static/js/public_workouts/workout-shell.js',
+    '/static/js/public_workouts/workout-curve.js',
     '/static/js/public_workouts/assessments-report.js',
     '/static/js/public_workouts/assessments.js',
     '/static/js/public_workouts/account.js',

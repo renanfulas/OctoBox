@@ -209,23 +209,27 @@
     flex-direction: column;
     gap: 2px;
     padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid var(--theme-border-soft);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--theme-surface-secondary) 94%), var(--theme-surface-secondary));
+    border-radius: 18px;
+    background: var(--theme-surface-strong);
 }
 
 .workout-record-card__label {
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--theme-text-secondary);
 }
 
+/* Recorde = pico: mesma cor do ultimo ponto da curva e do AMRAP. */
 .workout-record-card__value {
-    font-size: 1.35rem;
-    color: var(--brand);
-    text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
+    font-size: 2rem;
+    letter-spacing: -.03em;
+    color: var(--curva-peak);
     font-variant-numeric: tabular-nums;
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-record-card__value {
+    color: var(--curva-peak-core);
+    text-shadow: var(--curva-peak-text-glow);
 }
 
 .workout-record-card__unit {

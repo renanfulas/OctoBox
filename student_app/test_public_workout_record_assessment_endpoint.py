@@ -211,7 +211,9 @@ class PublicWorkoutRecordAssessmentSkinfoldTests(TestCase):
     def _url(self, slug='bruno'):
         return reverse('public-workout-record-assessment', kwargs={'plan_slug': slug})
 
-    def _unlock(self, plan_slug):
+    def _unlock(self, plan_slug, *, sex='M', height_cm=180):
+        # A avaliacao presencial do treinador libera as dobras online e,
+        # desde a 0045, registra o sexo/altura do aluno junto.
         from public_workouts.services import record_assessment
 
         record_assessment(
@@ -219,7 +221,45 @@ class PublicWorkoutRecordAssessmentSkinfoldTests(TestCase):
             measured_at='2026-01-01',
             body_fat_percent=18.0,
             body_fat_source='skinfold_jp7',
+            sex=sex,
+            height_cm=height_cm,
         )
+
+    def test_skinfolds_without_registered_sex_return_409_instead_of_assuming_male(self):
+        self._unlock('bruno', sex='', height_cm=None)
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps({'measured_at': '2026-02-01', 'age': 30, 'skinfolds': _SEVEN_FOLDS}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 409)
+
+    def test_self_report_uses_and_keeps_the_presencial_profile(self):
+        from public_workouts.formulas import Sex, estimate_body_fat_jackson_pollock_7site
+        from public_workouts.models import PublicWorkoutAssessment
+
+        self._unlock('bruno', sex='F', height_cm=165)
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self.client.post(
+            self._url('bruno'),
+            data=json.dumps({'measured_at': '2026-02-01', 'age': 30, 'skinfolds': _SEVEN_FOLDS}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        expected = estimate_body_fat_jackson_pollock_7site(
+            sex=Sex.FEMALE, age=30, chest_mm=8, midaxillary_mm=15, triceps_mm=20,
+            subscapular_mm=13, abdomen_mm=26, suprailiac_mm=13, thigh_mm=27,
+        )
+        self.assertAlmostEqual(response.json()['body_fat_percent'], expected, delta=0.1)
+        latest = PublicWorkoutAssessment.objects.get(plan_slug='bruno', measured_at='2026-02-01')
+        self.assertEqual((latest.sex, float(latest.height_cm)), ('F', 165.0))
 
     def test_skinfolds_rejected_without_presencial_history(self):
         account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')

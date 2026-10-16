@@ -1,15 +1,18 @@
 /* Lançador do treino guiado (começar / voltar ao treino) e aviso de conflito da fila.
-   A execução vive no modo foco: workout-guided-focus.css. */
+   A execução vive no modo foco: workout-guided-focus.css. É o hero do Treino:
+   mesmo fundo e mesmo contorno de neon fraco do hero da Início. */
 .workout-guided {
   padding: clamp(1.15rem, 3vw, 1.7rem);
   margin: 0;
-  border: 1px solid color-mix(in srgb, var(--brand) 29%, var(--theme-border-soft));
-  border-radius: 22px;
-  background:
-    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-accent-support) 12%, transparent), transparent 45%),
-    var(--theme-surface-panel);
+  border: 1px solid var(--curva-hero-edge);
+  border-radius: 24px;
+  background: var(--curva-hero-surface);
   color: var(--theme-text-primary);
   box-shadow: 0 18px 38px rgba(0, 0, 0, .2);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-guided {
+  box-shadow: var(--curva-hero-glow), 0 18px 38px rgba(0, 0, 0, .26);
 }
 
 .workout-guided__intro {
@@ -44,7 +47,7 @@
   min-height: 48px;
   padding: .7rem 1.1rem;
   border: 0;
-  border-radius: 12px;
+  border-radius: 999px;
   background: var(--brand);
   color: #071b22;
   font: inherit;
@@ -61,6 +64,15 @@
 
 .workout-guided__cta:active { transform: scale(.97); }
 .workout-guided button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-guided__cta {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--curva-neon-core) 60%, transparent),
+    0 0 1px var(--curva-neon),
+    0 0 12px color-mix(in srgb, var(--curva-neon) 38%, transparent),
+    0 0 32px color-mix(in srgb, var(--curva-neon) 16%, transparent);
+}
+
 .workout-guided button:disabled { cursor: wait; opacity: .6; }
 
 .workout-guided__conflict {
