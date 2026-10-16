@@ -37,7 +37,7 @@ class StudentInvitationOperationsRecommendations:
         journeys = [
             {
                 'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
-                'title': 'Link em massa',
+                'title': 'Link do grupo',
                 'copy': 'Leitura da rede do box: da visita na landing até a entrada real no app.',
                 'steps': [
                     ('landing_viewed', 'Visitas'),
@@ -53,7 +53,7 @@ class StudentInvitationOperationsRecommendations:
             {
                 'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
                 'title': 'Lead importado',
-                'copy': 'Leitura do corredor de precisão: convite, WhatsApp, revisão curta e entrada.',
+                'copy': 'Leitura do convite com mais controle: convite, WhatsApp, revisão curta e entrada.',
                 'steps': [
                     ('invite_created', 'Convites'),
                     ('whatsapp_handoff_opened', 'WhatsApp aberto'),
@@ -67,7 +67,7 @@ class StudentInvitationOperationsRecommendations:
             {
                 'journey': StudentOnboardingJourney.REGISTERED_STUDENT_INVITE,
                 'title': 'Aluno já cadastrado',
-                'copy': 'Leitura do corredor mais curto: convite, autenticação e entrada direta.',
+                'copy': 'Leitura do convite mais direto: convite, autenticação e entrada direta.',
                 'steps': [
                     ('invite_created', 'Convites'),
                     ('landing_viewed', 'Landing aberta'),
@@ -190,7 +190,7 @@ class StudentInvitationOperationsRecommendations:
         if stalled_invites:
             return {
                 'kind': 'stalled_invites',
-                'title': 'Trabalhar a fila quente do WhatsApp',
+                'title': 'Trabalhar a fila de mensagens do WhatsApp',
                 'body': f'Existem {len(stalled_invites)} convites travados. O maior ganho rápido agora é recuperar quem já estava quase entrando.',
                 'tone': 'danger' if len(stalled_invites) >= 3 else 'attention',
                 'pill': f'{min(len(stalled_invites), 5)} para atacar agora',
@@ -204,7 +204,7 @@ class StudentInvitationOperationsRecommendations:
         if active_box_invite_link is not None and active_box_invite_link.can_accept and not mass_has_visits:
             return {
                 'kind': 'mass_link_reannounce',
-                'title': 'Reanunciar o link em massa',
+                'title': 'Reanunciar o link do grupo',
                 'body': 'O link do grupo está pronto, mas ainda sem tração real nesta janela. Vale republicar no grupo com uma chamada simples para entrar com Google ou Apple.',
                 'tone': 'attention',
                 'pill': 'Rede pronta',
@@ -213,7 +213,7 @@ class StudentInvitationOperationsRecommendations:
         if recent_invites_last_24h == 0:
             return {
                 'kind': 'restart_momentum',
-                'title': 'Reaquecer o corredor hoje',
+                'title': 'Reativar este tipo de convite hoje',
                 'body': 'Não houve novos convites nas últimas 24h. O melhor agora é disparar algumas entradas para manter o onboarding vivo e aprendendo.',
                 'tone': 'muted',
                 'pill': 'Sem pulso recente',
@@ -231,7 +231,7 @@ class StudentInvitationOperationsRecommendations:
         return {
             'kind': 'monitoring',
             'title': 'Operação em observação',
-            'body': 'Os corredores estão sem gargalo gritante agora. Vale manter o ritmo e observar a próxima rodada de dados.',
+            'body': 'Os convites estão sem gargalo grave agora. Vale manter o ritmo e observar a próxima rodada de dados.',
             'tone': 'ok',
             'pill': 'Estavel',
         }
@@ -278,7 +278,7 @@ class StudentInvitationOperationsRecommendations:
         if priority_of_day['kind'] == 'mass_link_reannounce' and active_box_invite_link is not None:
             return [
                 {
-                    'title': 'Link em massa pronto para republicar',
+                    'title': 'Link do grupo pronto para republicar',
                     'detail': 'Use este link no grupo oficial do box e chame o aluno para entrar com Google ou Apple.',
                     'tone': 'attention',
                     'pill': f"{active_box_invite_link.use_count}/{active_box_invite_link.max_uses} usos",
@@ -311,7 +311,7 @@ class StudentInvitationOperationsRecommendations:
     def _build_journey_next_action(self, *, journey: str, first_step_value: int, conversion_rate: float, biggest_drop):
         if first_step_value == 0:
             return {
-                'title': 'Acione este corredor',
+                'title': 'Dê atenção a este tipo de convite',
                 'body': self.presenter.build_empty_journey_copy(journey=journey),
                 'tone': 'muted',
                 'pill': 'Sem movimento',
@@ -320,7 +320,7 @@ class StudentInvitationOperationsRecommendations:
         if biggest_drop is None:
             if conversion_rate >= 60:
                 return {
-                    'title': 'Corredor saudavel',
+                    'title': 'Convite saudável',
                     'body': 'A jornada está fechando bem. O melhor agora é manter volume e acompanhar se o ritmo continua.',
                     'tone': 'ok',
                     'pill': 'Fluxo bom',
@@ -341,7 +341,7 @@ class StudentInvitationOperationsRecommendations:
                 ('Cadastro concluído', 'Entrada no app'): 'Tem aluno terminando o cadastro e não sentando no app. Revise a mensagem final e a sensação de "pronto para usar".',
             },
             StudentOnboardingJourney.IMPORTED_LEAD_INVITE: {
-                ('Convites', 'WhatsApp aberto'): 'Os convites existem, mas a recepção ainda não puxou o handoff do WhatsApp. O próximo passo é trabalhar a fila quente do dia.',
+                ('Convites', 'WhatsApp aberto'): 'Os convites existem, mas a recepção ainda não puxou o envio da mensagem de WhatsApp. O próximo passo é trabalhar a fila de mensagens do dia.',
                 ('WhatsApp aberto', 'Landing aberta'): 'A mensagem está saindo, mas o aluno não está abrindo o link. Vale testar uma copy mais direta e pessoal no WhatsApp.',
                 ('Landing aberta', 'OAuth concluído'): 'O aluno chegou na landing, mas hesitou na autenticação. Deixe claro que basta tocar em Google ou Apple para entrar.',
                 ('OAuth concluído', 'Cadastro concluído'): 'O aluno entrou com OAuth, mas o wizard ainda está segurando gente demais. Revise os campos obrigatórios e a ordem visual.',

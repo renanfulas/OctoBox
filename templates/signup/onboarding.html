@@ -130,11 +130,23 @@ PONTOS CRITICOS:
                 <p class="checkout-kicker">Link inválido</p>
                 <h1 class="checkout-result-headline">Esse link não funciona mais.</h1>
                 {% if token_error == 'token-expirado' %}
-                    <p class="checkout-result-copy">
-                        O link de ativação expirou. Sem pânico —
-                        nossa equipe vai te chamar no WhatsApp em instantes
-                        para enviar um novo.
-                    </p>
+                    {% if resend_pending_id %}
+                        <p class="checkout-result-copy">
+                            O link de ativação expirou. Sem pânico — peça um novo agora,
+                            ele chega no e-mail que você usou na compra.
+                        </p>
+                        <div class="checkout-resend-panel" data-resend-activation data-resend-url="{% url 'signup-resend-activation' resend_pending_id %}">
+                            {% csrf_token %}
+                            <button type="button" class="checkout-resend-button" data-resend-button>Enviar um novo link para o meu e-mail</button>
+                            <p class="checkout-resend-status" data-resend-status hidden aria-live="polite"></p>
+                        </div>
+                    {% else %}
+                        <p class="checkout-result-copy">
+                            O link de ativação expirou. Sem pânico —
+                            nossa equipe vai te chamar no WhatsApp em instantes
+                            para enviar um novo.
+                        </p>
+                    {% endif %}
                 {% elif token_error == 'ja-ativado' %}
                     <p class="checkout-result-copy">
                         Sua conta já está ativa. Pode acessar pelo botão abaixo.
@@ -171,5 +183,6 @@ PONTOS CRITICOS:
         {% endif %}
     </main>
     <script src="{% static 'js/pages/signup/password_hints.js' %}?v={{ static_asset_version }}"></script>
+    {% if resend_pending_id %}<script defer src="{% static 'js/pages/signup/resend_activation.js' %}?v={{ static_asset_version }}"></script>{% endif %}
 </body>
 </html>

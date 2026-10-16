@@ -268,6 +268,51 @@ class AuthenticateStudentWithProviderTest(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertEqual(result.failure_reason, 'invite-not-found')
 
+    def _emailless_invitation(self, *, accepted_at=None):
+        invitation = MagicMock()
+        invitation.box_root_slug = 'academia-x'
+        invitation.is_expired = False
+        invitation.invited_email = ''
+        invitation.accepted_at = accepted_at
+        invitation.student = _student(student_id=7)
+        return invitation
+
+    def test_emailless_invite_rejected_when_student_already_has_identity(self):
+        """Convite sem e-mail (lead importado) nao pode ser usado por uma 2a conta Google."""
+        repo = _repo()
+        repo.find_by_provider_subject.return_value = None
+        repo.find_invitation_by_token.return_value = self._emailless_invitation()
+        repo.find_live_by_student_id.return_value = _identity_record()
+
+        result = self._uc(repo).execute(_auth_cmd(invite_token='tok', email='outra@gmail.com'))
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.failure_reason, 'invite-already-claimed')
+        repo.save_identity.assert_not_called()
+
+    def test_emailless_invite_rejected_when_already_accepted(self):
+        repo = _repo()
+        repo.find_by_provider_subject.return_value = None
+        repo.find_invitation_by_token.return_value = self._emailless_invitation(accepted_at='2026-01-01')
+        repo.find_live_by_student_id.return_value = None
+
+        result = self._uc(repo).execute(_auth_cmd(invite_token='tok'))
+
+        self.assertEqual(result.failure_reason, 'invite-already-claimed')
+        repo.save_identity.assert_not_called()
+
+    def test_emailless_invite_first_claim_still_works(self):
+        repo = _repo()
+        repo.find_by_provider_subject.return_value = None
+        repo.find_invitation_by_token.return_value = self._emailless_invitation()
+        repo.find_live_by_student_id.return_value = None
+        repo.save_identity.return_value = _identity_record()
+
+        result = self._uc(repo).execute(_auth_cmd(invite_token='tok'))
+
+        self.assertTrue(result.success)
+        repo.save_identity.assert_called_once()
+
     def test_failure_when_no_invite_and_email_ambiguous(self):
         """Sem invite_token e com múltiplos students para o email."""
         repo = _repo()
