@@ -43,8 +43,9 @@ from django.utils.safestring import mark_safe
 
 from public_workouts.dashboard import (
     build_program_summary, build_program_week_progress, build_week_overview, build_workout_day_selection,
-    day_keyword, day_short_label,
+    day_short_label,
 )
+from public_workouts.day_presentation import present_day
 from public_workouts.load_resolution import resolve_movement_load
 from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.periodization import (
@@ -96,11 +97,9 @@ def day_short(day_id: str) -> str:
 
 
 @register.simple_tag
-def day_workout_keyword(day) -> str:
-    """Wrapper de template pra dashboard.day_keyword — recebe o `day` do
-    payload inteiro (nao so' os campos soltos) pra assinatura ficar simples
-    no template: `{% day_workout_keyword day %}`."""
-    return day_keyword(day_id=day.get('day_id', ''), label=day.get('label', ''))
+def workout_day_presentation(day):
+    """Título compacto e foco muscular do mesmo dia, inclusive legado."""
+    return present_day(day)
 
 
 @register.simple_tag

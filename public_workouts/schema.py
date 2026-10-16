@@ -145,6 +145,14 @@ def _validate_day(day: dict, *, path: str, errors: list[str]) -> None:
 
     _require(isinstance(day.get('day_id'), str) and day['day_id'], errors, f'{path}.day_id: obrigatorio, string nao vazia')
     _require(isinstance(day.get('label'), str) and day['label'], errors, f'{path}.label: obrigatorio, string nao vazia')
+    for field, limit in (('display_title', 40), ('focus_description', 120)):
+        value = day.get(field)
+        if value is not None:
+            _require(
+                isinstance(value, str) and 0 < len(value.strip()) <= limit,
+                errors,
+                f'{path}.{field}: string nao vazia de ate {limit} caracteres',
+            )
 
     blocks = day.get('blocks')
     _require(isinstance(blocks, list) and len(blocks) > 0, errors, f'{path}.blocks: lista nao vazia')

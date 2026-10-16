@@ -294,9 +294,12 @@
     font-weight: 800;
     letter-spacing: -.01em;
     color: var(--theme-text-primary);
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.2;
+    white-space: normal;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .workout-day-tab.is-active {
@@ -462,7 +465,6 @@
     font-size: 0.875rem;
     line-height: 1.5;
 }
-.workout-day-tab__keyword { white-space: normal; }
 
 .workout-movement-card a:focus-visible,
 .workout-movement-variation-toggle:focus-visible {
