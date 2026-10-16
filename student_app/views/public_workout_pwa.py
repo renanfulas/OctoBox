@@ -49,7 +49,9 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # workout-push.js/css; o app instalado é justamente onde o aluno precisa dela.
 # Bump 15->16: camada neon Curva — HTML novo (hero com a curva, letreiro) e
 # workout-curve.js entram no precache.
-PUBLIC_WORKOUT_CACHE_EPOCH = 16
+# Bump 16->17: som do descanso ligado por padrão (guided-focus.js e o HTML do
+# modo foco); sem isto, o app instalado segue mudo com o script antigo.
+PUBLIC_WORKOUT_CACHE_EPOCH = 17
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
