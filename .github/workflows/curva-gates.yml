@@ -58,7 +58,7 @@ jobs:
             echo "curva=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          CURVA_PATHS='^(public_workouts/|student_app/|student_identity/|integrations/|config/|templates/public_workouts/|static/(js|css)/public_workouts/|tests/test_public_workout|tests/test_integrations_stripe|tests/e2e/|requirements[^/]*\.txt$|conftest\.py$|pytest\.ini$|\.github/workflows/curva-gates\.yml$)'
+          CURVA_PATHS='^(public_workouts/|student_app/|student_identity/|integrations/|config/|templates/public_workouts/|static/(js|css)/public_workouts/|static/js/student_app/|tests/js/|tests/test_public_workout|tests/test_integrations_stripe|tests/e2e/|requirements[^/]*\.txt$|conftest\.py$|pytest\.ini$|\.github/workflows/curva-gates\.yml$)'
           gh api --paginate "repos/$GH_REPO/pulls/$PR_NUMBER/files" --jq '.[].filename' > changed.txt
           if grep -Eq "$CURVA_PATHS" changed.txt; then
             echo "Arquivos do CURVA no PR:"
@@ -105,6 +105,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install -r requirements_test.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run CURVA JS tests (sync, outbox, estado do guiado)
+        run: node --test "tests/js/*.test.js"
 
       - name: Run CURVA unit/integration tests
         run: |

@@ -307,6 +307,27 @@ test('write-ahead: encerrar logo após a série espera o envio em curso e vai di
   assert.equal(commands.size, 0);
 });
 
+test('write-ahead: encerrar com série pendente e nenhuma drenagem ativa drena antes e não vira offline', async () => {
+  const { calls, send } = recorder();
+  const pendingKey = sandbox.window.CurvaGuidedSync.commandKey(setPayload(0, 1));
+  const { sync, commands } = fixture([{ key: pendingKey, sequence: 1, payload: setPayload(0, 1) }], send, writeAhead);
+  const result = await sync.deliver({ action: 'complete', session_id: 'server' });
+  assert.equal(result.queued, undefined, 'o encerramento não pode cair na fila com a rede de pé');
+  // O GET é a reconciliação de uma pendência que veio de antes (não é `fresh`).
+  assert.deepEqual(calls, ['POST:set:0:1', 'GET', 'POST:complete']);
+  assert.equal(commands.size, 0);
+});
+
+test('write-ahead: se a drenagem não esvazia a fila, o encerramento entra na fila uma vez só', async () => {
+  const { calls, send } = recorder({ set: () => Promise.reject(Object.assign(new Error('rede'), { retryable: true })) });
+  const pendingKey = sandbox.window.CurvaGuidedSync.commandKey(setPayload(0, 1));
+  const { sync, commands } = fixture([{ key: pendingKey, sequence: 1, payload: setPayload(0, 1) }], send, writeAhead);
+  const result = await sync.deliver({ action: 'complete', session_id: 'server' });
+  assert.equal(result.queued, true);
+  assert.equal(commands.size, 2);
+  assert.deepEqual(calls.filter((call) => call === 'POST:complete'), []);
+});
+
 test('sem write-ahead o envio continua direto e a drenagem continua pedindo GET', async () => {
   const { calls, send } = recorder();
   const online = fixture([], send, { hasActiveSession: () => true });
