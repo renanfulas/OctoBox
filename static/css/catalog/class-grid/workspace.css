@@ -347,6 +347,7 @@ body[data-theme="dark"] .weekday-option {
     display: flex;
     gap: 12px;
     align-items: flex-start;
+    min-width: 0;
     min-height: 44px;
     color: var(--muted);
 }
@@ -359,6 +360,10 @@ body[data-theme="dark"] .weekday-option {
 .weekday-option span {
     min-width: 0;
     overflow-wrap: anywhere;
+}
+
+.class-grid-checkbox span {
+    flex: 1 1 0%;
 }
 
 .class-grid-planner-reset-rail {
