@@ -92,7 +92,9 @@
       });
     }
 
-    function deliver(payload) {
+    // `drained`: já esperamos a fila esvaziar uma vez; se ainda sobrou pendência,
+    // o comando entra na fila em vez de esperar de novo (sem laço).
+    function deliver(payload, drained) {
       if (writeAhead && outbox && scope) {
         if (WRITE_AHEAD.indexOf(payload.action) !== -1) {
           return queue(payload, true).then(function () {
@@ -100,9 +102,14 @@
             return { queued: true, local: true };
           }, function () { return post(payload); });
         }
-        // Encerrar ou corrigir logo depois de uma série espera o envio em curso,
-        // em vez de cair na fila e parecer offline.
-        if (pending.size && active) return idle().then(function () { return deliver(payload); });
+        // Encerrar ou corrigir logo depois de uma série espera o envio dela,
+        // em vez de cair na fila e parecer offline. Se nenhuma drenagem está
+        // ativa (a anterior acabou de terminar ou foi recusada por `draining`),
+        // dispara uma agora; sem isso o encerramento ficava "pendente de envio"
+        // mesmo com a rede de pé.
+        if (!drained && pending.size && (active || options.isOnline())) {
+          return (active ? idle() : run(false)).then(function () { return deliver(payload, true); });
+        }
       }
       if (pending.size && outbox && scope) {
         return queue(payload).then(function (result) { run(!writeAhead); return result; });
