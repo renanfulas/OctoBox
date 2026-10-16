@@ -42,7 +42,8 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from public_workouts.dashboard import (
-    build_program_summary, build_week_overview, build_workout_day_selection, day_keyword, day_short_label,
+    build_program_summary, build_program_week_progress, build_week_overview, build_workout_day_selection,
+    day_keyword, day_short_label,
 )
 from public_workouts.load_resolution import resolve_movement_load
 from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
@@ -64,6 +65,13 @@ def program_summary(payload: dict) -> dict:
     """Wrapper de template pra dashboard.build_program_summary — o template
     so tem `program` (o payload) no contexto, nao precisa de var nova."""
     return build_program_summary(payload)
+
+
+@register.simple_tag
+def program_week_progress(payload: dict) -> dict | None:
+    """Wrapper de template pra dashboard.build_program_week_progress — mesma
+    data local (`timezone.localdate`) de `week_overview`/`workout_day_selection`."""
+    return build_program_week_progress(payload=payload, today=timezone.localdate())
 
 
 @register.simple_tag
@@ -648,6 +656,32 @@ def progress_chart_for_movement(movement_slug: str, progress_snapshots: dict) ->
         'scale_min': scale['min_kg'] if scale else None,
         'scale_max': scale['max_kg'] if scale else None,
     }
+
+
+@register.simple_tag
+def hero_progress_chart(progress_snapshots: dict, movement_labels: dict | None = None) -> dict | None:
+    """A curva do hero da Início: entre os movimentos que já têm curva (2+
+    séries principais em 90 dias), o da série principal mais recente; empate
+    na data fica com o de mais pontos. Reusa `progress_chart_for_movement` —
+    o mesmo dado do gráfico de Cargas, nunca um segundo cálculo. `None` sem
+    nenhuma curva (o hero simplesmente não mostra o bloco)."""
+    best_key, best = None, None
+    for movement_slug in progress_snapshots or {}:
+        chart = progress_chart_for_movement(movement_slug, progress_snapshots)
+        if not chart['has_data']:
+            continue
+        last = chart['points'][-1]['performed_on']
+        last_day = last if isinstance(last, _date) else _date.fromisoformat(str(last))
+        key = (last_day, len(chart['points']))
+        if best_key is None or key > best_key:
+            best_key = key
+            best = {
+                'movement_slug': movement_slug,
+                'label': resolve_movement_display_name(movement_slug, movement_labels),
+                'chart': chart,
+            }
+    return best
+
 
 @register.simple_tag
 def cycle_summary_rows(progress_snapshots: dict, movement_labels: dict | None) -> list[dict]:

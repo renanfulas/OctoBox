@@ -7,23 +7,15 @@
     padding: 4px 2px 8px;
 }
 
-.workout-training-heading__eyebrow {
-    color: var(--theme-text-muted);
-    font-size: .8125rem;
-    font-weight: 800;
-    letter-spacing: .11em;
-}
-
-.workout-training-heading__eyebrow span,
-.workout-training-heading h1 span { color: var(--theme-accent-premium); }
+.workout-training-heading h1 span { color: var(--curva-peak); }
 
 .workout-training-heading h1 {
     margin: 0;
     color: var(--theme-text-primary);
-    font-size: clamp(1.9rem, 4.5vw, 2.65rem);
+    font-size: clamp(2.3rem, 10vw, 3rem);
     font-weight: 850;
     letter-spacing: -.045em;
-    line-height: 1.13;
+    line-height: 1;
 }
 
 .workout-training-heading p {
@@ -63,9 +55,10 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 16px 20px;
-    padding: 22px;
-    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+    gap: 14px 20px;
+    padding: 20px;
+    border-radius: 24px;
+    background: var(--theme-surface-secondary);
 }
 
 .workout-movement-copy {
@@ -75,8 +68,9 @@
 }
 
 .workout-movement-copy strong {
-    font-size: 1.0625rem;
+    font-size: 1.1875rem;
     font-weight: 800;
+    letter-spacing: -.015em;
     /* Fresh --theme-text-primary: movimentos SEM reference_url (ex.: nota
        de cardio como "Corrida 10 min", sem link do MuscleWiki) caem no
        <strong> puro, sem a cor propria de .workout-wiki-link (que usa
@@ -87,14 +81,6 @@
 
 .workout-movement-copy span {
     color: var(--theme-text-muted);
-    font-size: 0.8125rem;
-}
-
-.workout-tracked-chip {
-    min-height: auto;
-    padding: 2px 8px;
-    margin-inline-start: 8px;
-    justify-self: start;
     font-size: 0.8125rem;
 }
 
@@ -144,26 +130,28 @@
    static/css/public_workouts/components.css). So aparece quando
    reps_phases() acha mais de 1 fase (texto com "→") — reps_spec simples
    ("3x12") continua na linha unica de sempre, sem pilula grande a toa. */
+/* Escada de intensidade: Prep neutro -> Feeder ambar -> Top na cor de acao
+   -> AMRAP na cor de pico (a mesma do ultimo ponto da curva e dos recordes). */
 .workout-phase-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 6px;
     margin-top: 2px;
 }
 
 .workout-phase-row .workout-phase-chip {
     display: inline-flex;
     align-items: center;
-    padding: 3px 8px;
-    border-radius: 8px;
+    padding: 5px 10px;
+    border-radius: 999px;
     font-size: 0.8125rem;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.3;
     white-space: nowrap;
 }
 
 .workout-phase-row .workout-phase-chip--prep {
-    background: color-mix(in srgb, var(--theme-text-muted) 18%, transparent);
+    background: var(--curva-surface-raised);
     color: var(--theme-text-secondary);
 }
 
@@ -173,13 +161,15 @@
 }
 
 .workout-phase-row .workout-phase-chip--top {
-    background: color-mix(in srgb, var(--brand) 16%, transparent);
-    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
+    background: color-mix(in srgb, var(--curva-neon) 10%, transparent);
+    color: color-mix(in srgb, var(--curva-neon) 78%, var(--theme-text-primary) 22%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--curva-neon) 50%, transparent);
 }
 
 .workout-phase-row .workout-phase-chip--max {
-    background: var(--theme-accent-danger-alpha);
-    color: color-mix(in srgb, var(--theme-accent-danger) 75%, var(--theme-text-primary) 25%);
+    background: color-mix(in srgb, var(--curva-peak) 12%, transparent);
+    color: color-mix(in srgb, var(--curva-peak) 78%, var(--theme-text-primary) 22%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--curva-peak) 55%, transparent);
 }
 
 .workout-phase-row .workout-phase-chip--plain {
@@ -205,10 +195,9 @@
     flex: 0 0 auto;
     min-width: 112px;
     max-width: 180px;
-    padding: 11px 12px;
-    border-radius: 12px;
-    border: 1px solid var(--theme-border-soft);
-    background: color-mix(in srgb, var(--theme-surface-strong) 62%, transparent);
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: var(--theme-surface-strong);
     text-align: left;
     font-size: 0.8125rem;
     color: var(--theme-text-muted);
@@ -217,14 +206,21 @@
 
 /* Carga calculada (percentage_of_rm com 1RM, fase canonica de
    periodizacao, ou estimativa via reps/RIR do proprio exercicio) --
-   kg em destaque, %RM como legenda pequena embaixo. Mesma disciplina de
-   paleta de .workout-load-chart-1rm (nao inventa cor nova so' pra isto). */
+   kg em destaque (o numero que a aluna procura no meio da serie), %RM como
+   legenda pequena embaixo. */
 .workout-movement-load__kg,
 .workout-movement-load__free {
     display: block;
     color: var(--theme-text-primary);
     font-size: 1rem;
     font-weight: 750;
+}
+
+.workout-movement-load__kg {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1.05;
 }
 
 .workout-movement-load__pct {
@@ -248,13 +244,18 @@
    dia vira um card proprio (nao mais .student-status-badge, que e' pensado
    pra pilula de UMA linha so'). flex:1 1 0 divide o espaco igual entre
    quantos dias o programa tiver (3 a 5 nos 10 reais); overflow-x:auto e'
-   so' rede de seguranca pra tela muito estreita. */
+   so' rede de seguranca pra tela muito estreita.
+
+   overflow-x:auto tambem corta na VERTICAL (overflow-y vira auto): sem o
+   padding, o halo do dia ativo saia recortado num retangulo ("neon
+   quadriculado"). A margem negativa devolve o alinhamento original. */
 .workout-day-nav {
     display: flex;
     flex-wrap: nowrap;
-    gap: 10px;
+    gap: 8px;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding: 18px 14px;
+    margin: -18px -14px -14px;
 }
 
 .workout-day-tab {
@@ -264,34 +265,34 @@
     place-items: center;
     gap: 2px;
     min-height: 62px;
-    padding: 9px 8px;
-    border-radius: 14px;
-    border: 1px solid var(--theme-border-soft);
-    background: color-mix(in srgb, var(--theme-surface-secondary) 96%, transparent);
+    padding: 9px 4px;
+    border-radius: 18px;
+    border: 1px solid transparent;
+    background: var(--theme-surface-secondary);
     color: inherit;
     font-family: inherit;
     cursor: pointer;
     text-align: center;
+    transition: border-color .2s ease, box-shadow .25s ease, background-color .25s ease;
 }
 
 .workout-day-tab:hover,
 .workout-day-tab:focus-visible {
     outline: none;
-    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
+    border-color: color-mix(in srgb, var(--curva-neon) 45%, transparent);
 }
 
 .workout-day-tab__day {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     color: var(--theme-text-muted);
 }
 
 .workout-day-tab__keyword {
     max-width: 100%;
-    font-size: 0.8125rem;
-    font-weight: 700;
+    font-size: 0.875rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
     color: var(--theme-text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -299,13 +300,13 @@
 }
 
 .workout-day-tab.is-active {
-    border-color: color-mix(in srgb, var(--brand) 48%, var(--theme-border-soft));
-    background: color-mix(in srgb, var(--brand) 11%, var(--theme-surface-secondary) 89%);
+    border-color: var(--curva-neon);
+    background: color-mix(in srgb, var(--curva-neon) 7%, var(--theme-surface-secondary));
 }
 
 .workout-day-tab.is-active .workout-day-tab__day,
 .workout-day-tab.is-active .workout-day-tab__keyword {
-    color: color-mix(in srgb, var(--brand) 78%, var(--theme-text-primary) 22%);
+    color: color-mix(in srgb, var(--curva-neon) 78%, var(--theme-text-primary) 22%);
 }
 
 /* Link do MuscleWiki (Onda B3, item 1) — nas paginas legadas era um botao
@@ -351,7 +352,8 @@
 }
 
 .workout-glossary-dot {
-    color: var(--brand);
+    color: inherit;
+    opacity: .7;
     font-size: 0.72em;
     margin-inline-start: 1px;
 }
@@ -392,29 +394,33 @@
 
 /* Ação explícita de registro. O artigo mantém links e outros controles
    independentes, sem semântica de botão no contêiner. */
-.workout-movement-card.is-load-tracked {
-    border-color: color-mix(in srgb, var(--brand) 17%, var(--theme-border-soft) 83%);
-}
-
 .workout-movement-register {
     grid-column: 1 / -1;
     justify-self: start;
-    min-height: 44px;
+    min-height: 48px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 7px 12px;
-    border: 1px solid color-mix(in srgb, var(--brand) 35%, var(--theme-border-soft) 65%);
-    border-radius: 10px;
+    padding: 7px 16px;
+    border: 0;
+    border-radius: 999px;
     color: var(--theme-text-primary);
-    background: color-mix(in srgb, var(--brand) 9%, var(--theme-surface-secondary) 91%);
+    background: var(--curva-surface-raised);
     font: inherit;
     font-size: 0.875rem;
     font-weight: 700;
     cursor: pointer;
+    transition: box-shadow .2s ease, transform .15s ease;
 }
 
-.workout-movement-register:hover,
+.workout-movement-register [data-workout-load-action-icon] {
+    color: var(--curva-neon);
+    font-weight: 800;
+}
+
+.workout-movement-register:hover { box-shadow: inset 0 0 0 1px var(--curva-neon); }
+.workout-movement-register:active { transform: scale(.98); }
+
 .workout-movement-register:focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 2px;
@@ -422,11 +428,9 @@
 
 .workout-phase-banner__eyebrow,
 .workout-rest-note__eyebrow {
-    color: var(--brand);
-    font-size: 0.8125rem;
-    font-weight: 750;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    color: var(--theme-text-primary);
+    font-size: 1rem;
+    font-weight: 800;
 }
 
 .workout-phase-banner__note {
@@ -439,7 +443,7 @@
     display: grid;
     gap: 5px;
     padding: 14px 16px;
-    border: 1px solid var(--theme-border-soft);
+    border: 1px solid var(--curva-edge);
     border-radius: 14px;
     background: var(--theme-surface-secondary);
     color: var(--theme-text-secondary);
@@ -459,7 +463,6 @@
     line-height: 1.5;
 }
 .workout-day-tab__keyword { white-space: normal; }
-.workout-day-tab.is-active { box-shadow: inset 0 -2px 0 var(--brand); }
 
 .workout-movement-card a:focus-visible,
 .workout-movement-variation-toggle:focus-visible {
@@ -470,8 +473,57 @@
 
 @media (max-width: 520px) {
     .workout-training-heading { padding-top: 0; }
-    .workout-movement-card { grid-template-columns: minmax(0, 1fr) auto; gap: 14px; padding: 18px; }
+    .workout-movement-card { grid-template-columns: minmax(0, 1fr) auto; gap: 14px; }
     .workout-movement-load { grid-column: 1 / -1; grid-row: 2; width: 100%; max-width: none; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
     .workout-movement-load-hint { max-width: 55%; text-align: right; }
     .workout-movement-register { grid-column: 1 / -1; width: 100%; justify-content: center; }
+}
+
+/* ============================================================
+ * Camada neon (so tema escuro). O dia ativo usa 4 camadas de halo com
+ * alfa baixo e blur crescente — degrade continuo, sem anel serrilhado.
+ * ============================================================ */
+body[data-plan-slug]:not([data-theme="light"]) .workout-training-heading h1 span { text-shadow: var(--curva-peak-text-glow); }
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-day-tab.is-active {
+    border-color: color-mix(in srgb, var(--curva-neon-core) 95%, transparent);
+    box-shadow:
+        0 0 1px var(--curva-neon),
+        0 0 6px color-mix(in srgb, var(--curva-neon) 42%, transparent),
+        0 0 14px color-mix(in srgb, var(--curva-neon) 20%, transparent),
+        0 0 24px color-mix(in srgb, var(--curva-neon) 8%, transparent),
+        inset 0 0 10px color-mix(in srgb, var(--curva-neon) 16%, transparent),
+        inset 0 1px 0 color-mix(in srgb, var(--curva-neon-core) 22%, transparent);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-day-tab.is-active .workout-day-tab__day,
+body[data-plan-slug]:not([data-theme="light"]) .workout-day-tab.is-active .workout-day-tab__keyword {
+    color: var(--curva-neon-core);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--curva-neon) 45%, transparent);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-phase-row .workout-phase-chip--feeder { color: #FFD49A; }
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-phase-row .workout-phase-chip--top {
+    color: var(--curva-neon-core);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--curva-neon) 50%, transparent), 0 0 10px color-mix(in srgb, var(--curva-neon) 16%, transparent);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-phase-row .workout-phase-chip--max {
+    color: var(--curva-peak-core);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--curva-peak) 55%, transparent), 0 0 10px color-mix(in srgb, var(--curva-peak) 20%, transparent);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-movement-load__kg {
+    color: var(--curva-neon-core);
+    text-shadow: var(--curva-neon-text-glow);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-movement-register:hover {
+    box-shadow: inset 0 0 0 1px var(--curva-neon), 0 0 12px color-mix(in srgb, var(--curva-neon) 25%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workout-day-tab,
+    .workout-movement-register { transition: none; }
 }
