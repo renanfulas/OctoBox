@@ -55,11 +55,25 @@
   var timer = window.CurvaGuidedTimer.create({
     onTick: function () {
       var rest = restModel();
-      if (rest) focus.restTick(rest);
+      if (rest) {
+        focus.restTick(rest);
+        restAlert.tick(rest.remainingMs);
+      }
       paintLauncher();
     },
     onEnd: restEnded,
   });
+
+  // Push do fim do descanso para o app fechado ou a tela bloqueada (guided-rest-alert.js).
+  // Se só esse script faltar, o descanso segue com o bipe do app.
+  function noop() {}
+  var restAlert = window.CurvaGuidedRestAlert ? window.CurvaGuidedRestAlert.create({
+    url: root.dataset.restAlertUrl,
+    describe: function () {
+      var step = movements.length ? project().current : null;
+      return step ? { exercise: step.movement.label, setNumber: step.setNumber } : {};
+    },
+  }) : { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop };
 
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
@@ -90,6 +104,7 @@
         startLocal = false;
         snapshot();
         timer.remap(localId, serverId);
+        restAlert.remap(localId, serverId);
         render();
       }
     },
@@ -102,7 +117,7 @@
       if (result.session) activate(result.session);
       else if (sessionId) {
         sessionId = null;
-        timer.stop();
+        stopRest();
         if (focus.isOpen() && screen !== 'finished') focus.close();
         startButton.disabled = false;
         paintLauncher();
@@ -145,6 +160,27 @@
   }
 
   function startKey(dayId) { return 'curva-start:' + location.pathname + ':' + dayId; }
+
+  /* ---------- relógio do descanso + aviso push ---------- */
+  function armRest() {
+    var rest = timer.snapshot();
+    if (rest && sessionId) restAlert.started(sessionId, rest.endAt);
+  }
+
+  function startRest(seconds) {
+    timer.start(seconds);
+    armRest();
+  }
+
+  function skipRest() {
+    timer.skip();
+    restAlert.cleared();
+  }
+
+  function stopRest() {
+    timer.stop();
+    restAlert.cleared();
+  }
 
   /* ---------- estado e view model ---------- */
   function project() {
@@ -521,6 +557,7 @@
       receiptKey = null;
       ended = null;
       timer.attach(sessionId);
+      armRest();
       status.textContent = recorded.size ? 'Sessão retomada. Continue de onde parou.' : 'Sessão iniciada. Registre cada série para avançar.';
     }
     startButton.disabled = false;
@@ -629,9 +666,9 @@
     receiptKey = setKey;
     clearFocusIfDone();
     var restSeconds = step.series.rest_seconds == null ? 90 : Number(step.series.rest_seconds);
-    if (!project().next) { timer.skip(); screen = 'summary'; }
-    else if (restSeconds > 0) { timer.start(restSeconds); screen = 'rest'; }
-    else { timer.skip(); screen = 'exercise'; }
+    if (!project().next) { skipRest(); screen = 'summary'; }
+    else if (restSeconds > 0) { startRest(restSeconds); screen = 'rest'; }
+    else { skipRest(); screen = 'exercise'; }
     render();
     focus.announce(screen === 'rest'
       ? 'Série registrada. Descanso de ' + format.spokenDuration(restSeconds) + '.'
@@ -651,7 +688,7 @@
       recorded.delete(setKey);
       recordedDetails.delete(setKey);
       setSync.delete(setKey);
-      if (receiptKey === setKey) { receiptKey = null; timer.skip(); }
+      if (receiptKey === setKey) { receiptKey = null; skipRest(); }
       var next = project().next;
       focusIndex = next && next.movementIndex === step.movementIndex ? null : step.movementIndex;
       screen = 'exercise';
@@ -715,7 +752,7 @@
     movement.series.push(Object.assign({}, movement.series[0], { set_number: movement.series.length + 1 }));
     var next = project().next;
     focusIndex = next && next.movementIndex === movementIndex ? null : movementIndex;
-    timer.skip();
+    skipRest();
     screen = 'exercise';
     render();
   }
@@ -754,7 +791,7 @@
     if (!sessionId) return;
     deliver({ action: outcome, session_id: sessionId }).then(function (result) {
       var titles = { complete: 'Treino registrado no Curva', partial: 'Treino parcial registrado', cancel: 'Sessão cancelada' };
-      timer.stop();
+      stopRest();
       stored(sessionStorage, 'removeItem', startKey(selectedDayId()));
       ended = {
         outcome: outcome,
@@ -785,6 +822,7 @@
 
   /* ---------- descanso ---------- */
   function restEnded() {
+    restAlert.ended();
     paintLauncher();
     if (!focus.isOpen()) return;
     if (screen === 'rest') {
@@ -807,13 +845,14 @@
   on('record', recordSet);
   on('skip-set', skipSet);
   on('skip-rest', function () {
-    timer.skip();
+    skipRest();
     screen = nextScreenAfterSet();
     render();
     focus.announce('Descanso pulado');
   });
   on('add-rest', function () {
     timer.add(30);
+    armRest();
     var rest = restModel();
     if (rest) focus.restAdded(rest);
     paintLauncher();
@@ -972,7 +1011,11 @@
     sync.release();
   });
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) return;
+    if (document.hidden) {
+      // Saiu da tela perto do fim, depois do cancelamento: o push volta a valer.
+      restAlert.hidden();
+      return;
+    }
     drain();
     timer.resync();
   });
