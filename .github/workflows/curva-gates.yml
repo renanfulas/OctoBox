@@ -1,0 +1,223 @@
+name: CURVA Gates
+
+# Gate dedicado ao CURVA (app do aluno: public_workouts + student_app +
+# student_identity). Antes deste workflow, os testes do CURVA so rodavam no
+# Full Test Suite e no E2E noturno — nenhum dos dois e check obrigatorio de
+# merge nem gate do deploy-vps.yml. Stripe, push, offline/PWA e treino guiado
+# podiam ir pra producao com teste vermelho.
+#
+# Jobs:
+#   changes    — o PR toca o CURVA? (push para main roda sempre)
+#   curva-unit — pytest dos apps e testes de integracao do CURVA
+#   curva-e2e  — Playwright do CURVA (PWA offline, push, guiado, checkout)
+#   curva-gates — agregador; e ESTE o nome do check obrigatorio no ruleset.
+#
+# Por que agregador em vez de `paths:` no gatilho: check obrigatorio de
+# workflow filtrado por path fica "pendente" para sempre em PR que nao toca o
+# CURVA e trava o merge. Aqui o workflow sempre roda; os jobs pesados pulam e o
+# agregador passa verde.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: curva-gates-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  DJANGO_SECRET_KEY: "a-dummy-secret-key-for-ci"
+  PHONE_BLIND_INDEX_KEY: "ci-only-blind-index-key"
+  DJANGO_SETTINGS_MODULE: config.settings.test
+  DATABASE_URL: postgres://user:password@localhost:5432/test_db
+  OCTOBOX_REQUIRE_POSTGRES: "1"
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      curva: ${{ steps.detect.outputs.curva }}
+    steps:
+      - name: Detectar mudancas no CURVA
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "Evento ${{ github.event_name }}: roda tudo."
+            echo "curva=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CURVA_PATHS='^(public_workouts/|student_app/|student_identity/|integrations/|config/|templates/public_workouts/|static/(js|css)/public_workouts/|tests/test_public_workout|tests/test_integrations_stripe|tests/e2e/|requirements[^/]*\.txt$|conftest\.py$|pytest\.ini$|\.github/workflows/curva-gates\.yml$)'
+          gh api --paginate "repos/$GH_REPO/pulls/$PR_NUMBER/files" --jq '.[].filename' > changed.txt
+          if grep -Eq "$CURVA_PATHS" changed.txt; then
+            echo "Arquivos do CURVA no PR:"
+            grep -E "$CURVA_PATHS" changed.txt | head -50
+            echo "curva=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "PR nao toca o CURVA; jobs pesados serao pulados."
+            echo "curva=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  curva-unit:
+    needs: changes
+    if: needs.changes.outputs.curva == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements_test.txt
+
+      - name: Run CURVA unit/integration tests
+        run: |
+          python -m pytest \
+            public_workouts/ \
+            student_app/ \
+            student_identity/ \
+            tests/test_public_workout*.py \
+            tests/test_integrations_stripe_payment_webhook_event.py \
+            --create-db --migrations \
+            -n 4 \
+            -p no:randomly \
+            --tb=short \
+            --junitxml=junit-curva.xml \
+            -q
+
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-curva
+          path: junit-curva.xml
+          if-no-files-found: ignore
+
+  curva-e2e:
+    needs: changes
+    if: needs.changes.outputs.curva == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements_test.txt
+
+      - name: Install Playwright browsers
+        run: playwright install --with-deps chromium
+
+      - name: Run CURVA E2E suite
+        run: |
+          python -m pytest \
+            tests/e2e/test_curva_*.py \
+            tests/e2e/test_public_workout_*.py \
+            --create-db --migrations \
+            --browser chromium \
+            -m e2e \
+            --tb=short \
+            --junitxml=junit-curva-e2e.xml \
+            -v
+
+      - name: Upload E2E JUnit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-curva-e2e
+          path: junit-curva-e2e.xml
+          if-no-files-found: ignore
+
+      - name: Upload Playwright traces (em falha)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: curva-playwright-traces
+          path: test-results/
+          if-no-files-found: ignore
+
+  curva-gates:
+    needs: [changes, curva-unit, curva-e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Consolidar resultado
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          CURVA: ${{ needs.changes.outputs.curva }}
+          UNIT: ${{ needs.curva-unit.result }}
+          E2E: ${{ needs.curva-e2e.result }}
+        run: |
+          echo "changes=$CHANGES curva=$CURVA unit=$UNIT e2e=$E2E"
+          if [ "$CHANGES" != "success" ]; then
+            echo "::error::Deteccao de mudancas falhou."; exit 1
+          fi
+          if [ "$CURVA" != "true" ]; then
+            echo "PR nao toca o CURVA — gate verde sem rodar testes."; exit 0
+          fi
+          if [ "$UNIT" != "success" ] || [ "$E2E" != "success" ]; then
+            echo "::error::CURVA Gates vermelho (unit=$UNIT, e2e=$E2E)."; exit 1
+          fi
+          echo "CURVA Gates verde."

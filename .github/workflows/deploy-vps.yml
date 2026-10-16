@@ -42,10 +42,12 @@ jobs:
               "Student Onboarding Corridors Regression",
               "Student Onboarding Real Smoke",
               "Security Scanners 🛡️",
+              "CURVA Gates",
             ];
             const sleep = ms => new Promise(r => setTimeout(r, ms));
             let missing = [...required];
-            for (let i = 1; i <= 20; i++) {
+            // 30 x 30s = 15 min: o E2E do CURVA (Playwright) e o gate mais lento.
+            for (let i = 1; i <= 30; i++) {
               const { data } = await github.rest.actions.listWorkflowRunsForRepo({
                 owner, repo, branch, head_sha: headSha, per_page: 50,
               });
@@ -54,7 +56,7 @@ jobs:
                 return !run || run.conclusion !== 'success';
               });
               if (!missing.length) return;
-              core.info(`Aguardando (${i}/20): ${missing.join(', ')}`);
+              core.info(`Aguardando (${i}/30): ${missing.join(', ')}`);
               await sleep(30000);
             }
             core.setFailed(`Gates incompletos: ${missing.join(', ')}`);
