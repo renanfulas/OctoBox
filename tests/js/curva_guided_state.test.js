@@ -93,6 +93,21 @@ test('série livre conta como concluída com uma série feita', () => {
   assert.equal(projected.overview[3].firstPending, null);
 });
 
+test('cada exercício livre precisa de um registro antes de finalizar', () => {
+  const freeformDay = [
+    { freeform: true, series: [{ role: 'legacy_unknown', required: false }] },
+    { freeform: true, series: [{ role: 'legacy_unknown', required: false }] },
+    { freeform: true, series: [{ role: 'legacy_unknown', required: false }] },
+  ];
+  const oneDone = state.project(freeformDay, new Set(['0:1']), new Set(), 0, null, 0);
+  assert.equal(oneDone.missing, 2);
+  assert.equal(oneDone.missingFreeformMovements, 2);
+  assert.equal(oneDone.canFinish, false);
+  const allDone = state.project(freeformDay, new Set(['0:1', '1:1', '2:1']), new Set(), 0, null, 2);
+  assert.equal(allDone.missing, 0);
+  assert.equal(allDone.canFinish, true);
+});
+
 test('série livre admite extras até o limite atual', () => {
   const freeform = [{ label: 'Livre', series: Array(29).fill({ required: false }) }];
   assert.equal(state.project(freeform, new Set(), new Set(), 0, null, 0).canAddExtra, true);

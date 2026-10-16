@@ -11,9 +11,16 @@ Mantenha enxuto: cada linha aqui custa contexto em TODA sessão.
 Para perguntas de **"onde fica X"** ou **"como funciona X"**, consulte o RAG **antes** de varrer arquivos:
 
 ```
-python manage.py search_project_knowledge "<pergunta>"      # índice SHARED no schema public
+# Windows (PowerShell) — use SEMPRE o Python do .venv; o `python` global não tem Django
+.\.venv\Scripts\python.exe manage.py search_project_knowledge "<pergunta>"
+
+# Linux / macOS
+./.venv/bin/python manage.py search_project_knowledge "<pergunta>"
 ```
 
+- Índice SHARED no schema `public`. Pré-requisito: Postgres no ar (dev local: porta **5433**).
+- Erro `ModuleNotFoundError: No module named 'django'` = você chamou o `python` global. Troque pelo do `.venv` (comando acima) — não instale Django global.
+- Se o RAG não responder (Postgres fora, índice vazio), **pare e ative antes de continuar**: suba o Postgres e reindexe com `.\.venv\Scripts\python.exe manage.py ingest_project_knowledge`.
 - Sem Postgres / offline: `.claude/skills/navigate-octobox/driver.py find "<pergunta>"`.
 - **Não** use o RAG para um símbolo que você **já conhece** — aí `Grep` é mais barato e direto.
 - Medido: para o caso frio (não sei a palavra-chave), o RAG custa ~50x menos tokens que o grep cego. Para símbolo conhecido, ~6x ou menos — então não force "RAG antes de tudo".
@@ -52,6 +59,24 @@ Runtime real e testes vencem qualquer doc.
 - Front-end: **criar bonito** → `frontend-aesthetic-director` · **tema oficial** → `octobox-design` · **organizar CSS** → `css_front_end_architect` · **limpar débito** → `octobox-ui-cleanup-auditor`.
 - Segurança: **defesa/hardening** → `security_performance_engineer` · **ataque/forense** → `white_hat_hacker`.
 - Arquitetura: **sistema/escala** → `software-architecture-chief` · **banco** → `octobox-sql-architect`.
+
+## Skills `octobox-*` (pacotes novos) vs. skills legadas
+
+Três pacotes importados vivem em `.claude/skills/` com prefixo `octobox-` e `disable-model-invocation: true` (a descrição **não** entra no contexto; só rodam quando o usuário chama `/nome`):
+
+- **Octobox Marketing** → `octobox-<nome>` (51 skills: `octobox-copywriting`, `octobox-cro`, `octobox-emails`, `octobox-ads`…)
+- **Octobox Social Media Mentor** → `octobox-social-mentor-<nome>` (17 skills)
+- **Octobox Taste Design UI/UX Personality** → `octobox-taste-design-ui-ux-personality` (principal) e `octobox-taste-<variante>` (13 skills)
+
+**Roteadores de pacote:** chamar `/octobox-marketing`, `/octobox-social-mentor` ou `/octobox-taste-design-ui-ux-personality` ativa o pacote inteiro; escolha quantas skills do pacote o contexto exigir, leia o `SKILL.md` de cada e siga.
+
+**Regra de precedência:**
+- Se o usuário **chamou** uma `octobox-*` pelo nome, **só ela** vale para a tarefa.
+- Se **não chamou**, nunca dispare uma `octobox-*` por conta própria: use a skill legada equivalente (ex.: texto/copy → `copywriter-sintese`; UI/tema → `octobox-design` ou `frontend-aesthetic-director`; CSS → `css_front_end_architect`; prompts → `prompt-engineer`).
+
+**Pré-requisitos externos (lembrar o usuário ao usar):**
+- `octobox-social-mentor-reels-scripting` exige as variáveis `APIFY_API_TOKEN` e `GOOGLE_AI_API_KEY`.
+- `octobox-social-mentor-niche-research` exige a extensão Claude for Chrome.
 
 ## Gotchas de runtime que você precisa saber
 

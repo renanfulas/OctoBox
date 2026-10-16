@@ -175,7 +175,7 @@ class StalledInvitationTest(unittest.TestCase):
 
     def test_stalled_reason_label(self):
         p = _presenter()
-        self.assertIn('Sem handoff', p.build_stalled_reason_label(None))
+        self.assertIn('Nenhuma mensagem', p.build_stalled_reason_label(None))
         self.assertIn('devolvido', p.build_stalled_reason_label(_delivery(D.BOUNCED)))
         self.assertIn('reclamou', p.build_stalled_reason_label(_delivery(D.COMPLAINED)))
         self.assertIn('bloqueado', p.build_stalled_reason_label(_delivery(D.SUPPRESSED)))
@@ -247,7 +247,7 @@ class EmailActionRecommendationTest(unittest.TestCase):
 class EmptyJourneyCopyTest(unittest.TestCase):
     def test_mapping_and_fallback(self):
         p = _presenter()
-        self.assertIn('link em massa', p.build_empty_journey_copy(journey=J.MASS_BOX_INVITE))
+        self.assertIn('link do grupo', p.build_empty_journey_copy(journey=J.MASS_BOX_INVITE))
         self.assertIn('recepção', p.build_empty_journey_copy(journey=J.IMPORTED_LEAD_INVITE))
         self.assertIn('já cadastrados', p.build_empty_journey_copy(journey=J.REGISTERED_STUDENT_INVITE))
         self.assertIn('volume', p.build_empty_journey_copy(journey='desconhecido'))

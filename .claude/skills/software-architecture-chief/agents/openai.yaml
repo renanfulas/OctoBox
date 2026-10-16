@@ -1,0 +1,7 @@
+interface:
+  display_name: "Software Architecture Chief"
+  short_description: "Architectures, audits, and scalable evolution"
+  default_prompt: "Use $software-architecture-chief to audit the current architecture and propose a scalable, low-risk evolution plan."
+
+policy:
+  allow_implicit_invocation: true
