@@ -169,6 +169,14 @@ class PublicWorkoutAssessment(models.Model):
     # nao respondeu/falhou/nao configurada: o frontend so nao mostra o
     # hero nesse caso, nunca quebra.
     hero_commentary = models.TextField(null=True, blank=True)
+    # Sexo ('F'/'M', vocabulario de formulas.Sex) e altura usados nesta
+    # avaliacao: a formula de dobras depende do sexo, RCQ/%gordura so sao
+    # classificados com ele e o IMC precisa da altura. O catalogo fixo
+    # (PublicWorkoutPlan.assessment_sex/height_cm) so tem isso pra 2 alunos;
+    # gravado aqui, todo aluno avaliado por dobras ganha o relatorio completo
+    # (build_report usa o valor mais recente quando o plano nao declara).
+    sex = models.CharField(max_length=1, blank=True, default='')
+    height_cm = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
 
     class Meta:
         db_table = 'public_workout_assessments'
