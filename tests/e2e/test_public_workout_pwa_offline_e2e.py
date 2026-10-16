@@ -204,6 +204,15 @@ def test_push_activation_moves_home_invite_to_profile_controls(page: Page, live_
     login = reverse('public-workout-login')
     page.goto(f'{origin}{login}?token={token.token}&next=/renan/bruno')
 
+    # A conta de ensaio pode abrir o tutorial no primeiro login; feche-o
+    # pelo controle real antes de navegar entre Início e Perfil.
+    wizard = page.locator('[data-onboarding-wizard]')
+    if wizard.get_attribute('data-onboarding-autostart') == 'true':
+        close_tutorial = wizard.get_by_role('button', name='Fechar tutorial')
+        expect(close_tutorial).to_be_visible()
+        close_tutorial.click()
+        expect(wizard).to_be_hidden()
+
     expect(page.locator('[data-workout-push-home]')).to_be_visible()
     page.locator('[data-workout-push-enable]').click()
     expect(page.locator('[data-workout-push-home]')).to_be_hidden()

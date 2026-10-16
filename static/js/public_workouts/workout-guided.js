@@ -47,6 +47,7 @@
   var startedAt = null;
   var startLocal = false;
   var dayTitle = '';
+  var dayDetail = '';
   var guidedLoads = window.CurvaGuidedLoads;
   var topTargets = {};
   var ended = null;
@@ -285,7 +286,7 @@
     if (sessionId) {
       var index = state && state.current ? state.current.movementIndex + 1 : movements.length;
       launchTitle.textContent = 'Treino em andamento';
-      launchText.textContent = dayTitle ? dayTitle + ' · continue de onde parou.' : 'Continue de onde parou.';
+      launchText.textContent = dayDetail ? dayDetail + ' · continue de onde parou.' : 'Continue de onde parou.';
       launchMeta.hidden = false;
       launchMeta.textContent = 'Exercício ' + index + ' de ' + movements.length + ' · '
         + (state ? state.recordedCount + ' de ' + state.total + ' séries' : '')
@@ -397,12 +398,14 @@
     return tab ? (tab.getAttribute('aria-controls') || '').replace(/^workout-day-/, '') : '';
   }
 
-  function dayLabel(dayId) {
+  function dayLabel(dayId, detailOnly) {
     var tab = panel.querySelector('[data-workout-tab-target="workout-day-' + dayId + '"]');
     if (!tab) return '';
     var day = tab.querySelector('.workout-day-tab__day');
     var keyword = tab.querySelector('.workout-day-tab__keyword');
-    return [day && day.textContent.trim(), keyword && keyword.textContent.trim()].filter(Boolean).join(' · ');
+    var fallback = keyword ? keyword.textContent.trim() : '';
+    var label = detailOnly ? (tab.dataset.workoutDayDetail || fallback) : (tab.dataset.workoutDayFull || fallback);
+    return [day && day.textContent.trim(), label].filter(Boolean).join(' · ');
   }
 
   function buildMovements(dayId) {
@@ -487,6 +490,7 @@
     });
     sessionId = session.session_id;
     dayTitle = dayLabel(session.day_id);
+    dayDetail = dayLabel(session.day_id, true);
     startedAt = Date.parse(session.started_at || '') || startedAt || Date.now();
     recorded = new Set((session.recorded || []).map(function (item) {
       return key(item.movement_index, item.set_number);

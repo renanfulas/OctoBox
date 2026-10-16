@@ -231,17 +231,21 @@ PONTOS CRITICOS:
       {% endif %}
       <nav class="workout-day-nav" role="tablist" aria-label="Dias do programa" data-workout-tab-nav>
         {% for day in program.days %}
+        {% workout_day_presentation day as day_display %}
         <button
           type="button"
           class="workout-day-tab{% if day.day_id == workout_selection.selected_day_id %} is-active{% endif %}"
           data-workout-tab-target="workout-day-{{ day.day_id }}"
+          data-workout-day-full="{{ day_display.full }}"
+          data-workout-day-detail="{{ day_display.detail }}"
           role="tab"
           id="workout-tab-{{ day.day_id }}"
           aria-controls="workout-day-{{ day.day_id }}"
           aria-selected="{% if day.day_id == workout_selection.selected_day_id %}true{% else %}false{% endif %}"
+          aria-label="{{ day.day_id|day_short }} · {{ day_display.full }}"
         >
           <span class="workout-day-tab__day">{{ day.day_id|day_short }}</span>
-          <span class="workout-day-tab__keyword">{% day_workout_keyword day %}</span>
+          <span class="workout-day-tab__keyword">{{ day_display.title }}</span>
         </button>
         {% endfor %}
       </nav>
