@@ -139,6 +139,12 @@ automaticamente depois — preencha algo razoavel mas nao se preocupe com \
 precisao neles.
 - `accent_variant` e null a menos que a anamnese deixe claro o genero da \
 pessoa (entao 'F' ou 'M').
+- Em cada dia, `display_title` e o nome curto do treino (ex.: 'Upper A', \
+'Lower B', 'Superior A', 'Quadriceps', 'HIIT'), sem dia da semana nem grupos \
+musculares adicionais. `focus_description` explica o foco em ate 120 \
+caracteres (ex.: 'Gluteos + Posterior de coxa'), sem repetir o nome curto. \
+Use acentuacao correta. `label` preserva ambos como '<display_title> — \
+<focus_description>' para clientes antigos.
 
 Formato exato do JSON esperado (schema completo, todos os campos):
 {{
@@ -151,7 +157,9 @@ Formato exato do JSON esperado (schema completo, todos os campos):
   "days": [
     {{
       "day_id": "string curto (ex: 'seg')",
-      "label": "string (ex: 'Segunda — Peito e triceps')",
+      "label": "string (ex: 'Upper A — Peito + Tríceps')",
+      "display_title": "string curta (ex: 'Upper A')",
+      "focus_description": "string curta (ex: 'Peito + Tríceps')",
       "blocks": [
         {{
           "movements": [
