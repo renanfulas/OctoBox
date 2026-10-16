@@ -269,7 +269,7 @@ def glossary_highlight(text: str, ramp=None):
         )
         last_end = match.end()
     pieces.append(escape(text[last_end:]))
-    return mark_safe(''.join(pieces))
+    return mark_safe(''.join(pieces))  # nosec B703 B308 - todo pedaço passa por escape() acima
 
 
 _PHASE_DETECTORS = (
