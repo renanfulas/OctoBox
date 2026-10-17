@@ -2,8 +2,10 @@
 Lançador do treino guiado: começa ou retoma a sessão. A execução acontece no
 modo foco (_guided_focus.html), incluído no fim do <body> de workout.html.
 O conflito de fila fica aqui porque precisa continuar visível com o modo foco fechado.
+data-rest-alert-url só com push verificado: o aviso do fim do descanso vai para
+este aparelho inscrito (guided-rest-alert.js).
 {% endcomment %}
-<section class="workout-guided" data-workout-guided data-session-url="{% url 'public-workout-session' plan_slug=plan_slug %}" data-program-version="{{ active_program_version|default:'' }}" data-account-scope="{{ guided_account_scope }}">
+<section class="workout-guided" data-workout-guided data-session-url="{% url 'public-workout-session' plan_slug=plan_slug %}" data-program-version="{{ active_program_version|default:'' }}" data-account-scope="{{ guided_account_scope }}"{% if push_configured and push_identity_verified %} data-rest-alert-url="{% url 'public-workout-push-rest' plan_slug=plan_slug %}"{% endif %}>
   <div class="workout-guided__intro">
     <div class="workout-guided__copy">
       <h2 class="workout-guided__title" data-guided-launch-title>Treino guiado</h2>

@@ -1,0 +1,24 @@
+[Unit]
+Description=OctoBOX Curva rest-end push worker (fim do descanso do modo foco)
+# Processo longo, nao timer: a fila de 1 minuto (outbox) nao acerta o fim de um
+# descanso de 60-90 s. Dorme ate o proximo aviso e acorda por LISTEN/NOTIFY.
+# Ver docs/decisions/0003-curva-rest-alert-worker.md.
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=octobox
+Group=octobox
+WorkingDirectory=/srv/octobox/app
+EnvironmentFile=/srv/octobox/shared/octobox.env
+ExecStart=/srv/octobox/venv/bin/python manage.py run_public_workout_rest_alerts
+Restart=always
+RestartSec=3
+# SIGTERM interrompe a espera na hora; um envio cortado vence pelo lease.
+TimeoutStopSec=15
+PrivateTmp=true
+MemoryMax=300M
+
+[Install]
+WantedBy=multi-user.target

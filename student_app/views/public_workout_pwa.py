@@ -51,7 +51,10 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # workout-curve.js entram no precache.
 # Bump 16->17: som do descanso ligado por padrão (guided-focus.js e o HTML do
 # modo foco); sem isto, o app instalado segue mudo com o script antigo.
-PUBLIC_WORKOUT_CACHE_EPOCH = 17
+# Bump 17->18: aviso push do fim do descanso — guided-rest-alert.js entra no
+# precache, workout-guided.js muda e o sw.js trata renotify/vibrate e o toque
+# no aviso do descanso sem recarregar a página.
+PUBLIC_WORKOUT_CACHE_EPOCH = 18
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -139,6 +142,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/guided-api.js',
     '/static/js/public_workouts/guided-sync.js',
     '/static/js/public_workouts/guided-timer.js',
+    '/static/js/public_workouts/guided-rest-alert.js',
     '/static/js/public_workouts/guided-state.js',
     '/static/js/public_workouts/guided-loads.js',
     '/static/js/public_workouts/guided-format.js',
