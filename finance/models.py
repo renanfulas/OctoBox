@@ -20,7 +20,10 @@ from finance.model_definitions import (
     FinanceFollowUpStatus,
     MembershipPlan,
     Payment,
+    PartnerCheckInCharge,
+    PartnerCheckInStatus,
     PaymentMethod,
+    PaymentSource,
     PaymentStatus,
 )
 
@@ -32,6 +35,9 @@ __all__ = [
     'FinanceFollowUpStatus',
     'MembershipPlan',
     'Payment',
+    'PartnerCheckInCharge',
+    'PartnerCheckInStatus',
     'PaymentMethod',
+    'PaymentSource',
     'PaymentStatus',
 ]
