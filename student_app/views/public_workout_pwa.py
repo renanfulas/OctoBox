@@ -49,10 +49,12 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # workout-push.js/css; o app instalado é justamente onde o aluno precisa dela.
 # Bump 15->16: camada neon Curva — HTML novo (hero com a curva, letreiro) e
 # workout-curve.js entram no precache.
-# Bump 16->17: aviso push do fim do descanso — guided-rest-alert.js entra no
+# Bump 16->17: som do descanso ligado por padrão (guided-focus.js e o HTML do
+# modo foco); sem isto, o app instalado segue mudo com o script antigo.
+# Bump 17->18: aviso push do fim do descanso — guided-rest-alert.js entra no
 # precache, workout-guided.js muda e o sw.js trata renotify/vibrate e o toque
 # no aviso do descanso sem recarregar a página.
-PUBLIC_WORKOUT_CACHE_EPOCH = 17
+PUBLIC_WORKOUT_CACHE_EPOCH = 18
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
