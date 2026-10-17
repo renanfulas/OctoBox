@@ -7,7 +7,9 @@ POR QUE ELE EXISTE:
   Onda B3). Cobre tambem o rate limit (S1) e a regra de uso unico (D.5/S3).
 """
 
+import re
 import threading
+import time
 import uuid
 from unittest.mock import Mock, patch
 
@@ -24,11 +26,13 @@ from public_workouts.models import (
     PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
 )
+from shared_support.platform_cache import platform_cache
 
 from .delivery_gateways import StudentEmailDeliveryError
 from .models import StudentIdentity
 from .public_workout_login import (
     PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX,
+    PUBLIC_WORKOUT_LOGIN_CODE_IP_FAILURES_MAX,
     PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX,
     PublicWorkoutLoginCodeAttemptsExceeded,
     PublicWorkoutLoginRateLimitExceeded,
@@ -45,8 +49,10 @@ from .public_workout_session import (
     build_public_workout_session_value,
     clear_public_workout_session_cookie,
     get_public_workout_account_id_from_request,
+    get_public_workout_session_max_age,
     get_verified_public_workout_account_id_from_request,
     read_public_workout_session_value,
+    renew_public_workout_session_cookie_if_stale,
 )
 
 
@@ -441,6 +447,14 @@ class VerifyLoginTokenRowLockTests(TestCase):
         self.assertEqual(len(mark_used_calls), 1)
 
 
+def _enter_with_link(client, token, *, next_url=None):
+    """O botão "Entrar como ..." da tela de confirmação do link."""
+    data = {'action': 'entrar_link', 'token': str(token)}
+    if next_url is not None:
+        data['next'] = next_url
+    return client.post(reverse('public-workout-login'), data)
+
+
 class PublicWorkoutLoginViewTests(TestCase):
     def test_google_errors_have_a_message_on_the_login_screen(self):
         for error, text in (
@@ -479,12 +493,11 @@ class PublicWorkoutLoginViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Muitos pedidos')
 
-    def test_get_with_valid_token_sets_session_cookie(self):
+    def test_post_confirmation_sets_session_cookie(self):
         PublicWorkoutAccount.objects.create(email='cookie@example.com')
         token = request_login_token(email='cookie@example.com', base_url='https://octoboxfit.com.br')
 
-        client = Client()
-        response = client.get(reverse('public-workout-login'), {'token': str(token.token)})
+        response = _enter_with_link(Client(), token.token)
 
         self.assertRedirects(response, '/treinos/minha-conta', fetch_redirect_response=False)
         self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
@@ -497,6 +510,8 @@ class PublicWorkoutLoginViewTests(TestCase):
         client = Client()
         response = client.get(reverse('public-workout-login'), {'token': 'lixo'})
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'expirou ou já foi usado')
+        self.assertNotContains(response, 'data-login-resend')
         self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
     def test_get_without_token_carries_next_into_hidden_field(self):
@@ -510,28 +525,29 @@ class PublicWorkoutLoginViewTests(TestCase):
         )
         self.assertIn('next=%2Frenan%2Fgiovanna', mail.outbox[0].body)
 
-    def test_get_with_valid_token_and_next_redirects_there_and_sets_cookie(self):
+    def test_confirmation_with_next_redirects_there_and_sets_cookie(self):
         PublicWorkoutAccount.objects.create(email='volta@example.com')
         token = request_login_token(
             email='volta@example.com', base_url='https://octoboxfit.com.br', next_url='/renan/rafael'
         )
 
         client = Client()
-        response = client.get(reverse('public-workout-login'), {'token': str(token.token), 'next': '/renan/rafael'})
+        page = client.get(reverse('public-workout-login'), {'token': str(token.token), 'next': '/renan/rafael'})
+        self.assertContains(page, 'name="next" value="/renan/rafael"')
+        response = _enter_with_link(client, token.token, next_url='/renan/rafael')
 
         self.assertRedirects(response, '/renan/rafael', fetch_redirect_response=False)
         self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
-    def test_get_with_valid_token_no_next_and_no_subscription_opens_account_hub(self):
+    def test_confirmation_without_next_and_no_subscription_opens_account_hub(self):
         PublicWorkoutAccount.objects.create(email='seminext@example.com')
         token = request_login_token(email='seminext@example.com', base_url='https://octoboxfit.com.br')
 
-        client = Client()
-        response = client.get(reverse('public-workout-login'), {'token': str(token.token)})
+        response = _enter_with_link(Client(), token.token)
 
         self.assertRedirects(response, '/treinos/minha-conta', fetch_redirect_response=False)
 
-    def test_get_with_valid_token_no_next_but_with_plan_slug_auto_redirects_to_own_treino(self):
+    def test_confirmation_without_next_but_with_plan_slug_auto_redirects_to_own_treino(self):
         # Achado real (usuario): abrir o link do e-mail direto (sem ter
         # vindo de uma pagina /renan/<slug> especifica) deixava a pessoa
         # numa tela de "login feito" sem redirecionar pra lugar nenhum.
@@ -541,8 +557,7 @@ class PublicWorkoutLoginViewTests(TestCase):
         )
         token = request_login_token(email='comslugautoredirect@example.com', base_url='https://octoboxfit.com.br')
 
-        client = Client()
-        response = client.get(reverse('public-workout-login'), {'token': str(token.token)})
+        response = _enter_with_link(Client(), token.token)
 
         self.assertRedirects(response, '/renan/bruno', fetch_redirect_response=False)
         self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
@@ -558,10 +573,7 @@ class PublicWorkoutLoginViewTests(TestCase):
             account=account, expires_at=timezone.now() + timezone.timedelta(minutes=15)
         )
 
-        client = Client()
-        response = client.get(
-            reverse('public-workout-login'), {'token': str(token.token), 'next': '/treinos/anamnese'}
-        )
+        response = _enter_with_link(Client(), token.token, next_url='/treinos/anamnese')
 
         self.assertRedirects(response, '/treinos/anamnese', fetch_redirect_response=False)
 
@@ -581,7 +593,9 @@ class PublicWorkoutLoginViewTests(TestCase):
             token = request_login_token(email=email, base_url='https://octoboxfit.com.br')
 
             client = Client()
-            response = client.get(reverse('public-workout-login'), {'token': str(token.token), 'next': unsafe_next})
+            page = client.get(reverse('public-workout-login'), {'token': str(token.token), 'next': unsafe_next})
+            self.assertNotContains(page, 'name="next"')
+            response = _enter_with_link(client, token.token, next_url=unsafe_next)
 
             self.assertRedirects(
                 response, '/treinos/minha-conta', fetch_redirect_response=False,
@@ -600,6 +614,314 @@ class PublicWorkoutLoginViewTests(TestCase):
 
         self.assertIsNotNone(token.token)
         self.assertEqual(len(mail.outbox), 0)
+
+
+class PublicWorkoutLoginLinkConfirmationTests(TestCase):
+    """O GET do link só confirma. Scanners de e-mail e prévias de link
+    (WhatsApp, Outlook) abrem o link antes do aluno e queimavam o token."""
+
+    def setUp(self):
+        platform_cache.clear()
+        self.account = PublicWorkoutAccount.objects.create(email='fulana@example.com')
+        self.token = PublicWorkoutLoginToken.objects.create(
+            account=self.account, expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+
+    def _open_link(self, client=None, **params):
+        return (client or self.client).get(
+            reverse('public-workout-login'), {'token': str(self.token.token), **params},
+        )
+
+    def _mark_used(self):
+        self.token.mark_used()
+        self.token.save(update_fields=['used_at', 'updated_at'])
+
+    def test_get_shows_masked_confirmation_without_consuming(self):
+        response = self._open_link()
+
+        self.assertContains(response, 'Entrar como fu•••@example.com')
+        self.assertContains(response, 'name="action" value="entrar_link"')
+        self.assertNotContains(response, 'fulana@example.com')
+        self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+        self.assertIn('no-store', response['Cache-Control'])
+        self.token.refresh_from_db()
+        self.assertIsNone(self.token.used_at)
+
+    def test_scanner_gets_before_the_student_do_not_burn_the_link(self):
+        self._open_link(Client())  # scanner do provedor de e-mail
+        self._open_link(Client())  # prévia do link no WhatsApp
+
+        response = _enter_with_link(Client(), self.token.token)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+
+    def test_post_consumes_the_token_only_once(self):
+        first = _enter_with_link(Client(), self.token.token)
+        second = _enter_with_link(Client(), self.token.token)
+
+        self.assertEqual(first.status_code, 302)
+        self.assertEqual(second.status_code, 200)
+        self.assertContains(second, 'expirou ou já foi usado')
+        self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, second.cookies)
+        self.token.refresh_from_db()
+        self.assertIsNotNone(self.token.used_at)
+
+    def test_confirmation_button_passes_real_csrf_checks(self):
+        client = Client(enforce_csrf_checks=True)
+        page = self._open_link(client)
+        csrf = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', page.content.decode()).group(1)
+
+        response = client.post(reverse('public-workout-login'), {
+            'csrfmiddlewaretoken': csrf, 'action': 'entrar_link', 'token': str(self.token.token),
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+
+    def test_verified_session_of_the_same_account_skips_confirmation_and_keeps_token(self):
+        client = Client()
+        client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=self.account.id, identity_verified=True,
+        )
+
+        response = self._open_link(client, next='/renan/bruno')
+
+        self.assertRedirects(response, '/renan/bruno', fetch_redirect_response=False)
+        self.token.refresh_from_db()
+        self.assertIsNone(self.token.used_at)
+
+    def test_second_tap_on_a_used_link_while_logged_in_goes_straight_in(self):
+        self._mark_used()
+        client = Client()
+        client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=self.account.id, identity_verified=True,
+        )
+
+        response = self._open_link(client)
+
+        self.assertRedirects(response, '/treinos/minha-conta', fetch_redirect_response=False)
+
+    def test_unverified_or_other_account_session_still_gets_the_confirmation(self):
+        other = PublicWorkoutAccount.objects.create(email='outra@example.com')
+        for value in (
+            build_public_workout_session_value(account_id=self.account.id),
+            build_public_workout_session_value(account_id=other.id, identity_verified=True),
+        ):
+            client = Client()
+            client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = value
+            self.assertContains(self._open_link(client), 'Entrar como fu•••@example.com')
+
+    def test_used_link_offers_a_new_link_to_the_same_email_without_typing_it(self):
+        self._mark_used()
+
+        page = self._open_link(next='/renan/bruno')
+        self.assertContains(page, 'Enviar novo link para fu•••@example.com')
+        self.assertNotContains(page, 'fulana@example.com')
+
+        response = self.client.post(reverse('public-workout-login'), {
+            'action': 'reenviar_link', 'token': str(self.token.token), 'next': '/renan/bruno',
+        })
+
+        self.assertContains(response, 'Link enviado para fu•••@example.com')
+        self.assertNotContains(response, 'fulana@example.com')
+        self.assertEqual(mail.outbox[-1].to, ['fulana@example.com'])
+        self.assertIn('next=%2Frenan%2Fbruno', mail.outbox[-1].body)
+        new_token = PublicWorkoutLoginToken.objects.get(account=self.account, used_at__isnull=True)
+
+        login = self.client.post(reverse('public-workout-login'), {
+            'action': 'entrar_codigo', 'token': str(self.token.token), 'next': '/renan/bruno',
+            'code': login_code_for_token(new_token.token),
+        })
+
+        self.assertRedirects(login, '/renan/bruno', fetch_redirect_response=False)
+        new_token.refresh_from_db()
+        self.assertIsNotNone(new_token.used_at)
+
+    def test_expired_link_also_offers_a_new_link(self):
+        self.token.expires_at = timezone.now() - timezone.timedelta(minutes=1)
+        self.token.save(update_fields=['expires_at'])
+
+        self.assertContains(self._open_link(), 'Enviar novo link para fu•••@example.com')
+
+    def test_pending_payment_link_explains_instead_of_confirming(self):
+        from public_workouts.billing import get_or_create_subscription
+
+        subscription = get_or_create_subscription(account=self.account, tier=PublicWorkoutTier.ESSENCIAL)
+        subscription.requires_login = True
+        subscription.save(update_fields=['requires_login'])
+
+        response = self._open_link()
+
+        self.assertContains(response, 'ainda não foi confirmado')
+        self.assertNotContains(response, 'data-login-confirm')
+        self.assertNotContains(response, 'data-login-resend')
+
+
+class PublicWorkoutLoginCodeScreenTests(TestCase):
+    """O código de 6 dígitos do e-mail, digitado na própria tela de login
+    (no iPhone o link abre no Safari, fora do app instalado)."""
+
+    def setUp(self):
+        platform_cache.clear()
+        self.account = PublicWorkoutAccount.objects.create(email='codigo-tela@example.com')
+
+    def _send_link(self, **extra):
+        response = self.client.post(reverse('public-workout-login'), {'email': self.account.email, **extra})
+        token = PublicWorkoutLoginToken.objects.filter(account=self.account).latest('created_at')
+        return response, login_code_for_token(token.token), token
+
+    def _enter_with_code(self, email, code, *, ip='203.0.113.7', **extra):
+        return Client().post(
+            reverse('public-workout-login'), {'action': 'entrar_codigo', 'email': email, 'code': code, **extra},
+            REMOTE_ADDR=ip,
+        )
+
+    def test_link_sent_screen_shows_the_code_field_with_the_email_hidden(self):
+        response, _code, _token = self._send_link(next='/renan/bruno')
+
+        self.assertContains(response, 'name="code"')
+        self.assertContains(response, f'<input type="hidden" name="email" value="{self.account.email}">', html=True)
+        self.assertContains(response, 'name="next" value="/renan/bruno"')
+
+    def test_first_screen_also_accepts_a_code_received_earlier(self):
+        response = self.client.get(reverse('public-workout-login'))
+
+        self.assertContains(response, 'Já recebi um código')
+        self.assertContains(response, 'name="action" value="entrar_codigo"')
+
+    def test_code_logs_in_with_verified_cookie_and_consumes_the_token(self):
+        _response, code, token = self._send_link()
+
+        response = self._enter_with_code(self.account.email.upper(), f'{code[:3]} {code[3:]}', next='/renan/bruno')
+
+        self.assertRedirects(response, '/renan/bruno', fetch_redirect_response=False)
+        session_value = read_public_workout_session_value(response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME].value)
+        self.assertEqual(session_value['account_id'], self.account.id)
+        self.assertIs(session_value['identity_verified'], True)
+        token.refresh_from_db()
+        self.assertIsNotNone(token.used_at)
+        self.account.refresh_from_db()
+        self.assertIsNotNone(self.account.last_login_at)
+
+    def test_code_without_next_goes_to_the_default_destination(self):
+        _response, code, _token = self._send_link()
+
+        response = self._enter_with_code(self.account.email, code)
+
+        self.assertRedirects(response, '/treinos/minha-conta', fetch_redirect_response=False)
+
+    def test_wrong_code_and_unknown_email_get_the_same_generic_error(self):
+        _response, code, _token = self._send_link()
+        wrong = str((int(code) + 1) % 1_000_000).zfill(6)
+
+        known = self._enter_with_code(self.account.email, wrong)
+        unknown = self._enter_with_code('ninguem@example.com', code)
+
+        for response in (known, unknown):
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'Código inválido ou expirado')
+            self.assertNotContains(response, 'Ainda não há uma conta')
+            self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+
+    def test_unknown_email_hits_the_same_attempt_cap_as_a_real_account(self):
+        _response, code, _token = self._send_link()
+        wrong = str((int(code) + 1) % 1_000_000).zfill(6)
+
+        for email in (self.account.email, 'ninguem@example.com'):
+            for _ in range(PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX):
+                self.assertContains(self._enter_with_code(email, wrong), 'Código inválido')
+            self.assertContains(self._enter_with_code(email, wrong), 'Muitas tentativas')
+
+    def test_ip_limit_stops_one_code_sprayed_across_many_emails(self):
+        _response, code, token = self._send_link()
+        for index in range(PUBLIC_WORKOUT_LOGIN_CODE_IP_FAILURES_MAX):
+            self.assertContains(self._enter_with_code(f'chute-{index}@example.com', code), 'Código inválido')
+
+        blocked = self._enter_with_code(self.account.email, code)
+
+        self.assertContains(blocked, 'Muitas tentativas')
+        self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, blocked.cookies)
+        token.refresh_from_db()
+        self.assertIsNone(token.used_at)
+        self.assertEqual(self._enter_with_code(self.account.email, code, ip='198.51.100.9').status_code, 302)
+
+    def test_successful_code_does_not_spend_the_ip_quota(self):
+        for index in range(PUBLIC_WORKOUT_LOGIN_CODE_IP_FAILURES_MAX - 1):
+            self._enter_with_code(f'chute-{index}@example.com', '000000')
+        _response, code, _token = self._send_link()
+
+        self.assertEqual(self._enter_with_code(self.account.email, code).status_code, 302)
+        self.assertContains(self._enter_with_code('mais-um@example.com', '000000'), 'Código inválido')
+        self.assertContains(self._enter_with_code('mais-dois@example.com', '000000'), 'Muitas tentativas')
+
+
+class PublicWorkoutLoginFailureLogTests(TestCase):
+    """Motivo de cada login recusado no log, sem token nem e-mail."""
+
+    LOGGER = 'student_identity.public_workout_login'
+
+    def setUp(self):
+        platform_cache.clear()
+        self.account = PublicWorkoutAccount.objects.create(email='medir@example.com')
+        self.token = PublicWorkoutLoginToken.objects.create(
+            account=self.account, expires_at=timezone.now() + timezone.timedelta(minutes=15),
+        )
+
+    def _logged_line(self, logs, reason):
+        line = '\n'.join(logs.output)
+        self.assertIn(f'reason={reason}', line)
+        self.assertNotIn(str(self.token.token), line)
+        self.assertNotIn('medir', line)
+        return line
+
+    def test_used_link_logs_how_long_ago_it_was_used(self):
+        now = timezone.now()
+        PublicWorkoutLoginToken.objects.filter(pk=self.token.pk).update(
+            created_at=now - timezone.timedelta(seconds=100), used_at=now - timezone.timedelta(seconds=90),
+        )
+
+        with self.assertLogs(self.LOGGER, 'WARNING') as logs:
+            self.assertIsNone(verify_login_token(token=str(self.token.token)))
+
+        line = self._logged_line(logs, 'ja_usado')
+        self.assertRegex(line, r'seconds_since_used=9[01]\b')
+        self.assertIn('seconds_from_created_to_used=10', line)
+        self.assertIn(f'account_id={self.account.id}', line)
+
+    def test_expired_and_unknown_links_log_their_reason(self):
+        self.token.expires_at = timezone.now() - timezone.timedelta(minutes=1)
+        self.token.save(update_fields=['expires_at'])
+
+        with self.assertLogs(self.LOGGER, 'WARNING') as logs:
+            verify_login_token(token=str(self.token.token))
+        self.assertIn('seconds_since_expired=', self._logged_line(logs, 'expirado'))
+
+        with self.assertLogs(self.LOGGER, 'WARNING') as logs:
+            verify_login_token(token=str(uuid.uuid4()))
+        self._logged_line(logs, 'nao_encontrado')
+
+    def test_opening_a_pending_payment_link_logs_its_reason(self):
+        from public_workouts.billing import get_or_create_subscription
+
+        subscription = get_or_create_subscription(account=self.account, tier=PublicWorkoutTier.ESSENCIAL)
+        subscription.requires_login = True
+        subscription.save(update_fields=['requires_login'])
+
+        with self.assertLogs(self.LOGGER, 'WARNING') as logs:
+            self.client.get(reverse('public-workout-login'), {'token': str(self.token.token)})
+
+        self._logged_line(logs, 'pagamento_pendente')
+
+    def test_wrong_code_on_the_login_screen_logs_codigo_invalido(self):
+        wrong = str((int(login_code_for_token(self.token.token)) + 1) % 1_000_000).zfill(6)
+
+        with self.assertLogs(self.LOGGER, 'WARNING') as logs:
+            self.client.post(reverse('public-workout-login'), {
+                'action': 'entrar_codigo', 'email': 'medir@example.com', 'code': wrong,
+            })
+
+        self.assertIn('channel=login', self._logged_line(logs, 'codigo_invalido'))
 
 
 class PublicWorkoutSessionTests(TestCase):
@@ -656,6 +978,37 @@ class PublicWorkoutSessionTests(TestCase):
         response = attach_public_workout_session_cookie(HttpResponse(), account_id=7)
 
         self.assertEqual(response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME]['path'], '/')
+
+    def _signed_days_ago(self, days, **kwargs):
+        with patch('django.core.signing.time.time', return_value=time.time() - days * 24 * 60 * 60):
+            return build_public_workout_session_value(**kwargs)
+
+    def _renew(self, raw_value):
+        from django.http import HttpResponse
+        from django.test import RequestFactory
+
+        request = RequestFactory().get('/renan/bruno')
+        request.COOKIES[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = raw_value
+        return renew_public_workout_session_cookie_if_stale(request, HttpResponse())
+
+    def test_week_old_cookie_is_reissued_keeping_identity_verified(self):
+        for verified in (True, False):
+            response = self._renew(self._signed_days_ago(8, account_id=42, identity_verified=verified))
+
+            renewed = response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME]
+            data = read_public_workout_session_value(renewed.value)
+            self.assertEqual(data['account_id'], 42)
+            self.assertIs(data['identity_verified'], verified)
+            self.assertEqual(renewed['max-age'], get_public_workout_session_max_age())
+
+    def test_recent_expired_or_tampered_cookie_is_not_reissued(self):
+        for raw_value in (
+            self._signed_days_ago(6, account_id=42, identity_verified=True),
+            self._signed_days_ago(31, account_id=42, identity_verified=True),
+            'lixo-nao-assinado',
+        ):
+            response = self._renew(raw_value)
+            self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
 
 class PublicWorkoutModelStrTests(TestCase):
