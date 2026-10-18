@@ -357,6 +357,66 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
+def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_server):
+    """100 kg na Top da semana 1 aparece, sem digitar, como 107,5 kg na semana 2."""
+    from public_workouts.models import (
+        PublicWorkoutAccount, PublicWorkoutLoginToken, PublicWorkoutSubscription, PublicWorkoutTrainingSession,
+    )
+    from public_workouts.schema import build_example_payload
+    from public_workouts.services import publish_program
+    from public_workouts.training_sessions import finish_session, record_set, start_session
+
+    today = timezone.localdate()
+    payload = build_example_payload()
+    payload['program_id'] = 'guided-e2e-2026'
+    # Começou há uma semana: hoje é a semana 2 (força-hipertrofia) e o registro foi na 1 (volume).
+    payload['started_on'] = (today - timedelta(days=7)).isoformat()
+    payload['periodization'] = {'weeks': [
+        {'week_number': 1, 'phase_type': 'volume'},
+        {'week_number': 2, 'phase_type': 'strength_hypertrophy'},
+    ], 'volume_table': [], 'note': ''}
+    movement = payload['days'][0]['blocks'][0]['movements'][0]
+    movement.update({
+        'movement_slug': _MOVEMENT_SLUG, 'load_type': 'free', 'load_value': None,
+        'reps_spec': '2x8 aquecimento + 1x6-8 Top', 'rir_spec': 'RIR 2',
+        'guided_prescription': {'version': 1, 'stages': [
+            {'stage_id': 'aquecimento', 'role': 'warmup', 'min_sets': 2, 'max_sets': 2,
+             'reps_min': 8, 'reps_max': 8, 'rest_seconds': 30,
+             'load_rule': {'kind': 'percent_of_top', 'start_percent': 40, 'end_percent': 55}},
+            {'stage_id': 'top', 'role': 'top_set', 'min_sets': 1, 'max_sets': 1,
+             'reps_min': 6, 'reps_max': 8, 'rest_seconds': 30, 'load_rule': {'kind': 'suggested_top'}},
+        ]},
+    })
+    publish_program(slug='bruno', payload=payload)
+    account = PublicWorkoutAccount.objects.create(email=_EMAIL, onboarding_completed_at=timezone.now())
+    PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+    last_week = start_session(account_id=account.pk, plan_slug='bruno', day_id='seg')
+    PublicWorkoutTrainingSession.objects.filter(pk=last_week.pk).update(started_at=timezone.now() - timedelta(days=7))
+    record_set(
+        account_id=account.pk, plan_slug='bruno', session_id=last_week.pk, movement_index=0, set_number=3,
+        movement_slug=_MOVEMENT_SLUG, role='top_set', weight=Decimal('100.00'), reps=8, rir=Decimal('2.0'),
+    )
+    finish_session(account_id=account.pk, plan_slug='bruno', session_id=last_week.pk, partial=True)
+    token = PublicWorkoutLoginToken.objects.create(account=account, expires_at=timezone.now() + timedelta(hours=1))
+
+    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    weight = page.locator('[data-workout-guided-weight]')
+    # Aquecimento 1 = 40% da Top sugerida (107,5) -> 42,5 kg, já preenchido.
+    expect(weight).to_have_value('42,5')
+    expect(page.locator('[data-guided-weight-source]')).to_contain_text('ajuste se precisar')
+    for _ in range(2):
+        page.locator('[data-workout-guided-skip]').click()
+        if page.locator('[data-guided-skip-rest]').is_visible():
+            page.locator('[data-guided-skip-rest]').click()
+    # Top: 100 x 76/67 = 113,4, teto 80% do 1RM estimado (133,3) = 106,7 -> 107,5 kg.
+    expect(weight).to_have_value('107,5')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
 def test_guided_online_set_is_one_request_with_local_receipt(page: Page, live_server):
     from public_workouts.models import PublicWorkoutTrainingSession
 
