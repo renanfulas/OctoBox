@@ -738,6 +738,20 @@ class PublicWorkoutLoginLinkConfirmationTests(TestCase):
         new_token.refresh_from_db()
         self.assertIsNotNone(new_token.used_at)
 
+    def test_resend_respects_the_email_rate_limit_and_unknown_tokens(self):
+        # Quem tem um link vencido não pode usar o reenvio para encher a caixa
+        # do dono: vale o mesmo teto por e-mail do formulário.
+        self._mark_used()
+        resend = {'action': 'reenviar_link', 'token': str(self.token.token)}
+        for _ in range(PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX):
+            self.assertContains(self.client.post(reverse('public-workout-login'), resend), 'Link enviado')
+
+        self.assertContains(self.client.post(reverse('public-workout-login'), resend), 'Muitos pedidos')
+        self.assertEqual(len(mail.outbox), PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX)
+        unknown = self.client.post(reverse('public-workout-login'), {**resend, 'token': str(uuid.uuid4())})
+        self.assertContains(unknown, 'expirou ou já foi usado')
+        self.assertEqual(len(mail.outbox), PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_MAX)
+
     def test_expired_link_also_offers_a_new_link(self):
         self.token.expires_at = timezone.now() - timezone.timedelta(minutes=1)
         self.token.save(update_fields=['expires_at'])
