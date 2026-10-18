@@ -51,7 +51,10 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # workout-curve.js entram no precache.
 # Bump 16->17: som do descanso ligado por padrão (guided-focus.js e o HTML do
 # modo foco); sem isto, o app instalado segue mudo com o script antigo.
-PUBLIC_WORKOUT_CACHE_EPOCH = 17
+# Bump 18->19: com a tela fora de vista e os avisos liberados, o fim do
+# descanso não bipa nem vibra pelo app (guided-focus.js); o push do #349
+# (18) avisa. Sem o bump, o Android instalado segue com o alerta duplo.
+PUBLIC_WORKOUT_CACHE_EPOCH = 19
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
