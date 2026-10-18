@@ -6,7 +6,8 @@ carga da Top calculada (e o aquecimento derivado dela), sem o aluno digitar.
 
 Regra (periodization.suggest_progressive_load_kg): última Top real do mesmo
 programa x (%RM-meio da fase atual / %RM-meio da fase em que foi feita),
-limitada pelo teto da fase contra o 1RM estimado, arredondada a 2,5 kg.
+limitada pelo teto da fase contra o 1RM estimado, arredondada a 2,5 kg. Na
+mesma fase do registro, repete a última carga sem o teto.
 """
 
 import json
@@ -139,8 +140,8 @@ class GuidedLoadProgressionTest(TestCase):
             _WEEK_3: 120.0,
             # deload: 100 x 57,5/67 = 85,8 (abaixo do teto de 86,7) -> 85
             _WEEK_4: 85.0,
-            # o mesociclo recomeça na fase de volume: 100, teto 72% = 96 -> 95
-            _WEEK_5: 95.0,
+            # o mesociclo recomeça em Volume, a fase do registro: repete os 100 kg
+            _WEEK_5: 100.0,
         }
         for moment, kg in expected.items():
             with self.subTest(semana=moment), freeze_time(moment):
@@ -154,15 +155,14 @@ class GuidedLoadProgressionTest(TestCase):
                 )
                 self.assertTrue(all(row['weight_kg'] for row in series))
 
-    def test_same_week_is_capped_by_the_phase_ceiling(self):
+    def test_same_phase_repeats_the_last_load_without_the_ceiling(self):
         self._publish()
         with freeze_time(_WEEK_1):
             self._record_top_through_guided(weight=100, reps=8, rir=2)
-        # Quinta da mesma semana (mesma fase): a razão é 1 (100 kg), mas o teto da
-        # fase de volume é 72% do 1RM estimado (133,3) = 96 -> sugere 95 kg, abaixo
-        # do que o aluno acabou de fazer. Regra atual; mudar é decisão de produto.
+        # Quinta da mesma semana (mesma fase): repete os 100 kg que o aluno fez. O teto
+        # de Volume (72% do 1RM estimado de 133,3 = 96) não corta para 95.
         with freeze_time('2026-01-08 12:00'):
-            self.assertEqual(self._top_kg(), (95.0, 'phase_progressive'))
+            self.assertEqual(self._top_kg(), (100.0, 'phase_progressive'))
 
     def test_newest_guided_load_is_the_anchor_for_the_following_week(self):
         self._publish()
