@@ -221,6 +221,12 @@ class RestAlertEndpointTest(TestCase):
         self.assertEqual(self._post(set_number=0).json()['error'], 'invalid-set-number')
         self.assertFalse(PublicWorkoutRestAlert.objects.exists())
 
+    def test_malformed_body_is_refused(self):
+        self._login()
+        response = self.client.post(self.url, data='{"session_id":', content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(PublicWorkoutRestAlert.objects.exists())
+
     def test_label_is_sanitized_and_trimmed(self):
         self._login()
         self._post(exercise='  Supino\n\x00reto  ' + 'x' * 200)
