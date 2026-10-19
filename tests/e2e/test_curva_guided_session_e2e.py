@@ -452,7 +452,7 @@ def test_rest_end_off_screen_leaves_alert_to_push(page: Page, live_server, push_
         page.add_init_script(_ALLOW_NOTIFICATIONS)
     page.add_init_script(_SPY_AUDIO)
     page.add_init_script(_SPY_VIBRATION)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
