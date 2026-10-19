@@ -3,6 +3,8 @@
 import pytest
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_login import enter_with_magic_link
+
 from public_workouts.billing import get_or_create_subscription
 from public_workouts.models import (
     PublicWorkoutAccount,
@@ -124,7 +126,7 @@ def test_returning_customer_enters_with_one_time_magic_link(page: Page, live_ser
     get_or_create_subscription(account=account, tier=PublicWorkoutTier.ESSENCIAL)
     token = request_login_token(email=email, base_url=live_server.url, next_url='/treinos/minha-conta')
     try:
-        page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/treinos/minha-conta')
+        enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/treinos/minha-conta')
         page.wait_for_url('**/treinos/minha-conta')
 
         expect(page.locator('#journey-title')).to_have_text('Estamos confirmando sua assinatura')

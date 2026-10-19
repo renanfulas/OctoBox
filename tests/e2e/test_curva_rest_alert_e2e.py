@@ -20,6 +20,8 @@ from django.test import override_settings
 from django.utils import timezone
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_login import enter_with_magic_link
+
 
 _EMAIL = 'curva-rest-e2e@example.test'
 _MOVEMENT_SLUG = 'curva-rest-e2e-squat'
@@ -112,7 +114,7 @@ def _prepare(rest_seconds):
 def _open_guided(page: Page, live_server, token):
     page.add_init_script(PUSH_STUB)
     page.set_viewport_size({'width': 390, 'height': 844})
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     expect(page.locator('[data-workout-guided]')).to_have_attribute('data-rest-alert-url', '/renan/bruno/push/descanso')
     page.locator('[data-workout-guided-start]').click()

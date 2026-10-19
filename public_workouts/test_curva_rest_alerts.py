@@ -117,7 +117,9 @@ class RestAlertEndpointTest(TestCase):
         token = PublicWorkoutLoginToken.objects.create(
             account=account or self.account, expires_at=timezone.now() + timedelta(minutes=15),
         )
-        response = self.client.get(reverse('public-workout-login'), {'token': str(token.token), 'next': '/renan/bruno'})
+        response = self.client.post(reverse('public-workout-login'), {
+            'action': 'entrar_link', 'token': str(token.token), 'next': '/renan/bruno',
+        })
         self.assertEqual(response.status_code, 302)
 
     def _post(self, **overrides):
