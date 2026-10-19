@@ -482,6 +482,7 @@ class PublicWorkoutDetailView(View):
             attach_public_workout_session_cookie,
             get_public_workout_account_id_from_request,
             get_verified_public_workout_account_id_from_request,
+            renew_public_workout_session_cookie_if_stale,
         )
 
         account_id = get_public_workout_account_id_from_request(request)
@@ -510,6 +511,8 @@ class PublicWorkoutDetailView(View):
             response['Cache-Control'] = 'private, no-store'
             if account_id is not None and not had_session:
                 attach_public_workout_session_cookie(response, account_id=account_id)
+            elif had_session:
+                renew_public_workout_session_cookie_if_stale(request, response)
             return response
 
         # O cliente do PWA envia POSTs JSON para sessão/push via cookie CSRF.
@@ -543,6 +546,8 @@ class PublicWorkoutDetailView(View):
             )
         if account_id is not None and not had_session:
             attach_public_workout_session_cookie(response, account_id=account_id)
+        elif had_session:
+            renew_public_workout_session_cookie_if_stale(request, response)
         # B0: quem abre a pagina prova posse do link — e o que autoriza a
         # leitura de /avaliacoes.json a seguir. Cookie por instancia, nao
         # global: cada slug so autoriza a si mesmo.

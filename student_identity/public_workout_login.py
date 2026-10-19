@@ -56,6 +56,11 @@ PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 900
 PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX = 5
 PUBLIC_WORKOUT_LOGIN_CODE_WINDOW_SECONDS = 900
 PUBLIC_WORKOUT_LOGIN_CODE_CANDIDATES = 5
+# Na tela de login o código chega com um e-mail digitado, não com o cookie:
+# o teto por conta não segura quem testa um código em muitos e-mails, então
+# o IP também tem teto. Só falhas contam; uma academia no mesmo Wi-Fi não
+# trava quem acerta.
+PUBLIC_WORKOUT_LOGIN_CODE_IP_FAILURES_MAX = 20
 
 
 class PublicWorkoutLoginRateLimitExceeded(Exception):
@@ -72,6 +77,44 @@ def _rate_limit_key(email: str) -> str:
 
 def _code_attempts_key(account_id: int) -> str:
     return f'octo_pwl_code_{account_id}'
+
+
+def _unknown_email_code_attempts_key(email: str) -> str:
+    return f'octo_pwl_code_e_{hashlib.sha256(email.encode()).hexdigest()[:24]}'
+
+
+def _code_ip_failures_key(client_ip: str) -> str:
+    return f'octo_pwl_code_ip_{hashlib.sha256(client_ip.encode()).hexdigest()[:24]}'
+
+
+def _consume_code_attempt(key: str) -> None:
+    attempts = platform_cache.get(key, 0)
+    if attempts >= PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX:
+        raise PublicWorkoutLoginCodeAttemptsExceeded(key)
+    platform_cache.set(key, attempts + 1, timeout=PUBLIC_WORKOUT_LOGIN_CODE_WINDOW_SECONDS)
+
+
+def mask_login_email(email: str) -> str:
+    """`fu•••@dominio`: reconhecível por quem é dono, inútil para quem não é."""
+    local, _, domain = (email or '').partition('@')
+    return f'{local[:2]}•••@{domain}' if domain else '•••'
+
+
+def _log_login_failure(reason: str, *, channel: str, account_id: int | None = None, **extra) -> None:
+    """Motivo de cada login recusado, para medir o que trava o aluno.
+
+    Nunca recebe token nem e-mail: o id da conta basta para cruzar com o banco.
+    """
+    details = ''.join(f' {key}={value}' for key, value in extra.items())
+    logger.warning(
+        'public_workout_login_failed reason=%s channel=%s account_id=%s%s',
+        reason, channel, account_id if account_id is not None else '-', details,
+    )
+
+
+def _pending_payment(account: PublicWorkoutAccount) -> bool:
+    subscription = getattr(account, 'subscription', None)
+    return subscription is not None and subscription.requires_login and subscription.status == 'pending_payment'
 
 
 def login_code_for_token(token) -> str:
@@ -138,10 +181,7 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
     platform_cache.set(rate_limit_key, attempts + 1, timeout=PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_WINDOW_SECONDS)
 
     account = PublicWorkoutAccount.objects.filter(email__iexact=normalized_email).first()
-    if account is None:
-        return None
-    subscription = getattr(account, 'subscription', None)
-    if subscription is not None and subscription.requires_login and subscription.status == 'pending_payment':
+    if account is None or _pending_payment(account):
         return None
     token = PublicWorkoutLoginToken.objects.create(
         account=account,
@@ -174,6 +214,57 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
     return token
 
 
+def find_login_token(token) -> PublicWorkoutLoginToken | None:
+    """Lê o token sem travar nem consumir — a tela de confirmação só mostra a conta."""
+    try:
+        return PublicWorkoutLoginToken.objects.select_related('account').filter(token=token).first()
+    except (ValueError, TypeError, ValidationError):
+        return None
+
+
+def login_token_refusal(login_token: PublicWorkoutLoginToken | None) -> str | None:
+    """Por que este token não entra, ou None se ainda entra. Não loga nem trava."""
+    if login_token is None:
+        return 'nao_encontrado'
+    if login_token.used_at is not None:
+        return 'ja_usado'
+    if login_token.is_expired:
+        return 'expirado'
+    if _pending_payment(login_token.account):
+        return 'pagamento_pendente'
+    return None
+
+
+def _log_login_token_refusal(reason: str, login_token: PublicWorkoutLoginToken | None) -> None:
+    if login_token is None:
+        _log_login_failure(reason, channel='link')
+        return
+    now = timezone.now()
+    extra = {}
+    if reason == 'ja_usado':
+        # Poucos segundos entre o envio e o uso apontam para scanner de e-mail
+        # ou prévia de link, não para o aluno.
+        extra = {
+            'seconds_since_used': int((now - login_token.used_at).total_seconds()),
+            'seconds_from_created_to_used': int((login_token.used_at - login_token.created_at).total_seconds()),
+        }
+    elif reason == 'expirado':
+        extra = {'seconds_since_expired': int((now - login_token.expires_at).total_seconds())}
+    _log_login_failure(reason, channel='link', account_id=login_token.account_id, **extra)
+
+
+def check_login_token(login_token: PublicWorkoutLoginToken | None) -> str | None:
+    """Motivo da recusa para a tela do GET (já no log), ou None; não consome.
+
+    Recebe o resultado de `find_login_token`. O POST revalida tudo sob trava
+    em `verify_login_token`.
+    """
+    reason = login_token_refusal(login_token)
+    if reason:
+        _log_login_token_refusal(reason, login_token)
+    return reason
+
+
 def verify_login_token(*, token: str) -> PublicWorkoutAccount | None:
     """Consome o token se valido. None se ausente, mal formado, expirado ou ja usado.
 
@@ -190,15 +281,14 @@ def verify_login_token(*, token: str) -> PublicWorkoutAccount | None:
                 .get(token=token)
             )
         except (PublicWorkoutLoginToken.DoesNotExist, ValueError, TypeError, ValidationError):
-            return None
+            login_token = None
 
-        if not login_token.is_valid:
+        reason = login_token_refusal(login_token)
+        if reason:
+            _log_login_token_refusal(reason, login_token)
             return None
 
         account = login_token.account
-        subscription = getattr(account, 'subscription', None)
-        if subscription is not None and subscription.requires_login and subscription.status == 'pending_payment':
-            return None
         login_token.mark_used()
         login_token.save(update_fields=['used_at', 'updated_at'])
 
@@ -208,7 +298,7 @@ def verify_login_token(*, token: str) -> PublicWorkoutAccount | None:
     return account
 
 
-def verify_login_code(*, account_id: int, code) -> PublicWorkoutAccount | None:
+def verify_login_code(*, account_id: int, code, channel: str = 'app') -> PublicWorkoutAccount | None:
     """Consome o token cujo código bate, só entre os tokens da conta já logada.
 
     Quem chama já resolveu `account_id` pelo cookie do aparelho: o código não
@@ -218,13 +308,11 @@ def verify_login_code(*, account_id: int, code) -> PublicWorkoutAccount | None:
     token expirou/foi usado ou se a assinatura ainda aguarda pagamento.
     """
     attempts_key = _code_attempts_key(account_id)
-    attempts = platform_cache.get(attempts_key, 0)
-    if attempts >= PUBLIC_WORKOUT_LOGIN_CODE_ATTEMPTS_MAX:
-        raise PublicWorkoutLoginCodeAttemptsExceeded(account_id)
-    platform_cache.set(attempts_key, attempts + 1, timeout=PUBLIC_WORKOUT_LOGIN_CODE_WINDOW_SECONDS)
+    _consume_code_attempt(attempts_key)
 
     normalized = ''.join(char for char in str(code or '') if char.isdigit())
     if len(normalized) != 6:
+        _log_login_failure('codigo_invalido', channel=channel, account_id=account_id)
         return None
     with transaction.atomic():
         candidates = list(
@@ -239,10 +327,11 @@ def verify_login_code(*, account_id: int, code) -> PublicWorkoutAccount | None:
             None,
         )
         if login_token is None:
+            _log_login_failure('codigo_invalido', channel=channel, account_id=account_id)
             return None
         account = login_token.account
-        subscription = getattr(account, 'subscription', None)
-        if subscription is not None and subscription.requires_login and subscription.status == 'pending_payment':
+        if _pending_payment(account):
+            _log_login_failure('pagamento_pendente', channel=channel, account_id=account_id)
             return None
         login_token.mark_used()
         login_token.save(update_fields=['used_at', 'updated_at'])
@@ -250,4 +339,46 @@ def verify_login_code(*, account_id: int, code) -> PublicWorkoutAccount | None:
     account.last_login_at = timezone.now()
     account.save(update_fields=['last_login_at', 'updated_at'])
     platform_cache.delete(attempts_key)
+    return account
+
+
+def verify_login_code_for_email(*, email: str, code, client_ip: str) -> PublicWorkoutAccount | None:
+    """Código digitado na tela de login, para quem não tem cookie nenhum.
+
+    Mesma regra de `verify_login_code` (candidatos, trava da linha, pagamento
+    pendente, teto por conta); a conta vem do e-mail digitado. Quem chama
+    responde igual para e-mail sem conta e código errado: o e-mail sem conta
+    também tem teto de tentativas, então seis palpites não dizem se a conta
+    existe. Levanta PublicWorkoutLoginCodeAttemptsExceeded no teto da conta
+    ou do IP.
+    """
+    ip_key = _code_ip_failures_key(client_ip or 'unknown')
+    if not platform_cache.add(ip_key, 1, timeout=PUBLIC_WORKOUT_LOGIN_CODE_WINDOW_SECONDS):
+        try:
+            failures = platform_cache.incr(ip_key)
+        except ValueError:
+            platform_cache.set(ip_key, 1, timeout=PUBLIC_WORKOUT_LOGIN_CODE_WINDOW_SECONDS)
+            failures = 1
+        if failures > PUBLIC_WORKOUT_LOGIN_CODE_IP_FAILURES_MAX:
+            _log_login_failure('muitas_tentativas_ip', channel='login')
+            raise PublicWorkoutLoginCodeAttemptsExceeded(ip_key)
+
+    normalized_email = (email or '').strip().lower()
+    account_id = (
+        PublicWorkoutAccount.objects.filter(email__iexact=normalized_email).values_list('id', flat=True).first()
+        if normalized_email else None
+    )
+    if account_id is None:
+        _consume_code_attempt(_unknown_email_code_attempts_key(normalized_email))
+        _log_login_failure('nao_encontrado', channel='login')
+        return None
+
+    account = verify_login_code(account_id=account_id, code=code, channel='login')
+    if account is not None:
+        # A tentativa já foi contada antes de saber o resultado; acerto não
+        # gasta a cota do IP.
+        try:
+            platform_cache.decr(ip_key)
+        except ValueError:
+            pass
     return account

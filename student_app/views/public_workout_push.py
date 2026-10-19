@@ -8,6 +8,7 @@ from django.views import View
 from student_identity.public_workout_login import (
     PublicWorkoutLoginCodeAttemptsExceeded,
     PublicWorkoutLoginRateLimitExceeded,
+    mask_login_email,
     request_login_token,
     verify_login_code,
 )
@@ -25,11 +26,6 @@ from student_app.views.public_workout_access import (
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutPushSubscription
 from public_workouts.outbox import TOPIC_PUSH_WELCOME, enqueue_outbox
 from public_workouts.push import configured, subscribe
-
-
-def _mask_email(email: str) -> str:
-    local, _, domain = (email or '').partition('@')
-    return f'{local[:2]}•••@{domain}' if domain else '•••'
 
 
 class PublicWorkoutPushSubscriptionView(View):
@@ -113,7 +109,7 @@ class PublicWorkoutPushVerificationView(View):
                 return JsonResponse({'error': 'muitos_pedidos'}, status=429)
             if token is None:
                 return JsonResponse({'error': 'conta_nao_ativa'}, status=409)
-            return JsonResponse({'ok': True, 'sent_to': _mask_email(account.email)})
+            return JsonResponse({'ok': True, 'sent_to': mask_login_email(account.email)})
         if action == 'confirm':
             try:
                 account = verify_login_code(account_id=account_id, code=data.get('code'))
