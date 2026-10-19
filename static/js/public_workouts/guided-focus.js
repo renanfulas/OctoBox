@@ -93,7 +93,18 @@
         if (resumed && resumed.catch) resumed.catch(function () { /* fora de um toque */ });
       } catch (_) { /* sem áudio */ }
     }
+    // Fora da tela e com os avisos liberados, quem avisa o fim do descanso é o
+    // push do servidor (docs/decisions/0003-curva-rest-alert-worker.md): no
+    // Android a página segue viva com a tela bloqueada e o bipe tocaria junto
+    // com a notificação. Sem os avisos, o bipe segue sendo o único alerta.
+    function pushCoversAlert() {
+      try {
+        return document.visibilityState !== 'visible'
+          && !!window.Notification && window.Notification.permission === 'granted';
+      } catch (_) { return false; }
+    }
     function feedback(vibrateMs, frequency, duration) {
+      if (pushCoversAlert()) return;
       try { if (navigator.vibrate) navigator.vibrate(vibrateMs); } catch (_) { /* sem vibração */ }
       beep(frequency, duration || 0.12);
     }
