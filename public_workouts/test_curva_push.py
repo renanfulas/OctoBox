@@ -69,8 +69,8 @@ class CurvaPushIntegrationTest(TestCase):
         token = PublicWorkoutLoginToken.objects.create(
             account=self.account, expires_at=timezone.now() + timedelta(minutes=15),
         )
-        login = self.client.get(reverse('public-workout-login'), {
-            'token': str(token.token), 'next': '/renan/bruno',
+        login = self.client.post(reverse('public-workout-login'), {
+            'action': 'entrar_link', 'token': str(token.token), 'next': '/renan/bruno',
         })
         self.assertEqual(login.status_code, 302)
         page = self.client.get('/renan/bruno')

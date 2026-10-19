@@ -2844,6 +2844,54 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
+    def test_week_old_session_is_reissued_keeping_identity_verified(self):
+        # A validade de 30 dias conta da assinatura do cookie: sem reemitir,
+        # quem abre o app toda semana caía no login mesmo assim.
+        import time
+        from unittest.mock import patch
+
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+        from student_identity.public_workout_session import (
+            PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            build_public_workout_session_value,
+            read_public_workout_session_value,
+        )
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='semanal@example.com')
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+        with patch('django.core.signing.time.time', return_value=time.time() - 8 * 24 * 60 * 60):
+            old_value = build_public_workout_session_value(account_id=account.id, identity_verified=True)
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = old_value
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        renewed = response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME].value
+        self.assertNotEqual(renewed, old_value)
+        data = read_public_workout_session_value(renewed)
+        self.assertEqual(data['account_id'], account.id)
+        self.assertIs(data['identity_verified'], True)
+
+    def test_recent_session_is_not_reissued(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+        from student_identity.public_workout_session import (
+            PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            build_public_workout_session_value,
+        )
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='recente@example.com')
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.id, identity_verified=True,
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+
     def test_first_login_autostarts_the_onboarding_wizard(self):
         from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
 
