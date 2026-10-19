@@ -35,7 +35,9 @@ from .views import (
     PublicWorkoutWeeklyReviewView,
 )
 from .views.public_workout_sessions import PublicWorkoutSessionView
-from .views.public_workout_push import PublicWorkoutPushSubscriptionView, PublicWorkoutPushVerificationView
+from .views.public_workout_push import (
+    PublicWorkoutPushSubscriptionView, PublicWorkoutPushVerificationView, PublicWorkoutRestAlertView,
+)
 
 
 urlpatterns = [
@@ -45,6 +47,7 @@ urlpatterns = [
         '<slug:plan_slug>/push/verificacao', PublicWorkoutPushVerificationView.as_view(),
         name='public-workout-push-verification',
     ),
+    path('<slug:plan_slug>/push/descanso', PublicWorkoutRestAlertView.as_view(), name='public-workout-push-rest'),
     path('sw.js', PublicWorkoutServiceWorkerView.as_view(), name='public-workout-sw'),
     path('offline/', PublicWorkoutOfflineView.as_view(), name='public-workout-offline'),
     path('<slug:plan_slug>/manifest.webmanifest', PublicWorkoutManifestView.as_view(), name='public-workout-manifest'),

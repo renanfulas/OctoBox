@@ -364,7 +364,7 @@ O `focusIndex` entra no snapshot local que já existe (`outbox.save`: `session_i
 - **Voltar do sistema:** abrir a camada faz `history.pushState(…, '#treino-guiado')` e `popstate` minimiza. O gesto de voltar do Android ou o swipe do iOS não tiram o aluno do app no meio da série.
 - **MuscleWiki:** `<a target="_blank" rel="noopener">`, igual à grade. No PWA instalado do iOS isso sai do app e pode recarregar a página. A recuperação usa `#treino-guiado`, o snapshot com `focus_movement_index` e o `endAt` do descanso. Teste obrigatório em iPhone.
 - **Tela acesa:** `navigator.wakeLock.request('screen')` enquanto a camada está aberta, pedindo de novo em `visibilitychange`. É liberado ao minimizar ou finalizar. Sem suporte, segue sem ele e sem aviso.
-- **App em segundo plano:** o tempo é calculado pelo horário final, então volta correto. **Não há alarme com a tela bloqueada**, e o plano não promete isso. O Wake Lock reduz o caso.
+- **App em segundo plano:** o tempo é calculado pelo horário final, então volta correto. O app sozinho não alerta com a tela bloqueada, porque o iOS congela o PWA. **Atualização (out/2026):** quem tem avisos ativos no aparelho recebe um push agendado no servidor no fim do descanso ("Descanso acabou · <exercício>, série N"). No silencioso, ele só vibra. Com a tela à vista perto do fim, o app cancela o push e toca o próprio bipe. Ver [0003](../decisions/0003-curva-rest-alert-worker.md) e `static/js/public_workouts/guided-rest-alert.js`. O Wake Lock continua reduzindo o caso.
 
 ## 7. Performance
 

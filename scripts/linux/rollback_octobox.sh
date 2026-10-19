@@ -52,6 +52,12 @@ find "${APP_DIR}/staticfiles" -type f -exec chmod 644 {} \;
 
 systemctl restart octobox-gunicorn
 systemctl is-active octobox-gunicorn
+
+# Worker do aviso do descanso roda o codigo novo so depois de reiniciar.
+if systemctl cat octobox-public-workout-rest-alerts.service >/dev/null 2>&1; then
+  systemctl restart octobox-public-workout-rest-alerts
+  systemctl is-active octobox-public-workout-rest-alerts || echo "AVISO: worker do descanso (octobox-public-workout-rest-alerts) nao ficou ativo."
+fi
 curl -sk "https://${OCTOBOX_DOMAIN}/api/v1/health/"
 
 printf '%s\n' "${current_commit}" > "${PREVIOUS_FILE}"

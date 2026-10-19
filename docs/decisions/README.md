@@ -51,3 +51,4 @@ lição reapareça na busca sobre a mesma área. Escreva só o que for **não-ó
 
 - [0001 — `knowledge` (RAG) movido para SHARED + gotcha de migração django-tenants](0001-knowledge-shared-migration.md)
 - [0002 — Deploy saiu do Render para HostGator VPS](0002-render-to-hostgator-vps.md)
+- [0003 — Fim do descanso da Curva por push agendado: worker com advisory lock + LISTEN/NOTIFY](0003-curva-rest-alert-worker.md)

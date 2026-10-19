@@ -616,6 +616,53 @@ class PublicWorkoutPushSubscription(TimeStampedModel):
         ordering = ['-created_at']
 
 
+class PublicWorkoutRestAlertStatus(models.TextChoices):
+    PENDING = 'pending', 'Agendado'
+    SENDING = 'sending', 'Enviando'
+    SENT = 'sent', 'Enviado'
+    CANCELLED = 'cancelled', 'Cancelado'
+    EXPIRED = 'expired', 'Vencido sem envio'
+    FAILED = 'failed', 'Falhou'
+
+
+class PublicWorkoutRestAlert(TimeStampedModel):
+    """Push do fim do descanso do modo foco: um aviso vivo por sessão guiada.
+
+    O app agenda quando o descanso começa e cancela quando ele termina com a
+    tela à vista; o worker `run_public_workout_rest_alerts` envia no horário.
+    `revision` sobe a cada agendamento e cancelamento, para o worker não marcar
+    como enviado um aviso que o aluno reagendou durante o envio. Ver
+    docs/decisions/0003-curva-rest-alert-worker.md.
+    """
+
+    session = models.OneToOneField(
+        PublicWorkoutTrainingSession, on_delete=models.CASCADE, related_name='rest_alert',
+    )
+    subscription = models.ForeignKey(
+        PublicWorkoutPushSubscription, on_delete=models.CASCADE, related_name='rest_alerts',
+    )
+    due_at = models.DateTimeField()
+    status = models.CharField(
+        max_length=12, choices=PublicWorkoutRestAlertStatus.choices,
+        default=PublicWorkoutRestAlertStatus.PENDING,
+    )
+    revision = models.PositiveIntegerField(default=1)
+    exercise_label = models.CharField(max_length=80, blank=True)
+    set_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    claimed_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.CharField(max_length=120, blank=True)
+
+    class Meta:
+        indexes = [
+            # O worker só olha os pendentes, sempre pelo próximo horário.
+            models.Index(
+                fields=['due_at'], name='pw_rest_alert_pending_idx',
+                condition=models.Q(status='pending'),
+            ),
+        ]
+
+
 class PublicWorkoutLoginToken(TimeStampedModel):
     """Token de login por e-mail do corredor de treinos.
 

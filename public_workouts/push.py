@@ -10,6 +10,11 @@ from django.utils import timezone
 from .models import PublicWorkoutPushSubscription
 
 
+# Sem timeout o requests espera para sempre: um gateway pendurado travaria a
+# outbox e o worker do descanso, que envia em série.
+PUSH_TIMEOUT_SECONDS = 10
+
+
 def configured():
     return bool(_allowed_hosts()) and all(getattr(settings, key, '').strip() for key in (
         'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY',
@@ -69,7 +74,13 @@ def subscribe(*, account_id, data, user_agent=''):
     return row
 
 
-def send(*, subscription, title, body, url, tag):
+def send(*, subscription, title, body, url, tag, ttl=60, urgency=None, extra=None, timeout=PUSH_TIMEOUT_SECONDS):
+    """Envia um push para um aparelho; False quando o gateway não aceita.
+
+    `extra` entra no payload que o service worker lê (ex.: `renotify`, `vibrate`).
+    `urgency` vira o cabeçalho `Urgency` do Web Push: `high` pede entrega
+    imediata mesmo com o aparelho em economia de bateria.
+    """
     if not configured():
         return False
     try:
@@ -82,12 +93,15 @@ def send(*, subscription, title, body, url, tag):
     try:
         from student_identity.push_notifications import _build_vapid_private_key
 
+        message = {**(extra or {}), 'title': title, 'body': body, 'url': url, 'tag': tag}
         webpush(
             subscription_info=subscription.subscription,
-            data=json.dumps({'title': title, 'body': body, 'url': url, 'tag': tag}),
+            data=json.dumps(message),
             vapid_private_key=_build_vapid_private_key(),
             vapid_claims={'sub': settings.STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT},
-            ttl=60,
+            ttl=ttl,
+            headers={'Urgency': urgency} if urgency else None,
+            timeout=timeout,
         )
     except WebPushException as exc:
         status = getattr(getattr(exc, 'response', None), 'status_code', 0)

@@ -48,24 +48,39 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Todo push vira notificação, mesmo com o app à vista: o iOS revoga a
+// inscrição de quem recebe push sem mostrar nada. Quem evita o alerta duplo
+// do fim do descanso é o app, que cancela o aviso antes do envio.
 self.addEventListener('push', (event) => {
   let payload = {};
   try { payload = event.data ? event.data.json() : {}; } catch (_) {}
-  event.waitUntil(self.registration.showNotification(payload.title || 'Curva', {
+  const options = {
     body: payload.body || 'Você tem uma atualização do seu treino.',
     icon: '/static/images/student-app-icon-192.png',
     badge: '/static/images/student-app-icon-192.png',
     tag: payload.tag || 'curva-update',
-    data: { url: payload.url || APP_SCOPE },
-  }));
+    data: { url: payload.url || APP_SCOPE, kind: payload.kind || '' },
+  };
+  // Fim do descanso: mesma tag na sessão inteira substitui em vez de empilhar;
+  // renotify faz a substituição alertar de novo. O padrão de vibração só vale
+  // no Android; no iPhone o aviso segue o modo do aparelho (silencioso = vibra).
+  if (payload.renotify === true) options.renotify = true;
+  if (Array.isArray(payload.vibrate)) options.vibrate = payload.vibrate;
+  event.waitUntil(self.registration.showNotification(payload.title || 'Curva', options));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const target = new URL(event.notification.data && event.notification.data.url || APP_SCOPE, self.location.origin);
+  const data = event.notification.data || {};
+  const target = new URL(data.url || APP_SCOPE, self.location.origin);
   if (target.origin !== self.location.origin) return;
   event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
     const existing = clients.find((client) => new URL(client.url).origin === target.origin);
+    // Descanso: a página do plano aberta já guarda o treino em andamento;
+    // só traz para a frente, sem recarregar.
+    if (existing && data.kind === 'rest' && new URL(existing.url).pathname === target.pathname) {
+      return existing.focus();
+    }
     return existing ? existing.navigate(target.href).then(() => existing.focus()) : self.clients.openWindow(target.href);
   }));
 });

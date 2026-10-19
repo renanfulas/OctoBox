@@ -53,8 +53,11 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # modo foco); sem isto, o app instalado segue mudo com o script antigo.
 # Bump 18->19: com a tela fora de vista e os avisos liberados, o fim do
 # descanso não bipa nem vibra pelo app (guided-focus.js); o push do #349
-# (18) avisa. Sem o bump, o Android instalado segue com o alerta duplo.
-PUBLIC_WORKOUT_CACHE_EPOCH = 19
+# avisa. Sem o bump, o Android instalado segue com o alerta duplo.
+# Bump 19->20: aviso push do fim do descanso (#349) — guided-rest-alert.js
+# entra no precache, workout-guided.js muda e o sw.js trata renotify/vibrate
+# e o toque no aviso do descanso sem recarregar a página.
+PUBLIC_WORKOUT_CACHE_EPOCH = 20
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -142,6 +145,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/guided-api.js',
     '/static/js/public_workouts/guided-sync.js',
     '/static/js/public_workouts/guided-timer.js',
+    '/static/js/public_workouts/guided-rest-alert.js',
     '/static/js/public_workouts/guided-state.js',
     '/static/js/public_workouts/guided-loads.js',
     '/static/js/public_workouts/guided-format.js',
