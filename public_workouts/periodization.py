@@ -188,6 +188,11 @@ def suggest_progressive_load_kg(
     o teto (nunca deixa a razão sugerir acima do %RM máximo da fase atual
     contra o 1RM estimado, protege contra um log anômalo se propagando).
 
+    Mesma fase de quando o log foi feito (mesma `key`, inclusive na volta
+    do mesociclo): devolve a última carga real tal e qual, SEM o teto do
+    1RM — decisão de produto: o aluno acabou de fazer aquele peso nesta
+    fase, e o teto sugeria menos (100 kg x 8 RIR 2 em Volume virava 95).
+
     `current_phase.hold_load=True` (ex.: `maintenance`/`test`, bloco de
     corte -- ver docstring de `PhaseProfile.hold_load`) pula a escala por
     razão inteiramente: devolve a ÚLTIMA carga registrada tal e qual,
@@ -210,13 +215,19 @@ def suggest_progressive_load_kg(
     if program_id and last_log.get('program_id') != program_id:
         return None
 
+    logged_on_raw = last_log.get('performed_on')
+    phase_when_logged = (
+        current_phase_profile(payload, today=date.fromisoformat(logged_on_raw)) if logged_on_raw else None
+    )
+    # Mesma fase de quando a carga foi feita: repete a última carga real, sem
+    # passar pelo teto do 1RM. O aluno acabou de mostrar que aguenta esse peso
+    # nesta fase; cortar pelo teto sugeria menos do que ele tinha feito.
+    if phase_when_logged is not None and phase_when_logged.key == current_phase.key:
+        return _round_to_nearest_load(float(last_log['weight_kg']))
+
     if current_phase.hold_load:
         suggested = float(last_log['weight_kg'])
     else:
-        logged_on_raw = last_log.get('performed_on')
-        if not logged_on_raw:
-            return None
-        phase_when_logged = current_phase_profile(payload, today=date.fromisoformat(logged_on_raw))
         if phase_when_logged is None:
             return None
 
