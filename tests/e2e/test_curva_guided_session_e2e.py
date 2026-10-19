@@ -401,7 +401,7 @@ def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_serve
     finish_session(account_id=account.pk, plan_slug='bruno', session_id=last_week.pk, partial=True)
     token = PublicWorkoutLoginToken.objects.create(account=account, expires_at=timezone.now() + timedelta(hours=1))
 
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     weight = page.locator('[data-workout-guided-weight]')
