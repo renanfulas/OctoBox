@@ -11,6 +11,8 @@ from django.test import override_settings
 from django.utils import timezone
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_login import enter_with_magic_link
+
 
 _EMAIL = 'curva-guided-e2e@example.test'
 _OTHER_EMAIL = 'curva-guided-other-e2e@example.test'
@@ -151,7 +153,7 @@ def test_freeform_summary_requires_each_exercise_and_records_partial(page: Page,
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student(freeform_count=3)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     page.locator('[data-workout-guided-weight]').fill('50')
@@ -176,7 +178,7 @@ def test_freeform_summary_requires_each_exercise_and_records_partial(page: Page,
 @override_settings(DEBUG=True)
 def test_offline_freeform_finish_requires_each_exercise(page: Page, live_server):
     _, token = _prepare_guided_student(freeform_count=2)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     _wait_for_offline_scope(page)
     page.evaluate("async () => { await navigator.serviceWorker.ready; }")
     page.context.set_offline(True)
@@ -215,7 +217,7 @@ def test_student_top_target_guides_ramp_and_survives_reload(page: Page, live_ser
          'load_rule': {'kind': 'suggested_top'}},
     ]
     account, token = _prepare_guided_student(stages)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
 
@@ -271,7 +273,7 @@ def test_load_conflict_keeps_values_and_reapplies_after_confirmation(page: Page,
             route.fulfill(status=200, content_type='application/json', body='{}')
 
     page.route('**/renan/bruno/carga', respond_load)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.locator('[data-workout-load-toggle]').click()
     widget = page.locator(f'[data-workout-load-input][data-movement-slug="{_MOVEMENT_SLUG}"]').first
@@ -301,7 +303,7 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
         page.set_viewport_size({'width': 390, 'height': 844})
     account, token = _prepare_guided_student()
 
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     expect(page.locator('[data-workout-guided-start]')).to_be_visible()
     page.locator('[data-workout-guided-start]').click()
@@ -422,7 +424,7 @@ def test_guided_online_set_is_one_request_with_local_receipt(page: Page, live_se
 
     account, token = _prepare_guided_student()
     page.add_init_script(_COUNT_OUTBOX_OPENS)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
@@ -450,7 +452,7 @@ def test_rest_end_beeps_by_default_and_student_can_mute(page: Page, live_server)
          'reps_min': 6, 'reps_max': 8, 'rest_seconds': 4, 'load_rule': {'kind': 'manual'}},
     ])
     page.add_init_script(_SPY_AUDIO)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
@@ -481,7 +483,7 @@ def test_guided_set_survives_tab_closed_before_post_returns(page: Page, live_ser
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
@@ -516,7 +518,7 @@ def test_guided_start_and_set_sync_after_network_returns(page: Page, live_server
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)
@@ -544,7 +546,7 @@ def test_reconnecting_does_not_erase_a_set_being_typed(page: Page, live_server):
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)
@@ -569,7 +571,7 @@ def test_guided_reopens_from_offline_shell_and_sends_in_order(page: Page, live_s
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     _wait_for_offline_scope(page)
     page.evaluate("async () => { await navigator.serviceWorker.ready; }")
     page.context.set_offline(True)
@@ -616,7 +618,7 @@ def test_offline_start_conflict_preserves_export_and_opens_new_program(page: Pag
     from public_workouts.services import publish_program
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)
@@ -681,7 +683,7 @@ def test_queued_training_waits_for_same_account_login(page: Page, live_server):
     from student_identity.public_workout_session import PUBLIC_WORKOUT_SESSION_COOKIE_NAME
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)
@@ -702,7 +704,7 @@ def test_queued_training_waits_for_same_account_login(page: Page, live_server):
     replacement = PublicWorkoutLoginToken.objects.create(
         account=account, expires_at=timezone.now() + timedelta(hours=1),
     )
-    page.goto(f'{live_server.url}/treinos/login?token={replacement.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={replacement.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=15000)
     session = PublicWorkoutTrainingSession.objects.get(account=account)
@@ -716,7 +718,7 @@ def test_two_tabs_drain_one_local_queue_without_duplicate_top(page: Page, live_s
     from public_workouts.models import PublicWorkoutLoadLog, PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     second = page.context.new_page()
     second.goto(f'{live_server.url}/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
@@ -750,7 +752,7 @@ def test_account_switch_does_not_send_queued_sets_to_another_student(page: Page,
     account, token = _prepare_guided_student()
     other = PublicWorkoutAccount.objects.create(email=_OTHER_EMAIL)
     PublicWorkoutSubscription.objects.create(account=other, plan_slug='bruno')
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)
