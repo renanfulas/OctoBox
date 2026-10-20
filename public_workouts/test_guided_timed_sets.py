@@ -134,6 +134,35 @@ class TimedSetRecordingTest(TestCase):
         self.assertEqual(recorded[0]['duration_seconds'], 45)
         self.assertEqual(PublicWorkoutTrainingSet.objects.get().duration_seconds, 45)
 
+    def test_api_rejects_bad_seconds_and_missing_time_then_completes(self):
+        started = self.client.post(self.url, data=json.dumps({
+            'action': 'start', 'day_id': 'seg', 'start_key': str(uuid.uuid4()),
+            'program_version': self.program.version,
+        }), content_type='application/json')
+        session_id = started.json()['session_id']
+        base = {
+            'action': 'set', 'session_id': session_id, 'movement_slug': 'forearm-plank',
+            'movement_index': 0, 'set_number': 1, 'set_role': 'top_set',
+            'weight_kg': '', 'reps': '', 'rir': '',
+        }
+
+        def post(body):
+            return self.client.post(self.url, data=json.dumps(body), content_type='application/json')
+
+        # Tempo booleano ou não numérico: payload inválido, nem chega na regra.
+        for bad in (True, 'abc'):
+            with self.subTest(duration=bad):
+                response = post({**base, 'duration_seconds': bad})
+                self.assertEqual((response.status_code, response.json()['error']), (400, 'serie invalida'))
+        # Série por tempo sem o tempo: a regra do servidor recusa com a mensagem certa.
+        response = post({**base, 'duration_seconds': ''})
+        self.assertEqual((response.status_code, response.json()['error']), (400, 'informe o tempo da série'))
+        self.assertEqual(post({**base, 'duration_seconds': 45}).status_code, 200)
+        # A etapa pede 2 séries: com 1 feita, o treino encerra como parcial e devolve o tempo.
+        completed = post({'action': 'partial', 'session_id': session_id})
+        self.assertEqual(completed.status_code, 200, completed.content)
+        self.assertEqual(completed.json()['recorded'][0]['duration_seconds'], 45)
+
     def test_timed_set_cannot_be_corrected_as_load(self):
         session = start_session(account_id=self.account.pk, plan_slug='prancha', day_id='seg')
         self._record(session, duration_seconds=45)
