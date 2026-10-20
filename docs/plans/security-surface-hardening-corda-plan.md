@@ -58,11 +58,10 @@ Ao mesmo tempo, a repassada recente mostrou que a casa ainda tem algumas portas 
 
 ### Fotografia atual dos achados mais importantes
 
-1. `RAG` de projeto com busca e resposta acessiveis para qualquer usuario autenticado
-2. `Mapa do Sistema` acessivel para qualquer usuario autenticado, expondo rotas, ownership e estrutura interna
-3. endpoint de bootstrap interno `debug/init-system/` com `migrate` e criacao de superuser usando credencial hardcoded
-4. endpoints financeiros da API v1 confiando em `LoginRequiredMixin` onde deveria existir autorizacao por papel e por recurso
-5. autocomplete de alunos expondo PII demais para uma fronteira de autorizacao fraca
+1. `RAG` e `Mapa do Sistema` agora exigem papel Owner ou DEV (busca, resposta, health e mapa)
+2. endpoint web `debug/init-system/` removido do roteamento e o modulo de bootstrap removido
+3. endpoints financeiros exigem papel por operacao; freeze permite Owner/Manager e link de pagamento Owner/Manager/Recepção
+4. autocomplete de alunos exige papel operacional e deixou de retornar telefone, nascimento e CPF
 6. retorno de `str(exc)` em bordas sensiveis
 7. `RoleRequiredMixin` despejando cookies e headers em arquivo local ao negar permissao
 8. allowlist de IP em endpoint tokenizado lendo `X-Forwarded-For` diretamente, sem a mesma cadeia de proxy confiavel do middleware central
@@ -212,7 +211,7 @@ Responsavel por:
 
 Alvos imediatos:
 
-1. `api/v1/internal_views.py`
+1. bootstrap web removido; conferir ausência da rota em `api/v1/urls.py`
 2. `guide/views.py`
 3. `api/v1/views.py`
 
@@ -227,8 +226,7 @@ Responsavel por:
 Alvos imediatos:
 
 1. `access/permissions/mixins.py`
-2. `api/v1/internal_views.py`
-3. `api/v1/finance_views.py`
+2. `api/v1/finance_views.py`
 
 #### 4. Fronteira de anti-exfiltracao e anti-abuse
 
@@ -274,21 +272,28 @@ Criterio de pronto:
 
 ### Onda 1 - Fechar o corredor proibido
 
+Estado: concluída no código; coberta por teste de que `/api/v1/debug/init-system/`
+não resolve no runtime web. O bootstrap agora deve ser executado apenas por comando
+operacional autenticado fora da aplicação web.
+
 Objetivo:
 
 1. eliminar ou neutralizar a superficie de bootstrap inseguro
 
 Entregas:
 
-1. remover `debug/init-system/` do runtime ou protegê-lo de forma operacionalmente segura e temporaria
-2. eliminar credenciais hardcoded e segredos em query string
+1. manter `debug/init-system/` ausente do runtime web
+2. manter credenciais de bootstrap fora de query strings e handlers HTTP
 3. revisar manifesto e rotas para garantir que a superficie sensivel nao fique anunciada sem necessidade
 
 Criterio de pronto:
 
-1. nao existe mais rota capaz de rodar `migrate` e criar superuser por chamada HTTP simples
+1. nao existe rota capaz de rodar `migrate` e criar superuser por chamada HTTP
 
 ### Onda 2 - Fechar leitura privilegiada
+
+Estado: concluída para RAG (health, busca e resposta) e Mapa do Sistema. As quatro
+superfícies exigem Owner/DEV; os testes cobrem usuário anônimo e Coach sem acesso.
 
 Objetivo:
 
@@ -307,6 +312,11 @@ Criterio de pronto:
 
 ### Onda 3 - Fechar mutacao indevida
 
+Estado: autorização por papel aplicada nas rotas financeiras; Owner/Manager podem
+congelar matrícula e Owner/Manager/Recepção podem gerar link. O escopo dos objetos
+é o tenant ativo, reforçado pelo schema-per-tenant. Auditoria específica de tentativa
+negada, congelamento e criação de checkout ainda precisa ser fechada.
+
 Objetivo:
 
 1. impedir BOLA/IDOR nas operacoes financeiras
@@ -323,6 +333,9 @@ Criterio de pronto:
 1. estar logado deixa de ser suficiente para agir em pagamento ou aluno arbitrario
 
 ### Onda 4 - Reduzir exfiltracao e enumeração
+
+Estado: autocomplete agora exige papel de staff e retorna somente id, nome, status e
+rota. Revisão mais ampla de enumeração e exfiltração permanece em aberto.
 
 Objetivo:
 

@@ -41,7 +41,8 @@ _REQUIRED_TABLES = [
     'boxcore_payment',
 ]
 
-# Groups obrigatórios em cada tenant
+# Grupos globais obrigatórios; no schema isolado, a validação só passa depois
+# de aplicar as migrations compartilhadas e executar bootstrap_roles.
 _REQUIRED_GROUPS = ['Owner', 'Manager', 'Coach', 'Recepcao']
 
 
@@ -51,10 +52,16 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--slug', required=True, help='Slug do Box a testar.')
         parser.add_argument('--verbose', action='store_true', help='Mostra checks que passaram.')
+        parser.add_argument(
+            '--schema-only',
+            action='store_true',
+            help='Valida o schema restaurado isoladamente, sem exigir metadados do control plane.',
+        )
 
     def handle(self, *args, **options):
         slug = options['slug'].strip()
         verbose = options['verbose']
+        schema_only = options['schema_only']
         schema_name = f'box_{slug}'
 
         self.stdout.write(f'smoke_test_tenant: slug={slug!r} schema={schema_name!r}')
@@ -63,18 +70,19 @@ class Command(BaseCommand):
         failures = []
         passes = []
 
-        # C1: Box existe em public
-        try:
-            from control.models import Box
-            box = Box.objects.filter(slug=slug).first()
-            if box is None:
-                failures.append(f'C1: Box slug={slug!r} nao existe em control_box.')
-            elif box.status != Box.Status.ACTIVE:
-                failures.append(f'C1: Box slug={slug!r} tem status={box.status!r}, esperado ACTIVE.')
-            else:
-                passes.append(f'C1: Box {slug!r} ACTIVE.')
-        except Exception as exc:
-            failures.append(f'C1: erro ao consultar Box — {exc}')
+        if not schema_only:
+            # C1: Box existe em public
+            try:
+                from control.models import Box
+                box = Box.objects.filter(slug=slug).first()
+                if box is None:
+                    failures.append(f'C1: Box slug={slug!r} nao existe em control_box.')
+                elif box.status != Box.Status.ACTIVE:
+                    failures.append(f'C1: Box slug={slug!r} tem status={box.status!r}, esperado ACTIVE.')
+                else:
+                    passes.append(f'C1: Box {slug!r} ACTIVE.')
+            except Exception as exc:
+                failures.append(f'C1: erro ao consultar Box — {exc}')
 
         # C2: Schema existe no Postgres
         try:
@@ -146,60 +154,63 @@ class Command(BaseCommand):
         except Exception as exc:
             failures.append(f'C5: erro ao verificar MembershipPlan — {exc}')
 
-        # C6: Membership do Owner existe em public
-        try:
-            from control.models import Box, Membership
-            box_obj = Box.objects.filter(slug=slug).first()
-            if box_obj:
-                owner_membership = Membership.objects.filter(
-                    box=box_obj,
-                    role=Membership.Role.OWNER,
-                ).first()
-                if owner_membership is None:
-                    failures.append(f'C6: Nenhuma Membership OWNER para box={slug!r}.')
+        if not schema_only:
+            # C6: Membership do Owner existe em public
+            try:
+                from control.models import Box, Membership
+                box_obj = Box.objects.filter(slug=slug).first()
+                if box_obj:
+                    owner_membership = Membership.objects.filter(
+                        box=box_obj,
+                        role=Membership.Role.OWNER,
+                    ).first()
+                    if owner_membership is None:
+                        failures.append(f'C6: Nenhuma Membership OWNER para box={slug!r}.')
+                    else:
+                        passes.append(f'C6: Owner membership presente (user={owner_membership.user.username!r}).')
                 else:
-                    passes.append(f'C6: Owner membership presente (user={owner_membership.user.username!r}).')
-            else:
-                passes.append('C6: Box nao encontrado — skip (coberto por C1).')
-        except Exception as exc:
-            failures.append(f'C6: erro ao verificar Membership — {exc}')
+                    passes.append('C6: Box nao encontrado — skip (coberto por C1).')
+            except Exception as exc:
+                failures.append(f'C6: erro ao verificar Membership — {exc}')
 
-        # C7: BoxProvisioningEvent todos os steps OK
-        try:
-            from control.models import Box, BoxProvisioningEvent
-            from control.services import PROVISIONING_STEPS
-            box_obj = Box.objects.filter(slug=slug).first()
-            if box_obj:
-                ok_steps = set(
-                    BoxProvisioningEvent.objects
-                    .filter(box=box_obj, status='ok')
-                    .values_list('step', flat=True)
-                )
-                missing_steps = [s for s in PROVISIONING_STEPS if s not in ok_steps]
-                if missing_steps:
-                    failures.append(f'C7: Steps de provisioning incompletos: {missing_steps}')
+        if not schema_only:
+            # C7: BoxProvisioningEvent todos os steps OK
+            try:
+                from control.models import Box, BoxProvisioningEvent
+                from control.services import PROVISIONING_STEPS
+                box_obj = Box.objects.filter(slug=slug).first()
+                if box_obj:
+                    ok_steps = set(
+                        BoxProvisioningEvent.objects
+                        .filter(box=box_obj, status='ok')
+                        .values_list('step', flat=True)
+                    )
+                    missing_steps = [s for s in PROVISIONING_STEPS if s not in ok_steps]
+                    if missing_steps:
+                        failures.append(f'C7: Steps de provisioning incompletos: {missing_steps}')
+                    else:
+                        passes.append(f'C7: Todos os {len(PROVISIONING_STEPS)} provisioning steps OK.')
                 else:
-                    passes.append(f'C7: Todos os {len(PROVISIONING_STEPS)} provisioning steps OK.')
-            else:
-                passes.append('C7: Box nao encontrado — skip.')
-        except Exception as exc:
-            failures.append(f'C7: erro ao verificar BoxProvisioningEvent — {exc}')
+                    passes.append('C7: Box nao encontrado — skip.')
+            except Exception as exc:
+                failures.append(f'C7: erro ao verificar BoxProvisioningEvent — {exc}')
 
-        # C8: Healthcheck endpoint acessível (via Django test client)
-        try:
-            from django.test import RequestFactory
-            from api.v1.views import ApiV1HealthView
-            factory = RequestFactory()
-            request = factory.get('/api/v1/health/')
-            response = ApiV1HealthView.as_view()(request)
-            import json as _json
-            data = _json.loads(response.content)
-            if data.get('healthy') and data.get('status') == 'ok':
-                passes.append(f'C8: /api/v1/health/ retorna healthy=True, tenants_active={data.get("tenants_active")}.')
-            else:
-                failures.append(f'C8: /api/v1/health/ retornou unexpected: {data}')
-        except Exception as exc:
-            failures.append(f'C8: erro ao chamar ApiV1HealthView — {exc}')
+        if not schema_only:
+            # C8: Healthcheck endpoint acessível (via Django test client)
+            try:
+                from django.test import RequestFactory
+                from api.v1.views import ApiV1HealthView
+                factory = RequestFactory()
+                request = factory.get('/api/v1/health/')
+                response = ApiV1HealthView.as_view()(request)
+                import json as _json
+                data = _json.loads(response.content)
+                if data.get('healthy') and data.get('status') == 'ok':
+                    passes.append(f'C8: /api/v1/health/ retorna healthy=True, tenants_active={data.get("tenants_active")}.')
+                else:
+                    failures.append(f'C8: /api/v1/health/ retornou unexpected: {data}')
+            except Exception as exc:
+                failures.append(f'C8: erro ao chamar ApiV1HealthView — {exc}')
 
         # -----------------------------------------------------------------
         # Relatório final

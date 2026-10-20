@@ -316,7 +316,10 @@ def test_mobile_bottom_nav_stays_in_viewport_while_training_scrolls(page: Page, 
 
     # O teclado do guia não deve cobrir os campos nem deixar a barra sobre ele.
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
-    page.locator('[data-workout-guided-active]').evaluate('(panel) => { panel.hidden = false; }')
+    page.locator('[data-workout-guided-active]').evaluate("""(dialog) => {
+        dialog.querySelector('[data-guided-screen="exercise"]').hidden = false;
+        dialog.showModal();
+    }""")
     guided_field = page.locator('[data-workout-guided-weight]')
     guided_field.focus()
     expect(page.locator('body')).to_have_class(re.compile(r'workout-keyboard-open'))
