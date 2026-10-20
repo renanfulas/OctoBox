@@ -424,12 +424,18 @@ def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_serve
     finish_session(account_id=account.pk, plan_slug='bruno', session_id=last_week.pk, partial=True)
     token = PublicWorkoutLoginToken.objects.create(account=account, expires_at=timezone.now() + timedelta(hours=1))
 
+    page.set_viewport_size({'width': 390, 'height': 844})
     enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     weight = page.locator('[data-workout-guided-weight]')
+    plan = page.locator('[data-guided-plan]')
     # Aquecimento 1 = 40% da Top sugerida (107,5) -> 42,5 kg, já preenchido.
     expect(weight).to_have_value('42,5')
+    expect(plan).to_contain_text('Série principal hoje')
+    expect(page.locator('[data-guided-plan-from]')).to_have_text('107,5 kg')
+    expect(page.locator('[data-guided-plan-to]')).to_have_text('42,5 kg')
+    expect(page.locator('[data-guided-plan-delta]')).to_have_text('40%')
     expect(page.locator('[data-guided-weight-source]')).to_contain_text('ajuste se precisar')
     for _ in range(2):
         page.locator('[data-workout-guided-skip]').click()
@@ -437,6 +443,15 @@ def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_serve
             page.locator('[data-guided-skip-rest]').click()
     # Top: 100 x 76/67 = 113,4, teto 80% do 1RM estimado (133,3) = 106,7 -> 107,5 kg.
     expect(weight).to_have_value('107,5')
+    # O quadro conta de onde veio: semana passada 100 kg -> hoje 107,5 kg (+8%), fase da semana.
+    expect(page.locator('[data-guided-plan-from-label]')).to_have_text('Semana passada')
+    expect(page.locator('[data-guided-plan-from]')).to_have_text('100 kg')
+    expect(page.locator('[data-guided-plan-to]')).to_have_text('107,5 kg')
+    expect(page.locator('[data-guided-plan-delta]')).to_have_text('+8%')
+    expect(page.locator('[data-guided-plan-why]')).to_have_text('Semana 2 de 2 · Força-Hipertrofia · cálculo automático')
+    expect(page.locator('[data-guided-weight-source]')).to_have_text('Calculada automaticamente · ajuste se precisar')
+    if screenshot_path := os.environ.get('CURVA_LOAD_PLAN_SCREENSHOT'):
+        page.locator('[data-guided-screen="exercise"]').screenshot(path=screenshot_path)
 
 
 @pytest.mark.e2e

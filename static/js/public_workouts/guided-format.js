@@ -97,6 +97,10 @@
      carga da série anterior do mesmo papel); o que o aluno digita nunca some. */
   function weightSource(movement, series, draft) {
     if (draft.base == null && draft.weight == null) {
+      // Sem histórico neste programa: um registro basta para o app calcular as próximas semanas.
+      if (movement.loadKind === 'free' && movement.anchorKg == null && series.role === 'top_set') {
+        return { text: 'Primeira vez aqui: informe a carga que usar. Nas próximas semanas o app calcula sozinho.', reset: null };
+      }
       var canUseTop = series.top_factor != null && movement.topTargetKg == null && movement.loadKind !== 'fixed_kg';
       return {
         text: canUseTop ? 'Sem sugestão em kg · defina a Top alvo acima ou informe a carga' : 'Sem sugestão em kg · informe a carga usada',
@@ -172,11 +176,65 @@
     return Math.max(0, Math.round((value + delta) * 100) / 100);
   }
 
+  /* "Semana passada 100 kg → Hoje 107,5 kg · +8%": a conta da carga de hoje,
+     legível num relance. Datas ISO (AAAA-MM-DD) comparadas em UTC, sem fuso. */
+  function isoDays(iso) {
+    var parts = String(iso || '').split('-').map(Number);
+    return parts.length === 3 && parts.every(Number.isFinite) ? Date.UTC(parts[0], parts[1] - 1, parts[2]) / 86400000 : null;
+  }
+  function whenLabel(anchorOn, todayIso) {
+    var from = isoDays(anchorOn);
+    var to = isoDays(todayIso);
+    if (from === null || to === null || to < from) return 'Último registro';
+    var days = to - from;
+    if (days < 7) return 'Último treino';
+    if (days < 14) return 'Semana passada';
+    return 'Há ' + Math.floor(days / 7) + ' semanas';
+  }
+  function periodText(period) {
+    if (!period || !period.week) return '';
+    return 'Semana ' + period.week + (period.total ? ' de ' + period.total : '') + (period.phase ? ' · ' + period.phase : '');
+  }
+  var ANCHORED_KINDS = { phase_progressive: true, last_observed: true };
+
+  function loadPlan(movement, series, options) {
+    options = options || {};
+    if (!movement || !series || !movement.allowLoad || movement.topTargetKg != null) return null;
+    var today = toNumber(series.weight_kg);
+    if (today === null) return null;
+    var period = periodText(options.period);
+    var factor = toNumber(series.top_factor);
+    if (factor !== null && factor < 1) {
+      var top = (movement.series || []).filter(function (row) {
+        return row.role === 'top_set' && toNumber(row.weight_kg) !== null;
+      })[0];
+      if (!top) return null;
+      return {
+        fromLabel: 'Série principal hoje', fromKg: Number(top.weight_kg),
+        toLabel: 'Esta série', toKg: today, delta: Math.round(factor * 100) + '%', tone: 'derived',
+        why: period || 'Calculada pela série principal',
+      };
+    }
+    var anchor = toNumber(movement.anchorKg);
+    if (anchor === null || anchor <= 0 || !movement.anchorOn || !ANCHORED_KINDS[movement.loadKind]) return null;
+    // Multiplica antes de dividir: (107,5 / 100 - 1) * 100 dá 7,4999… em ponto flutuante.
+    var pct = Math.round((today - anchor) * 100 / anchor);
+    return {
+      fromLabel: whenLabel(movement.anchorOn, options.today), fromKg: anchor,
+      toLabel: 'Hoje', toKg: today,
+      delta: pct === 0 ? 'Mesma carga' : (pct > 0 ? '+' : '−') + Math.abs(pct) + '%',
+      tone: pct > 0 ? 'up' : (pct < 0 ? 'down' : 'same'),
+      why: movement.loadKind === 'phase_progressive'
+        ? (period ? period + ' · cálculo automático' : 'Cálculo automático pela periodização')
+        : 'Sua última carga registrada',
+    };
+  }
+
   window.CurvaGuidedFormat = {
     ROLE: ROLE, decimal: decimal, kg: kg, setLabel: setLabel, setShortLabel: setShortLabel,
     repsText: repsText, metaText: metaText, loadSource: loadSource, weightSource: weightSource,
     ctaText: ctaText, valueText: valueText, rirText: rirText, clock: clock,
     spokenDuration: spokenDuration, parseWeight: parseWeight, parseReps: parseReps,
-    stepWeight: stepWeight,
+    stepWeight: stepWeight, loadPlan: loadPlan, whenLabel: whenLabel,
   };
 }());

@@ -81,16 +81,22 @@ class GuidedLoadProgressionTest(TestCase):
     def _publish(self, **kwargs):
         self.program = publish_program(slug=_SLUG, payload=_program_payload(**kwargs))
 
-    def _bench_card(self):
+    def _page(self):
+        return self.client.get(f'/renan/{_SLUG}').content.decode()
+
+    def _bench_card(self, html=None):
         """O que a página entrega ao guiado: kg por série e a origem da sugestão."""
-        html = self.client.get(f'/renan/{_SLUG}').content.decode()
+        series, _anchor, kind = self._bench_card_with_anchor(html)
+        return series, kind
+
+    def _bench_card_with_anchor(self, html=None):
         match = re.search(
-            r'data-guided-series="([^"]*)" data-movement-slug="' + _BENCH + r'"[^>]*data-load-kind="([^"]*)"',
-            html,
+            r'data-guided-series="([^"]*)" data-load-anchor="([^"]*)" data-movement-slug="' + _BENCH
+            + r'"[^>]*data-load-kind="([^"]*)"',
+            html or self._page(),
         )
         self.assertIsNotNone(match, 'cartão do supino não encontrado na página do aluno')
-        series = json.loads(unescape(match.group(1)))
-        return series, match.group(2)
+        return json.loads(unescape(match.group(1))), json.loads(unescape(match.group(2))), match.group(3)
 
     def _top_kg(self):
         series, kind = self._bench_card()
@@ -163,6 +169,20 @@ class GuidedLoadProgressionTest(TestCase):
         # de Volume (72% do 1RM estimado de 133,3 = 96) não corta para 95.
         with freeze_time('2026-01-08 12:00'):
             self.assertEqual(self._top_kg(), (100.0, 'phase_progressive'))
+
+    def test_page_hands_the_guided_screen_last_week_load_and_this_week_phase(self):
+        """Dados do quadro "Semana passada 100 kg → Hoje 107,5 kg" e da linha da fase."""
+        self._publish()
+        with freeze_time(_WEEK_1):
+            _series, anchor, _kind = self._bench_card_with_anchor()
+            self.assertEqual(anchor, {'kg': None, 'on': None})
+            self._record_top_through_guided(weight=100, reps=8, rir=2)
+        with freeze_time(_WEEK_2):
+            html = self._page()
+            series, anchor, kind = self._bench_card_with_anchor(html)
+            self.assertEqual(anchor, {'kg': 100.0, 'on': '2026-01-06'})
+            self.assertEqual((series[_TOP_SET_NUMBER - 1]['weight_kg'], kind), (107.5, 'phase_progressive'))
+            self.assertIn('data-period-week="2" data-period-total="4" data-period-phase="Força-Hipertrofia"', html)
 
     def test_newest_guided_load_is_the_anchor_for_the_following_week(self):
         self._publish()

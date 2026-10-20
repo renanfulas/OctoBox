@@ -192,3 +192,52 @@ test('pular descanso não dispara o fim e limpa o armazenamento', () => {
   clock.advance(3000);
   assert.equal(ended, 1);
 });
+
+test('quadro da carga mostra semana passada → hoje com a variação da periodização', () => {
+  const series = [
+    { role: 'warmup', weight_kg: 10, top_factor: 0.4 },
+    { role: 'top_set', weight_kg: 24, top_factor: 1 },
+  ];
+  const movement = { allowLoad: true, loadKind: 'phase_progressive', anchorKg: 20, anchorOn: '2026-01-06', series };
+  const period = { week: 3, total: 4, phase: 'Força-Hipertrofia' };
+  const plan = format.loadPlan(movement, series[1], { period, today: '2026-01-13' });
+  assert.deepEqual(
+    [plan.fromLabel, plan.fromKg, plan.toLabel, plan.toKg, plan.delta, plan.tone],
+    ['Semana passada', 20, 'Hoje', 24, '+20%', 'up'],
+  );
+  assert.equal(plan.why, 'Semana 3 de 4 · Força-Hipertrofia · cálculo automático');
+
+  // Aquecimento: a conta parte da série principal de hoje.
+  const warm = format.loadPlan(movement, series[0], { period, today: '2026-01-13' });
+  assert.deepEqual([warm.fromLabel, warm.fromKg, warm.toLabel, warm.toKg, warm.delta], ['Série principal hoje', 24, 'Esta série', 10, '40%']);
+
+  const deload = format.loadPlan({ ...movement, anchorKg: 30 }, series[1], { period, today: '2026-01-13' });
+  assert.deepEqual([deload.delta, deload.tone], ['−20%', 'down']);
+  const same = format.loadPlan({ ...movement, anchorKg: 24 }, series[1], { period, today: '2026-01-08' });
+  assert.deepEqual([same.fromLabel, same.delta, same.tone], ['Último treino', 'Mesma carga', 'same']);
+});
+
+test('quadro some sem âncora, com Top alvo do aluno ou sem registro de carga', () => {
+  const top = { role: 'top_set', weight_kg: 24, top_factor: 1 };
+  const base = { allowLoad: true, loadKind: 'phase_progressive', anchorKg: 20, anchorOn: '2026-01-06', series: [top] };
+  assert.equal(format.loadPlan({ ...base, anchorKg: null }, top, {}), null);
+  assert.equal(format.loadPlan({ ...base, topTargetKg: 30 }, top, {}), null);
+  assert.equal(format.loadPlan({ ...base, allowLoad: false }, top, {}), null);
+  assert.equal(format.loadPlan({ ...base, loadKind: 'percentage' }, top, {}), null);
+  assert.equal(format.loadPlan(base, { role: 'top_set', weight_kg: null }, {}), null);
+  assert.equal(format.whenLabel('2026-01-06', '2026-01-27'), 'Há 3 semanas');
+});
+
+test('primeira vez no programa explica que um registro basta para as próximas semanas', () => {
+  const first = { allowLoad: true, loadKind: 'free', anchorKg: null, series: [{ role: 'top_set', top_factor: 1 }] };
+  assert.equal(
+    format.weightSource(first, first.series[0], { weight: null, base: null }).text,
+    'Primeira vez aqui: informe a carga que usar. Nas próximas semanas o app calcula sozinho.',
+  );
+});
+
+test('variação arredonda certo em kg com meio ponto (100 → 107,5 = +8%)', () => {
+  const top = { role: 'top_set', weight_kg: 107.5, top_factor: 1 };
+  const movement = { allowLoad: true, loadKind: 'phase_progressive', anchorKg: 100, anchorOn: '2026-01-06', series: [top] };
+  assert.equal(format.loadPlan(movement, top, { today: '2026-01-13' }).delta, '+8%');
+});

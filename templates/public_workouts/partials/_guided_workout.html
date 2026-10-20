@@ -5,7 +5,7 @@ O conflito de fila fica aqui porque precisa continuar visível com o modo foco f
 data-rest-alert-url só com push verificado: o aviso do fim do descanso vai para
 este aparelho inscrito (guided-rest-alert.js).
 {% endcomment %}
-<section class="workout-guided" data-workout-guided data-session-url="{% url 'public-workout-session' plan_slug=plan_slug %}" data-program-version="{{ active_program_version|default:'' }}" data-account-scope="{{ guided_account_scope }}"{% if push_configured and push_identity_verified %} data-rest-alert-url="{% url 'public-workout-push-rest' plan_slug=plan_slug %}"{% endif %}>
+<section class="workout-guided" data-workout-guided data-session-url="{% url 'public-workout-session' plan_slug=plan_slug %}" data-program-version="{{ active_program_version|default:'' }}"{% if phase_banner.visible %} data-period-week="{{ phase_banner.week_number }}" data-period-total="{{ phase_banner.total_weeks }}" data-period-phase="{{ phase_banner.phase_label }}"{% endif %} data-account-scope="{{ guided_account_scope }}"{% if push_configured and push_identity_verified %} data-rest-alert-url="{% url 'public-workout-push-rest' plan_slug=plan_slug %}"{% endif %}>
   <div class="workout-guided__intro">
     <div class="workout-guided__copy">
       <h2 class="workout-guided__title" data-guided-launch-title>Treino guiado</h2>
