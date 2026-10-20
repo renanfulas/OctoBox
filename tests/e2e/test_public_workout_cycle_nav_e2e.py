@@ -318,9 +318,10 @@ def test_mobile_bottom_nav_stays_in_viewport_while_training_scrolls(page: Page, 
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     # Desde o modo foco (#333) o guia é um <dialog> fechado com a tela do
     # exercício oculta; sem abri-lo o campo não é focável.
-    page.locator('[data-guided-focus]').evaluate(
-        '(dialog) => { dialog.show(); '
-        'dialog.querySelector(\'[data-guided-screen="exercise"]\').hidden = false; }')
+    page.locator('[data-guided-focus]').evaluate("""(dialog) => {
+        dialog.querySelector('[data-guided-screen="exercise"]').hidden = false;
+        dialog.showModal();
+    }""")
     guided_field = page.locator('[data-workout-guided-weight]')
     guided_field.focus()
     expect(page.locator('body')).to_have_class(re.compile(r'workout-keyboard-open'))

@@ -20,6 +20,8 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.urls import reverse
 from django.views import View
+from access.permissions.mixins import RoleRequiredMixin
+from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 
 from shared_support.box_runtime import (
     get_box_runtime_namespace,
@@ -34,14 +36,6 @@ from student_identity.resend_webhooks import (
 from students.models import Student
 
 
-def _mask_cpf(cpf: str) -> str:
-    """Retorna CPF mascarado como ***.XXX.***-** para exibição em autocomplete."""
-    digits = ''.join(c for c in (cpf or '') if c.isdigit())
-    if len(digits) != 11:
-        return ''
-    return f'***.{digits[3:6]}.***-**'
-
-
 class ApiV1ManifestView(View):
     def get(self, request, *args, **kwargs):
         return JsonResponse(
@@ -53,16 +47,11 @@ class ApiV1ManifestView(View):
                     'student_autocomplete': reverse('api-v1-student-autocomplete'),
                     'whatsapp_poll_webhook': reverse('api-v1-whatsapp-poll-webhook'),
                     'student_invitation_resend_webhook': reverse('api-v1-resend-student-invitations-webhook'),
-                    'project_rag_health': reverse('api-v1-project-rag-health'),
-                    'project_rag_search': reverse('api-v1-project-rag-search'),
-                    'project_rag_answer': reverse('api-v1-project-rag-answer'),
-                    'project_rag_reindex': reverse('api-v1-project-rag-reindex'),
                 },
                 'scope': [
                     'foundation',
                     'mobile-ready-boundary',
                     'integration-ready-boundary',
-                    'internal-project-rag',
                 ],
             }
         )
@@ -124,8 +113,10 @@ class ApiV1TenantHealthView(LoginRequiredMixin, View):
         )
 
 
-class StudentAutocompleteView(LoginRequiredMixin, View):
+class StudentAutocompleteView(LoginRequiredMixin, RoleRequiredMixin, View):
     """Retorna ate 10 alunos cujo nome, telefone ou CPF contem o termo digitado."""
+
+    allowed_roles = (ROLE_OWNER, ROLE_DEV, ROLE_MANAGER, ROLE_RECEPTION, ROLE_COACH)
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get('q', '').strip()
@@ -149,12 +140,9 @@ class StudentAutocompleteView(LoginRequiredMixin, View):
             {
                 'id': student.id,
                 'name': student.full_name,
-                'phone': student.phone,
                 'status': student.get_status_display(),
                 'status_raw': student.status,
                 'url': reverse('student-quick-update', args=[student.id]),
-                'birth_date': student.birth_date.strftime('%d/%m/%Y') if student.birth_date else None,
-                'cpf_masked': _mask_cpf(student.cpf),
             }
             for student in students
         ]
