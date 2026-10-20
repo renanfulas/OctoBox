@@ -81,7 +81,7 @@ def start_session(*, account_id, plan_slug, day_id, start_key=None, expected_pro
 
 @transaction.atomic
 def record_set(*, account_id, plan_slug, session_id, movement_index, set_number,
-               movement_slug, role, weight, reps, rir):
+               movement_slug, role, weight, reps, rir, duration_seconds=None):
     session = PublicWorkoutTrainingSession.objects.select_for_update().filter(
         pk=session_id, account_id=account_id, plan_slug=plan_slug,
     ).first()
@@ -101,24 +101,32 @@ def record_set(*, account_id, plan_slug, session_id, movement_index, set_number,
     prescription = movement['series'][0] if movement['freeform'] else movement['series'][set_number - 1]
     if role != prescription['role']:
         raise TrainingSessionInvalid('papel da série diverge da prescrição')
+    timed = prescription.get('hold_seconds') is not None
+    if timed:
+        # Isometria: o fato da série é o tempo sustentado, não carga nem repetições.
+        if duration_seconds is None:
+            raise TrainingSessionInvalid('informe o tempo da série')
+    elif duration_seconds is not None:
+        raise TrainingSessionInvalid('esta série não é por tempo')
     if prescription['reps'] is not None and reps is None:
         raise TrainingSessionInvalid('informe as repetições realizadas nesta série')
-    if weight is None and reps is None and (movement['allow_load_registration'] or prescription['reps'] is not None):
+    if not timed and weight is None and reps is None and (movement['allow_load_registration'] or prescription['reps'] is not None):
         raise TrainingSessionInvalid('informe a carga ou as repetições realizadas')
     existing = PublicWorkoutTrainingSet.objects.filter(
         session=session, movement_index=movement_index, set_number=set_number,
     ).first()
     if existing is not None:
-        if (existing.status, existing.movement_slug, existing.set_role, existing.weight_kg, existing.reps, existing.rir) != (
-            'performed',
-            movement_slug, role, weight, reps, rir,
-        ):
+        if (
+            existing.status, existing.movement_slug, existing.set_role, existing.weight_kg,
+            existing.reps, existing.rir, existing.duration_seconds,
+        ) != ('performed', movement_slug, role, weight, reps, rir, duration_seconds):
             raise TrainingSessionConflict('série já registrada com outros valores')
         return existing, False
 
     # Cada Top efetivamente registrada pode ser a última quando a faixa é opcional.
+    # Série por tempo não vira registro de carga (não há kg para a curva nem para a fase).
     load_log = None
-    if movement['allow_load_registration'] and role == 'top_set':
+    if movement['allow_load_registration'] and role == 'top_set' and not timed:
         from .services import record_load
 
         load_result = record_load(
@@ -132,7 +140,7 @@ def record_set(*, account_id, plan_slug, session_id, movement_index, set_number,
     record = PublicWorkoutTrainingSet.objects.create(
         session=session, movement_index=movement_index, set_number=set_number,
         movement_slug=movement_slug, set_role=role, weight_kg=weight,
-        reps=reps, rir=rir, load_log=load_log,
+        reps=reps, rir=rir, duration_seconds=duration_seconds, load_log=load_log,
         stage_id=prescription.get('stage_id', ''),
         stage_ordinal=prescription.get('stage_ordinal'),
     )

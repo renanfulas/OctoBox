@@ -33,10 +33,13 @@
       if (payload.movement_index == null) return;
       var setKey = payload.movement_index + ':' + payload.set_number;
       if (payload.action === 'set' || payload.action === 'correct') {
-        recorded.set(setKey, {
+        var entry = {
           movement_index: payload.movement_index, set_number: payload.set_number,
           weight_kg: blank(payload.weight_kg), reps: blank(payload.reps), rir: blank(payload.rir),
-        });
+        };
+        // Isometria: o tempo sustentado só existe em série por tempo.
+        if (blank(payload.duration_seconds) !== null) entry.duration_seconds = blank(payload.duration_seconds);
+        recorded.set(setKey, entry);
       }
       if (payload.action === 'skip') skipped.add(setKey);
       if (payload.action === 'unskip') skipped.delete(setKey);

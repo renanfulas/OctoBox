@@ -35,6 +35,7 @@ def _session_body(session):
                 'movement_index': row.movement_index, 'set_number': row.set_number,
                 'weight_kg': str(row.weight_kg) if row.weight_kg is not None else None,
                 'reps': row.reps, 'rir': str(row.rir) if row.rir is not None else None,
+                'duration_seconds': row.duration_seconds,
             }
             for row in rows if row.status == 'performed'
         ],
@@ -111,7 +112,7 @@ class PublicWorkoutSessionView(View):
             return JsonResponse({'ok': True, 'created': created, **_session_body(session)})
         if action == 'set':
             try:
-                if any(isinstance(data.get(field), bool) for field in ('movement_index', 'set_number', 'reps', 'weight_kg', 'rir')):
+                if any(isinstance(data.get(field), bool) for field in ('movement_index', 'set_number', 'reps', 'weight_kg', 'rir', 'duration_seconds')):
                     raise ValueError('boolean não é número de série')
                 session_id = uuid.UUID(str(data.get('session_id')))
                 movement_index = int(data.get('movement_index'))
@@ -119,6 +120,7 @@ class PublicWorkoutSessionView(View):
                 reps = int(data.get('reps')) if data.get('reps') not in (None, '') else None
                 weight = Decimal(str(data.get('weight_kg'))) if data.get('weight_kg') not in (None, '') else None
                 rir = Decimal(str(data.get('rir'))) if data.get('rir') not in (None, '') else None
+                duration = int(data.get('duration_seconds')) if data.get('duration_seconds') not in (None, '') else None
                 movement_slug = str(data.get('movement_slug') or '')
                 role = str(data.get('set_role') or '')
             except (ValueError, TypeError, InvalidOperation):
@@ -131,6 +133,7 @@ class PublicWorkoutSessionView(View):
                 or (reps is not None and not 1 <= reps <= 999)
                 or (weight is not None and (not weight.is_finite() or weight < 0 or weight > Decimal('9999.99')))
                 or (rir is not None and (not rir.is_finite() or rir < 0 or rir > 10))
+                or (duration is not None and not 1 <= duration <= 3600)
             ):
                 return JsonResponse({'error': 'serie invalida'}, status=400)
             if weight is not None:
@@ -146,6 +149,7 @@ class PublicWorkoutSessionView(View):
                     account_id=account_id, plan_slug=plan.slug, session_id=session_id,
                     movement_index=movement_index, set_number=set_number,
                     movement_slug=movement_slug, role=role, weight=weight, reps=reps, rir=rir,
+                    duration_seconds=duration,
                 )
             except (TrainingSessionInvalid, LoadValueError, ValueError) as exc:
                 return JsonResponse({'error': str(exc)}, status=400)

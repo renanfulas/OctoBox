@@ -366,3 +366,14 @@ test('applyQueued dobra séries, correções e pulos ainda na fila sobre a sess�
   assert.equal(merged.session_id, 'server');
   assert.equal(session.recorded.length, 1, 'não altera a sessão recebida');
 });
+
+test('applyQueued preserva o tempo da isometria ainda na fila', () => {
+  const session = sandbox.window.CurvaGuidedSync.applyQueued({ recorded: [], skipped: [] }, [{
+    sequence: 1, created_at: 1, payload: {
+      action: 'set', movement_index: 2, set_number: 1, weight_kg: '', reps: '', rir: '', duration_seconds: '45',
+    },
+  }]);
+  assert.deepEqual(JSON.parse(JSON.stringify(session.recorded)), [{
+    movement_index: 2, set_number: 1, weight_kg: null, reps: null, rir: null, duration_seconds: '45',
+  }]);
+});

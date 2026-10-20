@@ -54,6 +54,9 @@
     var live = q('[data-guided-live]');
     var toastEl = q('[data-guided-toast]');
     var soundSwitch = q('[data-guided-sound]');
+    var timeInput = q('[data-guided-time]');
+    var holdRing = Ring.create(q('[data-guided-ring="hold"]'), { reducedMotion: reduced });
+    var holdRun = null;
 
     /* ---------- plataforma ---------- */
     // Ligado por padrão: só fica mudo para quem desligou no painel ('0').
@@ -134,6 +137,7 @@
     }
     function close(fromHistory) {
       stopCountdown();
+      if (holdRun) holdRun.cancel();
       closeSheets();
       hideToast();
       if (dialog.open) dialog.close();
@@ -165,7 +169,7 @@
       var changed = name !== current;
       current = name;
       Object.keys(screens).forEach(function (key) { screens[key].hidden = key !== name; });
-      var withChrome = name !== 'countdown' && name !== 'finished';
+      var withChrome = name !== 'countdown' && name !== 'finished' && name !== 'hold';
       chrome.hidden = !withChrome;
       progress.hidden = !withChrome || name === 'summary';
       return changed;
@@ -180,7 +184,7 @@
       model = vm;
       open();
       var changed = showScreen(name);
-      if (name !== 'countdown' && name !== 'finished') paintProgress(vm);
+      if (name !== 'countdown' && name !== 'finished' && name !== 'hold') paintProgress(vm);
       if (name === 'exercise') paintExercise(vm);
       else if (name === 'rest') paintRest(vm);
       else if (name === 'review') paintReview(vm);
@@ -254,6 +258,9 @@
         key: step.movementIndex + ':' + step.setNumber, weight: base, base: base, fromPrevious: fromPrevious,
         suggestion: suggestion,
         reps: null, rir: null, invalidWeight: false, invalidReps: false, repsRequired: series.reps != null,
+        // Isometria: o campo de tempo já vem com a meta (o alvo de cima da faixa).
+        timed: format.isTimed(series), invalidDuration: false,
+        duration: format.isTimed(series) ? Number(series.hold_seconds_max || series.hold_seconds) : null,
       };
     }
     /* A carga alvo da Top recalcula a sugestão da mesma série: o campo acompanha
@@ -285,6 +292,7 @@
     function writeDraftInputs() {
       weightInput.value = draft.weight == null ? '' : format.decimal(draft.weight);
       repsInput.value = draft.reps == null ? '' : String(draft.reps);
+      timeInput.value = draft.duration == null ? '' : String(draft.duration);
     }
     function paintDraft() {
       if (!model || !model.current || !draft) return;
@@ -308,6 +316,11 @@
       errorLine.hidden = !text;
     }
 
+    function timedKey(vm, setKey) {
+      var parts = String(setKey || '').split(':').map(Number);
+      var movement = vm.movements[parts[0]];
+      return !!movement && format.isTimed(movement.series[parts[1] - 1]);
+    }
     function paintExercise(vm) {
       var step = vm.current;
       var section = screens.exercise;
@@ -315,8 +328,14 @@
       setTitle(section, movement);
       q('[data-guided-set-label]', section).textContent = format.setLabel(movement, step.series, step.setNumber);
       q('[data-guided-meta]', section).textContent = format.metaText(movement, step.series);
-      q('[data-guided-weight-field]', section).hidden = !movement.allowLoad;
-      q('[data-guided-no-load]', section).hidden = movement.allowLoad;
+      var timed = format.isTimed(step.series);
+      q('[data-guided-weight-field]', section).hidden = !movement.allowLoad || timed;
+      q('[data-guided-no-load]', section).hidden = movement.allowLoad || timed;
+      q('[data-guided-time-field]', section).hidden = !timed;
+      q('[data-guided-reps-field]', section).hidden = timed;
+      q('[data-guided-time-direct]', section).hidden = !timed;
+      q('[data-guided-time-target]', section).textContent = timed ? 'meta ' + format.holdText(step.series) : '';
+      effort.hidden = timed;
       q('[data-guided-reps-target]', section).textContent = step.series.reps != null ? 'meta ' + format.repsText(step.series) : '';
       var stepKey = step.movementIndex + ':' + step.setNumber;
       if (!draft || draft.key !== stepKey) {
@@ -328,13 +347,27 @@
         followSuggestion(step);
       }
       paintTopTarget(vm);
-      q('[data-guided-correct-last]', section).hidden = !vm.lastRecordedKey;
+      q('[data-guided-correct-last]', section).hidden = !vm.lastRecordedKey || timedKey(vm, vm.lastRecordedKey);
       paintDraft();
     }
 
+    function validDuration() {
+      if (draft.invalidDuration || draft.duration == null) {
+        setError('Informe o tempo em segundos (1 a 3600).');
+        timeInput.focus();
+        return false;
+      }
+      setError('');
+      return true;
+    }
     function submitSet() {
       if (!model || !model.current || !draft) return;
       var movement = model.current.movement;
+      if (draft.timed) {
+        if (!validDuration()) return;
+        emit('hold', { key: draft.key, seconds: draft.duration });
+        return;
+      }
       if (draft.invalidWeight) { setError('Confira a carga: use números com até duas casas decimais.'); weightInput.focus(); return; }
       if (draft.invalidReps) { setError('Repetições precisam ser um número inteiro.'); repsInput.focus(); return; }
       if (draft.repsRequired && draft.reps == null) { setError('Informe quantas repetições você fez.'); repsInput.focus(); return; }
@@ -347,6 +380,13 @@
       });
     }
 
+    timeInput.addEventListener('input', function () {
+      if (!draft) return;
+      var parsed = format.parseSeconds(timeInput.value);
+      draft.invalidDuration = parsed === undefined;
+      draft.duration = parsed === undefined ? null : parsed;
+      paintDraft();
+    });
     weightInput.addEventListener('input', function () {
       if (!draft) return;
       var parsed = format.parseWeight(weightInput.value);
@@ -377,6 +417,16 @@
     });
 
     function stepValue(kind, direction) {
+      if (kind === 'time') {
+        if (!draft || !draft.timed) return;
+        var currentSeconds = draft.duration == null ? 0 : draft.duration;
+        draft.duration = Math.min(3600, Math.max(5, Math.round((currentSeconds + direction * 5) / 5) * 5));
+        draft.invalidDuration = false;
+        setError('');
+        writeDraftInputs();
+        paintDraft();
+        return;
+      }
       if (kind === 'weight' || kind === 'reps') {
         if (!draft || !model || !model.current) return;
         var series = model.current.series;
@@ -503,22 +553,71 @@
       if (countdownRun) countdownRun.cancel();
       countdownRun = null;
     }
-    function countdown(firstLabel) {
+    function countdown(firstLabel, options) {
+      options = options || {};
       return new Promise(function (resolve) {
         open();
         showScreen('countdown');
+        q('[data-guided-first-prefix]').textContent = options.prefix || 'Primeiro:';
         q('[data-guided-first-name]').textContent = firstLabel || '';
         q('[data-guided-countdown-hint]').textContent = 'Toque para começar agora';
         countdownRing.reset();
         countdownRing.setText('3');
         focusScreen('countdown');
-        announce('Treino começa em 3 segundos');
+        announce(options.announce || 'Treino começa em 3 segundos');
         stopCountdown();
         countdownRun = Ring.countdown({
           from: 3, goHoldMs: reduced() ? 350 : 650,
           onBeat: function (number) { countdownRing.beat(number); feedback(30, 660); },
           onGo: function () { countdownRing.go(goWord); feedback(90, 990, 0.24); announce('Valendo'); },
           onDone: function (result) { countdownRun = null; resolve(result); },
+        });
+      });
+    }
+    /* Isometria: 3, 2, 1 e o cronômetro corre no anel até zerar, ou até o aluno
+       parar (registra o tempo sustentado). Cancelar volta ao exercício sem registrar. */
+    function hold(options) {
+      var total = options.seconds;
+      return countdown(options.label, { prefix: 'Segure:', announce: 'Começa em 3 segundos' }).then(function () {
+        return new Promise(function (resolve) {
+          showScreen('hold');
+          q('[data-guided-hold-name]').textContent = options.name || '';
+          q('[data-guided-hold-goal]').textContent = 'Meta ' + format.seconds(total);
+          var started = Date.now();
+          var endAt = started + total * 1000;
+          var beeped = new Set();
+          function finish(result) {
+            if (!holdRun) return;
+            window.clearInterval(holdRun.timer);
+            holdRun = null;
+            resolve(result);
+          }
+          function tick() {
+            var remainingMs = Math.max(0, endAt - Date.now());
+            var secondsLeft = Math.ceil(remainingMs / 1000);
+            holdRing.setText(format.clock(secondsLeft));
+            holdRing.showRemaining(remainingMs, total * 1000);
+            if (secondsLeft > 0 && secondsLeft <= 3 && !beeped.has(secondsLeft)) {
+              beeped.add(secondsLeft);
+              feedback(30, 660);
+            }
+            if (remainingMs > 0) return;
+            feedback(140, 990, 0.24);
+            announce('Tempo concluído');
+            finish({ seconds: total, completed: true });
+          }
+          holdRun = {
+            timer: window.setInterval(tick, 200),
+            stop: function () {
+              var held = Math.min(total, Math.max(1, Math.round((Date.now() - started) / 1000)));
+              finish({ seconds: held, completed: false });
+            },
+            cancel: function () { finish(null); },
+          };
+          holdRing.drain(total * 1000, total * 1000);
+          tick();
+          focusScreen('hold');
+          announce(format.spokenDuration(total) + ', valendo');
         });
       });
     }
@@ -763,6 +862,15 @@
       var target = event.target.closest('button, a');
       if (!target || !dialog.contains(target)) return;
       if (target.matches('[data-guided-countdown-skip]')) { if (countdownRun) countdownRun.skip(); return; }
+      if (target.matches('[data-guided-hold-stop]')) { if (holdRun) holdRun.stop(); return; }
+      if (target.matches('[data-guided-hold-cancel]')) { if (holdRun) holdRun.cancel(); return; }
+      if (target.matches('[data-guided-time-direct]')) {
+        // Fez a prancha sem o cronômetro do app: registra o tempo do campo direto.
+        if (draft && draft.timed && validDuration()) {
+          emit('record', { key: draft.key, weight: null, reps: null, rir: null, duration: draft.duration });
+        }
+        return;
+      }
       if (target.matches('[data-guided-video]')) { emit('video'); return; }
       if (target.matches('[data-guided-minimize]')) { emit('minimize'); return; }
       if (target.matches('[data-guided-open-sheet]')) { openSheet('workout'); return; }
@@ -830,6 +938,8 @@
       refresh: function (vm) { if (current && current !== 'countdown' && dialog.open) show(current, vm); else model = vm; },
       countdown: countdown,
       countdownHint: countdownHint,
+      hold: hold,
+      isHolding: function () { return !!holdRun; },
       restTick: restTick,
       restAdded: restAdded,
       restDone: restDone,
