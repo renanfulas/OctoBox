@@ -5,7 +5,8 @@
  * no horário final (worker run_public_workout_rest_alerts); "+30 s" reagenda e
  * pular ou encerrar cancela. Se a tela ainda estiver à vista perto do fim, o
  * próprio app toca o bipe e cancela o aviso antes do envio: o iOS mostra todo
- * push recebido, então é o cancelamento que evita o alerta duplo.
+ * push recebido, então é o cancelamento que evita o alerta duplo. Enquanto o
+ * aviso estiver de pé (covers), o modo foco não bipa nem vibra por cima dele.
  * Só age com este aparelho inscrito nos avisos. Rede, relógio, visibilidade e
  * inscrição são injetáveis para os testes em Node.
  */
@@ -53,7 +54,7 @@
     options = options || {};
     var noop = function () {};
     if (!options.url && !options.send) {
-      return { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop };
+      return { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop, covers: noop };
     }
     var send = options.send || browserSend(options.url);
     var endpoint = options.endpoint || browserEndpoint;
@@ -133,6 +134,11 @@
         rest = { sessionId: serverId, endAt: rest.endAt };
         return schedule(false);
       },
+      // O push deste descanso está agendado e ninguém o cancelou: o fim é avisado
+      // por ele (tela bloqueada, ou o iPhone que volta à tela depois do envio).
+      // Sem inscrição, com o agendamento recusado ou depois do cancelamento
+      // perto do fim, o aviso volta a ser o bipe do app.
+      covers: function () { return !!armed; },
     };
   }
 
