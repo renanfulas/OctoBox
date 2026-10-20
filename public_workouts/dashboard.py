@@ -165,6 +165,39 @@ def build_workout_day_selection(*, payload: dict, today: date | None = None) -> 
     }
 
 
+# Acima disto a barra do ciclo vira riscos ilegíveis no celular: fica só o
+# texto "Semana N de M", sem segmentos.
+_CYCLE_BAR_MAX_WEEKS = 16
+
+
+def build_program_week_progress(*, payload: dict, today: date | None = None) -> dict | None:
+    """Semana atual do ciclo ("Semana 3 de 8") e o estado de cada semana, pro hero da Início.
+
+    Mesma conta de `periodization.current_week_number`: semanas inteiras
+    desde `started_on`, ciclando no total (o programa se repete até o
+    treinador publicar outra versão). Com `periodization.weeks` o total é o
+    do mesociclo — o mesmo "Semana N de M" do banner de fase do Treino; sem
+    ele, `weeks` do programa. `None` sem data/total válidos ou antes do início.
+    """
+    periodization_weeks = (payload.get('periodization') or {}).get('weeks') or ()
+    total = len(periodization_weeks) or payload.get('weeks') or 0
+    started_raw = payload.get('started_on')
+    try:
+        started_on = started_raw if isinstance(started_raw, date) else date.fromisoformat(started_raw or '')
+    except (TypeError, ValueError):
+        return None
+    today = today or date.today()
+    if total < 1 or today < started_on:
+        return None
+
+    current = ((today - started_on).days // 7) % total + 1
+    segments = (
+        ['done'] * (current - 1) + ['now'] + ['next'] * (total - current)
+        if total <= _CYCLE_BAR_MAX_WEEKS else []
+    )
+    return {'current': current, 'total': total, 'segments': segments}
+
+
 def build_program_summary(payload: dict) -> dict:
     """Explicação determinística (SEM IA) do programa: o que é, pra quantos
     dias por semana foi montado, quantos exercícios tem. Contrato estável
@@ -197,6 +230,6 @@ def build_program_summary(payload: dict) -> dict:
 
 
 __all__ = [
-    'WeekDay', 'build_program_summary', 'build_week_overview', 'build_workout_day_selection',
-    'day_keyword', 'day_short_label',
+    'WeekDay', 'build_program_summary', 'build_program_week_progress', 'build_week_overview',
+    'build_workout_day_selection', 'day_keyword', 'day_short_label',
 ]

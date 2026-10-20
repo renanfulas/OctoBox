@@ -35,6 +35,17 @@ O aviso automático não foi percebido como banner no momento da chegada, embora
 
 Se qualquer etapa falhar, manter o resultado como **não homologado** e anotar o primeiro ponto de divergência (interface, permissão, inscrição, outbox, gateway ou exibição no iPhone). A outbox agora retém mensagens quando a configuração de push está ausente no momento do envio; conferir `last_error` e a cadência de retry antes de reenviar.
 
+## Aviso do fim do descanso (modo foco)
+
+Com o app fechado ou a tela bloqueada, o fim do descanso chega por push agendado no servidor ("Descanso acabou · <exercício>, série N"). Quem envia é o worker `octobox-public-workout-rest-alerts.service`, um processo longo, não a outbox de 1 minuto. Decisão e mecânica: [docs/decisions/0003-curva-rest-alert-worker.md](../decisions/0003-curva-rest-alert-worker.md).
+
+1. Aplicar a migration `public_workouts.0046_rest_alert`.
+2. Instalar e ativar o worker com `scripts/linux/install_public_workout_operations_timers.sh`. O instalador copia a unit e faz `enable` + `restart`. Os deploys (`deploy_octobox.sh`, `rollback_octobox.sh`) reiniciam o worker depois do gunicorn quando a unit existe.
+3. Conferir `systemctl status octobox-public-workout-rest-alerts` e o log `curva_rest_alert_worker_active`. Cada envio registra `curva_rest_alert_sent alert_id=… lateness_ms=…`; atraso acima de 2000 ms merece investigação.
+4. Ensaio no iPhone: com avisos ativos, registrar uma série com descanso, bloquear a tela e esperar. O aviso deve chegar no fim do descanso. No silencioso, ele só vibra. Repetir com o app à vista: só o bipe do app deve tocar, e o registro `PublicWorkoutRestAlert` da sessão fica `cancelled`.
+
+Estados de `PublicWorkoutRestAlert`: `pending` (agendado), `sending`, `sent`, `cancelled` (pulou, encerrou, app à vista ou sessão encerrada), `expired` (o worker atrasou mais de 30 s; não envia tarde) e `failed` (`last_error` traz o motivo do gateway ou `subscription-revoked`). Para diagnóstico, `python manage.py run_public_workout_rest_alerts --once` envia o que já venceu e sai. Não rodar um segundo worker contínuo: o advisory lock o deixa de reserva.
+
 ## Diagnóstico
 
 - Botão ausente: conferir a conta logada e a aba **Perfil → Aplicativo** quando os avisos já estiverem ativos. O convite em **Início** desaparece após a ativação. Ele só aparece em `/renan/<slug>` quando a conta tem uma assinatura daquele plano; sem isso, o acesso pode levar a login, pagamento pendente ou 404. Após o PR #325, a posse do link legado mostra **Entrar para ativar**, e só o login confirmado mostra **Ativar avisos**. Depois verificar `configured()` e as quatro variáveis de operação: com conta proprietária e configuração incompleta, o cartão mostra a pendência, mas não o botão. Se o HTML tem o botão e ele some no iPhone, verificar suporte a `PushManager`/`Notification` e o estado de permissão no JavaScript.

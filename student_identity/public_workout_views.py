@@ -12,8 +12,12 @@ POR QUE ELE EXISTE:
 
 PONTOS CRITICOS:
 - GET sem ?token=: mostra o formulario de pedido de link.
-- GET com ?token=: consome o token e loga (seta o cookie proprio).
-- POST: emite e envia o token pro e-mail informado.
+- GET com ?token=: so mostra "Entrar como fu•••@dominio" (scanners de
+  e-mail e previas de link fazem GET; nada pode ser consumido ali).
+- POST action=entrar_link: consome o token e loga (seta o cookie proprio).
+- POST action=entrar_codigo: o codigo de 6 digitos do mesmo e-mail, pelo
+  e-mail digitado (iPhone: o link abre no Safari, fora do app instalado).
+- POST sem action: emite e envia o token pro e-mail informado.
 - ?next=/renan/<slug> (achado real: sem isso, o aluno tinha que voltar na
   mao pro treino depois de logar): so aceita path exato de
   /renan/<slug> — ver _safe_public_workout_next. Nao usa
@@ -21,9 +25,9 @@ PONTOS CRITICOS:
   do mesmo host) de proposito: o unico destino legitimo e o proprio
   treino, entao restringir ao padrao evita qualquer superficie de
   redirecionamento aberto por construcao, nao por checagem de host.
-  Viaja em 3 saltos ate o redirect final: querystring do GET inicial ->
-  campo hidden do formulario de e-mail -> dentro do link do e-mail
-  (request_login_token) -> querystring do GET com ?token=.
+  Viaja ate o redirect final: querystring do GET inicial -> campo hidden
+  do formulario de e-mail -> dentro do link do e-mail (request_login_token)
+  -> querystring do GET com ?token= -> campo hidden da confirmacao.
 
 PublicWorkoutSubscribeView e PublicWorkoutBillingPortalView (Onda B2,
 Fatia B/item 6) moram neste mesmo arquivo: precisam da mesma sessao
@@ -112,8 +116,14 @@ logger = logging.getLogger(__name__)
 
 from .oauth_providers import GoogleOAuthProvider, OAuthProviderError
 from .public_workout_login import (
+    PublicWorkoutLoginCodeAttemptsExceeded,
     PublicWorkoutLoginRateLimitExceeded,
+    check_login_token,
+    find_login_token,
+    login_token_refusal,
+    mask_login_email,
     request_login_token,
+    verify_login_code_for_email,
     verify_login_token,
 )
 from .public_workout_oauth import build_public_workout_oauth_state, read_public_workout_oauth_state
@@ -121,6 +131,7 @@ from .public_workout_session import (
     attach_public_workout_session_cookie,
     clear_public_workout_session_cookie,
     get_public_workout_account_id_from_request,
+    get_verified_public_workout_account_id_from_request,
 )
 
 _PUBLIC_WORKOUT_GOOGLE_CALLBACK_URL_NAME = 'public-workout-oauth-google-callback'
@@ -430,7 +441,16 @@ class PublicWorkoutPrivacyView(TemplateView):
     template_name = 'public_workouts/privacy.html'
 
 
+@method_decorator(never_cache, name='dispatch')
 class PublicWorkoutLoginView(View):
+    """GET mostra o formulário ou, com ?token=, a confirmação; só o POST entra.
+
+    Scanners de e-mail e prévias de link (WhatsApp, Outlook) abrem o link
+    antes do aluno. Quando o GET consumia o token, o aluno chegava num link
+    já usado. O campo `action` separa os POSTs: entrar pelo link, entrar pelo
+    código, reenviar o link de um token vencido; sem `action`, pede link.
+    """
+
     template_name = 'treinos/login.html'
 
     def get(self, request, *args, **kwargs):
@@ -442,10 +462,33 @@ class PublicWorkoutLoginView(View):
                 'checkout_return': request.GET.get('checkout') == 'retorno',
             })
 
-        account = verify_login_token(token=token)
-        if account is None:
-            return render(request, self.template_name, {'error': 'link_invalido', 'next_url': next_url})
+        login_token = find_login_token(token)
+        if (login_token is not None
+                and get_verified_public_workout_account_id_from_request(request) == login_token.account_id):
+            # Segundo toque no mesmo e-mail, já logado neste navegador: entra
+            # direto, sem gastar o token.
+            return redirect(next_url or _resolve_default_next_for_account(login_token.account_id))
+        reason = check_login_token(login_token)
+        if reason:
+            return self._render_link_refused(request, login_token, reason, next_url)
+        return render(request, self.template_name, {
+            'confirm_token': str(login_token.token),
+            'confirm_as': mask_login_email(login_token.account.email),
+            'next_url': next_url,
+        })
 
+    def post(self, request, *args, **kwargs):
+        next_url = _safe_public_workout_next(request.POST.get('next'))
+        action = request.POST.get('action')
+        if action == 'entrar_link':
+            return self._enter_with_link(request, next_url)
+        if action == 'entrar_codigo':
+            return self._enter_with_code(request, next_url)
+        if action == 'reenviar_link':
+            return self._resend_link(request, next_url)
+        return self._send_link(request, next_url)
+
+    def _logged_in(self, request, account, next_url):
         effective_next = next_url or _resolve_default_next_for_account(account.id)
         if effective_next:
             response = redirect(effective_next)
@@ -454,9 +497,62 @@ class PublicWorkoutLoginView(View):
         attach_public_workout_session_cookie(response, account_id=account.id, identity_verified=True)
         return response
 
-    def post(self, request, *args, **kwargs):
+    def _render_link_refused(self, request, login_token, reason, next_url):
+        if reason == 'pagamento_pendente':
+            return render(request, self.template_name, {'error': 'pagamento_pendente', 'next_url': next_url})
+        context = {'error': 'link_invalido', 'next_url': next_url}
+        if login_token is not None:
+            # Quem tem o link vencido recebe outro no mesmo e-mail, sem digitá-lo.
+            context['resend_token'] = str(login_token.token)
+            context['resend_to'] = mask_login_email(login_token.account.email)
+        return render(request, self.template_name, context)
+
+    def _enter_with_link(self, request, next_url):
+        token = (request.POST.get('token') or '').strip()
+        account = verify_login_token(token=token)
+        if account is None:
+            login_token = find_login_token(token)
+            return self._render_link_refused(request, login_token, login_token_refusal(login_token), next_url)
+        return self._logged_in(request, account, next_url)
+
+    def _enter_with_code(self, request, next_url):
         email = (request.POST.get('email') or '').strip().lower()
-        next_url = _safe_public_workout_next(request.POST.get('next'))
+        token = (request.POST.get('token') or '').strip()
+        context = {'code_form': True, 'code_email': email, 'next_url': next_url}
+        if not email and token:
+            # Veio do reenvio pelo link vencido: o e-mail nunca foi para a página.
+            login_token = find_login_token(token)
+            email = login_token.account.email if login_token is not None else ''
+            context.update(code_email='', code_token=token)
+        try:
+            account = verify_login_code_for_email(
+                email=email, code=request.POST.get('code'), client_ip=_get_client_ip(request),
+            )
+        except PublicWorkoutLoginCodeAttemptsExceeded:
+            return render(request, self.template_name, {**context, 'error': 'muitas_tentativas'})
+        if account is None:
+            return render(request, self.template_name, {**context, 'error': 'codigo_invalido'})
+        return self._logged_in(request, account, next_url)
+
+    def _resend_link(self, request, next_url):
+        login_token = find_login_token((request.POST.get('token') or '').strip())
+        if login_token is None:
+            return render(request, self.template_name, {'error': 'link_invalido', 'next_url': next_url})
+        try:
+            new_token = request_login_token(
+                email=login_token.account.email, base_url=request.build_absolute_uri('/'), next_url=next_url,
+            )
+        except PublicWorkoutLoginRateLimitExceeded:
+            return render(request, self.template_name, {'error': 'muitos_pedidos', 'next_url': next_url})
+        if new_token is None:
+            return render(request, self.template_name, {'error': 'conta_nao_ativa', 'next_url': next_url})
+        return render(request, self.template_name, {
+            'sent_to': mask_login_email(login_token.account.email),
+            'code_form': True, 'code_token': str(login_token.token), 'next_url': next_url,
+        })
+
+    def _send_link(self, request, next_url):
+        email = (request.POST.get('email') or '').strip().lower()
         if not email or '@' not in email:
             return render(request, self.template_name, {'error': 'email_invalido', 'next_url': next_url})
 
@@ -469,7 +565,9 @@ class PublicWorkoutLoginView(View):
             return render(request, self.template_name, {
                 'error': 'conta_nao_ativa', 'next_url': next_url,
             })
-        return render(request, self.template_name, {'sent_to': email})
+        return render(request, self.template_name, {
+            'sent_to': email, 'code_form': True, 'code_email': email, 'next_url': next_url,
+        })
 
 
 class PublicWorkoutGoogleStartView(View):
@@ -499,7 +597,7 @@ class PublicWorkoutGoogleCallbackView(View):
     """GET /treinos/login/google/callback — troca o `code` do Google pelo
     e-mail e loga.
 
-    Espelha o GET com ?token= de PublicWorkoutLoginView: consome uma
+    Espelha o POST de confirmacao de PublicWorkoutLoginView: consome uma
     prova de identidade de uso unico (aqui, code+state do Google,
     validados pelo proprio Google e pela assinatura do state) e seta o
     mesmo cookie do corredor. A identidade Google autentica, mas nunca

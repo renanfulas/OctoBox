@@ -25,12 +25,17 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import time
+
 from django.conf import settings
 from django.core import signing
 
 PUBLIC_WORKOUT_SESSION_SALT = 'student_identity.public_workout_session'
 PUBLIC_WORKOUT_SESSION_COOKIE_NAME = 'octobox_treinos_session'
 PUBLIC_WORKOUT_SESSION_PATH = '/'
+# A validade conta da assinatura, não do último uso: sem reemitir, quem treina
+# toda semana caía no login a cada PUBLIC_WORKOUT_SESSION_COOKIE_AGE.
+PUBLIC_WORKOUT_SESSION_RENEW_AFTER_SECONDS = 7 * 24 * 60 * 60
 
 
 def get_public_workout_session_max_age() -> int:
@@ -70,6 +75,30 @@ def attach_public_workout_session_cookie(response, *, account_id: int, identity_
         path=PUBLIC_WORKOUT_SESSION_PATH,
     )
     return response
+
+
+def _signed_at(raw_value: str) -> int | None:
+    # signing.dumps grava `payload:timestamp:assinatura`, timestamp em base62.
+    try:
+        _payload, timestamp, _signature = raw_value.rsplit(':', 2)
+        return signing.b62_decode(timestamp)
+    except (AttributeError, ValueError):
+        return None
+
+
+def renew_public_workout_session_cookie_if_stale(request, response):
+    """Reemite o cookie válido assinado há mais de 7 dias, com a mesma conta e
+    a mesma marca `identity_verified` — renovar nunca promove a identidade."""
+    raw_value = request.COOKIES.get(PUBLIC_WORKOUT_SESSION_COOKIE_NAME)
+    data = read_public_workout_session_value(raw_value)
+    if not data or data.get('account_id') is None:
+        return response
+    signed_at = _signed_at(raw_value)
+    if signed_at is None or time.time() - signed_at < PUBLIC_WORKOUT_SESSION_RENEW_AFTER_SECONDS:
+        return response
+    return attach_public_workout_session_cookie(
+        response, account_id=data['account_id'], identity_verified=data.get('identity_verified') is True,
+    )
 
 
 def clear_public_workout_session_cookie(response):

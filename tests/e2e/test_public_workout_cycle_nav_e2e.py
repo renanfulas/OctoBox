@@ -316,7 +316,9 @@ def test_mobile_bottom_nav_stays_in_viewport_while_training_scrolls(page: Page, 
 
     # O teclado do guia não deve cobrir os campos nem deixar a barra sobre ele.
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
-    page.locator('[data-workout-guided-active]').evaluate("""(dialog) => {
+    # Desde o modo foco (#333) o guia é um <dialog> fechado com a tela do
+    # exercício oculta; sem abri-lo o campo não é focável.
+    page.locator('[data-guided-focus]').evaluate("""(dialog) => {
         dialog.querySelector('[data-guided-screen="exercise"]').hidden = false;
         dialog.showModal();
     }""")

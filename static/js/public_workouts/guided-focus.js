@@ -56,8 +56,9 @@
     var soundSwitch = q('[data-guided-sound]');
 
     /* ---------- plataforma ---------- */
+    // Ligado por padrão: só fica mudo para quem desligou no painel ('0').
     function storedSound() {
-      try { return window.localStorage.getItem(SOUND_KEY) === '1'; } catch (_) { return false; }
+      try { return window.localStorage.getItem(SOUND_KEY) !== '0'; } catch (_) { return true; }
     }
     var soundOn = storedSound();
     soundSwitch.setAttribute('aria-checked', String(soundOn));
@@ -81,7 +82,29 @@
         osc.stop(audio.currentTime + duration + 0.02);
       } catch (_) { /* sem áudio */ }
     }
+    // O iPhone só libera o áudio dentro de um toque. Como o som vem ligado,
+    // abrir o guiado (o toque em "Iniciar") e cada toque nele destravam; o
+    // toque seguinte também religa o áudio que o iOS suspende em segundo plano.
+    function unlockAudio() {
+      if (!soundOn || (audio && audio.state === 'running')) return;
+      try {
+        audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+        var resumed = audio.resume();
+        if (resumed && resumed.catch) resumed.catch(function () { /* fora de um toque */ });
+      } catch (_) { /* sem áudio */ }
+    }
+    // Fora da tela e com os avisos liberados, quem avisa o fim do descanso é o
+    // push do servidor (docs/decisions/0003-curva-rest-alert-worker.md): no
+    // Android a página segue viva com a tela bloqueada e o bipe tocaria junto
+    // com a notificação. Sem os avisos, o bipe segue sendo o único alerta.
+    function pushCoversAlert() {
+      try {
+        return document.visibilityState !== 'visible'
+          && !!window.Notification && window.Notification.permission === 'granted';
+      } catch (_) { return false; }
+    }
     function feedback(vibrateMs, frequency, duration) {
+      if (pushCoversAlert()) return;
       try { if (navigator.vibrate) navigator.vibrate(vibrateMs); } catch (_) { /* sem vibração */ }
       beep(frequency, duration || 0.12);
     }
@@ -99,6 +122,7 @@
 
     /* ---------- abrir / fechar ---------- */
     function open() {
+      unlockAudio();
       if (!dialog.open) {
         try { dialog.showModal(); } catch (_) { dialog.setAttribute('open', ''); }
       }
@@ -732,6 +756,9 @@
     }
 
     /* ---------- eventos da tela ---------- */
+    ['pointerup', 'touchend', 'click', 'keydown'].forEach(function (type) {
+      dialog.addEventListener(type, unlockAudio, true);
+    });
     dialog.addEventListener('click', function (event) {
       var target = event.target.closest('button, a');
       if (!target || !dialog.contains(target)) return;
@@ -790,7 +817,7 @@
         target.setAttribute('aria-checked', String(soundOn));
         try { window.localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); } catch (_) { /* preferência só nesta visita */ }
         if (soundOn) {
-          try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (_) { /* sem áudio */ }
+          unlockAudio();
           beep(880, 0.08);
         }
         return;

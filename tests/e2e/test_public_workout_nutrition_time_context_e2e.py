@@ -41,6 +41,8 @@ from django.test import override_settings
 from django.utils import timezone
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_login import enter_with_magic_link
+
 _TEST_EMAIL = 'nutricao-e2e@octoboxfit.test'
 
 
@@ -124,7 +126,7 @@ def _login_token_for_unlocked_account_with_meal_plan(slug: str) -> str:
 def _open_dieta_tab(page: Page, live_server, fixed_time: datetime.datetime, token: str) -> None:
     # Instala o relogio ANTES do goto -- ver docstring do modulo.
     page.clock.install(time=fixed_time)
-    page.goto(f'{live_server.url}/treinos/login?token={token}')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token}')
 
     # Contas E2E novas podem iniciar o wizard de onboarding. Ele cobre a
     # página e intercepta cliques fora do fluxo que este teste valida.

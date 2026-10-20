@@ -21,8 +21,12 @@ class PublicWorkoutAccessSplitTests(SimpleTestCase):
 
     def test_services_validates_against_catalog_without_importing_view(self):
         _validate_plan_slug('bruno')
-        with self.assertRaises(UnknownPlanSlugError):
-            _validate_plan_slug('slug-inexistente')
+        # Fora do catalogo vale o mesmo criterio da view (programa ativo).
+        with patch('public_workouts.services.get_active_program', return_value=None):
+            with self.assertRaises(UnknownPlanSlugError):
+                _validate_plan_slug('slug-inexistente')
+        with patch('public_workouts.services.get_active_program', return_value=object()):
+            _validate_plan_slug('novo-aluno')
         source = Path('public_workouts/services.py').read_text(encoding='utf-8')
         tree = ast.parse(source)
         imported = [node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)]
