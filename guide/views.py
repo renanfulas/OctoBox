@@ -104,7 +104,9 @@ LEAD_IMPORT_STATUS_UI = {
 }
 
 
-class SystemMapView(LoginRequiredMixin, TemplateView):
+class SystemMapView(LoginRequiredMixin, RoleRequiredMixin, TemplateView):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV)
+
     template_name = 'guide/system-map.html'
 
     def get_context_data(self, **kwargs):

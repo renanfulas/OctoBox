@@ -178,7 +178,10 @@ class RecordSuccessfulInvoicePaymentTests(TestCase):
         self.subscription.refresh_from_db()
         self.assertEqual(self.subscription.status, PublicWorkoutSubscriptionStatus.ACTIVE)
 
-    @override_settings(PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com', 'giovanna@example.com'])
+    @override_settings(
+        PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com', 'giovanna@example.com'],
+        PUBLIC_WORKOUT_PUBLIC_BASE_URL='',
+    )
     def test_activation_enqueues_a_staff_alert_without_sending_synchronously(self):
         # Isto roda dentro do request/response do webhook da Stripe
         # (stripe_handlers.py) — nao pode chamar o gateway de e-mail direto
@@ -197,7 +200,10 @@ class RecordSuccessfulInvoicePaymentTests(TestCase):
         sent_to = [recipient for msg in mail.outbox for recipient in msg.to]
         self.assertEqual(sent_to, ['renan@example.com', 'giovanna@example.com'])
 
-    @override_settings(PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com'])
+    @override_settings(
+        PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com'],
+        PUBLIC_WORKOUT_PUBLIC_BASE_URL='',
+    )
     def test_alerts_staff_again_on_reactivation_after_suspension(self):
         self.subscription.status = PublicWorkoutSubscriptionStatus.SUSPENDED
         self.subscription.save(update_fields=['status'])
@@ -253,6 +259,7 @@ class RecordSuccessfulInvoicePaymentTests(TestCase):
         self.assertEqual(len(client_messages), 1)
         self.assertIn('reativado', client_messages[0].subject)
 
+    @override_settings(PUBLIC_WORKOUT_PUBLIC_BASE_URL='')
     def test_client_welcome_email_is_skipped_without_base_url_but_staff_still_hears(self):
         # Link de anamnese e' o UNICO conteudo acionavel do e-mail do
         # cliente — sem PUBLIC_WORKOUT_PUBLIC_BASE_URL nao ha como montar
@@ -466,6 +473,7 @@ class MarkSubscriptionCanceledTests(TestCase):
         self.assertEqual(len(client_messages), 1)
         self.assertIn('cancelada', client_messages[0].subject)
 
+    @override_settings(PUBLIC_WORKOUT_PUBLIC_BASE_URL='')
     def test_cancellation_email_still_sends_without_base_url(self):
         # Diferente do aviso de ativacao: confirmar o cancelamento nao
         # depende de link nenhum, entao essa config faltando so' tira o
