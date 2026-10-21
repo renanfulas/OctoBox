@@ -11,6 +11,7 @@ from django.test import override_settings
 from django.utils import timezone
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_focus import LOCK_SCREEN, RESET_SPIES, SPY_AUDIO, SPY_VIBRATION
 from tests.e2e.curva_login import enter_with_magic_link
 
 
@@ -32,33 +33,6 @@ _COUNT_OUTBOX_OPENS = """
 """
 
 
-# Anota a frequência de cada bipe do modo foco e quantas vezes o áudio é religado.
-_SPY_AUDIO = """
-(() => {
-  window.__curvaBeeps = [];
-  window.__curvaAudioResumes = 0;
-  const Real = window.AudioContext;
-  window.AudioContext = class extends Real {
-    resume() { window.__curvaAudioResumes += 1; return super.resume(); }
-    createOscillator() {
-      const osc = super.createOscillator();
-      const start = osc.start.bind(osc);
-      osc.start = (...args) => { window.__curvaBeeps.push(Math.round(osc.frequency.value)); return start(...args); };
-      return osc;
-    }
-  };
-})();
-"""
-# Anota cada vibração pedida pelo modo foco.
-_SPY_VIBRATION = """
-(() => {
-  window.__curvaVibrations = [];
-  Object.defineProperty(Navigator.prototype, 'vibrate', {
-    configurable: true, writable: true,
-    value(pattern) { window.__curvaVibrations.push(pattern); return true; },
-  });
-})();
-"""
 # Avisos liberados neste aparelho. O Chromium headless responde 'denied' mesmo
 # com grant_permissions, então a permissão é fixada na página.
 _ALLOW_NOTIFICATIONS = """
@@ -66,12 +40,6 @@ _ALLOW_NOTIFICATIONS = """
   Object.defineProperty(Notification, 'permission', { configurable: true, get: () => 'granted' });
 })();
 """
-# Tela bloqueada: a página segue viva, como no Android, mas fora de vista.
-_HIDE_PAGE = """() => {
-  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
-  Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-  document.dispatchEvent(new Event('visibilitychange'));
-}"""
 
 
 @pytest.fixture(autouse=True)
@@ -144,6 +112,25 @@ def _start_guided(page: Page):
     page.locator('[data-workout-guided-start]').click()
     # A contagem 3-2-1 do modo foco aceita um toque para começar na hora.
     page.locator('[data-guided-countdown-skip]').click()
+
+
+def _wait_for_empty_guided_queue(page: Page, plan_slug: str = 'bruno'):
+    """Espera a fila local do guiado esvaziar (o servidor confirmou e o aparelho apagou).
+
+    Recarregar com um envio ainda no ar deixa a série na fila sob o lease da aba
+    morta (~12 s); o que vem depois espera na fila para manter a ordem. Em CI
+    lento isso aparece como "pendente de envio" no lugar de "Treino concluído".
+    """
+    script = """async (slug) => {
+      const scope = localStorage.getItem('curva-guided-scope:' + slug);
+      if (!scope || !window.CurvaGuidedOutbox) return -1;
+      return (await window.CurvaGuidedOutbox.list(scope)).length;
+    }"""
+    for _ in range(100):
+        if page.evaluate(script, plan_slug) == 0:
+            return
+        page.wait_for_timeout(100)
+    raise AssertionError('a fila local do guiado não esvaziou')
 
 
 def _wait_for_offline_scope(page: Page):
@@ -254,6 +241,9 @@ def test_student_top_target_guides_ramp_and_survives_reload(page: Page, live_ser
         page.screenshot(path=screenshot_path, full_page=True)
     page.locator('[data-workout-guided-reps]').fill('8')
     page.locator('[data-workout-guided-set]').click()
+    # Só recarrega com a série já confirmada; senão o envio cortado fica sob o
+    # lease da aba morta e o encerramento espera na fila (ver o helper).
+    _wait_for_empty_guided_queue(page)
 
     # O modo foco reabre sozinho (#treino-guiado) e o alvo vem do aparelho.
     page.reload()
@@ -424,12 +414,18 @@ def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_serve
     finish_session(account_id=account.pk, plan_slug='bruno', session_id=last_week.pk, partial=True)
     token = PublicWorkoutLoginToken.objects.create(account=account, expires_at=timezone.now() + timedelta(hours=1))
 
+    page.set_viewport_size({'width': 390, 'height': 844})
     enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     weight = page.locator('[data-workout-guided-weight]')
+    plan = page.locator('[data-guided-plan]')
     # Aquecimento 1 = 40% da Top sugerida (107,5) -> 42,5 kg, já preenchido.
     expect(weight).to_have_value('42,5')
+    expect(plan).to_contain_text('Série principal hoje')
+    expect(page.locator('[data-guided-plan-from]')).to_have_text('107,5 kg')
+    expect(page.locator('[data-guided-plan-to]')).to_have_text('42,5 kg')
+    expect(page.locator('[data-guided-plan-delta]')).to_have_text('40%')
     expect(page.locator('[data-guided-weight-source]')).to_contain_text('ajuste se precisar')
     for _ in range(2):
         page.locator('[data-workout-guided-skip]').click()
@@ -437,6 +433,15 @@ def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_serve
             page.locator('[data-guided-skip-rest]').click()
     # Top: 100 x 76/67 = 113,4, teto 80% do 1RM estimado (133,3) = 106,7 -> 107,5 kg.
     expect(weight).to_have_value('107,5')
+    # O quadro conta de onde veio: semana passada 100 kg -> hoje 107,5 kg (+8%), fase da semana.
+    expect(page.locator('[data-guided-plan-from-label]')).to_have_text('Semana passada')
+    expect(page.locator('[data-guided-plan-from]')).to_have_text('100 kg')
+    expect(page.locator('[data-guided-plan-to]')).to_have_text('107,5 kg')
+    expect(page.locator('[data-guided-plan-delta]')).to_have_text('+8%')
+    expect(page.locator('[data-guided-plan-why]')).to_have_text('Semana 2 de 2 · Força-Hipertrofia · cálculo automático')
+    expect(page.locator('[data-guided-weight-source]')).to_have_text('Calculada automaticamente · ajuste se precisar')
+    if screenshot_path := os.environ.get('CURVA_LOAD_PLAN_SCREENSHOT'):
+        page.locator('[data-guided-screen="exercise"]').screenshot(path=screenshot_path)
 
 
 @pytest.mark.e2e
@@ -474,7 +479,7 @@ def test_rest_end_beeps_by_default_and_student_can_mute(page: Page, live_server)
         {'stage_id': 'top', 'role': 'top_set', 'min_sets': 2, 'max_sets': 2,
          'reps_min': 6, 'reps_max': 8, 'rest_seconds': 4, 'load_rule': {'kind': 'manual'}},
     ])
-    page.add_init_script(_SPY_AUDIO)
+    page.add_init_script(SPY_AUDIO)
     enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
@@ -502,47 +507,30 @@ def test_rest_end_beeps_by_default_and_student_can_mute(page: Page, live_server)
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
-@pytest.mark.parametrize('push_allowed', [True, False], ids=['avisos-liberados', 'sem-avisos'])
-def test_rest_end_off_screen_leaves_alert_to_push(page: Page, live_server, push_allowed):
+def test_locked_screen_still_beeps_when_no_push_is_scheduled(page: Page, live_server):
     _account, token = _prepare_guided_student([
-        {'stage_id': 'top', 'role': 'top_set', 'min_sets': 3, 'max_sets': 3,
+        {'stage_id': 'top', 'role': 'top_set', 'min_sets': 2, 'max_sets': 2,
          'reps_min': 6, 'reps_max': 8, 'rest_seconds': 4, 'load_rule': {'kind': 'manual'}},
     ])
-    if push_allowed:
-        page.add_init_script(_ALLOW_NOTIFICATIONS)
-    page.add_init_script(_SPY_AUDIO)
-    page.add_init_script(_SPY_VIBRATION)
+    # Permissão concedida, mas nenhum push agendado para este descanso: o
+    # silêncio do app depende do aviso estar de pé, não da permissão.
+    page.add_init_script(_ALLOW_NOTIFICATIONS)
+    page.add_init_script(SPY_AUDIO)
+    page.add_init_script(SPY_VIBRATION)
     enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
-    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+    page.locator('[data-workout-guided-weight]').fill('50')
+    page.locator('[data-workout-guided-reps]').fill('7')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
 
-    def record_set():
-        page.evaluate('() => { window.__curvaBeeps = []; window.__curvaVibrations = []; }')
-        page.locator('[data-workout-guided-weight]').fill('50')
-        page.locator('[data-workout-guided-reps]').fill('7')
-        page.locator('[data-workout-guided-set]').click()
-        expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
-
-    # Tela à vista: o app avisa como sempre, com ou sem push.
-    record_set()
+    page.evaluate(LOCK_SCREEN)
+    page.evaluate(RESET_SPIES)
     expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=10_000)
     beeps = page.evaluate('() => window.__curvaBeeps')
     assert 660 in beeps and beeps[-1] == 990, beeps
     assert page.evaluate('() => window.__curvaVibrations')[-1] == 140
-
-    # Tela bloqueada no meio do descanso: com os avisos liberados, nem o 3-2-1
-    # nem o tom final tocam pelo app; sem eles, o bipe segue sendo o alerta.
-    record_set()
-    page.evaluate(_HIDE_PAGE)
-    page.evaluate('() => { window.__curvaBeeps = []; window.__curvaVibrations = []; }')
-    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=10_000)
-    beeps = page.evaluate('() => window.__curvaBeeps')
-    vibrations = page.evaluate('() => window.__curvaVibrations')
-    if push_allowed:
-        assert beeps == [] and vibrations == [], (beeps, vibrations)
-    else:
-        assert 990 in beeps and 140 in vibrations, (beeps, vibrations)
 
 
 @pytest.mark.e2e
@@ -850,3 +838,65 @@ def test_account_switch_does_not_send_queued_sets_to_another_student(page: Page,
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=15000)
     assert PublicWorkoutTrainingSession.objects.filter(account=account).count() == 1
     assert not PublicWorkoutTrainingSession.objects.filter(account=other).exists()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_plank_runs_countdown_and_timer_instead_of_load(page: Page, live_server):
+    """Isometria: tempo no lugar da carga, 3-2-1 e o cronômetro registra a série."""
+    from public_workouts.models import PublicWorkoutTrainingSet
+
+    _account, token = _prepare_guided_student([
+        {'stage_id': 'prancha', 'role': 'top_set', 'min_sets': 1, 'max_sets': 2,
+         'reps_min': None, 'reps_max': None, 'hold_seconds_min': 4, 'hold_seconds_max': 4,
+         'rest_seconds': 30, 'load_rule': {'kind': 'manual'}},
+    ])
+    page.set_viewport_size({'width': 390, 'height': 844})
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+
+    # Sem carga nem repetições: só o tempo, já com a meta.
+    expect(page.locator('[data-guided-time-field]')).to_be_visible()
+    expect(page.locator('[data-guided-weight-field]')).to_be_hidden()
+    expect(page.locator('[data-guided-reps-field]')).to_be_hidden()
+    expect(page.locator('[data-guided-time]')).to_have_value('4')
+    expect(page.locator('[data-guided-meta]')).to_have_text('Meta 4 s · isometria')
+    start = page.locator('[data-workout-guided-set]')
+    expect(start).to_have_text('Iniciar 4 s')
+    if screenshot_path := os.environ.get('CURVA_PLANK_SCREENSHOT'):
+        page.locator('[data-guided-screen="exercise"]').screenshot(path=screenshot_path)
+
+    start.click()
+    expect(page.locator('[data-guided-first-prefix]')).to_have_text('Segure:')
+    page.locator('[data-guided-countdown-skip]').click()
+    hold = page.locator('[data-guided-screen="hold"]')
+    expect(hold).to_be_visible()
+    expect(hold.locator('[data-guided-hold-goal]')).to_have_text('Meta 4 s')
+    if screenshot_path := os.environ.get('CURVA_PLANK_TIMER_SCREENSHOT'):
+        hold.screenshot(path=screenshot_path)
+    # Zerou: registra 4 s sozinho e vai para o descanso.
+    expect(page.locator('[data-guided-screen="rest"]')).to_be_visible(timeout=8_000)
+    expect(page.locator('[data-guided-receipt]')).to_contain_text('4 s')
+
+    # Segunda série: aluno ajusta para 30 s e para antes.
+    page.locator('[data-guided-skip-rest]').click()
+    page.locator('[data-guided-time]').fill('30')
+    expect(start).to_have_text('Iniciar 30 s')
+    start.click()
+    page.locator('[data-guided-countdown-skip]').click()
+    expect(hold).to_be_visible()
+    page.wait_for_timeout(1_500)
+    page.locator('[data-guided-hold-stop]').click()
+    expect(hold).to_be_hidden()
+
+    durations = []
+    for _ in range(50):
+        durations = list(PublicWorkoutTrainingSet.objects.order_by('set_number').values_list('duration_seconds', flat=True))
+        if len(durations) == 2:
+            break
+        page.wait_for_timeout(100)
+    assert durations[0] == 4
+    assert 1 <= durations[1] <= 3, durations
+    assert PublicWorkoutTrainingSet.objects.filter(weight_kg__isnull=False).count() == 0

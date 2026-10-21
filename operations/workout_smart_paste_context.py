@@ -23,7 +23,7 @@ from operations.services.wod_paste_parser import load_wod_movement_dictionary
 from operations.services.wod_replication_batches import batch_can_be_undone
 from shared_support.page_payloads import attach_page_payload, build_page_assets, build_page_hero, build_page_payload
 from student_app.application.movement_references import lookup_movement_catalog_status
-from student_app.models import WeeklyWodPlan, WeeklyWodPlanStatus
+from student_app.models import WeeklyWodPlan, WeeklyWodPlanStatus, WorkoutBlockKind
 
 from .workout_corridor_navigation import build_workout_corridor_tabs
 
@@ -189,6 +189,12 @@ def _build_projection_week_calendar(projection_preview, parsed_payload):
 
 
 def _decorate_preview_payload(parsed_payload, *, week_start=None):
+    block_labels = dict(WorkoutBlockKind.choices)
+    movement_labels = {
+        slug: slug.replace('_', ' ').title()
+        for slug, _aliases in load_wod_movement_dictionary()
+    }
+    movement_labels['custom'] = 'Movimento personalizado'
     unresolved_items = []
     auto_fixed_items = []
     total_blocks = 0
@@ -208,9 +214,15 @@ def _decorate_preview_payload(parsed_payload, *, week_start=None):
             total_blocks += 1
             block_unresolved_count = 0
             block['block_index'] = block_index
+            block['kind_label'] = block_labels.get(block.get('kind'), 'Treino')
+            block['display_title'] = (
+                block['kind_label'] if not block.get('title') or block['title'].lower() == block.get('kind')
+                else block['title']
+            )
             block['block_focus_id'] = f'smart-paste-block-{day_index}-{block_index}'
             for movement_index, movement in enumerate(block.get('movements', [])):
                 movement['display_label'] = _smart_paste_display_label(movement)
+                movement['matched_label'] = movement_labels.get(movement.get('movement_slug'), '')
                 movement['review_target_id'] = f'review-item-{day_index}-{block_index}-{movement_index}'
                 if len(day_preview_movements) < 3:
                     day_preview_movements.append(movement['display_label'])
@@ -400,6 +412,17 @@ def build_weekly_wod_smart_paste_context(
         week_start=getattr(weekly_plan, 'week_start', None),
     )
     current_unresolved_item = parsed_payload.get('summary', {}).get('current_unresolved_item')
+    if projection_preview:
+        status_labels = {
+            'ready': 'Pronta para receber WOD',
+            'skip_no_day_plan': 'Sem treino para este dia',
+            'skip_existing_workout': 'WOD existente preservado',
+            'skip_no_compatible_blocks': 'Sem blocos compatíveis',
+        }
+        class_type_labels = dict(ClassType.choices)
+        for entry in projection_preview.get('entries', []):
+            entry['status_label'] = status_labels.get(entry.get('status'), 'Confira esta aula')
+            entry['class_type_label'] = class_type_labels.get(entry.get('class_type'), 'Outra modalidade')
     if current_unresolved_item and not getattr(review_form, 'is_bound', False):
         review_form = WeeklyWodReviewMovementForm(
             slug_choices=load_wod_movement_dictionary(),

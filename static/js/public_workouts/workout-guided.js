@@ -25,7 +25,7 @@
   var conflictServer = root.querySelector('[data-workout-guided-conflict-server]');
   var conflictCorrect = root.querySelector('[data-workout-guided-conflict-correct]');
   var format = window.CurvaGuidedFormat;
-  var focus = window.CurvaGuidedFocus.create(dialog);
+  var focus = window.CurvaGuidedFocus.create(dialog, { period: format.periodFrom(root.dataset) });
   var scope = root.dataset.accountScope && document.body.dataset.planSlug
     ? root.dataset.accountScope + ':' + document.body.dataset.planSlug : '';
   var outbox = window.CurvaGuidedOutbox;
@@ -56,8 +56,10 @@
     onTick: function () {
       var rest = restModel();
       if (rest) {
-        focus.restTick(rest);
+        // Primeiro o aviso: com a tela à vista perto do fim, o cancelamento do
+        // push devolve o 3-2-1 ao app já neste tick.
         restAlert.tick(rest.remainingMs);
+        focus.restTick(rest, restAlert.covers());
       }
       paintLauncher();
     },
@@ -73,7 +75,7 @@
       var step = movements.length ? project().current : null;
       return step ? { exercise: step.movement.label, setNumber: step.setNumber } : {};
     },
-  }) : { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop };
+  }) : { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop, covers: noop };
 
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
@@ -298,7 +300,7 @@
 
   function render() {
     paintLauncher();
-    if (!focus.isOpen() || focus.screen() === 'countdown') return;
+    if (!focus.isOpen() || focus.screen() === 'countdown' || focus.isHolding()) return;
     var vm = viewModel();
     if (screen === 'exercise' && !vm.current) screen = 'summary';
     if (screen === 'rest' && !vm.rest) screen = vm.current ? 'exercise' : 'summary';
@@ -454,7 +456,7 @@
       series.forEach(function (row) { row.base_weight_kg = row.weight_kg; });
       var heading = card.querySelector('.workout-movement-copy strong');
       var step = series.length && Number(series[0].rounding_step_kg) > 0 ? Number(series[0].rounding_step_kg) : 2.5;
-      return {
+      return Object.assign({
         slug: card.dataset.movementSlug,
         label: card.dataset.movementLabel || (heading ? heading.textContent.trim() : 'Exercício'),
         referenceUrl: card.dataset.referenceUrl || '',
@@ -462,7 +464,7 @@
         loadKind: card.dataset.loadKind, loadStep: step,
         allowLoad: card.dataset.allowLoadRegistration !== 'false',
         series: series, freeform: series.length === 1 && series[0].role === 'legacy_unknown',
-      };
+      }, format.anchorFrom(card.dataset.loadAnchor));
     }).filter(function (movement) { return movement.series.length > 0; });
   }
 
@@ -533,7 +535,7 @@
     }));
     recordedDetails = new Map((session.recorded || []).map(function (item) {
       return [key(item.movement_index, item.set_number), {
-        weight_kg: item.weight_kg, reps: item.reps, rir: item.rir,
+        weight_kg: item.weight_kg, reps: item.reps, rir: item.rir, duration_seconds: item.duration_seconds,
       }];
     }));
     recorded.forEach(function (setKey) { if (!setSync.has(setKey)) setSync.set(setKey, 'saved'); });
@@ -654,12 +656,12 @@
       set_number: step.setNumber, set_role: step.series.role,
       weight_kg: detail.weight == null ? '' : String(detail.weight),
       reps: detail.reps == null ? '' : String(detail.reps),
-      rir: detail.rir == null ? '' : String(detail.rir),
+      rir: detail.rir == null ? '' : String(detail.rir), duration_seconds: detail.duration == null ? '' : String(detail.duration),
     };
     // Transição otimista: o descanso começa no toque. O recibo vai de "Salvando…"
     // a "Salvo no aparelho" quando a fila local grava e a "✓ Salvo" com o servidor.
     recorded.add(setKey);
-    recordedDetails.set(setKey, { weight_kg: detail.weight, reps: detail.reps, rir: detail.rir });
+    recordedDetails.set(setKey, { weight_kg: detail.weight, reps: detail.reps, rir: detail.rir, duration_seconds: detail.duration });
     setSync.set(setKey, 'saving');
     lastFreeformIndex = step.movement.freeform ? step.movementIndex : null;
     lastSkipped = null;
@@ -822,11 +824,13 @@
 
   /* ---------- descanso ---------- */
   function restEnded() {
+    // Lido antes de ended(), que esquece o aviso: com o push de pé, o fim já é dele.
+    var quiet = restAlert.covers();
     restAlert.ended();
     paintLauncher();
     if (!focus.isOpen()) return;
     if (screen === 'rest') {
-      focus.restDone().then(function () {
+      focus.restDone(quiet).then(function () {
         if (screen !== 'rest') return;
         screen = nextScreenAfterSet();
         render();

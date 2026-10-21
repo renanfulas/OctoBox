@@ -22,6 +22,8 @@ from django.utils import timezone
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from access.permissions.mixins import RoleRequiredMixin
+from access.roles import ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
 from api.v1.bulk_views import GenericBulkActionView
 from catalog.forms import EnrollmentManagementForm, PaymentManagementForm
 from catalog.presentation.student_financial_fragments import render_student_financial_fragments
@@ -98,8 +100,10 @@ def _render_financial_fragments(request, student):
     return fragments
 
 
-class PaymentLinkView(LoginRequiredMixin, View):
+class PaymentLinkView(LoginRequiredMixin, RoleRequiredMixin, View):
     """Gera um link de checkout do Stripe para compartilhamento manual."""
+
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER, ROLE_RECEPTION)
 
     def get(self, request, payment_id, *args, **kwargs):
         # Mesmo guard de card-testing do StripeCheckoutRedirectView: sem isto a
@@ -134,10 +138,12 @@ class PaymentLinkView(LoginRequiredMixin, View):
                 status=502,
             )
 
-class StudentFreezeView(LoginRequiredMixin, View):
+class StudentFreezeView(LoginRequiredMixin, RoleRequiredMixin, View):
     """
     "Congela" um aluno por X dias, empurrando o fim da matricula e os vencimentos futuros.
     """
+    allowed_roles = (ROLE_OWNER, ROLE_MANAGER)
+
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)

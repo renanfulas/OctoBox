@@ -42,6 +42,7 @@ test('descanso começa: agenda no servidor pelo tempo restante, com exercício e
     remaining_ms: 90_000, exercise: 'Supino reto', set_number: 3,
   });
   assert.equal(calls[0].keepalive, false);
+  assert.equal(alert.covers(), true, 'push de pé: o fim é dele');
 });
 
 test('aparelho sem inscrição push não chama o servidor', async () => {
@@ -49,6 +50,7 @@ test('aparelho sem inscrição push não chama o servidor', async () => {
   device.endpoint = null;
   alert.started('session-1', clock.now + 90_000);
   await flush();
+  assert.equal(alert.covers(), false, 'sem push, o bipe do app avisa');
   alert.tick(3000);
   alert.cleared();
   await flush();
@@ -76,11 +78,14 @@ test('com a tela à vista perto do fim, o app cancela o push e toca o próprio b
   alert.tick(RestAlert.CANCEL_LEAD_MS + 1);
   await flush();
   assert.equal(calls.length, 1);
+  assert.equal(alert.covers(), true);
   alert.tick(RestAlert.CANCEL_LEAD_MS);
+  assert.equal(alert.covers(), false, 'o 3-2-1 volta para o app no mesmo tick');
   alert.tick(3000);
   await flush();
   assert.deepEqual(calls.map((call) => call.method), ['POST', 'DELETE']);
   alert.ended();
+  assert.equal(alert.covers(), false);
   alert.cleared();
   await flush();
   assert.equal(calls.length, 2);
@@ -95,6 +100,9 @@ test('tela bloqueada perto do fim mantém o push agendado', async () => {
   alert.tick(3000);
   await flush();
   assert.deepEqual(calls.map((call) => call.method), ['POST']);
+  assert.equal(alert.covers(), true, 'tela bloqueada: o app não bipa por cima do push');
+  alert.ended();
+  assert.equal(alert.covers(), false);
 });
 
 test('saiu da tela depois do cancelamento: agenda de novo com keepalive enquanto houver tempo', async () => {
@@ -112,6 +120,7 @@ test('saiu da tela depois do cancelamento: agenda de novo com keepalive enquanto
   assert.equal(calls[0].body.remaining_ms, 30_000);
   assert.equal(calls[2].keepalive, true);
   assert.equal(calls[2].body.remaining_ms, 3500);
+  assert.equal(alert.covers(), true);
 });
 
 test('no último segundo e meio não vale mais um push', async () => {
@@ -126,6 +135,7 @@ test('no último segundo e meio não vale mais um push', async () => {
   await flush();
   await flush();
   assert.deepEqual(calls.map((call) => call.method), ['POST', 'DELETE']);
+  assert.equal(alert.covers(), false, 'sem push a caminho, o bipe do app avisa mesmo com a tela bloqueada');
 });
 
 test('servidor recusou o agendamento: nada a cancelar perto do fim', async () => {
@@ -133,6 +143,7 @@ test('servidor recusou o agendamento: nada a cancelar perto do fim', async () =>
   alert.started('local-1', clock.now + 30_000);
   await flush();
   await flush();
+  assert.equal(alert.covers(), false, 'agendamento recusado: o bipe do app avisa');
   alert.tick(3000);
   await flush();
   assert.deepEqual(calls.map((call) => call.method), ['POST']);
@@ -161,8 +172,9 @@ test('descanso que já acabou não agenda', async () => {
 
 test('sem URL (push não verificado) o módulo não faz nada', () => {
   const alert = RestAlert.create({});
-  for (const method of ['started', 'cleared', 'ended', 'tick', 'hidden', 'remap']) {
+  for (const method of ['started', 'cleared', 'ended', 'tick', 'hidden', 'remap', 'covers']) {
     assert.equal(typeof alert[method], 'function');
     alert[method]('session-1', Date.now() + 30_000);
   }
+  assert.ok(!alert.covers());
 });

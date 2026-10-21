@@ -1,5 +1,6 @@
 """Uma decisão de carga para a ficha e o guia, com origem explícita."""
 
+import json
 from dataclasses import dataclass
 
 from .load_suggestion import suggest_movement_load
@@ -14,6 +15,8 @@ class LoadResolution:
     show_registration_hint: bool = False
     fallback_note: str | None = None
     anchor_kg: object | None = None
+    # Dia da carga real usada como âncora (ISO): o guiado mostra "semana passada X kg -> hoje Y kg".
+    anchor_on: str | None = None
     reason_code: str = ''
     rounding_step_kg: float = 2.5
     editable: bool = True
@@ -27,6 +30,16 @@ class LoadResolution:
         }
         if self.fallback_note is not None:
             result['fallback_note'] = self.fallback_note
+        # Só quando a âncora é uma carga REAL registrada (tem dia): o guiado mostra
+        # "semana passada X kg -> hoje Y kg". Carga do treinador ou 1RM não entram.
+        if self.anchor_on is not None:
+            result['anchor_kg'] = self.anchor_kg
+            result['anchor_on'] = self.anchor_on
+            # JSON fora do l10n para o guiado (data-load-anchor no cartão).
+            result['anchor_json'] = json.dumps(
+                {'kg': float(self.anchor_kg) if self.anchor_kg is not None else None, 'on': self.anchor_on},
+                separators=(',', ':'),
+            )
         return result
 
 
@@ -43,6 +56,7 @@ def resolve_movement_load(*, movement: dict, payload: dict, phase,
     has_rm = one_rep_max_kg is not None
     snapshot = (progress_snapshots or {}).get(slug)
     latest_top = snapshot.latest_top_set if snapshot else None
+    latest_top_on = latest_top.performed_on.isoformat() if latest_top is not None else None
     load_type = movement.get('load_type')
     load_value = movement.get('load_value')
 
@@ -58,7 +72,7 @@ def resolve_movement_load(*, movement: dict, payload: dict, phase,
         if latest_top is not None and latest_top.weight_kg is not None:
             return LoadResolution(
                 'last_observed', latest_top.weight_kg, percentage=load_value,
-                show_registration_hint=True, anchor_kg=latest_top.weight_kg,
+                show_registration_hint=True, anchor_kg=latest_top.weight_kg, anchor_on=latest_top_on,
                 reason_code='rm_missing_last_top_reference',
                 fallback_note='Sem RM confiável ainda. Use sua última carga registrada como referência e ajuste se necessário.',
             )
@@ -84,7 +98,7 @@ def resolve_movement_load(*, movement: dict, payload: dict, phase,
                 'phase_progressive', value,
                 percentage=round(sum(phase.intensity_pct_range) / 2),
                 anchor_kg=latest_top.weight_kg if latest_top else None,
-                reason_code='active_phase',
+                anchor_on=latest_top_on, reason_code='active_phase',
             )
 
     suggestion = suggest_movement_load(movement=movement, one_rep_max_kg=one_rep_max_kg)
@@ -97,7 +111,7 @@ def resolve_movement_load(*, movement: dict, payload: dict, phase,
     if latest_top is not None and latest_top.weight_kg is not None:
         return LoadResolution(
             'last_observed', latest_top.weight_kg, show_registration_hint=True,
-            anchor_kg=latest_top.weight_kg, reason_code='no_computable_prescription',
+            anchor_kg=latest_top.weight_kg, anchor_on=latest_top_on, reason_code='no_computable_prescription',
             fallback_note='A prescrição não gerou kg automático. Sua última carga registrada é uma referência editável.',
         )
     return LoadResolution(

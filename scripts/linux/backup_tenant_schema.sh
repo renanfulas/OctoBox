@@ -60,6 +60,16 @@ if [[ -z "$DATABASE" || -z "$USER_NAME" || -z "$SLUG" ]]; then
   exit 2
 fi
 
+if [[ ! "$SLUG" =~ ^[a-z][a-z0-9-]{1,55}$ ]]; then
+  echo "erro: --slug deve ser um slug valido (letra inicial, letras minusculas, numeros e hifens)" >&2
+  exit 2
+fi
+
+if [[ ! "$DATABASE" =~ ^[a-z][a-z0-9_-]{0,62}$ ]]; then
+  echo "erro: --database invalido" >&2
+  exit 2
+fi
+
 for binary in pg_dump psql; do
   command -v "$binary" >/dev/null 2>&1 || { echo "erro: $binary nao encontrado no PATH" >&2; exit 3; }
 done
