@@ -117,6 +117,13 @@ def _detect_scheme(text: str):
     if 'hyrox' in norm:
         return {'format_spec': text.strip()}, 'metcon'
 
+    wod_match = re.fullmatch(r'wod(?:\s*(\d+)\s*m?)?', norm)
+    if wod_match:
+        meta = {'format_spec': text.strip()}
+        if wod_match.group(1):
+            meta['timecap_min'] = int(wod_match.group(1))
+        return meta, 'metcon'
+
     # "Cap 16'" / "Cap 16" / "Cap 45m"  (a normalizacao remove o apostrofo)
     cap_match = re.fullmatch(r'cap\s*(\d+)\s*m?', norm)
     if cap_match:
@@ -456,8 +463,8 @@ def parse_weekly_wod_freeform(text: str) -> dict:
     return result
 
 
-def _freeform_should_take_over(parsed: dict | None) -> bool:
-    """True quando o parser com cabecalho nao rendeu estrutura util."""
+def _freeform_should_take_over(parsed: dict | None, freeform: dict | None = None) -> bool:
+    """Prefer the parse that preserves more real blocks or movement lines."""
     if not parsed:
         return True
     days = parsed.get('days') or []
@@ -470,7 +477,24 @@ def _freeform_should_take_over(parsed: dict | None) -> bool:
         for block in day.get('blocks', [])
     )
     warnings = len(parsed.get('parse_warnings') or [])
-    return warnings > max(total_movements, 1)
+    if warnings > max(total_movements, 1):
+        return True
+    if not freeform:
+        return False
+    freeform_days = freeform.get('days') or []
+    if [day.get('weekday') for day in freeform_days] != [day.get('weekday') for day in days]:
+        return False
+    freeform_blocks = sum(len(day.get('blocks', [])) for day in freeform_days)
+    freeform_movements = sum(
+        len(block.get('movements', []))
+        for day in freeform_days for block in day.get('blocks', [])
+    )
+    if len(freeform.get('parse_warnings') or []) > warnings:
+        return False
+    return (
+        (freeform_blocks > total_blocks and freeform_movements >= total_movements)
+        or (freeform_blocks >= total_blocks and freeform_movements >= total_movements + 2)
+    )
 
 
 __all__ = ['parse_weekly_wod_freeform', '_freeform_should_take_over']

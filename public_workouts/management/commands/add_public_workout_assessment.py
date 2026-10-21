@@ -2,9 +2,15 @@
 ARQUIVO: comando pra lancar uma avaliacao fisica de um treino publico.
 
 POR QUE ELE EXISTE:
-- a aba Avaliacoes nao tem formulario publico de escrita (decisao de
-  produto: quem mede e o treinador, nao o aluno pela pagina). Este comando
-  e o unico jeito de gravar um registro novo — roda localmente ou na VPS.
+- e o unico jeito de gravar uma avaliacao PRESENCIAL (Jackson-Pollock,
+  com o treinador e o adipometro, ou bioimpedancia) — roda localmente ou
+  na VPS. A partir da Onda A3/B4, a pagina TEM formulario publico de
+  escrita (PublicWorkoutRecordAssessmentView, POST /renan/<slug>/avaliacoes):
+  US Navy (so fita) sempre; dobras cutaneas de 7 pontos tambem, mas so
+  depois que este comando lancar a primeira avaliacao por dobra do plano
+  (`has_presencial_skinfold_assessment` — decisao do Renan: so confia na
+  tecnica do aluno pinçando a dobra sozinho apos ele ja ter sido
+  calibrado ao vivo pelo menos uma vez).
 
 FONTE DO %GORDURA (prioridade, da mais pra menos precisa):
 1. --bodyfat: numero ja pronto (ex.: leitura de bioimpedancia — use com
@@ -18,6 +24,14 @@ FONTE DO %GORDURA (prioridade, da mais pra menos precisa):
    fallback quando nao ha as 7 dobras completas.
 4. Nenhum dos anteriores: o relatorio cai pra estimativa por fita (US Navy),
    calculada em tempo real a partir de pescoco/cintura/quadril.
+
+SEXO E ALTURA (--sex F|M, --height cm):
+- ficam gravados na avaliacao e dao ao aluno o relatorio completo (IMC, RCQ,
+  %gordura com classificacao) — o mesmo da Franciele, que tem os dois no
+  catalogo fixo. So precisa informar na 1a vez: as avaliacoes seguintes
+  herdam o ultimo valor gravado. O catalogo, quando declara, sempre vence.
+- dobras cutaneas EXIGEM o sexo conhecido: a formula de Jackson-Pollock e
+  diferente pra homem e mulher. Antes caia na masculina sem avisar.
 
 EXEMPLO (medida por fita):
   python manage.py add_public_workout_assessment rafael --date 2026-09-06 \\
@@ -34,6 +48,12 @@ EXEMPLO (dobras — 7 pontos, mulher):
       --braco 30.75 --coxa 51.15 --panturrilha 33.75 \\
       --dobra-triceps 20 --dobra-iliaca 13 --dobra-coxa 27 --dobra-subescapular 13 \\
       --dobra-abdomen 26 --dobra-peitoral 8 --dobra-axilar 15
+
+EXEMPLO (dobras — aluno sem sexo/altura no catalogo, 1a avaliacao):
+  python manage.py add_public_workout_assessment <slug> --date 2026-10-15 \\
+      --sex F --height 165 --weight 61 --age 31 --cintura 70 --quadril 96 \\
+      --dobra-triceps 18 --dobra-iliaca 12 --dobra-coxa 24 --dobra-subescapular 11 \\
+      --dobra-abdomen 20 --dobra-peitoral 7 --dobra-axilar 10
 """
 
 from __future__ import annotations
@@ -42,12 +62,16 @@ from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
 
-from public_workouts.formulas import (
-    Sex,
-    estimate_body_fat_jackson_pollock_3site,
-    estimate_body_fat_jackson_pollock_7site,
+from public_workouts.catalog import PUBLIC_WORKOUT_LIBRARY
+from public_workouts.services import (
+    AssessmentValueError,
+    UnknownPlanSlugError,
+    build_report,
+    is_known_plan_slug,
+    record_assessment,
+    resolve_assessment_profile,
+    skinfold_body_fat,
 )
-from public_workouts.services import UnknownPlanSlugError, build_report, record_assessment
 
 _MEASUREMENT_FLAGS = ('pescoco', 'cintura', 'abdomen', 'quadril', 'ombro', 'peito', 'braco', 'coxa', 'panturrilha')
 _SKINFOLD_FLAGS = ('triceps', 'subescapular', 'abdomen', 'iliaca', 'coxa', 'peitoral', 'axilar')
@@ -57,10 +81,20 @@ class Command(BaseCommand):
     help = 'Registra uma avaliacao fisica (peso/medidas) de um plano do corredor publico de treinos.'
 
     def add_arguments(self, parser):
-        parser.add_argument('plan_slug', help='Slug do plano em PUBLIC_WORKOUT_LIBRARY (ex.: rafael)')
+        parser.add_argument('plan_slug', help='Slug do aluno (catalogo ou programa ativo, ex.: rafael, giulia)')
         parser.add_argument('--date', dest='measured_at', required=True, help='Data da avaliacao, formato AAAA-MM-DD')
         parser.add_argument('--weight', dest='weight_kg', type=float, default=None, help='Peso em kg')
         parser.add_argument('--age', dest='age', type=float, default=None, help='Idade — so usada no calculo de dobras cutaneas')
+        parser.add_argument(
+            '--sex',
+            dest='sex',
+            choices=('F', 'M'),
+            default=None,
+            help='Sexo do aluno (F/M) — obrigatorio pra dobras quando o catalogo nao declara; fica gravado',
+        )
+        parser.add_argument(
+            '--height', dest='height_cm', type=float, default=None, help='Altura em cm (IMC) — fica gravada'
+        )
         parser.add_argument(
             '--bodyfat',
             dest='body_fat_percent',
@@ -89,12 +123,13 @@ class Command(BaseCommand):
         except ValueError as exc:
             raise CommandError(f'Data invalida: {options["measured_at"]!r} (use AAAA-MM-DD)') from exc
 
-        from student_app.views.public_workout_views import PUBLIC_WORKOUT_LIBRARY
-
-        try:
-            plan = PUBLIC_WORKOUT_LIBRARY[plan_slug]
-        except KeyError as exc:
-            raise CommandError(f'Plano publico desconhecido: {plan_slug!r}') from exc
+        # Catalogo fixo ou aluno novo com programa ativo (fora do catalogo, sem
+        # sexo/altura fixos — vem de --sex/--height ou da avaliacao anterior).
+        if not is_known_plan_slug(plan_slug):
+            raise CommandError(f'Plano publico desconhecido: {plan_slug!r}')
+        plan = PUBLIC_WORKOUT_LIBRARY.get(plan_slug)
+        plan_sex = plan.assessment_sex if plan else None
+        plan_height_cm = plan.height_cm if plan else None
 
         measurements = {flag: options[flag] for flag in _MEASUREMENT_FLAGS if options[flag] is not None}
 
@@ -107,46 +142,26 @@ class Command(BaseCommand):
         body_fat_percent = options['body_fat_percent']
         body_fat_source = options['body_fat_source'] if body_fat_percent is not None else ''
 
-        if body_fat_percent is None and options['age']:
-            sex = plan.assessment_sex or Sex.MALE
-            septet = (
-                skinfolds.get('peitoral'),
-                skinfolds.get('axilar'),
-                skinfolds.get('triceps'),
-                skinfolds.get('subescapular'),
-                skinfolds.get('abdomen'),
-                skinfolds.get('iliaca'),
-                skinfolds.get('coxa'),
-            )
-            if all(v is not None for v in septet):
-                computed = estimate_body_fat_jackson_pollock_7site(
-                    sex=sex,
-                    age=options['age'],
-                    chest_mm=septet[0],
-                    midaxillary_mm=septet[1],
-                    triceps_mm=septet[2],
-                    subscapular_mm=septet[3],
-                    abdomen_mm=septet[4],
-                    suprailiac_mm=septet[5],
-                    thigh_mm=septet[6],
-                )
-                if computed is not None:
-                    body_fat_percent = computed
-                    body_fat_source = 'skinfold_jp7'
+        # Catalogo fixo vence; senao --sex/--height; senao o ultimo valor
+        # gravado nas avaliacoes anteriores deste aluno.
+        if options['sex'] and plan_sex and options['sex'] != plan_sex:
+            raise CommandError(f'--sex {options["sex"]} contradiz o catalogo de {plan_slug!r} ({plan_sex}).')
+        profile = resolve_assessment_profile(
+            plan_slug=plan_slug,
+            plan_sex=plan_sex or options['sex'],
+            plan_height_cm=plan_height_cm or options['height_cm'],
+        )
+        sex, height_cm = profile['sex'], profile['height_cm']
 
-            if body_fat_percent is None:
-                trio = (
-                    (skinfolds.get('triceps'), skinfolds.get('iliaca'), skinfolds.get('coxa'))
-                    if sex == Sex.FEMALE
-                    else (skinfolds.get('peitoral'), skinfolds.get('abdomen'), skinfolds.get('coxa'))
+        if body_fat_percent is None and options['age'] and skinfolds:
+            if not sex:
+                raise CommandError(
+                    f'Informe --sex F ou --sex M: {plan_slug!r} ainda nao tem sexo registrado e a formula '
+                    'de dobras cutaneas e diferente pra homem e mulher.'
                 )
-                if all(v is not None for v in trio):
-                    computed = estimate_body_fat_jackson_pollock_3site(
-                        sex=sex, age=options['age'], fold_a_mm=trio[0], fold_b_mm=trio[1], fold_c_mm=trio[2]
-                    )
-                    if computed is not None:
-                        body_fat_percent = computed
-                        body_fat_source = 'skinfold_jp3'
+            body_fat_percent, body_fat_source = skinfold_body_fat(sex=sex, age=options['age'], skinfolds=skinfolds)
+            if body_fat_percent is None:
+                body_fat_source = ''
 
         try:
             record_assessment(
@@ -157,13 +172,27 @@ class Command(BaseCommand):
                 body_fat_source=body_fat_source,
                 measurements=measurements,
                 notes=notes,
+                sex=sex or '',
+                height_cm=height_cm,
             )
-        except UnknownPlanSlugError as exc:
+        except (UnknownPlanSlugError, AssessmentValueError) as exc:
             raise CommandError(str(exc)) from exc
 
-        report = build_report(plan_slug=plan_slug, sex=plan.assessment_sex, height_cm=plan.height_cm)
+        # Gera e grava o comentario tecnico (hero da aba Avaliacoes) uma
+        # unica vez aqui, no momento do lancamento presencial — nunca em
+        # GET (ver assessment_hero_ai.py). Falha silenciosa (None) nunca
+        # impede a avaliacao de ter sido registrada com sucesso.
+        from public_workouts.assessment_hero_ai import generate_and_store_hero_commentary
+
+        hero_text = generate_and_store_hero_commentary(plan_slug=plan_slug, sex=sex, height_cm=height_cm)
+
+        report = build_report(plan_slug=plan_slug, sex=sex, height_cm=height_cm)
 
         self.stdout.write(self.style.SUCCESS(f'Avaliacao registrada: {plan_slug} @ {measured_at.isoformat()}'))
+        if hero_text:
+            self.stdout.write(f'  Comentario (hero): {hero_text}')
+        else:
+            self.stdout.write('  Comentario (hero): nao gerado (sem ANTHROPIC_API_KEY, timeout, ou erro).')
         indicators = report['indicators'] or {}
         if indicators.get('bmi'):
             self.stdout.write(f'  IMC: {indicators["bmi"]["value"]} ({indicators["bmi"]["classification"]["label"]})')

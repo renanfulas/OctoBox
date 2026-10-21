@@ -82,8 +82,15 @@ def _verify_rs256_jwt(token: str, *, audience: str, issuer: str, jwks: dict[str,
 class BaseOAuthProvider:
     provider = ''
 
-    def __init__(self):
+    def __init__(self, *, callback_url_name: str = 'student-identity-oauth-callback', callback_url_kwargs: dict | None = None):
+        """`callback_url_name`/`callback_url_kwargs` permitem outro produto reusar
+        este provider (Google/Apple) apontando pra própria URL de callback, sem
+        tocar em StudentIdentity nem no fluxo de convite do /aluno/ — ver
+        student_identity/public_workout_oauth.py. Default preserva o
+        comportamento original (callback de /aluno/) pra todo chamador existente."""
         self.http = requests.Session()
+        self.callback_url_name = callback_url_name
+        self.callback_url_kwargs = {'provider': self.provider} if callback_url_kwargs is None else callback_url_kwargs
 
     def get_authorize_url(self, *, state: str, request) -> str:
         raise NotImplementedError
@@ -92,7 +99,7 @@ class BaseOAuthProvider:
         raise NotImplementedError
 
     def _build_callback_uri(self, request) -> str:
-        callback_path = reverse('student-identity-oauth-callback', kwargs={'provider': self.provider})
+        callback_path = reverse(self.callback_url_name, kwargs=self.callback_url_kwargs)
         public_base_url = getattr(settings, 'STUDENT_OAUTH_PUBLIC_BASE_URL', '').strip().rstrip('/')
         if public_base_url:
             return f'{public_base_url}{callback_path}'

@@ -35,6 +35,7 @@ from .oauth_actions import (
     exchange_student_oauth_identity_payload,
     finalize_student_oauth_callback,
 )
+from .oauth_errors import map_student_oauth_failure_reason
 from .oauth_journeys import resolve_student_oauth_journey
 from .oauth_loader import enforce_student_oauth_callback_rate_limit
 from .oauth_policy import StudentOAuthCallbackPolicyError, read_student_oauth_callback_input
@@ -104,19 +105,6 @@ class StudentSignInView(TemplateView):
             invite_token=invite_token,
         )
         return use_case.execute(command)
-
-    def _map_failure_reason(self, reason: str) -> str:
-        mapping = {
-            'invite-not-found': 'O convite informado não foi encontrado ou expirou. Tente entrar sem convite.',
-            'invite-box-mismatch': 'Este convite não pertence ao box atual.',
-            'invite-expired': 'O convite informado não foi encontrado ou expirou. Tente entrar sem convite.',
-            'invite-email-mismatch': 'O e-mail informado não corresponde ao convite.',
-            'student-email-ambiguous': 'Não foi possível validar este aluno por e-mail neste box.',
-            'box-root-mismatch': 'Esta conta de aluno pertence a outro box.',
-            'student-box-mismatch': 'Este aluno já está vinculado a outro box.',
-            'provider-subject-required': 'Não foi possível validar a identidade social informada.',
-        }
-        return mapping.get(reason, 'Não foi possível autorizar este aluno no box atual.')
 
 
 class StudentOAuthStartView(View):
@@ -254,7 +242,7 @@ class StudentOAuthCallbackView(StudentSignInView):
         # CENTER LAYER (docs/architecture/center-layer.md):
         # Resolve o tenant ANTES de qualquer query TENANT_APPS abaixo.
         # Estrategias em ordem (primeira que resolver vence):
-        #   1. invite_token (invitation OU link em massa)
+        #   1. invite_token (invitation OU link do grupo)
         #   2. provider_subject -> existing identity
         #   3. email -> existing identity (so se houver 1 candidate)
         # Sem isso, AuthenticateStudentWithProvider.execute() chama
@@ -279,7 +267,7 @@ class StudentOAuthCallbackView(StudentSignInView):
             identity_payload=identity_payload,
             authentication_result=result,
             identity_repository_class=self.identity_repository_class,
-            map_failure_reason=self._map_failure_reason,
+            map_failure_reason=map_student_oauth_failure_reason,
         )
 
     def _map_provider_callback_error(self, reason: str) -> str:
@@ -466,7 +454,7 @@ class StudentBoxInviteLandingView(TemplateView):
                     action='student_box_invite_landing.rate_limited',
                     target_model='student_identity.StudentBoxInviteLink',
                     target_label=hashlib.sha256(str(self.kwargs.get('token', '')).encode()).hexdigest()[:16],
-                    description='Landing de link em massa do aluno bloqueada por rajada.',
+                    description='Landing de link do grupo do aluno bloqueada por rajada.',
                     metadata={
                         'ip_hash': hashlib.sha256(resolve_student_client_ip(request).encode()).hexdigest()[:8],
                         'path': request.path,
@@ -499,7 +487,7 @@ class StudentBoxInviteLandingView(TemplateView):
                 target_model='student_identity.StudentBoxInviteLink',
                 target_id=str(box_invite_link.id),
                 target_label=box_invite_link.box_root_slug,
-                description='Landing do link em massa visualizada.',
+                description='Landing do link do grupo visualizada.',
                 metadata={
                     'box_root_slug': box_invite_link.box_root_slug,
                     'box_invite_link_id': box_invite_link.id,
@@ -514,7 +502,7 @@ class StudentBoxInviteLandingView(TemplateView):
                     action='student_box_invite_landing.invalid_token_accessed',
                     target_model='student_identity.StudentBoxInviteLink',
                     target_label=_token_hash,
-                    description='Tentativa de abrir link em massa inexistente.',
+                    description='Tentativa de abrir link do grupo inexistente.',
                     metadata={
                         'box_root_slug': get_box_runtime_slug(),
                         'token_hash': _token_hash,

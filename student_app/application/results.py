@@ -91,6 +91,7 @@ class StudentMonthDay:
     day_label: str
     is_today: bool
     sessions: tuple[StudentSessionCard, ...] = ()
+    has_published_wod: bool = False
     holiday_name: str = ''
     is_holiday: bool = False
     student_checkin_label: str = ''
@@ -126,6 +127,8 @@ class StudentWorkoutMovementCard:
     percentage: Decimal | None = None
     is_primary_recommendation: bool = False
     reference_url: str = ''
+    demo_video_url: str = ''
+    is_scaled_alternative: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,6 +137,7 @@ class StudentWorkoutBlockCard:
     kind_label: str
     notes: str
     movements: tuple[StudentWorkoutMovementCard, ...]
+    format_label: str = ''
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,6 +150,7 @@ class StudentWorkoutDayResult:
     coach_notes: str
     blocks: tuple[StudentWorkoutBlockCard, ...]
     is_normalized: bool = False
+    has_structured_content: bool = False
     primary_recommendation: StudentWorkoutMovementCard | None = None
 
 

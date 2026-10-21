@@ -147,6 +147,7 @@ Exemplos fortes:
 4. [../plans/theme-implementation-final.md](../plans/theme-implementation-final.md) para a ordem pratica de implantacao do tema oficial
 5. [../plans/in-flight-board.md](../plans/in-flight-board.md) para "o que esta em voo agora" entre sessoes/worktrees e higiene de branch orfa
 6. [../plans/STATUS.md](../plans/STATUS.md) para "isso ja foi implementado?" — indice unico de status de todos os planos (bloqueado/referencia viva/ativo/aberto/precisa verificacao/dormente), snapshot datado
+7. [../plans/public-workouts-aceleracao-operacional-corda.md](../plans/public-workouts-aceleracao-operacional-corda.md) para a decisao de escala do Curva/Public Workouts; os planos GTM e de nutrição anteriores explicam origem, mas não liberam mídia
 
 ### 4. Reference
 

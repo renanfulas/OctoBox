@@ -18,7 +18,7 @@ from django.db.models import Count
 from django.urls import reverse
 from django.utils import timezone
 
-from access.roles import ROLE_COACH, ROLE_OWNER
+from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 
 from .workout_corridor_navigation import build_workout_corridor_tabs
@@ -49,14 +49,16 @@ def _build_page_payload(*, page_title, page_subtitle, current_role_slug):
         },
         data={
             'hero': build_page_hero(
-                eyebrow='Planner',
-                title='Semana de WOD em uma so grade.',
-                copy='Planeje, encontre lacunas e abra o editor certo sem depender de uma fila linear.',
+                eyebrow='Calendário',
+                title='A semana de treinos, aula por aula.',
+                copy='Cada aula mostra o estado do treino e o próximo passo até ele aparecer para os alunos.',
                 actions=[
-                    {'label': 'Aprovações', 'href': reverse('workout-approval-board'), 'kind': 'secondary'},
-                    {'label': 'Histórico', 'href': reverse('workout-publication-history'), 'kind': 'ghost'},
+                    {'label': 'Programar WOD da semana', 'href': reverse('workout-smart-paste'), 'kind': 'primary'},
+                    *([
+                        {'label': 'Revisar aprovações', 'href': reverse('workout-approval-board'), 'kind': 'secondary'},
+                    ] if current_role_slug in {ROLE_MANAGER, ROLE_OWNER} else []),
                 ],
-                aria_label='Planner semanal de WOD',
+                aria_label='Calendário semanal de WOD',
                 classes=['coach-hero'],
                 data_panel='coach-hero',
                 actions_slot='coach-hero-actions',

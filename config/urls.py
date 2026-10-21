@@ -28,12 +28,16 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('aluno/', include('student_app.urls')),
     path('renan/', include('student_app.public_urls')),
+    # Corredor de treinos: login e (Onda B2) webhook, fora do namespace de
+    # um personal especifico — D.000 do CORDA.
+    path('treinos/', include('student_identity.public_workout_urls')),
     path('', include('dashboard.urls')),
     path('', include('onboarding.urls')),
     path('', include('catalog.urls')),
     path('', include('guide.urls')),
     path('', include('operations.urls')),
     path('', include('integrations.urls')),
+    path('', include('public_workouts.urls')),
     path('metrics/', metrics_view),
     path(settings.ADMIN_URL_PATH, admin.site.urls),
 ]

@@ -122,17 +122,26 @@ class ApproveMembershipTest(unittest.TestCase):
 @patch('student_identity.staff_membership_actions.messages')
 @patch('student_identity.staff_membership_actions.AuditEvent')
 @patch('student_identity.staff_membership_actions._update_student_email_in_tenant')
+@patch('student_identity.staff_membership_actions.DjangoStudentIdentityRepository')
 class ChangeEmailTest(unittest.TestCase):
-    def test_denied_role_short_circuits(self, mock_update, mock_audit, mock_messages, mock_redirect):
+    """Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md) adicionou a checagem de
+    duplicidade de e-mail via DjangoStudentIdentityRepository().find_live_by_email_and_box —
+    precisa ser mockada no mesmo estilo do resto da classe (sem banco real neste arquivo)."""
+
+    @staticmethod
+    def _no_conflict(mock_repo):
+        mock_repo.return_value.find_live_by_email_and_box.return_value = None
+
+    def test_denied_role_short_circuits(self, mock_repo, mock_update, mock_audit, mock_messages, mock_redirect):
         result = _make_view(denied=True)._handle_change_email(_make_request())
         self.assertEqual(result, DENIED_SENTINEL)
 
-    def test_not_found_shows_error(self, mock_update, mock_audit, mock_messages, mock_redirect):
+    def test_not_found_shows_error(self, mock_repo, mock_update, mock_audit, mock_messages, mock_redirect):
         with _patch_membership_lookup(None):
             _make_view()._handle_change_email(_make_request())
         mock_messages.error.assert_called_once()
 
-    def test_blank_email_shows_error(self, mock_update, mock_audit, mock_messages, mock_redirect):
+    def test_blank_email_shows_error(self, mock_repo, mock_update, mock_audit, mock_messages, mock_redirect):
         membership = _make_membership()
         req = _make_request({'membership_id': '1', 'new_email': '   '})
         with _patch_membership_lookup(membership):
@@ -140,7 +149,7 @@ class ChangeEmailTest(unittest.TestCase):
         mock_messages.error.assert_called_once()
         mock_update.assert_not_called()
 
-    def test_invalid_email_shows_error(self, mock_update, mock_audit, mock_messages, mock_redirect):
+    def test_invalid_email_shows_error(self, mock_repo, mock_update, mock_audit, mock_messages, mock_redirect):
         membership = _make_membership()
         req = _make_request({'membership_id': '1', 'new_email': 'not-an-email'})
         with _patch_membership_lookup(membership):
@@ -148,7 +157,7 @@ class ChangeEmailTest(unittest.TestCase):
         mock_messages.error.assert_called_once()
         mock_update.assert_not_called()
 
-    def test_same_email_shows_info(self, mock_update, mock_audit, mock_messages, mock_redirect):
+    def test_same_email_shows_info(self, mock_repo, mock_update, mock_audit, mock_messages, mock_redirect):
         membership = _make_membership()
         membership.identity.email = 'same@example.com'
         req = _make_request({'membership_id': '1', 'new_email': 'same@example.com'})
@@ -157,7 +166,22 @@ class ChangeEmailTest(unittest.TestCase):
         mock_messages.info.assert_called_once()
         mock_update.assert_not_called()
 
-    def test_happy_path_updates_identity_and_tenant(self, mock_update, mock_audit, mock_messages, mock_redirect):
+    def test_email_already_used_in_box_shows_error(self, mock_repo, mock_update, mock_audit, mock_messages, mock_redirect):
+        # Onda 3: e-mail ja usado por OUTRA identity ativa no mesmo box -> bloqueia,
+        # sem tocar o banco (identity.save nunca chamado).
+        membership = _make_membership()
+        conflicting = MagicMock(id=999)  # id diferente do da propria identity (9)
+        mock_repo.return_value.find_live_by_email_and_box.return_value = conflicting
+        req = _make_request({'membership_id': '1', 'new_email': 'new@example.com'})
+        with _patch_membership_lookup(membership):
+            result = _make_view()._handle_change_email(req)
+        mock_messages.error.assert_called_once()
+        membership.identity.save.assert_not_called()
+        mock_update.assert_not_called()
+        self.assertEqual(result, REDIRECT_SENTINEL)
+
+    def test_happy_path_updates_identity_and_tenant(self, mock_repo, mock_update, mock_audit, mock_messages, mock_redirect):
+        self._no_conflict(mock_repo)
         membership = _make_membership()
         req = _make_request({'membership_id': '1', 'new_email': 'new@example.com', 'change_reason': 'pedido'})
         with _patch_membership_lookup(membership):
@@ -170,7 +194,7 @@ class ChangeEmailTest(unittest.TestCase):
         self.assertEqual(result, REDIRECT_SENTINEL)
 
     @patch('student_identity.staff_membership_actions.timezone')
-    def test_reception_second_change_blocked(self, mock_tz, mock_update, mock_audit, mock_messages, mock_redirect):
+    def test_reception_second_change_blocked(self, mock_tz, mock_repo, mock_update, mock_audit, mock_messages, mock_redirect):
         # ROLE_RECEPTION com 1 troca recente no mes -> bloqueia a segunda
         view = _make_view()
         view._get_actor_role_slug = lambda request: ROLE_RECEPTION
@@ -184,8 +208,9 @@ class ChangeEmailTest(unittest.TestCase):
         self.assertEqual(result, REDIRECT_SENTINEL)
 
     @patch('student_identity.staff_membership_actions.timezone')
-    def test_reception_first_change_allowed(self, mock_tz, mock_update, mock_audit, mock_messages, mock_redirect):
+    def test_reception_first_change_allowed(self, mock_tz, mock_repo, mock_update, mock_audit, mock_messages, mock_redirect):
         # ROLE_RECEPTION com 0 trocas recentes -> primeira troca passa normalmente
+        self._no_conflict(mock_repo)
         view = _make_view()
         view._get_actor_role_slug = lambda request: ROLE_RECEPTION
         membership = _make_membership()

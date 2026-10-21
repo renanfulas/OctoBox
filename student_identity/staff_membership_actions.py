@@ -18,6 +18,7 @@ from datetime import timedelta
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db import IntegrityError
 from django.shortcuts import redirect
 from django.utils import timezone
 
@@ -27,6 +28,7 @@ from shared_support.box_runtime import get_box_runtime_slug
 
 from .consent import resolve_onboarding_journey_for_membership
 from .funnel_events import record_student_onboarding_event
+from .infrastructure.repositories import DjangoStudentIdentityRepository
 from .models import StudentBoxMembership, StudentBoxMembershipStatus
 
 
@@ -172,9 +174,29 @@ class StudentInvitationMembershipActionsMixin:
                 )
                 return redirect('student-invitation-operations')
 
+        # Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md): antes desta checagem,
+        # trocar pra um e-mail ja usado por outra identity ativa no mesmo box estourava
+        # IntegrityError cru (constraint condicional do banco, que nao passa pela validacao
+        # de formulario). Reaproveita find_live_by_email_and_box, ja usado por
+        # TransferStudentToBox pro mesmo criterio de "e-mail vivo" no box.
+        conflicting_identity = DjangoStudentIdentityRepository().find_live_by_email_and_box(
+            email=new_email, box_root_slug=membership.box_root_slug,
+        )
+        if conflicting_identity is not None and conflicting_identity.id != identity.id:
+            messages.error(request, 'Esse e-mail já está em uso por outro cadastro neste box.')
+            return redirect('student-invitation-operations')
+
         old_email = identity.email
         identity.email = new_email
-        identity.save(update_fields=['email', 'updated_at'])
+        try:
+            # _handle_change_email nao roda dentro de nenhum @transaction.atomic (ao
+            # contrario de save_identity em repositories.py) — try/except direto basta,
+            # sem precisar de savepoint interno.
+            identity.save(update_fields=['email', 'updated_at'])
+        except IntegrityError:
+            # So alcancavel por uma corrida real — a checagem acima ja cobre o caso comum.
+            messages.error(request, 'Esse e-mail já está em uso por outro cadastro neste box.')
+            return redirect('student-invitation-operations')
         # Sprint 2: Student.email update requer schema_context (tenant->public direcao errada).
         # Aluno tem email tanto em StudentIdentity (login) quanto em Student (tenant).
         # Atualizar Student.email via schema_context do box correto.

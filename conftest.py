@@ -300,6 +300,30 @@ def _tenant_schema_context(request, test_tenant):
         yield
 
 
+@pytest.fixture(autouse=True)
+def _clear_process_caches():
+    """Zera os caches de processo (default/sessions/platform) apos cada test.
+
+    Backends de cache (LocMemCache em teste) NAO sao revertidos pelo
+    rollback de transacao do pytest-django — so o banco e. Um throttle
+    baseado em cache (ex.: checkout_rate_limit_exceeded, shared_support/
+    security/fintech_throttles.py, chave por IP+user — a mesma para
+    qualquer cliente de teste anonimo) acumula contagem entre tests que
+    nunca pretenderam se falar. Em ordem aleatoria (order-dependence-check
+    do CI) isso deixa um test sem relacao nenhuma "nascer ja estourado" —
+    achado ao vivo no seed 137 apos o merge da Onda B2 (mais volume de
+    tests aumentou a chance de estourar o limiar antes do teste do
+    throttle original rodar): test_payment_link_gateway_error_returns_502
+    _without_leaking_detail recebeu 429 em vez do 502 esperado.
+    """
+    yield
+    from django.conf import settings
+    from django.core.cache import caches
+
+    for alias in settings.CACHES:
+        caches[alias].clear()
+
+
 @pytest.fixture(scope='class', autouse=True)
 def _auto_membership_for_test_users(test_tenant, django_db_setup):
     """Sprint 4: auto-associa qualquer User criado durante o teste ao

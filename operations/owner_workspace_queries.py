@@ -111,7 +111,7 @@ def build_owner_workspace_snapshot(*, today):
     current_time = timezone.localtime()
     owner_session_objects = list(
         ClassSession.objects.filter(scheduled_at__date__gte=today)
-        .select_related('coach')
+        .select_related('coach', 'workout_program')
         .annotate(occupied_slots=Count('attendances'))
         .order_by('scheduled_at')[:5]
     )

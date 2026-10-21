@@ -274,8 +274,8 @@ textarea::placeholder {
 
 body[data-theme="dark"] input::placeholder,
 body[data-theme="dark"] textarea::placeholder {
-    color: var(--ink);
-    opacity: 0.85;
+    color: var(--theme-text-muted);
+    opacity: 1;
 }
 
 * {
@@ -482,6 +482,22 @@ textarea:focus {
     border-color: var(--theme-focus-ring);
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-accent-support) 12%, transparent);
     transform: translateY(-1px);
+}
+
+/* Checkbox/radio nao herdam o box de campo de texto (width:100%, min-height, padding):
+   no iOS Safari isso gerava checkbox gigante e label espremido dentro de flex. */
+input[type="checkbox"],
+input[type="radio"] {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    min-height: 0;
+    padding: 0;
+    border-radius: 6px;
+}
+
+input[type="radio"] {
+    border-radius: 50%;
 }
 
 input[readonly] {

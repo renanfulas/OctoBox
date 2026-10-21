@@ -18,6 +18,7 @@ ENV_FILE="${OCTOBOX_APP_HOME}/shared/octobox.env"
 STATE_DIR="${OCTOBOX_APP_HOME}/shared/deploy-state"
 CURRENT_FILE="${STATE_DIR}/current_commit"
 PREVIOUS_FILE="${STATE_DIR}/previous_commit"
+DEPLOYED_SHA_FILE="${STATE_DIR}/deployed_sha"
 LAST_BACKUP_FILE="${STATE_DIR}/last_backup_path"
 
 if [[ ! -d "${APP_DIR}/.git" ]]; then
@@ -82,6 +83,9 @@ PY" | tail -n 1)"
 echo "Backup criado em: ${backup_path}"
 printf '%s\n' "${backup_path}" > "${LAST_BACKUP_FILE}"
 
+echo "== Checkout ownership =="
+chown -R "${OCTOBOX_APP_USER}:${OCTOBOX_APP_GROUP}" "${APP_DIR}"
+
 echo "== Git sync =="
 sudo -u "${OCTOBOX_APP_USER}" git -C "${APP_DIR}" fetch origin
 sudo -u "${OCTOBOX_APP_USER}" git -C "${APP_DIR}" checkout "${OCTOBOX_BRANCH}"
@@ -105,10 +109,18 @@ echo "== Restart services =="
 systemctl restart octobox-gunicorn
 systemctl is-active octobox-gunicorn
 
-echo "== Healthcheck =="
-curl -sk "https://${OCTOBOX_DOMAIN}/api/v1/health/"
+# Worker do aviso do descanso roda o codigo novo so depois de reiniciar.
+if systemctl cat octobox-public-workout-rest-alerts.service >/dev/null 2>&1; then
+  systemctl restart octobox-public-workout-rest-alerts
+  systemctl is-active octobox-public-workout-rest-alerts || echo "AVISO: worker do descanso (octobox-public-workout-rest-alerts) nao ficou ativo."
+fi
 
 new_commit="$(sudo -u "${OCTOBOX_APP_USER}" git -C "${APP_DIR}" rev-parse HEAD)"
+printf '%s\n' "${new_commit}" > "${DEPLOYED_SHA_FILE}"
+
+echo "== Healthcheck =="
+curl -fsk "https://${OCTOBOX_DOMAIN}/api/v1/health/"
+
 printf '%s\n' "${current_commit}" > "${PREVIOUS_FILE}"
 printf '%s\n' "${new_commit}" > "${CURRENT_FILE}"
 

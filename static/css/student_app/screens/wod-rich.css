@@ -1,5 +1,5 @@
 /*
-ARQUIVO: estilos do tier rico (SmartPlan) e tier cru no app do aluno.
+ARQUIVO: estilos do tier estruturado de WOD e do tier cru no app do aluno.
 
 POR QUE ELE EXISTE:
 - separa os estilos especificos de tier de wod.css para que onda E.3 nao toque em CSS
@@ -7,7 +7,7 @@ POR QUE ELE EXISTE:
   SmartPlan esta ativo.
 
 O QUE ESTE ARQUIVO FAZ:
-1. badge SmartPlan na meta da sessao (tier rico).
+1. badge do tier estruturado na meta da sessao.
 2. pre-formatacao do texto cru (.student-wod-raw__text) com tokens de fonte mono.
 3. hint discreto no tier cru informando o que o aluno perde sem SmartPlan.
 
@@ -35,6 +35,28 @@ PONTOS CRITICOS:
     border: 1px solid color-mix(in srgb, var(--theme-accent-primary) 22%, transparent);
 }
 
+.student-wod-block__format,
+.student-wod-movement-card__scaled,
+.student-wod-movement-card__notes {
+    color: var(--theme-text-secondary);
+    font-size: max(0.8125rem, 13px);
+    line-height: 1.5;
+}
+
+.student-wod-block__format {
+    margin: -2px 0 8px;
+    font-weight: 650;
+}
+
+.student-wod-movement-card__scaled {
+    color: var(--theme-accent-support);
+    font-weight: 650;
+}
+
+.student-wod-movement-card__notes {
+    color: var(--theme-text-muted);
+}
+
 /* =========================
  * Link de referencia do movimento (MovementLibrary)
  * ========================= */
@@ -48,6 +70,19 @@ PONTOS CRITICOS:
 
 .student-wod-movement-ref:hover {
     text-decoration-color: var(--theme-accent-primary);
+}
+
+.student-wod-movement-video {
+    align-self: flex-start;
+    color: var(--theme-accent-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.student-wod-movement-video:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 /* =========================

@@ -1,0 +1,128 @@
+.workout-push-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--curva-edge);
+  border-radius: 24px;
+  background: var(--theme-surface-secondary);
+  color: var(--theme-text-primary);
+}
+
+.workout-push-prompt strong { display: block; font-size: 1rem; }
+.workout-push-prompt p { margin: .35rem 0; color: var(--theme-text-secondary); }
+.workout-push-prompt [data-workout-push-status] { color: var(--theme-text-muted); font-size: .85rem; }
+.workout-push-prompt__actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.workout-push-prompt button,
+.workout-push-prompt__actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: .6rem .9rem;
+  border: 1px solid var(--brand);
+  border-radius: 999px;
+  background: var(--brand);
+  color: #071b22;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+.workout-push-prompt button[data-workout-push-disable] {
+  background: transparent;
+  color: var(--theme-text-primary);
+}
+.workout-push-prompt button:focus-visible,
+.workout-push-prompt__actions a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.workout-push-prompt [hidden] { display: none; }
+.workout-push-prompt[hidden],
+.workout-install-prompt[hidden] { display: none; }
+
+.workout-device-settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--theme-border-soft);
+}
+.workout-device-settings__row:last-child { border-bottom: 0; }
+.workout-device-settings__copy { display: grid; gap: .25rem; min-width: 0; }
+.workout-device-settings__copy strong {
+  color: var(--theme-text-primary);
+  font-size: .92rem;
+  font-weight: 600;
+}
+.workout-device-settings__copy span {
+  color: var(--theme-text-muted);
+  font-size: .82rem;
+  line-height: 1.4;
+}
+.workout-device-settings__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.workout-device-settings__row button,
+.workout-device-settings__actions a {
+  flex: none;
+  min-height: 44px;
+  padding: .6rem .8rem;
+  border: 1px solid var(--theme-border-soft);
+  border-radius: 12px;
+  background: var(--theme-surface-secondary);
+  color: var(--theme-text-primary);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.workout-device-settings__row button:focus-visible,
+.workout-device-settings__actions a:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.workout-device-settings__row [hidden] { display: none; }
+.workout-device-settings__row button:disabled { cursor: not-allowed; opacity: .55; }
+
+/* Confirmação por código para quem já está logado (_push_verify.html). */
+.workout-push-verify { display: grid; gap: .5rem; min-width: 0; }
+.workout-push-verify__form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: end; }
+.workout-push-verify__form label {
+  grid-column: 1 / -1;
+  color: var(--theme-text-secondary);
+  font-size: .82rem;
+  font-weight: 700;
+}
+.workout-push-verify__form input {
+  min-width: 0;
+  min-height: 44px;
+  padding: .55rem .8rem;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 12px;
+  background: var(--theme-surface-strong);
+  color: var(--theme-text-primary);
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: .25em;
+  font-variant-numeric: tabular-nums;
+}
+.workout-push-verify__form input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.workout-push-verify .workout-push-verify__resend {
+  grid-column: 1 / -1;
+  justify-self: start;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--theme-text-secondary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.workout-push-verify [hidden] { display: none; }
+
+@media (max-width: 560px) {
+  .workout-push-prompt { align-items: stretch; flex-direction: column; }
+  .workout-push-prompt__actions { display: grid; }
+  .workout-device-settings__row { align-items: flex-start; flex-direction: column; }
+}

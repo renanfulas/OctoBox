@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 from django import forms
+from django.utils.formats import number_format
 from django.utils import timezone
 
 from finance.models import MembershipPlan
@@ -19,7 +20,6 @@ from students.models import Student
 
 
 MIN_STUDENT_BIRTH_DATE = date(1900, 1, 1)
-MAX_STUDENT_BIRTH_YEAR = 2026
 MIN_STUDENT_NAME_LENGTH = 5
 MIN_STUDENT_PHONE_DIGITS = 10
 MAX_STUDENT_PHONE_DIGITS = 11
@@ -33,6 +33,36 @@ def _student_phone_exists(*, normalized_phone: str, exclude_student_id: int | No
     if phone_lookup_index:
         return queryset.filter(phone_lookup_index=phone_lookup_index).exists()
     return queryset.filter(phone=normalized_phone).exists()
+
+
+def find_claimable_lead_by_phone(*, normalized_phone: str, box_root_slug: str):
+    """Acha um Student existente com esse telefone que AINDA NAO tem identidade de
+    app (StudentIdentity) neste box — candidato seguro pra reaproveitar em vez de
+    bloquear como duplicata.
+
+    Caso real: a recepcao ja cadastrou a pessoa como lead/aluno (nome + telefone),
+    mas ela nunca completou o login do app. Quando ela usa o link em massa depois,
+    o telefone "ja existe" — mas e ela mesma, so que sem login ainda.
+
+    Devolve None se nao achar nenhum Student com esse telefone, OU se o Student
+    encontrado ja tem uma StudentIdentity viva neste box (duplicata real, nao
+    reaproveitavel).
+    """
+    phone_lookup_index = generate_blind_index(normalized_phone)
+    queryset = Student.objects.all()
+    student = (
+        queryset.filter(phone_lookup_index=phone_lookup_index).first()
+        if phone_lookup_index
+        else queryset.filter(phone=normalized_phone).first()
+    )
+    if student is None:
+        return None
+    has_identity = StudentIdentity.objects.filter(
+        student_id=student.id,
+        box_root_slug=box_root_slug,
+        status__in=[StudentIdentityStatus.PENDING, StudentIdentityStatus.ACTIVE],
+    ).exists()
+    return None if has_identity else student
 
 
 def _student_identity_email_exists(*, email: str, box_root_slug: str, exclude_identity_id: int | None = None) -> bool:
@@ -124,6 +154,15 @@ class StudentExerciseMaxUpdateForm(forms.Form):
     )
 
 
+class StudentOnboardingPlanField(forms.ModelChoiceField):
+    """Mostra os detalhes que a pessoa precisa para comparar planos."""
+
+    def label_from_instance(self, plan):
+        price = number_format(plan.price, decimal_pos=2, use_l10n=True)
+        billing_cycle = plan.get_billing_cycle_display().lower()
+        return f'{plan.name} — R$ {price} · {billing_cycle} · {plan.sessions_per_week}x por semana'
+
+
 class BaseStudentOnboardingForm(forms.Form):
     full_name = forms.CharField(label='Nome completo', max_length=150)
     phone = forms.CharField(label='WhatsApp', max_length=20)
@@ -131,10 +170,9 @@ class BaseStudentOnboardingForm(forms.Form):
         label='Data de nascimento',
         required=False,
         min_year=MIN_STUDENT_BIRTH_DATE.year,
-        max_year=MAX_STUDENT_BIRTH_YEAR,
-        widget=forms.TextInput(),
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'type': 'text'}),
     )
-    selected_plan = forms.ModelChoiceField(
+    selected_plan = StudentOnboardingPlanField(
         label='Plano',
         required=False,
         queryset=MembershipPlan.objects.none(),
@@ -147,6 +185,12 @@ class BaseStudentOnboardingForm(forms.Form):
         self.identity = identity
         self.box_root_slug = box_root_slug
         self.fields['selected_plan'].queryset = MembershipPlan.objects.filter(active=True).order_by('price', 'name')
+        today = timezone.localdate()
+        birth_date_field = self.fields['birth_date']
+        birth_date_field.max_year = today.year
+        birth_date_field.error_messages['max_year'] = (
+            f'O ano da data de nascimento precisa ser no máximo {today.year}.'
+        )
         apply_text_input_attrs(
             self.fields['full_name'],
             placeholder='Ex.: Maria Souza',
@@ -166,20 +210,35 @@ class BaseStudentOnboardingForm(forms.Form):
             maxlength=10,
             pattern=r'\d{2}/\d{2}/\d{4}',
             min_year=MIN_STUDENT_BIRTH_DATE.year,
-            max_year=MAX_STUDENT_BIRTH_YEAR,
+            max_year=today.year,
         )
-        self.fields['birth_date'].help_text = 'Use o formato dd/mm/aaaa. Ano permitido: 1900 a 2026.'
+        self.fields['birth_date'].help_text = 'Opcional. Use dd/mm/aaaa; a data não pode ser futura.'
         self.fields['selected_plan'].widget.attrs.update({'autocomplete': 'off'})
 
     def clean_phone(self):
         raw_phone = (self.cleaned_data.get('phone') or '').strip()
         phone = normalize_phone_number(raw_phone)
         if not phone:
-            raise forms.ValidationError('Informe um WhatsApp valido com DDD.')
+            raise forms.ValidationError('Informe um WhatsApp válido com DDD.')
         if len(phone) < MIN_STUDENT_PHONE_DIGITS or len(phone) > MAX_STUDENT_PHONE_DIGITS:
-            raise forms.ValidationError('Informe um WhatsApp valido com DDD. Ex.: 5511999999999.')
-        if _student_phone_exists(normalized_phone=phone, exclude_student_id=getattr(self.student, 'id', None)):
-            raise forms.ValidationError('Ja existe um aluno cadastrado com este WhatsApp.')
+            raise forms.ValidationError('Informe um WhatsApp válido com DDD. Ex.: 5511999999999.')
+
+        exclude_id = getattr(self.student, 'id', None)
+        if exclude_id is None:
+            # Link em massa (self.student ainda nao e conhecido nesta jornada): um
+            # telefone que ja existe pode ser dela mesma — um lead que a recepcao
+            # ja cadastrou, mas que nunca completou o login do app. Reaproveita
+            # esse Student (ver find_claimable_lead_by_phone) em vez de bloquear;
+            # so bloqueia se o Student encontrado ja tiver identidade de app.
+            claimable = find_claimable_lead_by_phone(normalized_phone=phone, box_root_slug=self.box_root_slug)
+            if claimable is not None:
+                exclude_id = claimable.id
+
+        if _student_phone_exists(normalized_phone=phone, exclude_student_id=exclude_id):
+            raise forms.ValidationError(
+                'Já existe um aluno cadastrado com este WhatsApp. '
+                'Já é aluno? Peça o link de acesso na recepção do seu box.'
+            )
         return phone
 
     def clean_full_name(self):
@@ -195,9 +254,9 @@ class BaseStudentOnboardingForm(forms.Form):
         if birth_date is None:
             return birth_date
         if birth_date < MIN_STUDENT_BIRTH_DATE:
-            raise forms.ValidationError('A data de nascimento precisa ser posterior a 01/01/1900.')
-        if birth_date.year > MAX_STUDENT_BIRTH_YEAR:
-            raise forms.ValidationError('O ano da data de nascimento precisa ficar entre 1900 e 2026.')
+            raise forms.ValidationError('A data de nascimento precisa ser igual ou posterior a 01/01/1900.')
+        if birth_date > timezone.localdate():
+            raise forms.ValidationError('A data de nascimento não pode ser futura.')
         return birth_date
 
 
@@ -210,6 +269,11 @@ class ImportedLeadOnboardingForm(BaseStudentOnboardingForm):
         super().__init__(*args, **kwargs)
         self.fields['full_name'].help_text = 'Já puxamos o nome do lead. Ajuste só se precisar.'
         self.fields['phone'].help_text = 'Já puxamos seu WhatsApp do box. Ajuste se estiver diferente.'
+        if self.student is not None and self.student.birth_date:
+            self.fields['birth_date'].help_text = (
+                'Já puxamos essa data do cadastro do box. Se deixar em branco, ela será mantida; '
+                'informe outra data para corrigir.'
+            )
 
 
 class StudentProfileEditForm(forms.ModelForm):

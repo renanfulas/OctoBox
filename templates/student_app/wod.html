@@ -18,12 +18,14 @@
         <span class="student-context-switch">{{ student_workout_day.session_title }}</span>
         {% if student_workout_day.is_normalized %}
         <span class="student-wod-rich__badge">SmartPlan</span>
+        {% elif student_workout_day.has_structured_content %}
+        <span class="student-wod-rich__badge">WOD organizado</span>
         {% endif %}
     </div>
     <h1 class="student-wod-header__title">{{ student_workout_day.workout_title|default:"Treino do dia" }}</h1>
     {% if student_workout_day.coach_name or student_workout_day.coach_notes %}
     <p class="student-wod-header__notes">
-        {% if student_workout_day.coach_name %}{{ student_workout_day.coach_name }}{% endif %}{% if student_workout_day.coach_notes and student_workout_day.is_normalized %}{% if student_workout_day.coach_name %} · {% endif %}“{{ student_workout_day.coach_notes|truncatechars:140 }}”{% endif %}
+        {% if student_workout_day.coach_name %}{{ student_workout_day.coach_name }}{% endif %}{% if student_workout_day.coach_notes %}{% if student_workout_day.coach_name %} · {% endif %}“{{ student_workout_day.coach_notes|truncatechars:140 }}”{% endif %}
     </p>
     {% endif %}
 </section>
@@ -53,7 +55,7 @@
 {% endif %}
 
 {% if student_workout_day %}
-    {% if student_workout_day.is_normalized %}
+    {% if student_workout_day.has_structured_content %}
         {% include "student_app/_partials/_wod_rich.html" %}
     {% else %}
         {% include "student_app/_partials/_wod_raw.html" %}

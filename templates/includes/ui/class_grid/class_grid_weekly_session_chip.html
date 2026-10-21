@@ -6,6 +6,7 @@
         </div>
         <div class="card-content weekly-session-chip-content">
             <p class="weekly-session-title">{{ item.object.title }}</p>
+            {% if item.workout_program_name %}<p class="class-grid-meta">{{ item.workout_program_name }}</p>{% endif %}
             <p class="class-grid-meta">{{ item.coach_name }}</p>
             <p class="class-grid-meta">{{ item.occupied_slots }}/{{ item.capacity }} lugar(es)</p>
         </div>

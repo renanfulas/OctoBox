@@ -1,0 +1,122 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{{ student_label }} — Curva</title>
+<link rel="stylesheet" href="{% static 'css/public_workouts/account.css' %}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/staff_ops.css' %}">
+</head>
+<body class="curva-ops">
+<main class="curva-ops-shell">
+  <header class="curva-ops-topbar">
+    <a href="{% url 'public-workout-coach-roster' %}" class="curva-ops-brand">Cur<span>va</span> · operação</a>
+    <nav class="curva-ops-nav">
+      <a href="{% url 'public-workout-activation-queue' %}">Fila de ativação</a>
+      <a href="{% url 'public-workout-coach-roster' %}">Alunos</a>
+    </nav>
+    <div class="curva-ops-user">
+      <span>{{ staff_username }}</span>
+      <form method="post" action="{% url 'public-workout-staff-logout' %}">{% csrf_token %}<button type="submit">Sair</button></form>
+    </div>
+  </header>
+
+  <p><a href="{% url 'public-workout-coach-roster' %}" class="curva-ops-back-link">← Todos os alunos</a></p>
+
+  {% if notice %}
+  <div class="curva-ops-notice{% if notice.status == 'error' %} is-error{% endif %}" role="status">{{ notice.message }}</div>
+  {% endif %}
+
+  <section class="curva-ops-hero curva-ops-student-hero">
+    <p class="curva-ops-eyebrow">Curva · aluno</p>
+    <h1>{{ student_label }}</h1>
+    <p>{{ account.email }}{% if subscription %} · {{ subscription.get_tier_display }} · {% if subscription.status == 'active' %}assinatura ativa{% elif subscription.status == 'past_due' %}pagamento atrasado{% elif subscription.status == 'suspended' %}suspenso{% else %}{{ subscription.get_status_display }}{% endif %}{% endif %}</p>
+    <div class="curva-ops-hero-actions">
+      {% if whatsapp_url %}<a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="curva-ops-whatsapp-button curva-ops-whatsapp-button--lg">Chamar no WhatsApp</a>
+      {% else %}<span class="curva-ops-meta">Sem WhatsApp cadastrado — adicione em <a href="{% url 'admin:public_workouts_publicworkoutaccount_change' account.pk %}">Contas (admin)</a>.</span>{% endif %}
+      {% if subscription %}
+      <form method="post" class="curva-ops-inline-form">{% csrf_token %}
+        <button type="submit" class="curva-ops-secondary-button">Gerar novo rascunho de treino</button>
+      </form>
+      {% endif %}
+    </div>
+    {% if pending_draft %}<p class="curva-ops-meta">Já existe um rascunho aguardando revisão — <a href="{% url 'admin:public_workouts_publicworkoutprogramdraft_change' pending_draft.pk %}">revisar no admin</a>.</p>{% endif %}
+  </section>
+
+  <section class="curva-ops-card" aria-label="Evolução por movimento">
+    <h2 class="curva-ops-section-title">Evolução</h2>
+    {% if charts %}
+    <div class="curva-ops-chart-grid">
+      {% for item in charts %}
+      <article class="curva-ops-chart-card">
+        <div class="curva-ops-chart-card__head">
+          <strong>{{ item.label }}</strong>
+          {% if item.trend_signal == 'plateau' %}<span class="curva-ops-pill is-warning">platô</span>
+          {% elif item.trend_signal == 'declining' %}<span class="curva-ops-pill is-danger">em queda</span>
+          {% elif item.trend_signal != 'insufficient_data' %}<span class="curva-ops-pill is-success">em evolução</span>{% endif %}
+        </div>
+        {% if item.chart.has_data %}
+        <svg viewBox="{{ item.chart.viewbox }}" class="curva-ops-spark" preserveAspectRatio="none">
+          <polygon class="curva-ops-spark-area" points="{{ item.chart.area_points_attr }}"></polygon>
+          <polyline class="curva-ops-spark-line" points="{{ item.chart.points_attr }}"></polyline>
+        </svg>
+        <p class="curva-ops-chart-card__value">{{ item.chart.latest_weight_kg }} kg <span class="curva-ops-chart-card__delta curva-ops-chart-card__delta--{{ item.chart.trend }}">{% if item.chart.delta_weight_kg > 0 %}+{% endif %}{{ item.chart.delta_weight_kg }} kg</span></p>
+        {% else %}
+        <p class="curva-ops-meta">Ainda sem histórico suficiente pra curva.</p>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="curva-ops-empty">Nenhuma carga registrada ainda.</div>
+    {% endif %}
+  </section>
+
+  <section class="curva-ops-card" aria-label="Versões do programa">
+    <h2 class="curva-ops-section-title">Programa</h2>
+    {% if program_versions %}
+    <table class="curva-ops-table">
+      <thead><tr><th>Versão</th><th>Programa</th><th>Início</th><th>Semanas</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for version in program_versions %}
+        <tr>
+          <td>v{{ version.version }}</td>
+          <td>{{ version.program_label }}</td>
+          <td>{{ version.started_on }}</td>
+          <td>{{ version.weeks }}</td>
+          <td>{% if version.is_active %}<span class="curva-ops-pill is-success">ativa</span>{% else %}<span class="curva-ops-pill">inativa</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="curva-ops-empty">Sem programa publicado ainda.</div>
+    {% endif %}
+  </section>
+
+  <section class="curva-ops-card" aria-label="Histórico de carga">
+    <details>
+      <summary class="curva-ops-section-title" style="cursor:pointer">Histórico completo de carga ({{ load_history|length }} registros)</summary>
+      {% if load_history %}
+      <table class="curva-ops-table">
+        <thead><tr><th>Data</th><th>Movimento</th><th>Carga</th><th>Reps</th></tr></thead>
+        <tbody>
+          {% for entry in load_history reversed %}
+          <tr>
+            <td>{{ entry.performed_on }}</td>
+            <td>{{ entry.movement_slug }}</td>
+            <td>{% if entry.weight_kg %}{{ entry.weight_kg }} kg{% else %}—{% endif %}</td>
+            <td>{{ entry.reps|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="curva-ops-empty">Nenhum registro ainda.</div>
+      {% endif %}
+    </details>
+  </section>
+
+  <p class="curva-ops-footer">
+    {% if plan_slug %}<a href="/renan/{{ plan_slug }}">Abrir treino do aluno</a>{% endif %}
+    {% if subscription %}{% if plan_slug %} · {% endif %}<a href="{% url 'admin:public_workouts_publicworkoutsubscription_change' subscription.pk %}">Editar assinatura no admin</a>{% endif %}
+  </p>
+</main>
+</body></html>

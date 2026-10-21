@@ -85,6 +85,11 @@ class StudentIdentityStatus(models.TextChoices):
     BLOCKED = 'blocked', 'Bloqueada'
 
 
+# O corredor de treinos autentica por PublicWorkoutAccount (token de
+# e-mail proprio, ver public_workout_login.py). Nao adicionar provider
+# aqui por causa dele (S1 do CORDA, Onda B1) — isso mudaria o enum que
+# governa o login do app de box, e toda query que assume google|apple
+# passaria a ter um terceiro caso.
 class StudentIdentityProvider(models.TextChoices):
     GOOGLE = 'google', 'Google'
     APPLE = 'apple', 'Apple'
@@ -134,6 +139,10 @@ class StudentBoxMembershipStatus(models.TextChoices):
 class StudentConsentDocumentKind(models.TextChoices):
     WAIVER = 'waiver', 'Termo de responsabilidade'
     PARQ = 'parq', 'PAR-Q'
+    # Onda B1 do CORDA: cobre IA (parser de treino), transferencia
+    # internacional e retencao de 12 meses — dado de saude do corredor
+    # de treinos (public_workouts/models.py: PublicWorkoutAssessment).
+    HEALTH_DATA = 'health_data', 'Dado de saude'
 
 
 class StudentParqOutcome(models.TextChoices):
