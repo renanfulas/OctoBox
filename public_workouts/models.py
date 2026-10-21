@@ -584,6 +584,7 @@ class PublicWorkoutTrainingSet(TimeStampedModel):
     weight_kg = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     reps = models.PositiveSmallIntegerField(null=True, blank=True)
     rir = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    duration_seconds = models.PositiveSmallIntegerField(null=True, blank=True)  # isometria: segundos sustentados
     completed_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

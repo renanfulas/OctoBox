@@ -300,7 +300,7 @@
 
   function render() {
     paintLauncher();
-    if (!focus.isOpen() || focus.screen() === 'countdown') return;
+    if (!focus.isOpen() || focus.screen() === 'countdown' || focus.isHolding()) return;
     var vm = viewModel();
     if (screen === 'exercise' && !vm.current) screen = 'summary';
     if (screen === 'rest' && !vm.rest) screen = vm.current ? 'exercise' : 'summary';
@@ -535,7 +535,7 @@
     }));
     recordedDetails = new Map((session.recorded || []).map(function (item) {
       return [key(item.movement_index, item.set_number), {
-        weight_kg: item.weight_kg, reps: item.reps, rir: item.rir,
+        weight_kg: item.weight_kg, reps: item.reps, rir: item.rir, duration_seconds: item.duration_seconds,
       }];
     }));
     recorded.forEach(function (setKey) { if (!setSync.has(setKey)) setSync.set(setKey, 'saved'); });
@@ -656,12 +656,12 @@
       set_number: step.setNumber, set_role: step.series.role,
       weight_kg: detail.weight == null ? '' : String(detail.weight),
       reps: detail.reps == null ? '' : String(detail.reps),
-      rir: detail.rir == null ? '' : String(detail.rir),
+      rir: detail.rir == null ? '' : String(detail.rir), duration_seconds: detail.duration == null ? '' : String(detail.duration),
     };
     // Transição otimista: o descanso começa no toque. O recibo vai de "Salvando…"
     // a "Salvo no aparelho" quando a fila local grava e a "✓ Salvo" com o servidor.
     recorded.add(setKey);
-    recordedDetails.set(setKey, { weight_kg: detail.weight, reps: detail.reps, rir: detail.rir });
+    recordedDetails.set(setKey, { weight_kg: detail.weight, reps: detail.reps, rir: detail.rir, duration_seconds: detail.duration });
     setSync.set(setKey, 'saving');
     lastFreeformIndex = step.movement.freeform ? step.movementIndex : null;
     lastSkipped = null;

@@ -38,7 +38,10 @@ NEW_PYTHON_FILE_LIMIT = 600
 # excecao.
 LINE_CEILINGS = {
     # Arquivos do plano de split (auditoria, secao 2).
-    'public_workouts/models.py': 1539,
+    # +1 no #357: campo PublicWorkoutTrainingSet.duration_seconds (isometria). Mover
+    # model de arquivo dentro de um PR de feature é mais arriscado que 1 linha; o
+    # split de models é a Fase 5 do plano.
+    'public_workouts/models.py': 1540,
     'public_workouts/services.py': 1534,
     'student_app/views/public_workout_views.py': 1332,
     'student_identity/public_workout_views.py': 1200,

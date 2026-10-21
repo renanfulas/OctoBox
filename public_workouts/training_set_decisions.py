@@ -102,6 +102,9 @@ def correct_set(*, account_id, plan_slug, session_id, movement_index, set_number
         session=session, movement_index=movement_index, set_number=set_number,
         movement_slug=row.movement_slug, role=row.set_role,
     )
+    if prescription.get('hold_seconds') is not None:
+        # Série por tempo não tem carga/repetições para corrigir (nem registro de carga).
+        raise TrainingSessionInvalid('série por tempo não tem carga para corrigir')
     if prescription['reps'] is not None and reps is None:
         raise TrainingSessionInvalid('informe as repetições realizadas')
     if weight is None and reps is None and (movement['allow_load_registration'] or prescription['reps'] is not None):

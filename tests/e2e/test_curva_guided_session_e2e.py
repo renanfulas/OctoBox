@@ -838,3 +838,65 @@ def test_account_switch_does_not_send_queued_sets_to_another_student(page: Page,
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=15000)
     assert PublicWorkoutTrainingSession.objects.filter(account=account).count() == 1
     assert not PublicWorkoutTrainingSession.objects.filter(account=other).exists()
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_plank_runs_countdown_and_timer_instead_of_load(page: Page, live_server):
+    """Isometria: tempo no lugar da carga, 3-2-1 e o cronômetro registra a série."""
+    from public_workouts.models import PublicWorkoutTrainingSet
+
+    _account, token = _prepare_guided_student([
+        {'stage_id': 'prancha', 'role': 'top_set', 'min_sets': 1, 'max_sets': 2,
+         'reps_min': None, 'reps_max': None, 'hold_seconds_min': 4, 'hold_seconds_max': 4,
+         'rest_seconds': 30, 'load_rule': {'kind': 'manual'}},
+    ])
+    page.set_viewport_size({'width': 390, 'height': 844})
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+
+    # Sem carga nem repetições: só o tempo, já com a meta.
+    expect(page.locator('[data-guided-time-field]')).to_be_visible()
+    expect(page.locator('[data-guided-weight-field]')).to_be_hidden()
+    expect(page.locator('[data-guided-reps-field]')).to_be_hidden()
+    expect(page.locator('[data-guided-time]')).to_have_value('4')
+    expect(page.locator('[data-guided-meta]')).to_have_text('Meta 4 s · isometria')
+    start = page.locator('[data-workout-guided-set]')
+    expect(start).to_have_text('Iniciar 4 s')
+    if screenshot_path := os.environ.get('CURVA_PLANK_SCREENSHOT'):
+        page.locator('[data-guided-screen="exercise"]').screenshot(path=screenshot_path)
+
+    start.click()
+    expect(page.locator('[data-guided-first-prefix]')).to_have_text('Segure:')
+    page.locator('[data-guided-countdown-skip]').click()
+    hold = page.locator('[data-guided-screen="hold"]')
+    expect(hold).to_be_visible()
+    expect(hold.locator('[data-guided-hold-goal]')).to_have_text('Meta 4 s')
+    if screenshot_path := os.environ.get('CURVA_PLANK_TIMER_SCREENSHOT'):
+        hold.screenshot(path=screenshot_path)
+    # Zerou: registra 4 s sozinho e vai para o descanso.
+    expect(page.locator('[data-guided-screen="rest"]')).to_be_visible(timeout=8_000)
+    expect(page.locator('[data-guided-receipt]')).to_contain_text('4 s')
+
+    # Segunda série: aluno ajusta para 30 s e para antes.
+    page.locator('[data-guided-skip-rest]').click()
+    page.locator('[data-guided-time]').fill('30')
+    expect(start).to_have_text('Iniciar 30 s')
+    start.click()
+    page.locator('[data-guided-countdown-skip]').click()
+    expect(hold).to_be_visible()
+    page.wait_for_timeout(1_500)
+    page.locator('[data-guided-hold-stop]').click()
+    expect(hold).to_be_hidden()
+
+    durations = []
+    for _ in range(50):
+        durations = list(PublicWorkoutTrainingSet.objects.order_by('set_number').values_list('duration_seconds', flat=True))
+        if len(durations) == 2:
+            break
+        page.wait_for_timeout(100)
+    assert durations[0] == 4
+    assert 1 <= durations[1] <= 3, durations
+    assert PublicWorkoutTrainingSet.objects.filter(weight_kg__isnull=False).count() == 0

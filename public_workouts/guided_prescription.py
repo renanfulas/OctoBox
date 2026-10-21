@@ -67,6 +67,17 @@ def validate_guided_prescription(value, *, path='guided_prescription') -> list[s
             errors.append(f'{prefix}.reps_max: exige reps_min')
         if isinstance(reps_min, int) and isinstance(reps_max, int) and reps_max < reps_min:
             errors.append(f'{prefix}: reps_max menor que reps_min')
+        # Isometria (prancha): a série é medida em segundos, não em repetições.
+        hold_min, hold_max = stage.get('hold_seconds_min'), stage.get('hold_seconds_max')
+        for name, value in (('hold_seconds_min', hold_min), ('hold_seconds_max', hold_max)):
+            if value is not None and (not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 3600):
+                errors.append(f'{prefix}.{name}: inteiro entre 1 e 3600 ou null')
+        if hold_max is not None and hold_min is None:
+            errors.append(f'{prefix}.hold_seconds_max: exige hold_seconds_min')
+        if isinstance(hold_min, int) and isinstance(hold_max, int) and hold_max < hold_min:
+            errors.append(f'{prefix}: hold_seconds_max menor que hold_seconds_min')
+        if hold_min is not None and reps_min is not None:
+            errors.append(f'{prefix}: série por tempo não leva repetições')
         rir = stage.get('rir_target')
         if rir is not None and not _number(rir, minimum=0, maximum=10):
             errors.append(f'{prefix}.rir_target: número entre 0 e 10 ou null')
@@ -137,6 +148,8 @@ def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_k
                 'rir_target': stage.get('rir_target'), 'rest_seconds': stage['rest_seconds'],
                 'weight_kg': weight, 'load_source': kind,
                 'top_factor': top_factor, 'rounding_step_kg': step,
+                'hold_seconds': stage.get('hold_seconds_min'),
+                'hold_seconds_max': stage.get('hold_seconds_max') or stage.get('hold_seconds_min'),
             })
     return series
 
@@ -162,6 +175,16 @@ def propose_guided_prescription(movement: dict) -> dict | None:
             continue
         role = row['role']
         rule = {'kind': 'manual'}
+        if row.get('hold_seconds') is not None:
+            # Isometria: proposta por tempo, sem carga derivada da Top.
+            stages.append({
+                'stage_id': f'{row["stage"]}-{len(stages) + 1}', '_stage': row['stage'],
+                'role': role, 'min_sets': int(row['required']), 'max_sets': 1,
+                'reps_min': None, 'reps_max': None,
+                'hold_seconds_min': row['hold_seconds'], 'hold_seconds_max': row['hold_seconds_max'],
+                'rest_seconds': 60, 'load_rule': rule,
+            })
+            continue
         if role == 'warmup':
             rule = {'kind': 'percent_of_top', 'start_percent': 40, 'end_percent': 55}
         elif role == 'feeder':

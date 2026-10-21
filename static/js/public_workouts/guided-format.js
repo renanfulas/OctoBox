@@ -73,7 +73,27 @@
       ? series.reps + '–' + series.reps_max + ' reps' : series.reps + ' reps';
   }
 
+  /* Isometria (prancha): a série é medida em segundos. */
+  function isTimed(series) {
+    return !!series && series.hold_seconds != null && series.hold_seconds !== '';
+  }
+  function seconds(value) {
+    var parsed = toNumber(value);
+    if (parsed === null) return '';
+    var total = Math.round(parsed);
+    if (total < 60) return total + ' s';
+    var rest = total % 60;
+    return Math.floor(total / 60) + (rest ? ':' + String(rest).padStart(2, '0') : ' min');
+  }
+  function holdText(series) {
+    if (!isTimed(series)) return '';
+    var low = toNumber(series.hold_seconds);
+    var high = toNumber(series.hold_seconds_max);
+    return high !== null && high !== low ? low + '–' + seconds(high) : seconds(low);
+  }
+
   function metaText(movement, series) {
+    if (isTimed(series)) return 'Meta ' + holdText(series) + ' · isometria';
     var parts = [];
     var reps = repsText(series);
     if (reps) parts.push(reps);
@@ -120,6 +140,7 @@
   }
 
   function ctaText(movement, draft) {
+    if (draft.timed) return draft.duration != null ? 'Iniciar ' + seconds(draft.duration) : 'Informe o tempo';
     if (movement.allowLoad && draft.weight != null && draft.reps != null) {
       return 'Registrar ' + decimal(draft.weight) + ' kg × ' + draft.reps;
     }
@@ -129,6 +150,7 @@
   }
 
   function valueText(movement, entry, withRir) {
+    if (toNumber(entry.duration_seconds) !== null) return seconds(entry.duration_seconds);
     var weight = toNumber(entry.weight_kg);
     var reps = toNumber(entry.reps);
     var main = movement.allowLoad && weight !== null
@@ -174,6 +196,15 @@
   /* Passo do stepper sem acumular erro de ponto flutuante (2,5 + 2,5 + ...). */
   function stepWeight(value, delta) {
     return Math.max(0, Math.round((value + delta) * 100) / 100);
+  }
+
+  /* Tempo digitado em segundos inteiros (1 a 3600). undefined = inválido. */
+  function parseSeconds(text) {
+    var clean = String(text == null ? '' : text).trim();
+    if (!clean) return null;
+    if (!/^\d{1,4}$/.test(clean)) return undefined;
+    var value = Number(clean);
+    return value >= 1 && value <= 3600 ? value : undefined;
   }
 
   /* "Semana passada 100 kg → Hoje 107,5 kg · +8%": a conta da carga de hoje,
@@ -249,5 +280,6 @@
     ctaText: ctaText, valueText: valueText, rirText: rirText, clock: clock,
     spokenDuration: spokenDuration, parseWeight: parseWeight, parseReps: parseReps,
     stepWeight: stepWeight, loadPlan: loadPlan, whenLabel: whenLabel, anchorFrom: anchorFrom, periodFrom: periodFrom,
+    isTimed: isTimed, seconds: seconds, holdText: holdText, parseSeconds: parseSeconds,
   };
 }());

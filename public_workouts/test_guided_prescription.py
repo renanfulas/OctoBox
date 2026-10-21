@@ -101,10 +101,20 @@ class GuidedPrescriptionContractTest(SimpleTestCase):
                          [(2, 2), (1, 1), (2, 3)])
         self.assertIsNone(proposal['stages'][0]['reps_min'])
 
-    def test_stage_first_duration_and_extra_instructions_stay_freeform(self):
-        for spec in ('Top Set 2-3x 30-45 s', 'Top Set 3x 8-12 → 1x dropset',
-                     'Feeder 1x 8-10 Opcional'):
+    def test_stage_first_extra_instructions_stay_freeform(self):
+        for spec in ('Top Set 3x 8-12 → 1x dropset', 'Feeder 1x 8-10 Opcional'):
             self.assertIsNone(propose_guided_prescription({'reps_spec': spec}))
+
+    def test_duration_text_proposes_a_timed_stage(self):
+        # Isometria (prancha): o texto vira etapa por tempo, sem repetições nem carga da Top.
+        proposal = propose_guided_prescription({'reps_spec': 'Top Set 2-3x 30-45 s'})
+        self.assertEqual(validate_guided_prescription(proposal), [])
+        stage = proposal['stages'][0]
+        self.assertEqual(
+            (stage['role'], stage['min_sets'], stage['max_sets'], stage['reps_min'],
+             stage['hold_seconds_min'], stage['hold_seconds_max'], stage['load_rule']),
+            ('top_set', 2, 3, None, 30, 45, {'kind': 'manual'}),
+        )
 
     def test_non_scalar_payload_does_not_crash_validator(self):
         guided = _guided()

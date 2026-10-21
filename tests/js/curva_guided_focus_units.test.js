@@ -193,6 +193,20 @@ test('pular descanso não dispara o fim e limpa o armazenamento', () => {
   assert.equal(ended, 1);
 });
 
+test('isometria fala em segundos: meta, botão e recibo', () => {
+  const plank = { allowLoad: true, series: [{ role: 'top_set', hold_seconds: 30, hold_seconds_max: 45 }] };
+  const series = plank.series[0];
+  assert.equal(format.isTimed(series), true);
+  assert.equal(format.isTimed({ role: 'top_set', reps: 8 }), false);
+  assert.equal(format.metaText(plank, series), 'Meta 30–45 s · isometria');
+  assert.equal(format.metaText(plank, { hold_seconds: 90, hold_seconds_max: 90 }), 'Meta 1:30 · isometria');
+  assert.equal(format.ctaText(plank, { timed: true, duration: 45 }), 'Iniciar 45 s');
+  assert.equal(format.ctaText(plank, { timed: true, duration: null }), 'Informe o tempo');
+  assert.equal(format.valueText(plank, { duration_seconds: 45, weight_kg: null }), '45 s');
+  assert.equal(format.seconds(60), '1 min');
+  assert.deepEqual(['45', '', '0', '3601', '4,5'].map(format.parseSeconds), [45, null, undefined, undefined, undefined]);
+});
+
 test('quadro da carga mostra semana passada → hoje com a variação da periodização', () => {
   const series = [
     { role: 'warmup', weight_kg: 10, top_factor: 0.4 },

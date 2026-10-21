@@ -1173,7 +1173,7 @@ quiser rever este tutorial, é só voltar nesta aba.
 <svg class="guided-ring__svg" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><circle class="guided-ring__track" cx="120" cy="120" r="108"/><circle class="guided-ring__progress" data-ring-progress cx="120" cy="120" r="108"/></svg>
 <span class="guided-ring__center"><span class="guided-ring__value" data-ring-value aria-hidden="true">3</span></span>
 </span>
-<span class="guided-countdown__first"><span class="guided-focus__muted">Primeiro:</span> <span data-guided-first-name></span></span>
+<span class="guided-countdown__first"><span class="guided-focus__muted" data-guided-first-prefix>Primeiro:</span> <span data-guided-first-name></span></span>
 <span class="guided-countdown__hint" id="guided-countdown-hint" data-guided-countdown-hint>Toque para começar agora</span>
 </button>
 </section>
@@ -1231,7 +1231,16 @@ Ver treino todo
 <p class="guided-field__note" id="guided-weight-source"><span data-guided-weight-source></span> <button type="button" class="guided-link guided-link--inline" data-guided-weight-reset hidden></button></p>
 </div>
 <p class="guided-field__note" data-guided-no-load hidden>Exercício sem registro de carga</p>
-<div class="guided-field">
+<div class="guided-field" data-guided-time-field hidden>
+<div class="guided-field__label"><label for="guided-time">Tempo</label><span class="guided-field__hint" data-guided-time-target></span></div>
+<div class="guided-stepper">
+<button type="button" class="guided-stepper__button" data-guided-step="time" data-delta="-1" aria-label="Menos 5 segundos">−</button>
+<span class="guided-stepper__value"><input id="guided-time" class="guided-stepper__input guided-stepper__input--reps" data-guided-time inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-time-hint"><span class="guided-stepper__unit">s</span></span>
+<button type="button" class="guided-stepper__button" data-guided-step="time" data-delta="1" aria-label="Mais 5 segundos">+</button>
+</div>
+<p class="guided-field__note" id="guided-time-hint">O cronômetro começa depois do 3, 2, 1.</p>
+</div>
+<div class="guided-field" data-guided-reps-field>
 <div class="guided-field__label"><label for="guided-reps">Repetições</label><span class="guided-field__hint" data-guided-reps-target></span></div>
 <div class="guided-stepper">
 <button type="button" class="guided-stepper__button" data-guided-step="reps" data-delta="-1" aria-label="Uma repetição a menos">−</button>
@@ -1260,6 +1269,7 @@ Ver treino todo
 <button type="button" class="guided-cta" data-workout-guided-set>Registrar série</button>
 <div class="guided-screen__links">
 <button type="button" class="guided-link" data-workout-guided-skip>Pular série</button>
+<button type="button" class="guided-link" data-guided-time-direct hidden>Registrar sem cronômetro</button>
 <button type="button" class="guided-link" data-guided-correct-last hidden>Corrigir anterior</button>
 </div>
 <p class="guided-screen__sync" data-guided-sync hidden></p>
@@ -1288,6 +1298,25 @@ Ver treino todo
 <button type="button" class="guided-link" data-workout-guided-extra hidden>Fazer outra série livre</button>
 </div>
 <p class="guided-screen__sync" data-guided-sync hidden></p>
+</footer>
+</section>
+<section class="guided-screen" data-guided-screen="hold" hidden>
+<div class="guided-screen__body guided-rest">
+<div class="guided-ring" data-guided-ring="hold">
+<svg class="guided-ring__svg" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><circle class="guided-ring__track" cx="120" cy="120" r="108"/><circle class="guided-ring__progress" data-ring-progress cx="120" cy="120" r="108"/></svg>
+<span class="guided-ring__center">
+<span class="guided-sr">Tempo restante</span>
+<span class="guided-ring__value" data-ring-value role="timer"></span>
+<span class="guided-ring__receipt" data-guided-hold-name></span>
+<span class="guided-ring__status" data-guided-hold-goal></span>
+</span>
+</div>
+</div>
+<footer class="guided-screen__foot">
+<button type="button" class="guided-cta" data-guided-hold-stop>Parar e registrar</button>
+<div class="guided-screen__links">
+<button type="button" class="guided-link" data-guided-hold-cancel>Cancelar série</button>
+</div>
 </footer>
 </section>
 <section class="guided-screen" data-guided-screen="review" hidden>

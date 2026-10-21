@@ -62,7 +62,9 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # guided-focus.js), não mais por tela oculta + permissão.
 # Bump 21->22: quadro "semana passada -> hoje" da carga no modo foco
 # (guided-format/focus.js, workout-guided.js, CSS e HTML do foco).
-PUBLIC_WORKOUT_CACHE_EPOCH = 22
+# Bump 22->23: isometria por tempo no modo foco (campo de tempo, 3-2-1 e
+# cronômetro) muda guided-format/focus/sync, workout-guided e o HTML do foco.
+PUBLIC_WORKOUT_CACHE_EPOCH = 23
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512

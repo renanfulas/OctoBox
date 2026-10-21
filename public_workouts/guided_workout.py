@@ -32,11 +32,43 @@ def _freeform_series() -> list[dict]:
     }]
 
 
+_TIMED = re.compile(
+    r'(?P<sets>\d{1,2})(?:\s*[-–]\s*(?P<sets_max>\d{1,2}))?\s*(?:[x×]|s[ée]ries?\s*[·:\-–]?)\s*'
+    r'(?P<low>\d{1,4})(?:\s*[-–]\s*(?P<high>\d{1,4}))?\s*(?P<unit>segundos?|segs?|s|minutos?|min)\b',
+    re.I,
+)
+
+
+def _timed_series(spec: str) -> list[dict] | None:
+    """Isometria escrita como "2 séries · 30-45 seg" ou "Top Set 2× 45-60s": séries por tempo."""
+    if '→' in spec:
+        return None
+    match = _TIMED.search(spec)
+    if match is None:
+        return None
+    factor = 60 if match.group('unit').lower().startswith('min') else 1
+    minimum = int(match.group('sets'))
+    set_count = int(match.group('sets_max') or minimum)
+    low = int(match.group('low')) * factor
+    high = int(match.group('high') or match.group('low')) * factor
+    if not 1 <= minimum <= set_count <= 30 or not 1 <= low <= high <= 3600:
+        return None
+    role = 'warmup' if _phase(spec) == 'prep' else 'top_set'
+    return [{
+        'stage': _phase(spec), 'role': role, 'set_number': index + 1, 'required': index < minimum,
+        'reps': None, 'reps_max': None, 'weight_kg': None, 'top_factor': None, 'rounding_step_kg': 2.5,
+        'hold_seconds': low, 'hold_seconds_max': high,
+    } for index in range(set_count)]
+
+
 def build_legacy_series(movement: dict, top_weight_kg=None) -> list[dict]:
     """Adapta texto publicado antes do contrato estruturado."""
     spec = str((movement or {}).get('reps_spec') or '').strip()
     if not spec:
         return _freeform_series()
+    timed = _timed_series(spec)
+    if timed is not None:
+        return timed
     segments = [part.strip() for part in spec.split('→') if part.strip()] or [spec]
     result = []
     try:
