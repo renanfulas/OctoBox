@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from unittest.mock import Mock, patch
 
-from operations.forms import WeeklyWodProjectionForm, WeeklyWodSmartPasteForm
+from operations.forms import WeeklyWodProjectionForm, WeeklyWodSmartPasteForm, WeeklyWodReviewMovementForm
 from operations.workout_smart_paste_context import _default_week_start, _max_week_start
 from operations.models import ClassSession, ClassType, SessionStatus, WorkoutTemplate
 from student_app.models import (
@@ -56,6 +56,93 @@ def _minimal_normalized_week_candidate():
 
 
 class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
+    def test_review_accepts_exact_human_names_without_guessing_combined_movements(self):
+        from operations.services.wod_paste_parser import load_wod_movement_dictionary
+        data = {
+            'plan_id': 1, 'day_index': 0, 'block_index': 0, 'movement_index': 0,
+            'movement_label_raw': '10 agachamnto',
+        }
+        for typed_name, expected_slug in (('front squat', 'front_squat'), ('Flexão', 'push_up')):
+            with self.subTest(typed_name=typed_name):
+                form = WeeklyWodReviewMovementForm(
+                    {**data, 'movement_slug': typed_name}, slug_choices=load_wod_movement_dictionary(),
+                )
+                self.assertTrue(form.is_valid(), form.errors)
+                self.assertEqual(form.cleaned_data['movement_slug'], expected_slug)
+        form = WeeklyWodReviewMovementForm(
+            {**data, 'movement_slug': 'front squat e push up'}, slug_choices=load_wod_movement_dictionary(),
+        )
+        self.assertFalse(form.is_valid())
+
+    def test_stale_review_missing_item_and_confirmed_plan_keep_current_data(self):
+        plan = WeeklyWodPlan.objects.create(
+            created_by=self.coach, week_start=timezone.localdate(),
+            parsed_payload=_minimal_normalized_week_candidate(), source_text=SMART_PASTE_SAMPLE,
+        )
+        data = {
+            'action': 'update_review_item', 'plan_id': plan.pk,
+            'day_index': 0, 'block_index': 0, 'movement_index': 0,
+            'movement_label_raw': 'Sit-Up', 'movement_slug': 'sit_up',
+            'plan_revision': plan.updated_at.isoformat(), 'notes': 'Revisão atual',
+        }
+        response = self.client.post(reverse('workout-smart-paste'), data, HTTP_HX_REQUEST='true')
+        self.assertEqual(response.status_code, 200)
+        plan.refresh_from_db()
+        current_payload = plan.parsed_payload
+        data['notes'] = 'Revisão de uma aba antiga'
+        response = self.client.post(reverse('workout-smart-paste'), data, HTTP_HX_REQUEST='true')
+        self.assertContains(response, 'O rascunho mudou em outra aba')
+        plan.refresh_from_db()
+        self.assertEqual(plan.parsed_payload, current_payload)
+        data.update(plan_revision=plan.updated_at.isoformat(), movement_index=99)
+        response = self.client.post(reverse('workout-smart-paste'), data, HTTP_HX_REQUEST='true')
+        self.assertContains(response, 'Este item não está mais na prévia')
+        plan.status = WeeklyWodPlanStatus.CONFIRMED
+        plan.save()
+        data.update(plan_revision=plan.updated_at.isoformat(), movement_index=0)
+        response = self.client.post(reverse('workout-smart-paste'), data, HTTP_HX_REQUEST='true')
+        self.assertContains(response, 'já foi confirmado')
+        plan.refresh_from_db()
+        self.assertEqual(plan.parsed_payload, current_payload)
+
+    def test_invalid_calendar_dates_are_form_errors_instead_of_server_errors(self):
+        year = timezone.localdate().year
+        for invalid_date in ('31/02', '00/10', '15/13', f'31/02/{year}', f'00/10/{year}'):
+            with self.subTest(invalid_date=invalid_date):
+                response = self.client.post(reverse('workout-smart-paste'), {
+                    'action': 'parse_text', 'week_start': invalid_date,
+                    'source_text': SMART_PASTE_SAMPLE,
+                })
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('week_start', response.context['smart_paste_form'].errors)
+                self.assertFalse(WeeklyWodPlan.objects.filter(created_by=self.coach).exists())
+
+    def test_empty_paste_requires_text_before_creating_a_draft(self):
+        form = WeeklyWodSmartPasteForm({
+            'week_start': '26/10/2026', 'source_text': '  \n  ',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('source_text', form.errors)
+
+    def test_confirmation_keeps_explicit_year_for_next_year_programming(self):
+        target = date(timezone.localdate().year + 1, 1, 4)
+        target -= timedelta(days=target.weekday())
+        payload = {
+            'action': 'parse_text', 'week_start': target.strftime('%d/%m/%Y'),
+            'source_text': SMART_PASTE_SAMPLE,
+        }
+        with patch('operations.workout_board_views._max_week_start', return_value=target):
+            response = self.client.post(reverse('workout-smart-paste'), payload)
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, f'name="week_start" value="{target:%d/%m/%Y}"')
+            plan = WeeklyWodPlan.objects.get(created_by=self.coach)
+            payload.update(action='confirm_plan', plan_id=plan.pk)
+            response = self.client.post(reverse('workout-smart-paste'), payload)
+        self.assertEqual(response.status_code, 200)
+        plan.refresh_from_db()
+        self.assertEqual(plan.status, WeeklyWodPlanStatus.CONFIRMED)
+        self.assertEqual(plan.week_start, target)
+
     def test_text_only_smartplan_v2_is_sent_to_weekly_normalizer_and_previews(self):
         source_text = (
             '```\n=== WOD NORMALIZADO ===\nSEGUNDA-FEIRA\n[AQUECIMENTO]\n'
@@ -244,7 +331,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         })
         plan.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'O texto ou a semana mudou depois desta prévia.')
+        self.assertContains(response, 'O rascunho, a semana ou a modalidade mudou depois desta prévia.')
         self.assertEqual(plan.status, WeeklyWodPlanStatus.DRAFT)
         self.assertEqual(plan.source_text, source_text)
         self.assertEqual(plan.parsed_payload['weekly_normalization']['status'], 'awaiting_coach_review')
@@ -256,7 +343,7 @@ class WorkoutSmartPasteFlowTests(WorkoutFlowBaseTestCase):
         })
         plan.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'O texto ou a semana mudou depois desta prévia.')
+        self.assertContains(response, 'O rascunho, a semana ou a modalidade mudou depois desta prévia.')
         self.assertEqual(plan.status, WeeklyWodPlanStatus.DRAFT)
         self.assertEqual(plan.week_start.isoformat(), '2026-04-27')
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from calendar import monthrange
 from datetime import datetime, time, timedelta
 from decimal import Decimal
+import re
 import time as perf_time
 
 from django.utils import timezone
@@ -115,7 +116,9 @@ def _build_student_block_format_label(block):
         score_label = score_labels[score_type]
         if score_label.casefold() not in format_spec.casefold():
             parts.append(score_label)
-    if block.get('rounds'):
+    if block.get('rounds') and not re.fullmatch(
+        rf"{block['rounds']}\s*(?:x|rounds?|séries)", format_spec, flags=re.IGNORECASE,
+    ):
         parts.append(f"{block['rounds']} rounds")
     if block.get('timecap_min'):
         parts.append(f"time cap {block['timecap_min']} min")
@@ -874,7 +877,10 @@ class GetStudentWorkoutDay:
                 movement_cards.append(movement_card)
             block_cards.append(
                 StudentWorkoutBlockCard(
-                    title=block['title'],
+                    title=(
+                        block['kind_label'] if (block['title'] or '').strip().casefold() == block['kind']
+                        else block['title']
+                    ),
                     kind_label=block['kind_label'],
                     notes=block['notes'],
                     movements=tuple(movement_cards),

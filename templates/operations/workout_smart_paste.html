@@ -61,14 +61,20 @@
                     <span>Nome da semana <small>(opcional)</small></span>
                     {{ smart_paste_form.label }}
                 </label>
-                <label>
-                    <span>Treino da semana</span>
+                <div class="smart-paste-source-field">
+                    <div class="smart-paste-source-tools">
+                        <label for="{{ smart_paste_form.source_text.id_for_label }}">Treino da semana</label>
+                        <button class="button secondary" type="button" data-smart-paste-clipboard>Colar texto</button>
+                    </div>
                     {{ smart_paste_form.source_text }}
-                    <small>Cole como recebeu, mesmo com abreviações. Vamos separar os dias e tentar corrigir os movimentos automaticamente.</small>
-                </label>
+                    {% for error in smart_paste_form.source_text.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
+                    <small id="smart-paste-source-hint">Cole como recebeu, mesmo com abreviações. O texto entra na posição do cursor. Vamos separar os dias e tentar identificar os movimentos automaticamente.</small>
+                    <p class="smart-paste-source-status" data-smart-paste-clipboard-status role="status" aria-live="polite" hidden></p>
+                </div>
                 <div class="actions">
                     <button class="button" type="submit">Organizar meu treino</button>
                 </div>
+                <p class="smart-paste-source-status" data-smart-paste-processing role="status" hidden>Organizando os dias e os movimentos. Aguarde a prévia para conferir.</p>
             </form>
         </article>
 
