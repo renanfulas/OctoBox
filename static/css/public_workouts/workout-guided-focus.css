@@ -124,6 +124,22 @@ html.guided-focus-open { overflow: hidden; }
 .guided-field__hint { color: var(--gf-muted); font-weight: 600; font-size: .875rem; }
 .guided-field__note { margin: 0; font-size: .875rem; font-weight: 600; color: var(--gf-muted); }
 .guided-field__note:empty { display: none; }
+
+/* Conta da carga de hoje: "Semana passada 100 kg → Hoje 107,5 kg · +8%". */
+.guided-plan { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; background: var(--gf-surface); }
+.guided-plan[hidden] { display: none; }
+.guided-plan__flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; }
+.guided-plan__end { display: grid; gap: 2px; }
+.guided-plan__label { font-size: .75rem; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--gf-muted); }
+.guided-plan__end strong { font-size: 1.125rem; font-weight: 800; color: var(--gf-ink-2); font-variant-numeric: tabular-nums; }
+.guided-plan__end--to strong { font-size: 1.25rem; color: var(--gf-ink); }
+.guided-plan__arrow { flex: none; width: 22px; height: 22px; fill: none; stroke: var(--brand); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.guided-plan__delta { margin-left: auto; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--brand) 20%, transparent); color: var(--gf-ink); font-size: .875rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.guided-plan[data-tone="down"] .guided-plan__delta { background: color-mix(in srgb, var(--gf-success) 22%, transparent); }
+.guided-plan[data-tone="same"] .guided-plan__delta,
+.guided-plan[data-tone="derived"] .guided-plan__delta { background: var(--gf-surface-2); }
+.guided-plan__why { margin: 0; font-size: .875rem; font-weight: 600; color: var(--gf-muted); }
+.guided-plan__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .guided-stepper { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; align-items: center; gap: 8px; padding: 8px; border-radius: 20px; background: var(--gf-surface); }
 .guided-stepper:has(input:focus-visible) { outline: 3px solid var(--brand); outline-offset: 2px; }
 .guided-stepper__button { width: 56px; height: 56px; border-radius: 14px; background: var(--gf-surface-2); font-size: 1.75rem; font-weight: 600; line-height: 1; display: grid; place-items: center; transition: transform 120ms var(--gf-ease); }

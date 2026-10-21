@@ -25,7 +25,7 @@
   var conflictServer = root.querySelector('[data-workout-guided-conflict-server]');
   var conflictCorrect = root.querySelector('[data-workout-guided-conflict-correct]');
   var format = window.CurvaGuidedFormat;
-  var focus = window.CurvaGuidedFocus.create(dialog);
+  var focus = window.CurvaGuidedFocus.create(dialog, { period: format.periodFrom(root.dataset) });
   var scope = root.dataset.accountScope && document.body.dataset.planSlug
     ? root.dataset.accountScope + ':' + document.body.dataset.planSlug : '';
   var outbox = window.CurvaGuidedOutbox;
@@ -456,7 +456,7 @@
       series.forEach(function (row) { row.base_weight_kg = row.weight_kg; });
       var heading = card.querySelector('.workout-movement-copy strong');
       var step = series.length && Number(series[0].rounding_step_kg) > 0 ? Number(series[0].rounding_step_kg) : 2.5;
-      return {
+      return Object.assign({
         slug: card.dataset.movementSlug,
         label: card.dataset.movementLabel || (heading ? heading.textContent.trim() : 'Exercício'),
         referenceUrl: card.dataset.referenceUrl || '',
@@ -464,7 +464,7 @@
         loadKind: card.dataset.loadKind, loadStep: step,
         allowLoad: card.dataset.allowLoadRegistration !== 'false',
         series: series, freeform: series.length === 1 && series[0].role === 'legacy_unknown',
-      };
+      }, format.anchorFrom(card.dataset.loadAnchor));
     }).filter(function (movement) { return movement.series.length > 0; });
   }
 

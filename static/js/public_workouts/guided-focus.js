@@ -34,6 +34,7 @@
     var audio = null;
     var topPanelMovement = null;
     var goWord = options.goWord || 'GO';
+    var period = options.period || null;
 
     function q(selector, root) { return (root || dialog).querySelector(selector); }
     function qa(selector, root) { return Array.prototype.slice.call((root || dialog).querySelectorAll(selector)); }
@@ -271,6 +272,23 @@
         panel.open = top.openByDefault;
       }
     }
+    function todayIso() {
+      var now = new Date();
+      return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    }
+    /* "Semana passada 100 kg → Hoje 107,5 kg · +8%": de onde veio a carga de hoje. */
+    function paintPlan(plan) {
+      var box = q('[data-guided-plan]');
+      box.hidden = !plan;
+      if (!plan) return;
+      box.dataset.tone = plan.tone;
+      q('[data-guided-plan-from-label]').textContent = plan.fromLabel;
+      q('[data-guided-plan-from]').textContent = format.kg(plan.fromKg);
+      q('[data-guided-plan-to-label]').textContent = plan.toLabel;
+      q('[data-guided-plan-to]').textContent = format.kg(plan.toKg);
+      q('[data-guided-plan-delta]').textContent = plan.delta;
+      q('[data-guided-plan-why]').textContent = plan.why;
+    }
     function writeDraftInputs() {
       weightInput.value = draft.weight == null ? '' : format.decimal(draft.weight);
       repsInput.value = draft.reps == null ? '' : String(draft.reps);
@@ -280,7 +298,13 @@
       var movement = model.current.movement;
       var series = model.current.series;
       q('[data-workout-guided-set]').textContent = format.ctaText(movement, draft);
+      var plan = format.loadPlan(movement, series, { period: period, today: todayIso() });
+      paintPlan(plan);
       var source = format.weightSource(movement, series, draft);
+      // Com a conta à vista no quadro acima, a linha embaixo só lembra que dá para ajustar.
+      if (plan && draft.weight != null && draft.weight === draft.base && !draft.fromPrevious) {
+        source = { text: 'Calculada automaticamente · ajuste se precisar', reset: null };
+      }
       q('[data-guided-weight-source]').textContent = source.text;
       var reset = q('[data-guided-weight-reset]');
       reset.hidden = !source.reset;

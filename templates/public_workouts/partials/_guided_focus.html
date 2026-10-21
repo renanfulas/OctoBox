@@ -60,6 +60,15 @@ Modo foco do treino guiado (docs/plans/curva-treino-guiado-modo-foco-plan.md).
         </details>
         <div class="guided-field" data-guided-weight-field>
           <label class="guided-field__label" for="guided-weight">Carga</label>
+          <div class="guided-plan" data-guided-plan hidden>
+            <p class="guided-plan__flow">
+              <span class="guided-plan__end"><span class="guided-plan__label" data-guided-plan-from-label></span><strong data-guided-plan-from></strong></span>
+              <svg class="guided-plan__arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6"/></svg><span class="guided-plan__sr"> para </span>
+              <span class="guided-plan__end guided-plan__end--to"><span class="guided-plan__label" data-guided-plan-to-label></span><strong data-guided-plan-to></strong></span>
+              <span class="guided-plan__delta" data-guided-plan-delta></span>
+            </p>
+            <p class="guided-plan__why" data-guided-plan-why></p>
+          </div>
           <div class="guided-stepper">
             <button type="button" class="guided-stepper__button" data-guided-step="weight" data-delta="-1" aria-label="Diminuir carga">−</button>
             <span class="guided-stepper__value"><input id="guided-weight" class="guided-stepper__input" data-workout-guided-weight inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-weight-source"><span class="guided-stepper__unit">kg</span></span>

@@ -60,7 +60,9 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # Bump 20->21: o app só fica mudo no fim do descanso enquanto o push está
 # agendado (covers em guided-rest-alert.js, lido por workout-guided.js e
 # guided-focus.js), não mais por tela oculta + permissão.
-PUBLIC_WORKOUT_CACHE_EPOCH = 21
+# Bump 21->22: quadro "semana passada -> hoje" da carga no modo foco
+# (guided-format/focus.js, workout-guided.js, CSS e HTML do foco).
+PUBLIC_WORKOUT_CACHE_EPOCH = 22
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
