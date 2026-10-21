@@ -16,7 +16,6 @@ from django.urls import path
 
 from .finance_views import PaymentBulkActionView, PaymentLinkView, StudentFreezeView
 from .integrations_views import WhatsAppPollWebhookView
-from .internal_views import init_system_view
 from .jobs_views import SecureExportDownloadView
 from knowledge.views import (
     ProjectKnowledgeAnswerView,
@@ -47,6 +46,5 @@ urlpatterns = [
     path('project-rag/search/', ProjectKnowledgeSearchView.as_view(), name='api-v1-project-rag-search'),
     path('project-rag/answer/', ProjectKnowledgeAnswerView.as_view(), name='api-v1-project-rag-answer'),
     path('project-rag/reindex/', ProjectKnowledgeReindexView.as_view(), name='api-v1-project-rag-reindex'),
-    path('debug/init-system/', init_system_view, name='api-v1-init-system'),
     path('exports/download/<str:filename>', SecureExportDownloadView.as_view(), name='api-v1-secure-export-download'),
 ]

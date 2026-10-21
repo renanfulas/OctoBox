@@ -187,22 +187,31 @@ Evidencia esperada:
 
 ### Passo 2. Restore isolado (nao destrutivo)
 
+O banco isolado precisa primeiro receber as migrations compartilhadas do runtime e os
+grupos/permissoes globais. Isso prepara as tabelas públicas referenciadas pelas FKs do
+schema do tenant; nao copie o control plane de outro cliente para o banco de ensaio.
+
 ```bash
+# criar o banco isolado e apontar DATABASE_URL para ele antes dos comandos
+createdb octobox_restore_test
+python manage.py migrate_schemas --shared --noinput
+python manage.py bootstrap_roles
+
 PGPASSWORD='<senha>' bash scripts/linux/restore_tenant_schema.sh \
   --slug <box-slug> --user octobox_app \
   --backup-file backups/tenants/tenant-<slug>-AAAAmmdd-HHmmss.dump
 ```
 
-Depois, com `DATABASE_URL` apontando para o banco isolado:
+Depois, mantendo `DATABASE_URL` apontando para o banco isolado:
 
 ```bash
-python manage.py smoke_test_tenant --slug <box-slug>
+python manage.py smoke_test_tenant --slug <box-slug> --schema-only
 ```
 
 Evidencia esperada:
 
 1. contagem de tabelas restauradas maior que zero
-2. `smoke_test_tenant` com exit `0`
+2. `smoke_test_tenant --schema-only` com exit `0`
 3. horario de inicio e fim (este e o numero que vira SLA comercial)
 
 ### Passo 3. Ensaio da promocao para o banco vivo
@@ -225,7 +234,7 @@ PGPASSWORD='<senha>' pg_restore --host 127.0.0.1 --port 5432 \
   --schema box_<slug> --no-owner \
   backups/tenants/tenant-<slug>-AAAAmmdd-HHmmss.dump
 
-# 3. provar o box recuperado
+# 3. provar o box recuperado no cluster vivo
 python manage.py smoke_test_tenant --slug <box-slug>
 ```
 
@@ -256,7 +265,7 @@ E conferir uma contagem estavel (alunos, pagamentos) nesse outro schema.
 Se qualquer item abaixo falhar, o restore por tenant esta reprovado:
 
 1. dump gerado com tamanho zero, ou de schema inexistente
-2. `smoke_test_tenant` falha no banco isolado
+2. `smoke_test_tenant --schema-only` falha no banco isolado
 3. a promocao exigiu improviso fora do roteiro
 4. o box vizinho mudou de estado durante a operacao
 5. ninguem cronometrou o tempo total de recuperacao

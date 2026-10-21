@@ -96,18 +96,7 @@
         if (resumed && resumed.catch) resumed.catch(function () { /* fora de um toque */ });
       } catch (_) { /* sem áudio */ }
     }
-    // Fora da tela e com os avisos liberados, quem avisa o fim do descanso é o
-    // push do servidor (docs/decisions/0003-curva-rest-alert-worker.md): no
-    // Android a página segue viva com a tela bloqueada e o bipe tocaria junto
-    // com a notificação. Sem os avisos, o bipe segue sendo o único alerta.
-    function pushCoversAlert() {
-      try {
-        return document.visibilityState !== 'visible'
-          && !!window.Notification && window.Notification.permission === 'granted';
-      } catch (_) { return false; }
-    }
     function feedback(vibrateMs, frequency, duration) {
-      if (pushCoversAlert()) return;
       try { if (navigator.vibrate) navigator.vibrate(vibrateMs); } catch (_) { /* sem vibração */ }
       beep(frequency, duration || 0.12);
     }
@@ -506,7 +495,9 @@
       }
     }
 
-    function restTick(rest) {
+    // quiet: o push do fim do descanso está agendado e avisa por conta dele
+    // (guided-rest-alert.js); o anel segue contando, sem bipe nem vibração.
+    function restTick(rest, quiet) {
       qa('[data-guided-rest-chip-time]').forEach(function (element) { element.textContent = format.clock(rest.seconds); });
       [60, 30, 10].forEach(function (mark) {
         if (rest.seconds === mark && rest.totalMs > mark * 1000 && !announced.has(mark)) {
@@ -519,7 +510,7 @@
         if (!beats.has(rest.seconds)) {
           beats.add(rest.seconds);
           restRing.beat(rest.seconds);
-          feedback(30, 660);
+          if (!quiet) feedback(30, 660);
         }
         return;
       }
@@ -534,7 +525,7 @@
       restRing.setText(format.clock(rest.seconds));
     }
 
-    function restDone() {
+    function restDone(quiet) {
       return new Promise(function (resolve) {
         if (current !== 'rest' || !dialog.open) {
           if (dialog.open) toast('Descanso concluído');
@@ -542,7 +533,7 @@
           return;
         }
         restRing.go(goWord);
-        feedback(140, 990, 0.24);
+        if (!quiet) feedback(140, 990, 0.24);
         announce('Descanso concluído. Valendo.');
         window.setTimeout(resolve, reduced() ? 350 : 650);
       });

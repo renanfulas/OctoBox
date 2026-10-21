@@ -57,9 +57,12 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # Bump 19->20: aviso push do fim do descanso (#349) — guided-rest-alert.js
 # entra no precache, workout-guided.js muda e o sw.js trata renotify/vibrate
 # e o toque no aviso do descanso sem recarregar a página.
-# Bump 20->21: isometria por tempo no modo foco (campo de tempo, 3-2-1 e
+# Bump 20->21: o app só fica mudo no fim do descanso enquanto o push está
+# agendado (covers em guided-rest-alert.js, lido por workout-guided.js e
+# guided-focus.js), não mais por tela oculta + permissão.
+# Bump 21->22: isometria por tempo no modo foco (campo de tempo, 3-2-1 e
 # cronômetro) muda guided-format/focus/sync, workout-guided e o HTML do foco.
-PUBLIC_WORKOUT_CACHE_EPOCH = 21
+PUBLIC_WORKOUT_CACHE_EPOCH = 22
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512

@@ -200,7 +200,7 @@ def _is_block_note_candidate(line: str) -> bool:
     )
 
 
-def resolve_movement_slug(name_fragment: str) -> str | None:
+def resolve_movement_slug(name_fragment: str, *, exact_only: bool = False) -> str | None:
     normalized_name = _normalize_token(name_fragment)
     if not normalized_name:
         return None
@@ -216,7 +216,7 @@ def resolve_movement_slug(name_fragment: str) -> str | None:
                     partial_match = (slug, alias)
     if exact_match is not None:
         return exact_match[0]
-    if partial_match is not None:
+    if partial_match is not None and not exact_only:
         return partial_match[0]
     return None
 

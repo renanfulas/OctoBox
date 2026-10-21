@@ -10,15 +10,20 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
 from knowledge.models import KnowledgeChunk, KnowledgeDocument, KnowledgeSourceKind
+from access.roles import ROLE_COACH, ROLE_OWNER
 
 
 class ApiV1ProjectRagViewsTests(TestCase):
     def setUp(self):
+        call_command('bootstrap_roles', verbosity=0)
         self.user = get_user_model().objects.create_user(username='rag-owner', password='secret123')
+        self.user.groups.add(Group.objects.get(name=ROLE_OWNER))
         document = KnowledgeDocument.objects.create(
             path='README.md',
             title='OctoBox Control',
@@ -44,6 +49,20 @@ class ApiV1ProjectRagViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
+    def test_project_rag_health_denies_anonymous_access(self):
+        response = self.client.get(reverse('api-v1-project-rag-health'))
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_project_rag_health_denies_non_privileged_role(self):
+        coach = get_user_model().objects.create_user(username='rag-coach-health', password='secret123')
+        coach.groups.add(Group.objects.get(name=ROLE_COACH))
+        self.client.force_login(coach)
+
+        response = self.client.get(reverse('api-v1-project-rag-health'))
+
+        self.assertEqual(response.status_code, 403)
+
     def test_project_rag_search_returns_ranked_results(self):
         self.client.login(username='rag-owner', password='secret123')
 
@@ -52,6 +71,15 @@ class ApiV1ProjectRagViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload['results'][0]['path'], 'README.md')
+
+    def test_project_rag_search_denies_non_privileged_role(self):
+        coach = get_user_model().objects.create_user(username='rag-coach', password='secret123')
+        coach.groups.add(Group.objects.get(name=ROLE_COACH))
+        self.client.force_login(coach)
+
+        response = self.client.get(reverse('api-v1-project-rag-search'), {'q': 'OctoBox'})
+
+        self.assertEqual(response.status_code, 403)
 
     def test_project_rag_answer_returns_citations(self):
         self.client.login(username='rag-owner', password='secret123')
