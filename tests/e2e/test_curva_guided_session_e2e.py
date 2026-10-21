@@ -114,6 +114,25 @@ def _start_guided(page: Page):
     page.locator('[data-guided-countdown-skip]').click()
 
 
+def _wait_for_empty_guided_queue(page: Page, plan_slug: str = 'bruno'):
+    """Espera a fila local do guiado esvaziar (o servidor confirmou e o aparelho apagou).
+
+    Recarregar com um envio ainda no ar deixa a série na fila sob o lease da aba
+    morta (~12 s); o que vem depois espera na fila para manter a ordem. Em CI
+    lento isso aparece como "pendente de envio" no lugar de "Treino concluído".
+    """
+    script = """async (slug) => {
+      const scope = localStorage.getItem('curva-guided-scope:' + slug);
+      if (!scope || !window.CurvaGuidedOutbox) return -1;
+      return (await window.CurvaGuidedOutbox.list(scope)).length;
+    }"""
+    for _ in range(100):
+        if page.evaluate(script, plan_slug) == 0:
+            return
+        page.wait_for_timeout(100)
+    raise AssertionError('a fila local do guiado não esvaziou')
+
+
 def _wait_for_offline_scope(page: Page):
     # wait_for_function com string avalia via eval na página e a CSP (sem
     # 'unsafe-eval') bloqueia; page.evaluate passa pelo protocolo do navegador.
@@ -222,6 +241,9 @@ def test_student_top_target_guides_ramp_and_survives_reload(page: Page, live_ser
         page.screenshot(path=screenshot_path, full_page=True)
     page.locator('[data-workout-guided-reps]').fill('8')
     page.locator('[data-workout-guided-set]').click()
+    # Só recarrega com a série já confirmada; senão o envio cortado fica sob o
+    # lease da aba morta e o encerramento espera na fila (ver o helper).
+    _wait_for_empty_guided_queue(page)
 
     # O modo foco reabre sozinho (#treino-guiado) e o alvo vem do aparelho.
     page.reload()
