@@ -656,16 +656,12 @@
       set_number: step.setNumber, set_role: step.series.role,
       weight_kg: detail.weight == null ? '' : String(detail.weight),
       reps: detail.reps == null ? '' : String(detail.reps),
-      rir: detail.rir == null ? '' : String(detail.rir),
-      duration_seconds: detail.duration == null ? '' : String(detail.duration),
+      rir: detail.rir == null ? '' : String(detail.rir), duration_seconds: detail.duration == null ? '' : String(detail.duration),
     };
     // Transição otimista: o descanso começa no toque. O recibo vai de "Salvando…"
     // a "Salvo no aparelho" quando a fila local grava e a "✓ Salvo" com o servidor.
     recorded.add(setKey);
-    recordedDetails.set(setKey, {
-      weight_kg: detail.weight, reps: detail.reps, rir: detail.rir,
-      duration_seconds: detail.duration == null ? null : detail.duration,
-    });
+    recordedDetails.set(setKey, { weight_kg: detail.weight, reps: detail.reps, rir: detail.rir, duration_seconds: detail.duration });
     setSync.set(setKey, 'saving');
     lastFreeformIndex = step.movement.freeform ? step.movementIndex : null;
     lastSkipped = null;
@@ -851,18 +847,6 @@
   }
 
   on('record', recordSet);
-  // Isometria: 3, 2, 1 e cronômetro; o tempo sustentado vira a série registrada.
-  on('hold', function (detail) {
-    var step = project().current;
-    if (!step || !sessionId || detail.key !== key(step.movementIndex, step.setNumber)) return;
-    focus.hold({
-      seconds: detail.seconds, name: step.movement.label,
-      label: step.movement.label + ' · ' + format.seconds(detail.seconds),
-    }).then(function (result) {
-      if (!result) { screen = 'exercise'; render(); return; }
-      recordSet({ key: detail.key, weight: null, reps: null, rir: null, duration: result.seconds });
-    });
-  });
   on('skip-set', skipSet);
   on('skip-rest', function () {
     skipRest();
@@ -925,15 +909,7 @@
       }).catch(function (error) { focus.toast(error.message); });
     }
   });
-  on('correct-request', function (detail) {
-    var parts = String(detail.key || '').split(':').map(Number);
-    var movement = movements[parts[0]];
-    if (movement && format.isTimed(movement.series[parts[1] - 1])) {
-      focus.toast('Série por tempo: refaça a série para mudar o tempo.');
-      return;
-    }
-    requestCorrection(detail.key);
-  });
+  on('correct-request', function (detail) { requestCorrection(detail.key); });
   on('correct', saveCorrection);
   on('top-target', function (detail) {
     var step = project().current;

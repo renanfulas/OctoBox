@@ -349,12 +349,20 @@
       setError('');
       return true;
     }
+    /* Isometria: a própria tela roda o 3-2-1 e o cronômetro e, no fim, registra
+       a série com o tempo sustentado (o controlador só recebe o 'record'). */
+    function startHold(setKey, seconds) {
+      var label = model.current.movement.label;
+      hold({ seconds: seconds, name: label, label: label + ' · ' + format.seconds(seconds) }).then(function (result) {
+        if (!result) { show('exercise', model); return; }
+        emit('record', { key: setKey, weight: null, reps: null, rir: null, duration: result.seconds });
+      });
+    }
     function submitSet() {
       if (!model || !model.current || !draft) return;
       var movement = model.current.movement;
       if (draft.timed) {
-        if (!validDuration()) return;
-        emit('hold', { key: draft.key, seconds: draft.duration });
+        if (validDuration()) startHold(draft.key, draft.duration);
         return;
       }
       if (draft.invalidWeight) { setError('Confira a carga: use números com até duas casas decimais.'); weightInput.focus(); return; }
@@ -889,7 +897,12 @@
       }
       if (target.matches('[data-workout-guided-skip]')) { emit('skip-set'); return; }
       if (target.matches('[data-guided-correct-last]')) { emit('correct-request', { key: model && model.lastRecordedKey }); return; }
-      if (target.matches('[data-guided-correct]')) { emit('correct-request', { key: target.dataset.guidedCorrect }); return; }
+      if (target.matches('[data-guided-correct]')) {
+        // Série por tempo não tem carga/repetições para corrigir: refaz a série.
+        if (model && timedKey(model, target.dataset.guidedCorrect)) { toast('Série por tempo: refaça a série para mudar o tempo.'); return; }
+        emit('correct-request', { key: target.dataset.guidedCorrect });
+        return;
+      }
       if (target.matches('[data-workout-guided-correct-save]')) { submitCorrection(); return; }
       if (target.matches('[data-guided-skip-rest]')) { emit('skip-rest'); return; }
       if (target.matches('[data-guided-add-rest]')) { emit('add-rest'); return; }
@@ -929,7 +942,6 @@
       refresh: function (vm) { if (current && current !== 'countdown' && dialog.open) show(current, vm); else model = vm; },
       countdown: countdown,
       countdownHint: countdownHint,
-      hold: hold,
       isHolding: function () { return !!holdRun; },
       restTick: restTick,
       restAdded: restAdded,
