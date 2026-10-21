@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<!--
+ARQUIVO: prototipo do "template unico" (Onda B3 do CORDA — fundacao visual).
+POR QUE ELE EXISTE:
+- renderiza QUALQUER payload valido pelo contrato de public_workouts/schema.py
+usando os primitives compartilhados do design system (.student-card,
+.student-status-badge, tables.css, interactive-tabs.css) em vez dos 8 CSS
+por-plano que a Onda B3 real vai apagar. Nao depende de dado publicado de
+verdade (Onda A2) pra existir: os testes renderizam contra o payload de
+exemplo (public_workouts/schema.py::build_example_payload).
+- Estrutura de 5 telas (Inicio/Avaliacao/Treino/Cargas/Perfil) pedida pelo
+Renan pra aproximar o layout do app do aluno de box -- REIMPLEMENTADA do
+zero aqui (topbar, semana, nav), nunca importando os templates/CSS do
+student_app (ver PONTOS CRITICOS). So os TOKENS de cor (--theme-*, ja
+usados no resto deste arquivo) sao compartilhados.
+PONTOS CRITICOS:
+- E servido por `PublicWorkoutDetailView` para programas ativos e pelo
+preview de desenvolvimento. Manifest, prompt de instalacao e script de
+registro do service worker fazem parte deste template.
+- NAO estende templates/public_workouts/_base.html (a base legada, com o
+sistema --accent por-plano) nem templates/student_app/layout.html (acopla
+tenant via  no sidebar/topbar — D.3 diz que
+templates/student_app/** e so leitura pra este produto).
+- Resumo do programa (tela Inicio) e TEXTO DETERMINISTICO
+(dashboard.py::build_program_summary), sem chamada de IA — decisao do
+Renan: monta o espaco pronto pra plugar Haiku depois sem custo de API
+nem decisao de cache nesta entrega.
+- "Sua semana" usa `day_id` como abreviacao real do dia (seg/ter/qua/...) —
+e assim que o parser da Onda A2 sempre gerou os 10 programas reais,
+nao precisa de selecao manual de dia da semana.
+- Avaliacao/Cargas/Perfil sao paineis de NIVEL SUPERIOR (bottom nav), Treino
+mantem os sub-tabs de dia por dentro (dois `.interactive-tab-container`
+aninhados — CSS existente ja escopa por filho direto, script de tabs foi
+generalizado pra nao cruzar os dois niveis, ver <script> no fim).
+- `custom_checkout_available`/`student_name`/`account_email` sao contexto OPCIONAL
+(None-safe) — nenhuma view real os alimenta ainda, mesmo estagio de
+"fundacao, nao ligado a URL" do resto deste arquivo. Avaliacao NAO usa
+contexto Django nenhum -- e' 100% client-side via assessments.js (fetch
+de avaliacoes.json), igual aos 10 templates legados.
+- Reconciliado nesta sessao com um SEGUNDO redesign concorrente (chips de
+fase Feeder/Top/AMRAP + glossario inline, `reps_phases`/`glossary_highlight`)
+que chegou em cima do primeiro — a legenda em balao/`highlight_set_stages`
+desta sessao foi DESCARTADA em favor da versao deles (mais completa, ja
+validada pelo Renan). O que sobrevive desta sessao: nome PT-BR do
+exercicio (`movement_labels`/`resolve_movement_display_name`), stepper
+±2,5kg + dica de ultima carga no widget de registro de carga, secao
+"Seus recordes" no topo do painel Cargas.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<!-- WebKit #237961: viewport-fit=cover pode deslocar elementos fixed no PWA instalado. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programa golden</title>
+<meta name="theme-color" content="#0A0E1A">
+<link rel="manifest" href="/renan/gm-bia/manifest.webmanifest">
+<link rel="stylesheet" href="/static/css/student_app/app.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/design-system/components/tables.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/design-system/components/interactive-tabs.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/design-system/neon.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/assessments.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-shell.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/onboarding.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-loads.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-program-extras.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-nutrition.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-training.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-progress.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-assessment.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-guided.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-guided-focus.css?v=<asset>">
+<link rel="stylesheet" href="/static/css/public_workouts/workout-push.css?v=<asset>">
+</head>
+<body data-plan-slug="gm-bia" data-account-scope="990002" data-theme="dark">
+<script>
+try {
+if (localStorage.getItem('octobox-theme') === 'light') document.body.dataset.theme = 'light';
+} catch (error) {}
+</script>
+<main class="workout-shell">
+<header class="workout-topbar">
+<div class="workout-topbar-main">
+<span class="workout-avatar" aria-hidden="true">G</span>
+<strong class="workout-topbar-greeting">Bom dia, Gm-bia</strong>
+</div>
+<span class="workout-wordmark">curva<span aria-hidden="true">.</span></span>
+</header>
+<div class="interactive-tab-container" data-default-panel="workout-panel-inicio">
+<section id="workout-panel-inicio" class="is-tab-active" data-workout-tab-panel>
+<aside class="workout-install-prompt" data-workout-install hidden>
+<span data-workout-install-copy></span>
+<button type="button" data-workout-install-button>Instalar app</button>
+</aside>
+<article class="student-card workout-summary-card workout-home-hero">
+<div class="workout-home-hero__meta">
+<span class="workout-home-hero__week">Semana <strong>5</strong> de 6</span>
+<span class="workout-home-hero__cycle" aria-hidden="true"><span class="is-done"></span><span class="is-done"></span><span class="is-done"></span><span class="is-done"></span><span class="is-now"></span><span class="is-next"></span></span>
+</div>
+<h1>Seu treino.<br><em>Em movimento.</em></h1>
+<p>Montado pra rodar 2 dias por semana, com 5 exercícios no total — 4 deles com carga acompanhada de perto.</p>
+<figure class="workout-hero-curve">
+<figcaption>Sua curva · Supino reto GM</figcaption>
+<svg class="workout-hero-curve__svg" viewBox="0 0 600 120" preserveAspectRatio="none" role="img" aria-label="Curva de Supino reto GM. 3 registros de série principal nos últimos 90 dias. Último registro: 65,0 kg em 04/02." data-curva-chart="hero">
+<polyline class="workout-hero-curve__line" points="420.76,90.0 505.38,50.0 590.0,10.0"></polyline>
+</svg>
+<p class="workout-hero-curve__stats"><strong>65,00 kg</strong><span>+5,0 kg em 90 dias</span></p>
+</figure>
+<div class="workout-home-hero__footer">
+<button type="button" class="workout-home-hero__cta" data-workout-jump-panel="workout-panel-treino">Abrir meu treino <span aria-hidden="true">↗</span></button>
+</div>
+</article>
+<article
+class="student-card card-decor-topstripe workout-weekly-review-hero"
+data-workout-weekly-review
+data-weekly-review-url="/renan/gm-bia/revisao-semanal"
+data-workout-weekly-review-silent-empty
+hidden
+>
+<span class="workout-weekly-review-hero__eyebrow">Revisão da semana</span>
+<p class="workout-weekly-review__text" data-workout-weekly-review-text hidden></p>
+</article>
+<section class="workout-week-strip" aria-label="Sua semana">
+<div class="workout-week-strip__head">
+<span class="workout-week-strip__title">
+<svg class="workout-week-strip__flame" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+<path d="M12 2c.4 3.2-1.6 4.8-3 6.2C7.4 9.8 6 11.4 6 14a6 6 0 0 0 12 0c0-2.2-1-3.8-2-5-.4 1-1 1.6-1.8 1.8.6-2.2-.4-4.6-2.2-5.8z"/>
+</svg>
+Sua semana
+</span>
+<span class="workout-week-strip__score">1 de 2 dias com treino</span>
+</div>
+<div class="workout-week-strip__track">
+<button
+type="button"
+class="workout-week-day"
+data-workout-jump-panel="workout-panel-treino"
+data-workout-jump-day="workout-tab-seg"
+title="Ver treino de Seg"
+>Seg</button>
+<span class="workout-week-day is-rest" title="Descanso">Ter</span>
+<button
+type="button"
+class="workout-week-day is-today is-complete"
+data-workout-jump-panel="workout-panel-treino"
+data-workout-jump-day="workout-tab-qua"
+title="Ver treino de Qua · carga registrada"
+>Qua</button>
+<span class="workout-week-day is-rest" title="Descanso">Qui</span>
+<span class="workout-week-day is-rest" title="Descanso">Sex</span>
+<span class="workout-week-day is-rest" title="Descanso">Sáb</span>
+<span class="workout-week-day is-rest" title="Descanso">Dom</span>
+</div>
+</section>
+<aside class="workout-push-prompt" data-workout-push-home>
+<div><strong>Receba avisos da Curva</strong><p>Você escolhe se este dispositivo recebe avisos sobre seus treinos.</p><span data-workout-push-status aria-live="polite">Para vincular este dispositivo, confirme seu e-mail com um código.</span></div>
+<div class="workout-push-prompt__actions">
+<div class="workout-push-verify" data-workout-push-verify data-verify-url="/renan/gm-bia/push/verificacao">
+<button type="button" data-workout-push-verify-send>Confirmar e-mail para ativar</button>
+<form class="workout-push-verify__form" data-workout-push-verify-form hidden>
+<label for="workout-push-code-home">Código de 6 dígitos</label>
+<input id="workout-push-code-home" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required data-workout-push-verify-code>
+<button type="submit">Confirmar código</button>
+<button type="button" class="workout-push-verify__resend" data-workout-push-verify-resend>Reenviar código</button>
+</form>
+</div>
+</div>
+</aside>
+</section>
+<section id="workout-panel-avaliacao" class="workout-assessment-panel" data-workout-tab-panel>
+<!-- Conteudo 100% montado por assessments.js (silhueta SVG, gauges de
+IMC/RCQ/%gordura com bola+gradiente, grafico de peso, timeline,
+formulario de lancamento) -- mesmo script/CSS ja usado nos 10
+templates legados (student_app/tests.py ja cobre o comportamento
+deles). mountPanel() detecta este id e monta aqui em vez de criar
+um `.tabs`-based #tab-avaliacoes novo (ver assessments.js). -->
+</section>
+<!-- So' alcancado pelo ciclo do botao "Avaliacao" do bottom nav (mesmo
+padrao do ciclo Treino/Cardio/Periodizacao acima) -- por isso NAO
+tem <button> proprio fixo na nav logo abaixo, so' esta section. -->
+<section id="workout-panel-dieta" data-workout-tab-panel>
+<article class="student-card card-decor-topstripe workout-block-card">
+<h2>Nutrição</h2>
+<div
+data-workout-nutrition
+data-nutrition-url="/renan/gm-bia/nutricao.json"
+>
+<span class="workout-nutrition__status" data-workout-nutrition-status aria-live="polite">Carregando…</span>
+<div class="workout-nutrition__content" data-workout-nutrition-content hidden></div>
+</div>
+</article>
+</section>
+<section id="workout-panel-treino" data-workout-tab-panel>
+<header class="workout-training-heading">
+<h1>Hora de treinar<span aria-hidden="true">.</span></h1>
+<p>Escolha o dia, veja a prescrição e registre sua evolução.</p>
+</header>
+<aside class="workout-load-sync-notice" data-workout-load-sync-notice role="alert" hidden>
+<strong>Uma carga precisa da sua decisão</strong>
+<p data-load-sync-conflict-message></p>
+<div class="workout-load-sync-notice__actions">
+<button type="button" data-load-sync-reapply>Reaplicar meus valores</button>
+<button type="button" data-load-sync-export>Baixar cópia</button>
+<button type="button" data-load-sync-discard>Usar registro do servidor</button>
+</div>
+</aside>
+<article class="student-card card-decor-topstripe workout-phase-banner">
+<span class="workout-phase-banner__eyebrow">Foco geral da semana</span>
+<strong>Semana 5 de 6 · Pico</strong>
+<span class="workout-phase-banner__meta">1–3 reps · RIR 0,0 · ~94% RM</span>
+<span class="workout-phase-banner__note">A prescrição de cada exercício continua sendo a referência principal.</span>
+</article>
+<nav class="workout-day-nav" role="tablist" aria-label="Dias do programa" data-workout-tab-nav>
+<button
+type="button"
+class="workout-day-tab"
+data-workout-tab-target="workout-day-seg"
+data-workout-day-full="Inferiores — Quadriceps e posterior de coxa"
+data-workout-day-detail="Quadriceps e posterior de coxa"
+role="tab"
+id="workout-tab-seg"
+aria-controls="workout-day-seg"
+aria-selected="false"
+aria-label="Seg · Inferiores — Quadriceps e posterior de coxa"
+>
+<span class="workout-day-tab__day">Seg</span>
+<span class="workout-day-tab__keyword">Inferiores</span>
+</button>
+<button
+type="button"
+class="workout-day-tab is-active"
+data-workout-tab-target="workout-day-qua"
+data-workout-day-full="Superiores"
+data-workout-day-detail=""
+role="tab"
+id="workout-tab-qua"
+aria-controls="workout-day-qua"
+aria-selected="true"
+aria-label="Qua · Superiores"
+>
+<span class="workout-day-tab__day">Qua</span>
+<span class="workout-day-tab__keyword">Superiores</span>
+</button>
+</nav>
+<section class="workout-guided" data-workout-guided data-session-url="/renan/gm-bia/sessao" data-program-version="1" data-account-scope="990002">
+<div class="workout-guided__intro">
+<div class="workout-guided__copy">
+<h2 class="workout-guided__title" data-guided-launch-title>Treino guiado</h2>
+<p class="workout-guided__text" data-guided-launch-text>Uma série por vez, com a carga sugerida e o descanso cronometrado.</p>
+<p class="workout-guided__meta" data-guided-launch-meta hidden></p>
+<p class="workout-guided__status" data-workout-guided-status aria-live="polite"></p>
+</div>
+<button type="button" class="workout-guided__cta" data-workout-guided-start>Começar treino guiado</button>
+<button type="button" class="workout-guided__cta" data-guided-resume hidden>Voltar ao treino</button>
+</div>
+<div class="workout-guided__conflict" data-workout-guided-conflict hidden>
+<strong>Um registro precisa de atenção</strong>
+<p data-workout-guided-conflict-message aria-live="polite"></p>
+<button type="button" data-workout-guided-conflict-export>Exportar rascunho</button>
+<button type="button" data-workout-guided-conflict-server>Usar registro do servidor</button>
+<button type="button" data-workout-guided-conflict-correct hidden>Aplicar como correção</button>
+</div>
+</section>
+<div class="interactive-tab-container" data-default-panel="workout-day-qua">
+<section
+class="workout-day-panel"
+id="workout-day-seg"
+role="tabpanel"
+aria-labelledby="workout-tab-seg"
+data-workout-tab-panel
+>
+<div class="workout-movement-list">
+<article class="student-card workout-movement-card is-load-tracked" data-guided-series="[{&quot;stage&quot;:&quot;prep&quot;,&quot;role&quot;:&quot;warmup&quot;,&quot;set_number&quot;:1,&quot;required&quot;:true,&quot;reps&quot;:null,&quot;reps_max&quot;:null,&quot;weight_kg&quot;:32.5,&quot;top_factor&quot;:0.4,&quot;rounding_step_kg&quot;:2.5},{&quot;stage&quot;:&quot;prep&quot;,&quot;role&quot;:&quot;warmup&quot;,&quot;set_number&quot;:2,&quot;required&quot;:true,&quot;reps&quot;:null,&quot;reps_max&quot;:null,&quot;weight_kg&quot;:45.0,&quot;top_factor&quot;:0.55,&quot;rounding_step_kg&quot;:2.5},{&quot;stage&quot;:&quot;feeder&quot;,&quot;role&quot;:&quot;feeder&quot;,&quot;set_number&quot;:3,&quot;required&quot;:true,&quot;reps&quot;:null,&quot;reps_max&quot;:null,&quot;weight_kg&quot;:55.0,&quot;top_factor&quot;:0.7,&quot;rounding_step_kg&quot;:2.5},{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:4,&quot;required&quot;:true,&quot;reps&quot;:6,&quot;reps_max&quot;:8,&quot;weight_kg&quot;:80.0,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5},{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:5,&quot;required&quot;:true,&quot;reps&quot;:6,&quot;reps_max&quot;:8,&quot;weight_kg&quot;:80.0,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5}]" data-movement-slug="gm-agachamento-livre" data-movement-label="Agachamento livre" data-reference-url="https://example.test/agachamento" data-rir-spec="RIR 1-2" data-load-kind="percentage" data-allow-load-registration="true">
+<div class="workout-movement-copy">
+<strong><a class="workout-wiki-link" href="https://example.test/agachamento" target="_blank" rel="noopener">Agachamento livre <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
+<button type="button" class="workout-movement-variation-toggle" data-workout-variation-toggle aria-controls="workout-variation-seg-1-1" aria-expanded="false" aria-label="Mostrar variação de Agachamento livre">Ver variação</button>
+<span id="workout-variation-seg-1-1" class="workout-movement-variation" data-workout-variation hidden>Variação:
+<a href="https://example.test/smith" target="_blank" rel="noopener">No Smith</a>
+</span>
+<div class="workout-phase-row">
+<span class="workout-phase-chip workout-phase-chip--prep">2× <span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é Série Prep (preparatória)?">Prep<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>Série Prep (preparatória)</strong>Série de aquecimento específico com carga leve/moderada, antes das séries de trabalho. Peso sugerido: 32,5 kg → 45,0 kg.</span></span></span>
+<span class="workout-phase-chip workout-phase-chip--feeder">1× <span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é Série Feeder?">Feeder<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>Série Feeder</strong>Série leve de ativação antes da série principal (Top) — prepara a articulação e o padrão de movimento sem gerar fadiga. Peso sugerido: 55,0 kg.</span></span></span>
+<span class="workout-phase-chip workout-phase-chip--top">2× <span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é Série Top (Top Set)?">Top<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>Série Top (Top Set)</strong>A série mais pesada do exercício no dia — o estímulo-alvo do treino, feita depois do aquecimento/feeder. Peso sugerido: 80,0 kg → 80,0 kg.</span></span> (6-8)</span>
+</div>
+<span class="workout-phase-note"><span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é RIR (Reps in Reserve)?">RIR<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>RIR (Reps in Reserve)</strong>Repetições que ainda sobrariam na reserva se a série continuasse até a falha. Ex.: RIR 2 = parou a 2 repetições da falha.</span></span> 1-2</span>
+</div>
+<div class="workout-movement-load">
+<strong class="workout-movement-load__kg">≈80,0 kg</strong> <span class="workout-movement-load__pct">75,0% RM</span>
+</div>
+<button type="button" class="workout-movement-register" data-workout-load-toggle aria-controls="workout-load-input-seg-1-1" aria-expanded="false">
+<span data-workout-load-action-label>Registrar carga</span><span data-workout-load-action-icon aria-hidden="true">＋</span>
+</button>
+</article>
+<div id="workout-load-input-seg-1-1" class="workout-load-input" data-workout-load-input data-movement-slug="gm-agachamento-livre" data-program-id="gm-programa" hidden
+data-movement-label="Agachamento livre"
+>
+<div class="workout-load-input__substitutes" data-workout-substitute-pills>
+<button type="button" class="workout-load-input__substitute-pill is-active" data-substitute-slug="gm-agachamento-livre">Agachamento livre</button>
+<button type="button" class="workout-load-input__substitute-pill" data-substitute-slug="gm-agachamento-smith">Agachamento no Smith GM</button>
+<button type="button" class="workout-load-input__substitute-pill" data-substitute-slug="gm-leg-press">Leg press 45 GM</button>
+</div>
+<div class="workout-load-input__head">
+<span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+<span class="workout-load-input__hint" data-workout-load-hint></span>
+</div>
+<div class="workout-load-input__row">
+<button type="button" class="workout-load-input__step" data-workout-load-step="-2.5" aria-label="Diminuir 2,5 kg">−</button>
+<input
+type="number"
+inputmode="decimal"
+step="2.5"
+min="0"
+placeholder="kg"
+class="workout-load-input__field"
+data-workout-load-field
+aria-label="Carga de hoje em Agachamento livre, em quilos"
+>
+<button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>
+<button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
+</div>
+<label class="workout-load-input__warmup-toggle">
+<input type="checkbox" data-workout-load-warmup-toggle>
+Foi aquecimento (não entra na sua evolução)
+</label>
+<div class="workout-load-input__reps-row">
+<span class="workout-load-input__mini-label">Repetições</span>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="-1" aria-label="Diminuir uma repetição">−</button>
+<input
+type="number"
+inputmode="numeric"
+step="1"
+min="1"
+max="999"
+placeholder="reps"
+class="workout-load-input__reps-field"
+data-workout-reps-field
+aria-label="Repetições feitas de Agachamento livre"
+>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="1" aria-label="Aumentar uma repetição">+</button>
+</div>
+<details class="workout-load-input__effort" data-workout-effort>
+<summary class="workout-load-input__effort-summary">
+<span>Esforço · opcional</span>
+<span class="workout-load-input__effort-value" data-workout-effort-value></span>
+</summary>
+<div class="workout-load-input__effort-body">
+<p class="workout-load-input__effort-question">Quantas repetições ainda conseguiria fazer?</p>
+<p class="workout-load-input__effort-help">Uma estimativa de quantas faltavam para chegar ao seu limite. Também chamado RIR.</p>
+<div
+class="workout-load-input__rir-pills"
+data-workout-rir-picker
+role="radiogroup"
+aria-label="Repetições em reserva"
+>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="0" role="radio" aria-checked="false">0</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="1" role="radio" aria-checked="false">1</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="2" role="radio" aria-checked="false">2</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="3" role="radio" aria-checked="false">3</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="4" role="radio" aria-checked="false">4+</button>
+</div>
+<button type="button" class="workout-load-input__rir-other-toggle" data-workout-rir-other-toggle>Outro valor</button>
+<input
+type="number"
+inputmode="decimal"
+step="0.5"
+min="0"
+max="99.9"
+placeholder="RIR"
+class="workout-load-input__rir-other-field"
+data-workout-rir-other-field
+hidden
+aria-label="Outro valor de esforço (RIR)"
+>
+<button type="button" class="workout-load-input__rir-clear" data-workout-rir-clear>Não informar</button>
+</div>
+</details>
+<details class="workout-load-input__calculator" data-workout-plate-calculator>
+<summary class="workout-load-input__effort-summary"><span>Montar anilhas</span></summary>
+<div class="workout-load-input__effort-body">
+<div class="workout-load-input__row">
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-plate-target-step="-2.5" aria-label="Diminuir 2,5 kg no alvo da calculadora">−</button>
+<span class="workout-load-input__mini-num" data-plate-target-display>0</span>
+<span class="workout-load-input__mini-label">kg (alvo)</span>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-plate-target-step="2.5" aria-label="Aumentar 2,5 kg no alvo da calculadora">+</button>
+</div>
+<div class="workout-load-input__reps-row">
+<span class="workout-load-input__mini-label">Barra</span>
+<div class="workout-load-input__rir-pills" data-plate-bar-options>
+<button type="button" class="workout-load-input__rir-pill" data-bar-value="20">20</button>
+<button type="button" class="workout-load-input__rir-pill" data-bar-value="15">15</button>
+<button type="button" class="workout-load-input__rir-pill" data-bar-value="10">10</button>
+</div>
+<button type="button" class="workout-load-input__rir-other-toggle" data-plate-bar-other-toggle>Outro</button>
+</div>
+<input
+type="number"
+inputmode="decimal"
+step="0.5"
+min="0"
+placeholder="peso da barra"
+class="workout-load-input__rir-other-field"
+data-plate-bar-other-field
+hidden
+aria-label="Outro peso de barra"
+>
+<p class="workout-load-input__effort-help">Anilhas disponíveis por lado (pares):</p>
+<div class="workout-load-input__plate-inventory" data-plate-inventory></div>
+<p class="workout-load-input__effort-question" data-plate-result></p>
+<p class="workout-load-input__effort-help" data-plate-check></p>
+<button type="button" class="workout-load-input__save" data-plate-use-total hidden>Usar esse peso</button>
+</div>
+</details>
+<span class="workout-load-input__status" data-workout-load-status aria-live="polite"></span>
+<p class="workout-load-input__achievement" data-workout-load-achievement aria-live="polite" hidden></p>
+</div>
+<article class="student-card workout-movement-card is-load-tracked" data-guided-series="[{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:1,&quot;required&quot;:true,&quot;reps&quot;:10,&quot;reps_max&quot;:12,&quot;weight_kg&quot;:120.0,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5},{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:2,&quot;required&quot;:true,&quot;reps&quot;:10,&quot;reps_max&quot;:12,&quot;weight_kg&quot;:120.0,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5},{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:3,&quot;required&quot;:true,&quot;reps&quot;:10,&quot;reps_max&quot;:12,&quot;weight_kg&quot;:120.0,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5}]" data-movement-slug="gm-leg-press" data-movement-label="Leg press 45 GM" data-reference-url="" data-rir-spec="RIR 2" data-load-kind="fixed_kg" data-allow-load-registration="true">
+<div class="workout-movement-copy">
+<strong>Leg press 45 GM</strong>
+<span>
+3× <span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é Série Top (Top Set)?">Top<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>Série Top (Top Set)</strong>A série mais pesada do exercício no dia — o estímulo-alvo do treino, feita depois do aquecimento/feeder.</span></span> (10-12) · <span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é RIR (Reps in Reserve)?">RIR<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>RIR (Reps in Reserve)</strong>Repetições que ainda sobrariam na reserva se a série continuasse até a falha. Ex.: RIR 2 = parou a 2 repetições da falha.</span></span> 2
+</span>
+</div>
+<div class="workout-movement-load">
+120 kg
+</div>
+<button type="button" class="workout-movement-register" data-workout-load-toggle aria-controls="workout-load-input-seg-1-2" aria-expanded="false">
+<span data-workout-load-action-label>Registrar carga</span><span data-workout-load-action-icon aria-hidden="true">＋</span>
+</button>
+</article>
+<div id="workout-load-input-seg-1-2" class="workout-load-input" data-workout-load-input data-movement-slug="gm-leg-press" data-program-id="gm-programa" hidden
+data-movement-label="Leg press 45 GM"
+>
+<div class="workout-load-input__substitutes" data-workout-substitute-pills>
+<button type="button" class="workout-load-input__substitute-pill is-active" data-substitute-slug="gm-leg-press">Leg press 45 GM</button>
+<button type="button" class="workout-load-input__substitute-pill" data-substitute-slug="gm-agachamento-livre">Agachamento livre GM</button>
+<button type="button" class="workout-load-input__substitute-pill" data-substitute-slug="gm-agachamento-smith">Agachamento no Smith GM</button>
+</div>
+<div class="workout-load-input__head">
+<span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+<span class="workout-load-input__hint" data-workout-load-hint></span>
+</div>
+<div class="workout-load-input__row">
+<button type="button" class="workout-load-input__step" data-workout-load-step="-2.5" aria-label="Diminuir 2,5 kg">−</button>
+<input
+type="number"
+inputmode="decimal"
+step="2.5"
+min="0"
+placeholder="kg"
+class="workout-load-input__field"
+data-workout-load-field
+aria-label="Carga de hoje em Leg press 45 GM, em quilos"
+>
+<button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>
+<button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
+</div>
+<label class="workout-load-input__warmup-toggle">
+<input type="checkbox" data-workout-load-warmup-toggle>
+Foi aquecimento (não entra na sua evolução)
+</label>
+<div class="workout-load-input__reps-row">
+<span class="workout-load-input__mini-label">Repetições</span>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="-1" aria-label="Diminuir uma repetição">−</button>
+<input
+type="number"
+inputmode="numeric"
+step="1"
+min="1"
+max="999"
+placeholder="reps"
+class="workout-load-input__reps-field"
+data-workout-reps-field
+aria-label="Repetições feitas de Leg press 45 GM"
+>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="1" aria-label="Aumentar uma repetição">+</button>
+</div>
+<details class="workout-load-input__effort" data-workout-effort>
+<summary class="workout-load-input__effort-summary">
+<span>Esforço · opcional</span>
+<span class="workout-load-input__effort-value" data-workout-effort-value></span>
+</summary>
+<div class="workout-load-input__effort-body">
+<p class="workout-load-input__effort-question">Quantas repetições ainda conseguiria fazer?</p>
+<p class="workout-load-input__effort-help">Uma estimativa de quantas faltavam para chegar ao seu limite. Também chamado RIR.</p>
+<div
+class="workout-load-input__rir-pills"
+data-workout-rir-picker
+role="radiogroup"
+aria-label="Repetições em reserva"
+>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="0" role="radio" aria-checked="false">0</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="1" role="radio" aria-checked="false">1</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="2" role="radio" aria-checked="false">2</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="3" role="radio" aria-checked="false">3</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="4" role="radio" aria-checked="false">4+</button>
+</div>
+<button type="button" class="workout-load-input__rir-other-toggle" data-workout-rir-other-toggle>Outro valor</button>
+<input
+type="number"
+inputmode="decimal"
+step="0.5"
+min="0"
+max="99.9"
+placeholder="RIR"
+class="workout-load-input__rir-other-field"
+data-workout-rir-other-field
+hidden
+aria-label="Outro valor de esforço (RIR)"
+>
+<button type="button" class="workout-load-input__rir-clear" data-workout-rir-clear>Não informar</button>
+</div>
+</details>
+<span class="workout-load-input__status" data-workout-load-status aria-live="polite"></span>
+<p class="workout-load-input__achievement" data-workout-load-achievement aria-live="polite" hidden></p>
+</div>
+</div>
+</section>
+<section
+class="workout-day-panel is-tab-active"
+id="workout-day-qua"
+role="tabpanel"
+aria-labelledby="workout-tab-qua"
+data-workout-tab-panel
+>
+<div class="workout-movement-list">
+<article class="student-card workout-movement-card is-load-tracked" data-guided-series="[{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:1,&quot;required&quot;:true,&quot;reps&quot;:8,&quot;reps_max&quot;:8,&quot;weight_kg&quot;:65.0,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5},{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:2,&quot;required&quot;:true,&quot;reps&quot;:8,&quot;reps_max&quot;:8,&quot;weight_kg&quot;:65.0,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5}]" data-movement-slug="gm-supino-reto" data-movement-label="Supino reto GM" data-reference-url="" data-rir-spec="RIR 1" data-load-kind="phase_progressive" data-allow-load-registration="true">
+<div class="workout-movement-copy">
+<strong>Supino reto GM</strong>
+<span>
+2x8 aquecimento + 1x6-8 <span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é Série Top (Top Set)?">Top<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>Série Top (Top Set)</strong>A série mais pesada do exercício no dia — o estímulo-alvo do treino, feita depois do aquecimento/feeder.</span></span> · <span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é RIR (Reps in Reserve)?">RIR<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>RIR (Reps in Reserve)</strong>Repetições que ainda sobrariam na reserva se a série continuasse até a falha. Ex.: RIR 2 = parou a 2 repetições da falha.</span></span> 1
+</span>
+</div>
+<div class="workout-movement-load">
+<strong class="workout-movement-load__kg">≈65,0 kg</strong> <span class="workout-movement-load__pct">94% RM</span>
+</div>
+<button type="button" class="workout-movement-register" data-workout-load-toggle aria-controls="workout-load-input-qua-1-1" aria-expanded="false">
+<span data-workout-load-action-label>Registrar carga</span><span data-workout-load-action-icon aria-hidden="true">＋</span>
+</button>
+</article>
+<div id="workout-load-input-qua-1-1" class="workout-load-input" data-workout-load-input data-movement-slug="gm-supino-reto" data-program-id="gm-programa" hidden
+data-today-idempotency-key="gm-carga-7-correcao"
+data-today-top-set-idempotency-key="gm-carga-7-correcao"
+data-today-warmup-idempotency-key="gm-carga-8"
+data-today-top-set-weight="65.0"
+data-today-top-set-reps="6"
+data-today-top-set-rir="1.0"
+data-today-warmup-weight="40.0"
+data-today-warmup-reps="8"
+data-movement-label="Supino reto GM"
+>
+<div class="workout-load-input__head">
+<span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+<span class="workout-load-input__hint" data-workout-load-hint></span>
+</div>
+<div class="workout-load-input__row">
+<button type="button" class="workout-load-input__step" data-workout-load-step="-2.5" aria-label="Diminuir 2,5 kg">−</button>
+<input
+type="number"
+inputmode="decimal"
+step="2.5"
+min="0"
+placeholder="kg"
+class="workout-load-input__field"
+data-workout-load-field
+value="65.0"
+aria-label="Carga de hoje em Supino reto GM, em quilos"
+>
+<button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>
+<button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
+</div>
+<label class="workout-load-input__warmup-toggle">
+<input type="checkbox" data-workout-load-warmup-toggle>
+Foi aquecimento (não entra na sua evolução)
+</label>
+<div class="workout-load-input__reps-row">
+<span class="workout-load-input__mini-label">Repetições</span>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="-1" aria-label="Diminuir uma repetição">−</button>
+<input
+type="number"
+inputmode="numeric"
+step="1"
+min="1"
+max="999"
+placeholder="reps"
+class="workout-load-input__reps-field"
+data-workout-reps-field
+value="6"
+aria-label="Repetições feitas de Supino reto GM"
+>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="1" aria-label="Aumentar uma repetição">+</button>
+</div>
+<details class="workout-load-input__effort" data-workout-effort>
+<summary class="workout-load-input__effort-summary">
+<span>Esforço · opcional</span>
+<span class="workout-load-input__effort-value" data-workout-effort-value></span>
+</summary>
+<div class="workout-load-input__effort-body">
+<p class="workout-load-input__effort-question">Quantas repetições ainda conseguiria fazer?</p>
+<p class="workout-load-input__effort-help">Uma estimativa de quantas faltavam para chegar ao seu limite. Também chamado RIR.</p>
+<div
+class="workout-load-input__rir-pills"
+data-workout-rir-picker
+data-today-rir="1.0"
+role="radiogroup"
+aria-label="Repetições em reserva"
+>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="0" role="radio" aria-checked="false">0</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="1" role="radio" aria-checked="false">1</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="2" role="radio" aria-checked="false">2</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="3" role="radio" aria-checked="false">3</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="4" role="radio" aria-checked="false">4+</button>
+</div>
+<button type="button" class="workout-load-input__rir-other-toggle" data-workout-rir-other-toggle>Outro valor</button>
+<input
+type="number"
+inputmode="decimal"
+step="0.5"
+min="0"
+max="99.9"
+placeholder="RIR"
+class="workout-load-input__rir-other-field"
+data-workout-rir-other-field
+hidden
+aria-label="Outro valor de esforço (RIR)"
+>
+<button type="button" class="workout-load-input__rir-clear" data-workout-rir-clear>Não informar</button>
+</div>
+</details>
+<details class="workout-load-input__calculator" data-workout-plate-calculator>
+<summary class="workout-load-input__effort-summary"><span>Montar anilhas</span></summary>
+<div class="workout-load-input__effort-body">
+<div class="workout-load-input__row">
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-plate-target-step="-2.5" aria-label="Diminuir 2,5 kg no alvo da calculadora">−</button>
+<span class="workout-load-input__mini-num" data-plate-target-display>0</span>
+<span class="workout-load-input__mini-label">kg (alvo)</span>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-plate-target-step="2.5" aria-label="Aumentar 2,5 kg no alvo da calculadora">+</button>
+</div>
+<div class="workout-load-input__reps-row">
+<span class="workout-load-input__mini-label">Barra</span>
+<div class="workout-load-input__rir-pills" data-plate-bar-options>
+<button type="button" class="workout-load-input__rir-pill" data-bar-value="20">20</button>
+<button type="button" class="workout-load-input__rir-pill" data-bar-value="15">15</button>
+<button type="button" class="workout-load-input__rir-pill" data-bar-value="10">10</button>
+</div>
+<button type="button" class="workout-load-input__rir-other-toggle" data-plate-bar-other-toggle>Outro</button>
+</div>
+<input
+type="number"
+inputmode="decimal"
+step="0.5"
+min="0"
+placeholder="peso da barra"
+class="workout-load-input__rir-other-field"
+data-plate-bar-other-field
+hidden
+aria-label="Outro peso de barra"
+>
+<p class="workout-load-input__effort-help">Anilhas disponíveis por lado (pares):</p>
+<div class="workout-load-input__plate-inventory" data-plate-inventory></div>
+<p class="workout-load-input__effort-question" data-plate-result></p>
+<p class="workout-load-input__effort-help" data-plate-check></p>
+<button type="button" class="workout-load-input__save" data-plate-use-total hidden>Usar esse peso</button>
+</div>
+</details>
+<span class="workout-load-input__status" data-workout-load-status aria-live="polite">Já registrado hoje: 65.0 kg · 6 reps</span>
+<p class="workout-load-input__achievement" data-workout-load-achievement aria-live="polite" hidden></p>
+</div>
+<article class="student-card workout-movement-card is-load-tracked" data-guided-series="[{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:1,&quot;required&quot;:true,&quot;reps&quot;:8,&quot;reps_max&quot;:10,&quot;weight_kg&quot;:null,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5},{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:2,&quot;required&quot;:true,&quot;reps&quot;:8,&quot;reps_max&quot;:10,&quot;weight_kg&quot;:null,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5},{&quot;stage&quot;:&quot;top&quot;,&quot;role&quot;:&quot;top_set&quot;,&quot;set_number&quot;:3,&quot;required&quot;:true,&quot;reps&quot;:8,&quot;reps_max&quot;:10,&quot;weight_kg&quot;:null,&quot;top_factor&quot;:1.0,&quot;rounding_step_kg&quot;:2.5}]" data-movement-slug="gm-remada-curvada" data-movement-label="Remada curvada GM" data-reference-url="" data-rir-spec="RIR 2" data-load-kind="free" data-allow-load-registration="true">
+<div class="workout-movement-copy">
+<strong>Remada curvada GM</strong>
+<span>
+3× <span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é Série Top (Top Set)?">Top<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>Série Top (Top Set)</strong>A série mais pesada do exercício no dia — o estímulo-alvo do treino, feita depois do aquecimento/feeder.</span></span> (8-10) · <span class="workout-glossary-term" data-workout-glossary tabindex="0" role="button" aria-expanded="false" aria-label="O que é RIR (Reps in Reserve)?">RIR<sup class="workout-glossary-dot" aria-hidden="true">ⓘ</sup><span class="workout-glossary-tip" role="tooltip"><strong>RIR (Reps in Reserve)</strong>Repetições que ainda sobrariam na reserva se a série continuasse até a falha. Ex.: RIR 2 = parou a 2 repetições da falha.</span></span> 2
+</span>
+</div>
+<div class="workout-movement-load">
+<strong class="workout-movement-load__free">Escolha uma carga segura</strong>
+<span class="workout-movement-load-hint">Sem dados suficientes para sugerir kg. Registre uma carga confortável para criar sua primeira referência.</span>
+</div>
+<button type="button" class="workout-movement-register" data-workout-load-toggle aria-controls="workout-load-input-qua-1-2" aria-expanded="false">
+<span data-workout-load-action-label>Registrar carga</span><span data-workout-load-action-icon aria-hidden="true">＋</span>
+</button>
+</article>
+<div id="workout-load-input-qua-1-2" class="workout-load-input" data-workout-load-input data-movement-slug="gm-remada-curvada" data-program-id="gm-programa" hidden
+data-movement-label="Remada curvada GM"
+>
+<div class="workout-load-input__head">
+<span class="workout-load-input__label">⚖️ Registrar carga de hoje</span>
+<span class="workout-load-input__hint" data-workout-load-hint></span>
+</div>
+<div class="workout-load-input__row">
+<button type="button" class="workout-load-input__step" data-workout-load-step="-2.5" aria-label="Diminuir 2,5 kg">−</button>
+<input
+type="number"
+inputmode="decimal"
+step="2.5"
+min="0"
+placeholder="kg"
+class="workout-load-input__field"
+data-workout-load-field
+aria-label="Carga de hoje em Remada curvada GM, em quilos"
+>
+<button type="button" class="workout-load-input__step" data-workout-load-step="2.5" aria-label="Aumentar 2,5 kg">+</button>
+<button type="button" class="workout-load-input__save" data-workout-load-save>Salvar</button>
+</div>
+<label class="workout-load-input__warmup-toggle">
+<input type="checkbox" data-workout-load-warmup-toggle>
+Foi aquecimento (não entra na sua evolução)
+</label>
+<div class="workout-load-input__reps-row">
+<span class="workout-load-input__mini-label">Repetições</span>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="-1" aria-label="Diminuir uma repetição">−</button>
+<input
+type="number"
+inputmode="numeric"
+step="1"
+min="1"
+max="999"
+placeholder="reps"
+class="workout-load-input__reps-field"
+data-workout-reps-field
+aria-label="Repetições feitas de Remada curvada GM"
+>
+<button type="button" class="workout-load-input__step workout-load-input__step--mini" data-workout-reps-step="1" aria-label="Aumentar uma repetição">+</button>
+</div>
+<details class="workout-load-input__effort" data-workout-effort>
+<summary class="workout-load-input__effort-summary">
+<span>Esforço · opcional</span>
+<span class="workout-load-input__effort-value" data-workout-effort-value></span>
+</summary>
+<div class="workout-load-input__effort-body">
+<p class="workout-load-input__effort-question">Quantas repetições ainda conseguiria fazer?</p>
+<p class="workout-load-input__effort-help">Uma estimativa de quantas faltavam para chegar ao seu limite. Também chamado RIR.</p>
+<div
+class="workout-load-input__rir-pills"
+data-workout-rir-picker
+role="radiogroup"
+aria-label="Repetições em reserva"
+>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="0" role="radio" aria-checked="false">0</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="1" role="radio" aria-checked="false">1</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="2" role="radio" aria-checked="false">2</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="3" role="radio" aria-checked="false">3</button>
+<button type="button" class="workout-load-input__rir-pill" data-rir-value="4" role="radio" aria-checked="false">4+</button>
+</div>
+<button type="button" class="workout-load-input__rir-other-toggle" data-workout-rir-other-toggle>Outro valor</button>
+<input
+type="number"
+inputmode="decimal"
+step="0.5"
+min="0"
+max="99.9"
+placeholder="RIR"
+class="workout-load-input__rir-other-field"
+data-workout-rir-other-field
+hidden
+aria-label="Outro valor de esforço (RIR)"
+>
+<button type="button" class="workout-load-input__rir-clear" data-workout-rir-clear>Não informar</button>
+</div>
+</details>
+<span class="workout-load-input__status" data-workout-load-status aria-live="polite"></span>
+<p class="workout-load-input__achievement" data-workout-load-achievement aria-live="polite" hidden></p>
+</div>
+</div>
+<div class="workout-movement-list">
+<article class="student-card workout-movement-card" data-guided-series="[{&quot;stage&quot;:&quot;freeform&quot;,&quot;role&quot;:&quot;legacy_unknown&quot;,&quot;set_number&quot;:1,&quot;reps&quot;:null,&quot;reps_max&quot;:null,&quot;weight_kg&quot;:null,&quot;required&quot;:false}]" data-movement-slug="gm-prancha" data-movement-label="Prancha GM" data-reference-url="" data-rir-spec="" data-load-kind="free" data-allow-load-registration="false">
+<div class="workout-movement-copy">
+<strong>Prancha GM</strong>
+<span>
+texto aberto
+</span>
+</div>
+</article>
+</div>
+</section>
+</div>
+</section>
+<!-- Cardio/Periodizacao (Onda A2, fatia cardio/periodizacao) -- so'
+existem se o HTML legado original tinha essas abas (parser.py::
+parse_cardio_tab/parse_periodization_tab, formato de aba dedicada,
+nao o cardio embutido por dia). Alcancadas so' pelo ciclo do botao
+"Treino" do bottom nav (item pedido pelo Renan), nunca tem icone
+proprio fixo -- por isso NAO tem <button> correspondente na nav
+logo abaixo, so' esta section. -->
+<section id="workout-panel-cardio" data-workout-tab-panel>
+<div class="workout-movement-list">
+<article class="student-card card-decor-topstripe workout-cardio-card">
+<div class="workout-cardio-card__head">
+<strong>Caminhada inclinada</strong>
+<span class="student-status-badge workout-cardio-badge">Zona 2</span>
+</div>
+<dl class="workout-cardio-details">
+<div class="workout-cardio-detail"><dt>Duracao</dt><dd>30 min</dd></div>
+</dl>
+<p class="workout-cardio-note">Depois do treino de pernas</p>
+</article>
+</div>
+</section>
+<section id="workout-panel-periodizacao" data-workout-tab-panel>
+<article class="student-card card-decor-topstripe workout-block-card">
+<h2>Progressão do mesociclo</h2>
+<div class="workout-period-chart">
+<div class="workout-period-chart__col">
+<div class="workout-period-chart__bar-wrap">
+<span class="workout-period-chart__reps" style="color:#FB7185">12-15</span>
+<div class="workout-period-chart__bar" style="height:60%;background:#FB7185"></div>
+</div>
+<span class="workout-period-chart__focus" style="background:#FB7185;color:#FB7185">Adaptação</span>
+<span class="workout-period-chart__label">S1</span>
+</div>
+<div class="workout-period-chart__col">
+<div class="workout-period-chart__bar-wrap">
+<span class="workout-period-chart__reps" style="color:#F43F5E">8-12</span>
+<div class="workout-period-chart__bar" style="height:72%;background:#F43F5E"></div>
+</div>
+<span class="workout-period-chart__focus" style="background:#F43F5E;color:#F43F5E">Volume</span>
+<span class="workout-period-chart__label">S2</span>
+</div>
+<div class="workout-period-chart__col">
+<div class="workout-period-chart__bar-wrap">
+<span class="workout-period-chart__reps" style="color:#E11D48">6-8</span>
+<div class="workout-period-chart__bar" style="height:81%;background:#E11D48"></div>
+</div>
+<span class="workout-period-chart__focus" style="background:#E11D48;color:#E11D48">Força-Hipertrofia</span>
+<span class="workout-period-chart__label">S3</span>
+</div>
+<div class="workout-period-chart__col">
+<div class="workout-period-chart__bar-wrap">
+<span class="workout-period-chart__reps" style="color:#BE123C">3-6</span>
+<div class="workout-period-chart__bar" style="height:91%;background:#BE123C"></div>
+</div>
+<span class="workout-period-chart__focus" style="background:#BE123C;color:#BE123C">Intensidade</span>
+<span class="workout-period-chart__label">S4</span>
+</div>
+<div class="workout-period-chart__col workout-period-chart__col--current">
+<div class="workout-period-chart__bar-wrap">
+<span class="workout-period-chart__reps" style="color:#9F1239">1-3</span>
+<div class="workout-period-chart__bar" style="height:100%;background:#9F1239"></div>
+</div>
+<span class="workout-period-chart__focus" style="background:#9F1239;color:#9F1239">Pico</span>
+<span class="workout-period-chart__label">S5 · agora</span>
+</div>
+<div class="workout-period-chart__col">
+<div class="workout-period-chart__bar-wrap">
+<span class="workout-period-chart__reps" style="color:#10B981">8-10</span>
+<div class="workout-period-chart__bar" style="height:61%;background:#10B981"></div>
+</div>
+<span class="workout-period-chart__focus" style="background:#10B981;color:#10B981">Deload</span>
+<span class="workout-period-chart__label">S6</span>
+</div>
+</div>
+</article>
+<p class="workout-period-note">Mesociclo de 6 semanas com deload no fim.</p>
+<article class="student-card card-decor-topstripe workout-block-card">
+<h2>Volume por grupo muscular</h2>
+<div class="operation-table-wrap">
+<table>
+<thead>
+<tr><th scope="col">Grupo muscular</th><th scope="col">Séries/sem</th><th scope="col">Frequência</th><th scope="col">Onde</th></tr>
+</thead>
+<tbody>
+<tr><td>Quadriceps</td><td>10</td><td>2x</td><td>Seg e Qui</td></tr>
+<tr><td>Peitoral</td><td>8</td><td>1x</td><td>Qua</td></tr>
+</tbody>
+</table>
+</div>
+</article>
+</section>
+<section id="workout-panel-cargas" data-workout-tab-panel>
+<header class="workout-progress-heading">
+<h1>Sua evolução<span aria-hidden="true">.</span></h1>
+<p>As cargas registradas mostram o caminho que você já percorreu.</p>
+</header>
+<article class="student-card card-decor-topstripe workout-block-card workout-progress-lead">
+<h2>Evolução de carga</h2>
+<p class="workout-load-section-intro">Acompanhe suas séries principais e compare o que aconteceu nos últimos 90 dias.</p>
+<div class="workout-load-chart has-data" data-workout-progress-card>
+<div class="workout-load-chart-head">
+<h3>Agachamento livre GM</h3>
+<div class="workout-load-chart-latest">
+<span class="workout-load-chart-latest__label">Última série principal</span>
+<span class="workout-load-chart-current">
+<strong>87,50</strong><span class="workout-load-chart-unit">kg</span>
+</span>
+<span class="workout-load-chart-latest__meta">
+6 reps · RIR 1,0 · 28/01/2026
+</span>
+</div>
+<p class="workout-load-chart-statement">
+Sua série principal está evoluindo com consistência.
+</p>
+<div class="workout-load-chart-context">
+<span class="workout-load-chart-1rm" title="1RM estimado — confiança moderate (7 reps efetivas, blend)">1RM estimado: <strong>106,5 kg</strong></span>
+<span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--improving">Em evolução</span>
+</div>
+</div>
+<span class="workout-load-chart-trend workout-load-chart-trend--up">+7,5 kg nos últimos 90 dias</span>
+<svg
+class="workout-load-chart-svg"
+viewBox="0 0 600 120"
+preserveAspectRatio="none"
+role="img"
+aria-label="Curva de Agachamento livre GM. 4 registros de série principal nos últimos 90 dias. Último registro: 87,5 kg em 28/01."
+data-curva-chart="axis"
+>
+<defs>
+<linearGradient id="workout-load-fill-1" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.32" />
+<stop offset="100%" style="stop-color:var(--brand);stop-opacity:0" />
+</linearGradient>
+<linearGradient id="workout-load-stroke-1" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.55" />
+<stop offset="100%" style="stop-color:var(--brand);stop-opacity:1" />
+</linearGradient>
+</defs>
+<polygon class="workout-load-chart-area" points="420.76,90.0 463.07,63.33 505.38,36.67 547.69,10.0 547.69,90 420.76,90" fill="url(#workout-load-fill-1)"></polygon>
+<polyline class="workout-load-chart-line" points="420.76,90.0 463.07,63.33 505.38,36.67 547.69,10.0" pathLength="1" stroke="url(#workout-load-stroke-1)"></polyline>
+<circle class="workout-load-chart-halo" cx="420.76" cy="90.0" r="7"></circle>
+<circle class="workout-load-chart-dot" cx="420.76" cy="90.0" r="3">
+</circle>
+<circle class="workout-load-chart-halo" cx="463.07" cy="63.33" r="7"></circle>
+<circle class="workout-load-chart-dot" cx="463.07" cy="63.33" r="3">
+</circle>
+<circle class="workout-load-chart-halo" cx="505.38" cy="36.67" r="7"></circle>
+<circle class="workout-load-chart-dot" cx="505.38" cy="36.67" r="3">
+</circle>
+<circle class="workout-load-chart-halo" cx="547.69" cy="10.0" r="7"></circle>
+<circle class="workout-load-chart-dot" cx="547.69" cy="10.0" r="3">
+</circle>
+<text class="workout-load-chart-label" text-anchor="start" x="46.0" y="115">06/11</text><text class="workout-load-chart-label" text-anchor="middle" x="227.33" y="115">06/12</text><text class="workout-load-chart-label" text-anchor="middle" x="408.67" y="115">05/01</text><text class="workout-load-chart-label" text-anchor="end" x="590.0" y="115">04/02</text>
+<text class="workout-load-chart-scale-label" text-anchor="end" x="43" y="10">87.5 kg</text>
+<text class="workout-load-chart-scale-label" text-anchor="end" x="43" y="90">80.0 kg</text>
+</svg>
+<details class="workout-load-chart-sessions">
+<summary>Ver registros recentes <span>(4)</span></summary>
+<p class="workout-load-chart-sessions__note">Cada linha mostra a série principal efetiva daquele dia nos últimos 90 dias.</p>
+<ol>
+<li>
+<time datetime="2026-01-28">28/01/2026</time>
+<strong>87,50 kg</strong>
+<span>6 reps · RIR 1,0</span>
+</li>
+<li>
+<time datetime="2026-01-21">21/01/2026</time>
+<strong>85,00 kg</strong>
+<span>7 reps · RIR 1,0</span>
+</li>
+<li>
+<time datetime="2026-01-14">14/01/2026</time>
+<strong>82,50 kg</strong>
+<span>8 reps · RIR 2,0</span>
+</li>
+<li>
+<time datetime="2026-01-07">07/01/2026</time>
+<strong>80,00 kg</strong>
+<span>8 reps · RIR 2,0</span>
+</li>
+</ol>
+</details>
+<details class="workout-load-chart-siblings"><summary>Ver variações</summary><p>Variação: Agachamento no Smith GM, Leg press 45 GM</p></details>
+<div class="workout-load-chart-share">
+<button type="button" class="workout-load-chart-share-button" data-workout-share data-share-title="Minha evolução em Agachamento livre GM" data-share-text="💪 Agachamento livre GM: 87,5 kg · em evolução · +7,5 kg no período · 1RM estimado 106,5 kg">Compartilhar</button>
+<span class="workout-load-chart-share-status" data-workout-share-status aria-live="polite"></span>
+</div>
+</div>
+<div class="workout-load-chart has-data" data-workout-progress-card>
+<div class="workout-load-chart-head">
+<h3>Supino reto GM</h3>
+<div class="workout-load-chart-latest">
+<span class="workout-load-chart-latest__label">Última série principal</span>
+<span class="workout-load-chart-current">
+<strong>65,00</strong><span class="workout-load-chart-unit">kg</span>
+</span>
+<span class="workout-load-chart-latest__meta">
+6 reps · RIR 1,0 · 04/02/2026
+</span>
+</div>
+<div class="workout-load-chart-context">
+<span class="workout-load-chart-1rm" title="1RM estimado — confiança moderate (7 reps efetivas, blend)">1RM estimado: <strong>79,1 kg</strong></span>
+</div>
+</div>
+<span class="workout-load-chart-trend workout-load-chart-trend--up">+5,0 kg nos últimos 90 dias</span>
+<svg
+class="workout-load-chart-svg"
+viewBox="0 0 600 120"
+preserveAspectRatio="none"
+role="img"
+aria-label="Curva de Supino reto GM. 3 registros de série principal nos últimos 90 dias. Último registro: 65,0 kg em 04/02."
+data-curva-chart="axis"
+>
+<defs>
+<linearGradient id="workout-load-fill-2" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.32" />
+<stop offset="100%" style="stop-color:var(--brand);stop-opacity:0" />
+</linearGradient>
+<linearGradient id="workout-load-stroke-2" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:var(--brand);stop-opacity:0.55" />
+<stop offset="100%" style="stop-color:var(--brand);stop-opacity:1" />
+</linearGradient>
+</defs>
+<polygon class="workout-load-chart-area" points="420.76,90.0 505.38,50.0 590.0,10.0 590.0,90 420.76,90" fill="url(#workout-load-fill-2)"></polygon>
+<polyline class="workout-load-chart-line" points="420.76,90.0 505.38,50.0 590.0,10.0" pathLength="1" stroke="url(#workout-load-stroke-2)"></polyline>
+<circle class="workout-load-chart-halo" cx="420.76" cy="90.0" r="7"></circle>
+<circle class="workout-load-chart-dot" cx="420.76" cy="90.0" r="3">
+</circle>
+<circle class="workout-load-chart-halo" cx="505.38" cy="50.0" r="7"></circle>
+<circle class="workout-load-chart-dot" cx="505.38" cy="50.0" r="3">
+</circle>
+<circle class="workout-load-chart-halo" cx="590.0" cy="10.0" r="7"></circle>
+<circle class="workout-load-chart-dot" cx="590.0" cy="10.0" r="3">
+</circle>
+<text class="workout-load-chart-label" text-anchor="start" x="46.0" y="115">06/11</text><text class="workout-load-chart-label" text-anchor="middle" x="227.33" y="115">06/12</text><text class="workout-load-chart-label" text-anchor="middle" x="408.67" y="115">05/01</text><text class="workout-load-chart-label" text-anchor="end" x="590.0" y="115">04/02</text>
+<text class="workout-load-chart-scale-label" text-anchor="end" x="43" y="10">65.0 kg</text>
+<text class="workout-load-chart-scale-label" text-anchor="end" x="43" y="90">60.0 kg</text>
+</svg>
+<details class="workout-load-chart-sessions">
+<summary>Ver registros recentes <span>(3)</span></summary>
+<p class="workout-load-chart-sessions__note">Cada linha mostra a série principal efetiva daquele dia nos últimos 90 dias.</p>
+<ol>
+<li>
+<time datetime="2026-02-04">04/02/2026</time>
+<strong>65,00 kg</strong>
+<span>6 reps · RIR 1,0</span>
+</li>
+<li>
+<time datetime="2026-01-21">21/01/2026</time>
+<strong>62,50 kg</strong>
+<span>8 reps · RIR 1,0</span>
+</li>
+<li>
+<time datetime="2026-01-07">07/01/2026</time>
+<strong>60,00 kg</strong>
+<span>8 reps · RIR 2,0</span>
+</li>
+</ol>
+</details>
+<div class="workout-load-chart-share">
+<button type="button" class="workout-load-chart-share-button" data-workout-share data-share-title="Minha evolução em Supino reto GM" data-share-text="💪 Supino reto GM: 65 kg · +5 kg no período · 1RM estimado 79,1 kg">Compartilhar</button>
+<span class="workout-load-chart-share-status" data-workout-share-status aria-live="polite"></span>
+</div>
+</div>
+</article>
+<article class="student-card workout-block-card">
+<h2>Seus recordes</h2>
+<div class="workout-records-grid">
+<div class="workout-record-card" data-workout-record-card>
+<span class="workout-record-card__label">Agachamento livre GM</span>
+<strong class="workout-record-card__value">87,5 <span class="workout-record-card__unit">kg</span></strong>
+<span class="workout-record-card__reps">6 reps</span>
+<span class="workout-record-card__date">Maior carga em 28/01/2026</span>
+</div>
+<div class="workout-record-card" data-workout-record-card>
+<span class="workout-record-card__label">Supino reto GM</span>
+<strong class="workout-record-card__value">65,0 <span class="workout-record-card__unit">kg</span></strong>
+<span class="workout-record-card__reps">6 reps</span>
+<span class="workout-record-card__date">Maior carga em 04/02/2026</span>
+</div>
+</div>
+</article>
+<article class="student-card workout-block-card">
+<h2>Resumo do ciclo</h2>
+<div class="workout-records-grid">
+<div class="workout-record-card">
+<span class="workout-record-card__label">Agachamento livre GM</span>
+<div class="workout-record-card__meta">
+<span class="student-status-badge workout-load-chart-signal workout-load-chart-signal--improving">Em evolução</span>
+<span class="workout-record-card__date">1RM 106,5 kg</span>
+</div>
+</div>
+<div class="workout-record-card">
+<span class="workout-record-card__label">Supino reto GM</span>
+<div class="workout-record-card__meta">
+<span class="workout-record-card__date">Mais registros necessários para comparar</span>
+<span class="workout-record-card__date">1RM 79,1 kg</span>
+</div>
+</div>
+</div>
+</article>
+<article
+class="student-card workout-block-card"
+data-workout-weekly-review
+data-weekly-review-url="/renan/gm-bia/revisao-semanal"
+>
+<h2>Revisão semanal</h2>
+<p class="workout-weekly-review__text" data-workout-weekly-review-text hidden></p>
+<button type="button" class="workout-load-input__save" data-workout-weekly-review-generate>Gerar revisão</button>
+<span class="workout-weekly-review__status" data-workout-weekly-review-status aria-live="polite"></span>
+</article>
+</section>
+<section id="workout-panel-perfil" data-workout-tab-panel>
+<div class="workout-profile-header">
+<span class="workout-avatar workout-avatar--lg" aria-hidden="true">G</span>
+<strong class="workout-profile-header__name">Gm-bia</strong>
+<span class="workout-profile-header__email">gm-bia@golden.example.test</span>
+</div>
+<article class="student-card card-decor-topstripe workout-block-card">
+<h2>Conta</h2>
+<div class="workout-profile-list">
+<span class="workout-profile-row">
+<span class="workout-profile-row__label">Dados pessoais</span>
+<span>gm-bia@golden.example.test</span>
+</span>
+<button type="button" class="workout-profile-row" data-billing-portal>
+<span class="workout-profile-row__label">Pagamentos</span>
+<span aria-hidden="true">→</span>
+</button>
+<button type="button" class="workout-profile-row" data-ui="theme-toggle">
+<span class="workout-profile-row__label theme-toggle-label">Tema</span>
+<span class="theme-toggle-icon" aria-hidden="true"></span>
+</button>
+<button type="button" class="workout-profile-row" data-ui="replay-onboarding">
+<span class="workout-profile-row__label">Ver tutorial de novo</span>
+<span aria-hidden="true">→</span>
+</button>
+</div>
+<span class="workout-profile-row__status" data-action-status aria-live="polite"></span>
+</article>
+<article class="student-card card-decor-topstripe workout-block-card workout-device-settings">
+<h2>Aplicativo</h2>
+<div class="workout-profile-list">
+<div class="workout-device-settings__row">
+<div class="workout-device-settings__copy">
+<strong>Instalação</strong>
+<span data-workout-install-status aria-live="polite">Verificando instalação…</span>
+</div>
+<button type="button" data-workout-install-profile-button hidden>Instalar app</button>
+</div>
+<div class="workout-device-settings__row" data-workout-push-profile>
+<div class="workout-device-settings__copy">
+<strong>Notificações</strong>
+<span data-workout-push-profile-status aria-live="polite">Para vincular este dispositivo, confirme seu e-mail com um código.</span>
+</div>
+<div class="workout-device-settings__actions">
+<div class="workout-push-verify" data-workout-push-verify data-verify-url="/renan/gm-bia/push/verificacao">
+<button type="button" data-workout-push-verify-send>Confirmar e-mail para ativar</button>
+<form class="workout-push-verify__form" data-workout-push-verify-form hidden>
+<label for="workout-push-code-profile">Código de 6 dígitos</label>
+<input id="workout-push-code-profile" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required data-workout-push-verify-code>
+<button type="submit">Confirmar código</button>
+<button type="button" class="workout-push-verify__resend" data-workout-push-verify-resend>Reenviar código</button>
+</form>
+</div>
+</div>
+</div>
+</div>
+</article>
+<article class="student-card card-decor-topstripe workout-block-card">
+<h2>Versões do programa</h2>
+<div class="operation-table-wrap">
+<table>
+<thead>
+<tr>
+<th scope="col">Versão</th>
+<th scope="col">Programa</th>
+<th scope="col">Início</th>
+<th scope="col">Semanas</th>
+<th scope="col">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="workout-version-row">
+<td>v1</td>
+<td>Programa golden</td>
+<td>2026-01-05</td>
+<td>6</td>
+<td>
+<span class="student-status-badge">ativa</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</article>
+<button type="button" class="workout-signout-button" data-workout-signout data-signout-url="/renan/gm-bia/sair">Sair da conta</button>
+</section>
+</div>
+</main>
+<nav class="workout-mobile-nav" aria-label="Navegação" data-workout-tab-nav>
+<button type="button" class="workout-mobile-nav-link is-active" data-workout-tab-target="workout-panel-inicio">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-5.5h5V20"/></svg>
+Início
+</button>
+<button
+type="button"
+class="workout-mobile-nav-link"
+data-workout-cycle-nav
+data-cycle-key="avaliacao"
+data-cycle-targets="workout-panel-avaliacao|workout-panel-dieta"
+>
+<span data-cycle-icon aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-10a7 7 0 0 0-14 0c0 3.5 3 7 7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg></span>
+<span data-cycle-label>Avaliação</span>
+</button>
+<button
+type="button"
+class="workout-mobile-nav-link"
+data-workout-cycle-nav
+data-cycle-key="treino"
+data-cycle-targets="workout-panel-treino|workout-panel-cardio|workout-panel-periodizacao"
+>
+<span data-cycle-icon aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg></span>
+<span data-cycle-label>Treino</span>
+</button>
+<button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-cargas">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17 9 11 13 15 21 7"/><path d="M15 7h6v6"/></svg>
+Cargas
+</button>
+<button type="button" class="workout-mobile-nav-link" data-workout-tab-target="workout-panel-perfil">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+Perfil
+</button>
+</nav>
+<!--
+ARQUIVO: wizard de primeiro login do corredor de treinos (workout.html).
+POR QUE ELE EXISTE:
+- pedido direto do usuario: ensinar quem acabou de entrar o que cada aba
+do bottom nav faz, como ver o treino do dia, como registrar carga e
+como atualizar o pagamento -- sem isso, o primeiro contato real com o
+produto (depois do e-mail de boas-vindas) e' uma tela cheia de abas sem
+explicacao nenhuma.
+PONTOS CRITICOS:
+- SEMPRE renderizado (nunca so' quando show_onboarding_wizard e' True):
+o botao "Ver tutorial de novo" (aba Perfil) precisa do DOM existindo
+pra poder reabrir depois que a conta ja' completou o onboarding uma
+vez -- so' o autostart e' condicional (data-onboarding-autostart).
+- So' os tokens --theme-*/--radius-*/--font-* do design system (ja'
+usados no resto deste template) -- nenhuma classe nova herdada de
+student_app/** nem de outro produto (mesma regra do resto do
+workout.html, ver PONTOS CRITICOS la' no topo).
+- Passos descrevem SO' o que existe de verdade no bottom nav logo abaixo
+(Inicio/Avaliacao[/Dieta]/Treino[/Cardio/Periodizacao]/Cargas/Perfil) --
+nao inventar aba que nao existe.
+-->
+<div
+class="onboarding-wizard"
+data-onboarding-wizard
+data-onboarding-autostart="false"
+data-onboarding-complete-url="/renan/gm-bia/onboarding"
+hidden
+>
+<div class="onboarding-wizard__backdrop" data-onboarding-dismiss></div>
+<div class="onboarding-wizard__card" role="dialog" aria-modal="true" aria-labelledby="onboarding-wizard-title">
+<button type="button" class="onboarding-wizard__close" data-onboarding-dismiss aria-label="Fechar tutorial">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+</button>
+<div class="onboarding-wizard__dots" data-onboarding-dots aria-hidden="true"></div>
+<div class="onboarding-wizard__steps" data-onboarding-steps>
+<section class="onboarding-wizard__step" data-onboarding-step>
+<span class="onboarding-wizard__icon" aria-hidden="true">👋</span>
+<h2 id="onboarding-wizard-title" class="onboarding-wizard__title">Bem-vinda ao seu treino!</h2>
+<p class="onboarding-wizard__text">
+Esse é o seu app. Antes de começar, um tour rápido por cada aba —
+leva menos de 1 minuto.
+</p>
+</section>
+<section class="onboarding-wizard__step" data-onboarding-step hidden>
+<span class="onboarding-wizard__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-5.5h5V20"/></svg>
+</span>
+<h2 class="onboarding-wizard__title">Início</h2>
+<p class="onboarding-wizard__text">
+Resumo do seu ciclo atual e a sua semana: quantos treinos faltam e
+o foco de cada dia.
+</p>
+</section>
+<section class="onboarding-wizard__step" data-onboarding-step hidden>
+<span class="onboarding-wizard__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-10a7 7 0 0 0-14 0c0 3.5 3 7 7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>
+</span>
+<h2 class="onboarding-wizard__title">Avaliação &amp; Dieta</h2>
+<p class="onboarding-wizard__text">
+Registre fotos e medidas pra acompanhar sua evolução física.
+Toque de novo no mesmo ícone pra ver seu plano alimentar.
+</p>
+</section>
+<section class="onboarding-wizard__step" data-onboarding-step hidden>
+<span class="onboarding-wizard__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg>
+</span>
+<h2 class="onboarding-wizard__title">Treino</h2>
+<p class="onboarding-wizard__text">
+Cada aba no topo é um dia da semana — toque pra ver os exercícios
+daquele dia. Tem opção parecida? Toque em "Ver variação".
+</p>
+</section>
+<section class="onboarding-wizard__step" data-onboarding-step hidden>
+<span class="onboarding-wizard__icon" aria-hidden="true">📝</span>
+<h2 class="onboarding-wizard__title">Como registrar carga</h2>
+<p class="onboarding-wizard__text">
+Depois de cada série, toque em "Registrar carga" e salve peso e
+repetições. É esse registro que alimenta seus gráficos e recordes
+— sem ele, a aba Cargas fica vazia.
+</p>
+</section>
+<section class="onboarding-wizard__step" data-onboarding-step hidden>
+<span class="onboarding-wizard__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 9 11 13 15 21 7"/><path d="M15 7h6v6"/></svg>
+</span>
+<h2 class="onboarding-wizard__title">Cargas</h2>
+<p class="onboarding-wizard__text">
+Evolução de cada exercício e seus recordes pessoais. No fim da
+semana, toque em "Gerar revisão" pra ver um resumo do que você
+treinou.
+</p>
+</section>
+<section class="onboarding-wizard__step" data-onboarding-step hidden>
+<span class="onboarding-wizard__icon" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+</span>
+<h2 class="onboarding-wizard__title">Perfil</h2>
+<p class="onboarding-wizard__text">
+Seus dados, o status do pagamento — com o botão pra atualizar
+cartão ou pagar — e o tema claro/escuro do app ficam aqui. Se
+quiser rever este tutorial, é só voltar nesta aba.
+</p>
+</section>
+</div>
+<div class="onboarding-wizard__actions">
+<button type="button" class="onboarding-wizard__skip" data-onboarding-skip>Pular</button>
+<div class="onboarding-wizard__nav">
+<button type="button" class="onboarding-wizard__back" data-onboarding-back hidden>Voltar</button>
+<button type="button" class="onboarding-wizard__next" data-onboarding-next>Próximo</button>
+</div>
+</div>
+</div>
+</div>
+<dialog class="guided-focus" data-guided-focus data-workout-guided-active aria-label="Treino guiado">
+<div class="guided-focus__frame">
+<section class="guided-countdown" data-guided-screen="countdown" hidden>
+<button type="button" class="guided-countdown__button" data-guided-countdown-skip aria-describedby="guided-countdown-hint">
+<span class="guided-ring guided-ring--countdown" data-guided-ring="countdown">
+<svg class="guided-ring__svg" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><circle class="guided-ring__track" cx="120" cy="120" r="108"/><circle class="guided-ring__progress" data-ring-progress cx="120" cy="120" r="108"/></svg>
+<span class="guided-ring__center"><span class="guided-ring__value" data-ring-value aria-hidden="true">3</span></span>
+</span>
+<span class="guided-countdown__first"><span class="guided-focus__muted">Primeiro:</span> <span data-guided-first-name></span></span>
+<span class="guided-countdown__hint" id="guided-countdown-hint" data-guided-countdown-hint>Toque para começar agora</span>
+</button>
+</section>
+<header class="guided-focus__top" data-guided-chrome hidden>
+<button type="button" class="guided-focus__tool" data-guided-minimize>
+<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>
+Minimizar
+</button>
+<button type="button" class="guided-focus__tool guided-focus__tool--fill" data-guided-open-sheet aria-haspopup="dialog">
+<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 6h11M9 12h11M9 18h11"/><path class="guided-icon-dot" d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>
+Ver treino todo
+</button>
+</header>
+<div class="guided-focus__progress" data-guided-progress hidden>
+<div class="guided-focus__progress-row">
+<span class="guided-focus__progress-label" data-guided-progress-label></span>
+<button type="button" class="guided-focus__chip" data-guided-rest-chip hidden>Descanso <span data-guided-rest-chip-time></span></button>
+</div>
+<div class="guided-focus__segments" data-guided-segments aria-hidden="true"></div>
+</div>
+<section class="guided-screen" data-guided-screen="exercise" hidden>
+<div class="guided-screen__body">
+<div class="guided-exercise__head">
+<h3 class="guided-exercise__title" data-guided-title tabindex="-1"><a class="guided-exercise__name" data-guided-video target="_blank" rel="noopener"><span data-guided-name></span><svg class="guided-exercise__external" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 16 16 8M10 8h6v6"/></svg></a></h3>
+<p class="guided-exercise__set" data-guided-set-label></p>
+<p class="guided-exercise__meta" data-guided-meta></p>
+</div>
+<details class="guided-top" data-workout-guided-top-target hidden>
+<summary><span data-workout-guided-top-summary>Definir carga alvo da Top · opcional</span><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></summary>
+<div class="guided-top__body">
+<p>Use a carga que pretende tentar na série principal. O guia calcula a preparação e a aproximação; cada carga realizada continua editável.</p>
+<label class="guided-field__label" for="guided-top-input">Carga alvo da Top</label>
+<div class="guided-top__row">
+<span class="guided-top__value"><input id="guided-top-input" class="guided-top__input" data-workout-guided-top-input inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="—"><span class="guided-stepper__unit">kg</span></span>
+<button type="button" class="guided-cta guided-cta--quiet guided-top__apply" data-workout-guided-top-apply>Aplicar</button>
+</div>
+</div>
+</details>
+<div class="guided-field" data-guided-weight-field>
+<label class="guided-field__label" for="guided-weight">Carga</label>
+<div class="guided-stepper">
+<button type="button" class="guided-stepper__button" data-guided-step="weight" data-delta="-1" aria-label="Diminuir carga">−</button>
+<span class="guided-stepper__value"><input id="guided-weight" class="guided-stepper__input" data-workout-guided-weight inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-weight-source"><span class="guided-stepper__unit">kg</span></span>
+<button type="button" class="guided-stepper__button" data-guided-step="weight" data-delta="1" aria-label="Aumentar carga">+</button>
+</div>
+<p class="guided-field__note" id="guided-weight-source"><span data-guided-weight-source></span> <button type="button" class="guided-link guided-link--inline" data-guided-weight-reset hidden></button></p>
+</div>
+<p class="guided-field__note" data-guided-no-load hidden>Exercício sem registro de carga</p>
+<div class="guided-field">
+<div class="guided-field__label"><label for="guided-reps">Repetições</label><span class="guided-field__hint" data-guided-reps-target></span></div>
+<div class="guided-stepper">
+<button type="button" class="guided-stepper__button" data-guided-step="reps" data-delta="-1" aria-label="Uma repetição a menos">−</button>
+<span class="guided-stepper__value"><input id="guided-reps" class="guided-stepper__input guided-stepper__input--reps" data-workout-guided-reps inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-reps-hint"><span class="guided-stepper__unit">reps</span></span>
+<button type="button" class="guided-stepper__button" data-guided-step="reps" data-delta="1" aria-label="Uma repetição a mais">+</button>
+</div>
+<p class="guided-field__note" id="guided-reps-hint" data-guided-reps-hint></p>
+</div>
+<details class="guided-effort" data-guided-effort>
+<summary><span>Esforço · opcional</span><span class="guided-effort__value" data-guided-effort-value></span><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></summary>
+<div class="guided-effort__body">
+<p id="guided-effort-question">Quantas repetições ainda conseguiria fazer?</p>
+<div class="guided-effort__chips" role="group" aria-labelledby="guided-effort-question">
+<button type="button" class="guided-effort__chip" data-guided-rir="0" aria-pressed="false">0</button>
+<button type="button" class="guided-effort__chip" data-guided-rir="1" aria-pressed="false">1</button>
+<button type="button" class="guided-effort__chip" data-guided-rir="2" aria-pressed="false">2</button>
+<button type="button" class="guided-effort__chip" data-guided-rir="3" aria-pressed="false">3</button>
+<button type="button" class="guided-effort__chip" data-guided-rir="4" aria-pressed="false">4</button>
+</div>
+<button type="button" class="guided-link" data-guided-rir-clear>Não informar</button>
+</div>
+</details>
+</div>
+<footer class="guided-screen__foot">
+<p class="guided-screen__error" data-guided-error role="alert" hidden></p>
+<button type="button" class="guided-cta" data-workout-guided-set>Registrar série</button>
+<div class="guided-screen__links">
+<button type="button" class="guided-link" data-workout-guided-skip>Pular série</button>
+<button type="button" class="guided-link" data-guided-correct-last hidden>Corrigir anterior</button>
+</div>
+<p class="guided-screen__sync" data-guided-sync hidden></p>
+</footer>
+</section>
+<section class="guided-screen" data-guided-screen="rest" hidden>
+<div class="guided-screen__body guided-rest">
+<div class="guided-ring" data-guided-ring="rest" data-workout-guided-timer>
+<svg class="guided-ring__svg" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><circle class="guided-ring__track" cx="120" cy="120" r="108"/><circle class="guided-ring__progress" data-ring-progress cx="120" cy="120" r="108"/></svg>
+<span class="guided-ring__center">
+<span class="guided-sr">Descanso</span>
+<span class="guided-ring__value" data-ring-value role="timer"></span>
+<span class="guided-ring__receipt" data-guided-receipt></span>
+<span class="guided-ring__status" data-guided-receipt-status></span>
+</span>
+</div>
+<div class="guided-next" data-guided-next hidden>
+<p class="guided-next__name"><span class="guided-focus__muted">A seguir:</span> <span data-guided-next-name></span></p>
+<p class="guided-next__detail" data-guided-next-detail></p>
+</div>
+</div>
+<footer class="guided-screen__foot">
+<button type="button" class="guided-cta guided-cta--quiet" data-guided-skip-rest>Pular descanso</button>
+<div class="guided-screen__links">
+<button type="button" class="guided-link" data-guided-add-rest>+30 s</button>
+<button type="button" class="guided-link" data-workout-guided-extra hidden>Fazer outra série livre</button>
+</div>
+<p class="guided-screen__sync" data-guided-sync hidden></p>
+</footer>
+</section>
+<section class="guided-screen" data-guided-screen="review" hidden>
+<div class="guided-screen__body">
+<div class="guided-exercise__head">
+<h3 class="guided-exercise__title" data-guided-title tabindex="-1"><a class="guided-exercise__name" data-guided-video target="_blank" rel="noopener"><span data-guided-name></span><svg class="guided-exercise__external" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 16 16 8M10 8h6v6"/></svg></a></h3>
+<p class="guided-review__status" data-guided-review-status></p>
+</div>
+<ul class="guided-review__sets" data-guided-review-sets></ul>
+</div>
+<footer class="guided-screen__foot">
+<p class="guided-screen__next" data-guided-review-next hidden></p>
+<button type="button" class="guided-cta" data-guided-review-continue>Ir para o próximo</button>
+<div class="guided-screen__links"><button type="button" class="guided-link" data-guided-review-extra hidden></button></div>
+</footer>
+</section>
+<section class="guided-screen" data-guided-screen="summary" hidden>
+<div class="guided-screen__body">
+<h3 class="guided-summary__title" data-guided-title tabindex="-1"></h3>
+<dl class="guided-summary__stats">
+<div class="guided-summary__stat"><dt>duração</dt><dd data-guided-stat="duration"></dd></div>
+<div class="guided-summary__stat"><dt>séries feitas</dt><dd data-guided-stat="sets"></dd></div>
+<div class="guided-summary__stat"><dt>exercícios</dt><dd data-guided-stat="movements"></dd></div>
+</dl>
+<ul class="guided-summary__list" data-guided-summary-list></ul>
+</div>
+<footer class="guided-screen__foot">
+<button type="button" class="guided-cta" data-workout-guided-finish hidden>Finalizar treino</button>
+<button type="button" class="guided-cta" data-workout-guided-partial hidden>Encerrar como parcial</button>
+<div class="guided-screen__links"><button type="button" class="guided-link" data-guided-back hidden>Voltar ao treino</button></div>
+<p class="guided-screen__sync" data-guided-sync hidden></p>
+</footer>
+</section>
+<section class="guided-screen" data-guided-screen="finished" hidden>
+<div class="guided-screen__body guided-finished">
+<span class="guided-ring guided-ring--small" data-guided-finished-ring>
+<svg class="guided-ring__svg" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><circle class="guided-ring__track" cx="120" cy="120" r="108"/><circle class="guided-ring__progress guided-ring__progress--full" cx="120" cy="120" r="108"/></svg>
+<span class="guided-ring__center"><svg class="guided-finished__check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+</span>
+<h3 class="guided-finished__title" data-guided-title tabindex="-1"></h3>
+<p class="guided-finished__meta" data-guided-finished-meta></p>
+<p class="guided-screen__sync" data-guided-sync hidden></p>
+</div>
+<footer class="guided-screen__foot">
+<button type="button" class="guided-cta" data-guided-close>Voltar à ficha</button>
+</footer>
+</section>
+<div class="guided-sheet" data-guided-sheet="workout" hidden>
+<div class="guided-sheet__scrim" data-guided-sheet-close></div>
+<section class="guided-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="guided-sheet-title">
+<header class="guided-sheet__head">
+<h3 id="guided-sheet-title" data-guided-sheet-title>Treino de hoje</h3>
+<button type="button" class="guided-focus__tool guided-focus__tool--fill2" data-guided-sheet-close data-guided-autofocus>Fechar</button>
+<p data-guided-sheet-summary></p>
+</header>
+<ol class="guided-sheet__list" data-guided-sheet-list></ol>
+<div class="guided-sheet__actions">
+<button type="button" class="guided-sheet__action" data-guided-open-summary>Ver resumo e encerrar</button>
+<button type="button" class="guided-sheet__action guided-sheet__action--danger" data-workout-guided-cancel>Cancelar sessão</button>
+<div class="guided-sheet__switch"><span id="guided-sound-label">Som da contagem</span><button type="button" class="guided-switch" role="switch" aria-checked="true" aria-labelledby="guided-sound-label" data-guided-sound><span></span></button></div>
+</div>
+</section>
+</div>
+<div class="guided-sheet" data-guided-sheet="correction" hidden>
+<div class="guided-sheet__scrim" data-guided-sheet-close></div>
+<section class="guided-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="guided-correction-title">
+<header class="guided-sheet__head">
+<h3 id="guided-correction-title" data-guided-correction-title>Corrigir série</h3>
+<button type="button" class="guided-focus__tool guided-focus__tool--fill2" data-guided-sheet-close data-guided-autofocus>Cancelar</button>
+<p data-guided-correction-name></p>
+</header>
+<div class="guided-sheet__body">
+<div class="guided-field" data-guided-correction-weight-field>
+<label class="guided-field__label" for="guided-correct-weight">Carga</label>
+<div class="guided-stepper">
+<button type="button" class="guided-stepper__button" data-guided-step="correct-weight" data-delta="-1" aria-label="Diminuir carga">−</button>
+<span class="guided-stepper__value"><input id="guided-correct-weight" class="guided-stepper__input" data-workout-guided-correct-weight inputmode="decimal" autocomplete="off" placeholder="—"><span class="guided-stepper__unit">kg</span></span>
+<button type="button" class="guided-stepper__button" data-guided-step="correct-weight" data-delta="1" aria-label="Aumentar carga">+</button>
+</div>
+</div>
+<div class="guided-field">
+<label class="guided-field__label" for="guided-correct-reps">Repetições</label>
+<div class="guided-stepper">
+<button type="button" class="guided-stepper__button" data-guided-step="correct-reps" data-delta="-1" aria-label="Uma repetição a menos">−</button>
+<span class="guided-stepper__value"><input id="guided-correct-reps" class="guided-stepper__input guided-stepper__input--reps" data-workout-guided-correct-reps inputmode="numeric" autocomplete="off" placeholder="—"><span class="guided-stepper__unit">reps</span></span>
+<button type="button" class="guided-stepper__button" data-guided-step="correct-reps" data-delta="1" aria-label="Uma repetição a mais">+</button>
+</div>
+</div>
+<p class="guided-screen__error" data-guided-correction-error role="alert" hidden></p>
+</div>
+<div class="guided-sheet__actions">
+<button type="button" class="guided-cta" data-workout-guided-correct-save>Salvar correção</button>
+</div>
+</section>
+</div>
+<div class="guided-toast" data-guided-toast role="status" hidden>
+<span data-guided-toast-text></span>
+<button type="button" class="guided-toast__action" data-guided-toast-action hidden></button>
+</div>
+<p class="guided-sr" data-guided-live aria-live="polite"></p>
+</div>
+</dialog>
+<script src="/static/js/public_workouts/workout-shell.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/workout-curve.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/workout-pwa.js?v=<asset>" defer></script>
+<script src="/static/js/core/shell.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/load-storage.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/load-plate-calculator.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/load-api.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/load-sync.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/load_tracker.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/weekly_review.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/nutrition.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/assessments-report.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/assessments.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/account.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/onboarding.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-outbox.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-api.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-sync.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-timer.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-rest-alert.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-state.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-loads.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-format.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-ring.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/guided-focus.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/workout-guided.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/workout-push.js?v=<asset>" defer></script>
+</body>
+</html>
