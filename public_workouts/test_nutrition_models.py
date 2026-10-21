@@ -10,7 +10,9 @@ POR QUE ELE EXISTE:
 """
 
 from django.db import IntegrityError, transaction
+from django.apps import apps as django_apps
 from django.test import TestCase
+import importlib
 
 from .models import (
     PublicWorkoutAccount,
@@ -23,6 +25,13 @@ from .nutrition_schema import build_example_payload
 
 
 class PublicWorkoutProfessionalSeedMigrationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        migration = importlib.import_module(
+            'public_workouts.migrations.0010_seed_public_workout_professionals'
+        )
+        migration.seed_professionals(django_apps, None)
+
     def test_treino_professional_is_renan_with_real_cref(self):
         professional = PublicWorkoutProfessional.objects.get(role=PublicWorkoutProfessionalRole.TREINO)
 
@@ -55,7 +64,10 @@ class PublicWorkoutNutritionProfileTests(TestCase):
 class PublicWorkoutMealPlanTests(TestCase):
     def setUp(self):
         self.account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
-        self.nutricionista = PublicWorkoutProfessional.objects.get(role=PublicWorkoutProfessionalRole.NUTRICAO)
+        self.nutricionista = PublicWorkoutProfessional.objects.create(
+            name='Nutricionista de teste', role=PublicWorkoutProfessionalRole.NUTRICAO,
+            registration_council='CRN', registration_number='TESTE',
+        )
 
     def _make_plan(self, *, version, is_active):
         return PublicWorkoutMealPlan.objects.create(

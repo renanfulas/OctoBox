@@ -137,6 +137,7 @@ class ServicesTests(TestCase):
     def test_returns_serialized_dict_not_model_instance(self):
         result = record_assessment(plan_slug='rafael', measured_at=date(2026, 1, 5), weight_kg=80)
 
+        result.pop('id')  # autoincrement, nao deterministico entre runs
         self.assertEqual(result, {
             'measured_at': '2026-01-05',
             'weight_kg': 80.0,
@@ -166,7 +167,13 @@ class ServicesTests(TestCase):
         report = build_report(plan_slug='rafael', sex='M', height_cm=175)
         self.assertEqual(
             report,
-            {'assessments': [], 'summary': None, 'indicators': None, 'skinfold_self_report_unlocked': False},
+            {
+                'assessments': [],
+                'summary': None,
+                'indicators': None,
+                'skinfold_self_report_unlocked': False,
+                'hero_text': None,
+            },
         )
 
     def test_build_report_computes_deltas_and_indicators(self):

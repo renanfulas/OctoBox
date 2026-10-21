@@ -66,9 +66,7 @@ class StudentPublicWorkoutLinkViewTests(TestCase):
 
         account = PublicWorkoutAccount.objects.get(email='novo@example.com')
         self.assertEqual(account.student_identity_id, identity.id)
-        # sem assinatura ainda -- nao ha pra onde redirecionar
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'consultoria ativa', response.content)
+        self.assertRedirects(response, '/treinos/minha-conta', fetch_redirect_response=False)
 
     def test_does_not_duplicate_or_overwrite_existing_account(self):
         # Conta ja existia (ex.: criada via /treinos/login antes do aluno
@@ -84,11 +82,10 @@ class StudentPublicWorkoutLinkViewTests(TestCase):
         self.assertEqual(PublicWorkoutAccount.objects.count(), 1)
         self.assertEqual(existing.student_identity_id, 999999)
 
-    def test_no_subscription_returns_informative_page_not_error(self):
+    def test_no_subscription_redirects_to_connected_account_hub(self):
         student, identity = create_onboarded_student(email='aluno@example.com')
         self.client.cookies[STUDENT_SESSION_COOKIE] = auth_cookie_value(identity)
 
         response = self.client.get(self._url())
 
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'consultoria ativa', response.content)
+        self.assertRedirects(response, '/treinos/minha-conta', fetch_redirect_response=False)

@@ -10,6 +10,7 @@ from operations.models import ClassSession, ClassType
 class ClassSessionClassTypeTests(TestCase):
     def test_infer_class_type_from_session_title_uses_conservative_keywords(self):
         self.assertEqual(infer_class_type_from_session_title('Cross 07h'), ClassType.CROSS)
+        self.assertEqual(infer_class_type_from_session_title('HYROX 18h'), ClassType.HYROX)
         self.assertEqual(infer_class_type_from_session_title('Mobilidade 18h'), ClassType.MOBILITY)
         self.assertEqual(infer_class_type_from_session_title('Halterofilia tecnica'), ClassType.OLY)
         self.assertEqual(infer_class_type_from_session_title('Forca base'), ClassType.STRENGTH)
@@ -25,3 +26,16 @@ class ClassSessionClassTypeTests(TestCase):
         )
 
         self.assertEqual(session.class_type, ClassType.OTHER)
+
+    def test_unassigned_hyrox_session_is_attached_to_hyrox_track(self):
+        from operations.models import WorkoutProgram
+
+        session = ClassSession.objects.create(
+            title='HYROX 18h',
+            scheduled_at=timezone.make_aware(datetime(2026, 4, 24, 18, 0)),
+            duration_minutes=60,
+            capacity=12,
+        )
+
+        self.assertEqual(session.class_type, ClassType.HYROX)
+        self.assertEqual(session.workout_program, WorkoutProgram.objects.get(slug='hyrox'))

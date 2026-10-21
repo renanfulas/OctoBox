@@ -156,6 +156,18 @@ Today the project is best described as:
 
 ## How to use the documentation
 
+**Project knowledge search (RAG) — start here for "where is X / how does X work".** Always use the `.venv` interpreter (the global `python` has no Django); needs Postgres up (local dev: port 5433):
+
+```
+# Windows (PowerShell)
+.\.venv\Scripts\python.exe manage.py search_project_knowledge "<your question>"
+
+# Linux / macOS
+./.venv/bin/python manage.py search_project_knowledge "<your question>"
+```
+
+If the index is empty, rebuild it with `manage.py ingest_project_knowledge` (same interpreter). Offline fallback: `.claude/skills/navigate-octobox/driver.py find "<question>"`.
+
 Use the docs by question level:
 
 1. this README explains the product, current state, and overall direction

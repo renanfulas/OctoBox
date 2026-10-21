@@ -14,7 +14,11 @@ PONTOS CRITICOS:
 - Uma permissão errada pode liberar ou bloquear áreas de negócio sem perceber.
 """
 
+from contextlib import nullcontext
+
 from django.apps import apps
+from django.conf import settings
+from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
@@ -26,6 +30,25 @@ class Command(BaseCommand):
     help = 'Cria os grupos Owner, DEV, Manager, Recepcao e Coach com permissões iniciais do projeto.'
 
     def handle(self, *args, **options):
+        # Group e Permission vivem no schema public. Resolver ContentType com
+        # box_xxx no search_path pode gerar IDs locais inválidos para o FK de
+        # auth_permission em public. O cache do manager também é global ao
+        # processo, então precisa ser esvaziado nas duas trocas de schema.
+        if 'django_tenants' in settings.INSTALLED_APPS:
+            from django_tenants.utils import get_public_schema_name, schema_context
+
+            context = schema_context(get_public_schema_name())
+        else:
+            context = nullcontext()
+
+        with context:
+            ContentType.objects.clear_cache()
+            try:
+                self._bootstrap_roles()
+            finally:
+                ContentType.objects.clear_cache()
+
+    def _bootstrap_roles(self):
         model_index = {model._meta.model_name: model for model in apps.get_models()}
 
         for role_name, permission_map in ROLE_PERMISSION_MAP.items():
@@ -35,12 +58,22 @@ class Command(BaseCommand):
             for model_name, actions in permission_map.items():
                 model = model_index[model_name]
                 content_type = ContentType.objects.get_for_model(model)
-                codenames = [f'{action}_{model_name}' for action in actions]
+                permissions_for_model = []
+                for action in actions:
+                    codename = get_permission_codename(action, model._meta)
+                    permission, _ = Permission.objects.get_or_create(
+                        content_type=content_type,
+                        codename=codename,
+                        defaults={
+                            'name': f'Can {action} {model._meta.verbose_name_raw}',
+                        },
+                    )
+                    permissions_for_model.append(permission)
 
                 # O vínculo permission -> content_type garante que cada papel receba acesso ao modelo correto.
-                permissions.extend(
-                    Permission.objects.filter(content_type=content_type, codename__in=codenames)
-                )
+                # O get_or_create torna o bootstrap autocorretivo quando um flush parcial ou uma
+                # migração interrompida deixa permissões padrão ausentes.
+                permissions.extend(permissions_for_model)
 
             # set substitui permissões antigas e mantém o grupo sincronizado com a definição atual.
             group.permissions.set(permissions)

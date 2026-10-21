@@ -13,10 +13,9 @@ POR QUE ELE EXISTE:
   contra esta implementacao de verdade.
 
 PONTOS CRITICOS:
-- `_validate_plan_slug` importa PUBLIC_WORKOUT_LIBRARY de dentro da funcao
-  (nao no topo do arquivo) de proposito: student_app/views/public_workout_views.py
-  vai importar `public_workouts.services` para servir o JSON, e um import
-  de modulo no topo aqui criaria import circular.
+- `_validate_plan_slug` consulta o catalogo estatico e, fora dele, o
+  programa ativo no banco — independente da view; nao deve importar
+  `student_app.views` nem modelos de TENANT_APPS.
 - get_active_program/publish_program/build_student_package/record_load
   rodam no schema `public`, SEM tenant (mesmo motivo do resto do app — ver
   models.py). Nunca importam nada de TENANT_APPS: quem monta o payload a
@@ -31,35 +30,48 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+import logging
+import re
 from datetime import date
 from decimal import Decimal
 
 from django.conf import settings
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.db import models as django_models
 from django.db import transaction
+from django.utils import timezone
 
+from .catalog import PUBLIC_WORKOUT_LIBRARY
 from .formulas import (
+    Sex,
     classify_bmi,
     classify_body_fat,
     classify_whr,
     compute_bmi,
     compute_whr,
+    estimate_body_fat_jackson_pollock_3site,
+    estimate_body_fat_jackson_pollock_7site,
     estimate_body_fat_navy,
 )
-from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     PublicWorkoutAccount,
     PublicWorkoutAssessment,
     PublicWorkoutLoadLog,
+    PublicWorkoutLoadLogAchievementKind,
+    PublicWorkoutLoadLogSetRole,
     PublicWorkoutMealPlan,
     PublicWorkoutMovement,
     PublicWorkoutMovementModality,
+    PublicWorkoutMovementStatus,
+    PublicWorkoutNutritionProfile,
     PublicWorkoutPayment,
     PublicWorkoutPhysicalRestrictionTag,
     PublicWorkoutProgram,
     PublicWorkoutProgramDraft,
+    PublicWorkoutProgramDraftSource,
     PublicWorkoutProgramDraftStatus,
     PublicWorkoutTier,
     PublicWorkoutTrainingExperience,
@@ -68,7 +80,9 @@ from .models import (
     PublicWorkoutTrainingProfile,
 )
 from .nutrition_schema import assert_valid_payload as assert_valid_nutrition_payload
-from .one_rep_max import detect_one_rep_max_trend, estimate_one_rep_max
+from .one_rep_max import estimate_one_rep_max
+from .progress_eligibility import _PERSONAL_RECORD_ROLES
+from .progress_snapshot import build_progress_snapshots
 from .schema import assert_valid_payload
 
 
@@ -76,10 +90,18 @@ class UnknownPlanSlugError(ValueError):
     pass
 
 
-def _validate_plan_slug(plan_slug: str) -> None:
-    from student_app.views.public_workout_views import PUBLIC_WORKOUT_LIBRARY
+def is_known_plan_slug(plan_slug: str) -> bool:
+    """Catalogo fixo OU aluno com programa ativo publicado — o mesmo criterio
+    de `_synthesize_public_workout_plan` na view: aluno novo, aprovado pelo
+    fluxo de anamnese (ex.: giulia, willy), existe so no banco. Sem isto a
+    pagina dele abria, mas nenhuma avaliacao podia ser lancada."""
+    if plan_slug in PUBLIC_WORKOUT_LIBRARY:
+        return True
+    return get_active_program(slug=plan_slug) is not None
 
-    if plan_slug not in PUBLIC_WORKOUT_LIBRARY:
+
+def _validate_plan_slug(plan_slug: str) -> None:
+    if not is_known_plan_slug(plan_slug):
         raise UnknownPlanSlugError(f'Plano publico desconhecido: {plan_slug!r}')
 
 
@@ -100,10 +122,16 @@ def record_assessment(
     body_fat_source: str = '',
     measurements: dict | None = None,
     notes: str = '',
+    sex: str = '',
+    height_cm=None,
 ) -> dict:
     _validate_plan_slug(plan_slug)
     if weight_kg is not None and weight_kg <= 0:
         raise AssessmentValueError(f'weight_kg deve ser positivo: {weight_kg!r}')
+    if sex and sex not in _VALID_SEXES:
+        raise AssessmentValueError(f"sex deve ser 'F' ou 'M': {sex!r}")
+    if height_cm is not None and not 0 < height_cm < 300:
+        raise AssessmentValueError(f'height_cm fora da faixa: {height_cm!r}')
     # Mesma normalizacao de record_load (performed_on) — .objects.create()
     # NAO converte string pra date no atributo em memoria (so' na escrita
     # SQL); sem isso, _serialize() abaixo quebra em .isoformat() quando o
@@ -118,6 +146,8 @@ def record_assessment(
         body_fat_source=body_fat_source,
         measurements=measurements or {},
         notes=notes,
+        sex=sex or '',
+        height_cm=height_cm,
     )
     return _serialize(assessment)
 
@@ -127,6 +157,81 @@ def list_assessments(*, plan_slug: str):
 
 
 _PRESENCIAL_SKINFOLD_SOURCES = ('skinfold_jp7', 'skinfold_jp3')
+_VALID_SEXES = (Sex.FEMALE, Sex.MALE)
+SKINFOLD_KEYS = ('peitoral', 'axilar', 'triceps', 'subescapular', 'abdomen', 'iliaca', 'coxa')
+
+
+def assessment_profile(assessments) -> dict:
+    """Sexo e altura mais recentes gravados nas avaliacoes (lista em ordem de
+    `measured_at`). Cada campo e resolvido sozinho: a ultima avaliacao pode
+    ter so o sexo e uma anterior, a altura."""
+    sex, height_cm = '', None
+    for assessment in reversed(assessments):
+        if not sex and assessment.sex:
+            sex = assessment.sex
+        if height_cm is None and assessment.height_cm is not None:
+            height_cm = _num(assessment.height_cm)
+        if sex and height_cm is not None:
+            break
+    return {'sex': sex or None, 'height_cm': height_cm}
+
+
+def resolve_assessment_profile(*, plan_slug: str, plan_sex: str | None, plan_height_cm) -> dict:
+    """Sexo/altura que valem pra este aluno: o catalogo fixo vence (hoje so
+    Franciele e Rafael), senao o que ficou gravado na avaliacao mais recente."""
+    stored = assessment_profile(list_assessments(plan_slug=plan_slug))
+    return {
+        'sex': plan_sex or stored['sex'],
+        'height_cm': _num(plan_height_cm) if plan_height_cm else stored['height_cm'],
+    }
+
+
+# "Dobras (mm): triceps=20.0, ..." (comando presencial e autoavaliacao) ou
+# "Dobras cutâneas JP7 em mm: peitoral=10, ..." (avaliacoes inseridas direto
+# no banco, como as de giulia/willy em 12/10/2026).
+_SKINFOLD_NOTE_RE = re.compile(r'Dobras[^:\n]*:\s*([^\n]+)')
+_SKINFOLD_VALUE_RE = re.compile(r'([a-z]+)=(\d+(?:\.\d+)?)')
+
+
+def parse_skinfold_note(notes: str) -> dict:
+    """Dobras gravadas no texto da avaliacao (as dobras nunca tiveram coluna
+    propria) — aceita os dois formatos acima."""
+    match = _SKINFOLD_NOTE_RE.search(notes or '')
+    if not match:
+        return {}
+    return {key: float(value) for key, value in _SKINFOLD_VALUE_RE.findall(match.group(1))}
+
+
+def skinfold_body_fat(*, sex: str, age: float, skinfolds: dict) -> tuple[float | None, str]:
+    """%gordura por dobras cutaneas: 7 pontos de Jackson-Pollock quando as 7
+    estao presentes (mais preciso), senao os 3 pontos do sexo (triceps/
+    iliaca/coxa na mulher, peitoral/abdomen/coxa no homem). `(None, '')` sem
+    dobras suficientes ou com resultado fora da faixa fisiologica."""
+    septet = tuple(skinfolds.get(key) for key in SKINFOLD_KEYS)
+    if all(value is not None for value in septet):
+        body_fat = estimate_body_fat_jackson_pollock_7site(
+            sex=sex,
+            age=age,
+            chest_mm=septet[0],
+            midaxillary_mm=septet[1],
+            triceps_mm=septet[2],
+            subscapular_mm=septet[3],
+            abdomen_mm=septet[4],
+            suprailiac_mm=septet[5],
+            thigh_mm=septet[6],
+        )
+        if body_fat is not None:
+            return body_fat, 'skinfold_jp7'
+
+    trio_keys = ('triceps', 'iliaca', 'coxa') if sex == Sex.FEMALE else ('peitoral', 'abdomen', 'coxa')
+    trio = tuple(skinfolds.get(key) for key in trio_keys)
+    if all(value is not None for value in trio):
+        body_fat = estimate_body_fat_jackson_pollock_3site(
+            sex=sex, age=age, fold_a_mm=trio[0], fold_b_mm=trio[1], fold_c_mm=trio[2]
+        )
+        if body_fat is not None:
+            return body_fat, 'skinfold_jp3'
+    return None, ''
 
 
 def has_presencial_skinfold_assessment(*, plan_slug: str) -> bool:
@@ -151,6 +256,7 @@ def _num(value) -> float | None:
 
 def _serialize(assessment: PublicWorkoutAssessment) -> dict:
     return {
+        'id': assessment.id,
         'measured_at': assessment.measured_at.isoformat(),
         'weight_kg': _num(assessment.weight_kg),
         'body_fat_percent': _num(assessment.body_fat_percent),
@@ -168,8 +274,10 @@ def _delta(first: float | None, last: float | None) -> float | None:
 def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) -> dict:
     """Monta o payload completo consumido pela aba Avaliacoes e pelo relatorio.
 
-    `sex`/`height_cm` vem da config do plano (PublicWorkoutPlan), nao do
-    banco — sao constantes do aluno, nao variam por avaliacao.
+    `sex`/`height_cm` vem da config do plano (PublicWorkoutPlan) quando ela
+    declara; senao, do que ficou gravado na avaliacao mais recente
+    (`assessment_profile`) — e o que da o relatorio completo (IMC, RCQ,
+    %gordura) a todo aluno avaliado por dobras, nao so aos do catalogo.
     """
     assessments = list_assessments(plan_slug=plan_slug)
     serialized = [_serialize(a) for a in assessments]
@@ -181,9 +289,13 @@ def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) ->
             'summary': None,
             'indicators': None,
             'skinfold_self_report_unlocked': False,
+            'hero_text': None,
         }
 
     first, last = assessments[0], assessments[-1]
+    profile = assessment_profile(assessments)
+    sex = sex or profile['sex']
+    height_cm = height_cm or profile['height_cm']
 
     measurement_keys = sorted({key for a in assessments for key in a.measurements})
     measurement_deltas = {}
@@ -217,6 +329,12 @@ def build_report(*, plan_slug: str, sex: str | None, height_cm: float | None) ->
         'summary': summary,
         'indicators': indicators,
         'skinfold_self_report_unlocked': skinfold_self_report_unlocked,
+        # Gerado uma vez por assessment_hero_ai.py no momento em que a
+        # avaliacao mais recente foi registrada (nunca aqui, em tempo de
+        # leitura) — so' leitura de campo, nao chama IA. None quando nunca
+        # foi gerado (avaliacao antiga, anterior a este campo) ou quando a
+        # IA nao respondeu.
+        'hero_text': last.hero_commentary or None,
     }
 
 
@@ -309,6 +427,29 @@ def _iter_movement_slugs(payload: dict):
                     yield slug, movement.get('reference_url')
 
 
+def build_movement_label_lookup(payload: dict) -> dict[str, str]:
+    """Onda B3, item 1/2 — nome de exercicio em PT-BR pro template unico.
+
+    `humanize_movement_slug` (templatetags) e' so um PALPITE mecanico
+    ("barbell-bench-press" -> "Barbell bench press", em ingles, sem
+    tradução real) — sempre foi documentado como fallback, de proposito,
+    porque o template nao consultava PublicWorkoutMovement. Essa consulta
+    e essa. `_ensure_movements_exist` (chamada por publish_program) ja
+    garante que todo movement_slug de um programa publicado tem UMA linha
+    aqui — na pior hipotese so o mesmo palpite mecanico (`status=pending`,
+    label_pt=slug humanizado), na melhor um nome de verdade (extraido dos
+    10 HTMLs legados pela Onda A0, `extract_movements_from_html`) — nunca
+    uma consulta que "nao acha nada" pra um programa publicado de verdade.
+
+    Uma query so (`filter(slug__in=...)`), nao uma por movimento: o
+    payload pode repetir o mesmo movement_slug em blocos/dias diferentes.
+    """
+    slugs = {slug for slug, _ in _iter_movement_slugs(payload)}
+    if not slugs:
+        return {}
+    return dict(PublicWorkoutMovement.objects.filter(slug__in=slugs).values_list('slug', 'label_pt'))
+
+
 def _ensure_movements_exist(payload: dict) -> None:
     """Movimento desconhecido entra `pending` e nao bloqueia a publicacao
     (Onda A1, item 6). `modality` fica como 'strength' — melhor palpite
@@ -362,7 +503,7 @@ def publish_program(*, slug: str, payload: dict) -> PublicWorkoutProgram:
 
         PublicWorkoutProgram.objects.filter(slug=slug, is_active=True).update(is_active=False)
 
-        return PublicWorkoutProgram.objects.create(
+        program = PublicWorkoutProgram.objects.create(
             slug=slug,
             program_id=program_id,
             program_label=payload['program_label'],
@@ -372,6 +513,47 @@ def publish_program(*, slug: str, payload: dict) -> PublicWorkoutProgram:
             is_active=True,
             payload=payload,
         )
+        from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutWorkItemType
+        from public_workouts.operations import complete_onboarding_work_item
+
+        subscription = PublicWorkoutSubscription.objects.filter(plan_slug=slug).first()
+        if subscription is not None:
+            completed_item = complete_onboarding_work_item(
+                subscription=subscription,
+                item_type=PublicWorkoutWorkItemType.TRAINING_PROGRAM,
+            )
+            if completed_item is None:
+                logger.warning(
+                    'curva_publication_without_work_item content_type=program content_id=%s subscription_id=%s',
+                    program.pk, subscription.pk,
+                )
+            from public_workouts.acquisition import record_funnel_event
+            from public_workouts.models import PublicWorkoutAcquisitionSession
+            from public_workouts.outbox import TOPIC_PROGRAM_READY, enqueue_outbox
+
+            enqueue_outbox(
+                topic=TOPIC_PROGRAM_READY, aggregate_type='program',
+                aggregate_id=program.pk, version=program.version,
+            )
+            from public_workouts.models import PublicWorkoutPushSubscription
+            from public_workouts.outbox import TOPIC_PROGRAM_PUSH_READY
+            from public_workouts.push import configured as curva_push_configured
+
+            if curva_push_configured() and PublicWorkoutPushSubscription.objects.filter(
+                account_id=subscription.account_id, revoked_at__isnull=True,
+            ).exists():
+                enqueue_outbox(
+                    topic=TOPIC_PROGRAM_PUSH_READY, aggregate_type='program',
+                    aggregate_id=program.pk, version=program.version,
+                )
+            record_funnel_event(
+                'program_published',
+                acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
+                    subscription=subscription,
+                ).first(),
+                account=subscription.account, subscription=subscription, tier=subscription.tier,
+            )
+        return program
 
 
 # ---------------------------------------------------------------------------
@@ -438,6 +620,37 @@ def save_training_profile(
             'motivation': motivation,
             'biggest_difficulty': biggest_difficulty,
             'consent_ai_processing_at': timezone.now(),
+        },
+    )
+    return profile
+
+
+class NutritionIntakeValidationError(ValueError):
+    """Entrada nutricional sem consentimento ou sem informacao util."""
+
+
+def save_nutrition_profile(
+    *, account_id: int, comorbidades: str, alergias_restricoes: str,
+    rotina_alimentar: str, preferencias: str, objetivo: str,
+    medicamentos: str, historico: str, consent_given: bool,
+) -> PublicWorkoutNutritionProfile:
+    if not consent_given:
+        raise NutritionIntakeValidationError('consentimento obrigatorio para tratar dados de saude')
+    if not rotina_alimentar.strip() or not objetivo.strip():
+        raise NutritionIntakeValidationError('rotina alimentar e objetivo sao obrigatorios')
+
+    profile, _created = PublicWorkoutNutritionProfile.objects.update_or_create(
+        account_id=account_id,
+        defaults={
+            'comorbidades': comorbidades.strip(),
+            'alergias_restricoes': alergias_restricoes.strip(),
+            'rotina_alimentar': rotina_alimentar.strip(),
+            'preferencias': preferencias.strip(),
+            'objetivo': objetivo.strip(),
+            'medicamentos': medicamentos.strip(),
+            'historico': historico.strip(),
+            'consent_health_processing_at': timezone.now(),
+            'consent_version': 'nutrition-v1',
         },
     )
     return profile
@@ -521,6 +734,7 @@ def create_program_draft(
     source: str,
     ai_model: str = '',
     training_profile_snapshot: dict | None = None,
+    base_program_id: int | None = None,
 ) -> PublicWorkoutProgramDraft:
     """Cria um rascunho PENDING_REVIEW — NUNCA chama publish_program daqui
     (D.2, frase 2 continua valendo: nada vira PublicWorkoutProgram sem
@@ -547,7 +761,57 @@ def create_program_draft(
             source=source,
             ai_model=ai_model,
             training_profile_snapshot=training_profile_snapshot or {},
+            base_program_id=base_program_id,
         )
+
+
+def generate_ai_draft_for_subscription(subscription) -> tuple[str, str]:
+    """Mesma logica de PublicWorkoutSubscriptionAdmin.generate_ai_draft,
+    fatorada pra ser chamada tambem do cockpit do treinador (ficha do
+    aluno) sem duplicar o fluxo em dois lugares -- resultado
+    ('error'|'success', mensagem) pra quem chama decidir como exibir.
+    """
+    from .program_generation_ai import generate_program_draft_payload
+
+    if not subscription.plan_slug:
+        return 'error', 'defina plan_slug antes de gerar.'
+
+    profile = get_training_profile(account_id=subscription.account_id)
+    if profile is None:
+        return 'error', 'aluno ainda não respondeu à anamnese.'
+
+    training_profile_dict = serialize_training_profile(profile)
+    known_slugs = list(
+        PublicWorkoutMovement.objects.filter(status=PublicWorkoutMovementStatus.ACTIVE).values_list(
+            'slug', flat=True,
+        )
+    )
+    payload, model = generate_program_draft_payload(
+        training_profile=training_profile_dict,
+        tier=subscription.tier,
+        plan_slug=subscription.plan_slug,
+        known_movement_slugs=known_slugs,
+    )
+    if payload is None:
+        return (
+            'error',
+            'geração falhou (sem chave configurada, timeout, ou saída inválida — '
+            'ver logs). Monte manualmente como antes.',
+        )
+
+    try:
+        create_program_draft(
+            account_id=subscription.account_id,
+            slug=subscription.plan_slug,
+            payload=payload,
+            source=PublicWorkoutProgramDraftSource.AI_GENERATED,
+            ai_model=model,
+            training_profile_snapshot=training_profile_dict,
+        )
+    except IntegrityError:
+        return 'error', 'já existe rascunho pendente para este slug — revise-o antes de gerar outro.'
+
+    return 'success', 'rascunho gerado — revise em "Rascunhos de programa" antes de publicar.'
 
 
 def _resolve_stable_program_id(*, slug: str) -> str:
@@ -583,6 +847,14 @@ def approve_and_publish_draft(*, draft_id: int, reviewed_by) -> PublicWorkoutPro
             raise ProgramDraftReviewError(
                 f'rascunho {draft_id} nao esta pendente de revisao (status={draft.status!r})'
             )
+        if draft.base_program_id is not None:
+            base_program = PublicWorkoutProgram.objects.select_for_update().filter(
+                pk=draft.base_program_id, slug=draft.slug,
+            ).first()
+            if base_program is None or not base_program.is_active:
+                raise ProgramDraftReviewError(
+                    'A versão de origem deixou de ser ativa. Refaça a revisão a partir do programa atual.'
+                )
 
         payload = dict(draft.payload)
         payload['program_id'] = _resolve_stable_program_id(slug=draft.slug)
@@ -646,13 +918,43 @@ def publish_meal_plan(*, account_id: int, payload: dict, authored_by) -> PublicW
 
         PublicWorkoutMealPlan.objects.filter(account_id=account_id, is_active=True).update(is_active=False)
 
-        return PublicWorkoutMealPlan.objects.create(
+        meal_plan = PublicWorkoutMealPlan.objects.create(
             account_id=account_id,
             version=next_version,
             is_active=True,
             authored_by=authored_by,
             payload=payload,
         )
+        from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutWorkItemType
+        from public_workouts.operations import complete_onboarding_work_item
+
+        subscription = PublicWorkoutSubscription.objects.filter(account_id=account_id).first()
+        if subscription is not None:
+            completed_item = complete_onboarding_work_item(
+                subscription=subscription,
+                item_type=PublicWorkoutWorkItemType.NUTRITION_PLAN,
+            )
+            if completed_item is None:
+                logger.warning(
+                    'curva_publication_without_work_item content_type=meal_plan content_id=%s subscription_id=%s',
+                    meal_plan.pk, subscription.pk,
+                )
+            from public_workouts.acquisition import record_funnel_event
+            from public_workouts.models import PublicWorkoutAcquisitionSession
+            from public_workouts.outbox import TOPIC_MEAL_PLAN_READY, enqueue_outbox
+
+            enqueue_outbox(
+                topic=TOPIC_MEAL_PLAN_READY, aggregate_type='meal_plan',
+                aggregate_id=meal_plan.pk, version=meal_plan.version,
+            )
+            record_funnel_event(
+                'meal_plan_published',
+                acquisition_session=PublicWorkoutAcquisitionSession.objects.filter(
+                    subscription=subscription,
+                ).first(),
+                account=subscription.account, subscription=subscription, tier=subscription.tier,
+            )
+        return meal_plan
 
 
 def activate_program_version(*, slug: str, program_id: str, version: int) -> PublicWorkoutProgram:
@@ -704,25 +1006,67 @@ def list_program_versions(*, slug: str) -> list[dict]:
 
 
 _DEFAULT_MAX_WEIGHT_KG = Decimal('1000')  # decisao do Renan — teto de 1 tonelada.
+_MAX_REPS = 999
+_MAX_RIR = Decimal('99.9')
 
 
 class LoadValueError(ValueError):
-    """Levantada quando weight_kg/rir esta fora da faixa aceita — erro de
-    digitacao ou dado absurdo, nao julgamento de treino. Deteccao
+    """Levantada quando weight_kg/reps/rir esta fora da faixa aceita — erro
+    de digitacao ou dado absurdo, nao julgamento de treino. Deteccao
     estatistica de outlier de verdade (comparar com o historico do proprio
     atleta) e trabalho da Onda A3 (mesmo escopo de
     estimate_one_rep_max/deteccao de plato), nao esta faixa ampla aqui."""
 
 
-def _validate_load_values(*, weight_kg, rir) -> None:
+class LoadCorrectionNotFoundError(ValueError):
+    """Levantada quando `supersedes_idempotency_key` nao aponta pra um
+    registro existente NESTA conta — nunca revela se o registro existe em
+    OUTRA conta (mesma postura de 404 do resto do S3: nao ha slug pra
+    esconder aqui, mas tambem nao ha por que confirmar existencia cruzada
+    de conta)."""
+
+
+class LoadCorrectionConflictError(Exception):
+    """Levantada quando o alvo da correcao ja foi corrigido por outra
+    operacao (is_active=False) — retentativa dupla, duas abas, ou duas
+    correcoes concorrentes. HTTP 409, nunca 400: o payload em si e'
+    valido, o que mudou foi o ESTADO do alvo entre o aluno abrir o
+    registro pra corrigir e confirmar."""
+
+
+def _validate_load_values(*, weight_kg, reps, rir) -> None:
+    # NAO exige weight_kg ou reps preenchido: o plano
+    # curva-carga-completa-reps-rir-recorde propos essa exigencia (§1.3),
+    # mas test_load_log.py::test_movement_without_reps_gets_no_one_rep_max_entry
+    # ja cobre um caso real de weight_kg=None + reps=None (movimento
+    # isometrico tipo prancha, sem peso nem repeticao quantificavel — so a
+    # existencia do registro na data importa). Implementar a exigencia
+    # quebraria esse caso já em produção; ver nota na PR/plano.
     if weight_kg is not None:
+        # .is_finite() fecha um gap real: json.loads aceita o literal
+        # `NaN` (extensao nao-padrao), e Decimal('NaN') comparado com < 0
+        # levanta InvalidOperation em vez de retornar False — sem este
+        # check, um payload com weight_kg=NaN vira 500, nao 400.
+        if not weight_kg.is_finite():
+            raise LoadValueError(f'weight_kg precisa ser um numero finito: {weight_kg!r}')
         if weight_kg < 0:
             raise LoadValueError(f'weight_kg nao pode ser negativo: {weight_kg!r}')
         max_weight_kg = Decimal(str(getattr(settings, 'PUBLIC_WORKOUT_MAX_WEIGHT_KG', _DEFAULT_MAX_WEIGHT_KG)))
         if weight_kg > max_weight_kg:
             raise LoadValueError(f'weight_kg {weight_kg!r} acima do teto aceito ({max_weight_kg} kg)')
-    if rir is not None and rir < 0:
-        raise LoadValueError(f'rir nao pode ser negativo: {rir!r}')
+    if reps is not None:
+        # bool e subclasse de int em Python — isinstance(True, int) e True,
+        # entao o cheque de bool precisa vir ANTES do cheque de int, senao
+        # reps=true passaria como reps=1 silenciosamente.
+        if isinstance(reps, bool) or not isinstance(reps, int):
+            raise LoadValueError(f'reps precisa ser um numero inteiro: {reps!r}')
+        if reps < 1 or reps > _MAX_REPS:
+            raise LoadValueError(f'reps precisa estar entre 1 e {_MAX_REPS}: {reps!r}')
+    if rir is not None:
+        if not rir.is_finite():
+            raise LoadValueError(f'rir precisa ser um numero finito: {rir!r}')
+        if rir < 0 or rir > _MAX_RIR:
+            raise LoadValueError(f'rir precisa estar entre 0 e {_MAX_RIR}: {rir!r}')
 
 
 def _serialize_load_log(log: PublicWorkoutLoadLog) -> dict:
@@ -735,6 +1079,30 @@ def _serialize_load_log(log: PublicWorkoutLoadLog) -> dict:
         'program_id': log.program_id or None,
         'week_in_program': log.week_in_program,
         'idempotency_key': log.idempotency_key,
+        # Nao expoe supersedes/supersedes_id de proposito (evita N+1 --
+        # ver docstring de correct_load): quem precisa saber "isto foi
+        # corrigido" usa is_active, nunca precisa seguir o vinculo.
+        'is_active': log.is_active,
+        # set_role exposto so' pra tabela/historico completo mostrar
+        # contexto (plano curva-grafico-hierarquia-e-set-role.md §2.2,
+        # item 3 do mapa) -- nenhum consumidor de dict serializado toma
+        # decisao de elegibilidade sozinho a partir disso; quem decide
+        # "isso conta pra curva/tendencia/recorde" chama
+        # progress_eligibility.py, nunca compara essa string direto.
+        'set_role': log.set_role,
+        # Fase 4 (§6.2): None ("sem evento") na maioria das linhas. Nunca
+        # recalculado aqui -- so' devolve o que _lock_and_resolve_achievement
+        # gravou na transacao de escrita (replay estavel num reenvio com a
+        # mesma idempotency_key). delta_kg deriva na hora, nunca persistido
+        # (evitaria os dois campos divergirem se algum dia um for editado).
+        'achievement': (
+            {
+                'kind': log.achievement_kind,
+                'previous_weight_kg': float(log.achievement_previous_weight_kg),
+                'delta_kg': float(log.weight_kg - log.achievement_previous_weight_kg),
+            }
+            if log.achievement_kind else None
+        ),
     }
 
 
@@ -747,7 +1115,7 @@ def _serialize_one_rep_max_estimate(estimate) -> dict:
     }
 
 
-def build_student_package(*, account_id: int, slug: str) -> dict:
+def build_student_package(*, account_id: int, slug: str, progress_snapshots: dict | None = None) -> dict:
     """S2 — ultima carga por movimento + 1RM + substituicoes + access_until.
     Sem HTTP, sem request.
 
@@ -763,29 +1131,49 @@ def build_student_package(*, account_id: int, slug: str) -> dict:
     `access_until` fica `None` ate a Onda B3 (fase B) ligar a trava de
     acesso de verdade.
     """
-    logs = list(
-        PublicWorkoutLoadLog.objects.filter(account_id=account_id)
-        .order_by('movement_slug', '-performed_on', '-created_at')
-        .distinct('movement_slug')
+    # is_active=True: registro corrigido (Fase 3, §4.1) nunca alimenta
+    # "ultima carga"/1RM -- o valor errado deixou de existir pra qualquer
+    # leitura de estado atual assim que a correcao commitou.
+    log_query = PublicWorkoutLoadLog.objects.filter(account_id=account_id, is_active=True).order_by(
+        'movement_slug', '-performed_on', '-created_at', '-pk',
     )
+    if connection.features.can_distinct_on_fields:
+        logs = list(log_query.distinct('movement_slug'))
+        last_load_by_movement = {log.movement_slug: _serialize_load_log(log) for log in logs}
+    else:
+        # Portable fallback for SQLite diagnostics and backends without DISTINCT ON.
+        last_load_by_movement = {}
+        for log in log_query.iterator(chunk_size=500):
+            last_load_by_movement.setdefault(log.movement_slug, _serialize_load_log(log))
 
-    last_load_by_movement = {log.movement_slug: _serialize_load_log(log) for log in logs}
-
-    one_rep_max_by_movement = {}
-    for log in logs:
-        estimate = estimate_one_rep_max(weight_kg=log.weight_kg, reps=log.reps, rir=log.rir)
-        if estimate is not None:
-            one_rep_max_by_movement[log.movement_slug] = _serialize_one_rep_max_estimate(estimate)
+    # Plano curva-grafico-hierarquia-e-set-role.md (§7.5/§8.1 item 3): 1RM
+    # vem do snapshot de progresso (so' top_set elegivel), nao do ULTIMO
+    # log bruto de cada movimento -- o ultimo log podia ser aquecimento,
+    # contaminando a estimativa que alimenta o badge "1RM est." de
+    # workout.html. build_progress_snapshots ja roda EM LOTE (uma
+    # chamada, nao uma por movimento).
+    snapshots = progress_snapshots if progress_snapshots is not None else build_progress_snapshots(account_id=account_id)
+    one_rep_max_by_movement = {
+        movement_slug: _serialize_one_rep_max_estimate(snapshot.one_rep_max)
+        for movement_slug, snapshot in snapshots.items()
+        if snapshot.one_rep_max is not None
+    }
+    last_top_set_by_movement = {
+        movement_slug: {'weight_kg': float(snapshot.latest_top_set.weight_kg)}
+        for movement_slug, snapshot in snapshots.items()
+        if snapshot.latest_top_set is not None and snapshot.latest_top_set.weight_kg is not None
+    }
 
     return {
         'last_load_by_movement': last_load_by_movement,
+        'last_top_set_by_movement': last_top_set_by_movement,
         'one_rep_max_by_movement': one_rep_max_by_movement,
         'substitutions': {},
         'access_until': None,
     }
 
 
-def build_weekly_review(*, account_id: int) -> dict:
+def build_weekly_review(*, account_id: int, progress_snapshots: dict | None = None, as_of: date | None = None) -> dict:
     """Onda A3 — agrega os SINAIS calculados (tendencia de 1RM por
     movimento) pra alimentar o review semanal (Onda 4.5 do plano de
     produto). So a parte deterministica: NAO chama IA, NAO gera texto,
@@ -795,21 +1183,14 @@ def build_weekly_review(*, account_id: int) -> dict:
     sugerida fica pra quando esses dados existirem — aqui so preparamos o
     sinal, no formato "platô de 3 semanas", nao a tabela crua de sets.
     """
-    movement_slugs = (
-        PublicWorkoutLoadLog.objects.filter(account_id=account_id)
-        .order_by('movement_slug')
-        .values_list('movement_slug', flat=True)
-        .distinct()
-    )
-
+    snapshots = progress_snapshots if progress_snapshots is not None else build_progress_snapshots(account_id=account_id, as_of=as_of)
     trends = {}
-    for movement_slug in movement_slugs:
-        trend = detect_one_rep_max_trend(account_id=account_id, movement_slug=movement_slug)
-        if trend.label == 'insufficient_data':
+    for movement_slug, snapshot in snapshots.items():
+        if snapshot.trend_signal == 'insufficient_data':
             continue
         trends[movement_slug] = {
-            'label': trend.label,
-            'weekly_estimates_kg': list(trend.weekly_estimates_kg),
+            'label': snapshot.trend_signal,
+            'weekly_estimates_kg': list(snapshot.weekly_estimates_kg),
         }
 
     declining = sorted(slug for slug, t in trends.items() if t['label'] == 'declining')
@@ -822,6 +1203,48 @@ def build_weekly_review(*, account_id: int) -> dict:
     }
 
 
+def _lock_and_resolve_achievement(
+    *, account_id: int, movement_slug: str, set_role: str, weight_kg, exclude_pk=None,
+):
+    """Fase 4 do plano curva-carga-completa-reps-rir-recorde (§6.1/§6.2):
+    `weight_kg` vira recorde quando fica ESTRITAMENTE acima da maior
+    carga ja ATIVA e elegivel (top_set/max_set, mesmo corte de
+    progress_eligibility.py::eligible_for_personal_record) deste
+    movimento -- empate, aquecimento, legado e ausencia de peso nunca
+    disparam (retornam None, None sem consultar nada).
+
+    `select_for_update()` serializa contra outro dispositivo escrevendo
+    pro MESMO movimento ao mesmo tempo: sem o lock, duas gravacoes
+    concorrentes poderiam ler o mesmo "melhor anterior" e as duas se
+    declararem recorde uma da outra. So' funciona quando ja existe ao
+    menos uma linha elegivel pra travar -- a PRIMEIRA gravacao de um
+    movimento nunca tem concorrente possivel (nada a comparar), entao a
+    ausencia de lock nesse caso nao abre brecha nenhuma.
+
+    `exclude_pk` (usado por correct_load): o ALVO sendo substituido nao
+    compete contra o proprio valor corrigido -- corrigir o UNICO registro
+    que existia (900 -> 90, um typo) nunca e' "recorde" so' porque o
+    numero mudou; so' o SEGUNDO valor legitimo mais alto conta."""
+    if weight_kg is None or set_role not in _PERSONAL_RECORD_ROLES:
+        return None, None
+
+    locked = PublicWorkoutLoadLog.objects.select_for_update().filter(
+        account_id=account_id, movement_slug=movement_slug,
+        set_role__in=_PERSONAL_RECORD_ROLES, is_active=True, weight_kg__isnull=False,
+    )
+    if exclude_pk is not None:
+        locked = locked.exclude(pk=exclude_pk)
+
+    previous_best = None
+    for row in locked:
+        if previous_best is None or row.weight_kg > previous_best:
+            previous_best = row.weight_kg
+
+    if previous_best is not None and weight_kg > previous_best:
+        return PublicWorkoutLoadLogAchievementKind.LOAD_RECORD, previous_best
+    return None, None
+
+
 def record_load(
     *,
     account_id: int,
@@ -832,6 +1255,15 @@ def record_load(
     performed_on,
     program_id=None,
     week_in_program=None,
+    # Default SO' aqui, nunca no model nem na view (plano
+    # curva-grafico-hierarquia-e-set-role.md, §7.6): ~30 chamadas diretas
+    # de teste existentes (test_load_log.py e outros) nao tem nada a ver
+    # com set_role -- exigir o parametro sem default quebraria todas por
+    # um motivo alheio ao que estao testando. A view SEMPRE passa um
+    # valor explicito de qualquer forma (protocolo de payload, ver
+    # PublicWorkoutRecordLoadView), entao este default nunca e' exercido
+    # em produção.
+    set_role: str = PublicWorkoutLoadLogSetRole.TOP_SET,
     idempotency_key: str,
 ) -> dict:
     """S3 — registra uma carga. Idempotente por `idempotency_key`: reenvio
@@ -846,14 +1278,28 @@ def record_load(
     TransactionManagementError em vez de achar a linha (mesma pegadinha
     que o dedup do webhook em stripe_handlers.py evita nunca re-consultando
     na mesma transacao; aqui precisamos do valor de volta, entao isolamos
-    o INSERT em vez disso)."""
-    _validate_load_values(weight_kg=weight_kg, rir=rir)
+    o INSERT em vez disso).
+
+    `.filter().first()` na recuperação, NUNCA `.get()` direto: depois da
+    Migration B (CheckConstraint em set_role), um `set_role` inválido
+    também levanta `IntegrityError` — se a recuperação fosse `.get()`, ela
+    levantaria `DoesNotExist` (mascarando o erro real de validação atrás
+    de uma mensagem sobre idempotência). Com `.filter().first()`, se a
+    linha realmente não existe (porque o INSERT foi rejeitado pela
+    constraint, não por colisão de chave), `log` vem `None` e o `raise`
+    relança o `IntegrityError` ORIGINAL intacto."""
+    _validate_load_values(weight_kg=weight_kg, reps=reps, rir=rir)
+    if set_role not in PublicWorkoutLoadLogSetRole.values:
+        raise LoadValueError(f'set_role invalido: {set_role!r}')
 
     if isinstance(performed_on, str):
         performed_on = date.fromisoformat(performed_on)
 
     try:
         with transaction.atomic():
+            achievement_kind, achievement_previous_weight_kg = _lock_and_resolve_achievement(
+                account_id=account_id, movement_slug=movement_slug, set_role=set_role, weight_kg=weight_kg,
+            )
             log = PublicWorkoutLoadLog.objects.create(
                 account_id=account_id,
                 movement_slug=movement_slug,
@@ -863,15 +1309,137 @@ def record_load(
                 performed_on=performed_on,
                 program_id=program_id or '',
                 week_in_program=week_in_program,
+                set_role=set_role,
                 idempotency_key=idempotency_key,
+                achievement_kind=achievement_kind,
+                achievement_previous_weight_kg=achievement_previous_weight_kg,
             )
     except IntegrityError:
-        log = PublicWorkoutLoadLog.objects.get(idempotency_key=idempotency_key)
+        log = PublicWorkoutLoadLog.objects.filter(idempotency_key=idempotency_key).first()
+        if log is None:
+            raise
 
     return _serialize_load_log(log)
 
 
-def list_load_history(*, account_id: int, movement_slug: str | None = None) -> list[dict]:
+def correct_load(
+    *,
+    account_id: int,
+    supersedes_idempotency_key: str,
+    idempotency_key: str,
+    weight_kg,
+    reps=None,
+    rir=None,
+) -> dict:
+    """Fase 3 do plano curva-carga-completa-reps-rir-recorde (§4.1) —
+    corrige um registro existente (900 digitado por engano de 90) sem
+    fingir que e' um evento novo. `movement_slug`/`performed_on` NUNCA
+    vem do payload da correcao: sao herdados do ALVO, de proposito —
+    "mesma data e movimento nesta primeira fatia" (nao existe ainda rota
+    pra corrigir E mudar movimento/data ao mesmo tempo).
+
+    Idempotencia: se `idempotency_key` (da OPERACAO de correcao, nao do
+    alvo) ja existe, devolve o resultado existente sem tocar em nada —
+    uma retentativa de rede nunca reavalia `is_active` do alvo de novo
+    (ele so' pode ter sido marcado inativo pela primeira tentativa que
+    teve sucesso).
+
+    `select_for_update()` no alvo, dentro do MESMO `transaction.atomic()`
+    que cria o novo log e desativa o alvo: duas correcoes concorrentes pro
+    MESMO alvo serializam aqui — a segunda so' ve `is_active=False` depois
+    que a primeira commitar, e levanta `LoadCorrectionConflictError` (409)
+    em vez de criar uma segunda correcao pro mesmo registro."""
+    existing = PublicWorkoutLoadLog.objects.filter(idempotency_key=idempotency_key).first()
+    if existing is not None:
+        return _serialize_load_log(existing)
+
+    _validate_load_values(weight_kg=weight_kg, reps=reps, rir=rir)
+
+    with transaction.atomic():
+        try:
+            target = PublicWorkoutLoadLog.objects.select_for_update().get(
+                account_id=account_id, idempotency_key=supersedes_idempotency_key,
+            )
+        except PublicWorkoutLoadLog.DoesNotExist:
+            raise LoadCorrectionNotFoundError('registro original nao encontrado nesta conta') from None
+
+        if not target.is_active:
+            raise LoadCorrectionConflictError('este registro ja foi corrigido por outra operacao')
+
+        # Fase 4 (§6.2): "correcao compara estado ativo anterior e
+        # recalcula apos substituicao" -- exclude_pk=target.pk pra que o
+        # ALVO (ainda ativo aqui, so' vira is_active=False alguns passos
+        # abaixo) nao compita contra o proprio valor corrigido. Isso
+        # tambem e' o que faz "correcao para baixo nao criar celebracao
+        # compensatoria" sair de graca: sem o alvo na comparacao, corrigir
+        # o UNICO registro que existia pra baixo nunca acha um "anterior"
+        # pra superar.
+        achievement_kind, achievement_previous_weight_kg = _lock_and_resolve_achievement(
+            account_id=account_id, movement_slug=target.movement_slug, set_role=target.set_role,
+            weight_kg=weight_kg, exclude_pk=target.pk,
+        )
+
+        try:
+            new_log = PublicWorkoutLoadLog.objects.create(
+                account_id=account_id,
+                movement_slug=target.movement_slug,
+                weight_kg=weight_kg,
+                reps=reps,
+                rir=rir,
+                performed_on=target.performed_on,
+                program_id=target.program_id,
+                week_in_program=target.week_in_program,
+                # set_role tambem herdado do ALVO (mesmo espirito de
+                # movement_slug/performed_on, ver docstring): corrigir
+                # 900->90 nao reclassifica SE era aquecimento ou serie
+                # principal, so' corrige o VALOR digitado errado.
+                set_role=target.set_role,
+                idempotency_key=idempotency_key,
+                supersedes=target,
+                achievement_kind=achievement_kind,
+                achievement_previous_weight_kg=achievement_previous_weight_kg,
+            )
+        except IntegrityError:
+            # Corrida rara: outra request criou a MESMA idempotency_key
+            # entre o filter() do topo desta funcao e aqui -- devolve o
+            # que existe, nunca duplica (mesmo padrao de record_load).
+            # .filter().first(), nunca .get(): mesmo motivo de record_load
+            # -- se a linha nao existe de verdade (IntegrityError por outro
+            # motivo, nao colisao de chave), relanca o erro ORIGINAL em vez
+            # de mascara-lo com DoesNotExist.
+            new_log = PublicWorkoutLoadLog.objects.filter(idempotency_key=idempotency_key).first()
+            if new_log is None:
+                raise
+        else:
+            target.is_active = False
+            target.save(update_fields=['is_active'])
+
+    return _serialize_load_log(new_log)
+
+
+def active_correction_successor(*, account_id: int, supersedes_idempotency_key: str) -> dict | None:
+    """Encontra o registro ativo na cadeia de correções da própria conta.
+
+    Usado somente para oferecer revisão explícita após um 409. Nunca muda
+    automaticamente o alvo de uma operação idempotente já enfileirada.
+    """
+    current = PublicWorkoutLoadLog.objects.filter(
+        account_id=account_id, idempotency_key=supersedes_idempotency_key,
+    ).first()
+    seen = set()
+    while current is not None and not current.is_active:
+        if current.pk in seen:
+            return None
+        seen.add(current.pk)
+        current = PublicWorkoutLoadLog.objects.filter(
+            account_id=account_id, supersedes_id=current.pk,
+        ).order_by('-created_at', '-pk').first()
+    return _serialize_load_log(current) if current is not None else None
+
+
+def list_load_history(
+    *, account_id: int, movement_slug: str | None = None, only_active: bool = False
+) -> list[dict]:
     """Historico completo de carga da conta (Onda B4, fatia adiantada) —
     build_student_package (S2) so devolve a ULTIMA carga por movimento;
     isto e' a serie inteira, pra grafico de evolucao.
@@ -886,8 +1454,18 @@ def list_load_history(*, account_id: int, movement_slug: str | None = None) -> l
     e' continuidade do ATLETA, nao do programa ativo — republicar uma nova
     versao nao deveria "zerar" o historico de agachamento do aluno. Lista
     vazia (nunca None) quando a conta nao tem nenhum registro. Roda no
-    schema public, mesma regra do resto do modulo."""
+    schema public, mesma regra do resto do modulo.
+
+    `only_active` default False DE PROPOSITO: `export_account_data`
+    (Fase B4) chama esta funcao esperando o historico CRU, com registros
+    corrigidos inclusos (LGPD/auditoria — plano §4.1: "Auditoria pode
+    mostrar ambos com indicação Corrigido"). Os dois chamadores que
+    alimentam o TEMPLATE (curva, recorde, eco de hoje) passam
+    `only_active=True` explicitamente — nunca o inverso, senao a
+    exportacao perderia o registro original de toda correcao."""
     queryset = PublicWorkoutLoadLog.objects.filter(account_id=account_id)
+    if only_active:
+        queryset = queryset.filter(is_active=True)
     if movement_slug is not None:
         queryset = queryset.filter(movement_slug=movement_slug)
     return [_serialize_load_log(log) for log in queryset.order_by('movement_slug', 'performed_on', 'created_at')]

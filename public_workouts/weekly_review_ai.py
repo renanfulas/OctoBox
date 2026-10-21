@@ -109,4 +109,47 @@ def generate_weekly_review_text(review: dict) -> str | None:
     return text or None
 
 
-__all__ = ['generate_weekly_review_text']
+def _current_iso_week(*, today=None) -> str:
+    from datetime import date
+
+    today = today or date.today()
+    iso_year, iso_week_num, _ = today.isocalendar()
+    return f'{iso_year}-W{iso_week_num:02d}'
+
+
+def get_or_create_cached_review_text(*, account_id: int, review: dict) -> str | None:
+    """No MAXIMO 1 chamada a Haiku por conta por semana ISO -- achado do
+    Renan (colocar o resumo por IA na Início): sem isto, cada visita a
+    Início chamaria a Anthropic de novo (custo/latencia inaceitaveis, ver
+    docstring do modulo). Chamado tanto pelo card automatico da Início
+    quanto pelo botao manual "Gerar revisão" da aba Cargas -- os dois
+    compartilham a MESMA linha de cache pra mesma semana, nunca geram
+    texto divergente pro mesmo periodo.
+
+    `review` e' o retorno de `services.build_weekly_review` -- este modulo
+    continua nao consultando o banco pra calcular sinal, so' pra decidir
+    SE ja tentou gerar texto esta semana."""
+    from django.db import IntegrityError
+
+    from .models import PublicWorkoutWeeklyReviewCache
+
+    iso_week = _current_iso_week()
+    cached = PublicWorkoutWeeklyReviewCache.objects.filter(account_id=account_id, iso_week=iso_week).first()
+    if cached is not None:
+        return cached.review_text
+
+    review_text = generate_weekly_review_text(review)
+    try:
+        PublicWorkoutWeeklyReviewCache.objects.create(
+            account_id=account_id, iso_week=iso_week, review_text=review_text,
+        )
+    except IntegrityError:
+        # Corrida rara (dois requests da mesma conta na mesma semana antes
+        # do primeiro commitar): quem perdeu a corrida le o que o outro
+        # gravou, nunca duplica linha nem chama a IA de novo.
+        cached = PublicWorkoutWeeklyReviewCache.objects.filter(account_id=account_id, iso_week=iso_week).first()
+        return cached.review_text if cached is not None else review_text
+    return review_text
+
+
+__all__ = ['generate_weekly_review_text', 'get_or_create_cached_review_text']

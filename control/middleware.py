@@ -96,6 +96,12 @@ PUBLIC_SCHEMA_PATHS = (
     # public_workout_login.py, Onda B1 do CORDA) — nao pertencem ao
     # namespace de um personal especifico, por isso ficam fora de /renan/.
     '/treinos/',
+    # Telas internas de operacao do corredor (fila de ativacao etc.,
+    # public_workouts/views.py) — login PROPRIO (staff_auth.py), sem
+    # Box/Membership: o corredor nao e' o produto multi-tenant do OctoBox,
+    # entao nao pode depender de TenantBySessionMiddleware resolver tenant
+    # nenhum pra essas duas contas (Renan, Giovanna) entrarem.
+    '/public-workouts/',
     '/static/',
     '/favicon.ico',
     '/__debug__/',            # django-debug-toolbar
@@ -214,7 +220,15 @@ class TenantBySessionMiddleware:
     # ------------------------------------------------------------------
 
     def _is_public_path(self, path: str) -> bool:
-        if any(path.startswith(prefix) for prefix in PUBLIC_SCHEMA_PATHS):
+        # Toda entrada em PUBLIC_SCHEMA_PATHS termina em '/' -- sem o
+        # `path == prefix.rstrip('/')`, a versao sem barra final (ex.:
+        # '/treinos', que chega antes do APPEND_SLASH do Django decidir
+        # qualquer coisa) nunca batia no startswith e caia como privada,
+        # redirecionando pro login em vez de deixar o Django resolver o slash.
+        if any(
+            path.startswith(prefix) or path == prefix.rstrip('/')
+            for prefix in PUBLIC_SCHEMA_PATHS
+        ):
             return True
         return path in PUBLIC_SCHEMA_EXACT_PATHS
 

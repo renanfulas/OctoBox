@@ -32,6 +32,7 @@ html { scroll-behavior: smooth; }
 body[data-page="signup-checkout"] {
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     color: var(--checkout-text);
     font-family: var(--font-body, system-ui, sans-serif);
     background:
@@ -609,14 +610,31 @@ a { color: inherit; }
 }
 
 @media (max-width: 640px) {
+    /* iOS Safari can composite sticky + backdrop-filter layers as a blank
+       surface during scroll. Checkout needs a solid, predictable mobile layer. */
+    .checkout-nav {
+        position: static;
+        background: rgba(10, 14, 24, 0.98);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
     .checkout-shell {
         padding: 32px 0;
     }
 
     .checkout-form-card,
-    .checkout-summary {
+    .checkout-summary,
+    .checkout-result {
         padding: 24px;
         border-radius: 22px;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .checkout-form-card,
+    .checkout-result {
+        background-color: rgba(15, 21, 36, 0.96);
     }
 
     .checkout-submit {

@@ -11,6 +11,7 @@ O QUE ESTE ARQUIVO FAZ:
 */
 
 .wod-planner {
+    --wod-danger-ink: color-mix(in srgb, var(--theme-accent-danger) 70%, var(--theme-text-primary));
     display: grid;
     gap: 16px;
 }
@@ -33,7 +34,7 @@ O QUE ESTE ARQUIVO FAZ:
     border-radius: 20px;
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 12%, transparent), transparent 36%),
-        color-mix(in srgb, var(--theme-surface-panel) 84%, white 16%);
+        var(--theme-surface-secondary);
     box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
 }
 
@@ -63,16 +64,30 @@ O QUE ESTE ARQUIVO FAZ:
     justify-content: flex-end;
 }
 
-.wod-planner__btn-danger {
-    color: var(--danger, #ef4444);
-    border-color: color-mix(in srgb, var(--danger, #ef4444) 28%, transparent);
+.wod-planner-shell .button.wod-planner__btn-danger {
+    color: var(--wod-danger-ink);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 28%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-danger) 6%, var(--theme-surface-strong));
 }
 
-.wod-planner__btn-danger:hover,
-.wod-planner__btn-danger:focus-visible {
-    border-color: color-mix(in srgb, var(--danger, #ef4444) 52%, transparent);
-    background: color-mix(in srgb, var(--danger, #ef4444) 8%, white 92%);
-    color: var(--danger, #ef4444);
+body[data-theme="dark"] .wod-planner-shell .button.wod-planner__btn-danger {
+    color: var(--wod-danger-ink);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 28%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-danger) 6%, var(--theme-surface-strong));
+}
+
+.wod-planner-shell .button.wod-planner__btn-danger:hover,
+.wod-planner-shell .button.wod-planner__btn-danger:focus-visible {
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 52%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-danger) 8%, var(--theme-surface-strong));
+    color: var(--wod-danger-ink);
+}
+
+body[data-theme="dark"] .wod-planner-shell .button.wod-planner__btn-danger:hover,
+body[data-theme="dark"] .wod-planner-shell .button.wod-planner__btn-danger:focus-visible {
+    color: var(--wod-danger-ink);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 52%, transparent);
+    background: color-mix(in srgb, var(--theme-accent-danger) 8%, var(--theme-surface-strong));
 }
 
 .wod-planner__metrics {
@@ -85,7 +100,7 @@ O QUE ESTE ARQUIVO FAZ:
 .wod-planner__spotlight-shell {
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 20px;
-    background: color-mix(in srgb, var(--theme-surface-panel) 84%, white 16%);
+    background: var(--theme-surface-secondary);
     overflow: hidden;
 }
 
@@ -142,7 +157,7 @@ O QUE ESTE ARQUIVO FAZ:
     padding: 0 6px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 6px;
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 80%, white 20%);
+    background: var(--theme-surface-strong);
     color: var(--theme-text-primary);
     font-size: 0.74rem;
     font-weight: 800;
@@ -154,7 +169,7 @@ O QUE ESTE ARQUIVO FAZ:
     padding: 13px 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 16px;
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 74%, white 26%);
+    background: var(--theme-surface-strong);
 }
 
 .wod-planner__metric span {
@@ -197,7 +212,7 @@ O QUE ESTE ARQUIVO FAZ:
     padding: 8px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 16px;
-    background: color-mix(in srgb, var(--theme-surface-panel) 78%, white 22%);
+    background: var(--theme-surface-secondary);
 }
 
 .wod-planner__day-head {
@@ -241,7 +256,7 @@ O QUE ESTE ARQUIVO FAZ:
     padding: 7px 9px 7px 12px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
     border-left-width: 3px;
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 76%, white 24%);
+    background: var(--theme-surface-strong);
     color: var(--theme-text-secondary);
     transition:
         border-color var(--motion-base) var(--ease-standard),
@@ -277,6 +292,10 @@ O QUE ESTE ARQUIVO FAZ:
     height: 7px;
     border-radius: 50%;
     background: var(--theme-border-soft);
+}
+
+.wod-planner__cell-state {
+    display: none;
 }
 
 .wod-planner__cell:hover,
@@ -317,7 +336,7 @@ O QUE ESTE ARQUIVO FAZ:
     padding: 0 10px;
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 70%, white 30%);
+    background: var(--theme-surface-secondary);
     color: var(--theme-text-secondary);
     font-size: 0.72rem;
     font-weight: 700;
@@ -341,10 +360,7 @@ O QUE ESTE ARQUIVO FAZ:
 
 .wod-planner__cell-action--primary {
     border-color: color-mix(in srgb, var(--theme-accent-support) 52%, transparent);
-    background:
-        linear-gradient(180deg,
-            color-mix(in srgb, var(--theme-accent-support) 18%, white 82%),
-            color-mix(in srgb, var(--theme-accent-support) 10%, white 90%));
+    background: color-mix(in srgb, var(--theme-accent-support) 14%, var(--theme-surface-strong));
     color: color-mix(in srgb, var(--theme-accent-support) 68%, var(--theme-text-primary) 32%);
     box-shadow: 0 10px 24px color-mix(in srgb, var(--theme-accent-support-alpha) 20%, transparent);
 }
@@ -366,11 +382,11 @@ O QUE ESTE ARQUIVO FAZ:
 }
 
 .wod-planner__cell--draft {
-    border-color: color-mix(in srgb, var(--warning) 18%, var(--theme-border-soft) 82%);
-    border-left-color: var(--warning, #f59e0b);
+    border-color: color-mix(in srgb, var(--theme-accent-warning) 18%, var(--theme-border-soft) 82%);
+    border-left-color: var(--theme-accent-warning);
 }
 .wod-planner__cell--draft .wod-planner__cell-status-dot {
-    background: var(--warning, #f59e0b);
+    background: var(--theme-accent-warning);
 }
 
 .wod-planner__cell--pending {
@@ -382,19 +398,19 @@ O QUE ESTE ARQUIVO FAZ:
 }
 
 .wod-planner__cell--published {
-    border-color: color-mix(in srgb, var(--success) 20%, var(--theme-border-soft) 80%);
-    border-left-color: var(--success, #22c55e);
+    border-color: color-mix(in srgb, var(--theme-accent-success) 20%, var(--theme-border-soft) 80%);
+    border-left-color: var(--theme-accent-success);
 }
 .wod-planner__cell--published .wod-planner__cell-status-dot {
-    background: var(--success, #22c55e);
+    background: var(--theme-accent-success);
 }
 
 .wod-planner__cell--sensitive {
-    border-color: color-mix(in srgb, var(--danger) 22%, var(--theme-border-soft) 78%);
-    border-left-color: var(--danger, #ef4444);
+    border-color: color-mix(in srgb, var(--theme-accent-danger) 22%, var(--theme-border-soft) 78%);
+    border-left-color: var(--theme-accent-danger);
 }
 .wod-planner__cell--sensitive .wod-planner__cell-status-dot {
-    background: var(--danger, #ef4444);
+    background: var(--theme-accent-danger);
 }
 
 .wod-planner__empty-day {
@@ -410,7 +426,7 @@ O QUE ESTE ARQUIVO FAZ:
     border-top: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support-alpha) 10%, transparent), transparent 34%),
-        color-mix(in srgb, var(--theme-surface-panel) 82%, white 18%);
+        var(--theme-surface-secondary);
 }
 
 .wod-planner__spotlight h3,
@@ -459,7 +475,7 @@ O QUE ESTE ARQUIVO FAZ:
 
 .wod-planner__spotlight-action.is-secondary {
     border-color: color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 70%, white 30%);
+    background: var(--theme-surface-secondary);
     color: var(--theme-text-secondary);
 }
 
@@ -511,7 +527,7 @@ O QUE ESTE ARQUIVO FAZ:
     padding: 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
     border-radius: 16px;
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 76%, white 24%);
+    background: var(--theme-surface-strong);
 }
 
 .wod-planner__usage-ranking-card p,
@@ -535,7 +551,7 @@ O QUE ESTE ARQUIVO FAZ:
     padding: 0 12px;
     border-radius: 999px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
-    background: color-mix(in srgb, var(--theme-surface-panel) 70%, white 30%);
+    background: var(--theme-surface-secondary);
     color: var(--theme-text-primary);
     font-size: 0.8rem;
     font-weight: 700;
@@ -584,7 +600,7 @@ body[data-theme="dark"] .wod-planner__cell-action {
 body[data-theme="dark"] .wod-planner__cell-action--primary {
     border-color: rgba(96, 165, 250, 0.42);
     background: linear-gradient(180deg, rgba(19, 60, 118, 0.96), rgba(12, 37, 76, 0.96));
-    color: #e8f1ff;
+    color: var(--theme-text-primary);
 }
 
 body[data-theme="dark"] .wod-planner__toolbar h2,
@@ -592,7 +608,7 @@ body[data-theme="dark"] .wod-planner__spotlight-summary-toggle strong,
 body[data-theme="dark"] .wod-planner__insights-summary strong,
 body[data-theme="dark"] .wod-planner__spotlight h3,
 body[data-theme="dark"] .wod-planner__funnel-head h3 {
-    color: #f3f7ff;
+    color: var(--theme-text-primary);
     text-shadow: 0 1px 0 rgba(3, 7, 18, 0.28);
 }
 
@@ -633,7 +649,48 @@ body[data-theme="dark"] .wod-planner__funnel-head h3 {
     }
 
     .wod-planner__grid {
-        grid-template-columns: repeat(7, minmax(140px, 1fr));
+        grid-template-columns: minmax(0, 1fr);
+        overflow-x: visible;
+        gap: 12px;
+    }
+
+    .wod-planner__day {
+        min-height: 0;
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .wod-planner__cells {
+        gap: 8px;
+    }
+
+    .wod-planner__cell {
+        min-height: 104px;
+        gap: 5px;
+        padding: 12px;
+    }
+
+    .wod-planner__cell-state {
+        display: inline-flex;
+        width: fit-content;
+        color: var(--theme-text-secondary);
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .wod-planner__cell-action {
+        min-height: 42px;
+        padding: 0 14px;
+        font-size: 0.8rem;
+    }
+
+    .wod-planner__toolbar-actions,
+    .wod-planner__toolbar-actions > .button {
+        width: 100%;
+    }
+
+    .wod-planner__keyboard-hint {
+        display: none;
     }
 
 
@@ -648,6 +705,9 @@ html.wod-planner-template-picker-open body {
 }
 
 .wod-planner__template-picker {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     width: min(560px, calc(100vw - 32px));
     max-height: min(720px, calc(100dvh - 48px));
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
@@ -656,8 +716,7 @@ html.wod-planner-template-picker-open body {
     overflow: hidden;
     overscroll-behavior: contain;
     box-shadow: var(--theme-shadow-xl);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 253, 0.95));
+    background: var(--theme-surface-panel);
     color: var(--theme-text-primary);
 }
 
@@ -681,8 +740,7 @@ html.wod-planner-template-picker-open body {
     position: sticky;
     top: 0;
     z-index: 2;
-    background:
-        linear-gradient(180deg, rgba(250, 252, 255, 0.98), rgba(250, 252, 255, 0.92));
+    background: var(--theme-surface-panel);
 }
 
 .wod-planner__template-picker-head h3,
@@ -712,8 +770,7 @@ html.wod-planner-template-picker-open body {
     padding: 14px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 80%, transparent);
     border-radius: 16px;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 246, 252, 0.92));
+    background: var(--theme-surface-secondary);
     box-shadow: 0 10px 24px rgba(22, 35, 68, 0.08);
 }
 
@@ -745,8 +802,7 @@ html.wod-planner-template-picker-open body {
     padding: 10px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 76%, transparent);
     border-radius: 12px;
-    background:
-        linear-gradient(180deg, rgba(248, 251, 255, 0.96), rgba(239, 245, 251, 0.9));
+    background: var(--theme-surface-strong);
 }
 
 .wod-planner__template-picker-preview-card p,
@@ -756,12 +812,16 @@ html.wod-planner-template-picker-open body {
 
 @media (max-width: 640px) {
     .wod-planner__template-picker {
-        width: min(100%, calc(100vw - 20px));
-        height: min(740px, calc(100dvh - 20px));
-        max-height: calc(100dvh - 20px);
-        margin: auto;
+        inset: auto 0 0;
+        width: 100%;
+        max-width: none;
+        height: min(740px, calc(100dvh - env(safe-area-inset-top) - 0.75rem));
+        max-height: calc(100dvh - env(safe-area-inset-top) - 0.75rem);
+        margin: 0;
         padding: 14px;
-        border-radius: 22px;
+        padding-bottom: calc(14px + env(safe-area-inset-bottom));
+        border-radius: 22px 22px 0 0;
+        border-bottom: 0;
     }
 
     .wod-planner__template-picker-head {
@@ -802,7 +862,7 @@ html.wod-planner-template-picker-open body {
     padding: 16px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 18px;
-    background: color-mix(in srgb, var(--theme-surface-panel) 82%, white 18%);
+    background: var(--theme-surface-secondary);
 }
 
 .wod-planner__usage-ranking-head {
@@ -829,7 +889,7 @@ html.wod-planner-template-picker-open body {
     padding: 12px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
     border-radius: 14px;
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 76%, white 24%);
+    background: var(--theme-surface-strong);
 }
 
 .wod-planner__usage-card-actions {
@@ -851,7 +911,7 @@ html.wod-planner-template-picker-open body {
     padding: 6px 12px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 80%, white 20%);
+    background: var(--theme-surface-strong);
     color: var(--theme-text-primary);
     font-size: 0.86rem;
     font-weight: 600;
@@ -862,7 +922,7 @@ html.wod-planner-template-picker-open body {
 .wod-planner__usage-card-link:hover,
 .wod-planner__usage-card-link:focus-visible {
     border-color: color-mix(in srgb, var(--theme-accent-support) 28%, var(--theme-border-soft) 72%);
-    background: color-mix(in srgb, var(--theme-surface-strong) 72%, white 28%);
+    background: var(--theme-surface-strong);
     color: var(--theme-text-primary);
     outline: none;
 }
@@ -881,7 +941,7 @@ html.wod-planner-template-picker-open body {
     border-radius: 18px;
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--theme-accent-support) 12%, transparent), transparent 34%),
-        color-mix(in srgb, var(--theme-surface-panel) 84%, white 16%);
+        var(--theme-surface-secondary);
 }
 
 .wod-planner__funnel-head {
@@ -918,7 +978,7 @@ html.wod-planner-template-picker-open body {
     padding: 12px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 78%, transparent);
     border-radius: 14px;
-    background: color-mix(in srgb, var(--theme-surface-panel-strong) 80%, white 20%);
+    background: var(--theme-surface-strong);
 }
 
 .wod-planner__funnel-ranking-card p,
@@ -929,13 +989,31 @@ html.wod-planner-template-picker-open body {
 /* ── Confirm dialog (Clear Week) ─────────────────────────────────────────── */
 
 .wod-planner__confirm-dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
     width: min(440px, calc(100vw - 32px));
     padding: 24px;
     border: 1px solid color-mix(in srgb, var(--theme-border-soft) 82%, transparent);
     border-radius: 22px;
     box-shadow: var(--theme-shadow-xl);
-    background: color-mix(in srgb, var(--theme-surface-panel) 96%, white 4%);
+    background: var(--theme-surface-secondary);
     color: var(--theme-text-primary);
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+}
+
+@media (max-width: 640px) {
+    .wod-planner__confirm-dialog {
+        inset: auto 0 0;
+        margin: 0;
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - env(safe-area-inset-top) - 0.75rem);
+        border-radius: 20px 20px 0 0;
+        border-bottom: 0;
+        padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
 }
 
 .wod-planner__confirm-dialog::backdrop {

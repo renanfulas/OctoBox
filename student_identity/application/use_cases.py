@@ -115,6 +115,17 @@ class AuthenticateStudentWithProvider:
         if existing_identity is not None and existing_identity.box_root_slug != command.box_root_slug:
             return StudentIdentityAuthResult(success=False, identity=None, failure_reason='student-box-mismatch')
 
+        # Convite sem invited_email (ex.: imported_lead_invite) e "quem tem o link entra": nao ha
+        # e-mail pra validar. Entao ele so vale UMA vez — se o aluno ja foi reivindicado por
+        # outra conta (convite aceito ou identidade viva), uma segunda conta Google com o mesmo
+        # link nao pode sobrescrever o login dele (save_identity troca o provider_subject).
+        if (
+            invitation is not None
+            and not (invitation.invited_email or '').strip()
+            and (invitation.accepted_at is not None or existing_identity is not None)
+        ):
+            return StudentIdentityAuthResult(success=False, identity=None, failure_reason='invite-already-claimed')
+
         try:
             saved = self.repository.save_identity(
                 student=student,

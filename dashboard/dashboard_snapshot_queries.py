@@ -448,7 +448,7 @@ def _build_dashboard_snapshot_raw(*, today, month_start, role_slug=''):
     current_time = timezone.localtime()
     upcoming_session_objects = list(
         ClassSession.objects.filter(scheduled_at__date__gte=today)
-        .select_related('coach')
+        .select_related('coach', 'workout_program')
         .annotate(occupied_slots=Count('attendances'))
         .order_by('scheduled_at')[:5]
     )

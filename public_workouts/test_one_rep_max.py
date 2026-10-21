@@ -15,7 +15,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutLoadLogSetRole
 from public_workouts.one_rep_max import (
     MAX_EFFECTIVE_REPS,
     detect_one_rep_max_trend,
@@ -97,7 +97,14 @@ def _make_account(email='atleta@example.com') -> PublicWorkoutAccount:
     return PublicWorkoutAccount.objects.create(email=email)
 
 
-def _log(account, *, movement_slug, weight_kg, reps, performed_on, rir=Decimal('0')):
+def _log(account, *, movement_slug, weight_kg, reps, performed_on, rir=Decimal('0'), set_role=PublicWorkoutLoadLogSetRole.TOP_SET):
+    # set_role=TOP_SET por padrao (plano curva-grafico-hierarquia-e-set-
+    # role.md): estes testes criam a linha direto via ORM, sem passar por
+    # record_load (cujo default de FUNCAO nao se aplica aqui) -- sem um
+    # valor explicito, set_role fica None e _weekly_best_estimates (que
+    # agora filtra set_role__in=_CURVE_AND_TREND_ROLES) exclui a linha
+    # inteira, quebrando os testes de tendencia por um motivo que nao tem
+    # nada a ver com o que eles testam.
     return PublicWorkoutLoadLog.objects.create(
         account=account,
         movement_slug=movement_slug,
@@ -105,6 +112,7 @@ def _log(account, *, movement_slug, weight_kg, reps, performed_on, rir=Decimal('
         reps=reps,
         rir=rir,
         performed_on=performed_on,
+        set_role=set_role,
         idempotency_key=f'{movement_slug}-{performed_on.isoformat()}-{weight_kg}',
     )
 
@@ -158,12 +166,30 @@ class EstimateWorkingWeightKgTests(TestCase):
 
 
 class DetectOneRepMaxTrendTests(TestCase):
+
+    def test_warmups_do_not_contaminate_weekly_top_set_estimates(self):
+        account = _make_account()
+        for week_offset in (0, 7, 14):
+            day = date(2026, 1, 5) + timedelta(days=week_offset)
+            _log(account, movement_slug='agachamento-livre', weight_kg=100, reps=5, performed_on=day)
+            _log(
+                account, movement_slug='agachamento-livre', weight_kg=180, reps=5,
+                performed_on=day, set_role=PublicWorkoutLoadLogSetRole.WARMUP,
+            )
+
+        trend = detect_one_rep_max_trend(
+            account_id=account.pk, movement_slug='agachamento-livre', as_of=date(2026, 1, 19),
+        )
+
+        self.assertEqual(trend.label, 'plateau')
+        self.assertEqual(len(trend.weekly_estimates_kg), 3)
+
     def test_insufficient_data_with_fewer_than_three_weeks(self):
         account = _make_account()
         _log(account, movement_slug='agachamento-livre', weight_kg=100, reps=5, performed_on=date(2026, 1, 5))
         _log(account, movement_slug='agachamento-livre', weight_kg=102, reps=5, performed_on=date(2026, 1, 12))
 
-        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre')
+        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre', as_of=date(2026, 1, 19))
 
         self.assertEqual(trend.label, 'insufficient_data')
         self.assertEqual(trend.weekly_estimates_kg, ())
@@ -171,7 +197,7 @@ class DetectOneRepMaxTrendTests(TestCase):
     def test_insufficient_data_when_no_load_logged_at_all(self):
         account = _make_account()
 
-        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre')
+        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre', as_of=date(2026, 1, 19))
 
         self.assertEqual(trend.label, 'insufficient_data')
 
@@ -187,7 +213,7 @@ class DetectOneRepMaxTrendTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre')
+        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre', as_of=date(2026, 1, 19))
 
         self.assertEqual(trend.label, 'plateau')
         self.assertEqual(len(trend.weekly_estimates_kg), 3)
@@ -203,7 +229,7 @@ class DetectOneRepMaxTrendTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre')
+        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre', as_of=date(2026, 1, 19))
 
         self.assertEqual(trend.label, 'improving')
 
@@ -218,7 +244,7 @@ class DetectOneRepMaxTrendTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre')
+        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre', as_of=date(2026, 1, 19))
 
         self.assertEqual(trend.label, 'declining')
 
@@ -237,7 +263,7 @@ class DetectOneRepMaxTrendTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre')
+        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre', as_of=date(2026, 1, 19))
 
         # As tres semanas ficam no mesmo patamar (110) -> plato, nao
         # "melhorando" por causa do set fraco de 90kg na primeira semana.
@@ -252,7 +278,7 @@ class DetectOneRepMaxTrendTests(TestCase):
         _log(account, movement_slug='agachamento-livre', weight_kg=100, reps=5, performed_on=date(2026, 1, 12))
         _log(account, movement_slug='agachamento-livre', weight_kg=100, reps=5, performed_on=date(2026, 1, 19))
 
-        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre')
+        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='agachamento-livre', as_of=date(2026, 1, 19))
 
         self.assertEqual(trend.label, 'insufficient_data')
 
@@ -270,7 +296,7 @@ class DetectOneRepMaxTrendTests(TestCase):
         # janela do slug acima (F-D do plano).
         _log(account, movement_slug='hip-thrust-machine', weight_kg=180, reps=5, performed_on=date(2026, 1, 19))
 
-        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='hip-thrust-barbell')
+        trend = detect_one_rep_max_trend(account_id=account.pk, movement_slug='hip-thrust-barbell', as_of=date(2026, 1, 19))
 
         self.assertEqual(trend.label, 'plateau')
         self.assertTrue(all(value < 150 for value in trend.weekly_estimates_kg))
@@ -287,6 +313,6 @@ class DetectOneRepMaxTrendTests(TestCase):
                 performed_on=date(2026, 1, 5) + timedelta(days=week_offset),
             )
 
-        trend_b = detect_one_rep_max_trend(account_id=account_b.pk, movement_slug='agachamento-livre')
+        trend_b = detect_one_rep_max_trend(account_id=account_b.pk, movement_slug='agachamento-livre', as_of=date(2026, 1, 19))
 
         self.assertEqual(trend_b.label, 'insufficient_data')

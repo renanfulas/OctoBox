@@ -1571,13 +1571,40 @@ bloqueio).
 > logout no corredor (só o cookie de posse do B0 e a sessão de login do
 > B1) — `window.PublicWorkoutLoadTracker.clearOutbox` já está exportada,
 > esperando esse botão nascer.
-> **Fora desta entrega, de propósito** (achado ao comparar `workout.html`
-> renderizado com dado real da `bruno.json` golden contra a página legada):
-> nome de exercício em PT-BR (hoje só `movement_slug` humanizado
-> mecanicamente, ex. "Barbell bench press" em vez de "Supino reto com
-> barra") e legenda de tipo de série (Feeder/Top Set) — os dois exigiriam
-> campo novo em `schema.py`, contrato da Onda S0 que muda só com acordo
-> escrito das duas frentes (D.5). Não decidido unilateralmente aqui.
+> **Correção da nota acima**: nome de exercício em PT-BR NÃO precisava de
+> campo novo em `schema.py` — achado incorreto, corrigido nesta sessão.
+> `PublicWorkoutMovement` (Onda A0, `extract_movements_from_html`) já é um
+> catálogo à parte, chaveado por `movement_slug`, com `label_pt` de
+> verdade extraído das 10 páginas legadas (85 movimentos) + 44 essenciais
+> de CrossFit curados — `publish_program` já garante (via
+> `_ensure_movements_exist`) que todo `movement_slug` publicado tem pelo
+> menos uma entrada aqui. **Entregue nesta sessão**:
+> `services.build_movement_label_lookup(payload)` (1 query em lote) +
+> `resolve_movement_display_name` (templatetag) — `workout.html` agora
+> mostra o nome PT-BR revisado quando existe, senão o mesmo palpite
+> mecânico de sempre. Zero mudança em `schema.py`, zero acordo entre
+> frentes necessário.
+> **Legenda de tipo de série (Preparatória/Feeder/Top Set/Max Set),
+> também entregue**: como v1 pragmático — `reps_spec` já carrega o
+> estágio como texto livre (ex. "2-3× Prep → 1× Feeder → 3× Top (6-8)",
+> um segmento por estágio); o filtro `highlight_set_stages` reconhece o
+> vocabulário fechado (extraído das 10 páginas legadas, `.st-p/.st-f/.st-t/.st-m`)
+> e pinta cada palavra-chave, sem inventar dado novo nem mexer no
+> contrato. Cores oficiais do design system (`--theme-text-muted`/
+> `--theme-accent-warning`/`--brand`/`--theme-accent-danger`), uma legenda
+> só pra página inteira. Formalizar como campo estruturado em `schema.py`
+> fica pra quando a Frente A mexer no parser de qualquer forma — não
+> bloqueia esta entrega.
+> **Aba "Suas Cargas" (nova, pedido do Renan)**: recorde (maior peso já
+> registrado) por movimento, via filtro `personal_record` sobre o mesmo
+> `load_history` que a aba Histórico já usa — sem nova consulta ao banco.
+> **Widget de carga redesenhado**: stepper ±2,5kg, dica clicável de
+> "última vez: X kg" (busca `GET /renan/<slug>/pacote.json` — já existe —
+> e usa `last_load_by_movement`; sem sessão de login, a dica só fica
+> vazia, nunca bloqueia o registro), pulso visual de confirmação ao
+> salvar. Tudo verificado via Playwright contra o payload real do Bruno
+> (nome PT-BR, badges de estágio, stepper, aba nova) — screenshots
+> comparados lado a lado com a página legada antes de push.
 
 ### O que fazer
 1. `workout.html` composto dos primitives do `student_app` — chip, card,
@@ -1609,11 +1636,29 @@ bloqueio).
 - alteração de `templates/student_app/**` ou `static/css/student_app/**` (só leitura)
 
 ### Pronto quando
-1. Os 10 renderizam do banco com golden idêntico.
-2. Aluno A logado abrindo slug de B recebe **404**.
+1. ✅ Os 10 renderizam do banco com golden idêntico. Verificado nesta
+   sessão: `PublicWorkoutPreviewView` (`GET /renan/<slug>/preview`, novo)
+   renderiza `workout.html` contra `PublicWorkoutProgram` de verdade —
+   mesmo gate de posse da rota real, mas rota SEPARADA, não linkada em
+   lugar nenhum, zero risco à rota que o aluno usa hoje. Os 10 programas
+   reais (dado publicado via `migrate_legacy_workouts`, não exemplo)
+   renderizaram sem erro, 208/208 exercícios com nome PT-BR, 0 erro de
+   console — comparação lado a lado (`/renan/<slug>` vs `/renan/<slug>/preview`)
+   feita via Playwright e compartilhada com o Renan.
+2. Aluno A logado abrindo slug de B recebe **404** — já valia pra rota
+   real (item 5, sessão anterior) e agora também pra `/preview`
+   (`test_public_workout_preview_endpoint.py`).
 3. Publicar v2 aparece no celular na próxima abertura com rede (device real).
 4. Registro feito offline sobe sozinho e não duplica.
 5. Nenhum aluno perdeu carga.
+
+> **O que o item 1 acima NÃO prova**: que a rota real (`/renan/<slug>`)
+> já está cortada pra servir `workout.html` — ela continua servindo o
+> template legado, de propósito (itens 3/4/6/7/9 abaixo continuam sem
+> tocar). Também não prova que os 10 programas estão publicados na VPS
+> de produção — só que a migração é determinística e reproduz
+> identicamente no sandbox local. Confirmação de produção fica por
+> conta de quem tem acesso à VPS.
 
 ---
 
@@ -2079,6 +2124,42 @@ bloqueio).
 > Suíte completa (457 testes, `public_workouts` + `student_app`) verde;
 > `manage.py check` sem problemas.
 
+> **Atualização (terceira colisão de nome PT-BR entre duas sessões — desta
+> vez reconciliada por UNIÃO, não por descarte):**
+> Depois das duas rodadas anteriores (legenda de série e widget de carga,
+> ambas resolvidas descartando a versão mais fraca), o main avançou de
+> novo com uma TERCEIRA solução paralela pro mesmo problema de nome PT-BR
+> do exercício — desta vez via `movement.name` aditivo direto no payload
+> (`schema.py`, escrito pelo parser da Frente A) + filtro
+> `movement_display_name`. Diferente das duas rodadas anteriores, as duas
+> soluções resolvem problemas DIFERENTES, não competem: `movement.name` é
+> o dado mais fresco (a versão do payload que o parser já reprocessou),
+> enquanto o catálogo `PublicWorkoutMovement` (`movement_labels`, Onda A0)
+> é a cobertura retroativa dos programas publicados ANTES dessa fatia do
+> parser — os 10 legados de produção, hoje. Unidas num filtro só,
+> `movement_name(movement, movement_labels)`: prioriza `movement.name`,
+> senão cai pro catálogo, senão humaniza o slug. `movement_display_name`
+> (só cobria os 2 primeiros casos) foi removido — nada mais chamava.
+> **Risco de débito técnico anotado, não resolvido nesta sessão**: a
+> chamada do filtro (`movement|movement_name:movement_labels`) exige
+> `movement_labels` no contexto do template — Django levanta
+> `VariableDoesNotExist` (erro 500, não degradação silenciosa) quando o
+> ARGUMENTO de um filtro referencia uma chave ausente do contexto, ao
+> contrário do valor filtrado em si. Hoje as duas views que renderizam
+> `workout.html` (`PublicWorkoutPreviewView` e `PublicWorkoutTemplatePreviewView`,
+> a `/preview-b3` documentada acima) passam essa chave — se uma TERCEIRA
+> view futura esquecer, quebra com 500 em vez de exibir o slug humanizado.
+> Vale um valor padrão centralizado (context processor ou wrapper de view)
+> se aparecer mais uma view renderizando este template.
+> Também achado nesta reconciliação: a queixa do Renan ("não to
+> conseguindo ver no preview", que motivou a criação da `/preview-b3`
+> acima) pode ter sido o gate de posse da MINHA `/preview` — se ele abriu
+> `/renan/<slug>/preview` sem estar "logado" como dono daquele slug
+> (mesmo cookie de sessão do B0 que a rota real exige), a resposta é 404,
+> igual a "não aparece nada". Não confirmado com o Renan ainda — vale
+> perguntar antes de consolidar as duas rotas de preview em uma só.
+> 627 testes verdes (+ os que vieram do main); `manage.py check` sem
+> problemas.
 > **Atualização (parser cobre `.c-card` embutido por dia — franciele/
 > rafael, achado do Renan: "treino da franciele está incompleto... e o
 > cardio não aparece"):**

@@ -18,9 +18,14 @@ PONTOS CRITICOS:
   Django NAO reproduz essa restricao, so mescla cookies sem checar path,
   entao os testes de B1/B2 nunca pegaram isso). `/` e o unico path que
   cobre os dois prefixos sem duplicar o mecanismo de sessao.
+- A rota legado `/renan/<slug>` tambem cria cookie pela posse do link.
+  `identity_verified` so e' marcado apos magic link, Google ou ponte
+  autenticada do aluno de box; push nunca usa o cookie legado como login.
 """
 
 from __future__ import annotations
+
+import time
 
 from django.conf import settings
 from django.core import signing
@@ -28,14 +33,22 @@ from django.core import signing
 PUBLIC_WORKOUT_SESSION_SALT = 'student_identity.public_workout_session'
 PUBLIC_WORKOUT_SESSION_COOKIE_NAME = 'octobox_treinos_session'
 PUBLIC_WORKOUT_SESSION_PATH = '/'
+# A validade conta da assinatura, não do último uso: sem reemitir, quem treina
+# toda semana caía no login a cada PUBLIC_WORKOUT_SESSION_COOKIE_AGE.
+PUBLIC_WORKOUT_SESSION_RENEW_AFTER_SECONDS = 7 * 24 * 60 * 60
 
 
 def get_public_workout_session_max_age() -> int:
     return int(getattr(settings, 'PUBLIC_WORKOUT_SESSION_COOKIE_AGE', 2592000))
 
 
-def build_public_workout_session_value(*, account_id: int) -> str:
-    return signing.dumps({'account_id': int(account_id)}, salt=PUBLIC_WORKOUT_SESSION_SALT, compress=True)
+def build_public_workout_session_value(*, account_id: int, identity_verified: bool = False) -> str:
+    # A ponte por posse do link legado também emite este cookie. Só os fluxos
+    # de autenticação explícita podem marcar a identidade como verificada.
+    return signing.dumps(
+        {'account_id': int(account_id), 'identity_verified': identity_verified},
+        salt=PUBLIC_WORKOUT_SESSION_SALT, compress=True,
+    )
 
 
 def read_public_workout_session_value(raw_value: str | None) -> dict | None:
@@ -51,10 +64,10 @@ def read_public_workout_session_value(raw_value: str | None) -> dict | None:
         return None
 
 
-def attach_public_workout_session_cookie(response, *, account_id: int):
+def attach_public_workout_session_cookie(response, *, account_id: int, identity_verified: bool = False):
     response.set_cookie(
         PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
-        build_public_workout_session_value(account_id=account_id),
+        build_public_workout_session_value(account_id=account_id, identity_verified=identity_verified),
         max_age=get_public_workout_session_max_age(),
         httponly=True,
         secure=bool(getattr(settings, 'SESSION_COOKIE_SECURE', False)),
@@ -62,6 +75,30 @@ def attach_public_workout_session_cookie(response, *, account_id: int):
         path=PUBLIC_WORKOUT_SESSION_PATH,
     )
     return response
+
+
+def _signed_at(raw_value: str) -> int | None:
+    # signing.dumps grava `payload:timestamp:assinatura`, timestamp em base62.
+    try:
+        _payload, timestamp, _signature = raw_value.rsplit(':', 2)
+        return signing.b62_decode(timestamp)
+    except (AttributeError, ValueError):
+        return None
+
+
+def renew_public_workout_session_cookie_if_stale(request, response):
+    """Reemite o cookie válido assinado há mais de 7 dias, com a mesma conta e
+    a mesma marca `identity_verified` — renovar nunca promove a identidade."""
+    raw_value = request.COOKIES.get(PUBLIC_WORKOUT_SESSION_COOKIE_NAME)
+    data = read_public_workout_session_value(raw_value)
+    if not data or data.get('account_id') is None:
+        return response
+    signed_at = _signed_at(raw_value)
+    if signed_at is None or time.time() - signed_at < PUBLIC_WORKOUT_SESSION_RENEW_AFTER_SECONDS:
+        return response
+    return attach_public_workout_session_cookie(
+        response, account_id=data['account_id'], identity_verified=data.get('identity_verified') is True,
+    )
 
 
 def clear_public_workout_session_cookie(response):
@@ -78,6 +115,15 @@ def get_public_workout_account_id_from_request(request) -> int | None:
     raw_value = request.COOKIES.get(PUBLIC_WORKOUT_SESSION_COOKIE_NAME)
     data = read_public_workout_session_value(raw_value)
     if not data:
+        return None
+    account_id = data.get('account_id')
+    return int(account_id) if account_id is not None else None
+
+
+def get_verified_public_workout_account_id_from_request(request) -> int | None:
+    """Identidade confirmada por login; a posse do link legado não basta para push."""
+    data = read_public_workout_session_value(request.COOKIES.get(PUBLIC_WORKOUT_SESSION_COOKIE_NAME))
+    if not data or data.get('identity_verified') is not True:
         return None
     account_id = data.get('account_id')
     return int(account_id) if account_id is not None else None

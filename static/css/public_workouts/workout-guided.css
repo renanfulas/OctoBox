@@ -1,0 +1,100 @@
+/* Lançador do treino guiado (começar / voltar ao treino) e aviso de conflito da fila.
+   A execução vive no modo foco: workout-guided-focus.css. É o hero do Treino:
+   mesmo fundo e mesmo contorno de neon fraco do hero da Início. */
+.workout-guided {
+  padding: clamp(1.15rem, 3vw, 1.7rem);
+  margin: 0;
+  border: 1px solid var(--curva-hero-edge);
+  border-radius: 24px;
+  background: var(--curva-hero-surface);
+  color: var(--theme-text-primary);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, .2);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-guided {
+  box-shadow: var(--curva-hero-glow), 0 18px 38px rgba(0, 0, 0, .26);
+}
+
+.workout-guided__intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.workout-guided__copy { display: grid; gap: .35rem; min-width: 0; }
+
+.workout-guided__title {
+  margin: 0;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  line-height: 1.15;
+  letter-spacing: -.02em;
+}
+
+.workout-guided__text,
+.workout-guided__meta,
+.workout-guided__status {
+  margin: 0;
+  color: var(--theme-text-secondary);
+  line-height: 1.45;
+}
+
+.workout-guided__meta { color: var(--theme-text-primary); font-weight: 700; font-variant-numeric: tabular-nums; }
+.workout-guided__status:empty { display: none; }
+.workout-guided__status { font-size: .9rem; }
+
+.workout-guided button {
+  min-height: 48px;
+  padding: .7rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #071b22;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.workout-guided__cta {
+  flex: 0 0 auto;
+  min-height: 52px;
+  font-size: 1rem;
+  transition: transform .12s ease;
+}
+
+.workout-guided__cta:active { transform: scale(.97); }
+.workout-guided button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-guided__cta {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--curva-neon-core) 60%, transparent),
+    0 0 1px var(--curva-neon),
+    0 0 12px color-mix(in srgb, var(--curva-neon) 38%, transparent),
+    0 0 32px color-mix(in srgb, var(--curva-neon) 16%, transparent);
+}
+
+.workout-guided button:disabled { cursor: wait; opacity: .6; }
+
+.workout-guided__conflict {
+  display: grid;
+  gap: .85rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, #d87939 65%, var(--theme-text-muted));
+  border-radius: 16px;
+  background: var(--theme-surface-strong);
+}
+
+.workout-guided__conflict p { margin: 0; color: var(--theme-text-secondary); }
+.workout-guided__conflict > button { justify-self: start; }
+.workout-guided [hidden] { display: none; }
+
+@media (max-width: 560px) {
+  .workout-guided__intro { align-items: stretch; flex-direction: column; }
+  .workout-guided__cta,
+  .workout-guided__conflict > button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workout-guided__cta { transition: none; }
+}

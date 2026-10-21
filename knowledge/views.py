@@ -31,7 +31,9 @@ from .models import KnowledgeChunk, KnowledgeChunkEmbedding, KnowledgeDocument
 from .retrieval import search_project_knowledge
 
 
-class ProjectKnowledgeHealthView(View):
+class ProjectKnowledgeHealthView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV)
+
     def get(self, request, *args, **kwargs):
         active_documents = KnowledgeDocument.objects.filter(is_active=True)
         active_chunks = KnowledgeChunk.objects.filter(document__is_active=True)
@@ -47,7 +49,9 @@ class ProjectKnowledgeHealthView(View):
         )
 
 
-class ProjectKnowledgeSearchView(LoginRequiredMixin, View):
+class ProjectKnowledgeSearchView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV)
+
     def get(self, request, *args, **kwargs):
         question = request.GET.get('q', '').strip()
         limit = _safe_limit(request.GET.get('limit'))
@@ -74,7 +78,9 @@ class ProjectKnowledgeSearchView(LoginRequiredMixin, View):
         )
 
 
-class ProjectKnowledgeAnswerView(LoginRequiredMixin, View):
+class ProjectKnowledgeAnswerView(LoginRequiredMixin, RoleRequiredMixin, View):
+    allowed_roles = (ROLE_OWNER, ROLE_DEV)
+
     def post(self, request, *args, **kwargs):
         payload = _read_json(request)
         question = str(payload.get('question', '')).strip()

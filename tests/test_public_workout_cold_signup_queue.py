@@ -15,9 +15,20 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from integrations.stripe.models import PaymentWebhookEvent
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus, PublicWorkoutTier
+from public_workouts.models import (
+    PublicWorkoutAccount,
+    PublicWorkoutCheckoutLead,
+    PublicWorkoutProfessional,
+    PublicWorkoutProfessionalRole,
+    PublicWorkoutSubscription,
+    PublicWorkoutSubscriptionStatus,
+    PublicWorkoutTier,
+    PublicWorkoutWaitlistEntry,
+    PublicWorkoutWaitlistStatus,
+)
 from public_workouts.stripe_handlers import route_public_workout_stripe_event
 
 
@@ -28,53 +39,148 @@ def _fila_de_ativacao():
 
 
 class ColdSignupToActivationQueueTests(TestCase):
+    def test_failed_invoice_does_not_create_student_account(self):
+        lead = PublicWorkoutCheckoutLead.objects.create(
+            email='falha-primeira-fatura@example.com', tier=PublicWorkoutTier.ESSENCIAL,
+        )
+        event = PaymentWebhookEvent.objects.create(
+            event_id='evt_first_invoice_failed', event_type='invoice.payment_failed',
+            payload={'id': 'evt_first_invoice_failed', 'type': 'invoice.payment_failed',
+                     'data': {'object': {
+                         'id': 'in_failed', 'subscription': 'sub_failed',
+                         'subscription_details': {'metadata': {
+                             'product': 'coaching', 'public_workout_checkout_lead_id': str(lead.pk),
+                             'tier': PublicWorkoutTier.ESSENCIAL,
+                         }},
+                     }}},
+        )
+
+        route_public_workout_stripe_event(event)
+
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email=lead.email).exists())
+        self.assertFalse(PublicWorkoutSubscription.objects.exists())
+
+    @override_settings(PUBLIC_WORKOUT_CAPACITY_MODE='enforce')
+    def test_enforce_without_configured_capacity_joins_waitlist_without_account_or_checkout(self):
+        with patch('stripe.checkout.Session.create') as mock_create:
+            response = self.client.post(
+                reverse('public-workout-cold-signup'),
+                {'email': 'fila@example.com', 'tier': PublicWorkoutTier.ESSENCIAL, 'accept_contract': '1'},
+            )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertTrue(response.json()['waitlisted'])
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email='fila@example.com').exists())
+        self.assertTrue(PublicWorkoutWaitlistEntry.objects.filter(email='fila@example.com').exists())
+        mock_create.assert_not_called()
+
+    @override_settings(PUBLIC_WORKOUT_CAPACITY_MODE='enforce')
+    def test_configured_capacity_allows_checkout(self):
+        PublicWorkoutProfessional.objects.create(
+            name='Treinador', role=PublicWorkoutProfessionalRole.TREINO,
+            registration_council='CREF', registration_number='1',
+            weekly_capacity_minutes=1000,
+        )
+        with self.settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_essencial', STRIPE_SECRET_KEY='sk_test_x'):
+            with patch('stripe.checkout.Session.create') as mock_create:
+                mock_create.return_value = MagicMock(id='cs_capacity', url='https://checkout.stripe.com/pay/capacity')
+                response = self.client.post(
+                    reverse('public-workout-cold-signup'),
+                    {'email': 'vaga@example.com', 'tier': PublicWorkoutTier.ESSENCIAL, 'accept_contract': '1'},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('checkout_url', response.json())
+
+    @override_settings(
+        PUBLIC_WORKOUT_CAPACITY_MODE='enforce',
+        PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_essencial',
+        STRIPE_SECRET_KEY='sk_test_x',
+    )
+    def test_valid_waitlist_invitation_reserves_checkout_even_when_capacity_is_full(self):
+        entry = PublicWorkoutWaitlistEntry.objects.create(
+            email='convidado@example.com', tier=PublicWorkoutTier.ESSENCIAL,
+            status=PublicWorkoutWaitlistStatus.INVITED,
+            invited_at=timezone.now(), expires_at=timezone.now() + timezone.timedelta(days=3),
+        )
+        with patch('stripe.checkout.Session.create') as mock_create:
+            mock_create.return_value = MagicMock(id='cs_invited', url='https://checkout.stripe.com/pay/invited')
+            response = self.client.post(reverse('public-workout-cold-signup'), {
+                'email': entry.email, 'tier': entry.tier, 'accept_contract': '1',
+                'invite_token': str(entry.invite_token),
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('checkout_url', response.json())
+
+    @override_settings(PUBLIC_WORKOUT_CAPACITY_MODE='enforce')
+    def test_expired_invitation_does_not_bypass_capacity(self):
+        entry = PublicWorkoutWaitlistEntry.objects.create(
+            email='expirado@example.com', tier=PublicWorkoutTier.ESSENCIAL,
+            status=PublicWorkoutWaitlistStatus.INVITED,
+            invited_at=timezone.now() - timezone.timedelta(days=4),
+            expires_at=timezone.now() - timezone.timedelta(days=1),
+        )
+        response = self.client.post(reverse('public-workout-cold-signup'), {
+            'email': entry.email, 'tier': entry.tier, 'accept_contract': '1',
+            'invite_token': str(entry.invite_token),
+        })
+
+        self.assertEqual(response.status_code, 202)
+        entry.refresh_from_db()
+        self.assertEqual(entry.status, PublicWorkoutWaitlistStatus.EXPIRED)
     @override_settings(
         PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_essencial', STRIPE_SECRET_KEY='sk_test_x'
     )
     def test_full_lifecycle_from_cold_signup_to_queue_to_slug_assignment(self):
         with patch('stripe.checkout.Session.create') as mock_create:
-            mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_cold')
+            mock_create.return_value = MagicMock(id='cs_test_cold', url='https://checkout.stripe.com/pay/cs_test_cold')
             response = self.client.post(
                 reverse('public-workout-cold-signup'),
-                {'email': 'desconhecido@example.com', 'tier': PublicWorkoutTier.ESSENCIAL},
+                {'email': 'desconhecido@example.com', 'tier': PublicWorkoutTier.ESSENCIAL, 'accept_contract': '1'},
             )
         self.assertEqual(response.status_code, 200)
 
-        account = PublicWorkoutAccount.objects.get(email='desconhecido@example.com')
-        subscription = account.subscription
-        self.assertEqual(subscription.status, PublicWorkoutSubscriptionStatus.PENDING_PAYMENT)
-        self.assertIsNone(subscription.plan_slug)
-        self.assertNotIn(subscription.pk, _fila_de_ativacao().values_list('pk', flat=True))
+        lead = PublicWorkoutCheckoutLead.objects.get(email='desconhecido@example.com')
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email=lead.email).exists())
+        self.assertIsNone(lead.account_id)
+        self.assertFalse(PublicWorkoutSubscription.objects.exists())
 
-        # Checkout abandonado (nunca completou) nao pode aparecer na fila —
-        # continua PENDING_PAYMENT, invisivel pra Renan/esposa (RT7).
-        self.assertNotIn(subscription.pk, _fila_de_ativacao().values_list('pk', flat=True))
-
-        # Stripe confirma o pagamento — webhook checkout.session.completed
-        # com o Price ID real batendo o tier da metadata (D.3).
+        # Nenhuma conta/assinatura existe enquanto o checkout está aberto.
+        # O webhook de sessão apenas guarda os IDs, não concede acesso.
         event = PaymentWebhookEvent.objects.create(
             event_id='evt_cold_signup',
             event_type='checkout.session.completed',
             payload={
-                'id': 'evt_cold_signup',
-                'type': 'checkout.session.completed',
-                'data': {
-                    'object': {
-                        'metadata': {
-                            'product': 'coaching',
-                            'public_workout_subscription_id': str(subscription.pk),
-                            'tier': PublicWorkoutTier.ESSENCIAL,
-                        },
-                        'customer': 'cus_cold_1',
-                        'subscription': 'sub_cold_1',
-                    }
-                },
+                'id': 'evt_cold_signup', 'type': 'checkout.session.completed',
+                'data': {'object': {
+                    'metadata': {'product': 'coaching', 'public_workout_checkout_lead_id': str(lead.pk),
+                                 'tier': PublicWorkoutTier.ESSENCIAL},
+                    'customer': 'cus_cold_1', 'subscription': 'sub_cold_1',
+                }},
             },
         )
-        with patch('stripe.Subscription.retrieve', return_value={'items': {'data': [{'price': {'id': 'price_essencial'}}]}}):
-            route_public_workout_stripe_event(event)
+        route_public_workout_stripe_event(event)
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email=lead.email).exists())
 
-        subscription.refresh_from_db()
+        # invoice.payment_succeeded confirma pagamento, cria conta e ativa.
+        paid_event = PaymentWebhookEvent.objects.create(
+            event_id='evt_cold_signup_paid', event_type='invoice.payment_succeeded',
+            payload={'id': 'evt_cold_signup_paid', 'type': 'invoice.payment_succeeded',
+                     'data': {'object': {
+                         'id': 'in_cold_1', 'subscription': 'sub_cold_1', 'customer': 'cus_cold_1',
+                         'amount_paid': 9700, 'period_start': 1789862400,
+                         'subscription_details': {'subscription': 'sub_cold_1', 'metadata': {
+                             'product': 'coaching', 'public_workout_checkout_lead_id': str(lead.pk),
+                             'tier': PublicWorkoutTier.ESSENCIAL,
+                         }},
+                         'lines': {'data': [{'price': {'id': 'price_essencial'}}]},
+                     }}}
+        )
+        route_public_workout_stripe_event(paid_event)
+
+        account = PublicWorkoutAccount.objects.get(email='desconhecido@example.com')
+        subscription = account.subscription
         self.assertEqual(subscription.status, PublicWorkoutSubscriptionStatus.ACTIVE)
         self.assertIsNone(subscription.plan_slug)
         # So agora, pago de verdade e ainda sem slug, aparece na fila (D.2).

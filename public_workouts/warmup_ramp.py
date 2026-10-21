@@ -57,6 +57,21 @@ def _round_to_nearest_load(value: float) -> float:
     return round(value / _LOAD_ROUNDING_KG) * _LOAD_ROUNDING_KG
 
 
+def stage_ramp_factors(*, stage: str, set_count: int) -> list[float]:
+    """Frações da Top para o guia recalcular uma sugestão escolhida no aparelho."""
+    set_count = max(1, set_count)
+    if stage in ('top', 'max'):
+        return [1.0] * set_count
+    pct_range = _STAGE_PCT_RANGES.get(stage)
+    if pct_range is None:
+        return []
+    low, high = pct_range
+    return [
+        (low + high) / 2 if set_count == 1 else low + (high - low) * index / (set_count - 1)
+        for index in range(set_count)
+    ]
+
+
 def extract_leading_set_count(segment: str) -> int:
     """'2-3× Prep' -> 2 (média arredondada da faixa). '1× Feeder' -> 1.
     Sem prefixo "N×" reconhecível -> 1 (nunca 0)."""
@@ -79,21 +94,13 @@ def stage_ramp_kg(*, stage: str, set_count: int, top_weight_kg: float) -> list[f
     if not top_weight_kg:
         return []
 
-    set_count = max(1, set_count)
+    # O histórico persiste kg como Decimal; a interpolação usa percentuais float.
+    top_weight_kg = float(top_weight_kg)
 
+    factors = stage_ramp_factors(stage=stage, set_count=set_count)
     if stage in ('top', 'max'):
-        return [top_weight_kg] * set_count
-
-    pct_range = _STAGE_PCT_RANGES.get(stage)
-    if pct_range is None:
-        return []
-
-    low, high = pct_range
-    weights = []
-    for index in range(set_count):
-        pct = (low + high) / 2 if set_count == 1 else low + (high - low) * index / (set_count - 1)
-        weights.append(_round_to_nearest_load(pct * top_weight_kg))
-    return weights
+        return [top_weight_kg] * len(factors)
+    return [_round_to_nearest_load(factor * top_weight_kg) for factor in factors]
 
 
-__all__ = ['extract_leading_set_count', 'stage_ramp_kg']
+__all__ = ['extract_leading_set_count', 'stage_ramp_factors', 'stage_ramp_kg']

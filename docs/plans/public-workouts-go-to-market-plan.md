@@ -7,6 +7,15 @@
 
 **Status:** rascunho v3 · **Data:** 2026-09-17 · **Dono:** Renan · **Revisão:** 3
 
+> **Status de implementação em 2026-09-21:** checkout a frio, tiers, cobrança
+> imediata com garantia operacional de sete dias, contrato versionado, hub do cliente,
+> anamnese, fila de trabalho, capacidade/waitlist, atribuição de aquisição e snapshots
+> comerciais foram implementados sob feature flags. A escala de mídia continua
+> **bloqueada**. As suítes críticas, E2E do domínio e runner global PostgreSQL estão verdes;
+> ainda faltam as jornadas E2E comerciais finais e os gates operacionais precisam permanecer
+> saudáveis nas janelas reais de observação. Fonte de verdade da aceleração:
+> [public-workouts-aceleracao-operacional-corda.md](public-workouts-aceleracao-operacional-corda.md).
+
 > **O que mudou na Revisão 2:** a esposa do Renan é nutricionista com **CRN ativo** e vai
 > assumir a frente de nutrição — o risco legal do R1 (prescrever dieta sem ser
 > nutricionista) deixa de existir. Isso reabre a oferta "treino + nutrição" desde o

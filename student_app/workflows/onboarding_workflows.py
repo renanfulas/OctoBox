@@ -63,6 +63,10 @@ class OnboardingCompletionResult:
         return self.status == 'ok'
 
 
+class _BoxInviteLinkUnavailable(Exception):
+    """Sem vaga no link do grupo no momento de concluir o cadastro (forca rollback)."""
+
+
 class OnboardingWorkflow:
     def __init__(self, *, identity_repository=None):
         self.identity_repository = identity_repository or DjangoStudentIdentityRepository()
@@ -145,6 +149,19 @@ class OnboardingWorkflow:
                     # Sem repassar aqui, o photo_url capturado no OAuth se perdia.
                     photo_url=pending_onboarding.get('photo_url', ''),
                 )
+                # Vaga do link do grupo consumida so aqui (cadastro concluido), de forma atomica.
+                # Se o link acabou entre o OAuth e agora, o rollback do savepoint desfaz o
+                # Student/identity recem-criados.
+                box_invite_link_id = pending_onboarding.get('box_invite_link_id')
+                if box_invite_link_id and not self.identity_repository.consume_box_invite_slot(box_invite_link_id):
+                    raise _BoxInviteLinkUnavailable()
+        except _BoxInviteLinkUnavailable:
+            return OnboardingCompletionResult(
+                student=None,
+                identity=None,
+                status='invite_link_unavailable',
+                error_message='Este link do grupo não está mais disponível. Peça um link novo ao seu box.',
+            )
         except IdentitySaveConflictError as exc:
             # Onda 3: 'email-conflict' e deterministico e comum (o e-mail do Google/Apple
             # ja tem cadastro ativo neste box) — save_identity checa e levanta ANTES de
@@ -240,7 +257,11 @@ class OnboardingWorkflow:
         student.full_name = cleaned_data['full_name']
         student.phone = cleaned_data['phone']
         student.email = self.get_pending_email(pending_onboarding=pending_onboarding)
-        student.birth_date = cleaned_data.get('birth_date')
+        # O campo e opcional: deixar vazio durante a revisao nao deve apagar
+        # silenciosamente a data que o box ja conhece. Uma correcao explicita
+        # de data continua sendo salva normalmente.
+        if cleaned_data.get('birth_date') is not None:
+            student.birth_date = cleaned_data['birth_date']
         if student.status == StudentStatus.LEAD:
             student.status = StudentStatus.ACTIVE
         student.save()

@@ -1,0 +1,236 @@
+{% comment %}
+Modo foco do treino guiado (docs/plans/curva-treino-guiado-modo-foco-plan.md).
+
+- Marcação renderizada no servidor e oculta; guided-focus.js só alterna telas e
+  preenche texto via textContent (nomes de exercício nunca entram como HTML).
+- Fica fora dos painéis de aba: um <dialog> dentro de ancestral display:none não
+  aparece na top layer.
+- Os atributos data-workout-guided-* preservam os ganchos do e2e do guiado.
+{% endcomment %}
+<dialog class="guided-focus" data-guided-focus data-workout-guided-active aria-label="Treino guiado">
+  <div class="guided-focus__frame">
+
+    <section class="guided-countdown" data-guided-screen="countdown" hidden>
+      <button type="button" class="guided-countdown__button" data-guided-countdown-skip aria-describedby="guided-countdown-hint">
+        <span class="guided-ring guided-ring--countdown" data-guided-ring="countdown">
+          <svg class="guided-ring__svg" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><circle class="guided-ring__track" cx="120" cy="120" r="108"/><circle class="guided-ring__progress" data-ring-progress cx="120" cy="120" r="108"/></svg>
+          <span class="guided-ring__center"><span class="guided-ring__value" data-ring-value aria-hidden="true">3</span></span>
+        </span>
+        <span class="guided-countdown__first"><span class="guided-focus__muted">Primeiro:</span> <span data-guided-first-name></span></span>
+        <span class="guided-countdown__hint" id="guided-countdown-hint" data-guided-countdown-hint>Toque para começar agora</span>
+      </button>
+    </section>
+
+    <header class="guided-focus__top" data-guided-chrome hidden>
+      <button type="button" class="guided-focus__tool" data-guided-minimize>
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>
+        Minimizar
+      </button>
+      <button type="button" class="guided-focus__tool guided-focus__tool--fill" data-guided-open-sheet aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 6h11M9 12h11M9 18h11"/><path class="guided-icon-dot" d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>
+        Ver treino todo
+      </button>
+    </header>
+
+    <div class="guided-focus__progress" data-guided-progress hidden>
+      <div class="guided-focus__progress-row">
+        <span class="guided-focus__progress-label" data-guided-progress-label></span>
+        <button type="button" class="guided-focus__chip" data-guided-rest-chip hidden>Descanso <span data-guided-rest-chip-time></span></button>
+      </div>
+      <div class="guided-focus__segments" data-guided-segments aria-hidden="true"></div>
+    </div>
+
+    <section class="guided-screen" data-guided-screen="exercise" hidden>
+      <div class="guided-screen__body">
+        <div class="guided-exercise__head">
+          <h3 class="guided-exercise__title" data-guided-title tabindex="-1"><a class="guided-exercise__name" data-guided-video target="_blank" rel="noopener"><span data-guided-name></span><svg class="guided-exercise__external" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 16 16 8M10 8h6v6"/></svg></a></h3>
+          <p class="guided-exercise__set" data-guided-set-label></p>
+          <p class="guided-exercise__meta" data-guided-meta></p>
+        </div>
+        <details class="guided-top" data-workout-guided-top-target hidden>
+          <summary><span data-workout-guided-top-summary>Definir carga alvo da Top · opcional</span><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <div class="guided-top__body">
+            <p>Use a carga que pretende tentar na série principal. O guia calcula a preparação e a aproximação; cada carga realizada continua editável.</p>
+            <label class="guided-field__label" for="guided-top-input">Carga alvo da Top</label>
+            <div class="guided-top__row">
+              <span class="guided-top__value"><input id="guided-top-input" class="guided-top__input" data-workout-guided-top-input inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="—"><span class="guided-stepper__unit">kg</span></span>
+              <button type="button" class="guided-cta guided-cta--quiet guided-top__apply" data-workout-guided-top-apply>Aplicar</button>
+            </div>
+          </div>
+        </details>
+        <div class="guided-field" data-guided-weight-field>
+          <label class="guided-field__label" for="guided-weight">Carga</label>
+          <div class="guided-stepper">
+            <button type="button" class="guided-stepper__button" data-guided-step="weight" data-delta="-1" aria-label="Diminuir carga">−</button>
+            <span class="guided-stepper__value"><input id="guided-weight" class="guided-stepper__input" data-workout-guided-weight inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-weight-source"><span class="guided-stepper__unit">kg</span></span>
+            <button type="button" class="guided-stepper__button" data-guided-step="weight" data-delta="1" aria-label="Aumentar carga">+</button>
+          </div>
+          <p class="guided-field__note" id="guided-weight-source"><span data-guided-weight-source></span> <button type="button" class="guided-link guided-link--inline" data-guided-weight-reset hidden></button></p>
+        </div>
+        <p class="guided-field__note" data-guided-no-load hidden>Exercício sem registro de carga</p>
+        <div class="guided-field">
+          <div class="guided-field__label"><label for="guided-reps">Repetições</label><span class="guided-field__hint" data-guided-reps-target></span></div>
+          <div class="guided-stepper">
+            <button type="button" class="guided-stepper__button" data-guided-step="reps" data-delta="-1" aria-label="Uma repetição a menos">−</button>
+            <span class="guided-stepper__value"><input id="guided-reps" class="guided-stepper__input guided-stepper__input--reps" data-workout-guided-reps inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-reps-hint"><span class="guided-stepper__unit">reps</span></span>
+            <button type="button" class="guided-stepper__button" data-guided-step="reps" data-delta="1" aria-label="Uma repetição a mais">+</button>
+          </div>
+          <p class="guided-field__note" id="guided-reps-hint" data-guided-reps-hint></p>
+        </div>
+        <details class="guided-effort" data-guided-effort>
+          <summary><span>Esforço · opcional</span><span class="guided-effort__value" data-guided-effort-value></span><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <div class="guided-effort__body">
+            <p id="guided-effort-question">Quantas repetições ainda conseguiria fazer?</p>
+            <div class="guided-effort__chips" role="group" aria-labelledby="guided-effort-question">
+              <button type="button" class="guided-effort__chip" data-guided-rir="0" aria-pressed="false">0</button>
+              <button type="button" class="guided-effort__chip" data-guided-rir="1" aria-pressed="false">1</button>
+              <button type="button" class="guided-effort__chip" data-guided-rir="2" aria-pressed="false">2</button>
+              <button type="button" class="guided-effort__chip" data-guided-rir="3" aria-pressed="false">3</button>
+              <button type="button" class="guided-effort__chip" data-guided-rir="4" aria-pressed="false">4</button>
+            </div>
+            <button type="button" class="guided-link" data-guided-rir-clear>Não informar</button>
+          </div>
+        </details>
+      </div>
+      <footer class="guided-screen__foot">
+        <p class="guided-screen__error" data-guided-error role="alert" hidden></p>
+        <button type="button" class="guided-cta" data-workout-guided-set>Registrar série</button>
+        <div class="guided-screen__links">
+          <button type="button" class="guided-link" data-workout-guided-skip>Pular série</button>
+          <button type="button" class="guided-link" data-guided-correct-last hidden>Corrigir anterior</button>
+        </div>
+        <p class="guided-screen__sync" data-guided-sync hidden></p>
+      </footer>
+    </section>
+
+    <section class="guided-screen" data-guided-screen="rest" hidden>
+      <div class="guided-screen__body guided-rest">
+        <div class="guided-ring" data-guided-ring="rest" data-workout-guided-timer>
+          <svg class="guided-ring__svg" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><circle class="guided-ring__track" cx="120" cy="120" r="108"/><circle class="guided-ring__progress" data-ring-progress cx="120" cy="120" r="108"/></svg>
+          <span class="guided-ring__center">
+            <span class="guided-sr">Descanso</span>
+            <span class="guided-ring__value" data-ring-value role="timer"></span>
+            <span class="guided-ring__receipt" data-guided-receipt></span>
+            <span class="guided-ring__status" data-guided-receipt-status></span>
+          </span>
+        </div>
+        <div class="guided-next" data-guided-next hidden>
+          <p class="guided-next__name"><span class="guided-focus__muted">A seguir:</span> <span data-guided-next-name></span></p>
+          <p class="guided-next__detail" data-guided-next-detail></p>
+        </div>
+      </div>
+      <footer class="guided-screen__foot">
+        <button type="button" class="guided-cta guided-cta--quiet" data-guided-skip-rest>Pular descanso</button>
+        <div class="guided-screen__links">
+          <button type="button" class="guided-link" data-guided-add-rest>+30 s</button>
+          <button type="button" class="guided-link" data-workout-guided-extra hidden>Fazer outra série livre</button>
+        </div>
+        <p class="guided-screen__sync" data-guided-sync hidden></p>
+      </footer>
+    </section>
+
+    <section class="guided-screen" data-guided-screen="review" hidden>
+      <div class="guided-screen__body">
+        <div class="guided-exercise__head">
+          <h3 class="guided-exercise__title" data-guided-title tabindex="-1"><a class="guided-exercise__name" data-guided-video target="_blank" rel="noopener"><span data-guided-name></span><svg class="guided-exercise__external" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 16 16 8M10 8h6v6"/></svg></a></h3>
+          <p class="guided-review__status" data-guided-review-status></p>
+        </div>
+        <ul class="guided-review__sets" data-guided-review-sets></ul>
+      </div>
+      <footer class="guided-screen__foot">
+        <p class="guided-screen__next" data-guided-review-next hidden></p>
+        <button type="button" class="guided-cta" data-guided-review-continue>Ir para o próximo</button>
+        <div class="guided-screen__links"><button type="button" class="guided-link" data-guided-review-extra hidden></button></div>
+      </footer>
+    </section>
+
+    <section class="guided-screen" data-guided-screen="summary" hidden>
+      <div class="guided-screen__body">
+        <h3 class="guided-summary__title" data-guided-title tabindex="-1"></h3>
+        <dl class="guided-summary__stats">
+          <div class="guided-summary__stat"><dt>duração</dt><dd data-guided-stat="duration"></dd></div>
+          <div class="guided-summary__stat"><dt>séries feitas</dt><dd data-guided-stat="sets"></dd></div>
+          <div class="guided-summary__stat"><dt>exercícios</dt><dd data-guided-stat="movements"></dd></div>
+        </dl>
+        <ul class="guided-summary__list" data-guided-summary-list></ul>
+      </div>
+      <footer class="guided-screen__foot">
+        <button type="button" class="guided-cta" data-workout-guided-finish hidden>Finalizar treino</button>
+        <button type="button" class="guided-cta" data-workout-guided-partial hidden>Encerrar como parcial</button>
+        <div class="guided-screen__links"><button type="button" class="guided-link" data-guided-back hidden>Voltar ao treino</button></div>
+        <p class="guided-screen__sync" data-guided-sync hidden></p>
+      </footer>
+    </section>
+
+    <section class="guided-screen" data-guided-screen="finished" hidden>
+      <div class="guided-screen__body guided-finished">
+        <span class="guided-ring guided-ring--small" data-guided-finished-ring>
+          <svg class="guided-ring__svg" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><circle class="guided-ring__track" cx="120" cy="120" r="108"/><circle class="guided-ring__progress guided-ring__progress--full" cx="120" cy="120" r="108"/></svg>
+          <span class="guided-ring__center"><svg class="guided-finished__check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+        </span>
+        <h3 class="guided-finished__title" data-guided-title tabindex="-1"></h3>
+        <p class="guided-finished__meta" data-guided-finished-meta></p>
+        <p class="guided-screen__sync" data-guided-sync hidden></p>
+      </div>
+      <footer class="guided-screen__foot">
+        <button type="button" class="guided-cta" data-guided-close>Voltar à ficha</button>
+      </footer>
+    </section>
+
+    <div class="guided-sheet" data-guided-sheet="workout" hidden>
+      <div class="guided-sheet__scrim" data-guided-sheet-close></div>
+      <section class="guided-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="guided-sheet-title">
+        <header class="guided-sheet__head">
+          <h3 id="guided-sheet-title" data-guided-sheet-title>Treino de hoje</h3>
+          <button type="button" class="guided-focus__tool guided-focus__tool--fill2" data-guided-sheet-close data-guided-autofocus>Fechar</button>
+          <p data-guided-sheet-summary></p>
+        </header>
+        <ol class="guided-sheet__list" data-guided-sheet-list></ol>
+        <div class="guided-sheet__actions">
+          <button type="button" class="guided-sheet__action" data-guided-open-summary>Ver resumo e encerrar</button>
+          <button type="button" class="guided-sheet__action guided-sheet__action--danger" data-workout-guided-cancel>Cancelar sessão</button>
+          <div class="guided-sheet__switch"><span id="guided-sound-label">Som da contagem</span><button type="button" class="guided-switch" role="switch" aria-checked="true" aria-labelledby="guided-sound-label" data-guided-sound><span></span></button></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="guided-sheet" data-guided-sheet="correction" hidden>
+      <div class="guided-sheet__scrim" data-guided-sheet-close></div>
+      <section class="guided-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="guided-correction-title">
+        <header class="guided-sheet__head">
+          <h3 id="guided-correction-title" data-guided-correction-title>Corrigir série</h3>
+          <button type="button" class="guided-focus__tool guided-focus__tool--fill2" data-guided-sheet-close data-guided-autofocus>Cancelar</button>
+          <p data-guided-correction-name></p>
+        </header>
+        <div class="guided-sheet__body">
+          <div class="guided-field" data-guided-correction-weight-field>
+            <label class="guided-field__label" for="guided-correct-weight">Carga</label>
+            <div class="guided-stepper">
+              <button type="button" class="guided-stepper__button" data-guided-step="correct-weight" data-delta="-1" aria-label="Diminuir carga">−</button>
+              <span class="guided-stepper__value"><input id="guided-correct-weight" class="guided-stepper__input" data-workout-guided-correct-weight inputmode="decimal" autocomplete="off" placeholder="—"><span class="guided-stepper__unit">kg</span></span>
+              <button type="button" class="guided-stepper__button" data-guided-step="correct-weight" data-delta="1" aria-label="Aumentar carga">+</button>
+            </div>
+          </div>
+          <div class="guided-field">
+            <label class="guided-field__label" for="guided-correct-reps">Repetições</label>
+            <div class="guided-stepper">
+              <button type="button" class="guided-stepper__button" data-guided-step="correct-reps" data-delta="-1" aria-label="Uma repetição a menos">−</button>
+              <span class="guided-stepper__value"><input id="guided-correct-reps" class="guided-stepper__input guided-stepper__input--reps" data-workout-guided-correct-reps inputmode="numeric" autocomplete="off" placeholder="—"><span class="guided-stepper__unit">reps</span></span>
+              <button type="button" class="guided-stepper__button" data-guided-step="correct-reps" data-delta="1" aria-label="Uma repetição a mais">+</button>
+            </div>
+          </div>
+          <p class="guided-screen__error" data-guided-correction-error role="alert" hidden></p>
+        </div>
+        <div class="guided-sheet__actions">
+          <button type="button" class="guided-cta" data-workout-guided-correct-save>Salvar correção</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="guided-toast" data-guided-toast role="status" hidden>
+      <span data-guided-toast-text></span>
+      <button type="button" class="guided-toast__action" data-guided-toast-action hidden></button>
+    </div>
+    <p class="guided-sr" data-guided-live aria-live="polite"></p>
+  </div>
+</dialog>

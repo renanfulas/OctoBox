@@ -27,7 +27,7 @@ from django.views.generic import View
 
 from public_workouts.services import build_report
 
-from .public_workout_views import _get_public_workout_entry, get_public_workout_owner_slug
+from .public_workout_access import _get_public_workout_entry, get_public_workout_owner_slug
 
 
 class PublicWorkoutAssessmentsView(View):

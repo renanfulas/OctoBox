@@ -52,9 +52,14 @@ def build_student_onboarding_context(view, **kwargs):
         else 'Revise seus dados para entrar no app'
     )
     context['journey_copy'] = (
-        'Aqui a gente pega os dados essenciais para o seu acesso nascer redondo.'
+        'Confirme seu nome e WhatsApp para ativar o acesso. Data de nascimento e plano são opcionais.'
         if journey == StudentOnboardingJourney.MASS_BOX_INVITE
-        else 'Já puxamos o que o box sabia sobre você. Agora falta só uma revisão curta.'
+        else 'Nome e WhatsApp já vieram do cadastro do box. Confira os dados; data de nascimento e plano são opcionais.'
+    )
+    context['submit_label'] = (
+        'Concluir cadastro'
+        if journey == StudentOnboardingJourney.MASS_BOX_INVITE
+        else 'Confirmar dados e entrar'
     )
     context['oauth_email'] = (
         view.pending_onboarding.get('email')

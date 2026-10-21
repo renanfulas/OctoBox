@@ -23,6 +23,7 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 from .periodization import PHASE_TYPE_KEYS
+from .guided_prescription import validate_guided_prescription
 
 SCHEMA_VERSION = 1
 
@@ -74,6 +75,18 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
     _require(isinstance(movement.get('reps_spec'), str), errors, f'{path}.reps_spec: obrigatorio, string (pode ser vazia)')
     _require(isinstance(movement.get('rir_spec'), str), errors, f'{path}.rir_spec: obrigatorio, string (pode ser vazia)')
     _require(isinstance(movement.get('is_tracked'), bool), errors, f'{path}.is_tracked: obrigatorio, bool')
+
+    if 'guided_prescription' in movement:
+        errors.extend(validate_guided_prescription(
+            movement['guided_prescription'], path=f'{path}.guided_prescription',
+        ))
+
+    allow_load_registration = movement.get('allow_load_registration')
+    _require(
+        allow_load_registration is None or isinstance(allow_load_registration, bool),
+        errors,
+        f'{path}.allow_load_registration: bool ou ausente',
+    )
 
     load_type = movement.get('load_type')
     _require(load_type in LOAD_TYPES, errors, f'{path}.load_type: precisa ser um de {LOAD_TYPES}')
@@ -132,6 +145,14 @@ def _validate_day(day: dict, *, path: str, errors: list[str]) -> None:
 
     _require(isinstance(day.get('day_id'), str) and day['day_id'], errors, f'{path}.day_id: obrigatorio, string nao vazia')
     _require(isinstance(day.get('label'), str) and day['label'], errors, f'{path}.label: obrigatorio, string nao vazia')
+    for field, limit in (('display_title', 40), ('focus_description', 120)):
+        value = day.get(field)
+        if value is not None:
+            _require(
+                isinstance(value, str) and 0 < len(value.strip()) <= limit,
+                errors,
+                f'{path}.{field}: string nao vazia de ate {limit} caracteres',
+            )
 
     blocks = day.get('blocks')
     _require(isinstance(blocks, list) and len(blocks) > 0, errors, f'{path}.blocks: lista nao vazia')

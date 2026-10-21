@@ -1,19 +1,10 @@
 (function () {
   'use strict';
 
-  var WOD_BASE = '/aluno/wod/';
-
   // ── Navegação direta (1 aula no dia) ───────────────────────────
   document.querySelectorAll('[data-wod-href]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       window.location.href = btn.getAttribute('data-wod-href');
-    });
-    // Acessibilidade: Enter/Space
-    btn.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        window.location.href = btn.getAttribute('data-wod-href');
-      }
     });
   });
 
@@ -23,10 +14,12 @@
   if (monthToggle && monthCalendar) {
     monthToggle.addEventListener('click', function () {
       monthCalendar.open = !monthCalendar.open;
-      monthToggle.setAttribute('aria-expanded', monthCalendar.open ? 'true' : 'false');
       if (monthCalendar.open) {
         monthCalendar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
+    });
+    monthCalendar.addEventListener('toggle', function () {
+      monthToggle.setAttribute('aria-expanded', monthCalendar.open ? 'true' : 'false');
     });
   }
 
@@ -38,6 +31,9 @@
 
   if (!picker) return;
 
+  var pickerTrigger = null;
+  var previousBodyOverflow = '';
+
   function openPicker(btn) {
     var dataEl = btn.querySelector('.student-month-day__sessions-data');
     if (!dataEl) return;
@@ -46,7 +42,7 @@
 
     dataEl.querySelectorAll('[data-session-id]').forEach(function (s) {
       var a = document.createElement('a');
-      a.href = WOD_BASE + '?session_id=' + s.dataset.sessionId;
+      a.href = picker.dataset.wodBase + '?session_id=' + encodeURIComponent(s.dataset.sessionId);
       a.className = 'student-month-picker__item';
 
       var timeSpan = document.createElement('span');
@@ -67,6 +63,8 @@
       pickerList.appendChild(a);
     });
 
+    pickerTrigger = btn;
+    previousBodyOverflow = document.body.style.overflow;
     picker.hidden = false;
     document.body.style.overflow = 'hidden';
 
@@ -77,7 +75,9 @@
 
   function closePicker() {
     picker.hidden = true;
-    document.body.style.overflow = '';
+    document.body.style.overflow = previousBodyOverflow;
+    if (pickerTrigger) pickerTrigger.focus();
+    pickerTrigger = null;
   }
 
   document.querySelectorAll('[data-day-picker]').forEach(function (btn) {

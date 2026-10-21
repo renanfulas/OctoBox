@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from freezegun import freeze_time
 
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
@@ -15,8 +16,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
-from finance.models import Enrollment, MembershipPlan
-from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
+from finance.models import Enrollment, EnrollmentStatus, MembershipPlan
+from operations.models import Attendance, AttendanceStatus, ClassSession, ClassType, SessionStatus
+from operations.services.wod_projection import project_plan_to_sessions
 from student_app.application.cache_keys import (
     build_student_agenda_snapshot_cache_key,
     build_student_home_snapshot_cache_key,
@@ -30,6 +32,7 @@ from student_app.models import (
     SessionWorkoutBlock,
     SessionWorkoutMovement,
     SessionWorkoutStatus,
+    MovementLibrary,
     StudentAppActivity,
     StudentAppActivityKind,
     StudentExerciseMax,
@@ -37,6 +40,7 @@ from student_app.models import (
     StudentProfileChangeRequest,
     StudentProfileChangeRequestStatus,
     StudentWorkoutView,
+    WeeklyWodPlan,
     WorkoutBlockKind,
     WorkoutLoadType,
 )
@@ -190,6 +194,13 @@ class StudentAppExperienceTests(TestCase):
     def test_mass_onboarding_creates_student_and_identity(self):
         client = Client()
         link = self._set_mass_onboarding_session(client)
+        plan = MembershipPlan.objects.create(
+            name='Plano mensal de entrada',
+            price=Decimal('159.90'),
+            billing_cycle='monthly',
+            sessions_per_week=3,
+            active=True,
+        )
 
         response = client.post(
             reverse('student-app-onboarding'),
@@ -197,7 +208,7 @@ class StudentAppExperienceTests(TestCase):
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
                 'birth_date': '02/01/2000',
-                'selected_plan': '',
+                'selected_plan': str(plan.pk),
             },
             follow=False,
         )
@@ -207,6 +218,8 @@ class StudentAppExperienceTests(TestCase):
         identity = StudentIdentity.objects.get(provider_subject='provider-subject-new-mass')
         self.assertEqual(identity.email, 'novo@app.com')
         self.assertEqual(identity.student.full_name, 'Novo Aluno App')
+        enrollment = Enrollment.objects.get(student=identity.student, plan=plan)
+        self.assertEqual(enrollment.status, EnrollmentStatus.PENDING)
         membership = StudentBoxMembership.objects.get(identity=identity, box_root_slug=get_box_runtime_slug())
         self.assertEqual(membership.status, StudentBoxMembershipStatus.ACTIVE)
         self.assertTrue(
@@ -274,9 +287,39 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'data-mask="date"', html=False)
         self.assertContains(response, '/static/js/core/forms.js', html=False)
         self.assertContains(response, 'data-min-year="1900"', html=False)
-        self.assertContains(response, 'data-max-year="2026"', html=False)
+        self.assertContains(response, f'data-max-year="{timezone.localdate().year}"', html=False)
         self.assertNotContains(response, '<span>E-mail</span>', html=False)
         self.assertContains(response, 'Seu e-mail será o mesmo validado no OAuth', html=False)
+
+    def test_mass_onboarding_explains_optional_fields_and_primary_action(self):
+        client = Client()
+        self._set_mass_onboarding_session(client)
+
+        response = client.get(reverse('student-app-onboarding'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Concluir cadastro')
+        self.assertContains(response, 'Data de nascimento (opcional)')
+        self.assertContains(response, 'Plano (opcional)')
+
+    def test_mass_onboarding_plan_choice_shows_price_cycle_and_frequency(self):
+        client = Client()
+        self._set_mass_onboarding_session(client)
+        MembershipPlan.objects.create(
+            name='Plano Bronze',
+            price=Decimal('159.90'),
+            billing_cycle='monthly',
+            sessions_per_week=3,
+            active=True,
+        )
+
+        response = client.get(reverse('student-app-onboarding'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Plano Bronze — R$ 159,90 · mensal · 3x por semana')
+        self.assertContains(response, 'matrícula pendente')
+        self.assertContains(response, 'Nenhum pagamento é feito neste passo')
+
 
     def test_mass_onboarding_rejects_invalid_phone_payload(self):
         client = Client()
@@ -300,21 +343,61 @@ class StudentAppExperienceTests(TestCase):
     def test_mass_onboarding_rejects_birth_date_after_max_year(self):
         client = Client()
         self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-birth')
+        future_year = timezone.localdate().year + 1
 
         response = client.post(
             reverse('student-app-onboarding'),
             {
                 'full_name': 'Novo Aluno App',
                 'phone': '5511888888888',
-                'birth_date': '01/01/2027',
+                'birth_date': f'01/01/{future_year}',
                 'selected_plan': '',
             },
             follow=False,
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'O ano da data de nascimento precisa ficar entre 1900 e 2026.')
+        self.assertContains(response, f'O ano da data de nascimento precisa ser no máximo {timezone.localdate().year}.')
         self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-birth').exists())
+
+    def test_mass_onboarding_accepts_minimum_birth_date(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-minimum-birth')
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno Limite',
+                'phone': '5511888888888',
+                'birth_date': '01/01/1900',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        identity = StudentIdentity.objects.get(provider_subject='provider-subject-minimum-birth')
+        self.assertEqual(identity.student.birth_date, date(1900, 1, 1))
+
+    @freeze_time('2026-10-02')
+    def test_mass_onboarding_rejects_birth_date_later_in_the_current_year(self):
+        client = Client()
+        self._set_mass_onboarding_session(client, provider_subject='provider-subject-future-day')
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': 'Novo Aluno App',
+                'phone': '5511888888888',
+                'birth_date': '31/12/2026',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A data de nascimento não pode ser futura.')
+        self.assertFalse(StudentIdentity.objects.filter(provider_subject='provider-subject-future-day').exists())
 
     def test_mass_onboarding_accepts_masked_phone_and_saves_clean_digits(self):
         client = Client()
@@ -415,6 +498,66 @@ class StudentAppExperienceTests(TestCase):
                 metadata__identity_id=identity.id,
             ).exists()
         )
+
+    def test_imported_lead_onboarding_preserves_birth_date_when_optional_field_is_blank(self):
+        client = Client()
+        existing_birth_date = date(1996, 4, 3)
+        student = Student.objects.create(
+            full_name='Lead Importado com Nascimento',
+            phone='5511666699999',
+            email='',
+            birth_date=existing_birth_date,
+            status=StudentStatus.LEAD,
+        )
+        identity = StudentIdentity.objects.create(
+            student_id=student.id,
+            student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            primary_box_root_slug=get_box_runtime_slug(),
+            provider=StudentIdentityProvider.GOOGLE,
+            provider_subject='provider-subject-imported-blank-birth-date',
+            email='lead-birth-date@app.com',
+            status=StudentIdentityStatus.ACTIVE,
+        )
+        StudentBoxMembership.objects.create(
+            identity=identity,
+            student_id=student.id,
+            box_root_slug=get_box_runtime_slug(),
+            status=StudentBoxMembershipStatus.ACTIVE,
+        )
+        invitation = StudentAppInvitation.objects.create(
+            student_id=student.id,
+            student_name=student.full_name,
+            box_root_slug=get_box_runtime_slug(),
+            invited_email='lead-birth-date@app.com',
+            onboarding_journey=StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            expires_at=timezone.now() + timedelta(days=3),
+        )
+        session = client.session
+        session['student_pending_onboarding'] = {
+            'journey': StudentOnboardingJourney.IMPORTED_LEAD_INVITE,
+            'box_root_slug': get_box_runtime_slug(),
+            'student_id': student.id,
+            'identity_id': identity.id,
+            'invitation_id': invitation.id,
+            'email': 'lead-birth-date@app.com',
+        }
+        session.save()
+
+        response = client.post(
+            reverse('student-app-onboarding'),
+            {
+                'full_name': student.full_name,
+                'phone': '5511666699999',
+                'birth_date': '',
+                'selected_plan': '',
+            },
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        student.refresh_from_db()
+        self.assertEqual(student.birth_date, existing_birth_date)
 
     def test_imported_lead_onboarding_persists_google_photo_url_captured_during_oauth(self):
         """Bug irmao do mass onboarding: convite individual de lead importado
@@ -832,6 +975,44 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'class="student-agenda-card"', html=False)
         self.assertContains(response, 'class="student-session-actions"', html=False)
         self.assertContains(response, 'Cancele até 2h antes sem perder crédito.')
+
+    def test_student_can_open_next_month_and_find_published_wod(self):
+        today = timezone.localdate()
+        next_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1)
+        session_date = next_month + timedelta(days=7)
+        session = ClassSession.objects.create(
+            title='Cross do próximo mês',
+            scheduled_at=timezone.make_aware(datetime.combine(session_date, datetime.min.time().replace(hour=10))),
+            status=SessionStatus.SCHEDULED,
+        )
+        SessionWorkout.objects.create(
+            session=session,
+            title='Treino publicado da próxima semana',
+            status=SessionWorkoutStatus.PUBLISHED,
+        )
+
+        month_response = self.client.get(reverse('student-app-grade'), {
+            'month': next_month.strftime('%Y-%m'),
+        })
+        self.assertEqual(month_response.status_code, 200)
+        self.assertEqual(month_response.context['student_visible_month'], next_month)
+        self.assertContains(month_response, 'Próximo mês')
+        self.assertContains(month_response, 'WOD disponível')
+        self.assertContains(month_response, f'?session_id={session.id}')
+
+        day_response = self.client.get(reverse('student-app-grade'), {
+            'month': next_month.strftime('%Y-%m'),
+            'date': session_date.isoformat(),
+        })
+        self.assertEqual(day_response.status_code, 200)
+        self.assertEqual(day_response.context['student_selected_date'], session_date)
+        self.assertContains(day_response, 'Treino publicado da próxima semana')
+
+    def test_invalid_student_month_falls_back_to_current_month(self):
+        response = self.client.get(reverse('student-app-grade'), {'month': 'not-a-month'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['student_visible_month'], timezone.localdate().replace(day=1))
 
     def test_cancel_attendance_sets_booking_as_canceled_until_one_hour_before_class(self):
         session = ClassSession.objects.create(
@@ -1384,6 +1565,19 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Calculadora')
         self.assertContains(response, 'Deadlift')
 
+    def test_student_wod_uses_readable_block_names_without_repeating_rounds(self):
+        session = ClassSession.objects.create(title='WOD de hoje', scheduled_at=timezone.now())
+        workout = SessionWorkout.objects.create(session=session, status=SessionWorkoutStatus.PUBLISHED)
+        SessionWorkoutBlock.objects.create(
+            workout=workout, kind=WorkoutBlockKind.WARMUP, title='warmup',
+            rounds=3, format_spec='3x', sort_order=1,
+        )
+        response = self.client.get(reverse('student-app-wod'), {'session_id': session.pk})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Aquecimento')
+        self.assertNotContains(response, '<h2>warmup</h2>', html=True)
+        self.assertEqual(response.context['student_workout_day'].blocks[0].format_label, '3x')
+
     def test_student_wod_route_renders_published_workout_day(self):
         StudentExerciseMax.objects.create(
             student=self.student,
@@ -1530,6 +1724,121 @@ class StudentAppExperienceTests(TestCase):
         # 4: MovementLibrary IN lookup (E.4 — links de referencia por slug)
         self.assertLessEqual(len(captured_queries), 4)
         self.assertEqual(second_result.primary_recommendation.recommended_load_kg, Decimal('55.00'))
+
+    def test_weekly_projected_workout_uses_rich_student_render_without_smartplan_flag(self):
+        MovementLibrary.objects.create(
+            slug='push-press',
+            label_pt='Push press',
+            reference_url='https://example.test/push-press',
+            demo_video_url='https://video.example.test/push-press',
+        )
+        session = ClassSession.objects.create(
+            title='Cross semanal',
+            scheduled_at=timezone.now() + timedelta(minutes=30),
+            status='open',
+            class_type=ClassType.CROSS,
+        )
+        local_session_date = timezone.localtime(session.scheduled_at).date()
+        week_start = local_session_date - timedelta(days=local_session_date.weekday())
+        weekday = local_session_date.weekday()
+        plan = WeeklyWodPlan.objects.create(
+            week_start=week_start,
+            label='Semana com metadados completos',
+            source_text='21/15/9 For time, 3 rounds, cap 12 min, intervalo 90 s.',
+            status='confirmed',
+            parsed_payload={
+                'source': 'weekly_smart_paste',
+                'days': [{
+                    'weekday': weekday,
+                    'blocks': [{
+                        'kind': 'metcon',
+                        'title': 'WOD',
+                        'notes': '',
+                        'timecap_min': 12,
+                        'rounds': 3,
+                        'interval_seconds': 90,
+                        'score_type': 'for_time',
+                        'format_spec': '21/15/9',
+                        'movements': [{
+                            'movement_slug': 'push_press',
+                            'movement_label_raw': '21/15/9 push press 40/25 kg',
+                            'sets': 3,
+                            'reps_spec': '21/15/9',
+                            'load_spec': '40/25 kg',
+                            'is_scaled_alternative': True,
+                            'notes': 'Carga por categoria.',
+                        }, {
+                            'movement_slug': 'deadlift',
+                            'movement_label_raw': 'Deadlift de 10 a 12 reps a 65% RM',
+                            'sets': 4,
+                            'reps_spec': '10 a 12',
+                            'load_spec': '65% RM',
+                            'is_scaled_alternative': False,
+                            'notes': '',
+                        }],
+                    }, {
+                        'kind': 'skill',
+                        'title': 'EMOM tecnico',
+                        'notes': '',
+                        'rounds': 10,
+                        'interval_seconds': 60,
+                        'score_type': 'emom',
+                        'format_spec': 'EMOM 10 — 1:00 rest',
+                        'movements': [],
+                    }],
+                }],
+            },
+        )
+        actor = get_user_model().objects.create_user(
+            username='weekly-projection-qa',
+            email='weekly-projection-qa@example.com',
+            password=None,
+        )
+        project_plan_to_sessions(
+            weekly_plan=plan,
+            target_week_start=week_start,
+            class_types=[ClassType.CROSS],
+            actor=actor,
+        )
+        workout = SessionWorkout.objects.get(session=session)
+        self.assertEqual(workout.status, SessionWorkoutStatus.PENDING_APPROVAL)
+        workout.status = SessionWorkoutStatus.PUBLISHED
+        workout.save(update_fields=['status', 'updated_at'])
+
+        result = GetStudentWorkoutDay().execute(
+            student=self.student,
+            session_id=session.id,
+            box_root_slug=get_box_runtime_slug(),
+        )
+
+        self.assertFalse(result.is_normalized)
+        self.assertTrue(result.has_structured_content)
+        self.assertEqual(
+            result.blocks[0].format_label,
+            '21/15/9 · For time · 3 rounds · time cap 12 min · intervalo 90 s',
+        )
+        self.assertEqual(result.blocks[0].movements[0].prescription_label, '3 séries · 21/15/9 reps · @ 40/25 kg')
+        self.assertTrue(result.blocks[0].movements[0].is_scaled_alternative)
+        self.assertEqual(result.blocks[0].movements[0].notes, 'Carga por categoria.')
+        self.assertEqual(result.blocks[0].movements[0].reference_url, 'https://example.test/push-press')
+        self.assertEqual(result.blocks[0].movements[0].demo_video_url, 'https://video.example.test/push-press')
+        self.assertEqual(result.blocks[0].movements[1].prescription_label, '4 séries · 10 a 12 reps · @ 65% RM')
+        self.assertEqual(result.blocks[1].format_label, 'EMOM 10 — 1:00 rest · 10 rounds · intervalo 60 s')
+
+        response = self.client.get(
+            reverse('student-app-wod'),
+            {'session_id': session.id},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            '21/15/9 · For time · 3 rounds · time cap 12 min · intervalo 90 s',
+        )
+        self.assertContains(response, '3 séries · 21/15/9 reps · @ 40/25 kg')
+        self.assertContains(response, 'Ver demonstração')
+        self.assertContains(response, 'https://video.example.test/push-press')
+        self.assertContains(response, '4 séries · 10 a 12 reps · @ 65% RM')
+        self.assertContains(response, 'EMOM 10 — 1:00 rest · 10 rounds · intervalo 60 s')
 
     def test_student_dashboard_agenda_snapshot_keeps_attendance_personalized(self):
         cache.clear()
@@ -2123,6 +2432,26 @@ class StudentAppExperienceTests(TestCase):
 
         self.assertRedirects(response, reverse('student-identity-invite', kwargs={'token': token}))
 
+    def test_invite_entry_routes_group_link_to_box_invite_landing(self):
+        token = str(uuid.uuid4())
+        group_url = f'https://app.octoboxfit.com.br/aluno/auth/box-invite/{token}/'
+
+        response = self.client.post(
+            reverse('student-app-enter-invite'),
+            {'invite_token_or_url': group_url},
+        )
+
+        self.assertRedirects(response, reverse('student-identity-box-invite', kwargs={'token': token}))
+
+    def test_switch_box_ignores_external_next_url(self):
+        response = self.client.post(
+            reverse('student-app-switch-box'),
+            {'box_root_slug': get_box_runtime_slug(), 'next': 'https://evil.example.com/phish'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn('evil.example.com', response['Location'])
+
 
 class PublicWorkoutPwaTests(TestCase):
     # NOTA (Entrega 4, corte pra workout.html): esta classe nunca chama
@@ -2190,11 +2519,9 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(payload['scope'], '/renan/')
         self.assertEqual(len(payload['icons']), 3)
 
-    def test_public_workout_service_worker_precaches_only_the_requesting_slug(self):
-        # A4 do CORDA: antes, o SW precacheava TODOS os slugs em qualquer
-        # aparelho — o celular da Giovanna guardava o %gordura do Bruno,
-        # offline. O ALLOWLIST so pode conter o slug que a propria pagina
-        # informou ao registrar (?slug=), nunca os outros.
+    def test_public_workout_service_worker_precaches_static_assets_without_plan_html(self):
+        # O manifest pode variar por slug, mas HTML de aluno nao entra no
+        # Cache Storage. O shell offline retoma a ficha salva no IndexedDB.
         other_slugs = ('bruno', 'milene', 'giovanna', 'thaislima', 'john', 'henrique', 'johnespanha')
 
         sw_response = self.client.get(reverse('public-workout-sw'), {'slug': 'juliana'})
@@ -2205,14 +2532,17 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertEqual(sw_response['Service-Worker-Allowed'], '/renan/')
         self.assertIn('/renan/juliana', sw_content)
         self.assertIn('/renan/juliana/manifest.webmanifest', sw_content)
-        self.assertIn("'/renan/juliana?source=pwa'", sw_content)
+        self.assertNotIn("'/renan/juliana?source=pwa'", sw_content)
+        self.assertNotIn("'/renan/juliana',", sw_content)
         for other_slug in other_slugs:
             self.assertNotIn(f'/renan/{other_slug}', sw_content, f'{other_slug} nao deveria estar no precache da juliana')
         self.assertIn('/renan/offline/', sw_content)
-        self.assertIn('const PAGE_CACHE', sw_content)
-        self.assertIn('normalizedWorkoutPath', sw_content)
+        self.assertNotIn('const PAGE_CACHE', sw_content)
+        self.assertIn('const validCaches = [STATIC_CACHE]', sw_content)
+        self.assertIn('return await caches.match(OFFLINE_URL', sw_content)
         self.assertEqual(offline_response.status_code, 200)
         self.assertContains(offline_response, 'Sem conexão agora.')
+        self.assertContains(offline_response, 'data-offline-open')
 
     def test_public_workout_service_worker_without_slug_precaches_no_plan_pages(self):
         # Registro sem ?slug= (ou slug desconhecido): SW generico, sem
@@ -2411,6 +2741,40 @@ class PublicWorkoutTemplatePreviewViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(DEBUG=True)
+    def test_uses_real_account_photo_and_email_when_session_is_active(self):
+        # Renan: "usar a foto do Google... no avatar" -- unica forma de
+        # conferir isso antes do corte de producao real (rota ainda nao
+        # existe, ver docstring de PublicWorkoutTemplatePreviewView).
+        from public_workouts.models import PublicWorkoutAccount
+        from student_identity.public_workout_session import (
+            PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            build_public_workout_session_value,
+        )
+
+        self._publish()
+        account = PublicWorkoutAccount.objects.create(
+            email='comfoto@example.com', photo_url='https://lh3.googleusercontent.com/a/foto-preview',
+        )
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.id,
+        )
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        content = response.content.decode('utf-8')
+        self.assertIn('https://lh3.googleusercontent.com/a/foto-preview', content)
+        self.assertIn('comfoto@example.com', content)
+
+    @override_settings(DEBUG=True)
+    def test_falls_back_to_plan_name_without_photo_when_no_session(self):
+        self._publish()
+
+        response = self.client.get('/renan/bruno/preview-b3')
+
+        content = response.content.decode('utf-8')
+        self.assertNotIn('googleusercontent', content)
+
 
 class PublicWorkoutDetailViewCutoverTests(TestCase):
     """GET /renan/<slug> — Entrega 4: corte pra workout.html quando o slug
@@ -2438,6 +2802,11 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         content = response.content.decode('utf-8')
         self.assertIn('workout-shell', content)
         self.assertIn('workout-mobile-nav', content)
+        self.assertIn('/renan/bruno/manifest.webmanifest', content)
+        self.assertIn('data-plan-slug="bruno"', content)
+        self.assertRegex(content, r'workout-pwa\.js\?v=[^"\']+')
+        self.assertIn('data-workout-install', content)
+        self.assertRegex(content, r'workout-progress\.css\?v=[^"\']+')
 
     def test_falls_back_to_legacy_when_no_program_published(self):
         # giovanna: nenhum publish_program chamado nesta base de teste —
@@ -2488,6 +2857,124 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
+    def test_week_old_session_is_reissued_keeping_identity_verified(self):
+        # A validade de 30 dias conta da assinatura do cookie: sem reemitir,
+        # quem abre o app toda semana caía no login mesmo assim.
+        import time
+        from unittest.mock import patch
+
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+        from student_identity.public_workout_session import (
+            PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            build_public_workout_session_value,
+            read_public_workout_session_value,
+        )
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='semanal@example.com')
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+        with patch('django.core.signing.time.time', return_value=time.time() - 8 * 24 * 60 * 60):
+            old_value = build_public_workout_session_value(account_id=account.id, identity_verified=True)
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = old_value
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        renewed = response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME].value
+        self.assertNotEqual(renewed, old_value)
+        data = read_public_workout_session_value(renewed)
+        self.assertEqual(data['account_id'], account.id)
+        self.assertIs(data['identity_verified'], True)
+
+    def test_recent_session_is_not_reissued(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+        from student_identity.public_workout_session import (
+            PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
+            build_public_workout_session_value,
+        )
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='recente@example.com')
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.id, identity_verified=True,
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+
+    def test_first_login_autostarts_the_onboarding_wizard(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='novo@example.com')
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'data-onboarding-autostart="true"')
+
+    def test_already_onboarded_account_does_not_autostart_the_wizard(self):
+        from django.utils import timezone
+
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(
+            email='veterana@example.com', onboarding_completed_at=timezone.now(),
+        )
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'data-onboarding-autostart="false"')
+
+    def test_wizard_mentions_only_avaliacao_for_a_tier_without_nutrition(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutTier
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='so-treino@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account, plan_slug='bruno', tier=PublicWorkoutTier.ESSENCIAL,
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertNotContains(response, 'Avaliação &amp; Dieta')
+
+    def test_wizard_mentions_dieta_for_a_tier_with_nutrition(self):
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutTier
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(email='treino-e-dieta@example.com')
+        PublicWorkoutSubscription.objects.create(
+            account=account, plan_slug='bruno', tier=PublicWorkoutTier.COMPLETO,
+        )
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'Avaliação &amp; Dieta')
+
+    def test_replay_onboarding_button_is_present_even_after_completing_it(self):
+        # "Ver tutorial de novo" (aba Perfil) precisa existir pra QUALQUER
+        # conta, nao so' pra quem ainda nao viu o wizard — senao quem ja'
+        # completou nunca consegue reabrir.
+        from django.utils import timezone
+
+        from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+
+        self._publish('bruno')
+        account = PublicWorkoutAccount.objects.create(
+            email='veterana2@example.com', onboarding_completed_at=timezone.now(),
+        )
+        PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'data-ui="replay-onboarding"')
+
 
 class PublicWorkoutAssessmentsEndpointTests(TestCase):
     """GET /renan/<slug>/avaliacoes.json — exige cookie assinado do dono do slug.
@@ -2524,7 +3011,13 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         payload = response.json()
         self.assertEqual(
             payload,
-            {'assessments': [], 'summary': None, 'indicators': None, 'skinfold_self_report_unlocked': False},
+            {
+                'assessments': [],
+                'summary': None,
+                'indicators': None,
+                'skinfold_self_report_unlocked': False,
+                'hero_text': None,
+            },
         )
 
     def test_returns_404_for_unknown_plan_slug(self):

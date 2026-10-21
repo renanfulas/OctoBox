@@ -11,6 +11,15 @@ existente no plano original em vez de inventar um trilho paralelo.
 varredura de código real) · **Data:** 2026-09-17 · **Dono:** Renan (+ esposa,
 frente de nutrição) · **Nível de esforço avaliado:** chief-architect (ver §Contexto)
 
+> **Status de implementação em 2026-09-21:** as Entregas 5/6 estão materializadas no
+> monólito modular, incluindo editor nutricional estruturado, entrega por outbox, hub,
+> tiers e operação. A camada adicional de aceleração (contratos, funil, SLO, capacidade,
+> waitlist, garantia e unit economics) está em
+> [public-workouts-aceleracao-operacional-corda.md](public-workouts-aceleracao-operacional-corda.md).
+> Não considerar “liberado para escala” antes da Fase 8: as suítes PostgreSQL e E2E do
+> domínio e o runner global multi-tenant já possuem evidência verde, mas as jornadas E2E
+> comerciais finais e as janelas reais de capacidade/SLO ainda não fecharam o gate final.
+
 > **Atualização (mesmo dia, pós-Revisão 3 do GTM):** a decisão do §7.6 do GTM mudou de
 > "v1 100% manual, payload livre" para **"nasce estruturada desde o v1"** — o dono do
 > produto decidiu não aceitar o `payload` como blob JSON livre decidido ad-hoc pela

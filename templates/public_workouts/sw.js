@@ -1,13 +1,9 @@
 const VERSION = 'public-workouts-{{ asset_version }}-e{{ cache_epoch }}';
 const STATIC_CACHE = `${VERSION}-static`;
-const PAGE_CACHE = `${VERSION}-pages`;
 const OFFLINE_URL = '{{ offline_url }}';
 const APP_SCOPE = '{{ app_scope }}';
 const ALLOWLIST = [
-{% for slug in plan_slugs %}  '/renan/{{ slug }}',
-  '/renan/{{ slug }}/',
-  '/renan/{{ slug }}?source=pwa',
-  '/renan/{{ slug }}/manifest.webmanifest',
+{% for slug in plan_slugs %}  '/renan/{{ slug }}/manifest.webmanifest',
 {% endfor %}  OFFLINE_URL,
 {% for asset_url in static_asset_urls %}  '{{ asset_url }}',
 {% endfor %}];
@@ -42,17 +38,51 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  // R1 do CORDA: a versao anterior apagava tudo que nao fosse STATIC_CACHE
-  // a cada ativacao — inclusive o PAGE_CACHE vigente, que tem um nome
-  // diferente por construcao (`${VERSION}-pages`). Whitelist dos dois
-  // caches validos desta versao em vez de blacklist de um so.
-  const validCaches = [STATIC_CACHE, PAGE_CACHE];
+  // HTML de aluno não pertence ao cache compartilhado do navegador.
+  const validCaches = [STATIC_CACHE];
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((key) => !validCaches.includes(key)).map((key) => caches.delete(key)))
     )
   );
   self.clients.claim();
+});
+
+// Todo push vira notificação, mesmo com o app à vista: o iOS revoga a
+// inscrição de quem recebe push sem mostrar nada. Quem evita o alerta duplo
+// do fim do descanso é o app, que cancela o aviso antes do envio.
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch (_) {}
+  const options = {
+    body: payload.body || 'Você tem uma atualização do seu treino.',
+    icon: '/static/images/student-app-icon-192.png',
+    badge: '/static/images/student-app-icon-192.png',
+    tag: payload.tag || 'curva-update',
+    data: { url: payload.url || APP_SCOPE, kind: payload.kind || '' },
+  };
+  // Fim do descanso: mesma tag na sessão inteira substitui em vez de empilhar;
+  // renotify faz a substituição alertar de novo. O padrão de vibração só vale
+  // no Android; no iPhone o aviso segue o modo do aparelho (silencioso = vibra).
+  if (payload.renotify === true) options.renotify = true;
+  if (Array.isArray(payload.vibrate)) options.vibrate = payload.vibrate;
+  event.waitUntil(self.registration.showNotification(payload.title || 'Curva', options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  const target = new URL(data.url || APP_SCOPE, self.location.origin);
+  if (target.origin !== self.location.origin) return;
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+    const existing = clients.find((client) => new URL(client.url).origin === target.origin);
+    // Descanso: a página do plano aberta já guarda o treino em andamento;
+    // só traz para a frente, sem recarregar.
+    if (existing && data.kind === 'rest' && new URL(existing.url).pathname === target.pathname) {
+      return existing.focus();
+    }
+    return existing ? existing.navigate(target.href).then(() => existing.focus()) : self.clients.openWindow(target.href);
+  }));
 });
 
 self.addEventListener('fetch', (event) => {
@@ -68,7 +98,11 @@ self.addEventListener('fetch', (event) => {
   // mesmo depois que o cookie de posse autorizar a leitura. Checado antes
   // do branch de 'navigate' de proposito: cobre tambem o caso raro de
   // navegacao direta para a URL do JSON, nao so o fetch() da pagina.
-  if (requestUrl.pathname.startsWith(APP_SCOPE) && requestUrl.pathname.endsWith('.json')) {
+  if (requestUrl.pathname.startsWith(APP_SCOPE) && (
+    requestUrl.pathname.endsWith('.json')
+    || requestUrl.pathname.endsWith('/sessao')
+    || requestUrl.pathname.endsWith('/push')
+  )) {
     return;
   }
 
@@ -78,22 +112,10 @@ self.addEventListener('fetch', (event) => {
     }
     event.respondWith(
       (async () => {
-        const pageCache = await caches.open(PAGE_CACHE);
-        const cacheKey = normalizedWorkoutPath(requestUrl.pathname);
         try {
-          const response = await fetch(request);
-          if (response.ok) {
-            pageCache.put(cacheKey, response.clone());
-          }
-          return response;
+          return await fetch(request);
         } catch (error) {
-          return (
-            await pageCache.match(cacheKey, { ignoreSearch: true })
-            || await pageCache.match(requestUrl.pathname, { ignoreSearch: true })
-            || await caches.match(cacheKey, { ignoreSearch: true })
-            || await caches.match(request, { ignoreSearch: true })
-            || await caches.match(OFFLINE_URL, { ignoreSearch: true })
-          );
+          return await caches.match(OFFLINE_URL, { ignoreSearch: true });
         }
       })()
     );
@@ -105,23 +127,15 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (requestUrl.pathname.startsWith(APP_SCOPE)) {
-    event.respondWith(
-      (async () => {
-        const cacheName = requestUrl.pathname.endsWith('.webmanifest') ? STATIC_CACHE : PAGE_CACHE;
-        const cache = await caches.open(cacheName);
-        const cacheKey = normalizedWorkoutPath(requestUrl.pathname);
-        const cached = await cache.match(cacheKey, { ignoreSearch: true }) || await cache.match(request, { ignoreSearch: true });
-        try {
-          const response = await fetch(request);
-          if (response.ok) {
-            cache.put(cacheKey, response.clone());
-          }
-          return cached || response;
-        } catch (error) {
-          return cached || caches.match(OFFLINE_URL, { ignoreSearch: true });
-        }
-      })()
-    );
+    if (!requestUrl.pathname.endsWith('.webmanifest')) return;
+    event.respondWith(caches.open(STATIC_CACHE).then(async (cache) => {
+      const cached = await cache.match(request);
+      try {
+        const response = await fetch(request);
+        if (response.ok) cache.put(request, response.clone());
+        return cached || response;
+      } catch (error) { return cached || caches.match(OFFLINE_URL); }
+    }));
     return;
   }
 

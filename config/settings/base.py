@@ -80,6 +80,8 @@ def env_list_alias(names, default=''):
     return env_list(names[0], default)
 
 
+
+
 def build_https_trusted_origins(hosts):
     origins = []
     for host in hosts:
@@ -374,6 +376,13 @@ TENANT_APPS = [
     # django.contrib.contenttypes duplicado em TENANT para FK per-tenant funcionar
     'django.contrib.contenttypes',
 
+    # O admin tambem precisa de django_admin_log no schema do tenant. Sem
+    # isso, uma acao feita com search_path=box_xxx resolve o ContentType
+    # local, mas tenta grava-lo no django_admin_log de public, cujo FK aponta
+    # para public.django_content_type. IDs divergentes viram IntegrityError e
+    # a propria publicacao do admin responde 500 no COMMIT.
+    'django.contrib.admin',
+
     # Âncora histórica de TODAS as migrations de domínio
     'boxcore.apps.BoxcoreConfig',
 
@@ -612,15 +621,44 @@ PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_
 PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO', '')
 PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM = env_str('PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM', '')
 PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET = env_str('PUBLIC_WORKOUT_STRIPE_WEBHOOK_SECRET', '')
+# Aceleracao operacional do Curva: rollout seguro e contrato versionado.
+PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED = env_bool('PUBLIC_WORKOUT_FUNNEL_TRACKING_ENABLED', True)
+PUBLIC_WORKOUT_OPERATIONS_ENABLED = env_bool('PUBLIC_WORKOUT_OPERATIONS_ENABLED', False)
+PUBLIC_WORKOUT_CAPACITY_MODE = env_str('PUBLIC_WORKOUT_CAPACITY_MODE', 'observe')
+PUBLIC_WORKOUT_CAPACITY_MAX_UTILIZATION = float(env_str('PUBLIC_WORKOUT_CAPACITY_MAX_UTILIZATION', '0.85'))
+PUBLIC_WORKOUT_GROWTH_MIN_SLO_RATE = float(env_str('PUBLIC_WORKOUT_GROWTH_MIN_SLO_RATE', '0.95'))
+PUBLIC_WORKOUT_GROWTH_MIN_ATTRIBUTION_RATE = float(env_str('PUBLIC_WORKOUT_GROWTH_MIN_ATTRIBUTION_RATE', '0.70'))
+PUBLIC_WORKOUT_OFFER_VERSION = env_str('PUBLIC_WORKOUT_OFFER_VERSION', 'curva-2026-09-v1')
+PUBLIC_WORKOUT_SERVICE_POLICY_VERSION = env_str(
+    'PUBLIC_WORKOUT_SERVICE_POLICY_VERSION', 'curva-service-2026-09-v1'
+)
+PUBLIC_WORKOUT_TERMS_VERSION = env_str('PUBLIC_WORKOUT_TERMS_VERSION', '2026-09-20')
+PUBLIC_WORKOUT_PRIVACY_VERSION = env_str('PUBLIC_WORKOUT_PRIVACY_VERSION', '2026-09-20')
+PUBLIC_WORKOUT_PUBLIC_BASE_URL = env_str('PUBLIC_WORKOUT_PUBLIC_BASE_URL', '')
 # Entrega 4 (corte pra workout.html, docs/plans/public-workouts-produtizacao-corda.md):
 # escape hatch de rollout canario/kill switch. Slug listado aqui continua
 # servindo o template legado por-cliente (bruno.html etc.) mesmo com
 # PublicWorkoutProgram ativo — reverte por env var + restart, sem deploy.
 PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS = frozenset(filter(None, env_str('PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS', '').split(',')))
+# Quem recebe o aviso quando uma assinatura do corredor vira ACTIVE (venda
+# nova ou reativacao apos suspensao/atraso) — ver reactivate_subscription em
+# public_workouts/billing.py e notify_staff_new_subscription em notifications.py.
+PUBLIC_WORKOUT_STAFF_ALERT_EMAILS = env_list(
+    'PUBLIC_WORKOUT_STAFF_ALERT_EMAILS', 'renanfulas@outlook.com,giovannafontesrios@outlook.com'
+)
+# Login proprio da area interna do Curva (public_workouts/staff_auth.py e
+# o cockpit de analytics em student_identity/public_workout_views.py) —
+# NAO e o login de staff do OctoBox (access/, Membership por Box): o
+# corredor de treinos e um produto a parte, sem tenant/box, entao suas
+# duas unicas contas de operacao (Renan, Giovanna) nao passam por
+# auth.User nem pelo sistema de papeis do OctoBox. Credencial mora em
+# PublicWorkoutStaffCredential (banco), gerenciavel pelo Admin — sem
+# variavel de ambiente pra isso.
 STUDENT_OAUTH_PUBLIC_BASE_URL = env_str('STUDENT_OAUTH_PUBLIC_BASE_URL')
 STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY')
 STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY = env_str('STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY')
 STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT = env_str('STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT')
+PUBLIC_WORKOUT_PUSH_ALLOWED_HOSTS = env_str('PUBLIC_WORKOUT_PUSH_ALLOWED_HOSTS', '')
 STUDENT_GOOGLE_OAUTH_CLIENT_ID = env_str('STUDENT_GOOGLE_OAUTH_CLIENT_ID')
 STUDENT_GOOGLE_OAUTH_CLIENT_SECRET = env_str('STUDENT_GOOGLE_OAUTH_CLIENT_SECRET')
 STUDENT_APPLE_OAUTH_CLIENT_ID = env_str('STUDENT_APPLE_OAUTH_CLIENT_ID')
@@ -691,6 +729,10 @@ ALERT_SIREN_HIGH_WEBHOOK_LIMIT_CAP = env_int('ALERT_SIREN_HIGH_WEBHOOK_LIMIT_CAP
 WOD_ACTION_TELEMETRY_ENABLED = env_bool('WOD_ACTION_TELEMETRY_ENABLED', True)
 WOD_ACTION_TELEMETRY_SAMPLE_RATE = env_float('WOD_ACTION_TELEMETRY_SAMPLE_RATE', 1.0)
 WOD_APPROVAL_POLICY = env_str('WOD_APPROVAL_POLICY', 'strict')
+# Kill switch for the structural Smart Paste normalizer. Keep disabled until
+# provider quality, latency/cost and recovery UX pass the staging rollout gate.
+WOD_WEEKLY_NORMALIZER_ENABLED = env_bool('WOD_WEEKLY_NORMALIZER_ENABLED', False)
+WOD_WEEKLY_NORMALIZER_BOXES = env_list('WOD_WEEKLY_NORMALIZER_BOXES')
 
 # 🔒 Segurança Institucional White Hat (Bug Bounty Fixes)
 # Força o browser do cliente a nunca se conectar com HTTP por 1 ano (prevenindo mitm_downgrade)

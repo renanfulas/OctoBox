@@ -15,7 +15,7 @@ PONTOS CRITICOS:
 """
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -206,3 +206,38 @@ class BootstrapRolesCommandTests(TestCase):
         dev_group = Group.objects.get(name=ROLE_DEV)
 
         self.assertTrue(dev_group.permissions.filter(codename='view_studentappinvitation').exists())
+
+    def test_command_recreates_missing_default_permissions(self):
+        Permission.objects.filter(codename='view_auditevent').delete()
+
+        call_command('bootstrap_roles')
+
+        dev_group = Group.objects.get(name=ROLE_DEV)
+        self.assertTrue(dev_group.permissions.filter(codename='view_auditevent').exists())
+
+    def test_command_uses_public_content_types_inside_tenant_context(self):
+        from django.contrib.contenttypes.models import ContentType
+        from django.db import connection
+
+        if connection.vendor != 'postgresql':
+            self.skipTest('Requer PostgreSQL com django-tenants')
+
+        from django_tenants.utils import get_public_schema_name, schema_context
+        from auditing.models import AuditEvent
+
+        self.addCleanup(ContentType.objects.clear_cache)
+        tenant_schema = connection.schema_name
+        self.assertNotEqual(tenant_schema, get_public_schema_name())
+        call_command('bootstrap_roles')
+        self.assertEqual(connection.schema_name, tenant_schema)
+
+        with schema_context(get_public_schema_name()):
+            content_type = ContentType.objects.get_for_model(AuditEvent)
+            permission = Permission.objects.get(codename='view_auditevent', content_type=content_type)
+            self.assertTrue(
+                ContentType.objects.filter(
+                    pk=permission.content_type_id,
+                    app_label=AuditEvent._meta.app_label,
+                    model=AuditEvent._meta.model_name,
+                ).exists()
+            )

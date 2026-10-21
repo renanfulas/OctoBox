@@ -163,6 +163,26 @@ HTML por aluno" descrevem um padrão ANTIGO, descontinuado neste projeto (ver
 essa parte continua valendo — é só a mecânica de entrega (HTML vs. payload)
 que mudou. A fonte de verdade sobre como PUBLICAR é este arquivo.
 
+### Distinção obrigatória entre Curva e OctoBox
+
+Embora os dois aplicativos vivam no mesmo repositório, **Curva e OctoBox são produtos e fluxos separados**. Nunca misture cadastros ou publique conteúdo no aplicativo errado.
+
+- **Curva (`public_workouts`)**: use o fluxo de payload desta skill para programas individuais de musculação, hipertrofia e condicionamento. Não inclua WODs de CrossFit no payload da Curva só porque a pessoa também faz CrossFit.
+- **OctoBox (`operations`, `student_app` e `student_identity`)**: use o fluxo do OctoBox para marcar aulas/modalidades de CrossFit. Se o pedido for apenas marcar dias, registre a modalidade sem inventar ou prescrever um WOD.
+- Quando o pedido envolver os dois, trate cada ação separadamente: musculação na Curva; CrossFit no OctoBox. Confirme que está usando o cadastro da cliente e o box corretos antes de alterar cada aplicativo.
+- Não confunda a grade de aulas do box com a agenda individual da cliente. Para registrar uma agenda individual no OctoBox, confira a identidade/matrícula e as aulas ou horários disponíveis. Não altere a grade geral do box para representar a rotina de uma única pessoa.
+- Se a cliente ainda não tiver cadastro ou identidade no aplicativo de destino, ou se faltarem dados necessários para escolher as aulas, não crie convites, não envie mensagens e não improvise um cadastro: peça os dados de vinculação necessários antes dessa parte. Continue em paralelo com a parte independente do outro aplicativo.
+
+### Lições deste fluxo de prescrição e publicação
+
+- `is_tracked` controla a badge de curadoria; por si só não esconde o registro de carga. Para mobilidade/alongamento que não deve ter registro, use `allow_load_registration: false` no movimento, valide o booleano no schema e confirme na prévia que sumiram botão, formulário e dica de carga. Movimentos sem essa chave mantêm o comportamento atual.
+- `reference_url` pode abrir uma demonstração externa. MuscleWiki é preferido quando tem demonstração adequada; caso contrário, verifique o vídeo exato em fonte de fisioterapia/reabilitação confiável. O link da ficha abre a fonte em outra aba; não o descreva como vídeo incorporado.
+- Publicar com `publish_program` grava no banco configurado pelo processo. Uma publicação em banco local/DEBUG não significa que a ficha está em produção. Identifique explicitamente o ambiente e só confirme produção após consultar a URL e o health check de produção sem cookies.
+- Antes de diagnosticar falhas de teste ou implantar, identifique branch/base e mudanças locais. Isole o patch da tarefa; não inclua nem descarte alterações alheias do worktree. Rode a suíte indicada contra o mesmo commit que será lançado e relate falhas remanescentes com seu teste e mensagem exatos.
+- Em previews com template cacheado, reinicie o servidor local após editar o template antes de validar a página renderizada.
+
+Erros cometidos neste fluxo e prevenção: um rascunho temporário chegou a incluir dias de CrossFit na Curva (foi corrigido antes de publicar); a publicação de desenvolvimento foi descrita sem diferenciar claramente do lançamento em produção; `is_tracked=False` foi inicialmente tratado como se escondesse o botão de carga; e uma prévia reutilizada reteve o template anterior. Para evitar repetição, siga a separação de aplicativos acima, identifique o ambiente em cada status, use a chave explícita de registro e valide uma renderização nova após reiniciar o preview.
+
 ### Passo a passo
 
 1. **Reúna os dados** (pergunte o que faltar, não adivinhe): nome, idade,

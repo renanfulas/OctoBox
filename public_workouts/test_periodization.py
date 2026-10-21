@@ -193,6 +193,17 @@ class SuggestProgressiveLoadKgTests(SimpleTestCase):
 
         self.assertEqual(result, 82.5)
 
+    def test_same_phase_repeats_the_last_weight_without_the_ceiling(self):
+        payload = self._payload()
+        # 100 kg em Volume (semana 2); o teto de Volume seria 72% de 133,3 = 96.
+        log = {'weight_kg': 100.0, 'performed_on': '2026-01-12', 'program_id': 'juliana-2026-q1'}
+
+        result = suggest_progressive_load_kg(
+            payload=payload, current_phase=PHASE_PROFILES['volume'], last_log=log, one_rep_max_kg=133.3,
+        )
+
+        self.assertEqual(result, 100.0)
+
     def test_never_exceeds_one_rep_max_ceiling(self):
         payload = self._payload()
         # log MUITO baixo numa fase de intensidade baixa, mas 1RM baixo tambem --

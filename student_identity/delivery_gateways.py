@@ -47,7 +47,7 @@ class ResendStudentEmailGateway:
             method='POST',
         )
         try:
-            with urlopen(request, timeout=15) as response:
+            with urlopen(request, timeout=15) as response:  # nosec B310 - endpoint fixo https da classe
                 response_payload = json.loads(response.read().decode('utf-8') or '{}')
         except HTTPError as exc:
             detail = exc.read().decode('utf-8', errors='ignore') if hasattr(exc, 'read') else ''

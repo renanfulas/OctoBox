@@ -68,9 +68,10 @@ class PublicWorkoutPackageEndpointTests(TestCase):
         body = response.json()
         self.assertEqual(
             set(body),
-            {'last_load_by_movement', 'one_rep_max_by_movement', 'substitutions', 'access_until'},
+            {'last_load_by_movement', 'last_top_set_by_movement', 'one_rep_max_by_movement', 'substitutions', 'access_until'},
         )
         self.assertEqual(body['last_load_by_movement'], {})
+        self.assertEqual(body['last_top_set_by_movement'], {})
         self.assertEqual(body['one_rep_max_by_movement'], {})
         self.assertEqual(body['substitutions'], {})
         self.assertIsNone(body['access_until'])
@@ -94,6 +95,7 @@ class PublicWorkoutPackageEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body['last_load_by_movement']['agachamento-livre']['weight_kg'], 100.0)
+        self.assertEqual(body['last_top_set_by_movement']['agachamento-livre']['weight_kg'], 100.0)
         estimate = body['one_rep_max_by_movement']['agachamento-livre']
         self.assertEqual(estimate['formula'], 'brzycki')
 

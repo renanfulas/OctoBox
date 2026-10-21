@@ -1,0 +1,6 @@
+{% if account_email %}
+<aside class="workout-push-prompt" data-workout-push-home{% if push_identity_verified %} data-workout-push data-public-key="{{ push_public_key }}" data-subscribe-url="{% url 'public-workout-push' plan_slug=plan_slug %}"{% if push_configured %} hidden{% endif %}{% endif %}>
+  <div><strong>Receba avisos da Curva</strong><p>Você escolhe se este dispositivo recebe avisos sobre seus treinos.</p><span data-workout-push-status aria-live="polite">{% if not push_configured %}Ativação pendente da configuração de notificações.{% elif not push_identity_verified %}Para vincular este dispositivo, confirme seu e-mail com um código.{% endif %}</span></div>
+  {% if push_configured %}<div class="workout-push-prompt__actions">{% if push_identity_verified %}<button type="button" data-workout-push-enable>Ativar avisos</button>{% else %}{% include 'public_workouts/partials/_push_verify.html' with verify_id='home' %}{% endif %}</div>{% endif %}
+</aside>
+{% endif %}
