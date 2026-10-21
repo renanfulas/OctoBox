@@ -28,6 +28,50 @@
     min-width: 0;
 }
 
+/* O halo fora do cartão criava uma área rolável invisível. Ao focar o
+   textarea, o browser rolava o cartão e cortava os rótulos à esquerda. */
+.smart-paste-card::after {
+    right: 0;
+    bottom: 0;
+}
+
+.smart-paste-source-field {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.smart-paste-source-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.smart-paste-source-tools .button.secondary {
+    width: auto;
+    min-height: 44px;
+    flex: 0 0 auto;
+}
+
+.smart-paste-source-status {
+    margin: 0;
+    color: var(--theme-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.smart-paste-source-field > small {
+    color: var(--theme-text-secondary);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.smart-paste-source-status[hidden] {
+    display: none;
+}
+
 /* Preview empty state — shown when no text has been organised yet */
 .smart-paste-empty-state {
     display: flex;
