@@ -219,28 +219,104 @@ Erros cometidos neste fluxo e prevenção: um rascunho temporário chegou a incl
    deve devolver lista vazia. Se não devolver, corrija — nunca publique com
    erro de schema.
 
-8. **Teste renderizado antes de publicar de verdade**: rode local
-   (`python manage.py runserver`) e abra `/renan/<slug>/preview-b3` — isso
-   renderiza `workout.html` contra o payload sem precisar de conta/cookie.
-   Confira visualmente (ou via `get_page_text` num agente com browser): os
-   exercícios aparecem certos, a régua de periodização (se usada) mostra a
-   fase/semana esperada.
+8. **Revise o rascunho antes de aprovar**: confira payload completo, diff por
+   dia/movimento, acentuação e resultado de `validate_payload`. Atenção: hoje
+   `/renan/<slug>/preview-b3` lê somente a versão já publicada (e só existe
+   com `DEBUG=True`); ela não pré-visualiza um `PublicWorkoutProgramDraft`.
+   A prévia visual segura de rascunho ainda precisa ser implementada. Depois
+   da publicação, use `/preview-b3` apenas em desenvolvimento para verificar
+   o template; ela não prova que um draft foi pré-visualizado antes da
+   publicação.
 
-9. **Publique**: `public_workouts.services.publish_program(slug=..., payload=payload)`.
-   Isso NÃO exige nenhuma `PublicWorkoutAccount`/`PublicWorkoutSubscription`
-   existir antes — o programa fica acessível em `/renan/<slug>` imediatamente
-   (mesmo fluxo de "cookie de posse" que os clientes legados usam), mesmo
-   sem o e-mail do aluno ainda. Conectar o login por e-mail é um passo
-   independente e posterior (não bloqueia publicar o treino).
+9. **Aprove e publique somente após aprovação explícita**: salve o payload
+   completo como `PublicWorkoutProgramDraft` pendente e use a ação
+   “Aprovar e publicar” (`approve_and_publish_draft`). Ela chama
+   `publish_program`, que cria uma nova versão imutável; não publique um draft
+   por chamada direta ao serviço. Publicação do snapshot e vinculação de
+   acesso são operações separadas. Confirme a associação correta da assinatura
+   antes da publicação; nunca escolha conta por nome parcial nem reutilize login
+   de funcionário. Após a aprovação do usuário, publique e deixe o aviso por
+   e-mail seguir pelo outbox do app.
 
-10. **Confirme em produção com curl SEM cookie** antes de testar no
-    navegador: `curl -sI https://octoboxfit.com.br/renan/<slug>` deve
-    devolver `200`. Se você mesmo testar no navegador logo depois de ter
-    testado outras contas na mesma sessão (Bruno, Juliana, etc.), pode ver
-    um 404 falso — é o cookie de sessão de OUTRA conta bloqueando por
-    posse, não um bug (ver "Onda B3, item 5" — nunca revela via 403, vira
-    404 mesmo sendo só cookie cruzado). curl sem cookie é a fonte da
-    verdade nesse caso.
+10. **Confirme a publicação em produção sem cookie**: consulte no banco
+    `PublicWorkoutProgram` e confirme o slug, versão ativa e `is_active=True`.
+    Faça também `curl -sSI https://app.octoboxfit.com.br/renan/<slug>` e
+    interprete a resposta: um redirecionamento para `/treinos/login` é esperado
+    quando o programa exige autenticação; não trate a página de login com HTTP
+    200 após seguir o redirecionamento como prova de que o treino abriu. O aviso
+    de publicação envia um token de acesso com validade de 15 minutos no link
+    do e-mail. Confirme a entrega em `PublicWorkoutOutboxMessage` (status
+    `sent`) e `PublicWorkoutProgramDelivery` (`sent_at` preenchido e
+    `last_error` vazio). Se estiver pendente, aguarde o timer do outbox; não
+    dispare um segundo envio manual. Isso confirma aceitação pelo gateway de
+    e-mail, não leitura na caixa de entrada. Informe o estado real da publicação
+    e da entrega.
+
+### Alterar um treino existente sem reconstruir tudo
+
+Use um briefing curto e reaproveite dados já confirmados. Para treino novo,
+peça somente campos ausentes:
+
+```text
+ALUNA / slug:
+OBJETIVO e nível:
+DIVISÃO semanal:
+EQUIPAMENTOS:
+RESTRIÇÕES, sintomas ou avaliação:
+ÊNFASES e cardio:
+```
+
+Para atualização, prefira uma instrução localizada, por exemplo:
+`Franciele, baseada na versão ativa: segunda, leg press, séries 3 → 4; manter o restante.`
+Resolva os nomes para `day_id`/`movement_slug`, confira que identificam um
+único item e mostre apenas a diferença mais o resumo semanal afetado.
+
+- Para uma alteração pontual, use o programa aprovado/publicado como base e
+  aplique somente a mudança pedida ao dia e ao exercício identificados. Não
+  regenere o treino com IA quando uma edição determinística (séries,
+  repetições, RIR, troca explicitamente pedida) resolve o pedido.
+- Preserve todos os dias, exercícios, referências e metadados não citados.
+  O resultado salvo para revisão continua sendo um payload completo; a
+  diferença em relação à versão-base deve ser calculada e apresentada para
+  conferência humana. O admin atual ainda não oferece diff estruturado.
+- Antes de aprovar, confirme que a versão usada como base ainda é a ativa.
+  Se outra versão foi publicada durante a revisão, refaça a diferença sobre
+  a versão atual e mostre novamente as alterações. O vínculo automático
+  entre rascunho e versão-base ainda não existe no runtime; siga o
+  procedimento manual em `docs/coaching/guia-montagem-treino-curva.md`.
+- Mantenha o ciclo rascunho → validação → diff/revisão → aprovação explícita
+  → nova versão. Nunca edite o snapshot publicado diretamente.
+- Não chame `/renan/<slug>/preview-b3` de prévia de rascunho: hoje essa rota
+  renderiza apenas o programa já publicado e só existe em `DEBUG`. Não
+  publique para conseguir uma prévia; revise o payload e o diff até existir
+  uma rota privada que renderize o draft sem ativá-lo.
+- Se já existe rascunho salvo, preserve-o e continue dali. Se a geração por IA
+  falhar antes de salvar o rascunho, guarde o briefing e informe que uma nova
+  tentativa fará outra chamada; o runtime ainda não registra checkpoint
+  durável dessa geração. Consulte o guia do Curva para o comportamento real
+  de falhas, retry e rollback.
+
+### Aprendizados operacionais desta entrega
+
+- Curva e OctoBox são produtos separados, mesmo compartilhando repositório e
+  VPS. Publique treinos e confira avisos pelo domínio/fluxo de Curva; não entre
+  na equipe OctoBox nem altere sua grade para representar a rotina individual
+  de uma cliente.
+- Para comandos Django na VPS, use o virtualenv indicado pelo serviço systemd
+  e carregue o arquivo de ambiente do serviço sem imprimir seus valores. Rodar
+  `python` genérico fora desse contexto causa `command not found` ou falta de
+  `DJANGO_SECRET_KEY`; confirme caminho de app e serviço antes de executar.
+- Codifique scripts multiline como UTF-8/Base64 ao passá-los pelo SSH, valide
+  primeiro em modo de leitura e use transação para vincular a assinatura e
+  publicar. Um `SyntaxError` no `manage.py shell -c` significa que nada foi
+  aplicado; reconsulte o banco antes de repetir qualquer escrita.
+- Para a suíte local, não sobrescreva nem recrie um banco de testes padrão que
+  já pode estar em uso por outra sessão. Defina um `TEST_DATABASE_URL` isolado
+  com nome exclusivo antes de usar `--create-db --migrations`; não tente
+  derrubar um banco que reporte conexões ativas.
+- Não confunda HTTP 200 da tela de login após seguir redirecionamento com
+  acesso ao treino. Registre URL efetiva e status original, confira o snapshot
+  ativo no banco e o estado real de entrega do aviso.
 
 ---
 
@@ -277,7 +353,8 @@ qualquer slug novo que você confirmar.
 `machine-hamstring-curl` · `barbell-hip-thrust` · `dumbbell-hip-thrust` ·
 `machine-standing-calf-raises` · `machine-horizontal-leg-press-calf-raise` ·
 `dumbbell-bulgarian-split-squat` · `dumbbell-goblet-bulgarian-split-squat` ·
-`machine-hack-squat`
+`machine-hack-squat` · `smith-machine-squat` · `machine-horizontal-leg-press` ·
+`machine-horizontal-sissy-leg-press`
 
 **Peito / costas / ombro:**
 `barbell-bench-press` · `dumbbell-bench-press` · `dumbbell-incline-bench-press` ·
@@ -285,15 +362,16 @@ qualquer slug novo que você confirmar.
 `machine-seated-cable-row` · `barbell-overhead-press` ·
 `dumbbell-overhead-press` · `dumbbell-neutral-seated-overhead-press` ·
 `dumbbell-seated-overhead-press` · `cable-low-single-arm-lateral-raise` ·
-`cable-low-bilateral-lateral-raise`
+`cable-low-bilateral-lateral-raise` · `cable-pec-fly` · `machine-pec-fly` ·
+`dumbbell-decline-bench-press` · `cable-seated-rope-face-pull` · `machine-reverse-fly`
 
 **Braço:**
 `cable-bar-curl` · `dumbbell-preacher-curl` · `dumbbell-hammer-curl` ·
 `cable-rope-pushdown` · `cable-bar-pushdown` · `dumbbell-skullcrusher` ·
-`cable-rope-skullcrusher` · `dumbbell-overhead-tricep-extension`
+`cable-rope-skullcrusher` · `dumbbell-overhead-tricep-extension` · `dumbbell-curl`
 
 **Abdômen:**
-`forearm-plank` · `dead-bug`
+`forearm-plank` · `dead-bug` · `reverse-crunch` · `bicycle-crunch` · `bird-dog`
 
 ---
 
@@ -382,17 +460,20 @@ proponha isso ao Renan explicitamente em vez de inventar texto solto (foi
 exatamente a falta dessa disciplina que gerou 13 rótulos diferentes
 espalhados pelos clientes legados, antes do modelo canônico existir).
 
-**Publicar**: `public_workouts.services.publish_program(slug=..., payload=payload)`
-— cria uma versão nova, ativa automaticamente, nunca edita a anterior in-place.
-**Nunca** crie arquivo de template novo nem entrada em `PUBLIC_WORKOUT_LIBRARY`
-pra isso.
+**Publicação**: o fluxo normal salva `PublicWorkoutProgramDraft` e exige
+aprovação humana via `approve_and_publish_draft`, que chama
+`public_workouts.services.publish_program(slug=..., payload=payload)`. O serviço
+cria uma versão nova e ativa, nunca edita a anterior in-place. Não publique
+rascunhos por chamada direta ao serviço. **Nunca** crie arquivo de template
+novo nem entrada em `PUBLIC_WORKOUT_LIBRARY`.
 
-**Verificar antes de publicar de verdade**: `GET /renan/<slug>/preview-b3`
+**Prévia visual**: ainda não há uma prévia de `PublicWorkoutProgramDraft`.
+`GET /renan/<slug>/preview-b3`
 (`PublicWorkoutTemplatePreviewView`, `student_app/views/public_workout_views.py`)
-— renderiza `workout.html` contra o payload já publicado, só existe com
-`settings.DEBUG=True`, não precisa do cookie de posse do aluno. Roda local
-(`python manage.py runserver`) e abre essa URL — isso substitui o fluxo
-antigo de abrir a página HTML direto no navegador.
+renderiza `workout.html` contra o programa já publicado, só existe com
+`settings.DEBUG=True` e não precisa do cookie de posse do aluno. Use essa rota
+somente depois da publicação, em desenvolvimento; não publique só para
+conseguir uma prévia. A prévia segura do draft é uma melhoria pendente.
 
 **Elementos que sobrevivem do padrão antigo** (conceito igual, mecanismo
 diferente):
