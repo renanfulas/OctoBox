@@ -11,6 +11,7 @@ from django.test import override_settings
 from django.utils import timezone
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_focus import LOCK_SCREEN, RESET_SPIES, SPY_AUDIO, SPY_VIBRATION
 from tests.e2e.curva_login import enter_with_magic_link
 
 
@@ -32,33 +33,6 @@ _COUNT_OUTBOX_OPENS = """
 """
 
 
-# Anota a frequência de cada bipe do modo foco e quantas vezes o áudio é religado.
-_SPY_AUDIO = """
-(() => {
-  window.__curvaBeeps = [];
-  window.__curvaAudioResumes = 0;
-  const Real = window.AudioContext;
-  window.AudioContext = class extends Real {
-    resume() { window.__curvaAudioResumes += 1; return super.resume(); }
-    createOscillator() {
-      const osc = super.createOscillator();
-      const start = osc.start.bind(osc);
-      osc.start = (...args) => { window.__curvaBeeps.push(Math.round(osc.frequency.value)); return start(...args); };
-      return osc;
-    }
-  };
-})();
-"""
-# Anota cada vibração pedida pelo modo foco.
-_SPY_VIBRATION = """
-(() => {
-  window.__curvaVibrations = [];
-  Object.defineProperty(Navigator.prototype, 'vibrate', {
-    configurable: true, writable: true,
-    value(pattern) { window.__curvaVibrations.push(pattern); return true; },
-  });
-})();
-"""
 # Avisos liberados neste aparelho. O Chromium headless responde 'denied' mesmo
 # com grant_permissions, então a permissão é fixada na página.
 _ALLOW_NOTIFICATIONS = """
@@ -66,12 +40,6 @@ _ALLOW_NOTIFICATIONS = """
   Object.defineProperty(Notification, 'permission', { configurable: true, get: () => 'granted' });
 })();
 """
-# Tela bloqueada: a página segue viva, como no Android, mas fora de vista.
-_HIDE_PAGE = """() => {
-  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
-  Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-  document.dispatchEvent(new Event('visibilitychange'));
-}"""
 
 
 @pytest.fixture(autouse=True)
@@ -489,7 +457,7 @@ def test_rest_end_beeps_by_default_and_student_can_mute(page: Page, live_server)
         {'stage_id': 'top', 'role': 'top_set', 'min_sets': 2, 'max_sets': 2,
          'reps_min': 6, 'reps_max': 8, 'rest_seconds': 4, 'load_rule': {'kind': 'manual'}},
     ])
-    page.add_init_script(_SPY_AUDIO)
+    page.add_init_script(SPY_AUDIO)
     enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
@@ -517,47 +485,30 @@ def test_rest_end_beeps_by_default_and_student_can_mute(page: Page, live_server)
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
-@pytest.mark.parametrize('push_allowed', [True, False], ids=['avisos-liberados', 'sem-avisos'])
-def test_rest_end_off_screen_leaves_alert_to_push(page: Page, live_server, push_allowed):
+def test_locked_screen_still_beeps_when_no_push_is_scheduled(page: Page, live_server):
     _account, token = _prepare_guided_student([
-        {'stage_id': 'top', 'role': 'top_set', 'min_sets': 3, 'max_sets': 3,
+        {'stage_id': 'top', 'role': 'top_set', 'min_sets': 2, 'max_sets': 2,
          'reps_min': 6, 'reps_max': 8, 'rest_seconds': 4, 'load_rule': {'kind': 'manual'}},
     ])
-    if push_allowed:
-        page.add_init_script(_ALLOW_NOTIFICATIONS)
-    page.add_init_script(_SPY_AUDIO)
-    page.add_init_script(_SPY_VIBRATION)
+    # Permissão concedida, mas nenhum push agendado para este descanso: o
+    # silêncio do app depende do aviso estar de pé, não da permissão.
+    page.add_init_script(_ALLOW_NOTIFICATIONS)
+    page.add_init_script(SPY_AUDIO)
+    page.add_init_script(SPY_VIBRATION)
     enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
-    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+    page.locator('[data-workout-guided-weight]').fill('50')
+    page.locator('[data-workout-guided-reps]').fill('7')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
 
-    def record_set():
-        page.evaluate('() => { window.__curvaBeeps = []; window.__curvaVibrations = []; }')
-        page.locator('[data-workout-guided-weight]').fill('50')
-        page.locator('[data-workout-guided-reps]').fill('7')
-        page.locator('[data-workout-guided-set]').click()
-        expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
-
-    # Tela à vista: o app avisa como sempre, com ou sem push.
-    record_set()
+    page.evaluate(LOCK_SCREEN)
+    page.evaluate(RESET_SPIES)
     expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=10_000)
     beeps = page.evaluate('() => window.__curvaBeeps')
     assert 660 in beeps and beeps[-1] == 990, beeps
     assert page.evaluate('() => window.__curvaVibrations')[-1] == 140
-
-    # Tela bloqueada no meio do descanso: com os avisos liberados, nem o 3-2-1
-    # nem o tom final tocam pelo app; sem eles, o bipe segue sendo o alerta.
-    record_set()
-    page.evaluate(_HIDE_PAGE)
-    page.evaluate('() => { window.__curvaBeeps = []; window.__curvaVibrations = []; }')
-    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=10_000)
-    beeps = page.evaluate('() => window.__curvaBeeps')
-    vibrations = page.evaluate('() => window.__curvaVibrations')
-    if push_allowed:
-        assert beeps == [] and vibrations == [], (beeps, vibrations)
-    else:
-        assert 990 in beeps and 140 in vibrations, (beeps, vibrations)
 
 
 @pytest.mark.e2e

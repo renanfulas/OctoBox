@@ -56,8 +56,10 @@
     onTick: function () {
       var rest = restModel();
       if (rest) {
-        focus.restTick(rest);
+        // Primeiro o aviso: com a tela à vista perto do fim, o cancelamento do
+        // push devolve o 3-2-1 ao app já neste tick.
         restAlert.tick(rest.remainingMs);
+        focus.restTick(rest, restAlert.covers());
       }
       paintLauncher();
     },
@@ -73,7 +75,7 @@
       var step = movements.length ? project().current : null;
       return step ? { exercise: step.movement.label, setNumber: step.setNumber } : {};
     },
-  }) : { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop };
+  }) : { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop, covers: noop };
 
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
@@ -830,11 +832,13 @@
 
   /* ---------- descanso ---------- */
   function restEnded() {
+    // Lido antes de ended(), que esquece o aviso: com o push de pé, o fim já é dele.
+    var quiet = restAlert.covers();
     restAlert.ended();
     paintLauncher();
     if (!focus.isOpen()) return;
     if (screen === 'rest') {
-      focus.restDone().then(function () {
+      focus.restDone(quiet).then(function () {
         if (screen !== 'rest') return;
         screen = nextScreenAfterSet();
         render();

@@ -284,7 +284,6 @@ Arquivos de codigo que este corredor costuma tocar:
 1. `api/urls.py`
 2. `api/v1/urls.py`
 3. `api/v1/views.py`
-4. `api/v1/internal_views.py`
 5. `integrations/*`
 6. `jobs/*`
 7. `monitoring/*`
