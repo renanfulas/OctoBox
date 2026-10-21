@@ -96,11 +96,10 @@ def _coerce_smart_paste_date(
     if normalized.count('/') == 1:
         try:
             day_value, month_value = [int(chunk) for chunk in normalized.split('/')]
+            current_year_candidate = date(today.year, month_value, day_value)
+            next_year_candidate = date(today.year + 1, month_value, day_value)
         except ValueError as exc:
-            raise forms.ValidationError(f'Use {field_label} no formato dd/mm.') from exc
-
-        current_year_candidate = date(today.year, month_value, day_value)
-        next_year_candidate = date(today.year + 1, month_value, day_value)
+            raise forms.ValidationError(f'Informe uma data válida para {field_label} no formato dd/mm/aaaa.') from exc
         current_distance = abs((current_year_candidate - today).days)
         next_distance = abs((next_year_candidate - today).days)
         if allow_past:
@@ -116,7 +115,10 @@ def _coerce_smart_paste_date(
             year_value += 2000
         if not allow_historical_years and year_value not in allowed_years:
             raise forms.ValidationError('A data precisa ficar no ano anterior, atual ou no proximo ano.')
-        candidate = date(year_value, month_value, day_value)
+        try:
+            candidate = date(year_value, month_value, day_value)
+        except ValueError as exc:
+            raise forms.ValidationError(f'Informe uma data válida para {field_label} no formato dd/mm/aaaa.') from exc
     else:
         raise forms.ValidationError(f'Use {field_label} no formato dd/mm.')
 
@@ -408,6 +410,7 @@ SMART_PASTE_MAX_LINES = 500
 
 class WeeklyWodSmartPasteForm(forms.Form):
     plan_id = forms.IntegerField(required=False, min_value=1)
+    plan_revision = forms.DateTimeField(required=False)
     workout_program = forms.ModelChoiceField(
         queryset=None,
         empty_label='Selecione a modalidade',
@@ -417,7 +420,10 @@ class WeeklyWodSmartPasteForm(forms.Form):
     )
     week_start = forms.CharField(max_length=10)
     label = forms.CharField(max_length=140, required=False)
-    source_text = forms.CharField(widget=forms.Textarea(attrs={'rows': 22}), required=False)
+    source_text = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 12}),
+        error_messages={'required': 'Cole o treino da semana antes de organizar.'},
+    )
 
     def __init__(self, *args, max_week_start: date | None = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -467,6 +473,7 @@ class WeeklyWodSmartPasteForm(forms.Form):
                 ),
                 'class': 'smart-paste-textarea',
                 'spellcheck': 'false',
+                'aria-describedby': 'smart-paste-source-hint',
             }
         )
 
@@ -546,6 +553,7 @@ class WeeklyWodProjectionForm(forms.Form):
 
 class WeeklyWodReviewMovementForm(forms.Form):
     plan_id = forms.IntegerField(min_value=1)
+    plan_revision = forms.DateTimeField(required=False)
     day_index = forms.IntegerField(min_value=0)
     block_index = forms.IntegerField(min_value=0)
     movement_index = forms.IntegerField(min_value=0)
@@ -590,6 +598,10 @@ class WeeklyWodReviewMovementForm(forms.Form):
             return ''
         valid_slugs = {choice[0] for choice in self.slug_choices}
         if slug not in valid_slugs and slug != 'custom':
+            from operations.services.wod_paste_parser import resolve_movement_slug
+            matched_slug = resolve_movement_slug(slug, exact_only=True)
+            if matched_slug in valid_slugs:
+                return matched_slug
             raise forms.ValidationError(
                 'Escolha um movimento sugerido ou use “Manter nome original como personalizado”.'
             )

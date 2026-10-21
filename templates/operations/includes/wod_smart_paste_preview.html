@@ -1,5 +1,12 @@
 <article class="table-card smart-paste-card" id="smart-paste-preview-panel" data-smart-paste-preview-panel {% if smart_paste_auto_open_review_target %}data-smart-paste-auto-open-target="{{ smart_paste_auto_open_review_target }}"{% endif %}>
 
+    {% if smart_paste_review_conflict %}
+    <div class="smart-paste-resolution-notice" role="alert">
+        <strong>A revisão não foi salva</strong>
+        <p>{{ smart_paste_review_conflict }}</p>
+    </div>
+    {% endif %}
+
     {% if smart_paste_weekly_normalization.status == 'awaiting_coach_review' %}
     <section class="smart-paste-resolution-notice" role="status" aria-live="polite">
         <strong>O Haiku organizou a estrutura. Confira as mudanças antes de continuar.</strong>
@@ -41,6 +48,7 @@
 
     {% if smart_paste_days %}
     <div class="smart-paste-confidence-strip" aria-label="Resumo de confianca da leitura">
+        {% if weekly_plan.workout_program %}<span class="pill info">{{ weekly_plan.workout_program.name }}</span>{% endif %}
         <span class="pill success">{{ smart_paste_summary.days_count }} dia(s)</span>
         <span class="pill info">{{ smart_paste_summary.blocks_count }} bloco(s)</span>
         <span class="pill accent">{{ smart_paste_summary.movements_count }} movimento(s)</span>
@@ -117,6 +125,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_review_item">
                 <input type="hidden" name="review_source" value="queue">
+                <input type="hidden" name="plan_revision" value="{{ weekly_plan.updated_at|date:'c' }}">
                 <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
                 <input type="hidden" name="day_index" value="{{ smart_paste_summary.current_unresolved_item.day_index }}">
                 <input type="hidden" name="block_index" value="{{ smart_paste_summary.current_unresolved_item.block_index }}">
@@ -179,12 +188,12 @@
                 <article class="smart-paste-block-card smart-paste-block-card--{{ block.kind }} {% if block.has_unresolved %}smart-paste-block-card--warning{% else %}smart-paste-block-card--clean{% endif %}" data-dialog-block data-block-focus-id="{{ block.block_focus_id }}" data-block-state="{% if block.has_unresolved %}warning{% else %}clean{% endif %}">
                     <button type="button" class="smart-paste-block-card__surface" data-action="focus-block" data-target="{{ block.block_focus_id }}" aria-expanded="false" aria-controls="{{ block.block_focus_id }}">
                         <div class="smart-paste-block-head">
-                            <span class="pill accent">{{ block.kind }}</span>
+                            <span class="pill accent">{{ block.kind_label }}</span>
                             {% if block.timecap_min %}<span class="pill info">{{ block.timecap_min }}m</span>{% endif %}
                             {% if block.rounds %}<span class="pill warning">{{ block.rounds }} rounds</span>{% endif %}
                         </div>
                         <div class="smart-paste-block-summary">
-                            <strong>{% if block.title %}{{ block.title }}{% else %}{{ block.kind|title }}{% endif %}</strong>
+                            <strong>{{ block.display_title }}</strong>
                             {% if block.format_spec %}<p>{{ block.format_spec }}</p>{% endif %}
                             {% if block.notes %}<p>{{ block.notes }}</p>{% endif %}
                             <div class="smart-paste-block-summary__meta">
@@ -201,14 +210,12 @@
                         <div class="smart-paste-block-detail__actions">
                             <button type="button" class="button tertiary smart-paste-block-detail__back" data-action="unfocus-block">Voltar aos cards</button>
                         </div>
-                        {% if block.format_spec %}<p>{{ block.format_spec }}</p>{% endif %}
-                        {% if block.notes %}<p>{{ block.notes }}</p>{% endif %}
                         <ul class="smart-paste-movement-list">
                             {% for movement in block.movements %}
                             <li class="{% if not movement.movement_slug %}is-warning{% endif %}">
                                 <span>{{ movement.display_label|default:movement.movement_label_raw }}</span>
                                 {% if movement.movement_slug %}
-                                    <code>{{ movement.movement_slug }}</code>
+                                    <span class="pill success">Identificado: {{ movement.matched_label }}</span>
                                     {% if movement.llm_resolved %}
                                     <span class="pill accent" title="{{ movement.llm_fix_note }}">✨ ajustado</span>
                                     {% endif %}
@@ -228,6 +235,7 @@
                                         >
                                             {% csrf_token %}
                                             <input type="hidden" name="action" value="update_review_item">
+                                            <input type="hidden" name="plan_revision" value="{{ weekly_plan.updated_at|date:'c' }}">
                                             <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
                                             <input type="hidden" name="day_index" value="{{ day.day_index }}">
                                             <input type="hidden" name="block_index" value="{{ block.block_index }}">
@@ -263,14 +271,15 @@
     <datalist id="smart-paste-movement-slugs">
         <option value="custom" label="Manter como movimento personalizado"></option>
         {% for slug, aliases in review_slug_choices %}
-        <option value="{{ slug }}"></option>
+        <option value="{{ slug }}" label="{{ aliases.0 }}"></option>
         {% endfor %}
     </datalist>
 
     {% if not smart_paste_parse_errors %}<form method="post" class="coach-wod-form-stack smart-paste-confirm-form">
         {% csrf_token %}
         <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
-        <input type="hidden" name="week_start" value="{{ weekly_plan.week_start|date:'d/m' }}">
+        <input type="hidden" name="week_start" value="{{ weekly_plan.week_start|date:'d/m/Y' }}">
+        <input type="hidden" name="plan_revision" value="{{ weekly_plan.updated_at|date:'c' }}">
         <input type="hidden" name="label" value="{{ weekly_plan.label }}">
         <input type="hidden" name="workout_program" value="{{ weekly_plan.workout_program_id }}">
         <input type="hidden" name="source_text" value="{{ weekly_plan.source_text }}">

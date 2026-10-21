@@ -522,10 +522,17 @@ def test_smart_paste_requires_explicit_modality_in_browser(page: Page, live_serv
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize(
+    ('program_label', 'class_type', 'peer_type'),
+    (('CrossFit', ClassType.CROSS, ClassType.HYROX), ('HYROX', ClassType.HYROX, ClassType.CROSS)),
+)
 def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gate(
     page: Page,
     live_server,
     e2e_owner_credentials,
+    program_label,
+    class_type,
+    peer_type,
 ):
     """A semana mostra os destinos antes de escrever os WODs e conserva a aprovação."""
     actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
@@ -533,12 +540,16 @@ def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gat
     # Diferencia a semana escolhida da sugestão padrão para detectar fallback silencioso.
     target_monday = today + timedelta(days=(7 - today.weekday()) % 7) + timedelta(days=7)
     session = ClassSession.objects.create(
-        title='Smart Paste E2E CrossFit',
-        class_type=ClassType.CROSS,
+        title=f'Smart Paste E2E {program_label}',
+        class_type=class_type,
         coach=actor,
         scheduled_at=timezone.make_aware(datetime.combine(target_monday, datetime.min.time()).replace(hour=12)),
         duration_minutes=60,
         capacity=16,
+    )
+    peer_session = ClassSession.objects.create(
+        title='Trilha vizinha preservada', class_type=peer_type, coach=actor,
+        scheduled_at=session.scheduled_at, duration_minutes=60, capacity=16,
     )
     # Estende o limite do picker até a semana seguinte, permitindo escolher
     # uma quarta-feira na semana-alvo e verificar o snap no fluxo completo.
@@ -569,7 +580,7 @@ def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gat
     expect(page.locator('[data-smart-date-monday-hint]')).to_contain_text('Ajustado para segunda')
     page.locator('input[name="label"]').fill('E2E Smart Paste Automático')
     page.locator('textarea[name="source_text"]').fill(CLEAN_SAMPLE_WOD)
-    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
+    page.locator('select[name="workout_program"]').select_option(label=program_label)
     page.locator('form.smart-paste-form button[type="submit"]').click()
     page.wait_for_load_state("networkidle")
 
@@ -589,7 +600,7 @@ def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gat
 
     dialog.locator('[data-weekday-filter="0"]').click()
     monday_destination = dialog.locator('.smart-paste-projection-card[data-weekday-index="0"]').filter(
-        has_text='Smart Paste E2E CrossFit'
+        has_text=f'Smart Paste E2E {program_label}'
     )
     expect(monday_destination).to_be_visible()
     monday_destination.locator('details > summary').first.click()
@@ -605,7 +616,7 @@ def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gat
     assert dialog_box['x'] + dialog_box['width'] <= 376
     assert dialog_box['y'] + dialog_box['height'] <= 668
     expect(dialog.get_by_role('button', name='Voltar para revisar')).to_be_visible()
-    expect(dialog.locator('.smart-paste-projection-card').first).to_contain_text('Smart Paste E2E CrossFit')
+    expect(dialog.locator('.smart-paste-projection-card').first).to_contain_text(f'Smart Paste E2E {program_label}')
 
     dialog.get_by_role('button', name='Voltar para revisar').click()
     expect(page.locator('dialog.smart-paste-week-dialog[open]')).to_have_count(0)
@@ -668,6 +679,7 @@ def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gat
     assert batch.target_week_start == target_monday
     assert str(batch.idempotency_key) == retry_key
     assert SessionWorkout.objects.filter(session=session).count() == 1
+    assert not SessionWorkout.objects.filter(session=peer_session).exists(), 'a modalidade vizinha deve permanecer intacta'
     page.goto(f'{live_server.url}/operacao/wod/planner/?week={target_monday.isoformat()}')
     page.wait_for_load_state('networkidle')
 
@@ -784,6 +796,10 @@ def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gat
     }])
     page.goto(f'{live_server.url}/aluno/wod/?session_id={session.id}')
     expect(page.get_by_text('E2E Smart Paste Automático', exact=False).first).to_be_visible()
+    for original_movement in ('10 lunges', '8 front squat', '20 sit up'):
+        expect(page.locator('#student-wod-day')).to_contain_text(original_movement)
+    assert _horizontal_overflow(page) <= 1
+    page.screenshot(path=screenshot_dir / f'student-wod-{class_type}-mobile-dark.png', full_page=True)
 
     next_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1)
     next_month_session = ClassSession.objects.create(
@@ -824,7 +840,7 @@ def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gat
         status=SessionWorkoutStatus.PUBLISHED,
     )
     page.goto(f'{live_server.url}/aluno/grade/?month={next_month:%Y-%m}')
-    multi_day = page.locator('.student-month-day[data-day-picker]')
+    multi_day = page.locator(f'.student-month-day[data-day-picker="{next_month + timedelta(days=7):%Y-%m-%d}"]')
     expect(multi_day).to_be_visible()
     multi_day.click()
     picker = page.locator('#studentMonthPicker')
@@ -1018,6 +1034,19 @@ def test_weekly_normalization_review_is_explicit_and_mobile_safe(
     expect(confirm).to_be_disabled()
     week_field.fill(original_week)
     expect(confirm).to_be_enabled()
+    day_month, year = original_week.rsplit('/', 1)
+    week_field.fill(f'{day_month}/{int(year) + 1}')
+    expect(page.locator('[data-smart-paste-stale-source-notice]')).to_be_visible()
+    expect(confirm).to_be_disabled()
+    week_field.fill(original_week)
+    expect(confirm).to_be_enabled()
+    program_field = page.locator('.smart-paste-form [name="workout_program"]')
+    original_program = program_field.input_value()
+    program_field.select_option(label='HYROX')
+    expect(page.locator('[data-smart-paste-stale-source-notice]')).to_be_visible()
+    expect(confirm).to_be_disabled()
+    program_field.select_option(original_program)
+    expect(confirm).to_be_enabled()
     label_field = page.locator('.smart-paste-form [name="label"]')
     original_label = label_field.input_value()
     label_field.fill('Semana diferente')
@@ -1031,6 +1060,49 @@ def test_weekly_normalization_review_is_explicit_and_mobile_safe(
     plan = WeeklyWodPlan.objects.get(created_by=actor)
     assert plan.status == WeeklyWodPlanStatus.CONFIRMED
     assert plan.parsed_payload['weekly_normalization']['status'] == 'coach_accepted'
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+def test_clipboard_paste_preserves_text_and_handles_denied_access(page: Page, live_server, e2e_owner_credentials):
+    """Colar pelo botão preserva linhas e seleção; permissão negada mantém o treino."""
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.set_viewport_size(VIEWPORTS['mobile'])
+    page.goto(f'{live_server.url}/operacao/wod/paste/')
+    # Simulate only the OS clipboard boundary; the button and textarea stay real.
+    page.evaluate("""() => Object.defineProperty(navigator, 'clipboard', {
+        configurable: true, value: {readText: async () => 'Segunda\\nForça\\n5x5 front squat 75%'}
+    })""")
+    button = page.get_by_role('button', name='Colar texto', exact=True)
+    field = page.locator('textarea[name="source_text"]')
+    button.click()
+    expect(field).to_have_value('Segunda\nForça\n5x5 front squat 75%')
+    expect(page.locator('[data-smart-paste-clipboard-status]')).to_contain_text('Texto colado')
+    field.evaluate('(el) => el.setSelectionRange(0, 7)')
+    page.evaluate("() => { navigator.clipboard.readText = async () => 'Terça'; }")
+    button.click()
+    expect(field).to_have_value('Terça\nForça\n5x5 front squat 75%')
+    page.evaluate("() => { navigator.clipboard.readText = async () => {throw new Error('denied')}; }")
+    button.click()
+    expect(field).to_have_value('Terça\nForça\n5x5 front squat 75%')
+    expect(field).to_be_focused()
+    expect(page.locator('[data-smart-paste-clipboard-status]')).to_contain_text('Cole diretamente')
+    page.evaluate("() => { navigator.clipboard.readText = async () => ''; }")
+    button.click()
+    expect(page.locator('[data-smart-paste-clipboard-status]')).to_contain_text('está vazia')
+    assert _horizontal_overflow(page) <= 1
+    screenshot_dir = Path('tmp') / 'visual_contract' / 'smart_paste'
+    screenshot_dir.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=screenshot_dir / 'clipboard-mobile.png', full_page=True)
+    geometry = page.locator('.smart-paste-form-card').evaluate("""card => {
+        const field = card.querySelector('textarea');
+        const r = card.getBoundingClientRect();
+        const f = field.getBoundingClientRect();
+        return {leftInset:f.left-r.left, rightInset:r.right-f.right,
+            scrollLeft:card.scrollLeft, scrollWidth:card.scrollWidth, clientWidth:card.clientWidth,
+            fieldWidth:f.width, cardWidth:r.width};
+    }""")
+    assert geometry['leftInset'] >= 12 and geometry['rightInset'] >= 12, geometry
 
 
 @pytest.mark.e2e
@@ -1072,4 +1144,5 @@ def test_smart_paste_rejects_source_text_over_line_limit(page: Page, live_server
     page.locator("form.smart-paste-form button[type=submit]").click()
     page.wait_for_load_state("networkidle")
 
-    expect(page.get_by_text("o limite e 500", exact=False)).to_be_visible(timeout=5_000)
+    expect(page.locator('.smart-paste-source-field .form-error')).to_contain_text('o limite e 500')
+    expect(page.locator('textarea[name="source_text"]')).to_have_value(oversized_text)
