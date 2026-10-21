@@ -32,7 +32,9 @@ from tests.source_tree_test_support import REPO_ROOT, count_lines, is_test_file,
 
 NEW_PYTHON_FILE_LIMIT = 600
 
-# Medido no main 6a0c8ca0 (21/10/2026).
+# Medido no main b07b4680 (21/10/2026). O #360 entrou antes da trava e fez
+# crescer use_cases.py, workout_board_views.py e operations/forms.py: os tetos
+# deles sao o tamanho depois desse merge, nao uma excecao.
 LINE_CEILINGS = {
     # Arquivos do plano de split (auditoria, secao 2).
     'public_workouts/models.py': 1539,
@@ -46,8 +48,8 @@ LINE_CEILINGS = {
     'static/js/public_workouts/workout-guided.js': 1022,
     # Demais arquivos Python de producao que ja passavam de 600 linhas.
     'operations/manager_workspace_queries.py': 933,
-    'student_app/application/use_cases.py': 909,
-    'operations/workout_board_views.py': 891,
+    'student_app/application/use_cases.py': 915,
+    'operations/workout_board_views.py': 909,
     'config/settings/base.py': 815,
     'public_workouts/notifications.py': 813,
     'boxcore/management/commands/seed_south_sp_box.py': 778,
@@ -55,7 +57,7 @@ LINE_CEILINGS = {
     'dashboard/presentation.py': 761,
     'control/services.py': 732,
     'integrations/stripe/router.py': 710,
-    'operations/forms.py': 694,
+    'operations/forms.py': 706,
     'dashboard/dashboard_snapshot_queries.py': 684,
     'student_app/models.py': 682,
     'operations/workout_editor_actions.py': 670,
