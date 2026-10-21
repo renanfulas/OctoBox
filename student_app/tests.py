@@ -1565,6 +1565,19 @@ class StudentAppExperienceTests(TestCase):
         self.assertContains(response, 'Calculadora')
         self.assertContains(response, 'Deadlift')
 
+    def test_student_wod_uses_readable_block_names_without_repeating_rounds(self):
+        session = ClassSession.objects.create(title='WOD de hoje', scheduled_at=timezone.now())
+        workout = SessionWorkout.objects.create(session=session, status=SessionWorkoutStatus.PUBLISHED)
+        SessionWorkoutBlock.objects.create(
+            workout=workout, kind=WorkoutBlockKind.WARMUP, title='warmup',
+            rounds=3, format_spec='3x', sort_order=1,
+        )
+        response = self.client.get(reverse('student-app-wod'), {'session_id': session.pk})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Aquecimento')
+        self.assertNotContains(response, '<h2>warmup</h2>', html=True)
+        self.assertEqual(response.context['student_workout_day'].blocks[0].format_label, '3x')
+
     def test_student_wod_route_renders_published_workout_day(self):
         StudentExerciseMax.objects.create(
             student=self.student,

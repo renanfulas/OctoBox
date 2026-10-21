@@ -174,9 +174,7 @@ POR QUE ELE EXISTE:
       name.className = 'search-ac-name';
       name.textContent = item.name || '';
       meta.className = 'search-ac-meta';
-      var metaParts = [item.phone || '', item.status || ''];
-      if (item.birth_date) { metaParts.push(item.birth_date); }
-      if (item.cpf_masked) { metaParts.push(item.cpf_masked); }
+      var metaParts = [item.status || ''];
       meta.textContent = metaParts.filter(Boolean).join(' · ');
       li.appendChild(name);
       li.appendChild(meta);

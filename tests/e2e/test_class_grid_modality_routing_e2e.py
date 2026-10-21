@@ -28,9 +28,23 @@ def test_calendar_requires_track_and_displays_parallel_modalities(page: Page, li
     expect(planner_program).to_have_value('')
     expect(planner_program).to_have_attribute('required', '')
 
+    page.set_viewport_size({'width': 390, 'height': 844})
+    notes = page.locator('#planner-board textarea[name="notes"]')
+    expect(notes).to_be_visible()
+    expect(notes).to_have_attribute('placeholder', 'Ex.: aula de alta demanda; abrir check-in 15 min antes.')
+    assert page.evaluate('document.documentElement.scrollWidth - window.innerWidth') <= 1
+
     page.locator('[data-action="open-monthly-calendar"]').first.click()
     monthly_dialog = page.locator('#class-monthly-modal[open]')
     expect(monthly_dialog).to_be_visible()
+    controls = page.evaluate("""() => Object.fromEntries(['toggle-monthly-rotation','close-monthly-calendar'].map(id => {
+      const el = document.getElementById(id);
+      const r = el.getBoundingClientRect();
+      return [id, {left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:r.width, position:getComputedStyle(el).position}];
+    }))""")
+    toggle_box = controls['toggle-monthly-rotation']
+    close_box = controls['close-monthly-calendar']
+    assert toggle_box['right'] <= close_box['left'] or close_box['right'] <= toggle_box['left'], controls
     page.locator('#toggle-monthly-rotation').click()
     rotation_program = page.locator('#class-grid-weekend-rotation select[name="workout_program"]')
     expect(rotation_program).to_be_visible()

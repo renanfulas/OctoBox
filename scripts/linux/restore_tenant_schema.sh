@@ -67,6 +67,18 @@ if [[ -z "$USER_NAME" || -z "$SLUG" || -z "$BACKUP_FILE" ]]; then
   exit 2
 fi
 
+if [[ ! "$SLUG" =~ ^[a-z][a-z0-9-]{1,55}$ ]]; then
+  echo "erro: --slug deve ser um slug valido (letra inicial, letras minusculas, numeros e hifens)" >&2
+  exit 2
+fi
+
+for database_name in "$TARGET_DATABASE" "$ADMIN_DATABASE" "$FORBID_DATABASE"; do
+  if [[ ! "$database_name" =~ ^[a-z][a-z0-9_-]{0,62}$ ]]; then
+    echo "erro: nome de banco de dados invalido" >&2
+    exit 2
+  fi
+done
+
 if [[ "$TARGET_DATABASE" == "$FORBID_DATABASE" ]]; then
   echo "erro: --target-database aponta para o banco vivo ('${FORBID_DATABASE}')." >&2
   echo "      restore por tenant sempre roda em banco isolado." >&2
@@ -107,6 +119,13 @@ if [[ "$schema_present" == "1" ]]; then
   exit 4
 fi
 
+# pg_dump -n inclui objetos do schema, mas pode omitir o objeto CREATE SCHEMA.
+# Criamos o namespace vazio antes do restore; a validacao do slug acima torna
+# seguro interpolar o identificador entre aspas.
+psql -h "$HOST" -p "$PORT" -U "$USER_NAME" -d "$TARGET_DATABASE" \
+  -v ON_ERROR_STOP=1 \
+  -c "CREATE SCHEMA \"${SCHEMA}\""
+
 started_at="$(date +%H:%M:%S)"
 
 pg_restore \
@@ -115,6 +134,7 @@ pg_restore \
   --username "$USER_NAME" \
   --dbname "$TARGET_DATABASE" \
   --schema "$SCHEMA" \
+  --exit-on-error \
   --no-owner \
   "$BACKUP_FILE"
 
@@ -138,4 +158,4 @@ if [[ "$table_count" == "0" ]]; then
   exit 5
 fi
 echo "proximo passo obrigatorio:"
-echo "  python manage.py smoke_test_tenant --slug ${SLUG}   # com DATABASE_URL apontando para ${TARGET_DATABASE}"
+echo "  python manage.py smoke_test_tenant --slug ${SLUG} --schema-only   # com DATABASE_URL apontando para ${TARGET_DATABASE}"

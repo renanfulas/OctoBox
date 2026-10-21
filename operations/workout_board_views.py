@@ -11,7 +11,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -275,12 +275,20 @@ class WorkoutSmartPasteView(OperationBaseView):
         # desaparecer so porque o ambiente nao redefiniu SMARTPLAN_GPT_URL.
         return base_context
 
+    @transaction.atomic
     def _update_review_item(self, *, plan, cleaned_data):
+        plan = WeeklyWodPlan.objects.select_for_update().get(pk=plan.pk)
+        revision = cleaned_data.get('plan_revision')
+        if plan.status != WeeklyWodPlanStatus.DRAFT or (revision and revision != plan.updated_at):
+            raise ValidationError('O rascunho mudou em outra aba ou já foi confirmado. Confira a prévia atual antes de revisar.')
         payload = plan.parsed_payload or {}
         days = payload.get('days') or []
-        day = days[cleaned_data['day_index']]
-        block = day['blocks'][cleaned_data['block_index']]
-        movement = block['movements'][cleaned_data['movement_index']]
+        try:
+            day = days[cleaned_data['day_index']]
+            block = day['blocks'][cleaned_data['block_index']]
+            movement = block['movements'][cleaned_data['movement_index']]
+        except (IndexError, KeyError, TypeError) as exc:
+            raise ValidationError('Este item não está mais na prévia. Confira o rascunho atual e tente novamente.') from exc
         movement['movement_label_raw'] = cleaned_data['movement_label_raw']
         chosen_slug = (cleaned_data.get('movement_slug') or '').strip()
         movement['movement_slug'] = chosen_slug or resolve_movement_slug(cleaned_data['movement_label_raw'])
@@ -339,7 +347,15 @@ class WorkoutSmartPasteView(OperationBaseView):
                     return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
                 return self.render_to_response(context)
             plan = self._load_plan(review_form.cleaned_data['plan_id'])
-            plan = self._update_review_item(plan=plan, cleaned_data=review_form.cleaned_data)
+            try:
+                plan = self._update_review_item(plan=plan, cleaned_data=review_form.cleaned_data)
+            except ValidationError as exc:
+                plan.refresh_from_db()
+                context = self._build_context(plan=plan)
+                context['smart_paste_review_conflict'] = exc.message
+                if self._is_hx_request():
+                    return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
+                return self.render_to_response(context)
             messages.success(request, 'Item revisado no preview semanal.')
             next_target = ''
             for day_index, day in enumerate((plan.parsed_payload or {}).get('days', [])):
@@ -590,6 +606,7 @@ class WorkoutSmartPasteView(OperationBaseView):
             if (
                 cleaned['source_text'] != plan.source_text
                 or cleaned['week_start'] != plan.week_start
+                or (cleaned.get('plan_revision') and cleaned['plan_revision'] != plan.updated_at)
                 or (
                     plan.workout_program_id is not None
                     and cleaned['workout_program'].pk != plan.workout_program_id
@@ -597,7 +614,7 @@ class WorkoutSmartPasteView(OperationBaseView):
             ):
                 messages.error(
                     request,
-                    'O texto ou a semana mudou depois desta prévia. Organize o treino novamente antes de confirmar.',
+                    'O rascunho, a semana ou a modalidade mudou depois desta prévia. Confira a versão atual antes de confirmar.',
                 )
                 context = self._build_context(
                     plan=plan,
@@ -814,7 +831,8 @@ class WorkoutSmartPasteView(OperationBaseView):
         refreshed_form = WeeklyWodSmartPasteForm(
             initial={
                 'plan_id': plan.id,
-                'week_start': plan.week_start.strftime('%d/%m'),
+                'workout_program': plan.workout_program_id,
+                'week_start': plan.week_start.strftime('%d/%m/%Y'),
                 'label': plan.label,
                 'source_text': plan.source_text,
             }
