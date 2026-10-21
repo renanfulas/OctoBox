@@ -175,7 +175,7 @@ class GuidedLoadProgressionTest(TestCase):
         self._publish()
         with freeze_time(_WEEK_1):
             _series, anchor, _kind = self._bench_card_with_anchor()
-            self.assertEqual(anchor, {'kg': None, 'on': None})
+            self.assertEqual(anchor, {})  # sem carga real ainda: nenhuma âncora
             self._record_top_through_guided(weight=100, reps=8, rir=2)
         with freeze_time(_WEEK_2):
             html = self._page()

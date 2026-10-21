@@ -197,6 +197,19 @@
   }
   var ANCHORED_KINDS = { phase_progressive: true, last_observed: true };
 
+  /* Última carga real que ancorou a sugestão (JSON do servidor) e semana da
+     periodização (data-period-* do lançador). Entrada ruim vira "sem âncora". */
+  function anchorFrom(raw) {
+    try {
+      var parsed = JSON.parse(raw || '{}') || {};
+      return { anchorKg: toNumber(parsed.kg), anchorOn: parsed.on || null };
+    } catch (_) { return { anchorKg: null, anchorOn: null }; }
+  }
+  function periodFrom(dataset) {
+    if (!dataset || !dataset.periodWeek) return null;
+    return { week: Number(dataset.periodWeek), total: Number(dataset.periodTotal) || null, phase: dataset.periodPhase || '' };
+  }
+
   function loadPlan(movement, series, options) {
     options = options || {};
     if (!movement || !series || !movement.allowLoad || movement.topTargetKg != null) return null;
@@ -235,6 +248,6 @@
     repsText: repsText, metaText: metaText, loadSource: loadSource, weightSource: weightSource,
     ctaText: ctaText, valueText: valueText, rirText: rirText, clock: clock,
     spokenDuration: spokenDuration, parseWeight: parseWeight, parseReps: parseReps,
-    stepWeight: stepWeight, loadPlan: loadPlan, whenLabel: whenLabel,
+    stepWeight: stepWeight, loadPlan: loadPlan, whenLabel: whenLabel, anchorFrom: anchorFrom, periodFrom: periodFrom,
   };
 }());

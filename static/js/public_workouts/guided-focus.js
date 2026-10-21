@@ -34,6 +34,7 @@
     var audio = null;
     var topPanelMovement = null;
     var goWord = options.goWord || 'GO';
+    var period = options.period || null;
 
     function q(selector, root) { return (root || dialog).querySelector(selector); }
     function qa(selector, root) { return Array.prototype.slice.call((root || dialog).querySelectorAll(selector)); }
@@ -297,7 +298,7 @@
       var movement = model.current.movement;
       var series = model.current.series;
       q('[data-workout-guided-set]').textContent = format.ctaText(movement, draft);
-      var plan = format.loadPlan(movement, series, { period: model.period, today: todayIso() });
+      var plan = format.loadPlan(movement, series, { period: period, today: todayIso() });
       paintPlan(plan);
       var source = format.weightSource(movement, series, draft);
       // Com a conta à vista no quadro acima, a linha embaixo só lembra que dá para ajustar.

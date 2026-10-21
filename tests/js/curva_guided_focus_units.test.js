@@ -241,3 +241,15 @@ test('variação arredonda certo em kg com meio ponto (100 → 107,5 = +8%)', ()
   const movement = { allowLoad: true, loadKind: 'phase_progressive', anchorKg: 100, anchorOn: '2026-01-06', series: [top] };
   assert.equal(format.loadPlan(movement, top, { today: '2026-01-13' }).delta, '+8%');
 });
+
+test('âncora e semana vêm do HTML; entrada ruim vira "sem âncora"', () => {
+  const plain = (value) => JSON.parse(JSON.stringify(value));
+  assert.deepEqual(plain(format.anchorFrom('{"kg":100.0,"on":"2026-01-06"}')), { anchorKg: 100, anchorOn: '2026-01-06' });
+  assert.deepEqual(plain(format.anchorFrom('{}')), { anchorKg: null, anchorOn: null });
+  assert.deepEqual(plain(format.anchorFrom('não é json')), { anchorKg: null, anchorOn: null });
+  assert.deepEqual(
+    plain(format.periodFrom({ periodWeek: '2', periodTotal: '4', periodPhase: 'Força-Hipertrofia' })),
+    { week: 2, total: 4, phase: 'Força-Hipertrofia' },
+  );
+  assert.equal(format.periodFrom({}), null);
+});

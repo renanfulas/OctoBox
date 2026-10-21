@@ -306,17 +306,6 @@ def guided_series(movement: dict, top_weight_kg=None, one_rep_max_by_movement=No
 
 
 @register.filter
-def guided_load_anchor(load: dict) -> str:
-    """Última carga real que ancorou a sugestão e o dia dela, em JSON (fora do
-    l10n): o guiado mostra "Semana passada 100 kg -> Hoje 107,5 kg"."""
-    anchor = (load or {}).get('anchor_kg')
-    return json.dumps(
-        {'kg': float(anchor) if anchor is not None else None, 'on': (load or {}).get('anchor_on')},
-        separators=(',', ':'),
-    )
-
-
-@register.filter
 def reps_phases(reps_spec: str, top_weight_kg=None):
     """Quebra `reps_spec` em fases (Prep/Feeder/Top/AMRAP) quando o texto do
     treinador junta varias com ' → ' (ex.: '2-3× Prep → 1× Feeder → 3× Top

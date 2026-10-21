@@ -1,5 +1,6 @@
 """Uma decisão de carga para a ficha e o guia, com origem explícita."""
 
+import json
 from dataclasses import dataclass
 
 from .load_suggestion import suggest_movement_load
@@ -34,6 +35,11 @@ class LoadResolution:
         if self.anchor_on is not None:
             result['anchor_kg'] = self.anchor_kg
             result['anchor_on'] = self.anchor_on
+            # JSON fora do l10n para o guiado (data-load-anchor no cartão).
+            result['anchor_json'] = json.dumps(
+                {'kg': float(self.anchor_kg) if self.anchor_kg is not None else None, 'on': self.anchor_on},
+                separators=(',', ':'),
+            )
         return result
 
 

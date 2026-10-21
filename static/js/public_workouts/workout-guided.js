@@ -25,7 +25,7 @@
   var conflictServer = root.querySelector('[data-workout-guided-conflict-server]');
   var conflictCorrect = root.querySelector('[data-workout-guided-conflict-correct]');
   var format = window.CurvaGuidedFormat;
-  var focus = window.CurvaGuidedFocus.create(dialog);
+  var focus = window.CurvaGuidedFocus.create(dialog, { period: format.periodFrom(root.dataset) });
   var scope = root.dataset.accountScope && document.body.dataset.planSlug
     ? root.dataset.accountScope + ':' + document.body.dataset.planSlug : '';
   var outbox = window.CurvaGuidedOutbox;
@@ -288,10 +288,6 @@
       dayTitle: dayTitle, progressIndex: progressIndex, rest: restModel(), syncText: syncText(),
       lastRecordedKey: lastRecordedKey(),
       topTarget: topTargetModel(state.current),
-      period: root.dataset.periodWeek ? {
-        week: Number(root.dataset.periodWeek), total: Number(root.dataset.periodTotal) || null,
-        phase: root.dataset.periodPhase || '',
-      } : null,
       receipt: receiptMovement && recordedDetails.has(receiptKey) ? {
         movement: receiptMovement, entry: recordedDetails.get(receiptKey), sync: setSync.get(receiptKey) || 'saved',
         canAddFreeform: receiptMovement.freeform && receiptMovement.series.length < 30,
@@ -460,19 +456,15 @@
       series.forEach(function (row) { row.base_weight_kg = row.weight_kg; });
       var heading = card.querySelector('.workout-movement-copy strong');
       var step = series.length && Number(series[0].rounding_step_kg) > 0 ? Number(series[0].rounding_step_kg) : 2.5;
-      var anchor = {};
-      try { anchor = JSON.parse(card.dataset.loadAnchor || '{}') || {}; } catch (_) { anchor = {}; }
-      return {
+      return Object.assign({
         slug: card.dataset.movementSlug,
         label: card.dataset.movementLabel || (heading ? heading.textContent.trim() : 'Exercício'),
         referenceUrl: card.dataset.referenceUrl || '',
         rirSpec: card.dataset.rirSpec || '',
         loadKind: card.dataset.loadKind, loadStep: step,
-        // Última carga real que ancorou a sugestão de hoje ("semana passada X kg").
-        anchorKg: anchor.kg == null ? null : Number(anchor.kg), anchorOn: anchor.on || null,
         allowLoad: card.dataset.allowLoadRegistration !== 'false',
         series: series, freeform: series.length === 1 && series[0].role === 'legacy_unknown',
-      };
+      }, format.anchorFrom(card.dataset.loadAnchor));
     }).filter(function (movement) { return movement.series.length > 0; });
   }
 
