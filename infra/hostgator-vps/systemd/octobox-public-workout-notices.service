@@ -1,0 +1,14 @@
+[Unit]
+Description=OctoBOX corredor de treinos billing notice drain
+After=network-online.target octobox-gunicorn.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/octobox/app
+EnvironmentFile=-/srv/octobox/shared/octobox.env
+ExecStart=/srv/octobox/app/.venv/bin/python manage.py drain_public_workout_notices
+User=root
+
+[Install]
+WantedBy=multi-user.target

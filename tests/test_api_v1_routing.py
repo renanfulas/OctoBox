@@ -10,7 +10,7 @@ O QUE ESTE ARQUIVO FAZ:
 """
 
 from django.test import SimpleTestCase
-from django.urls import resolve, reverse
+from django.urls import Resolver404, resolve, reverse
 
 
 class ApiV1RoutingTests(SimpleTestCase):
@@ -20,11 +20,9 @@ class ApiV1RoutingTests(SimpleTestCase):
         self.assertEqual(match.func.view_class.__module__, 'api.v1.integrations_views')
         self.assertEqual(match.func.view_class.__name__, 'WhatsAppPollWebhookView')
 
-    def test_init_system_route_resolves_to_internal_module(self):
-        match = resolve(reverse('api-v1-init-system'))
-
-        self.assertEqual(match.func.__module__, 'api.v1.internal_views')
-        self.assertEqual(match.func.__name__, 'init_system_view')
+    def test_init_system_route_is_not_registered_in_web_runtime(self):
+        with self.assertRaises(Resolver404):
+            resolve('/api/v1/debug/init-system/')
 
     def test_payment_link_route_resolves_to_finance_module(self):
         match = resolve(reverse('api-v1-payment-link', args=[1]))

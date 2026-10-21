@@ -63,7 +63,7 @@ class ClassGridView(CatalogBaseView, FormView):
             selected_session_id = self.request.POST.get('session_id') or selected_session_id
         if not selected_session_id:
             return None
-        return ClassSession.objects.filter(pk=selected_session_id).select_related('coach').first()
+        return ClassSession.objects.filter(pk=selected_session_id).select_related('coach', 'workout_program').first()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

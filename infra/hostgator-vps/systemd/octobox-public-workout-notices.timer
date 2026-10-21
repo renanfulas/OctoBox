@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodic OctoBOX corredor de treinos billing notice drain
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Persistent=true
+Unit=octobox-public-workout-notices.service
+
+[Install]
+WantedBy=timers.target

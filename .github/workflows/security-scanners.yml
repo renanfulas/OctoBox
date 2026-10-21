@@ -35,7 +35,7 @@ jobs:
           bandit -r access api auditing boxcore catalog communications config
           dashboard finance guide integrations jobs model_support monitoring
           onboarding operations reporting scripts security shared_support
-          students -x ./.venv,./tests,./*migrations*,./**/tests,./**/test_*.py -ll
+          students public_workouts student_app student_identity -x ./.venv,./tests,./*migrations*,./**/tests,./**/test_*.py -ll
 
       - name: Run Pip-Audit (Dependency Scan)
         run: |

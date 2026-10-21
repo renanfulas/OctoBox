@@ -19,6 +19,7 @@ PONTOS CRITICOS:
 from __future__ import annotations
 
 import logging
+import re
 
 from django.contrib import messages
 from django.contrib.auth import login
@@ -38,10 +39,12 @@ from .services import (
     activate_pending_signup,
     create_checkout_session,
     generate_magic_token,
+    is_launch_promo_code,
     mark_pending_signup_paid,
     query_stripe_session_status,
     resend_activation_rate_limit_exceeded,
     send_onboarding_email,
+    peek_expired_magic_token_pending_id,
     verify_magic_token,
 )
 
@@ -57,6 +60,14 @@ def _resolve_plan(raw_value):
     if candidate in _VALID_PLANS:
         return candidate
     return PendingSignupPlan.ANNUAL.value
+
+
+_PROMO_CODE_PATTERN = re.compile(r'[^A-Z0-9-]')
+
+
+def _resolve_promo(request):
+    raw = request.POST.get('promo') or request.GET.get('promo') or ''
+    return _PROMO_CODE_PATTERN.sub('', raw.strip().upper())[:32]
 
 
 def _plan_display(plan_value):
@@ -76,13 +87,19 @@ class CheckoutFormView(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         plan = _resolve_plan(self.request.GET.get('plan'))
+        promo = _resolve_promo(self.request)
         context['plan'] = plan
         context['plan_display'] = _plan_display(plan)
         context['post_program_price'] = 'R$ 197/mês'
+        context['promo'] = promo
+        # Banner so aparece no plano mensal — a campanha nao se aplica ao anual
+        # (ver signup/services.py:_resolve_launch_promotion_code_id).
+        context['promo_valid'] = bool(promo) and is_launch_promo_code(promo) and plan == PendingSignupPlan.MONTHLY.value
         return context
 
     def form_valid(self, form):
         plan = _resolve_plan(self.request.POST.get('plan') or self.request.GET.get('plan'))
+        promo = _resolve_promo(self.request)
         referer = (self.request.META.get('HTTP_REFERER') or '')[:255]
 
         pending = PendingSignup.objects.create(
@@ -91,6 +108,7 @@ class CheckoutFormView(FormView):
             box_name=form.cleaned_data['box_name'],
             phone=form.cleaned_data['phone'],
             plan=plan,
+            promo_code=promo,
             landing_referer=referer,
         )
 
@@ -227,28 +245,19 @@ class ResendActivationEmailView(View):
     o email de novo. Idempotente e seguro de repetir.
     """
 
+    # Resposta unica para qualquer estado (inexistente, ja ativado, nao pago, enviado, falha de
+    # envio): a rota e anonima e o pending_id e sequencial, entao status HTTP/codigos/e-mail
+    # diferentes por estado permitiriam enumerar cadastros e vazar PII. O texto orienta os
+    # casos legitimos sem confirmar qual deles ocorreu.
+    GENERIC_MESSAGE = (
+        'Se existir um pagamento confirmado para este cadastro, o e-mail de ativação já está a caminho. '
+        'Confira também a caixa de spam. Se você já ativou a conta, é só entrar pelo login. '
+        'Se acabou de pagar, aguarde alguns instantes e tente de novo.'
+    )
+
     def post(self, request, pending_id, *args, **kwargs):
-        pending = PendingSignup.objects.filter(pk=pending_id).first()
-        if pending is None:
-            return JsonResponse({'ok': False, 'error': 'Cadastro não encontrado.'}, status=404)
-
-        if pending.status == PendingSignupStatus.ACTIVATED:
-            return JsonResponse(
-                {'ok': False, 'code': 'already-activated', 'error': 'Essa conta já foi ativada — você já pode entrar no OctoBox.'},
-                status=409,
-            )
-
-        if pending.status != PendingSignupStatus.PAID:
-            return JsonResponse(
-                {
-                    'ok': False,
-                    'code': 'not-paid-yet',
-                    'error': 'Ainda não identificamos seu pagamento. Aguarde alguns instantes e tente de novo.',
-                },
-                status=409,
-            )
-
-        if resend_activation_rate_limit_exceeded(request, pending_id=pending.pk):
+        # Rate limit ANTES de qualquer consulta: nao da pra usar a rota para sondar ids em massa.
+        if resend_activation_rate_limit_exceeded(request, pending_id=pending_id):
             return JsonResponse(
                 {
                     'ok': False,
@@ -258,20 +267,14 @@ class ResendActivationEmailView(View):
                 status=429,
             )
 
-        token = generate_magic_token(pending)
-        activation_url = request.build_absolute_uri(reverse('signup-onboarding', kwargs={'token': token}))
-        sent = send_onboarding_email(pending, activation_url=activation_url)
-        if not sent:
-            return JsonResponse(
-                {
-                    'ok': False,
-                    'code': 'send-failed',
-                    'error': 'Não conseguimos enviar agora. Tente de novo em instantes.',
-                },
-                status=502,
-            )
+        pending = PendingSignup.objects.filter(pk=pending_id, status=PendingSignupStatus.PAID).first()
+        if pending is not None:
+            token = generate_magic_token(pending)
+            activation_url = request.build_absolute_uri(reverse('signup-onboarding', kwargs={'token': token}))
+            if not send_onboarding_email(pending, activation_url=activation_url):
+                logger.warning('signup_resend_activation_send_failed pending_id=%s', pending.pk)
 
-        return JsonResponse({'ok': True, 'message': f'E-mail reenviado para {pending.email}. Confira também a caixa de spam.'})
+        return JsonResponse({'ok': True, 'message': self.GENERIC_MESSAGE})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -294,15 +297,26 @@ class OnboardingWizardView(FormView):
             self.pending = verify_magic_token(token)
         except InvalidMagicTokenError as exc:
             self.pending = None
-            self.token_error = str(exc)
+            reason = str(exc)
+            # Onda 5 (docs/plans/student-login-magic-link-bugs-corda.md): signup/services.py
+            # levanta 'status-invalido:{pending.status}' com o valor bruto do enum interno
+            # embutido. Normaliza pra um bucket unico e estavel AQUI, na fronteira — o
+            # template nunca deve ver (nem por engano vir a ecoar) o valor cru de
+            # pending.status (poderia vazar vocabulario interno tipo "cancelled"/"refunded").
+            self.token_error = 'status-invalido' if reason.startswith('status-invalido:') else reason
+            # Link expirado: o dono pode pedir outro na hora (mesmo endpoint da tela de sucesso)
+            # em vez de esperar contato por WhatsApp.
+            self.resend_pending_id = peek_expired_magic_token_pending_id(token) if reason == 'token-expirado' else None
         else:
             self.token_error = None
+            self.resend_pending_id = None
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['pending'] = self.pending
         context['token_error'] = self.token_error
+        context['resend_pending_id'] = self.resend_pending_id
         context['suggested_username'] = self._suggest_username() if self.pending else ''
         return context
 

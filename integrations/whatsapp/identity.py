@@ -88,7 +88,7 @@ def resolve_whatsapp_channel_identity(*, phone: str, external_contact_id: str = 
         intake = StudentIntake.objects.filter(
             phone_lookup_index=phone_index,
             linked_student__isnull=True,
-        ).order_by('-created_at').first()
+        ).order_by('-created_at', '-id').first()
 
     return WhatsAppChannelIdentity(
         normalized_phone=lookup_plan.normalized_phone,

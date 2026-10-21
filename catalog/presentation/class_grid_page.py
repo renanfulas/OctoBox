@@ -17,6 +17,7 @@ def _build_weekend_rotation_state(schedule_form):
     selected_weekdays = {str(value) for value in (schedule_form['weekdays'].value() or [])}
     return {
         'title': schedule_form['title'].value() or '',
+        'workout_program_id': str(schedule_form['workout_program'].value() or ''),
         'coach_id': str(schedule_form['coach'].value() or ''),
         'start_time': schedule_form['start_time'].value() or '',
         'duration_minutes': schedule_form['duration_minutes'].value() or '',

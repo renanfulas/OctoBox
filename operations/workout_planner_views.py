@@ -47,8 +47,8 @@ def _handle_template_storage_unavailable(request, *, redirect_name='workout-plan
 class WorkoutPlannerView(OperationBaseView):
     allowed_roles = (ROLE_COACH, ROLE_MANAGER, ROLE_OWNER)
     template_name = 'operations/workout_planner.html'
-    page_title = 'Planner de WOD'
-    page_subtitle = 'Semana, aulas e status do treino em uma grade operacional.'
+    page_title = 'Calendário de WOD'
+    page_subtitle = 'Veja os treinos por dia e aula, acompanhe aprovações e encontre o que ainda falta.'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

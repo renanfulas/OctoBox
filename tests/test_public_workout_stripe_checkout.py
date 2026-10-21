@@ -1,0 +1,304 @@
+"""
+ARQUIVO: testes do checkout proprio do corredor de treinos (Onda B2, Fatia B).
+
+POR QUE ELE EXISTE:
+- garante que o checkout nunca aciona o fluxo do box (N2): mode=subscription
+  na conta reusada (STRIPE_SECRET_KEY do box), sem stripe_connected_account_id,
+  com metadata.product='coaching' — o discriminador que o webhook handler
+  usa pra decidir se o evento e do corredor.
+"""
+
+from __future__ import annotations
+
+from unittest.mock import MagicMock, patch
+
+from django.test import TestCase, override_settings
+
+from decimal import Decimal
+
+from public_workouts.billing import get_or_create_subscription
+from public_workouts.models import PublicWorkoutAccount, PublicWorkoutCheckoutLead, PublicWorkoutTier
+from public_workouts.stripe_checkout import (
+    PublicWorkoutStripeNotConfiguredError,
+    start_checkout_lead_session,
+    start_custom_price_subscription_checkout,
+    start_customer_portal_session,
+    start_subscription_checkout,
+)
+
+
+class StartCheckoutLeadSessionTests(TestCase):
+    def setUp(self):
+        self.lead = PublicWorkoutCheckoutLead.objects.create(
+            email='lead@example.com', tier=PublicWorkoutTier.ESSENCIAL,
+        )
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_creates_subscription_checkout_with_lead_metadata_and_no_student_account(self, mock_create):
+        mock_create.return_value = MagicMock(id='cs_lead', url='https://checkout.stripe.com/cs_lead')
+
+        url = start_checkout_lead_session(
+            lead=self.lead,
+            success_url='https://octoboxfit.com.br/treinos/checkout/retorno?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='https://octoboxfit.com.br/treinos/#curva-precos',
+        )
+
+        self.assertEqual(url, 'https://checkout.stripe.com/cs_lead')
+        self.lead.refresh_from_db()
+        self.assertEqual(self.lead.stripe_checkout_session_id, 'cs_lead')
+        self.assertFalse(PublicWorkoutAccount.objects.filter(email=self.lead.email).exists())
+        _, payload = mock_create.call_args
+        self.assertEqual(payload['metadata']['public_workout_checkout_lead_id'], str(self.lead.pk))
+        self.assertEqual(payload['subscription_data']['metadata']['product'], 'coaching')
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO='price_completo', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_completo_lead_checkout_accepts_promotion_codes(self, mock_create):
+        self.lead.tier = PublicWorkoutTier.COMPLETO
+        self.lead.save(update_fields=['tier', 'updated_at'])
+        mock_create.return_value = MagicMock(id='cs_completo', url='https://checkout.stripe.com/cs_completo')
+
+        start_checkout_lead_session(
+            lead=self.lead,
+            success_url='https://octoboxfit.com.br/treinos/checkout/retorno?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='https://octoboxfit.com.br/treinos/#curva-precos',
+        )
+
+        self.assertTrue(mock_create.call_args.kwargs['allow_promotion_codes'])
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    @patch('stripe.checkout.Session.retrieve')
+    def test_completed_paid_session_returns_to_verified_return_instead_of_creating_another(
+        self, mock_retrieve, mock_create,
+    ):
+        self.lead.stripe_checkout_session_id = 'cs_paid'
+        self.lead.save(update_fields=['stripe_checkout_session_id', 'updated_at'])
+        mock_retrieve.return_value = MagicMock(
+            id='cs_paid', status='complete', payment_status='paid',
+        )
+
+        url = start_checkout_lead_session(
+            lead=self.lead,
+            success_url='https://octoboxfit.com.br/treinos/checkout/retorno?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='https://octoboxfit.com.br/treinos/#curva-precos',
+        )
+
+        self.assertEqual(url, 'https://octoboxfit.com.br/treinos/checkout/retorno?session_id=cs_paid')
+        mock_create.assert_not_called()
+
+
+
+
+class StartSubscriptionCheckoutTests(TestCase):
+    def setUp(self):
+        self.account = PublicWorkoutAccount.objects.create(email='aluno@example.com')
+        self.subscription = get_or_create_subscription(account=self.account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='giovanna')
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='', STRIPE_SECRET_KEY='sk_test_x')
+    def test_raises_when_price_id_not_configured(self):
+        with self.assertRaises(PublicWorkoutStripeNotConfiguredError):
+            start_subscription_checkout(
+                subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+            )
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='')
+    def test_raises_when_secret_key_not_configured(self):
+        with self.assertRaises(PublicWorkoutStripeNotConfiguredError):
+            start_subscription_checkout(
+                subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+            )
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_creates_session_in_subscription_mode_with_coaching_metadata(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_123')
+
+        url = start_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+
+        self.assertEqual(url, 'https://checkout.stripe.com/pay/cs_test_123')
+        _, kwargs = mock_create.call_args
+        self.assertEqual(kwargs['mode'], 'subscription')
+        self.assertEqual(kwargs['line_items'], [{'price': 'price_123', 'quantity': 1}])
+        self.assertTrue(kwargs['allow_promotion_codes'])
+        self.assertEqual(kwargs['metadata']['product'], 'coaching')
+        self.assertEqual(kwargs['metadata']['public_workout_subscription_id'], str(self.subscription.pk))
+        self.assertEqual(kwargs['metadata']['tier'], PublicWorkoutTier.ESSENCIAL)
+        self.assertEqual(kwargs['subscription_data']['metadata']['product'], 'coaching')
+        self.assertEqual(kwargs['subscription_data']['metadata']['tier'], PublicWorkoutTier.ESSENCIAL)
+        # Sem Connect Express (C5): nenhuma chave de conta conectada no payload.
+        self.assertNotIn('stripe_account', kwargs)
+        self.assertNotIn('on_behalf_of', kwargs)
+        self.assertNotIn('application_fee_percent', kwargs)
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_idempotency_key_includes_subscription_id(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_123')
+
+        start_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+
+        _, kwargs = mock_create.call_args
+        self.assertIn(str(self.subscription.pk), kwargs['idempotency_key'])
+
+    @override_settings(
+        PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_essencial',
+        PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO='price_completo',
+        PUBLIC_WORKOUT_STRIPE_PRICE_ID_PREMIUM='price_premium',
+        STRIPE_SECRET_KEY='sk_test_x',
+    )
+    @patch('stripe.checkout.Session.create')
+    def test_each_tier_resolves_its_own_price_id(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_123')
+        expected_price_by_tier = {
+            PublicWorkoutTier.ESSENCIAL: 'price_essencial',
+            PublicWorkoutTier.COMPLETO: 'price_completo',
+            PublicWorkoutTier.PREMIUM: 'price_premium',
+        }
+
+        for tier, expected_price_id in expected_price_by_tier.items():
+            self.subscription.tier = tier
+            self.subscription.save(update_fields=['tier'])
+
+            start_subscription_checkout(
+                subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+            )
+
+            _, kwargs = mock_create.call_args
+            self.assertEqual(kwargs['line_items'], [{'price': expected_price_id, 'quantity': 1}])
+            self.assertEqual(kwargs['metadata']['tier'], tier)
+            self.assertTrue(kwargs['allow_promotion_codes'])
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_subscription_charges_immediately_without_trial(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_123')
+
+        start_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+
+        _, kwargs = mock_create.call_args
+        self.assertNotIn('trial_period_days', kwargs['subscription_data'])
+        self.assertEqual(kwargs['metadata']['guarantee_model'], 'refund_guarantee')
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_ESSENCIAL='price_123', STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_persists_the_price_id_used_by_the_contract(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_123')
+
+        start_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+
+        self.subscription.refresh_from_db()
+        self.assertEqual(self.subscription.contracted_price_id, 'price_123')
+
+    @override_settings(PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO='', STRIPE_SECRET_KEY='sk_test_x')
+    def test_raises_a_clear_error_when_a_tiers_price_id_is_not_configured(self):
+        self.subscription.tier = PublicWorkoutTier.COMPLETO
+        self.subscription.save(update_fields=['tier'])
+
+        with self.assertRaisesMessage(PublicWorkoutStripeNotConfiguredError, 'PUBLIC_WORKOUT_STRIPE_PRICE_ID_COMPLETO'):
+            start_subscription_checkout(
+                subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+            )
+
+
+class StartCustomPriceSubscriptionCheckoutTests(TestCase):
+    # Legado sem plano fixo (achado do Renan): "quem nao tem valor fixo,
+    # colocar uma estrutura onde coloque um valor personalizado pra cobrar".
+
+    def setUp(self):
+        self.account = PublicWorkoutAccount.objects.create(email='legado@example.com')
+        self.subscription = get_or_create_subscription(account=self.account, tier=PublicWorkoutTier.ESSENCIAL, plan_slug='bruno')
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    def test_raises_when_custom_monthly_price_not_set(self):
+        with self.assertRaises(PublicWorkoutStripeNotConfiguredError):
+            start_custom_price_subscription_checkout(
+                subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+            )
+
+    @override_settings(STRIPE_SECRET_KEY='')
+    def test_raises_when_secret_key_not_configured(self):
+        self.subscription.custom_monthly_price = Decimal('150.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+
+        with self.assertRaises(PublicWorkoutStripeNotConfiguredError):
+            start_custom_price_subscription_checkout(
+                subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+            )
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_creates_session_with_ad_hoc_price_data_in_cents(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_custom')
+        self.subscription.custom_monthly_price = Decimal('150.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+
+        url = start_custom_price_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+
+        self.assertEqual(url, 'https://checkout.stripe.com/pay/cs_test_custom')
+        _, kwargs = mock_create.call_args
+        self.assertEqual(kwargs['mode'], 'subscription')
+        line_item = kwargs['line_items'][0]
+        self.assertEqual(line_item['price_data']['currency'], 'brl')
+        self.assertEqual(line_item['price_data']['unit_amount'], 15000)
+        self.assertEqual(line_item['price_data']['recurring'], {'interval': 'month'})
+        self.assertEqual(kwargs['metadata']['product'], 'coaching')
+        self.assertEqual(kwargs['metadata']['custom_price'], '1')
+        self.assertEqual(kwargs['subscription_data']['metadata']['custom_price'], '1')
+        # Nunca chama _resolve_price_id (nao ha Price ID fixo pra checar).
+        self.assertNotIn('price', line_item)
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.checkout.Session.create')
+    def test_idempotency_key_changes_when_value_is_renegotiated(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://checkout.stripe.com/pay/cs_test_custom')
+        self.subscription.custom_monthly_price = Decimal('150.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+        start_custom_price_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+        _, first_kwargs = mock_create.call_args
+
+        self.subscription.custom_monthly_price = Decimal('180.00')
+        self.subscription.save(update_fields=['custom_monthly_price'])
+        start_custom_price_subscription_checkout(
+            subscription=self.subscription, success_url='https://x/success', cancel_url='https://x/cancel'
+        )
+        _, second_kwargs = mock_create.call_args
+
+        self.assertNotEqual(first_kwargs['idempotency_key'], second_kwargs['idempotency_key'])
+
+
+class StartCustomerPortalSessionTests(TestCase):
+    # Onda B2, item 6 (Customer Portal) — ultimo item pendente da onda.
+
+    @override_settings(STRIPE_SECRET_KEY='')
+    def test_raises_when_secret_key_not_configured(self):
+        with self.assertRaises(PublicWorkoutStripeNotConfiguredError):
+            start_customer_portal_session(customer_id='cus_123', return_url='https://x/voltar')
+
+    @override_settings(STRIPE_SECRET_KEY='sk_test_x')
+    @patch('stripe.billing_portal.Session.create')
+    def test_creates_portal_session_for_the_given_customer(self, mock_create):
+        mock_create.return_value = MagicMock(url='https://billing.stripe.com/session/bps_test_123')
+
+        url = start_customer_portal_session(customer_id='cus_123', return_url='https://x/voltar')
+
+        self.assertEqual(url, 'https://billing.stripe.com/session/bps_test_123')
+        _, kwargs = mock_create.call_args
+        self.assertEqual(kwargs['customer'], 'cus_123')
+        self.assertEqual(kwargs['return_url'], 'https://x/voltar')
+        # Sem Connect Express (C5, mesma decisao do checkout): nenhuma chave
+        # de conta conectada no payload.
+        self.assertNotIn('stripe_account', kwargs)

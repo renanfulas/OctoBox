@@ -1,0 +1,30 @@
+<article class="student-card card-decor-topstripe workout-block-card workout-device-settings">
+  <h2>Aplicativo</h2>
+  <div class="workout-profile-list">
+    <div class="workout-device-settings__row">
+      <div class="workout-device-settings__copy">
+        <strong>Instalação</strong>
+        <span data-workout-install-status aria-live="polite">Verificando instalação…</span>
+      </div>
+      <button type="button" data-workout-install-profile-button hidden>Instalar app</button>
+    </div>
+    {% if account_email %}
+    <div class="workout-device-settings__row" data-workout-push-profile>
+      <div class="workout-device-settings__copy">
+        <strong>Notificações</strong>
+        <span data-workout-push-profile-status aria-live="polite">{% if not push_configured %}Ativação pendente da configuração de notificações.{% elif not push_identity_verified %}Para vincular este dispositivo, confirme seu e-mail com um código.{% else %}Verificando avisos…{% endif %}</span>
+      </div>
+      <div class="workout-device-settings__actions">
+        {% if push_configured %}
+          {% if push_identity_verified %}
+          <button type="button" data-workout-push-profile-enable hidden>Ativar avisos</button>
+          <button type="button" data-workout-push-disable hidden>Desativar avisos</button>
+          {% else %}
+          {% include 'public_workouts/partials/_push_verify.html' with verify_id='profile' %}
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</article>

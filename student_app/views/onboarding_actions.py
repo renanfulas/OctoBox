@@ -28,6 +28,14 @@ def complete_student_mass_onboarding(view, form):
         pending_onboarding=view.pending_onboarding,
         cleaned_data=form.cleaned_data,
     )
+    # Onda 1 (docs/plans/student-login-magic-link-bugs-corda.md): complete_mass_onboarding
+    # antes so tinha caminho de sucesso ou excecao — agora tambem pode devolver
+    # status='duplicate_provider_subject' (identity=None). Sem este check, result.identity.id
+    # abaixo estouraria AttributeError: exatamente a mesma classe de bug que esta onda corrige.
+    if not result.is_success:
+        messages.error(view.request, result.error_message)
+        clear_pending_student_onboarding(view.request)
+        return redirect('student-identity-login')
     clear_pending_student_onboarding(view.request)
     response = redirect('student-app-home')
     attach_student_session_cookie(

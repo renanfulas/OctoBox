@@ -8,7 +8,7 @@ O QUE ESTE ARQUIVO FAZ:
 1. monta snapshots de memberships pendentes e gerenciados.
 2. monta a leitura de convites recentes e fila travada.
 3. calcula cards e alertas de observabilidade.
-4. centraliza a leitura do link em massa ativo.
+4. centraliza a leitura do link do grupo ativo.
 """
 
 from __future__ import annotations
@@ -237,7 +237,7 @@ class StudentInvitationOperationsQueries:
                         'student_name': invitation.student_name,  # # Sprint 2: denormalizado
                         'email_status_label': self.presenter.build_last_email_delivery_status_label(last_email_delivery),
                         'reason_label': self.presenter.build_stalled_reason_label(last_email_delivery),
-                        'whatsapp_action_label': 'Enviar mensagem',
+                        'whatsapp_action_label': 'Enviar por WhatsApp',
                         'invitation_id': invitation.id,
                         'priority_label': self.presenter.build_stalled_priority_label(last_email_delivery),
                         'priority_tone': self.presenter.build_stalled_priority_tone(last_email_delivery),
@@ -307,9 +307,9 @@ class StudentInvitationOperationsQueries:
                 'tone': 'ok',
             },
             {
-                'eyebrow': 'Fila quente',
+                'eyebrow': 'Fila de mensagens',
                 'value': str(len(stalled_invites)),
-                'detail': 'Convites travados que precisam de um corredor alternativo.',
+                'detail': 'Convites travados que precisam de um caminho alternativo.',
                 'tone': 'danger' if stalled_invites else 'ok',
             },
             {
@@ -331,7 +331,7 @@ class StudentInvitationOperationsQueries:
             )
         if len(stalled_invites) >= 3:
             observability_alerts.append(
-                'A fila quente já tem 3 ou mais convites travados. Vale revisar e-mail ruim, bounce e handoff via WhatsApp.'
+                'A fila de mensagens já tem 3 ou mais convites travados. Vale revisar e-mail ruim, bounce e o envio por WhatsApp.'
             )
         if len(pending_memberships) >= 5:
             observability_alerts.append(

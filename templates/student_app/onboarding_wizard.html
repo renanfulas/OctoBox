@@ -28,19 +28,19 @@
         </div>
         {% endif %}
         <label>
-            <span>Data de nascimento</span>
+            <span>Data de nascimento (opcional)</span>
             {{ form.birth_date }}
             {% if form.birth_date.help_text %}<small class="student-form-note">{{ form.birth_date.help_text }}</small>{% endif %}
             {{ form.birth_date.errors }}
         </label>
         <label>
-            <span>Plano</span>
+            <span>Plano (opcional)</span>
             {{ form.selected_plan }}
-            <small class="student-form-note">Se você ainda não sabe, pode decidir depois com o box.</small>
+            <small class="student-form-note">Ao escolher, sua preferência fica como matrícula pendente para o box confirmar. Nenhum pagamento é feito neste passo. Se preferir, combine o plano depois com a recepção.</small>
             {{ form.selected_plan.errors }}
         </label>
         <div class="actions actions-tight">
-            <button type="submit" class="student-button">Continuar</button>
+            <button type="submit" class="student-button">{{ submit_label }}</button>
         </div>
     </form>
 </section>

@@ -1,0 +1,13 @@
+[Unit]
+Description=OctoBOX Curva daily commercial and operational snapshot
+After=network-online.target octobox-gunicorn.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/octobox/app
+EnvironmentFile=-/srv/octobox/shared/octobox.env
+ExecStart=/srv/octobox/venv/bin/python manage.py capture_public_workout_metrics
+# Resultado incompleto é esperado durante observação; --strict só é usado na
+# decisão humana de elevar orçamento.
+ExecStartPost=/srv/octobox/venv/bin/python manage.py evaluate_public_workout_growth_gate
+User=root

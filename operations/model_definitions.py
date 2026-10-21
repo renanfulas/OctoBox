@@ -28,6 +28,7 @@ HISTORICAL_BOXCORE_CLASS_SESSION_MODEL = 'boxcore.ClassSession'
 
 class ClassType(models.TextChoices):
     CROSS = 'cross', 'CrossFit'
+    HYROX = 'hyrox', 'HYROX'
     MOBILITY = 'mobility', 'Mobilidade / Alongamento'
     OLY = 'oly', 'Halterofilia'
     STRENGTH = 'strength', 'Forca'
@@ -89,6 +90,29 @@ class LeadImportJobStatus(models.TextChoices):
     FAILED = 'failed', 'Falha'
 
 
+class WorkoutProgram(TimeStampedModel):
+    """Modalidade/trilha de programacao do box, isolada do tipo operacional da aula.
+
+    O model vive no schema do box (app label historico `boxcore`) para que cada
+    tenant possa manter suas proprias modalidades sem espalhar choices estaticas
+    entre o parser, a projecao e a interface.
+    """
+
+    slug = models.SlugField(max_length=64, unique=True)
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=255, blank=True)
+    allowed_block_kinds = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        app_label = HISTORICAL_BOXCORE_APP_LABEL
+        ordering = ['sort_order', 'name', 'id']
+
+    def __str__(self):
+        return self.name
+
+
 class ClassSession(TimeStampedModel):
     title = models.CharField(max_length=100)
     class_type = models.CharField(
@@ -96,6 +120,13 @@ class ClassSession(TimeStampedModel):
         choices=ClassType.choices,
         default=ClassType.OTHER,
         db_index=True,
+    )
+    workout_program = models.ForeignKey(
+        'boxcore.WorkoutProgram',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='class_sessions',
     )
     # on_delete=DO_NOTHING: ver control.services.delete_user_safely e o
     # comentario completo em dashboard/models.py.
@@ -115,6 +146,36 @@ class ClassSession(TimeStampedModel):
         default=SessionStatus.SCHEDULED,
     )
     notes = models.TextField(blank=True)
+
+    def save(self, *args, **kwargs):
+        # Ensure sessions created through imports, admin, API, or older code
+        # paths still join the matching workout track. Explicitly selected
+        # programs are preserved; only legacy/unassigned sessions are mapped.
+        if not self.workout_program_id:
+            if self.class_type == ClassType.OTHER:
+                from operations.class_session_types import infer_class_type_from_session_title
+
+                inferred_class_type = infer_class_type_from_session_title(self.title)
+                if inferred_class_type != ClassType.OTHER:
+                    self.class_type = inferred_class_type
+                    update_fields = kwargs.get('update_fields')
+                    if update_fields is not None:
+                        kwargs['update_fields'] = tuple(set(update_fields) | {'class_type'})
+            from operations.workout_program_catalog import (
+                ensure_default_workout_programs,
+                program_slug_for_class_type,
+            )
+
+            program_slug = program_slug_for_class_type(self.class_type)
+            if not WorkoutProgram.objects.filter(is_active=True, slug='crossfit').exists():
+                ensure_default_workout_programs()
+            program = WorkoutProgram.objects.filter(slug=program_slug, is_active=True).only('pk').first()
+            if program:
+                self.workout_program_id = program.pk
+                update_fields = kwargs.get('update_fields')
+                if update_fields is not None:
+                    kwargs['update_fields'] = tuple(set(update_fields) | {'workout_program'})
+        return super().save(*args, **kwargs)
 
     class Meta:
         app_label = HISTORICAL_BOXCORE_APP_LABEL
@@ -320,11 +381,17 @@ class WorkoutTemplateBlock(TimeStampedModel):
         ('strength', 'Forca'),
         ('skill', 'Skill'),
         ('metcon', 'Metcon'),
+        ('mobility', 'Mobilidade'),
         ('cooldown', 'Cooldown'),
         ('custom', 'Livre'),
     ), default='custom')
     title = models.CharField(max_length=120)
     notes = models.TextField(blank=True)
+    timecap_min = models.PositiveIntegerField(null=True, blank=True)
+    rounds = models.PositiveIntegerField(null=True, blank=True)
+    interval_seconds = models.PositiveIntegerField(null=True, blank=True)
+    score_type = models.CharField(max_length=24, blank=True)
+    format_spec = models.TextField(blank=True)
     sort_order = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -340,6 +407,7 @@ class WorkoutTemplateMovement(TimeStampedModel):
     movement_label = models.CharField(max_length=120)
     sets = models.PositiveIntegerField(null=True, blank=True)
     reps = models.PositiveIntegerField(null=True, blank=True)
+    reps_spec = models.CharField(max_length=64, blank=True)
     load_type = models.CharField(
         max_length=32,
         choices=(
@@ -350,6 +418,8 @@ class WorkoutTemplateMovement(TimeStampedModel):
         default='free',
     )
     load_value = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    load_spec = models.CharField(max_length=64, blank=True)
+    is_scaled_alternative = models.BooleanField(default=False)
     notes = models.CharField(max_length=255, blank=True)
     sort_order = models.PositiveIntegerField(default=1)
 

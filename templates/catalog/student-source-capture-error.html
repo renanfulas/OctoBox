@@ -1,0 +1,44 @@
+<!--
+ARQUIVO: pagina de erro dedicada da captura de origem do aluno (link publico).
+
+POR QUE ELE EXISTE:
+- Onda 4 (docs/plans/student-login-magic-link-bugs-corda.md): antes, 6 causas de falha
+  diferentes (token ausente/expirado/invalido, tenant ambiguo, aluno nao encontrado)
+  caiam todas no Http404 generico do site. Aqui, cada causa tem titulo e explicacao
+  proprios — mesmo espirito de templates/student_identity/invite_landing.html.
+-->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="operation-shell workspace-shell" data-page="student-source-capture-error">
+    <section class="table-card student-filter-card layout-panel--narrow-center">
+        <div class="form-stack-lg">
+            <header class="stack-8">
+                <p class="eyebrow">Qualificação de origem</p>
+                {% if capture_error == 'token-vazio' %}
+                <h1 class="section-title-sm">Esse link está incompleto.</h1>
+                <p class="meta-text">Faltou uma parte do endereço — provavelmente foi cortado ao copiar. Peça para reenviarem o link completo.</p>
+                {% elif capture_error == 'token-expirado' %}
+                <h1 class="section-title-sm">Esse link venceu.</h1>
+                <p class="meta-text">Links de confirmação de origem valem por um tempo limitado por segurança. Peça um novo link ao seu box.</p>
+                {% elif capture_error == 'token-invalido' %}
+                <h1 class="section-title-sm">Não conseguimos validar esse link.</h1>
+                <p class="meta-text">O endereço parece ter sido alterado ou copiado incompleto. Copie o link original novamente.</p>
+                {% elif capture_error == 'tenant-ambiguo' %}
+                <h1 class="section-title-sm">Não conseguimos identificar seu box.</h1>
+                <p class="meta-text">Esse link é de uma versão antiga do sistema. Fale com a recepção do seu box para receber um link atualizado.</p>
+                {% elif capture_error == 'aluno-nao-encontrado' %}
+                <h1 class="section-title-sm">Não encontramos seu cadastro.</h1>
+                <p class="meta-text">Esse aluno pode ter sido removido do sistema. Fale com a recepção para confirmar seu cadastro.</p>
+                {% else %}
+                <h1 class="section-title-sm">Não foi possível abrir esse link.</h1>
+                <p class="meta-text">Fale com a recepção do seu box para receber um link atualizado.</p>
+                {% endif %}
+            </header>
+            <div class="note-panel note-panel-danger">
+                Se precisar de ajuda, fale com a recepção do seu box.
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

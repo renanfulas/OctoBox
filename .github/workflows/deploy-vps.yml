@@ -42,10 +42,12 @@ jobs:
               "Student Onboarding Corridors Regression",
               "Student Onboarding Real Smoke",
               "Security Scanners 🛡️",
+              "CURVA Gates",
             ];
             const sleep = ms => new Promise(r => setTimeout(r, ms));
             let missing = [...required];
-            for (let i = 1; i <= 20; i++) {
+            // 30 x 30s = 15 min: o E2E do CURVA (Playwright) e o gate mais lento.
+            for (let i = 1; i <= 30; i++) {
               const { data } = await github.rest.actions.listWorkflowRunsForRepo({
                 owner, repo, branch, head_sha: headSha, per_page: 50,
               });
@@ -54,7 +56,7 @@ jobs:
                 return !run || run.conclusion !== 'success';
               });
               if (!missing.length) return;
-              core.info(`Aguardando (${i}/20): ${missing.join(', ')}`);
+              core.info(`Aguardando (${i}/30): ${missing.join(', ')}`);
               await sleep(30000);
             }
             core.setFailed(`Gates incompletos: ${missing.join(', ')}`);
@@ -151,17 +153,20 @@ jobs:
             "$VENV/bin/pip" install --quiet -r "$APP/requirements.txt"
 
             echo "==> Coletando static files..."
-            set -a && source "$ENV" && set +a
-            "$VENV/bin/python" "$APP/manage.py" collectstatic --noinput
+            RUN_WITH_ENV=("$VENV/bin/python" "$APP/scripts/linux/run_with_env_file.py" "$ENV" --)
+            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" collectstatic --noinput
 
             echo "==> Bootstrap control (resolve InconsistentMigrationHistory)..."
-            "$VENV/bin/python" "$APP/manage.py" bootstrap_control
+            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" bootstrap_control
 
             echo "==> Rodando migrations..."
-            "$VENV/bin/python" "$APP/manage.py" migrate --noinput
+            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" migrate --noinput
 
             echo "==> Sincronizando roles..."
-            "$VENV/bin/python" "$APP/manage.py" bootstrap_roles
+            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" bootstrap_roles
+
+            echo "==> Restaurando dono do checkout após comandos como root..."
+            chown -R octobox:octobox "$APP"
 
             echo "==> Reiniciando Gunicorn..."
             systemctl restart octobox-gunicorn

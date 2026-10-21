@@ -1,0 +1,128 @@
+<!--
+ARQUIVO: wizard de primeiro login do corredor de treinos (workout.html).
+
+POR QUE ELE EXISTE:
+- pedido direto do usuario: ensinar quem acabou de entrar o que cada aba
+  do bottom nav faz, como ver o treino do dia, como registrar carga e
+  como atualizar o pagamento -- sem isso, o primeiro contato real com o
+  produto (depois do e-mail de boas-vindas) e' uma tela cheia de abas sem
+  explicacao nenhuma.
+
+PONTOS CRITICOS:
+- SEMPRE renderizado (nunca so' quando show_onboarding_wizard e' True):
+  o botao "Ver tutorial de novo" (aba Perfil) precisa do DOM existindo
+  pra poder reabrir depois que a conta ja' completou o onboarding uma
+  vez -- so' o autostart e' condicional (data-onboarding-autostart).
+- So' os tokens --theme-*/--radius-*/--font-* do design system (ja'
+  usados no resto deste template) -- nenhuma classe nova herdada de
+  student_app/** nem de outro produto (mesma regra do resto do
+  workout.html, ver PONTOS CRITICOS la' no topo).
+- Passos descrevem SO' o que existe de verdade no bottom nav logo abaixo
+  (Inicio/Avaliacao[/Dieta]/Treino[/Cardio/Periodizacao]/Cargas/Perfil) --
+  nao inventar aba que nao existe.
+-->
+<div
+  class="onboarding-wizard"
+  data-onboarding-wizard
+  data-onboarding-autostart="{% if show_onboarding_wizard %}true{% else %}false{% endif %}"
+  data-onboarding-complete-url="{% url 'public-workout-onboarding-complete' plan_slug=plan_slug %}"
+  hidden
+>
+  <div class="onboarding-wizard__backdrop" data-onboarding-dismiss></div>
+
+  <div class="onboarding-wizard__card" role="dialog" aria-modal="true" aria-labelledby="onboarding-wizard-title">
+    <button type="button" class="onboarding-wizard__close" data-onboarding-dismiss aria-label="Fechar tutorial">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+
+    <div class="onboarding-wizard__dots" data-onboarding-dots aria-hidden="true"></div>
+
+    <div class="onboarding-wizard__steps" data-onboarding-steps>
+
+      <section class="onboarding-wizard__step" data-onboarding-step>
+        <span class="onboarding-wizard__icon" aria-hidden="true">👋</span>
+        <h2 id="onboarding-wizard-title" class="onboarding-wizard__title">Bem-vinda ao seu treino!</h2>
+        <p class="onboarding-wizard__text">
+          Esse é o seu app. Antes de começar, um tour rápido por cada aba —
+          leva menos de 1 minuto.
+        </p>
+      </section>
+
+      <section class="onboarding-wizard__step" data-onboarding-step hidden>
+        <span class="onboarding-wizard__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-5.5h5V20"/></svg>
+        </span>
+        <h2 class="onboarding-wizard__title">Início</h2>
+        <p class="onboarding-wizard__text">
+          Resumo do seu ciclo atual e a sua semana: quantos treinos faltam e
+          o foco de cada dia.
+        </p>
+      </section>
+
+      <section class="onboarding-wizard__step" data-onboarding-step hidden>
+        <span class="onboarding-wizard__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c4-3 7-6.5 7-10a7 7 0 0 0-14 0c0 3.5 3 7 7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>
+        </span>
+        <h2 class="onboarding-wizard__title">Avaliação{% if nutrition_unlocked %} &amp; Dieta{% endif %}</h2>
+        <p class="onboarding-wizard__text">
+          Registre fotos e medidas pra acompanhar sua evolução física.
+          {% if nutrition_unlocked %}Toque de novo no mesmo ícone pra ver seu plano alimentar.{% endif %}
+        </p>
+      </section>
+
+      <section class="onboarding-wizard__step" data-onboarding-step hidden>
+        <span class="onboarding-wizard__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3"/><path d="M18 10h3"/><path d="M6 7v6"/><path d="M18 7v6"/><path d="M8.5 12h7"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/></svg>
+        </span>
+        <h2 class="onboarding-wizard__title">Treino</h2>
+        <p class="onboarding-wizard__text">
+          Cada aba no topo é um dia da semana — toque pra ver os exercícios
+          daquele dia. Tem opção parecida? Toque em "Ver variação".
+        </p>
+      </section>
+
+      <section class="onboarding-wizard__step" data-onboarding-step hidden>
+        <span class="onboarding-wizard__icon" aria-hidden="true">📝</span>
+        <h2 class="onboarding-wizard__title">Como registrar carga</h2>
+        <p class="onboarding-wizard__text">
+          Depois de cada série, toque em "Registrar carga" e salve peso e
+          repetições. É esse registro que alimenta seus gráficos e recordes
+          — sem ele, a aba Cargas fica vazia.
+        </p>
+      </section>
+
+      <section class="onboarding-wizard__step" data-onboarding-step hidden>
+        <span class="onboarding-wizard__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 9 11 13 15 21 7"/><path d="M15 7h6v6"/></svg>
+        </span>
+        <h2 class="onboarding-wizard__title">Cargas</h2>
+        <p class="onboarding-wizard__text">
+          Evolução de cada exercício e seus recordes pessoais. No fim da
+          semana, toque em "Gerar revisão" pra ver um resumo do que você
+          treinou.
+        </p>
+      </section>
+
+      <section class="onboarding-wizard__step" data-onboarding-step hidden>
+        <span class="onboarding-wizard__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+        </span>
+        <h2 class="onboarding-wizard__title">Perfil</h2>
+        <p class="onboarding-wizard__text">
+          Seus dados, o status do pagamento — com o botão pra atualizar
+          cartão ou pagar — e o tema claro/escuro do app ficam aqui. Se
+          quiser rever este tutorial, é só voltar nesta aba.
+        </p>
+      </section>
+
+    </div>
+
+    <div class="onboarding-wizard__actions">
+      <button type="button" class="onboarding-wizard__skip" data-onboarding-skip>Pular</button>
+      <div class="onboarding-wizard__nav">
+        <button type="button" class="onboarding-wizard__back" data-onboarding-back hidden>Voltar</button>
+        <button type="button" class="onboarding-wizard__next" data-onboarding-next>Próximo</button>
+      </div>
+    </div>
+  </div>
+</div>

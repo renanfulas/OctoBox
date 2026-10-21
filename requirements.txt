@@ -16,6 +16,6 @@ python-magic==0.4.27
 stripe==15.5.1
 cryptography==50.0.0
 # Security floor for transitive environment dependencies flagged by Safety.
-pillow==12.3.0
+pillow==13.0.0
 requests==2.34.2
 pywebpush==2.4.0

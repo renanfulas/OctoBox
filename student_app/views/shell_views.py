@@ -152,23 +152,35 @@ class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
     _WEEKDAY_LABELS = ('Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom')
     _WEEKDAY_LONG = ('Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo')
 
+    @staticmethod
+    def _shift_month(month_start, offset):
+        month_index = month_start.year * 12 + month_start.month - 1 + offset
+        return date(month_index // 12, month_index % 12 + 1, 1)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         box_timezone = resolve_box_timezone(box_root_slug=self.request.student_identity.box_root_slug)
         today = timezone.localtime(timezone.now(), box_timezone).date()
-        week_start = today - timedelta(days=today.weekday())
-        week_end = week_start + timedelta(days=6)
+        current_month = today.replace(day=1)
+        raw_month = (self.request.GET.get('month') or '').strip()
+        try:
+            visible_month = date.fromisoformat(f'{raw_month}-01') if raw_month else current_month
+        except ValueError:
+            visible_month = current_month
+        # Keep calendar navigation useful without allowing arbitrary deep queries.
+        if not self._shift_month(current_month, -12) <= visible_month <= self._shift_month(current_month, 12):
+            visible_month = current_month
 
-        # Dia selecionado pela régua da semana (?date=), travado na semana corrente.
-        selected = today
+        selected = today if visible_month == current_month else visible_month
         raw_date = (self.request.GET.get('date') or '').strip()
         if raw_date:
             try:
                 candidate = date.fromisoformat(raw_date)
             except ValueError:
                 candidate = None
-            if candidate and week_start <= candidate <= week_end:
+            if candidate and candidate.year == visible_month.year and candidate.month == visible_month.month:
                 selected = candidate
+        week_start = selected - timedelta(days=selected.weekday())
         next_day = selected + timedelta(days=1)
 
         # Agenda do dia selecionado + do dia seguinte (janela de 2 dias).
@@ -182,9 +194,21 @@ class StudentGradeView(StudentIdentityRequiredMixin, TemplateView):
         context['student_shell_nav'] = 'grade'
         context['student_shell_title'] = 'Grade'
         context['student_next_session'] = dashboard.focal_session or (dashboard.next_sessions[0] if dashboard.next_sessions else None)
-        context['student_month_days'] = GetStudentMonthSchedule().execute(identity=self.request.student_identity)
+        month_days = GetStudentMonthSchedule().execute(
+            identity=self.request.student_identity,
+            reference_date=visible_month,
+        )
+        context['student_month_days'] = month_days
+        context['student_month_has_sessions'] = any(day.sessions for day in month_days)
+        context['student_visible_month'] = visible_month
+        context['student_visible_month_param'] = visible_month.strftime('%Y-%m')
+        previous_month = self._shift_month(visible_month, -1)
+        following_month = self._shift_month(visible_month, 1)
+        context['student_previous_month_param'] = previous_month.strftime('%Y-%m') if previous_month >= self._shift_month(current_month, -12) else ''
+        context['student_next_month_param'] = following_month.strftime('%Y-%m') if following_month <= self._shift_month(current_month, 12) else ''
+        context['student_month_is_current'] = visible_month == current_month
 
-        # Régua fixa da semana (segunda → domingo); hoje destacado.
+        # Week strip follows the selected day, including future months.
         context['student_week_days'] = [
             {
                 'date': week_start + timedelta(days=i),

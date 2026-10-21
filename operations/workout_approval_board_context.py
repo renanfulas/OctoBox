@@ -195,7 +195,9 @@ def build_workout_approval_board_context(
             current_role_slug=current_role.slug,
         ),
         'workout_corridor_tabs': build_workout_corridor_tabs(
-            current_key='approval',
+            # A fila de aprovação é acessada a partir do Calendário, não é
+            # uma terceira entrada primária do corredor.
+            current_key='planner',
             current_role_slug=current_role.slug,
         ),
         'pending_workouts': pending_workouts,
