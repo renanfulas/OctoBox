@@ -32,9 +32,10 @@ from tests.source_tree_test_support import REPO_ROOT, count_lines, is_test_file,
 
 NEW_PYTHON_FILE_LIMIT = 600
 
-# Medido no main b07b4680 (21/10/2026). O #360 entrou antes da trava e fez
-# crescer use_cases.py, workout_board_views.py e operations/forms.py: os tetos
-# deles sao o tamanho depois desse merge, nao uma excecao.
+# Medido no main f2778059 (21/10/2026). O #360 e o #358 entraram antes da trava
+# e fizeram crescer use_cases.py, workout_board_views.py, operations/forms.py e
+# workout-guided.js: os tetos deles sao o tamanho depois desses merges, nao uma
+# excecao.
 LINE_CEILINGS = {
     # Arquivos do plano de split (auditoria, secao 2).
     'public_workouts/models.py': 1539,
@@ -45,7 +46,7 @@ LINE_CEILINGS = {
     'catalog/views/student_views.py': 1077,
     'public_workouts/templatetags/public_workouts_extras.py': 988,
     'templates/public_workouts/workout.html': 772,
-    'static/js/public_workouts/workout-guided.js': 1022,
+    'static/js/public_workouts/workout-guided.js': 1026,
     # Demais arquivos Python de producao que ja passavam de 600 linhas.
     'operations/manager_workspace_queries.py': 933,
     'student_app/application/use_cases.py': 915,
