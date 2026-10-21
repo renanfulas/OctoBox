@@ -20,6 +20,9 @@ from django.test import override_settings
 from django.utils import timezone
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_focus import (
+    FREEZE_TIMERS, LOCK_SCREEN, RESET_SPIES, SPY_AUDIO, SPY_VIBRATION, THAW_TIMERS, UNLOCK_SCREEN,
+)
 from tests.e2e.curva_login import enter_with_magic_link
 
 
@@ -43,12 +46,6 @@ PUSH_STUB = """(() => {
   window.PushManager = function () {};
   window.Notification = { permission: 'granted', requestPermission: async () => 'granted' };
 })();""" % _ENDPOINT
-# Bloquear a tela: o navegador avisa a página com visibilitychange.
-_LOCK_SCREEN = """() => {
-  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
-  Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-  document.dispatchEvent(new Event('visibilitychange'));
-}"""
 PUSH_SETTINGS = {
     'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY': 'test-public',
     'STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY': 'test-private',
@@ -197,7 +194,7 @@ def test_visible_app_cancels_before_send_and_locking_the_screen_brings_the_push_
 
     # Bloqueou a tela depois do cancelamento: o aviso volta para o tempo que falta.
     with page.expect_response(_rest_call('POST')) as rescheduled:
-        page.evaluate(_LOCK_SCREEN)
+        page.evaluate(LOCK_SCREEN)
     assert rescheduled.value.status == 200
     alert.refresh_from_db()
     assert alert.status == PublicWorkoutRestAlertStatus.PENDING
@@ -210,3 +207,61 @@ def test_visible_app_cancels_before_send_and_locking_the_screen_brings_the_push_
     assert send.call_args.kwargs['tag'] == f'curva-rest-{alert.session_id}'
     alert.refresh_from_db()
     assert alert.status == PublicWorkoutRestAlertStatus.SENT
+
+
+def _dispatch_when_due(alert):
+    from public_workouts import rest_alerts
+
+    alert.refresh_from_db()
+    time.sleep(max(0.0, (alert.due_at - timezone.now()).total_seconds()) + 0.1)
+    with patch('public_workouts.push.send', return_value=True):
+        assert rest_alerts.dispatch_due()['sent'] == 1
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True, **PUSH_SETTINGS)
+def test_locked_android_leaves_the_rest_end_to_the_push(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutRestAlert, PublicWorkoutRestAlertStatus
+
+    account, token = _prepare(rest_seconds=8)
+    page.add_init_script(SPY_AUDIO)
+    page.add_init_script(SPY_VIBRATION)
+    _open_guided(page, live_server, token)
+    _record_set(page)
+
+    # Tela bloqueada antes da janela de cancelamento: no Android a página segue
+    # viva, mas com o push de pé nem o 3-2-1 nem o tom final tocam pelo app.
+    page.evaluate(LOCK_SCREEN)
+    page.evaluate(RESET_SPIES)
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=15_000)
+    assert page.evaluate('() => [window.__curvaBeeps, window.__curvaVibrations]') == [[], []]
+    alert = PublicWorkoutRestAlert.objects.get(session__account=account)
+    assert alert.status == PublicWorkoutRestAlertStatus.PENDING, 'o app não cancelou: o aviso é do push'
+    _dispatch_when_due(alert)
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True, **PUSH_SETTINGS)
+def test_frozen_iphone_back_after_the_push_does_not_beep_again(page: Page, live_server):
+    from public_workouts.models import PublicWorkoutRestAlert
+
+    account, token = _prepare(rest_seconds=8)
+    page.add_init_script(SPY_AUDIO)
+    page.add_init_script(SPY_VIBRATION)
+    _open_guided(page, live_server, token)
+    _record_set(page)
+
+    # Saiu da tela e o iOS congelou o PWA; o push "Descanso acabou" sai do servidor.
+    page.evaluate(LOCK_SCREEN)
+    page.evaluate(FREEZE_TIMERS)
+    page.evaluate(RESET_SPIES)
+    _dispatch_when_due(PublicWorkoutRestAlert.objects.get(session__account=account))
+
+    # O aluno volta pelo aviso: o relógio fecha o descanso atrasado e o app não
+    # bipa de novo por cima do push que ele acabou de ouvir.
+    page.evaluate(UNLOCK_SCREEN)
+    page.evaluate(THAW_TIMERS)
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=5_000)
+    assert page.evaluate('() => [window.__curvaBeeps, window.__curvaVibrations]') == [[], []]
