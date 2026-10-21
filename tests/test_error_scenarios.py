@@ -143,6 +143,11 @@ class ErrorScenarioTests(TestCase):
         response = self.client.get(reverse('api-v1-payment-link', args=[paid.pk]))
         self.assertEqual(response.status_code, 400)
 
+    def test_payment_link_denies_coach_role(self):
+        self.client.force_login(self.coach)
+        response = self.client.get(reverse('api-v1-payment-link', args=[self.payment.pk]))
+        self.assertEqual(response.status_code, 403)
+
     # ── 3. api-v1-finance-freeze ───────────────────────────────────────────
 
     def test_freeze_anonymous_redirects_to_login(self):
@@ -164,6 +169,24 @@ class ErrorScenarioTests(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_freeze_denies_reception_role(self):
+        self.client.force_login(self.reception)
+        response = self.client.post(
+            reverse('api-v1-finance-freeze'),
+            data=json.dumps({'student_id': self.student.pk, 'days': 7}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_student_autocomplete_returns_only_minimal_result_fields(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse('api-v1-student-autocomplete'), {'q': self.student.full_name[:5]})
+
+        self.assertEqual(response.status_code, 200)
+        result = response.json()['results'][0]
+        self.assertEqual(set(result), {'id', 'name', 'status', 'status_raw', 'url'})
 
     def test_freeze_returns_404_for_nonexistent_student(self):
         """student_id inexistente retorna JSON 404."""

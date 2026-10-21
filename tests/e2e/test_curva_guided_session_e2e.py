@@ -11,6 +11,9 @@ from django.test import override_settings
 from django.utils import timezone
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_focus import LOCK_SCREEN, RESET_SPIES, SPY_AUDIO, SPY_VIBRATION
+from tests.e2e.curva_login import enter_with_magic_link
+
 
 _EMAIL = 'curva-guided-e2e@example.test'
 _OTHER_EMAIL = 'curva-guided-other-e2e@example.test'
@@ -26,6 +29,15 @@ _COUNT_OUTBOX_OPENS = """
     if (String(name).startsWith('curva-guided:')) window.__curvaOutboxOpens += 1;
     return open.apply(this, arguments);
   };
+})();
+"""
+
+
+# Avisos liberados neste aparelho. O Chromium headless responde 'denied' mesmo
+# com grant_permissions, então a permissão é fixada na página.
+_ALLOW_NOTIFICATIONS = """
+(() => {
+  Object.defineProperty(Notification, 'permission', { configurable: true, get: () => 'granted' });
 })();
 """
 
@@ -132,7 +144,7 @@ def test_freeform_summary_requires_each_exercise_and_records_partial(page: Page,
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student(freeform_count=3)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     page.locator('[data-workout-guided-weight]').fill('50')
@@ -157,7 +169,7 @@ def test_freeform_summary_requires_each_exercise_and_records_partial(page: Page,
 @override_settings(DEBUG=True)
 def test_offline_freeform_finish_requires_each_exercise(page: Page, live_server):
     _, token = _prepare_guided_student(freeform_count=2)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     _wait_for_offline_scope(page)
     page.evaluate("async () => { await navigator.serviceWorker.ready; }")
     page.context.set_offline(True)
@@ -196,7 +208,7 @@ def test_student_top_target_guides_ramp_and_survives_reload(page: Page, live_ser
          'load_rule': {'kind': 'suggested_top'}},
     ]
     account, token = _prepare_guided_student(stages)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
 
@@ -252,7 +264,7 @@ def test_load_conflict_keeps_values_and_reapplies_after_confirmation(page: Page,
             route.fulfill(status=200, content_type='application/json', body='{}')
 
     page.route('**/renan/bruno/carga', respond_load)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.locator('[data-workout-load-toggle]').click()
     widget = page.locator(f'[data-workout-load-input][data-movement-slug="{_MOVEMENT_SLUG}"]').first
@@ -282,7 +294,7 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
         page.set_viewport_size({'width': 390, 'height': 844})
     account, token = _prepare_guided_student()
 
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     expect(page.locator('[data-workout-guided-start]')).to_be_visible()
     page.locator('[data-workout-guided-start]').click()
@@ -338,12 +350,72 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
+def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_server):
+    """100 kg na Top da semana 1 aparece, sem digitar, como 107,5 kg na semana 2."""
+    from public_workouts.models import (
+        PublicWorkoutAccount, PublicWorkoutLoginToken, PublicWorkoutSubscription, PublicWorkoutTrainingSession,
+    )
+    from public_workouts.schema import build_example_payload
+    from public_workouts.services import publish_program
+    from public_workouts.training_sessions import finish_session, record_set, start_session
+
+    today = timezone.localdate()
+    payload = build_example_payload()
+    payload['program_id'] = 'guided-e2e-2026'
+    # Começou há uma semana: hoje é a semana 2 (força-hipertrofia) e o registro foi na 1 (volume).
+    payload['started_on'] = (today - timedelta(days=7)).isoformat()
+    payload['periodization'] = {'weeks': [
+        {'week_number': 1, 'phase_type': 'volume'},
+        {'week_number': 2, 'phase_type': 'strength_hypertrophy'},
+    ], 'volume_table': [], 'note': ''}
+    movement = payload['days'][0]['blocks'][0]['movements'][0]
+    movement.update({
+        'movement_slug': _MOVEMENT_SLUG, 'load_type': 'free', 'load_value': None,
+        'reps_spec': '2x8 aquecimento + 1x6-8 Top', 'rir_spec': 'RIR 2',
+        'guided_prescription': {'version': 1, 'stages': [
+            {'stage_id': 'aquecimento', 'role': 'warmup', 'min_sets': 2, 'max_sets': 2,
+             'reps_min': 8, 'reps_max': 8, 'rest_seconds': 30,
+             'load_rule': {'kind': 'percent_of_top', 'start_percent': 40, 'end_percent': 55}},
+            {'stage_id': 'top', 'role': 'top_set', 'min_sets': 1, 'max_sets': 1,
+             'reps_min': 6, 'reps_max': 8, 'rest_seconds': 30, 'load_rule': {'kind': 'suggested_top'}},
+        ]},
+    })
+    publish_program(slug='bruno', payload=payload)
+    account = PublicWorkoutAccount.objects.create(email=_EMAIL, onboarding_completed_at=timezone.now())
+    PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
+    last_week = start_session(account_id=account.pk, plan_slug='bruno', day_id='seg')
+    PublicWorkoutTrainingSession.objects.filter(pk=last_week.pk).update(started_at=timezone.now() - timedelta(days=7))
+    record_set(
+        account_id=account.pk, plan_slug='bruno', session_id=last_week.pk, movement_index=0, set_number=3,
+        movement_slug=_MOVEMENT_SLUG, role='top_set', weight=Decimal('100.00'), reps=8, rir=Decimal('2.0'),
+    )
+    finish_session(account_id=account.pk, plan_slug='bruno', session_id=last_week.pk, partial=True)
+    token = PublicWorkoutLoginToken.objects.create(account=account, expires_at=timezone.now() + timedelta(hours=1))
+
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    weight = page.locator('[data-workout-guided-weight]')
+    # Aquecimento 1 = 40% da Top sugerida (107,5) -> 42,5 kg, já preenchido.
+    expect(weight).to_have_value('42,5')
+    expect(page.locator('[data-guided-weight-source]')).to_contain_text('ajuste se precisar')
+    for _ in range(2):
+        page.locator('[data-workout-guided-skip]').click()
+        if page.locator('[data-guided-skip-rest]').is_visible():
+            page.locator('[data-guided-skip-rest]').click()
+    # Top: 100 x 76/67 = 113,4, teto 80% do 1RM estimado (133,3) = 106,7 -> 107,5 kg.
+    expect(weight).to_have_value('107,5')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
 def test_guided_online_set_is_one_request_with_local_receipt(page: Page, live_server):
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
     page.add_init_script(_COUNT_OUTBOX_OPENS)
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
@@ -365,11 +437,73 @@ def test_guided_online_set_is_one_request_with_local_receipt(page: Page, live_se
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
+def test_rest_end_beeps_by_default_and_student_can_mute(page: Page, live_server):
+    _account, token = _prepare_guided_student([
+        {'stage_id': 'top', 'role': 'top_set', 'min_sets': 2, 'max_sets': 2,
+         'reps_min': 6, 'reps_max': 8, 'rest_seconds': 4, 'load_rule': {'kind': 'manual'}},
+    ])
+    page.add_init_script(SPY_AUDIO)
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
+    # Aluno que nunca mexeu no painel: som ligado, e o toque em "Iniciar" já religou o áudio.
+    assert page.locator('[data-guided-sound]').get_attribute('aria-checked') == 'true'
+    assert page.evaluate('() => window.__curvaAudioResumes') >= 1
+
+    page.evaluate('() => { window.__curvaBeeps = []; }')
+    page.locator('[data-workout-guided-weight]').fill('50')
+    page.locator('[data-workout-guided-reps]').fill('7')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
+    # Descanso de 4 s: bipes curtos no 3-2-1 e o tom de "Valendo" no fim.
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=10_000)
+    beeps = page.evaluate('() => window.__curvaBeeps')
+    assert 660 in beeps and beeps[-1] == 990, beeps
+
+    page.locator('[data-guided-open-sheet]').click()
+    page.locator('[data-guided-sound]').click()
+    assert page.locator('[data-guided-sound]').get_attribute('aria-checked') == 'false'
+    assert page.evaluate("() => localStorage.getItem('curva-guided-sound')") == '0'
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_locked_screen_still_beeps_when_no_push_is_scheduled(page: Page, live_server):
+    _account, token = _prepare_guided_student([
+        {'stage_id': 'top', 'role': 'top_set', 'min_sets': 2, 'max_sets': 2,
+         'reps_min': 6, 'reps_max': 8, 'rest_seconds': 4, 'load_rule': {'kind': 'manual'}},
+    ])
+    # Permissão concedida, mas nenhum push agendado para este descanso: o
+    # silêncio do app depende do aviso estar de pé, não da permissão.
+    page.add_init_script(_ALLOW_NOTIFICATIONS)
+    page.add_init_script(SPY_AUDIO)
+    page.add_init_script(SPY_VIBRATION)
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    page.locator('[data-workout-guided-weight]').fill('50')
+    page.locator('[data-workout-guided-reps]').fill('7')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
+
+    page.evaluate(LOCK_SCREEN)
+    page.evaluate(RESET_SPIES)
+    expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible(timeout=10_000)
+    beeps = page.evaluate('() => window.__curvaBeeps')
+    assert 660 in beeps and beeps[-1] == 990, beeps
+    assert page.evaluate('() => window.__curvaVibrations')[-1] == 140
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
 def test_guided_set_survives_tab_closed_before_post_returns(page: Page, live_server):
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     _start_guided(page)
     expect(page.locator('[data-guided-screen="exercise"]')).to_be_visible()
@@ -404,7 +538,7 @@ def test_guided_start_and_set_sync_after_network_returns(page: Page, live_server
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)
@@ -432,7 +566,7 @@ def test_reconnecting_does_not_erase_a_set_being_typed(page: Page, live_server):
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)
@@ -457,7 +591,7 @@ def test_guided_reopens_from_offline_shell_and_sends_in_order(page: Page, live_s
     from public_workouts.models import PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     _wait_for_offline_scope(page)
     page.evaluate("async () => { await navigator.serviceWorker.ready; }")
     page.context.set_offline(True)
@@ -504,7 +638,7 @@ def test_offline_start_conflict_preserves_export_and_opens_new_program(page: Pag
     from public_workouts.services import publish_program
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)
@@ -569,7 +703,7 @@ def test_queued_training_waits_for_same_account_login(page: Page, live_server):
     from student_identity.public_workout_session import PUBLIC_WORKOUT_SESSION_COOKIE_NAME
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)
@@ -590,7 +724,7 @@ def test_queued_training_waits_for_same_account_login(page: Page, live_server):
     replacement = PublicWorkoutLoginToken.objects.create(
         account=account, expires_at=timezone.now() + timedelta(hours=1),
     )
-    page.goto(f'{live_server.url}/treinos/login?token={replacement.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={replacement.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=15000)
     session = PublicWorkoutTrainingSession.objects.get(account=account)
@@ -604,7 +738,7 @@ def test_two_tabs_drain_one_local_queue_without_duplicate_top(page: Page, live_s
     from public_workouts.models import PublicWorkoutLoadLog, PublicWorkoutTrainingSession
 
     account, token = _prepare_guided_student()
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     second = page.context.new_page()
     second.goto(f'{live_server.url}/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
@@ -638,7 +772,7 @@ def test_account_switch_does_not_send_queued_sets_to_another_student(page: Page,
     account, token = _prepare_guided_student()
     other = PublicWorkoutAccount.objects.create(email=_OTHER_EMAIL)
     PublicWorkoutSubscription.objects.create(account=other, plan_slug='bruno')
-    page.goto(f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
     page.context.set_offline(True)
     _start_guided(page)

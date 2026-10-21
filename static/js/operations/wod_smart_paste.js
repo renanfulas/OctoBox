@@ -420,12 +420,14 @@ POR QUE ELE EXISTE:
     var sourceField = root.querySelector('.smart-paste-form textarea[name="source_text"]');
     var weekField = root.querySelector('.smart-paste-form [name="week_start"]');
     var labelField = root.querySelector('.smart-paste-form [name="label"]');
+    var programField = root.querySelector('.smart-paste-form [name="workout_program"]');
     if (!sourceField) return;
     root.querySelectorAll('form.smart-paste-confirm-form').forEach(function (form) {
       if (form.dataset.sourceGuardBound === 'true') return;
       var confirmedSource = form.querySelector('input[name="source_text"]');
       var confirmedWeek = form.querySelector('input[name="week_start"]');
       var confirmedLabel = form.querySelector('input[name="label"]');
+      var confirmedProgram = form.querySelector('input[name="workout_program"]');
       var notice = form.querySelector('[data-smart-paste-stale-source-notice]');
       if (!confirmedSource || !notice) return;
       var buttons = Array.prototype.slice.call(form.querySelectorAll('button[type="submit"]'));
@@ -434,8 +436,8 @@ POR QUE ELE EXISTE:
       });
 
       function normalizeWeek(value) {
-        var match = String(value || '').trim().match(/^(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?$/);
-        return match ? pad(match[1]) + '/' + pad(match[2]) : String(value || '').trim();
+        var match = String(value || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        return match ? pad(match[1]) + '/' + pad(match[2]) + '/' + match[3] : String(value || '').trim();
       }
 
       function syncState() {
@@ -445,6 +447,9 @@ POR QUE ELE EXISTE:
         }
         if (labelField && confirmedLabel) {
           stale = stale || labelField.value !== confirmedLabel.value;
+        }
+        if (programField && confirmedProgram) {
+          stale = stale || programField.value !== confirmedProgram.value;
         }
         notice.hidden = !stale;
         buttons.forEach(function (button) {
@@ -457,7 +462,9 @@ POR QUE ELE EXISTE:
 
       sourceField.addEventListener('input', syncState);
       if (weekField) weekField.addEventListener('input', syncState);
+      if (weekField) weekField.addEventListener('change', syncState);
       if (labelField) labelField.addEventListener('input', syncState);
+      if (programField) programField.addEventListener('change', syncState);
       form.addEventListener('submit', function (event) {
         if (!syncState()) return;
         event.preventDefault();
@@ -466,6 +473,72 @@ POR QUE ELE EXISTE:
       });
       form.dataset.sourceGuardBound = 'true';
       syncState();
+    });
+  }
+
+  function bindComposer() {
+    var form = root.querySelector('form.smart-paste-form');
+    if (!form) return;
+    var field = form.querySelector('[name="source_text"]');
+    var pasteButton = form.querySelector('[data-smart-paste-clipboard]');
+    var pasteStatus = form.querySelector('[data-smart-paste-clipboard-status]');
+    var submitButton = form.querySelector('button[type="submit"]');
+    var progress = form.querySelector('[data-smart-paste-processing]');
+
+    function pasteMessage(message) {
+      pasteStatus.textContent = message;
+      pasteStatus.hidden = false;
+    }
+
+    pasteButton.addEventListener('click', async function () {
+      var manualHint = 'Cole diretamente no campo: toque e segure e escolha Colar, ou use o atalho de colar do teclado.';
+      if (!navigator.clipboard || !navigator.clipboard.readText) {
+        field.focus();
+        pasteMessage(manualHint);
+        return;
+      }
+      var previousValue = field.value;
+      var start = field.selectionStart;
+      var end = field.selectionEnd;
+      pasteButton.disabled = true;
+      try {
+        var text = await navigator.clipboard.readText();
+        if (!text.trim()) {
+          pasteMessage('A área de transferência está vazia. Copie o treino e tente novamente.');
+          return;
+        }
+        if (field.value !== previousValue) {
+          pasteMessage(manualHint);
+          return;
+        }
+        field.focus();
+        field.setRangeText(text, start, end, 'end');
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        pasteMessage('Texto colado. Confira a modalidade e toque em Organizar meu treino.');
+      } catch (_) {
+        field.focus();
+        pasteMessage(manualHint);
+      } finally {
+        pasteButton.disabled = false;
+      }
+    });
+
+    form.addEventListener('submit', function (event) {
+      if (event.defaultPrevented) return;
+      if (form.getAttribute('aria-busy') === 'true') {
+        event.preventDefault();
+        return;
+      }
+      form.setAttribute('aria-busy', 'true');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Organizando…';
+      progress.hidden = false;
+    });
+    window.addEventListener('pageshow', function () {
+      form.removeAttribute('aria-busy');
+      submitButton.disabled = false;
+      submitButton.textContent = 'Organizar meu treino';
+      progress.hidden = true;
     });
   }
 
@@ -490,6 +563,7 @@ POR QUE ELE EXISTE:
     button.setAttribute('aria-pressed', 'true');
   });
 
+  bindComposer();
   initializeScope(root);
 
   document.body.addEventListener('htmx:beforeSwap', function (event) {

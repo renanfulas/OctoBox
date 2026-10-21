@@ -7,7 +7,8 @@ from datetime import date
 from django.test import SimpleTestCase
 
 from public_workouts.dashboard import (
-    build_program_summary, build_week_overview, build_workout_day_selection, day_keyword, day_short_label,
+    build_program_summary, build_program_week_progress, build_week_overview, build_workout_day_selection,
+    day_keyword, day_short_label,
 )
 from public_workouts.schema import build_example_payload
 
@@ -177,3 +178,48 @@ class DayKeywordTests(SimpleTestCase):
 
     def test_empty_label_returns_empty(self):
         self.assertEqual(day_keyword(day_id='seg', label=''), '')
+
+
+class BuildProgramWeekProgressTests(SimpleTestCase):
+    def _payload(self, **overrides):
+        payload = build_example_payload()  # started_on='2026-01-05' (segunda)
+        payload.update(overrides)
+        return payload
+
+    def test_counts_whole_weeks_since_start(self):
+        progress = build_program_week_progress(payload=self._payload(weeks=8), today=date(2026, 1, 20))
+
+        self.assertEqual(progress['current'], 3)
+        self.assertEqual(progress['total'], 8)
+        self.assertEqual(progress['segments'], ['done', 'done', 'now'] + ['next'] * 5)
+
+    def test_start_day_is_week_one(self):
+        progress = build_program_week_progress(payload=self._payload(weeks=4), today=date(2026, 1, 5))
+
+        self.assertEqual(progress['current'], 1)
+        self.assertEqual(progress['segments'], ['now', 'next', 'next', 'next'])
+
+    def test_cycles_after_the_last_week(self):
+        # O programa se repete ate o treinador publicar outra versao.
+        progress = build_program_week_progress(payload=self._payload(weeks=8), today=date(2026, 3, 9))
+
+        self.assertEqual(progress['current'], 2)
+
+    def test_periodization_weeks_win_over_program_weeks(self):
+        payload = self._payload(weeks=12, periodization={'weeks': [{}, {}, {}, {}, {}, {}]})
+
+        progress = build_program_week_progress(payload=payload, today=date(2026, 1, 20))
+
+        self.assertEqual(progress['total'], 6)
+
+    def test_long_cycle_keeps_text_without_bar(self):
+        progress = build_program_week_progress(payload=self._payload(weeks=20), today=date(2026, 1, 20))
+
+        self.assertEqual(progress['current'], 3)
+        self.assertEqual(progress['segments'], [])
+
+    def test_none_before_start_or_without_valid_data(self):
+        self.assertIsNone(build_program_week_progress(payload=self._payload(), today=date(2026, 1, 4)))
+        self.assertIsNone(build_program_week_progress(payload=self._payload(started_on=None), today=date(2026, 1, 20)))
+        self.assertIsNone(build_program_week_progress(payload=self._payload(started_on='ontem'), today=date(2026, 1, 20)))
+        self.assertIsNone(build_program_week_progress(payload=self._payload(weeks=0), today=date(2026, 1, 20)))

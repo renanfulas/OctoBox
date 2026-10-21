@@ -185,9 +185,9 @@
             <div class="smart-paste-projection-head">
                 <div>
                     <strong>{{ entry.session_title }}</strong>
-                    <p>{{ entry.weekday_label }} · {{ entry.session_date_label }} · {{ entry.class_type }}</p>
+                    <p>{{ entry.weekday_label }} · {{ entry.session_date_label }} · {{ entry.class_type_label }}</p>
                 </div>
-                <span class="pill {% if entry.status == 'ready' %}success{% elif 'skip' in entry.status %}warning{% else %}info{% endif %}">{{ entry.status }}</span>
+                <span class="pill {% if entry.status == 'ready' %}success{% elif 'skip' in entry.status %}warning{% else %}info{% endif %}">{{ entry.status_label }}</span>
             </div>
             {% if entry.reason %}
             <p>{{ entry.reason }}</p>

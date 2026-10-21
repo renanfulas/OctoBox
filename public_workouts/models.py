@@ -169,6 +169,14 @@ class PublicWorkoutAssessment(models.Model):
     # nao respondeu/falhou/nao configurada: o frontend so nao mostra o
     # hero nesse caso, nunca quebra.
     hero_commentary = models.TextField(null=True, blank=True)
+    # Sexo ('F'/'M', vocabulario de formulas.Sex) e altura usados nesta
+    # avaliacao: a formula de dobras depende do sexo, RCQ/%gordura so sao
+    # classificados com ele e o IMC precisa da altura. O catalogo fixo
+    # (PublicWorkoutPlan.assessment_sex/height_cm) so tem isso pra 2 alunos;
+    # gravado aqui, todo aluno avaliado por dobras ganha o relatorio completo
+    # (build_report usa o valor mais recente quando o plano nao declara).
+    sex = models.CharField(max_length=1, blank=True, default='')
+    height_cm = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
 
     class Meta:
         db_table = 'public_workout_assessments'
@@ -606,6 +614,53 @@ class PublicWorkoutPushSubscription(TimeStampedModel):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class PublicWorkoutRestAlertStatus(models.TextChoices):
+    PENDING = 'pending', 'Agendado'
+    SENDING = 'sending', 'Enviando'
+    SENT = 'sent', 'Enviado'
+    CANCELLED = 'cancelled', 'Cancelado'
+    EXPIRED = 'expired', 'Vencido sem envio'
+    FAILED = 'failed', 'Falhou'
+
+
+class PublicWorkoutRestAlert(TimeStampedModel):
+    """Push do fim do descanso do modo foco: um aviso vivo por sessão guiada.
+
+    O app agenda quando o descanso começa e cancela quando ele termina com a
+    tela à vista; o worker `run_public_workout_rest_alerts` envia no horário.
+    `revision` sobe a cada agendamento e cancelamento, para o worker não marcar
+    como enviado um aviso que o aluno reagendou durante o envio. Ver
+    docs/decisions/0003-curva-rest-alert-worker.md.
+    """
+
+    session = models.OneToOneField(
+        PublicWorkoutTrainingSession, on_delete=models.CASCADE, related_name='rest_alert',
+    )
+    subscription = models.ForeignKey(
+        PublicWorkoutPushSubscription, on_delete=models.CASCADE, related_name='rest_alerts',
+    )
+    due_at = models.DateTimeField()
+    status = models.CharField(
+        max_length=12, choices=PublicWorkoutRestAlertStatus.choices,
+        default=PublicWorkoutRestAlertStatus.PENDING,
+    )
+    revision = models.PositiveIntegerField(default=1)
+    exercise_label = models.CharField(max_length=80, blank=True)
+    set_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    claimed_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.CharField(max_length=120, blank=True)
+
+    class Meta:
+        indexes = [
+            # O worker só olha os pendentes, sempre pelo próximo horário.
+            models.Index(
+                fields=['due_at'], name='pw_rest_alert_pending_idx',
+                condition=models.Q(status='pending'),
+            ),
+        ]
 
 
 class PublicWorkoutLoginToken(TimeStampedModel):

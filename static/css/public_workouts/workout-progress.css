@@ -6,23 +6,15 @@
     padding: 4px 2px 8px;
 }
 
-.workout-progress-heading__eyebrow {
-    color: var(--theme-text-muted);
-    font-size: .8125rem;
-    font-weight: 800;
-    letter-spacing: .11em;
-}
-
-.workout-progress-heading__eyebrow span,
-.workout-progress-heading h1 span { color: var(--theme-accent-premium); }
+.workout-progress-heading h1 span { color: var(--curva-peak); }
 
 .workout-progress-heading h1 {
     margin: 0;
     color: var(--theme-text-primary);
-    font-size: clamp(1.9rem, 4.5vw, 2.65rem);
+    font-size: clamp(2.3rem, 10vw, 3rem);
     font-weight: 850;
     letter-spacing: -.045em;
-    line-height: 1.13;
+    line-height: 1;
 }
 
 .workout-progress-heading p {
@@ -39,9 +31,9 @@
     gap: 18px;
     justify-self: start;
     min-height: 48px;
-    padding: 10px 16px;
+    padding: 10px 18px;
     border: 0;
-    border-radius: 12px;
+    border-radius: 999px;
     background: var(--brand);
     color: #061821;
     font: inherit;
@@ -66,22 +58,22 @@
     #workout-panel-cargas [data-workout-weekly-review-generate] { width: 100%; }
 }
 
-/* Painel de vidro por movimento — mesma familia visual de .card-decor-glow
-   (brilho sutil, nao animado, ja usado no dashboard), com um filete de
-   brand na borda em vez do preenchimento solido de um .student-card
-   aninhado (evita "caixa dentro de caixa"). */
-.workout-load-chart {
-    margin-top: 14px;
-    padding: 14px 16px 6px;
-    border-radius: 14px;
-    border: 1px solid var(--theme-border-soft);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 5%, var(--theme-surface-secondary) 95%), var(--theme-surface-secondary));
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+/* Cada movimento e o seu proprio card fosco; o "Evolucao de carga" em volta
+   deixa de ser card (evita "caixa dentro de caixa"). */
+.workout-block-card.workout-progress-lead {
+    padding: 0;
+    border: 0;
+    background: none;
+    overflow: visible;
 }
 
-.workout-load-chart.has-data:hover {
-    border-color: color-mix(in srgb, var(--brand) 45%, var(--theme-border-soft) 55%);
-    box-shadow: 0 0 22px color-mix(in srgb, var(--brand) 16%, transparent);
+.workout-progress-lead > h2 { font-size: 1.25rem; }
+
+.workout-load-chart {
+    margin-top: 14px;
+    padding: 20px 18px 12px;
+    border-radius: 24px;
+    background: var(--theme-surface-secondary);
 }
 
 .workout-load-chart-head {
@@ -97,11 +89,10 @@
 }
 
 .workout-load-chart h3 {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--theme-text-muted);
+    font-size: 1.0625rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    color: var(--theme-text-primary);
     margin: 0 0 0.4rem;
 }
 
@@ -113,9 +104,10 @@
 }
 
 .workout-load-chart-current strong {
-    font-size: clamp(2rem, 8vw, 2.6rem);
+    font-size: clamp(3rem, 15vw, 3.75rem);
     line-height: 1;
     font-weight: 800;
+    letter-spacing: -.04em;
     color: var(--brand);
     text-shadow: 0 0 12px color-mix(in srgb, var(--brand) 45%, transparent);
 }
@@ -132,16 +124,18 @@
     font-size: 0.9rem;
 }
 
+/* 1RM estimado + estado de evolucao, sempre visiveis (sem "Ver detalhes"). */
 .workout-load-chart-context {
     flex-basis: 100%;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
+    margin-top: 2px;
     font-size: 0.8125rem;
     color: var(--theme-text-muted);
 }
 
-.workout-load-chart-context summary,
 .workout-load-chart-siblings summary {
     cursor: pointer;
     text-decoration: underline;
@@ -221,9 +215,11 @@
 }
 
 .workout-load-chart-trend {
+    display: inline-block;
+    margin-top: 12px;
     font-size: 0.72rem;
     font-weight: 600;
-    padding: 1px 6px;
+    padding: 4px 10px;
     border-radius: 999px;
 }
 
@@ -246,13 +242,27 @@
    (build_weekly_review) — mesmos tokens de --success/--danger do trend
    de peso acima, pra nao inventar paleta nova so pra este badge. */
 .workout-load-chart-1rm {
-    font-size: 0.72rem;
-    color: var(--theme-text-muted);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-secondary);
+    font-size: 0.8125rem;
     font-variant-numeric: tabular-nums;
 }
 
 .workout-load-chart-1rm strong {
     color: var(--theme-text-primary, inherit);
+    font-size: 0.9375rem;
+}
+
+.workout-load-chart-signal {
+    min-height: 0;
+    padding: 6px 12px;
+    border: 0;
+    font-size: 0.8125rem;
 }
 
 .workout-load-chart-signal--plateau {
@@ -351,19 +361,96 @@
     text-underline-offset: 2px;
 }
 
+/* Grafico redesenhado no tamanho real em px por workout-curve.js (o <svg>
+   esticado acima vira so o fallback sem JS): texto nitido, pontos redondos.
+   Tambem desenha a curva do hero da Inicio (.workout-curve--hero). */
+.workout-curve--axis {
+    position: relative;
+    height: 176px;
+    margin-top: 6px;
+}
+
+.workout-curve svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    shape-rendering: geometricPrecision;
+}
+
+.workout-curve text {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    fill: var(--theme-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-curve__guide {
+    stroke: color-mix(in srgb, var(--theme-text-muted) 22%, transparent);
+    stroke-width: 1;
+    stroke-dasharray: 2 5;
+}
+
+.workout-curve__area-start { stop-color: var(--curva-neon); stop-opacity: .22; }
+.workout-curve__area-end { stop-color: var(--curva-neon); stop-opacity: 0; }
+.workout-curve--hero .workout-curve__area-start { stop-opacity: .16; }
+
+.workout-curve__line {
+    fill: none;
+    stroke: var(--curva-neon);
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Halo da linha: so aparece no tema escuro (camada neon abaixo). */
+.workout-curve__glow {
+    fill: none;
+    stroke: var(--curva-neon);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+}
+
+.workout-curve__dot {
+    fill: var(--theme-surface-secondary);
+    stroke: var(--curva-neon);
+    stroke-width: 1.75;
+}
+
+.workout-curve__dot--version { stroke: var(--theme-accent-warning); }
+.workout-curve__dot--legacy { fill: var(--theme-text-muted); stroke: none; }
+
+.workout-curve__peak {
+    fill: var(--curva-peak);
+    stroke: var(--curva-peak);
+    stroke-width: 2;
+}
+
+.workout-curve__peak-halo {
+    fill: var(--curva-peak);
+    opacity: .2;
+}
+
+.workout-curve .is-drawing { transition: stroke-dashoffset 1.2s cubic-bezier(.45, .05, .2, 1); }
+
 @media (prefers-reduced-motion: reduce) {
     .workout-load-chart-line {
         animation: none;
         stroke-dashoffset: 0;
     }
+
+    .workout-curve .is-drawing { transition: none; }
 }
 
 .workout-load-section-intro { margin: -2px 0 12px; color: var(--theme-text-secondary); font-size: 0.82rem; line-height: 1.45; }
 .workout-load-chart-latest { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 10px; row-gap: 3px; }
-.workout-load-chart-latest__label { grid-column: 1 / -1; color: var(--theme-text-muted); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.workout-load-chart-latest__label { grid-column: 1 / -1; color: var(--theme-text-muted); font-size: 0.7rem; font-weight: 600; }
 .workout-load-chart-latest__meta { min-width: 0; color: var(--theme-text-secondary); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
 
-.workout-load-chart-sessions { margin: 12px 0 8px; border-top: 1px solid var(--theme-border-soft); padding-top: 10px; }
+.workout-load-chart-sessions { margin: 12px 0 8px; border-top: 1px solid var(--curva-edge); padding-top: 10px; }
 .workout-load-chart-sessions summary { min-height: 40px; display: flex; align-items: center; gap: 5px; color: var(--theme-text-primary); font-size: 0.82rem; font-weight: 700; cursor: pointer; }
 .workout-load-chart-sessions summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
 .workout-load-chart-sessions summary span, .workout-load-chart-sessions__note { color: var(--theme-text-muted); font-size: 0.75rem; font-weight: 400; }
@@ -387,11 +474,11 @@
 }
 
 .workout-load-chart-share-button {
-    padding: 4px 12px;
+    padding: 6px 14px;
     border-radius: 999px;
-    border: 1px solid var(--theme-border-soft);
-    background: transparent;
-    color: var(--theme-text-muted);
+    border: 1px solid transparent;
+    background: var(--theme-surface-strong);
+    color: var(--theme-text-secondary);
     font-size: 0.74rem;
     cursor: pointer;
 }
@@ -420,16 +507,38 @@
     }
 }
 
-.workout-load-chart h3,
 .workout-load-chart-unit,
 .workout-load-chart-trend,
-.workout-load-chart-1rm,
 .workout-load-chart-latest__label,
 .workout-load-chart-latest__meta,
 .workout-load-chart-sessions summary span,
 .workout-load-chart-sessions__note,
 .workout-load-chart-sessions li,
-.workout-load-chart-share-button,
 .workout-load-chart-share-status {
     font-size: 0.8125rem;
+}
+
+/* ============================================================
+ * Camada neon (so tema escuro): numero da ultima serie, sinal de evolucao
+ * e a curva acesa; o ultimo ponto (pico) na cor de pico.
+ * ============================================================ */
+body[data-plan-slug]:not([data-theme="light"]) .workout-progress-heading h1 span { text-shadow: var(--curva-peak-text-glow); }
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-load-chart-current strong {
+    color: var(--curva-neon-core);
+    text-shadow: var(--curva-neon-text-glow);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-load-chart-trend--up,
+body[data-plan-slug]:not([data-theme="light"]) .workout-load-chart-signal--improving {
+    color: var(--curva-neon-core);
+    background: color-mix(in srgb, var(--curva-neon) 10%, transparent);
+}
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-curve__line { stroke: var(--curva-neon-core); }
+body[data-plan-slug]:not([data-theme="light"]) .workout-curve__glow { opacity: .55; }
+
+body[data-plan-slug]:not([data-theme="light"]) .workout-curve__peak {
+    fill: var(--curva-peak-core);
+    filter: drop-shadow(0 0 3px var(--curva-peak));
 }

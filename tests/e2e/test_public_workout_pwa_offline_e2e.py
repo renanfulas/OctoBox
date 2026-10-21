@@ -10,6 +10,8 @@ import pytest
 from django.test import override_settings
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_login import enter_with_magic_link
+
 
 @pytest.fixture(autouse=True)
 def _cleanup_published_programs_after_e2e(django_db_blocker):
@@ -202,7 +204,16 @@ def test_push_activation_moves_home_invite_to_profile_controls(page: Page, live_
     page.route('**/renan/bruno/push', lambda route: route.fulfill(status=200, content_type='application/json', body='{}'))
     origin = live_server.url.rstrip('/')
     login = reverse('public-workout-login')
-    page.goto(f'{origin}{login}?token={token.token}&next=/renan/bruno')
+    enter_with_magic_link(page, f'{origin}{login}?token={token.token}&next=/renan/bruno')
+
+    # A conta de ensaio pode abrir o tutorial no primeiro login; feche-o
+    # pelo controle real antes de navegar entre Início e Perfil.
+    wizard = page.locator('[data-onboarding-wizard]')
+    if wizard.get_attribute('data-onboarding-autostart') == 'true':
+        close_tutorial = wizard.get_by_role('button', name='Fechar tutorial')
+        expect(close_tutorial).to_be_visible()
+        close_tutorial.click()
+        expect(wizard).to_be_hidden()
 
     expect(page.locator('[data-workout-push-home]')).to_be_visible()
     page.locator('[data-workout-push-enable]').click()
