@@ -36,7 +36,7 @@ def execute_student_quick_create(*, request, form, selected_intake):
     except IntegrityError as exc:
         if "phone_lookup_index" not in str(exc):
             raise
-        form.add_error("phone", "Ja existe um aluno cadastrado com este WhatsApp.")
+        form.add_error("phone", "Já existe um aluno cadastrado com este WhatsApp.")
         return None
 
     student = workflow["student"]

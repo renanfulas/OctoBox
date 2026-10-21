@@ -51,6 +51,11 @@ def serialize_workout_snapshot(workout):
                 'kind': block.kind,
                 'kind_label': block.get_kind_display(),
                 'notes': block.notes,
+                'timecap_min': block.timecap_min,
+                'rounds': block.rounds,
+                'interval_seconds': block.interval_seconds,
+                'score_type': block.score_type,
+                'format_spec': block.format_spec,
                 'movements': [
                     {
                         'sort_order': movement.sort_order,
@@ -58,8 +63,11 @@ def serialize_workout_snapshot(workout):
                         'movement_label': movement.movement_label,
                         'sets': movement.sets,
                         'reps': movement.reps,
+                        'reps_spec': movement.reps_spec,
                         'load_type': movement.load_type,
                         'load_value': str(movement.load_value) if movement.load_value is not None else '',
+                        'load_spec': movement.load_spec,
+                        'is_scaled_alternative': movement.is_scaled_alternative,
                         'notes': movement.notes,
                     }
                     for movement in block.movements.all()
@@ -70,6 +78,8 @@ def serialize_workout_snapshot(workout):
         'title': workout.title,
         'coach_notes': workout.coach_notes,
         'status': workout.status,
+        'is_normalized': workout.is_normalized,
+        'structured_source': (workout.structured_payload or {}).get('source', ''),
         'session_id': workout.session_id,
         'version': workout.version,
         'blocks': blocks,
@@ -311,6 +321,11 @@ def week_start_for(date_value):
 
 
 def should_require_workout_approval(*, workout, coach, source, source_template=None):
+    # Text pasted into Smart Paste can be AI-cleaned but is not canonical or
+    # trusted-template content. Keep the existing human approval gate even
+    # when a box enables coach autonomy for other WOD creation flows.
+    if source == 'smart_paste':
+        return True
     policy = resolve_workout_approval_policy(actor=coach, session=getattr(workout, 'session', None))
     if policy == 'strict':
         return True

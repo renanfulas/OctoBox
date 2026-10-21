@@ -10,6 +10,7 @@ PONTOS CRITICOS:
 <tr class="class-grid-row">
     <td data-label="Aula">
         <strong>{{ item.object.title }}</strong>
+        {% if item.workout_program_name %}<p class="class-grid-meta">{{ item.workout_program_name }}</p>{% endif %}
         <p class="class-grid-meta">{{ item.object.duration_minutes }} min de aula</p>
         {% if page.capabilities.can_manage_classes %}
         {% url 'class-grid' as class_grid_url %}

@@ -131,8 +131,17 @@ class WorkoutBlockKind(models.TextChoices):
     STRENGTH = 'strength', 'Forca'
     SKILL = 'skill', 'Skill'
     METCON = 'metcon', 'Metcon'
+    MOBILITY = 'mobility', 'Mobilidade'
     COOLDOWN = 'cooldown', 'Cooldown'
     CUSTOM = 'custom', 'Livre'
+
+
+class WorkoutScoreType(models.TextChoices):
+    FOR_TIME = 'for_time', 'For time'
+    AMRAP = 'amrap', 'AMRAP'
+    EMOM = 'emom', 'EMOM'
+    ROUNDS_REPS = 'rounds_reps', 'Rounds e reps'
+    LOAD = 'load', 'Carga'
 
 
 class SessionWorkoutStatus(models.TextChoices):
@@ -220,6 +229,13 @@ class PlanBlockKind(models.TextChoices):
 
 class WeeklyWodPlan(TimeStampedModel):
     week_start = models.DateField()
+    workout_program = models.ForeignKey(
+        'boxcore.WorkoutProgram',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='weekly_wod_plans',
+    )
     label = models.CharField(max_length=140, blank=True)
     source_text = models.TextField(blank=True)
     parsed_payload = models.JSONField(default=dict, blank=True)
@@ -238,6 +254,7 @@ class WeeklyWodPlan(TimeStampedModel):
         ordering = ['-week_start', '-created_at', '-id']
         indexes = [
             models.Index(fields=['status', '-week_start'], name='weekly_wod_plan_status_week'),
+            models.Index(fields=['workout_program', 'week_start'], name='weekly_wod_program_week'),
         ]
 
     def __str__(self):
@@ -268,6 +285,8 @@ class PlanBlock(TimeStampedModel):
     timecap_min = models.PositiveIntegerField(null=True, blank=True)
     rounds = models.PositiveIntegerField(null=True, blank=True)
     interval_seconds = models.PositiveIntegerField(null=True, blank=True)
+    score_type = models.CharField(max_length=24, choices=WorkoutScoreType.choices, blank=True)
+    format_spec = models.TextField(blank=True)
     sort_order = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -287,6 +306,7 @@ class PlanMovement(TimeStampedModel):
     sets = models.PositiveIntegerField(null=True, blank=True)
     reps_spec = models.CharField(max_length=64, blank=True)
     load_spec = models.CharField(max_length=64, blank=True)
+    is_scaled_alternative = models.BooleanField(default=False)
     notes = models.CharField(max_length=255, blank=True)
     sort_order = models.PositiveIntegerField(default=1)
 
@@ -312,6 +332,9 @@ class ReplicationBatch(TimeStampedModel):
         related_name='weekly_wod_replication_batches_created',
     )
     class_type_filter = models.JSONField(default=list, blank=True)
+    target_week_start = models.DateField(null=True, blank=True)
+    idempotency_key = models.UUIDField(null=True, blank=True, unique=True, default=None)
+    request_fingerprint = models.CharField(max_length=64, blank=True, default='')
     sessions_targeted = models.PositiveIntegerField(default=0)
     sessions_created = models.PositiveIntegerField(default=0)
     undone_at = models.DateTimeField(null=True, blank=True)
@@ -411,6 +434,11 @@ class SessionWorkoutBlock(TimeStampedModel):
     kind = models.CharField(max_length=24, choices=WorkoutBlockKind.choices, default=WorkoutBlockKind.CUSTOM)
     title = models.CharField(max_length=120)
     notes = models.TextField(blank=True)
+    timecap_min = models.PositiveIntegerField(null=True, blank=True)
+    rounds = models.PositiveIntegerField(null=True, blank=True)
+    interval_seconds = models.PositiveIntegerField(null=True, blank=True)
+    score_type = models.CharField(max_length=24, choices=WorkoutScoreType.choices, blank=True)
+    format_spec = models.TextField(blank=True)
     sort_order = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -426,8 +454,11 @@ class SessionWorkoutMovement(TimeStampedModel):
     movement_label = models.CharField(max_length=120)
     sets = models.PositiveIntegerField(null=True, blank=True)
     reps = models.PositiveIntegerField(null=True, blank=True)
+    reps_spec = models.CharField(max_length=64, blank=True)
     load_type = models.CharField(max_length=32, choices=WorkoutLoadType.choices, default=WorkoutLoadType.FREE)
     load_value = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    load_spec = models.CharField(max_length=64, blank=True)
+    is_scaled_alternative = models.BooleanField(default=False)
     notes = models.CharField(max_length=255, blank=True)
     sort_order = models.PositiveIntegerField(default=1)
 
@@ -598,6 +629,7 @@ class MovementLibrary(models.Model):
     label_pt = models.CharField(max_length=120)
     label_en = models.CharField(max_length=120, blank=True)
     reference_url = models.URLField(max_length=255, blank=True)
+    demo_video_url = models.URLField(max_length=500, blank=True)
 
     class Meta:
         verbose_name = 'Biblioteca de Movimento'
@@ -606,3 +638,45 @@ class MovementLibrary(models.Model):
 
     def __str__(self):
         return f'{self.slug} — {self.label_pt}'
+
+
+class WodGenerationCreditLedger(TimeStampedModel):
+    """Cota mensal de geracoes automaticas de treino via Haiku ("Monte um treino pra mim").
+
+    Por que existe:
+    - a geracao automatica de treino (Fase 3, futura) vai consumir 1 credito por uso.
+    - a cota e por BOX, nao por coach — o modelo vive no TENANT_APP student_app, entao o
+      isolamento por box ja vem do schema (sem precisar de FK pra Box).
+    - um "periodo" e um mes-calendario (dia 1 a dia 1 do mes seguinte); cada mes tem sua
+      propria linha, criada sob demanda (get_or_create_current_ledger) — reset automatico,
+      sem job agendado.
+
+    Pontos criticos:
+    - free_credits_used nunca ultrapassa free_credits_total (consumo checa antes de gastar).
+    - purchased_credits_available e alimentado pelo webhook de pagamento avulso (Fase 2,
+      ainda nao implementada) — fica zerado ate la, sem quebrar nada.
+    - consumo deve rodar dentro de transaction.atomic + select_for_update (ver
+      operations/services/wod_generation_credits.py) pra nao dar credito duplo sob
+      concorrencia (dois cliques quase simultaneos no botao).
+    """
+
+    period_start = models.DateField(unique=True)
+    free_credits_total = models.PositiveSmallIntegerField(default=2)
+    free_credits_used = models.PositiveSmallIntegerField(default=0)
+    purchased_credits_available = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'Cota de Geracao de Treino (Haiku)'
+        verbose_name_plural = 'Cotas de Geracao de Treino (Haiku)'
+        ordering = ['-period_start']
+
+    @property
+    def free_credits_remaining(self):
+        return max(0, self.free_credits_total - self.free_credits_used)
+
+    @property
+    def credits_remaining(self):
+        return self.free_credits_remaining + self.purchased_credits_available
+
+    def __str__(self):
+        return f'Creditos {self.period_start:%m/%Y}: {self.credits_remaining} restantes'

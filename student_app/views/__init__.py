@@ -25,11 +25,24 @@ from .payment_views import (
     StudentPaySuccessView,
 )
 from .public_workout_assessment_views import PublicWorkoutAssessmentsView
+from .public_workout_link_views import StudentPublicWorkoutLinkView
 from .public_workout_views import (
     PublicWorkoutDetailView,
+    PublicWorkoutDownloadPdfView,
+    PublicWorkoutExportDataView,
+    PublicWorkoutLocalStorageBackupView,
     PublicWorkoutManifestView,
+    PublicWorkoutMealPlanView,
     PublicWorkoutOfflineView,
+    PublicWorkoutOnboardingCompleteView,
+    PublicWorkoutPackageView,
+    PublicWorkoutPreviewView,
+    PublicWorkoutRecordAssessmentView,
+    PublicWorkoutRecordLoadView,
     PublicWorkoutServiceWorkerView,
+    PublicWorkoutSignOutView,
+    PublicWorkoutTemplatePreviewView,
+    PublicWorkoutWeeklyReviewView,
 )
 from .pwa_views import (
     StudentManifestView,
@@ -54,9 +67,21 @@ from .shell_views import (
 __all__ = [
     'PublicWorkoutAssessmentsView',
     'PublicWorkoutDetailView',
+    'PublicWorkoutDownloadPdfView',
+    'PublicWorkoutExportDataView',
+    'PublicWorkoutLocalStorageBackupView',
     'PublicWorkoutManifestView',
+    'PublicWorkoutMealPlanView',
     'PublicWorkoutOfflineView',
+    'PublicWorkoutOnboardingCompleteView',
+    'PublicWorkoutPackageView',
+    'PublicWorkoutPreviewView',
+    'PublicWorkoutRecordAssessmentView',
+    'PublicWorkoutRecordLoadView',
     'PublicWorkoutServiceWorkerView',
+    'PublicWorkoutSignOutView',
+    'PublicWorkoutTemplatePreviewView',
+    'PublicWorkoutWeeklyReviewView',
     'StudentAddRmView',
     'StudentCancelAttendanceView',
     'StudentClearanceView',
@@ -82,6 +107,7 @@ __all__ = [
     'StudentSettingsView',
     'StudentSuspendedFinancialView',
     'StudentSwitchBoxView',
+    'StudentPublicWorkoutLinkView',
     'StudentUpdateRmView',
     'StudentWodView',
 ]

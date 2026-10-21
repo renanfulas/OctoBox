@@ -1,0 +1,21 @@
+<nav class="wod-journey" aria-label="Etapas da publicação do WOD">
+    <a class="wod-journey__step{% if wod_journey_step == 'paste' %} is-current{% endif %}" href="{% url 'workout-smart-paste' %}"{% if wod_journey_step == 'paste' %} aria-current="step"{% endif %}>
+        <span class="wod-journey__number" aria-hidden="true">1</span>
+        <span><strong>Colar e organizar</strong><small>IA corrige os movimentos</small></span>
+    </a>
+    <a class="wod-journey__step{% if wod_journey_step == 'planner' %} is-current{% endif %}" href="{% url 'workout-planner' %}"{% if wod_journey_step == 'planner' %} aria-current="step"{% endif %}>
+        <span class="wod-journey__number" aria-hidden="true">2</span>
+        <span><strong>Conferir aulas</strong><small>Veja onde cada treino entrou</small></span>
+    </a>
+    {% if current_role.slug == 'Manager' or current_role.slug == 'Owner' %}
+    <a class="wod-journey__step{% if wod_journey_step == 'approval' %} is-current{% endif %}" href="{% url 'workout-approval-board' %}"{% if wod_journey_step == 'approval' %} aria-current="step"{% endif %}>
+        <span class="wod-journey__number" aria-hidden="true">3</span>
+        <span><strong>Aprovar</strong><small>Libera para os alunos</small></span>
+    </a>
+    {% else %}
+    <span class="wod-journey__step wod-journey__step--informative">
+        <span class="wod-journey__number" aria-hidden="true">3</span>
+        <span><strong>Aguardando aprovação</strong><small>Manager ou Owner publica</small></span>
+    </span>
+    {% endif %}
+</nav>

@@ -77,6 +77,7 @@ Cada um tem um banner `> STATUS:` no topo do próprio arquivo com a evidência.
 | Plano | Nota |
 |---|---|
 | [signal-mesh-retry-scheduler-runbook.md](signal-mesh-retry-scheduler-runbook.md) | Ligado à frente "Hardening de pagamentos — P1 sweep de dead-letter do Stripe" no `in-flight-board.md` — **snapshot de 2026-06-20/21, confirmar se ainda é real antes de continuar** |
+| [public-workouts-aceleracao-operacional-corda.md](public-workouts-aceleracao-operacional-corda.md) | Implementação e QA técnico concluídos em 2026-09-21; aguarda 28 dias de snapshots e 14 dias verdes consecutivos antes de escalar mídia. Esta é a autoridade de gate para Curva, não os planos GTM/nutrição anteriores. |
 
 ## Aberto — próximo passo conhecido
 
@@ -128,6 +129,7 @@ Não re-verificado a fundo nesta auditoria (classificação herdada da varredura
 | [vertical-sky-beam-readiness-guide.md](vertical-sky-beam-readiness-guide.md) | Cross-capability | Guia de prontidão — acompanha o roadmap acima |
 | [top-layer-architecture-execution-plan.md](top-layer-architecture-execution-plan.md) | Arquitetura | Fase 0/1 já fechadas — próximo: frentes de Alert Siren / Red Beacon |
 | [PaymentUI.md](PaymentUI.md) | Pagamentos | Ondas 1-4 — sem evidência de conclusão, verificar contra a UI atual antes de retomar |
+| [divulgacao-launch-plan.md](divulgacao-launch-plan.md) | Comercial | Ciclo semanal 80/20 agente/humano (indicação, WhatsApp, cold e-mail, LinkedIn, landing/SEO, Instagram/Facebook) — revisado em 2026-08-29; 119 leads no [tracker](divulgacao-pipeline-tracker.md), gargalo passou a ser contato, não pesquisa |
 
 ## Precisa verificação manual (não dá pra confirmar só pelo repositório)
 

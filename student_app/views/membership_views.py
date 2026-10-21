@@ -15,6 +15,7 @@ import re
 
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import TemplateView, View
 
 from auditing.models import AuditEvent
@@ -79,17 +80,20 @@ class StudentInviteEntryView(StudentAnyMembershipMixin, View):
 
         match = UUID_TOKEN_PATTERN.search(raw_value)
         if match is None:
-            messages.error(request, 'Nao consegui reconhecer um token de convite valido nesse texto.')
+            messages.error(request, 'Não consegui reconhecer um convite válido nesse texto. Cole o link inteiro que o box te enviou.')
             return redirect(request.META.get('HTTP_REFERER') or 'student-app-settings')
 
-        return redirect('student-identity-invite', token=match.group('token'))
+        # Link do grupo (/box-invite/<token>/) e convite individual (/invite/<token>/) vivem em
+        # rotas diferentes; mandar o link do grupo para a rota individual dava "convite nao encontrado".
+        route_name = 'student-identity-box-invite' if '/box-invite/' in raw_value else 'student-identity-invite'
+        return redirect(route_name, token=match.group('token'))
 
 
 class StudentSwitchBoxView(StudentIdentityRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         target_box_root_slug = (request.POST.get('box_root_slug') or '').strip()
         if not target_box_root_slug:
-            messages.error(request, 'Escolha um box valido para trocar o contexto.')
+            messages.error(request, 'Escolha um box válido para trocar o contexto.')
             return redirect('student-app-home')
 
         target_membership = next(
@@ -97,14 +101,21 @@ class StudentSwitchBoxView(StudentIdentityRequiredMixin, View):
             None,
         )
         if target_membership is None:
-            messages.error(request, 'Este box nao esta disponivel para esta identidade de aluno.')
+            messages.error(request, 'Este box não está disponível para esta conta de aluno.')
             return redirect('student-app-home')
 
         target_membership.last_access_at = target_membership.last_access_at or None
         target_membership.mark_active()
         target_membership.save(update_fields=['status', 'approved_at', 'last_access_at', 'updated_at'])
         request.student_active_box_root_slug = target_membership.box_root_slug
-        response = redirect(request.POST.get('next') or request.META.get('HTTP_REFERER') or 'student-app-home')
+        next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or ''
+        if not url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            next_url = 'student-app-home'
+        response = redirect(next_url)
         attach_student_session_cookie(
             response,
             identity_id=request.student_identity.id,

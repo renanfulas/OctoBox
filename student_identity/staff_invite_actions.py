@@ -6,7 +6,7 @@ POR QUE ELE EXISTE:
 
 O QUE ESTE ARQUIVO FAZ:
 1. cria convite individual ou aberto para o aluno.
-2. cria e pausa link em massa do box.
+2. cria e pausa link do grupo do box.
 3. registra auditoria e eventos de onboarding ligados a convite.
 """
 
@@ -115,7 +115,7 @@ class StudentInvitationInviteActionsMixin:
         )
         messages.success(
             request,
-            f'Link em massa renovado para o box. Token pronto: {request.build_absolute_uri(reverse("student-identity-box-invite", kwargs={"token": result.token}))}',
+            f'Novo link do grupo criado. O link anterior parou de funcionar. Link pronto: {request.build_absolute_uri(reverse("student-identity-box-invite", kwargs={"token": result.token}))}',
         )
         record_student_onboarding_event(
             actor=request.user,
@@ -125,7 +125,7 @@ class StudentInvitationInviteActionsMixin:
             target_model='student_identity.StudentBoxInviteLink',
             target_id=str(result.id),
             target_label=get_box_runtime_slug(),
-            description='Link em massa criado ou renovado para onboarding do box.',
+            description='Link do grupo criado ou renovado para onboarding do box.',
             metadata={
                 'box_root_slug': get_box_runtime_slug(),
                 'box_invite_link_id': result.id,
@@ -145,9 +145,27 @@ class StudentInvitationInviteActionsMixin:
             .first()
         )
         if link is None:
-            messages.error(request, 'O link em massa não foi encontrado para pausa.')
+            messages.error(request, 'O link do grupo não foi encontrado para pausa.')
             return redirect('student-invitation-operations')
         link.paused_at = timezone.now()
         link.save(update_fields=['paused_at', 'updated_at'])
-        messages.success(request, 'Link em massa pausado. Ele deixa de aceitar novos cadastros até ser regenerado.')
+        messages.success(request, 'Link do grupo pausado. Ele não aceita novos cadastros até você tocar em "Retomar link".')
+        return redirect('student-invitation-operations')
+
+    def _handle_resume_box_link(self, request):
+        link = (
+            StudentBoxInviteLink.objects.filter(
+                pk=request.POST.get('box_invite_link_id'),
+                box_root_slug=get_box_runtime_slug(),
+                revoked_at__isnull=True,
+                paused_at__isnull=False,
+            )
+            .first()
+        )
+        if link is None:
+            messages.error(request, 'Esse link do grupo não está pausado (ou já foi substituído). Gere um novo se precisar.')
+            return redirect('student-invitation-operations')
+        link.paused_at = None
+        link.save(update_fields=['paused_at', 'updated_at'])
+        messages.success(request, 'Link do grupo retomado. Ele volta a aceitar novos cadastros.')
         return redirect('student-invitation-operations')

@@ -1,0 +1,11 @@
+[Unit]
+Description=Drain Curva outbox every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+Persistent=true
+Unit=octobox-public-workout-outbox.service
+
+[Install]
+WantedBy=timers.target

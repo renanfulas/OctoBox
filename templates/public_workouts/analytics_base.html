@@ -1,0 +1,23 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050c14">
+<meta name="robots" content="noindex,nofollow">
+<title>{% block title %}Analytics · Curva{% endblock %}</title>
+<link rel="preload" href="{% static 'fonts/manrope/manrope-latin-variable.woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{% static 'css/public_workouts/analytics.css' %}?v={{ static_asset_version }}-standalone1">
+</head>
+<body class="curva-analytics-body">
+<header class="curva-analytics-nav">
+  <a class="curva-analytics-brand" href="{% url 'public-workout-funnel-analytics' %}" aria-label="Curva Analytics — início">curva<span aria-hidden="true">↗</span><small>Inteligência comercial</small></a>
+  {% if analytics_username %}
+  <div class="curva-analytics-account"><span>{{ analytics_username }}</span><form method="post" action="{% url 'public-workout-funnel-analytics-logout' %}">{% csrf_token %}<button type="submit">Sair</button></form></div>
+  {% endif %}
+</header>
+<main class="curva-analytics-main">
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

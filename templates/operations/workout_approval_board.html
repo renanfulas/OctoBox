@@ -5,6 +5,16 @@
 <div class="operation-shell coach-scene workspace-shell coach-wod-editor-shell">
     {% include "includes/ui/layout/page_hero.html" with hero=page.data.hero %}
     {% include "operations/includes/wod_corridor_tabs.html" %}
+    {% with wod_journey_step='approval' %}{% include "operations/includes/wod_journey.html" %}{% endwith %}
+
+    <section class="wod-step-intro wod-step-intro--approval">
+        <span class="wod-step-intro__mark" aria-hidden="true">3</span>
+        <div>
+            <p class="eyebrow">Decisão do Manager ou Owner</p>
+            <h2>Revise e libere para os alunos</h2>
+            <p>Os treinos colados pelo time chegam aqui depois de entrar nas aulas. Confira o conteúdo e aprove para publicar no app.</p>
+        </div>
+    </section>
 
     <section class="coach-wod-filter-bar" aria-label="Filtros da fila de aprovação">
         <form method="get" class="coach-wod-filter-form">
@@ -57,21 +67,21 @@
     <section class="coach-wod-queue-summary" aria-label="Resumo executivo da fila">
         <div class="coach-wod-queue-summary-head">
             <div>
-                <p class="eyebrow">Radar da fila {% include "operations/includes/wod_tooltip.html" with tooltip_text="Mostra pressão, risco e próxima decisão antes de abrir cada WOD." %}</p>
-                <h2>Decisão curta para publicar sem ruído</h2>
+                <p class="eyebrow">Fila de revisão {% include "operations/includes/wod_tooltip.html" with tooltip_text="Mostra quantos WODs aguardam e quais precisam de atenção antes de publicar." %}</p>
+                <h2>Escolha o próximo treino para revisar</h2>
             </div>
         </div>
         <div class="coach-wod-summary-grid coach-wod-summary-grid--approval">
             <article class="coach-wod-summary-card tone-info">
-                <p class="eyebrow">Aguardando carimbo</p>
+                <p class="eyebrow">Aguardando aprovação</p>
                 <h2>{{ approval_queue_assist.total }}</h2>
             </article>
             <article class="coach-wod-summary-card tone-warning">
-                <p class="eyebrow">Alto impacto</p>
+                <p class="eyebrow">Exigem atenção</p>
                 <h2>{{ approval_queue_assist.high_impact_count }}</h2>
             </article>
             <article class="coach-wod-summary-card tone-danger">
-                <p class="eyebrow">Mudança sensível</p>
+                <p class="eyebrow">Mudanças sensíveis</p>
                 <h2>{{ approval_queue_assist.sensitive_count }}</h2>
             </article>
         </div>

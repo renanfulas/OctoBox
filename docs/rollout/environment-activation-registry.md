@@ -107,12 +107,23 @@ Rodar no ambiente alvo, na ordem. Todos são idempotentes (seguro repetir).
 ### Workspace do Manager (piloto)
 - **Var:** `OPERATIONS_MANAGER_WORKSPACE_ENABLED=True` quando o papel Manager faz parte do pacote do dia 1.
 
+### Normalização estrutural do WOD com Haiku (piloto controlado)
+- **Vars:** `WOD_WEEKLY_NORMALIZER_ENABLED=True` liga o kill switch global; `WOD_WEEKLY_NORMALIZER_BOXES=box_<slug>` limita a chamada aos schemas tenant explicitamente listados. O schema `public` nunca é elegível. `ANTHROPIC_API_KEY` é segredo e precisa existir apenas no ambiente-alvo.
+- **Rollout:** manter desligado por padrão; validar primeiro em staging com corpus dourado, latência/custo e UX de recuperação. Depois, incluir um schema piloto, reiniciar o runtime, verificar, e expandir a allowlist somente após os gates operacionais. Para rollback, desligar a flag global e reiniciar o runtime.
+- **Verificar:** com a flag desligada, fora da allowlist ou no schema `public`, não há chamada Anthropic; o texto original permanece e a tela mantém a correção manual. No box piloto, aceitar apenas resposta validada e revisada pelo coach.
+
 ### Push web do aluno (pagamento confirmado)
 - **Vars:** `STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY`, `STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY` (**segredo**), `STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT` (`mailto:suporte@octoboxfit.com.br`, não é segredo).
 - **Como gerar:** par de chaves VAPID (`py_vapid`, já é dependência via `pywebpush`). A privada precisa estar em **formato PEM** — `_build_vapid_private_key()` em `student_identity/push_notifications.py` usa `Vapid02.from_pem(...)`, não `Vapid02.from_string(...)` (bug real documentado ali: `from_string`/passar a chave crua tenta decodificar os cabeçalhos `-----BEGIN...-----` como base64url e quebra). A pública precisa estar em base64url do ponto EC não-comprimido (formato `applicationServerKey` do Push API do navegador), não em PEM.
 - **Fora do código:** colar as 3 vars no `octobox.env` da VPS e reiniciar `octobox-gunicorn.service` (as vars só são lidas no boot do processo).
 - **Verificar:** `is_student_web_push_configured()` deve retornar `True`; sem as vars, `send_student_web_push_notification()` retorna `False` em silêncio (a confirmação de pagamento continua funcionando, só sem o push).
 - **Por quê existe:** feature mergeada no PR #175 (payment-confirmed push) sem nenhuma das 3 vars configuradas em produção — `is_student_web_push_configured()` ficava sempre `False`, então `webpush()` nunca chegou a rodar. Sintoma de "está no `main` mas não funciona" que este registro existe para prevenir.
+
+### Push do aplicativo Curva (opt-in no dispositivo)
+- **Vars:** reutiliza `STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY`, `STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY` e `STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT`; requer também `PUBLIC_WORKOUT_PUSH_ALLOWED_HOSTS` e `PUBLIC_WORKOUT_PUBLIC_BASE_URL=https://<domínio público>`.
+- **Ativação:** chave VAPID persistente no cofre do ambiente, HTTPS, migrations `public_workouts.0040`–`0043`, timer `octobox-public-workout-outbox.timer` instalado e ativo. A configuração local de desenvolvimento não ativa a VPS.
+- **Verificar:** entrar como aluno num PWA instalado, tocar **Ativar avisos**, aceitar a permissão, conferir inscrição ativa na conta correta, publicar programa de ensaio, observar outbox drenada, recebimento, clique para o domínio esperado e desativação. Repetir em cada navegador suportado. O treino deve concluir mesmo com provedor push indisponível.
+- **Rollback:** pausar os tópicos push/worker ou remover as variáveis Curva; não desligar sessão e analytics. Rotação de VAPID exige reinscrição dos aparelhos. Ver [runbook Curva](../runbooks/curva-push-operations.md).
 
 ### Backup do PostgreSQL (diário)
 - **Vars:** `OCTOBOX_BACKUP_REMOTE` (ex. `r2:octobox`, não é segredo — a credencial do provedor fica só no `rclone.conf` da VPS, nunca em env var), `OCTOBOX_BACKUP_REMOTE_PREFIX`, `OCTOBOX_BACKUP_RETENTION_DAYS`.

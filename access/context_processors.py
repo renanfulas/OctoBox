@@ -100,7 +100,13 @@ def _build_static_asset_version():
         # Em producao, o CSS/JS nao muda sozinho.
         # Varremos os arquivos do HD exatas UMA vez no ciclo de vida da worker.
         if not _ASSET_VERSION_CACHE['boot_calculated']:
-            _ASSET_VERSION_CACHE['value'] = getattr(settings, 'STATIC_ASSET_VERSION', _calculate_static_asset_version())
+            configured = str(getattr(settings, 'STATIC_ASSET_VERSION', '') or '')
+            # O default do VPS é "1". Com Nginx servindo /static/ como
+            # immutable, reutilizá-lo mantém CSS/JS antigos no iPhone por dias.
+            _ASSET_VERSION_CACHE['value'] = (
+                configured if configured and configured != '1'
+                else _calculate_static_asset_version()
+            )
             _ASSET_VERSION_CACHE['boot_calculated'] = True
         return _ASSET_VERSION_CACHE['value']
 

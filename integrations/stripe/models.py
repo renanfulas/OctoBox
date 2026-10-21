@@ -16,6 +16,7 @@ PONTOS CRITICOS:
 - event_id vem do campo id do evento Stripe (ex: evt_xxx) — é o idempotency key externo.
 """
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
 
@@ -48,6 +49,7 @@ class PaymentWebhookEvent(TimeStampedModel):
     )
     provider = models.CharField(max_length=50, default='stripe')
     payload = models.JSONField(
+        encoder=DjangoJSONEncoder,
         help_text='Payload bruto normalizado. Não expor fora de integrations/stripe/.',
     )
 

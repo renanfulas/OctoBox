@@ -2,10 +2,16 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from django.db.models import F
 from django.utils import timezone
 
-from student_identity.application.results import StudentBoxInviteLinkRecord, StudentIdentityRecord, StudentInvitationRecord
+from student_identity.application.results import (
+    IdentitySaveConflictError,
+    StudentBoxInviteLinkRecord,
+    StudentIdentityRecord,
+    StudentInvitationRecord,
+)
 from student_identity.models import (
     StudentAppInvitation,
     StudentBoxInviteLink,
@@ -220,9 +226,10 @@ class DjangoStudentIdentityRepository:
         now = timezone.now()
         (
             StudentBoxInviteLink.objects
+            # Inclui links pausados: "Gerar novo link" substitui TODOS os do box. Antes o pausado
+            # sobrevivia e, ao ser retomado, voltava a funcionar ao lado do link novo.
             .filter(
                 box_root_slug=box_root_slug,
-                paused_at__isnull=True,
                 revoked_at__isnull=True,
                 expires_at__gt=now,
             )
@@ -237,11 +244,26 @@ class DjangoStudentIdentityRepository:
         return _box_invite_link_record(link)
 
     @transaction.atomic
+    def consume_box_invite_slot(self, link_id: int) -> bool:
+        """Consome 1 vaga do link do grupo, atomicamente (um UPDATE condicional no banco).
+
+        Duas requests simultaneas nunca passam de max_uses: o WHERE reavalia use_count < max_uses
+        no momento do UPDATE. Devolve False se o link acabou/pausou/revogou/expirou.
+        """
+        now = timezone.now()
+        updated = StudentBoxInviteLink.objects.filter(
+            pk=link_id,
+            paused_at__isnull=True,
+            revoked_at__isnull=True,
+            expires_at__gt=now,
+            use_count__lt=F('max_uses'),
+        ).update(use_count=F('use_count') + 1, updated_at=now)
+        return updated == 1
+
+    @transaction.atomic
     def record_box_invite_acceptance(self, link: StudentBoxInviteLink) -> StudentBoxInviteLink:
-        StudentBoxInviteLink.objects.filter(pk=link.pk).update(
-            use_count=link.use_count + 1,
-            updated_at=timezone.now(),
-        )
+        # Mantido por compatibilidade; sem leitura-modificacao-escrita em Python.
+        self.consume_box_invite_slot(link.pk)
         return StudentBoxInviteLink.objects.get(pk=link.pk)
 
     @transaction.atomic
@@ -254,9 +276,19 @@ class DjangoStudentIdentityRepository:
         provider_subject: str,
         email: str,
         invitation=None,
+        photo_url: str = '',
     ) -> StudentIdentityRecord:
+        normalized_photo_url = (photo_url or '').strip()
         identity = self.find_live_by_student_id(student.id)
         if identity is None:
+            # Onda 1 (docs/plans/student-login-magic-link-bugs-corda.md): find_live_by_student_id
+            # so enxerga StudentIdentity do MESMO Student — uma chave LOCAL ao schema do tenant
+            # atual. Quando esse provider_subject ja pertence a uma identidade de OUTRO box
+            # (Student diferente, mas StudentIdentity e schema publico/compartilhado), essa busca
+            # nunca acha, e o create() abaixo estouraria IntegrityError (provider_subject e
+            # unique=True). Cinto de seguranca: procurar tambem pela chave global antes de criar.
+            if self.find_by_provider_subject(provider_subject=provider_subject) is not None:
+                raise IdentitySaveConflictError('provider-subject-conflict')
             identity = StudentIdentity(
                 student_id=student.id,          # Sprint 2: IntegerField (sem FK)
                 student_name=student.full_name,  # Sprint 2: denormalizado
@@ -266,6 +298,7 @@ class DjangoStudentIdentityRepository:
                 provider_subject=provider_subject,
                 email=(email or '').strip().lower(),
                 invited_at=timezone.now() if invitation is not None else None,
+                photo_url=normalized_photo_url,
             )
         else:
             identity.student_id = student.id
@@ -278,9 +311,35 @@ class DjangoStudentIdentityRepository:
                 identity.primary_box_root_slug = box_root_slug
             if invitation is not None and identity.invited_at is None:
                 identity.invited_at = timezone.now()
+            # So sobrescreve com um valor novo — nunca apaga uma foto ja salva
+            # com um payload sem foto (ex.: Apple normalmente nao manda picture).
+            if normalized_photo_url:
+                identity.photo_url = normalized_photo_url
+
+        # Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md): o commit bd01222e
+        # removeu a validacao de duplicidade de e-mail do onboarding sem substitui-la — so
+        # a UniqueConstraint condicional do banco (models.py, status in [PENDING, ACTIVE])
+        # pegava isso, como IntegrityError cru. find_live_by_email_and_box ja usa o mesmo
+        # criterio de "vivo" da constraint; exclui a propria identity (update sem mudar
+        # e-mail, ou re-save do mesmo registro) comparando pk.
+        conflicting_identity = self.find_live_by_email_and_box(email=identity.email, box_root_slug=box_root_slug)
+        if conflicting_identity is not None and conflicting_identity.id != identity.pk:
+            raise IdentitySaveConflictError('email-conflict', provider=conflicting_identity.provider)
 
         identity.mark_authenticated()
-        identity.save()
+        try:
+            # savepoint interno: save_identity ja e @transaction.atomic — sem este
+            # `with transaction.atomic()`, um IntegrityError aqui deixaria a transacao
+            # externa marcada "precisa de rollback" e qualquer query seguinte nesta
+            # mesma funcao (ex.: _ensure_membership_status, logo abaixo) estouraria
+            # TransactionManagementError em vez do conflito limpo que queremos devolver.
+            with transaction.atomic():
+                identity.save()
+        except IntegrityError as exc:
+            # So alcancavel por uma corrida real (duas requests simultaneas passando pelas
+            # checagens acima — provider_subject ou e-mail — antes de qualquer uma
+            # commitar). As checagens acima ja cobrem o caso comum e deterministico.
+            raise IdentitySaveConflictError('unique-constraint-conflict') from exc
         membership_status = StudentBoxMembershipStatus.ACTIVE
         if invitation is not None and invitation.invite_type == StudentInvitationType.OPEN_BOX:
             membership_status = StudentBoxMembershipStatus.PENDING_APPROVAL

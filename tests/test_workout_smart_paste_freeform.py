@@ -6,14 +6,23 @@ _freeform_should_take_over.
 """
 
 import json
+from datetime import date, datetime, timezone as dt_timezone
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
+from django.utils import timezone
 
 from operations.services.wod_paste_freeform_parser import (
     _freeform_should_take_over,
     parse_weekly_wod_freeform,
 )
 from operations.services.wod_paste_parser import parse_weekly_wod_text
+from operations.workout_smart_paste_context import (
+    _build_projection_week_calendar,
+    _decorate_preview_payload,
+    _max_week_start,
+    list_unlinked_projection_movements,
+)
 
 
 # Texto colado por um coach real: sem cabecalhos de bloco, blocos separados por linha em
@@ -262,6 +271,119 @@ class FreeformSampleStructureTests(SimpleTestCase):
         self.assertEqual(_block_counts(crlf), _block_counts(self.parsed))
         self.assertEqual(crlf, self.parsed)
 
+
+class SmartPasteDateDecorationTests(SimpleTestCase):
+    def test_max_week_limit_uses_box_local_date_for_utc_boundary_session(self):
+        utc_monday_early = datetime(2026, 4, 27, 2, 30, tzinfo=dt_timezone.utc)
+        with patch('operations.workout_smart_paste_context.ClassSession.objects') as sessions:
+            sessions.exclude.return_value.order_by.return_value.values_list.return_value.first.return_value = (
+                utc_monday_early
+            )
+            with timezone.override('America/Sao_Paulo'):
+                result = _max_week_start(date(2026, 4, 20))
+
+        # 02:30 UTC na segunda ainda e domingo 23:30 no box; limite fica na
+        # semana que contem o domingo local, nao uma semana a frente.
+        self.assertEqual(result, date(2026, 4, 20))
+
+    def test_day_cards_use_the_selected_monday_as_their_date_anchor(self):
+        payload = {
+            'days': [
+                {'weekday': 0, 'weekday_label': 'Segunda', 'blocks': []},
+                {'weekday': 2, 'weekday_label': 'Quarta', 'blocks': []},
+            ],
+        }
+
+        decorated = _decorate_preview_payload(payload, week_start=date(2026, 10, 5))
+
+        self.assertEqual(decorated['days'][0]['date_iso'], '2026-10-05')
+        self.assertEqual(decorated['days'][0]['date_label'], '05/10')
+        self.assertEqual(decorated['days'][1]['date_iso'], '2026-10-07')
+        self.assertEqual(decorated['days'][1]['date_label'], '07/10')
+
+    def test_only_custom_or_unmatched_movements_are_listed_for_warning(self):
+        preview = {
+            'entries': [{
+                'status': 'ready',
+                'weekday_label': 'Segunda',
+                'projection_blocks': [{
+                    'title': 'WOD',
+                    'movements': [
+                        {'movement_slug': 'back_squat', 'movement_label_raw': 'Back squat'},
+                        {'movement_slug': 'custom', 'movement_label_raw': 'Ski erg lateral'},
+                        {'movement_slug': '', 'movement_label_raw': 'Movimento desconhecido'},
+                    ],
+                }],
+            }, {
+                'status': 'skip_no_compatible_blocks',
+                'weekday_label': 'Terça',
+                'projection_blocks': [{
+                    'title': 'Bloco incompatível',
+                    'movements': [{'movement_slug': 'custom', 'movement_label_raw': 'Não projetar'}],
+                }],
+            }],
+        }
+        with patch(
+            'operations.workout_smart_paste_context.lookup_movement_catalog_status',
+            return_value={'back_squat': {'is_registered': True, 'demo_video_url': 'https://example.test/video'}},
+        ):
+            items = list_unlinked_projection_movements(preview)
+
+        self.assertEqual([item['movement_label'] for item in items], [
+            'Ski erg lateral', 'Movimento desconhecido',
+        ])
+        self.assertTrue(all(item['day_label'] == 'Segunda' for item in items))
+        self.assertTrue(all(item['block_title'] == 'WOD' for item in items))
+        self.assertTrue(all(item['is_custom'] for item in items))
+        self.assertTrue(all('sem compatibilidade validada nem vídeo' in item['warning_label'] for item in items))
+
+    def test_known_movement_without_reference_link_requires_acknowledgement(self):
+        preview = {
+            'entries': [{
+                'status': 'ready',
+                'weekday_label': 'Quarta',
+                'projection_blocks': [{
+                    'title': 'Força',
+                    'movements': [
+                        {'movement_slug': 'back_squat', 'movement_label_raw': 'Back squat'},
+                    ],
+                }],
+            }],
+        }
+        with patch(
+            'operations.workout_smart_paste_context.lookup_movement_catalog_status',
+            return_value={'back_squat': {'is_registered': True, 'demo_video_url': ''}},
+        ):
+            items = list_unlinked_projection_movements(preview)
+
+        self.assertEqual(len(items), 1)
+        self.assertFalse(items[0]['is_custom'])
+        self.assertIn('sem vídeo demonstrativo', items[0]['warning_label'])
+
+    def test_projection_week_calendar_distinguishes_ready_no_class_and_no_workout(self):
+        days = _build_projection_week_calendar(
+            {
+                'target_week_start': date(2026, 10, 5),
+                'canceled_by_weekday': {3: 2},
+                'entries': [{
+                    'weekday_index': 0,
+                    'status': 'ready',
+                }],
+            },
+            {'days': [
+                {'weekday': 0},
+                {'weekday': 2},
+            ]},
+        )
+
+        self.assertEqual(days[0]['date_label'], '05/10')
+        self.assertEqual(days[0]['date_iso'], '2026-10-05')
+        self.assertEqual(days[0]['status'], 'ready')
+        self.assertEqual(days[1]['status'], 'no_workout')
+        self.assertEqual(days[2]['status'], 'no_sessions')
+        self.assertEqual(days[3]['status'], 'attention')
+        self.assertEqual(days[3]['status_label'], '2 aula(s) cancelada(s)')
+        self.assertEqual(days[3]['canceled_count'], 2)
 
 class FreeformEdgeCaseTests(SimpleTestCase):
     """Bugs previsiveis: vazios, acentos, duplicatas, lixo, espacos."""

@@ -25,6 +25,7 @@ from operations.model_definitions import (
     LeadImportProcessingMode,
     LeadImportSourceType,
     SessionStatus,
+    WorkoutProgram,
 )
 
 
@@ -40,4 +41,5 @@ __all__ = [
     'LeadImportProcessingMode',
     'LeadImportSourceType',
     'SessionStatus',
+    'WorkoutProgram',
 ]

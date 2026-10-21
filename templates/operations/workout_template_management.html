@@ -70,7 +70,7 @@
                     <span class="pill accent">{{ approval_policy_setting.approval_policy|default:'strict' }}</span>
                 </div>
             </div>
-            {% if current_role.slug == 'owner' %}
+            {% if current_role.slug == 'Owner' %}
             <form method="post" action="{% url 'workout-approval-policy-update' %}" class="coach-wod-form-stack">
                 {% csrf_token %}
                 <label>

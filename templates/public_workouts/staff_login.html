@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Entrar — Curva</title>
+<style>
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:#f5efe4;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;box-sizing:border-box;}
+  .card{max-width:360px;width:100%;background:#11203b;border-radius:18px;padding:28px;box-shadow:0 16px 34px rgba(15,23,42,.4);}
+  h1{font-size:1.25rem;margin:0 0 4px;}
+  .eyebrow{font-size:.74rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#00e5ff;margin:0 0 8px;}
+  p{font-size:.9rem;line-height:1.5;color:#cbd5e1;margin:0 0 16px;}
+  label{display:block;font-size:.82rem;font-weight:700;color:#cbd5e1;margin-bottom:6px;}
+  input[type=text],input[type=password]{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#f5efe4;font-size:1rem;margin-bottom:14px;}
+  button{width:100%;padding:12px 14px;border-radius:12px;border:0;background:#00e5ff;color:#06101a;font-weight:800;font-size:1rem;cursor:pointer;}
+  .error{color:#fca5a5;}
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Curva · operação</p>
+  <h1>Área interna</h1>
+  <p>Acesso restrito à equipe do Curva.</p>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+    <label for="staff-username">Usuário</label>
+    <input id="staff-username" type="text" name="username" autocomplete="username" required autofocus>
+    <label for="staff-password">Senha</label>
+    <input id="staff-password" type="password" name="password" autocomplete="current-password" required>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+</body>
+</html>

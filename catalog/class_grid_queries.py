@@ -71,7 +71,7 @@ def build_class_grid_snapshot(today, params=None):
 
     all_sessions = list(
         sessions_queryset
-        .select_related('coach')
+        .select_related('coach', 'workout_program')
         .annotate(occupied_slots=Count('attendances'))
         .order_by('scheduled_at')
     )

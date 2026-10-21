@@ -122,6 +122,65 @@ class _SignatureParser(HTMLParser):
             self.text.append(normalized)
 
 
+def build_payload_signature(payload: dict) -> dict[str, list[str]]:
+    """Projeta um payload de PublicWorkoutProgram (Onda A2) nos mesmos
+    campos `hrefs`/`text` de build_signature() -- pra comparar a migracao
+    contra o golden legado como SUBCONJUNTO (nunca igualdade: o payload nao
+    modela nav, variacoes, nem widgets narrativos como "4 sessoes · 100
+    min", so' a prescricao em si).
+    """
+    hrefs: list[str] = []
+    text: list[str] = []
+    for day in payload.get('days', ()):
+        for block in day.get('blocks', ()):
+            for movement in block.get('movements', ()):
+                reference_url = movement.get('reference_url')
+                if reference_url:
+                    hrefs.append(reference_url)
+                for field in ('reps_spec', 'rir_spec'):
+                    value = movement.get(field)
+                    if value:
+                        text.append(value)
+    return {'hrefs': hrefs, 'text': text}
+
+
+_TOKEN_RE = re.compile(r'\S+')
+
+
+def _significant_tokens(values: list[str]) -> set[str]:
+    # tokens de 1 caractere (×, →, ·) sao conectores que o parser insere ao
+    # sintetizar reps_spec/rir_spec -- nao sao conteudo, ignorar evita falso
+    # negativo quando o golden tem os mesmos pedacos em nos de texto
+    # separados (ex.: <td>Top Set</td><td>3×</td><td>8-10</td>).
+    tokens: set[str] = set()
+    for value in values:
+        tokens.update(token for token in _TOKEN_RE.findall(value) if len(token) > 1)
+    return tokens
+
+
+def payload_fidelity_report(payload: dict, golden: dict[str, object]) -> list[str]:
+    """Compara a assinatura do payload migrado contra o golden legado como
+    SUBCONJUNTO: todo `reference_url` referenciado precisa existir na
+    pagina original, e todo token de conteudo (reps/RIR) precisa rastrear
+    ate algo que ja estava la. Lista de problemas (vazia = ok) -- nunca
+    levanta excecao, quem chama decide o que fazer (teste vs relatorio).
+    """
+    problems: list[str] = []
+    signature = build_payload_signature(payload)
+
+    golden_hrefs = set(golden.get('hrefs', ()))
+    for href in signature['hrefs']:
+        if href not in golden_hrefs:
+            problems.append(f'href fora do golden: {href}')
+
+    golden_tokens = _significant_tokens(golden.get('text', ()))
+    payload_tokens = _significant_tokens(signature['text'])
+    for token in sorted(payload_tokens - golden_tokens):
+        problems.append(f'texto sem rastro no golden: {token!r}')
+
+    return problems
+
+
 def build_signature(html: str) -> dict[str, object]:
     parser = _SignatureParser()
     parser.feed(html)
