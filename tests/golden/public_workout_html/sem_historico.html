@@ -144,19 +144,9 @@ title="Ver treino de Qua"
 <span class="workout-week-day is-rest" title="Descanso">Dom</span>
 </div>
 </section>
-<aside class="workout-push-prompt" data-workout-push-home>
-<div><strong>Receba avisos da Curva</strong><p>Você escolhe se este dispositivo recebe avisos sobre seus treinos.</p><span data-workout-push-status aria-live="polite">Para vincular este dispositivo, confirme seu e-mail com um código.</span></div>
-<div class="workout-push-prompt__actions">
-<div class="workout-push-verify" data-workout-push-verify data-verify-url="/renan/gm-ana/push/verificacao">
-<button type="button" data-workout-push-verify-send>Confirmar e-mail para ativar</button>
-<form class="workout-push-verify__form" data-workout-push-verify-form hidden>
-<label for="workout-push-code-home">Código de 6 dígitos</label>
-<input id="workout-push-code-home" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required data-workout-push-verify-code>
-<button type="submit">Confirmar código</button>
-<button type="button" class="workout-push-verify__resend" data-workout-push-verify-resend>Reenviar código</button>
-</form>
-</div>
-</div>
+<aside class="workout-push-prompt" data-workout-push-home data-workout-push data-public-key="golden-vapid-public-key" data-subscribe-url="/renan/gm-ana/push" hidden>
+<div><strong>Receba avisos da Curva</strong><p>Você escolhe se este dispositivo recebe avisos sobre seus treinos.</p><span data-workout-push-status aria-live="polite"></span></div>
+<div class="workout-push-prompt__actions"><button type="button" data-workout-push-enable>Ativar avisos</button></div>
 </aside>
 </section>
 <section id="workout-panel-avaliacao" class="workout-assessment-panel" data-workout-tab-panel>
@@ -222,7 +212,7 @@ aria-label="Qua · Superiores"
 <span class="workout-day-tab__keyword">Superiores</span>
 </button>
 </nav>
-<section class="workout-guided" data-workout-guided data-session-url="/renan/gm-ana/sessao" data-program-version="1" data-account-scope="990001">
+<section class="workout-guided" data-workout-guided data-session-url="/renan/gm-ana/sessao" data-program-version="1" data-account-scope="990001" data-rest-alert-url="/renan/gm-ana/push/descanso">
 <div class="workout-guided__intro">
 <div class="workout-guided__copy">
 <h2 class="workout-guided__title" data-guided-launch-title>Treino guiado</h2>
@@ -828,18 +818,11 @@ data-weekly-review-url="/renan/gm-ana/revisao-semanal"
 <div class="workout-device-settings__row" data-workout-push-profile>
 <div class="workout-device-settings__copy">
 <strong>Notificações</strong>
-<span data-workout-push-profile-status aria-live="polite">Para vincular este dispositivo, confirme seu e-mail com um código.</span>
+<span data-workout-push-profile-status aria-live="polite">Verificando avisos…</span>
 </div>
 <div class="workout-device-settings__actions">
-<div class="workout-push-verify" data-workout-push-verify data-verify-url="/renan/gm-ana/push/verificacao">
-<button type="button" data-workout-push-verify-send>Confirmar e-mail para ativar</button>
-<form class="workout-push-verify__form" data-workout-push-verify-form hidden>
-<label for="workout-push-code-profile">Código de 6 dígitos</label>
-<input id="workout-push-code-profile" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required data-workout-push-verify-code>
-<button type="submit">Confirmar código</button>
-<button type="button" class="workout-push-verify__resend" data-workout-push-verify-resend>Reenviar código</button>
-</form>
-</div>
+<button type="button" data-workout-push-profile-enable hidden>Ativar avisos</button>
+<button type="button" data-workout-push-disable hidden>Desativar avisos</button>
 </div>
 </div>
 </div>

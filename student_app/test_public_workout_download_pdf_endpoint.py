@@ -16,6 +16,7 @@ from django.test import TestCase
 
 from public_workouts.schema import build_example_payload
 from public_workouts.services import publish_program
+from public_workouts.testing import sign_in_public_workout_owner
 
 
 class PublicWorkoutDownloadPdfEndpointTests(TestCase):
@@ -57,6 +58,7 @@ class PublicWorkoutDownloadPdfEndpointTests(TestCase):
 
     def test_owner_with_published_program_downloads_pdf(self):
         publish_program(slug='giovanna', payload=build_example_payload())
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie do dono
 
         response = self.client.get(self._url('giovanna'))

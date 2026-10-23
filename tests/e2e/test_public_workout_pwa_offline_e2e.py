@@ -10,7 +10,7 @@ import pytest
 from django.test import override_settings
 from playwright.sync_api import Page, expect
 
-from tests.e2e.curva_login import enter_with_magic_link
+from tests.e2e.curva_login import enter_with_magic_link, sign_in_owner
 
 
 @pytest.fixture(autouse=True)
@@ -58,6 +58,7 @@ def test_public_workout_pwa_installs_and_opens_offline_shell_without_private_htm
       await caches.open('public-workouts-previous-e5-pages');
     }""")
 
+    sign_in_owner(page, origin, 'bruno')
     page.goto(f'{origin}/renan/bruno')
     assert page.locator('link[rel="manifest"]').get_attribute('href') == '/renan/bruno/manifest.webmanifest'
     assert page.locator('script[src*="workout-pwa.js"]').count() == 1
@@ -129,6 +130,7 @@ def test_installed_app_hides_home_invite_and_shows_state_in_profile(page: Page, 
 
     publish_program(slug='bruno', payload=build_example_payload())
     page.add_init_script("Object.defineProperty(navigator, 'standalone', { value: true });")
+    sign_in_owner(page, live_server.url, 'bruno')
     page.goto(f'{live_server.url.rstrip("/")}/renan/bruno')
 
     expect(page.locator('[data-workout-install]')).to_be_hidden()
@@ -144,6 +146,7 @@ def test_accepted_install_prompt_leaves_home_and_updates_profile(page: Page, liv
     from public_workouts.services import publish_program
 
     publish_program(slug='bruno', payload=build_example_payload())
+    sign_in_owner(page, live_server.url, 'bruno')
     page.goto(f'{live_server.url.rstrip("/")}/renan/bruno')
     page.evaluate("""() => {
       const event = new Event('beforeinstallprompt');

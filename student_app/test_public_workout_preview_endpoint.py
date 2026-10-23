@@ -33,7 +33,7 @@ def _make_account_with_subscription(*, email, plan_slug) -> PublicWorkoutAccount
 
 
 def _login(client, account_id):
-    client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=account_id)
+    client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=account_id, identity_verified=True)
 
 
 class PublicWorkoutPreviewEndpointTests(TestCase):
@@ -48,12 +48,24 @@ class PublicWorkoutPreviewEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_anonymous_visitor_sees_published_program(self):
+    def test_anonymous_visitor_is_sent_to_login_without_ownership_cookie(self):
+        # O cookie de posse libera /avaliacoes.json: sem login, nem pagina
+        # nem cookie.
         publish_program(slug='bruno', payload=build_example_payload())
 
         response = self.client.get(self._url('bruno'))
 
+        self.assertRedirects(response, '/treinos/login?next=/renan/bruno', fetch_redirect_response=False)
+        self.assertNotIn(PUBLIC_WORKOUT_OWNER_COOKIE, response.cookies)
+
+    def test_owner_sees_published_program(self):
+        publish_program(slug='bruno', payload=build_example_payload())
+        _login(self.client, _make_account_with_subscription(email='dono@example.com', plan_slug='bruno').pk)
+
+        response = self.client.get(self._url('bruno'))
+
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
         self.assertContains(response, 'Programa de exemplo')
 
     def test_logged_in_account_opening_someone_elses_slug_gets_404_not_403(self):
@@ -78,8 +90,8 @@ class PublicWorkoutPreviewEndpointTests(TestCase):
 
         response = self.client.get(self._url('bruno'))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, '100,0 kg')
+        self.assertRedirects(response, '/treinos/login?next=/renan/bruno', fetch_redirect_response=False)
+        self.assertNotContains(response, '100,0 kg', status_code=302)
 
     def test_owner_logged_in_sees_their_own_recorded_load(self):
         publish_program(slug='bruno', payload=build_example_payload())
@@ -106,6 +118,7 @@ class PublicWorkoutPreviewEndpointTests(TestCase):
         # mesmo com o resto da pagina funcionando (achado ao verificar
         # visualmente com Playwright).
         publish_program(slug='bruno', payload=build_example_payload())
+        _login(self.client, _make_account_with_subscription(email='dono@example.com', plan_slug='bruno').pk)
 
         response = self.client.get(self._url('bruno'))
 
@@ -118,6 +131,7 @@ class PublicWorkoutPreviewEndpointTests(TestCase):
         payload = build_example_payload()
         publish_program(slug='bruno', payload=payload)
         PublicWorkoutMovement.objects.filter(slug='agachamento-livre').update(label_pt='Agachamento livre — nome revisado')
+        _login(self.client, _make_account_with_subscription(email='dono@example.com', plan_slug='bruno').pk)
 
         response = self.client.get(self._url('bruno'))
 

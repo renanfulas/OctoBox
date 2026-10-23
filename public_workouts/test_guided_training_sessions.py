@@ -203,7 +203,7 @@ class GuidedTrainingSessionIntegrationTest(TestCase):
 
     def test_session_api_persists_skip_and_unskip_for_same_account(self):
         PublicWorkoutSubscription.objects.create(account=self.account, plan_slug='guiado')
-        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=self.account.pk)
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=self.account.pk, identity_verified=True)
         session = start_session(account_id=self.account.pk, plan_slug='guiado', day_id='seg')
         url = reverse('public-workout-session', kwargs={'plan_slug': 'guiado'})
         body = {'action': 'skip', 'session_id': str(session.pk), 'movement_index': 0,

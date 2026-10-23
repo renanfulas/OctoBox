@@ -16,9 +16,9 @@ POR QUE EXISTE:
 
 USO:
     python manage.py seed_legacy_workout_accounts --dry-run \
-        --account bruno:brunofulas@hotmail.com --account juliana:julianaalves_o@hotmail.com
+        --account bruno:aluno1@example.com --account juliana:aluno2@example.com
     python manage.py seed_legacy_workout_accounts \
-        --account bruno:brunofulas@hotmail.com
+        --account bruno:aluno1@example.com
 
 PONTOS CRÍTICOS:
 - Idempotente: `get_or_create` por email (conta) e por account+plan_slug
@@ -45,7 +45,7 @@ class Command(BaseCommand):
             action='append',
             default=[],
             dest='accounts',
-            help='Par slug:email, repetir uma vez por cliente. Ex.: --account bruno:brunofulas@hotmail.com',
+            help='Par slug:email, repetir uma vez por cliente. Ex.: --account bruno:aluno1@example.com',
         )
         parser.add_argument('--dry-run', action='store_true')
 

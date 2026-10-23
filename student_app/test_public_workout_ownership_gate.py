@@ -7,12 +7,14 @@ POR QUE ELE EXISTE:
   (PublicWorkoutAccount), a view so mostra o treino se a conta for dona
   DAQUELE slug (via PublicWorkoutSubscription) — senao 404, nunca 403
   (403 confirmaria que o slug existe) e nunca o treino de outra pessoa.
-  Sem sessao (visitante anonimo, fluxo B0 por cookie), nada muda.
+  Sem sessao verificada, o visitante vai para o login (posse do link nao
+  prova identidade).
 """
 
 from django.test import TestCase
 
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
+from public_workouts.testing import sign_in_public_workout_account
 from student_identity.public_workout_session import (
     PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
     build_public_workout_session_value,
@@ -29,17 +31,15 @@ def _make_account_with_subscription(*, email, plan_slug, status=None) -> PublicW
 
 
 class PublicWorkoutOwnershipGateTests(TestCase):
-    def test_anonymous_visitor_is_unaffected(self):
-        # Fluxo B0 (cookie de posse por link) continua igual — fase B de
-        # login obrigatorio (Onda B3) ainda nao esta ligada.
+    def test_anonymous_visitor_is_sent_to_login(self):
         response = self.client.get('/renan/bruno')
 
-        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, '/treinos/login?next=/renan/bruno', fetch_redirect_response=False)
 
     def test_logged_in_account_can_open_the_slug_it_owns(self):
         account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account.pk
+            account_id=account.pk, identity_verified=True
         )
 
         response = self.client.get('/renan/bruno')
@@ -51,7 +51,7 @@ class PublicWorkoutOwnershipGateTests(TestCase):
         # aluno B recebe 404" (nunca 403, nunca o treino de B).
         account_a = _make_account_with_subscription(email='a@example.com', plan_slug='bruno')
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account_a.pk
+            account_id=account_a.pk, identity_verified=True
         )
 
         response = self.client.get('/renan/juliana')
@@ -62,7 +62,7 @@ class PublicWorkoutOwnershipGateTests(TestCase):
     def test_logged_in_account_without_any_subscription_gets_404(self):
         account = PublicWorkoutAccount.objects.create(email='sem-assinatura@example.com')
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account.pk
+            account_id=account.pk, identity_verified=True
         )
 
         response = self.client.get('/renan/bruno')
@@ -77,7 +77,7 @@ class PublicWorkoutOwnershipGateTests(TestCase):
 
         response = self.client.get('/renan/bruno')
 
-        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, '/treinos/login?next=/renan/bruno', fetch_redirect_response=False)
 
     def test_session_cookie_is_scoped_broad_enough_to_reach_renan(self):
         # Regressao do bug achado ao implementar este gate: o cookie de
@@ -113,20 +113,22 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
     tela: nao fazem sentido pra visualizacao humana."""
 
     def test_active_subscription_is_not_blocked(self):
-        _make_account_with_subscription(
+        account = _make_account_with_subscription(
             email='ativo@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.ACTIVE
         )
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Bruno')
 
     def test_suspended_subscription_shows_payment_blocked_screen_not_404(self):
-        _make_account_with_subscription(
+        account = _make_account_with_subscription(
             email='suspenso@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
         )
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertEqual(response.status_code, 200)
@@ -134,20 +136,22 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
         self.assertNotContains(response, 'Sua semana')  # nunca o treino de verdade
 
     def test_past_due_subscription_shows_payment_blocked_screen(self):
-        _make_account_with_subscription(
+        account = _make_account_with_subscription(
             email='atraso@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.PAST_DUE
         )
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Atualizar pagamento')
 
     def test_canceled_subscription_shows_payment_blocked_screen(self):
-        _make_account_with_subscription(
+        account = _make_account_with_subscription(
             email='cancelado@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.CANCELED
         )
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertEqual(response.status_code, 200)
@@ -160,19 +164,19 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
             email='suspenso-api@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
         )
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account.pk
+            account_id=account.pk, identity_verified=True
         )
 
         response = self.client.get('/renan/bruno/pacote.json')
 
         self.assertEqual(response.status_code, 404)
 
-    def test_a_slug_with_no_subscription_row_at_all_is_never_blocked(self):
-        # Legado: giovanna nao tem PublicWorkoutSubscription nenhuma neste
-        # teste (mesma realidade dos 10 clientes reais antes da Onda B1/B2).
+    def test_a_slug_with_no_subscription_row_at_all_still_requires_login(self):
+        # Sem assinatura nenhuma ninguem e' dono do slug: antes a pagina
+        # abria pra qualquer visitante, agora so leva ao login.
         response = self.client.get('/renan/giovanna')
 
-        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, '/treinos/login?next=/renan/giovanna', fetch_redirect_response=False)
 
     def test_logged_in_owner_of_a_suspended_subscription_also_sees_the_blocked_screen(self):
         # O bloqueio nao e' so' pro visitante anonimo — o proprio dono
@@ -182,7 +186,7 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
             email='dono-suspenso@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
         )
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account.pk
+            account_id=account.pk, identity_verified=True
         )
 
         response = self.client.get('/renan/bruno')
@@ -194,10 +198,11 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
         # A tela nao inventa uma rota nova pra pagar — reusa
         # PublicWorkoutBillingPortalView (/treinos/billing-portal), ja
         # testado em student_identity/test_public_workout_login.py.
-        _make_account_with_subscription(
+        account = _make_account_with_subscription(
             email='suspenso-portal@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.SUSPENDED
         )
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertContains(response, '/treinos/billing-portal')

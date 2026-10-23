@@ -44,6 +44,7 @@ from student_app.models import (
     WorkoutBlockKind,
     WorkoutLoadType,
 )
+from public_workouts.testing import sign_in_public_workout_account, sign_in_public_workout_owner
 from student_identity.infrastructure.session import build_student_session_value, read_student_session_value
 from student_identity.models import (
     StudentAppInvitation,
@@ -2463,48 +2464,39 @@ class PublicWorkoutPwaTests(TestCase):
     # PublicWorkoutDetailViewCutoverTests, mais abaixo, que publica de
     # verdade antes de testar.
 
-    def test_public_workout_pages_are_open_without_login(self):
-        juliana_response = self.client.get('/renan/juliana')
-        bruno_response = self.client.get('/renan/bruno')
-        milene_response = self.client.get('/renan/milene')
-        giovanna_response = self.client.get('/renan/giovanna')
-        thaislima_response = self.client.get('/renan/thaislima')
-        john_response = self.client.get('/renan/john')
-        henrique_response = self.client.get('/renan/henrique')
-        johnespanha_response = self.client.get('/renan/johnespanha')
+    def test_anonymous_visitor_is_sent_to_login_without_any_session(self):
+        # O slug e' o primeiro nome do aluno: abrir o link sem login nao pode
+        # entregar a pagina, nem a sessao, nem o cookie de posse do B0.
+        from student_identity.public_workout_session import PUBLIC_WORKOUT_SESSION_COOKIE_NAME
 
-        self.assertEqual(juliana_response.status_code, 200)
-        self.assertEqual(bruno_response.status_code, 200)
-        self.assertEqual(milene_response.status_code, 200)
-        self.assertEqual(giovanna_response.status_code, 200)
-        self.assertEqual(thaislima_response.status_code, 200)
-        self.assertEqual(john_response.status_code, 200)
-        self.assertEqual(henrique_response.status_code, 200)
-        self.assertEqual(johnespanha_response.status_code, 200)
-        self.assertContains(juliana_response, 'Juliana Alves')
-        self.assertContains(bruno_response, 'Bruno Fulas')
-        self.assertContains(milene_response, 'Milene Geraldes')
-        self.assertContains(giovanna_response, 'Giovanna Fontes')
-        self.assertContains(thaislima_response, 'Thais Lima')
-        self.assertContains(john_response, 'John')
-        self.assertContains(henrique_response, 'Henrique Santos Souza')
-        self.assertContains(johnespanha_response, 'John Espanha')
-        self.assertContains(juliana_response, "/renan/juliana/manifest.webmanifest")
-        self.assertContains(bruno_response, "/renan/bruno/manifest.webmanifest")
-        self.assertContains(milene_response, "/renan/milene/manifest.webmanifest")
-        self.assertContains(giovanna_response, "/renan/giovanna/manifest.webmanifest")
-        self.assertContains(thaislima_response, "/renan/thaislima/manifest.webmanifest")
-        self.assertContains(john_response, "/renan/john/manifest.webmanifest")
-        self.assertContains(henrique_response, "/renan/henrique/manifest.webmanifest")
-        self.assertContains(johnespanha_response, "/renan/johnespanha/manifest.webmanifest")
-        self.assertContains(juliana_response, "/renan/sw.js")
-        self.assertContains(bruno_response, "/renan/sw.js")
-        self.assertContains(milene_response, "/renan/sw.js")
-        self.assertContains(giovanna_response, "/renan/sw.js")
-        self.assertContains(thaislima_response, "/renan/sw.js")
-        self.assertContains(john_response, "/renan/sw.js")
-        self.assertContains(henrique_response, "/renan/sw.js")
-        self.assertContains(johnespanha_response, "/renan/sw.js")
+        for slug in ('juliana', 'bruno', 'johnespanha'):
+            with self.subTest(slug=slug):
+                response = self.client.get(f'/renan/{slug}')
+
+                self.assertRedirects(response, f'/treinos/login?next=/renan/{slug}', fetch_redirect_response=False)
+                self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
+                self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+                self.assertNotIn('renan_slug', response.cookies)
+
+    def test_owner_sees_the_page_with_first_name_only_and_no_body_data(self):
+        slugs = ('juliana', 'bruno', 'milene', 'giovanna', 'thaislima', 'john', 'henrique', 'johnespanha')
+        first_names = ('Juliana', 'Bruno', 'Milene', 'Giovanna', 'Thais', 'John', 'Henrique', 'John Espanha')
+        surnames = ('Alves', 'Fulas', 'Geraldes', 'Fontes', 'Lima', 'Santos Souza')
+        for slug, first_name in zip(slugs, first_names):
+            with self.subTest(slug=slug):
+                sign_in_public_workout_owner(self.client, slug)
+                response = self.client.get(f'/renan/{slug}')
+
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
+                self.assertContains(response, first_name)
+                content = response.content.decode('utf-8')
+                for surname in surnames:
+                    self.assertNotIn(surname, content)
+                for label in ('Idade', 'Peso', 'Gordura', 'Body fat', 'Massa magra', 'IMC'):
+                    self.assertNotIn(f'stat-l">{label}<', content)
+                self.assertContains(response, f'/renan/{slug}/manifest.webmanifest')
+                self.assertContains(response, '/renan/sw.js')
 
     def test_public_workout_manifest_is_dynamic_per_slug(self):
         response = self.client.get(reverse('public-workout-manifest', kwargs={'plan_slug': 'juliana'}))
@@ -2559,6 +2551,7 @@ class PublicWorkoutPwaTests(TestCase):
             self.assertNotIn(f'/renan/{slug}', sw_content)
 
     def test_public_workout_page_renders_install_cta(self):
+        sign_in_public_workout_owner(self.client, 'juliana')
         response = self.client.get('/renan/juliana')
 
         self.assertEqual(response.status_code, 200)
@@ -2567,6 +2560,7 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'Adicionar à Tela de Início')
 
     def test_juliana_week_order_reflects_quad_frequency_program(self):
+        sign_in_public_workout_owner(self.client, 'juliana')
         response = self.client.get('/renan/juliana')
         content = response.content.decode()
 
@@ -2598,6 +2592,7 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, '4 sessões · 100 min')
 
     def test_henrique_week_order_reflects_split_and_required_back_exercises(self):
+        sign_in_public_workout_owner(self.client, 'henrique')
         response = self.client.get('/renan/henrique')
         content = response.content.decode()
 
@@ -2620,6 +2615,7 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertContains(response, 'Face pull no cabo')
 
     def test_johnespanha_week_order_reflects_glute_priority_and_low_back_volume(self):
+        sign_in_public_workout_owner(self.client, 'johnespanha')
         response = self.client.get('/renan/johnespanha')
         content = response.content.decode()
 
@@ -2653,6 +2649,7 @@ class PublicWorkoutPwaTests(TestCase):
         # o cookie CSRF nunca nascia — qualquer POST feito por JS depois
         # (autoavaliacao online, assessments.js) levava 403 em producao,
         # mesmo com sessao de login valida.
+        sign_in_public_workout_owner(self.client, 'giovanna')
         response = self.client.get('/renan/giovanna')
 
         self.assertIn(settings.CSRF_COOKIE_NAME, response.cookies)
@@ -2666,6 +2663,7 @@ class PublicWorkoutSignOutViewTests(TestCase):
     """
 
     def test_clears_owner_cookie_and_redirects_to_offline(self):
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie do dono
         self.assertIn('renan_slug', self.client.cookies)
 
@@ -2757,7 +2755,7 @@ class PublicWorkoutTemplatePreviewViewTests(TestCase):
             email='comfoto@example.com', photo_url='https://lh3.googleusercontent.com/a/foto-preview',
         )
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account.id,
+            account_id=account.id, identity_verified=True
         )
 
         response = self.client.get('/renan/bruno/preview-b3')
@@ -2796,6 +2794,7 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
     def test_renders_workout_html_when_program_is_active(self):
         self._publish('bruno')
 
+        sign_in_public_workout_owner(self.client, 'bruno')
         response = self.client.get('/renan/bruno')
 
         self.assertEqual(response.status_code, 200)
@@ -2811,6 +2810,7 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
     def test_falls_back_to_legacy_when_no_program_published(self):
         # giovanna: nenhum publish_program chamado nesta base de teste —
         # comportamento identico ao de sempre (PublicWorkoutPwaTests).
+        sign_in_public_workout_owner(self.client, 'giovanna')
         response = self.client.get('/renan/giovanna')
 
         self.assertEqual(response.status_code, 200)
@@ -2822,29 +2822,27 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         # mesmo com programa publicado, slug listado continua no legado.
         self._publish('bruno')
 
+        sign_in_public_workout_owner(self.client, 'bruno')
         response = self.client.get('/renan/bruno')
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('workout-shell', response.content.decode('utf-8'))
 
-    def test_visitor_without_any_account_gets_empty_load_data(self):
-        # Ninguem visitou ainda, nenhuma PublicWorkoutSubscription existe
-        # pra 'bruno' nesta base de teste — account_id fica None, a pagina
-        # nao pode quebrar, so degrada Cargas/revisao/1RM pra vazio.
+    def test_owner_without_loads_gets_empty_load_data(self):
+        # Dono recem-logado, sem nenhuma carga: a pagina nao pode quebrar,
+        # so degrada Cargas/revisao/1RM pra vazio.
         self._publish('bruno')
+        sign_in_public_workout_owner(self.client, 'bruno')
 
         response = self.client.get('/renan/bruno')
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Nenhuma carga registrada ainda.')
 
-    def test_visitor_auto_logs_in_when_a_subscription_already_exists(self):
-        # Achado da varredura: os clientes legados nunca passaram por
-        # /treinos/login (seed_legacy_workout_accounts so cria a conta e a
-        # PublicWorkoutSubscription). Sem sessao B1 propria ainda, a
-        # primeira visita resolve a conta pela subscription do slug e ja
-        # estabelece a sessao — sem isso, POST /carga ficaria 401 pra
-        # sempre pra quem nunca logou.
+    def test_link_no_longer_logs_in_the_subscription_owner(self):
+        # Antes, a primeira visita resolvia a conta pela subscription do slug
+        # e emitia a sessao: qualquer pessoa que adivinhasse /renan/bruno
+        # virava o Bruno. Os legados agora entram pelo login por e-mail.
         from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
         from student_identity.public_workout_session import PUBLIC_WORKOUT_SESSION_COOKIE_NAME
 
@@ -2854,8 +2852,8 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
 
         response = self.client.get('/renan/bruno')
 
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
+        self.assertRedirects(response, '/treinos/login?next=/renan/bruno', fetch_redirect_response=False)
+        self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
     def test_week_old_session_is_reissued_keeping_identity_verified(self):
         # A validade de 30 dias conta da assinatura do cookie: sem reemitir,
@@ -2912,6 +2910,7 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         account = PublicWorkoutAccount.objects.create(email='novo@example.com')
         PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertContains(response, 'data-onboarding-autostart="true"')
@@ -2927,6 +2926,7 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         )
         PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertContains(response, 'data-onboarding-autostart="false"')
@@ -2940,6 +2940,7 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
             account=account, plan_slug='bruno', tier=PublicWorkoutTier.ESSENCIAL,
         )
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertNotContains(response, 'Avaliação &amp; Dieta')
@@ -2953,6 +2954,7 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
             account=account, plan_slug='bruno', tier=PublicWorkoutTier.COMPLETO,
         )
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertContains(response, 'Avaliação &amp; Dieta')
@@ -2971,6 +2973,7 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         )
         PublicWorkoutSubscription.objects.create(account=account, plan_slug='bruno')
 
+        sign_in_public_workout_account(self.client, account)
         response = self.client.get('/renan/bruno')
 
         self.assertContains(response, 'data-ui="replay-onboarding"')
@@ -2992,6 +2995,7 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_returns_404_for_cookie_of_another_slug(self):
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie de giovanna
         response = self.client.get('/renan/rafael/avaliacoes.json')
         self.assertEqual(response.status_code, 404)
@@ -3005,6 +3009,7 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_returns_empty_shape_for_plan_without_assessments(self):
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie do dono
         response = self.client.get('/renan/giovanna/avaliacoes.json')
         self.assertEqual(response.status_code, 200)
@@ -3033,6 +3038,7 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
             weight_kg=70,
             measurements={'cintura': 82, 'pescoco': 38},
         )
+        sign_in_public_workout_owner(self.client, 'rafael')
         self.client.get('/renan/rafael')  # seta o cookie do dono
         response = self.client.get('/renan/rafael/avaliacoes.json')
         self.assertEqual(response.status_code, 200)
@@ -3045,6 +3051,7 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         # giovanna usa o design system compartilhado; johnespanha continua
         # autocontido — os dois precisam do mesmo endpoint de leitura.
         for slug in ('giovanna', 'johnespanha', 'rafael'):
+            sign_in_public_workout_owner(self.client, slug)
             response = self.client.get(f'/renan/{slug}')
             self.assertContains(response, 'assessments.js')
             self.assertContains(response, "goTab('avaliacoes',this)")
@@ -3066,6 +3073,7 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_returns_404_for_cookie_of_another_slug(self):
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie de giovanna
         response = self.client.post(
             '/renan/rafael/backup-carga',
@@ -3077,6 +3085,7 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
     def test_saves_raw_blob_as_is_for_owner(self):
         from public_workouts.models import PublicWorkoutLocalStorageBackup
 
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie do dono
         blob = {'sessions': [{'date': '2026-01-05', 'weight': 42}], 'anything': 'nao normalizado'}
         response = self.client.post(
@@ -3091,6 +3100,7 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
         self.assertEqual(backup.store_key, 'giovanna_fontes_v1')
 
     def test_rejects_malformed_json(self):
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')
         response = self.client.post(
             '/renan/giovanna/backup-carga',
@@ -3100,6 +3110,7 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_rejects_non_object_json(self):
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')
         response = self.client.post(
             '/renan/giovanna/backup-carga',
@@ -3143,6 +3154,7 @@ class PublicWorkoutContentSignatureTests(TestCase):
 
         for slug in slugs:
             with self.subTest(slug=slug):
+                sign_in_public_workout_owner(self.client, slug)
                 response = self.client.get(f'/renan/{slug}')
                 self.assertEqual(response.status_code, 200)
                 actual = build_signature(response.content.decode('utf-8'))

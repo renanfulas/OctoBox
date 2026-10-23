@@ -18,9 +18,11 @@ PONTOS CRITICOS:
   Django NAO reproduz essa restricao, so mescla cookies sem checar path,
   entao os testes de B1/B2 nunca pegaram isso). `/` e o unico path que
   cobre os dois prefixos sem duplicar o mecanismo de sessao.
-- A rota legado `/renan/<slug>` tambem cria cookie pela posse do link.
-  `identity_verified` so e' marcado apos magic link, Google ou ponte
-  autenticada do aluno de box; push nunca usa o cookie legado como login.
+- `identity_verified` so e' marcado apos magic link, codigo, Google ou ponte
+  autenticada do aluno de box. Cookie sem essa marca vinha da antiga ponte
+  por posse do link legado (`/renan/<slug>` criava sessao pra qualquer
+  visitante que adivinhasse o slug) e deixou de valer como sessao: quem o
+  tem volta ao login uma vez.
 """
 
 from __future__ import annotations
@@ -43,8 +45,8 @@ def get_public_workout_session_max_age() -> int:
 
 
 def build_public_workout_session_value(*, account_id: int, identity_verified: bool = False) -> str:
-    # A ponte por posse do link legado também emite este cookie. Só os fluxos
-    # de autenticação explícita podem marcar a identidade como verificada.
+    # Só os fluxos de autenticação explícita marcam a identidade como
+    # verificada; sem a marca o cookie é ignorado na leitura.
     return signing.dumps(
         {'account_id': int(account_id), 'identity_verified': identity_verified},
         salt=PUBLIC_WORKOUT_SESSION_SALT, compress=True,
@@ -91,7 +93,7 @@ def renew_public_workout_session_cookie_if_stale(request, response):
     a mesma marca `identity_verified` — renovar nunca promove a identidade."""
     raw_value = request.COOKIES.get(PUBLIC_WORKOUT_SESSION_COOKIE_NAME)
     data = read_public_workout_session_value(raw_value)
-    if not data or data.get('account_id') is None:
+    if not data or data.get('account_id') is None or data.get('identity_verified') is not True:
         return response
     signed_at = _signed_at(raw_value)
     if signed_at is None or time.time() - signed_at < PUBLIC_WORKOUT_SESSION_RENEW_AFTER_SECONDS:
@@ -110,11 +112,12 @@ def get_public_workout_account_id_from_request(request) -> int | None:
     """Le o cookie da requisicao e devolve o account_id, ou None se ausente/invalido.
 
     So decodifica a assinatura — nao consulta o banco (quem chama decide se
-    precisa carregar a PublicWorkoutAccount ou so precisa do id).
+    precisa carregar a PublicWorkoutAccount ou so precisa do id). Cookie sem
+    `identity_verified` conta como ausente (ver PONTOS CRITICOS no topo).
     """
     raw_value = request.COOKIES.get(PUBLIC_WORKOUT_SESSION_COOKIE_NAME)
     data = read_public_workout_session_value(raw_value)
-    if not data:
+    if not data or data.get('identity_verified') is not True:
         return None
     account_id = data.get('account_id')
     return int(account_id) if account_id is not None else None

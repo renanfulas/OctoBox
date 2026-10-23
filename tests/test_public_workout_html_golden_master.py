@@ -55,6 +55,7 @@ from public_workouts.models import (
     PublicWorkoutTier,
 )
 from public_workouts.services import correct_load, publish_program, record_load
+from public_workouts.testing import sign_in_public_workout_account
 from public_workouts.training_sessions import day_plan, record_set, start_session
 
 
@@ -277,6 +278,8 @@ class CurvaWorkoutGoldenMasterTests(TestCase):
     maxDiff = None
 
     def _get_page(self, slug):
+        # Mesmo caminho do aluno real: sessao de login verificada do dono.
+        sign_in_public_workout_account(self.client, PublicWorkoutSubscription.objects.get(plan_slug=slug).account)
         response = self.client.get(f'/renan/{slug}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Cache-Control'], 'private, no-store')

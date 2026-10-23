@@ -439,6 +439,20 @@ def _render_payment_blocked_html(plan: PublicWorkoutPlan) -> str:
     })
 
 
+def _public_workout_login_redirect(plan_slug: str):
+    response = redirect(f'/treinos/login?next=/renan/{plan_slug}')
+    response['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
+
+
+def _private_public_workout_response(html: str) -> HttpResponse:
+    """Pagina pessoal do aluno: nunca em cache compartilhado nem em buscador."""
+    response = HttpResponse(html)
+    response['Cache-Control'] = 'private, no-store'
+    response['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
+
+
 class PublicWorkoutDetailView(View):
     def get(self, request, plan_slug, *args, **kwargs):
         plan = _get_public_workout_entry(plan_slug)
@@ -454,11 +468,11 @@ class PublicWorkoutDetailView(View):
         )
         from student_identity.public_workout_session import get_public_workout_account_id_from_request
 
-        protected_subscription = PublicWorkoutSubscription.objects.filter(
-            plan_slug=plan.slug, requires_login=True
-        ).first()
-        if protected_subscription is not None and get_public_workout_account_id_from_request(request) is None:
-            return redirect(f'/treinos/login?next=/renan/{plan.slug}')
+        # A pagina traz nome, avaliacao corporal e historico do aluno: posse
+        # do link nao prova identidade (o slug e' o primeiro nome). Todo
+        # slug exige sessao de login, com ou sem `requires_login`.
+        if get_public_workout_account_id_from_request(request) is None:
+            return _public_workout_login_redirect(plan.slug)
         _confirm_ownership_or_404(request, plan.slug)
         # get_token() marca o cookie CSRF pra ser enviado na resposta —
         # sem isso, o cookie nunca nasce aqui (nenhum template desta pagina
@@ -469,31 +483,12 @@ class PublicWorkoutDetailView(View):
 
         get_token(request)
 
-        # Entrega 4: os clientes legados nunca passaram pelo fluxo de
-        # login por token (/treinos/login) — foram onboardados manuais
-        # antes dele existir. Sem sessao B1 ja ativa, resolve a conta pela
-        # PublicWorkoutSubscription do proprio slug (get_or_create feito
-        # uma vez via seed_legacy_workout_accounts) e ja estabelece a
-        # sessao nesta mesma visita — mesmo modelo de confianca que o B0
-        # ja usa hoje (posse do link prova identidade; fase B de login
-        # obrigatorio ainda nao esta ligada, ver docstring do B0 acima).
-        from public_workouts.models import PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
-        from student_identity.public_workout_session import (
-            attach_public_workout_session_cookie,
-            get_public_workout_account_id_from_request,
-            get_verified_public_workout_account_id_from_request,
-            renew_public_workout_session_cookie_if_stale,
-        )
+        # Os clientes legados (seed_legacy_workout_accounts) entram pelo
+        # mesmo login por e-mail dos demais; a sessao ja foi exigida acima.
+        from public_workouts.models import PublicWorkoutSubscriptionStatus
+        from student_identity.public_workout_session import renew_public_workout_session_cookie_if_stale
 
         account_id = get_public_workout_account_id_from_request(request)
-        had_session = account_id is not None
-        if account_id is None:
-            subscription = (
-                PublicWorkoutSubscription.objects.filter(plan_slug=plan.slug)
-                .values_list('account_id', flat=True)
-                .first()
-            )
-            account_id = subscription
 
         # Pagamento bloqueado: tela dedicada (nao 404) — ver docstring de
         # _render_payment_blocked_html. So' se aplica quando EXISTE
@@ -507,23 +502,15 @@ class PublicWorkoutDetailView(View):
             .exists()
         )
         if blocking_subscription:
-            response = HttpResponse(_render_payment_blocked_html(plan))
-            response['Cache-Control'] = 'private, no-store'
-            if account_id is not None and not had_session:
-                attach_public_workout_session_cookie(response, account_id=account_id)
-            elif had_session:
-                renew_public_workout_session_cookie_if_stale(request, response)
-            return response
+            response = _private_public_workout_response(_render_payment_blocked_html(plan))
+            return renew_public_workout_session_cookie_if_stale(request, response)
 
         # O cliente do PWA envia POSTs JSON para sessão/push via cookie CSRF.
         # Força o cookie também nas páginas renderizadas por render_to_string.
         get_token(request)
-        verified_account_id = get_verified_public_workout_account_id_from_request(request)
-        response = HttpResponse(_render_public_workout_html(
-            plan_slug, account_id=account_id,
-            push_identity_verified=verified_account_id is not None and verified_account_id == account_id,
+        response = _private_public_workout_response(_render_public_workout_html(
+            plan_slug, account_id=account_id, push_identity_verified=True,
         ))
-        response['Cache-Control'] = 'private, no-store'
         opened_subscription = PublicWorkoutSubscription.objects.select_related('account').filter(
             plan_slug=plan.slug, account_id=account_id,
         ).first()
@@ -544,13 +531,10 @@ class PublicWorkoutDetailView(View):
                 subscription=opened_subscription,
                 tier=opened_subscription.tier,
             )
-        if account_id is not None and not had_session:
-            attach_public_workout_session_cookie(response, account_id=account_id)
-        elif had_session:
-            renew_public_workout_session_cookie_if_stale(request, response)
-        # B0: quem abre a pagina prova posse do link — e o que autoriza a
-        # leitura de /avaliacoes.json a seguir. Cookie por instancia, nao
-        # global: cada slug so autoriza a si mesmo.
+        renew_public_workout_session_cookie_if_stale(request, response)
+        # B0: so o dono logado chega aqui — e o que autoriza a leitura de
+        # /avaliacoes.json a seguir. Cookie por instancia, nao global: cada
+        # slug so autoriza a si mesmo.
         response.set_signed_cookie(
             PUBLIC_WORKOUT_OWNER_COOKIE,
             plan.slug,
@@ -608,6 +592,12 @@ class PublicWorkoutPreviewView(View):
         if program is None:
             raise Http404('Treino publico nao encontrado.')
 
+        from student_identity.public_workout_session import get_public_workout_account_id_from_request
+
+        # Mesma regra da rota real: o cookie de posse abaixo libera
+        # /avaliacoes.json, entao nunca sai para visitante sem login.
+        if get_public_workout_account_id_from_request(request) is None:
+            return _public_workout_login_redirect(plan_slug)
         _confirm_login_session_owns_slug_or_404(request, plan_slug)
 
         # Mesmo cookie de posse do B0 que PublicWorkoutDetailView ja seta —
@@ -618,8 +608,6 @@ class PublicWorkoutPreviewView(View):
         from django.middleware.csrf import get_token
 
         get_token(request)
-
-        from student_identity.public_workout_session import get_public_workout_account_id_from_request
 
         account_id = get_public_workout_account_id_from_request(request)
         load_history: list = []
@@ -664,7 +652,7 @@ class PublicWorkoutPreviewView(View):
             'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
             'push_configured': curva_push_configured(),
         })
-        response = HttpResponse(html)
+        response = _private_public_workout_response(html)
         response.set_signed_cookie(
             PUBLIC_WORKOUT_OWNER_COOKIE,
             plan_slug,

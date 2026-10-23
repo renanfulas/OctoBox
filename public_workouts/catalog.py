@@ -116,7 +116,7 @@ PUBLIC_WORKOUT_LIBRARY: dict[str, PublicWorkoutPlan] = {
         ),
         PublicWorkoutPlan(
             slug='thaislima',
-            title='Treino Thais Lima',
+            title='Treino Thais',
             theme_color='#111111',
             background_color='#f6f5f2',
             template_file='thaislima.html',
