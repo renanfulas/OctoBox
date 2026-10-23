@@ -80,19 +80,13 @@ class CurvaPushIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(PublicWorkoutPushSubscription.objects.filter(account=self.account).count(), 1)
 
-    def _verification(self, payload):
-        return self.client.post(
-            reverse('public-workout-push-verification', kwargs={'plan_slug': 'bruno'}),
-            data=json.dumps(payload), content_type='application/json',
-        )
-
     def _push(self):
         return self.client.post(
             reverse('public-workout-push', kwargs={'plan_slug': 'bruno'}),
             data=json.dumps({'subscription': self.subscription}), content_type='application/json',
         )
 
-    def test_old_link_session_cannot_start_in_app_verification_or_push(self):
+    def test_old_link_session_cannot_activate_push(self):
         # Cookie emitido pela antiga ponte do link (sem identidade
         # verificada): deixou de valer como sessão em todo o corredor.
         from student_identity.public_workout_session import (
@@ -106,13 +100,11 @@ class CurvaPushIntegrationTest(TestCase):
         )
 
         self.assertEqual(self.client.get('/renan/bruno').status_code, 302)
-        self.assertEqual(self._verification({'action': 'send'}).status_code, 401)
-        self.assertFalse(PublicWorkoutLoginToken.objects.exists())
         self.assertEqual(self._push().status_code, 401)
-    def test_verification_requires_an_open_session(self):
-        response = self._verification({'action': 'send'})
-        self.assertEqual(response.status_code, 401)
-        self.assertFalse(PublicWorkoutLoginToken.objects.exists())
+
+    def test_in_app_email_verification_route_is_gone(self):
+        # Toda sessão aceita já é verificada; o login por código fica em /treinos/login.
+        self.assertEqual(self.client.post('/renan/bruno/push/verificacao').status_code, 404)
 
     def test_publishing_program_queues_push_after_device_opt_in(self):
         subscribe(account_id=self.account.pk, data=self.subscription)

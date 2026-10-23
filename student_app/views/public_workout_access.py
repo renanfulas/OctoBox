@@ -34,11 +34,7 @@ def _synthesize_public_workout_plan(slug: str) -> PublicWorkoutPlan | None:
     So' sintetiza tema GENERICO (nunca uma das paletas artesanais dos 10
     clientes legados) — branding fino por aluno continua sendo trabalho
     editorial de quem, se/quando quiser, adicionar a entrada de verdade
-    neste dict depois. `template_file` fica vazio de proposito: so' e' lido
-    quando o slug esta' em `_legacy_template_slugs()` (kill switch por env
-    var), que nunca contem um slug que nao veio deste dict primeiro — um
-    slug sintetizado aqui sempre renderiza pelo template unico
-    (workout.html), nunca pelo caminho legado.
+    neste dict depois.
 
     Retorna None (nunca levanta) quando nem o dict nem o banco conhecem o
     slug — `_get_public_workout_entry` decide o 404, esta funcao so'
@@ -53,7 +49,6 @@ def _synthesize_public_workout_plan(slug: str) -> PublicWorkoutPlan | None:
         title=f'Treino {slug.capitalize()}',
         theme_color='#0f172a',
         background_color='#f5efe4',
-        template_file='',
         accent=PublicWorkoutAccent('#2451C4', '#EAF0FD', '#BFDBFE', '#DBEAFE', '#1B3A96'),
         tabs=(_TAB_TREINO, _TAB_AVALIACOES),
         tracker_weeks=0,
