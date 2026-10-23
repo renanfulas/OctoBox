@@ -108,6 +108,7 @@ class SmartPlanActionTests(TestCase):
         self.coach.groups.add(Group.objects.get(name=ROLE_COACH))
         self.session = ClassSession.objects.create(
             title='WOD SmartPlan Test',
+            coach=self.coach,
             scheduled_at=timezone.now(),
         )
         self.url = reverse('coach-session-workout-editor', kwargs={'session_id': self.session.id})

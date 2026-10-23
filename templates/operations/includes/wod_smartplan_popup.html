@@ -16,12 +16,11 @@ PONTOS CRITICOS:
 - nao igualar peso visual entre os dois botoes; isso quebra o nudge.
 -->
 {% if smartplan_paste_show_popup %}
-<div class="wod-smartplan-popup" role="dialog" aria-modal="true" aria-labelledby="wod-smartplan-popup-title" data-panel="wod-smartplan-popup">
-    <div class="wod-smartplan-popup__overlay" data-action="wod-smartplan-popup-close"></div>
+<dialog class="wod-smartplan-popup" aria-labelledby="wod-smartplan-popup-title" data-panel="wod-smartplan-popup">
     <article class="wod-smartplan-popup__panel notice-panel notice-panel--warning" role="document">
         <header class="wod-smartplan-popup__head">
             <p class="eyebrow">SmartPlan</p>
-            <h2 id="wod-smartplan-popup-title">WOD fora do formato SmartPlan</h2>
+            <h2 id="wod-smartplan-popup-title" tabindex="-1">WOD fora do formato SmartPlan</h2>
             <p class="system-map-copy">
                 {% if smartplan_paste_invalid_reason == 'markers_missing' %}
                 A resposta colada nao tem os marcadores `=== WOD NORMALIZADO ===` e `=== JSON ESTRUTURADO ===`.
@@ -66,5 +65,5 @@ PONTOS CRITICOS:
             </form>
         </footer>
     </article>
-</div>
+</dialog>
 {% endif %}

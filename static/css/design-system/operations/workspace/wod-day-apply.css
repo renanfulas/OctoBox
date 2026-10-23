@@ -104,6 +104,26 @@ CONVENÇÕES:
     padding: 16px 24px 0;
 }
 
+.wod-day-apply__modality {
+    display: grid;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.wod-day-apply__mode-wrap > p {
+    color: var(--theme-text-secondary);
+    font-size: 0.875rem;
+}
+
+.wod-day-apply__error {
+    margin: 1rem 1.5rem 0;
+    color: var(--wod-warning-ink);
+}
+
+.wod-day-apply__error[hidden] {
+    display: none;
+}
+
 .wod-day-apply__mode-options {
     display: flex;
     flex-direction: column;

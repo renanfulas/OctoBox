@@ -168,6 +168,68 @@ def test_calendar_selection_keeps_year_and_snaps_to_monday(page: Page, live_serv
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
+@pytest.mark.browser_context_args(has_touch=True)
+@pytest.mark.parametrize('viewport', (VIEWPORTS['mobile'], VIEWPORTS['desktop']))
+@pytest.mark.parametrize(('interaction', 'supports_show_picker'), (
+    ('mouse', True), ('mouse', False), ('touch', True), ('touch', False), ('keyboard', True),
+))
+def test_filled_calendar_reopens_after_cancel_and_same_date(
+    page: Page, live_server, e2e_owner_credentials, viewport, supports_show_picker, interaction,
+):
+    """Abrir/fechar com data preenchida não pode perder o próximo clique real."""
+    actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    today = timezone.localdate()
+    monday = today + timedelta(days=(7 - today.weekday()) % 7)
+    ClassSession.objects.create(
+        title='Limite para testar abertura do calendário', coach=actor,
+        scheduled_at=timezone.make_aware(datetime.combine(monday + timedelta(weeks=8), datetime.min.time()).replace(hour=12)),
+        duration_minutes=60, capacity=16, class_type=ClassType.CROSS,
+    )
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.set_viewport_size(viewport)
+    page.goto(f'{live_server.url}/operacao/wod/paste/')
+    if not supports_show_picker:
+        page.evaluate("HTMLInputElement.prototype.showPicker = undefined")
+    field = page.locator('input[name="week_start"]')
+    original = field.input_value()
+    original_date = datetime.strptime(original, '%d/%m/%Y').date()
+    trigger = page.locator('.smart-paste-date-trigger').first
+
+    def open_calendar():
+        if interaction == 'keyboard':
+            field.focus()
+            field.press('Tab')
+            expect(page.locator('#smart-paste-week-start-picker')).to_be_focused()
+            page.keyboard.press('Space')
+            return
+        trigger.scroll_into_view_if_needed()
+        bounds = trigger.bounding_box()
+        assert bounds
+        x, y = bounds['x'] + bounds['width'] / 2, bounds['y'] + bounds['height'] / 2
+        if interaction == 'touch':
+            page.touchscreen.tap(x, y)
+        else:
+            page.mouse.click(x, y)
+
+    for _ in range(3):
+        open_calendar()
+        page.keyboard.press('Escape')
+        expect(field).to_have_value(original)
+    open_calendar()
+    page.keyboard.press('Enter')  # confirmar a data existente também precisa permitir reabrir
+    expect(field).to_have_value(original)
+    open_calendar()
+    page.keyboard.press('ArrowDown')
+    page.keyboard.press('Enter')
+    expect(field).to_have_value((original_date + timedelta(days=7)).strftime('%d/%m/%Y'))
+    if interaction == 'touch' and supports_show_picker and viewport == VIEWPORTS['mobile']:
+        screenshot_dir = Path('tmp') / 'visual_contract' / 'smart_paste'
+        screenshot_dir.mkdir(parents=True, exist_ok=True)
+        page.locator('.smart-paste-date-field').screenshot(path=screenshot_dir / 'calendar-filled-mobile.png')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
 def test_planner_day_apply_modes_can_be_selected_with_keyboard(page: Page, live_server, e2e_owner_credentials):
     """Os modos de aplicação são rádios nativos acessíveis por Tab e setas."""
     actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
@@ -182,6 +244,8 @@ def test_planner_day_apply_modes_can_be_selected_with_keyboard(page: Page, live_
 
     replace_empty = dialog.locator('input[name="wod_day_apply_mode"][value="replace_empty"]')
     overwrite = dialog.locator('input[name="wod_day_apply_mode"][value="overwrite"]')
+    page.keyboard.press('Tab')
+    expect(dialog.locator('[data-wod-day-apply-class-type]')).to_be_focused()
     page.keyboard.press('Tab')
     expect(replace_empty).to_be_focused()
     page.keyboard.press('ArrowDown')
@@ -499,6 +563,28 @@ def test_smart_paste_golden_path_end_to_end(
     assert not SessionWorkout.objects.exists(), 'conferir a semana nao deve gravar WODs'
 
     assert _horizontal_overflow(page) <= 1, "overflow horizontal apos confirmar e abrir a replicacao"
+
+    # O destino já preenchido precisa abrir também após a troca HTMX do painel,
+    # sem depender de showPicker() e sem perder a data enviada no formulário.
+    page.evaluate('HTMLInputElement.prototype.showPicker = undefined')
+    for offset in (7, 14):
+        page.get_by_role('button', name='Voltar sem distribuir').click()
+        page.locator('.smart-paste-target-week-override summary').click()
+        trigger = page.locator('#smart-paste-projection-panel .smart-paste-date-trigger')
+        trigger.scroll_into_view_if_needed()
+        bounds = trigger.bounding_box()
+        assert bounds
+        page.mouse.click(bounds['x'] + bounds['width'] / 2, bounds['y'] + bounds['height'] / 2)
+        page.keyboard.press('ArrowDown')
+        page.keyboard.press('Enter')
+        expected_date = selected_week_start + timedelta(days=offset)
+        expect(page.locator('#id_target_week_start')).to_have_value(f'{expected_date:%d/%m/%Y}')
+        expect(page.locator('#smart-paste-target-week-display')).to_have_text(f'{expected_date:%d/%m/%Y}')
+        page.locator('#smart-paste-projection-panel form').first.locator('button[type="submit"]').click()
+        expect(page.locator('dialog.smart-paste-week-dialog[open]')).to_be_visible()
+        expect(page.locator('#smart-paste-week-dialog .smart-paste-week-dialog__head')).to_contain_text(
+            f'{expected_date:%d/%m/%Y}'
+        )
 
 
 @pytest.mark.e2e

@@ -69,7 +69,7 @@ class CoachSessionWorkoutEditorView(CoachSessionWorkoutEditorActionsMixin, Opera
     }
 
     def dispatch(self, request, *args, **kwargs):
-        self.session = load_coach_workout_editor_session(session_id=kwargs['session_id'])
+        self.session = load_coach_workout_editor_session(session_id=kwargs['session_id'], actor=request.user)
         return super().dispatch(request, *args, **kwargs)
 
     def _get_workout(self):
@@ -109,7 +109,7 @@ class WorkoutPrescriptionPreviewView(OperationBaseView, View):
     allowed_roles = (ROLE_COACH, ROLE_OWNER)
 
     def get(self, request, session_id, *args, **kwargs):
-        session = load_coach_workout_editor_session(session_id=session_id)
+        session = load_coach_workout_editor_session(session_id=session_id, actor=request.user)
         payload = build_session_movement_prescription_preview(
             session=session,
             movement_slug=(request.GET.get('movement_slug') or '').strip(),

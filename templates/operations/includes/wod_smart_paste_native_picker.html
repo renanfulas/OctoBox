@@ -1,0 +1,17 @@
+{% comment %}O toque chega ao input nativo, sem abrir um campo oculto via JavaScript.{% endcomment %}
+<div class="smart-paste-date-picker-control">
+    <span class="button tertiary smart-paste-date-trigger" aria-hidden="true">
+        <span class="smart-paste-date-trigger-icon">Cal</span>
+        <span class="smart-paste-date-trigger-label">{{ picker_label|default:"Calendário" }}</span>
+        <span class="smart-paste-date-trigger-badge">Segunda</span>
+    </span>
+    <input
+        type="date"
+        id="{{ picker_id }}"
+        class="smart-paste-native-picker"
+        value="{{ picker_value }}"
+        aria-label="{{ picker_aria_label|default:'Selecionar semana no calendário' }}"
+        {% if picker_min %}min="{{ picker_min }}"{% endif %}
+        {% if picker_max %}max="{{ picker_max }}"{% endif %}
+    >
+</div>

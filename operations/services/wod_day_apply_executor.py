@@ -1,21 +1,4 @@
-"""
-ARQUIVO: executor de aplicação de template em todas as sessões de um dia.
-
-POR QUE ELE EXISTE:
-- orquestra a aplicação em lote reutilizando apply_persisted_workout_template,
-  que já lida com criação/atualização de SessionWorkout e revisão de auditoria.
-
-O QUE ESTE ARQUIVO FAZ:
-1. carrega sessões do dia alvo filtradas por box e class_type permitidos.
-2. aplica as regras de elegibilidade (replace_empty | overwrite).
-3. chama apply_persisted_workout_template por sessão elegível.
-4. retorna payload para undo e resumo de impacto.
-
-PONTOS CRÍTICOS:
-- instância única por box (single-tenant); sem filtro box_id em ClassSession.
-- nunca propaga exceção de sessão individual — registra skip com motivo.
-- retorna undo_token com os workout_ids criados/afetados (usado por wod_day_apply_undo).
-"""
+"""Aplica templates por data, modalidade e permissão, com estado reversível."""
 
 from __future__ import annotations
 
@@ -24,15 +7,18 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from operations.domain.wod_day_apply_rules import ApplyMode, filter_eligible_sessions
-from operations.models import ClassSession, WorkoutTemplate
+from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER, get_user_role
+from operations.models import ClassSession, ClassType, SessionStatus, WorkoutTemplate
 from operations.workout_templates import apply_persisted_workout_template
+from student_app.models import SessionWorkout, SessionWorkoutStatus
 
+from .wod_day_apply_state import undo_cache_key, workout_state
 
-_UNDO_TTL = 60  # segundos
+_UNDO_TTL = 60
 
 
 @dataclass
@@ -44,95 +30,63 @@ class DayApplyResult:
     skipped_reasons: list[dict] = field(default_factory=list)
 
 
-def _day_range(target_date: date):
-    tz = timezone.get_current_timezone()
-    start = timezone.make_aware(datetime.combine(target_date, time.min), tz)
-    end = timezone.make_aware(datetime.combine(target_date, time.max), tz)
-    return start, end
+@transaction.atomic
+def execute_day_apply(*, actor, target_date: date, template_id: int, class_type: str, mode: str) -> DayApplyResult:
+    role = get_user_role(actor)
+    if role is None or role.slug not in {ROLE_COACH, ROLE_MANAGER, ROLE_OWNER}:
+        raise PermissionDenied('Sem permissão para aplicar WODs.')
+    if class_type not in ClassType.values or mode not in {'replace_empty', 'overwrite'}:
+        raise ValidationError('Escolha a modalidade e o modo de aplicação.')
 
-
-def execute_day_apply(
-    *,
-    actor,
-    target_date: date,
-    template_id: int,
-    mode: ApplyMode,
-) -> DayApplyResult:
-    template = WorkoutTemplate.objects.filter(
-        id=template_id,
-        is_active=True,
-        archived_at__isnull=True,
+    template = WorkoutTemplate.objects.select_for_update().filter(
+        id=template_id, is_active=True, archived_at__isnull=True,
     ).first()
     if template is None:
-        return DayApplyResult(
-            applied_count=0,
-            skipped_count=0,
-            undo_token='',
-            skipped_reasons=[{'reason': 'Template não encontrado ou arquivado.'}],
+        raise ValidationError('Template não encontrado ou arquivado.')
+    if role.slug == ROLE_COACH and template.created_by_id != actor.pk:
+        raise PermissionDenied('Use um template criado por você.')
+
+    range_start = timezone.make_aware(datetime.combine(target_date, time.min))
+    sessions = ClassSession.objects.select_for_update().filter(
+        scheduled_at__gte=range_start,
+        scheduled_at__lt=range_start + timedelta(days=1),
+        class_type=class_type,
+        status__in=(SessionStatus.SCHEDULED, SessionStatus.OPEN, SessionStatus.COMPLETED),
+    ).order_by('id')
+    if role.slug == ROLE_COACH:
+        sessions = sessions.filter(coach=actor)
+    sessions = list(sessions)
+    workouts = {
+        workout.session_id: workout for workout in SessionWorkout.objects.select_for_update().filter(
+            session_id__in=[session.id for session in sessions],
         )
+    }
+    changes = []
+    skipped = []
+    for session in sessions:
+        workout = workouts.get(session.id)
+        if workout is not None:
+            if mode == 'replace_empty' or workout.status != SessionWorkoutStatus.DRAFT:
+                skipped.append({'session_id': session.id, 'reason': 'WOD existente preservado; substituição permite apenas rascunhos.'})
+                continue
+            session.workout = workout
+        before = workout_state(workout)
+        if workout is not None:
+            workout.blocks.all().delete()
+        result = apply_persisted_workout_template(actor=actor, template=template, target_session=session)
+        if not result.get('ok'):
+            # Falhar reverte o lote inteiro, inclusive qualquer limpeza anterior.
+            raise ValidationError('Não foi possível aplicar o template. Nenhuma aula foi alterada.')
+        applied = result['workout']
+        applied.refresh_from_db()
+        changes.append({'session_id': session.id, 'before': before, 'after': workout_state(applied)})
 
-    range_start, range_end = _day_range(target_date)
-    sessions = list(
-        ClassSession.objects.select_related('workout')
-        .filter(scheduled_at__gte=range_start, scheduled_at__lte=range_end)
-        .order_by('scheduled_at', 'id')
-    )
-
-    session_payloads = [
-        {
-            'session_id': s.id,
-            'session': s,
-            'has_existing_workout': hasattr(s, 'workout'),
-        }
-        for s in sessions
-    ]
-
-    eligible, skipped = filter_eligible_sessions(sessions=session_payloads, mode=mode)
-
-    applied_session_ids = []
-    skipped_reasons = [{'session_id': s.session_id, 'reason': s.skip_reason} for s in skipped]
-
-    with transaction.atomic():
-        for payload in eligible:
-            session = payload['session']
-            if mode == 'overwrite' and hasattr(session, 'workout'):
-                session.workout.blocks.all().delete()
-
-            result = apply_persisted_workout_template(
-                actor=actor,
-                template=template,
-                target_session=session,
-            )
-            if result.get('ok', True) is not False:
-                applied_session_ids.append(session.id)
-            else:
-                skipped_reasons.append({
-                    'session_id': session.id,
-                    'reason': result.get('reason', 'erro desconhecido'),
-                })
-
-        WorkoutTemplate.objects.filter(pk=template.pk).update(
-            usage_count=template.usage_count + len(applied_session_ids),
-            last_used_at=timezone.now(),
-        )
-
-    undo_token = str(uuid.uuid4())
-    cache.set(
-        f'wod_day_apply_undo:{undo_token}',
-        {
-            'template_id': template_id,
-            'session_ids': applied_session_ids,
-            'mode': mode,
-        },
-        timeout=_UNDO_TTL,
-    )
-
+    token = str(uuid.uuid4()) if changes else ''
+    if changes:
+        cache.set(undo_cache_key(actor, token), {'changes': changes}, timeout=_UNDO_TTL)
     return DayApplyResult(
-        applied_count=len(applied_session_ids),
-        skipped_count=len(skipped_reasons),
-        undo_token=undo_token,
-        applied_session_ids=applied_session_ids,
-        skipped_reasons=skipped_reasons,
+        applied_count=len(changes), skipped_count=len(skipped), undo_token=token,
+        applied_session_ids=[change['session_id'] for change in changes], skipped_reasons=skipped,
     )
 
 
