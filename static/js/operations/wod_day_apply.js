@@ -28,6 +28,10 @@ O QUE FAZ:
   var undoUrl = undoBtn ? undoBtn.dataset.undoUrl : '/operacao/wod/planner/dia/desfazer/';
 
   var activeDate = null;
+  var classType = dialog ? dialog.querySelector('[data-wod-day-apply-class-type]') : null;
+  var errorMsg = dialog ? dialog.querySelector('[data-wod-day-apply-error]') : null;
+  var applying = false;
+  var storageKey = 'octobox:wod-day-apply:' + (toast ? toast.dataset.undoContext : '');
   var countdownInterval = null;
   var currentUndoToken = null;
 
@@ -41,6 +45,7 @@ O QUE FAZ:
   function openDialogForTrigger(btn) {
     if (!btn || !dialog) return;
     activeDate = btn.dataset.date;
+    if (errorMsg) errorMsg.hidden = true;
     var dayLabel = btn.dataset.dayLabel || 'este dia';
     if (dialogTitle) dialogTitle.textContent = 'Aplicar em ' + dayLabel;
     if (searchInput) {
@@ -88,7 +93,17 @@ O QUE FAZ:
     var templateLabel = btn.dataset.templateLabel;
     var mode = getSelectedMode();
     if (!activeDate || !templateId || !applyUrl) return;
+    if (applying) return;
+    if (!classType || !classType.value) {
+      if (errorMsg) {
+        errorMsg.textContent = 'Escolha a modalidade antes de aplicar o WOD.';
+        errorMsg.hidden = false;
+      }
+      if (classType) classType.focus();
+      return;
+    }
 
+    applying = true;
     btn.disabled = true;
     btn.textContent = 'Aplicando...';
 
@@ -97,21 +112,37 @@ O QUE FAZ:
       target_date: activeDate,
       template_id: templateId,
       mode: mode,
+      class_type: classType.value,
     });
 
     fetch(applyUrl, { method: 'POST', body: body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        dialog.close();
+        applying = false;
         btn.disabled = false;
         btn.textContent = 'Aplicar neste dia';
         if (data.ok) {
-          showToast(data, templateLabel);
+          dialog.close();
+          if (data.applied_count > 0) {
+            try {
+              sessionStorage.setItem(storageKey, JSON.stringify({ data: data, label: templateLabel, expires: Date.now() + 60000 }));
+              window.location.reload();
+              return;
+            } catch (error) {
+              // Se o storage estiver bloqueado, mantém o desfazer nesta página.
+            }
+          }
+          try { sessionStorage.removeItem(storageKey); } catch (error) { /* Storage opcional. */ }
+          showToast(data, templateLabel, 60);
         } else {
-          alert('Erro ao aplicar template. Tente novamente.');
+          if (errorMsg) {
+            errorMsg.textContent = data.reason || 'Não foi possível aplicar. Confira a modalidade e tente novamente.';
+            errorMsg.hidden = false;
+          }
         }
       })
       .catch(function () {
+        applying = false;
         btn.disabled = false;
         btn.textContent = 'Aplicar neste dia';
         alert('Erro de conexao. Tente novamente.');
@@ -135,16 +166,20 @@ O QUE FAZ:
 
   // ── Toast + undo ──────────────────────────────────────────────────
 
-  function showToast(data, templateLabel) {
+  function showToast(data, templateLabel, seconds) {
     if (!toast || !toastMsg) return;
     currentUndoToken = data.undo_token;
+    if (undoBtn) {
+      undoBtn.hidden = !currentUndoToken;
+      undoBtn.disabled = false;
+    }
 
     var skipped = data.skipped_count > 0 ? ' · ' + data.skipped_count + ' pulada(s)' : '';
     toastMsg.textContent =
       '"' + templateLabel + '" aplicado em ' + data.applied_count + ' aula(s)' + skipped + '.';
 
     toast.hidden = false;
-    startCountdown(60);
+    startCountdown(seconds);
   }
 
   function startCountdown(seconds) {
@@ -166,6 +201,7 @@ O QUE FAZ:
     if (toast) toast.hidden = true;
     currentUndoToken = null;
     clearInterval(countdownInterval);
+    try { sessionStorage.removeItem(storageKey); } catch (error) { /* Storage opcional. */ }
   }
 
   if (undoBtn) {
@@ -181,11 +217,16 @@ O QUE FAZ:
       fetch(undoUrl, { method: 'POST', body: body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          dismissToast();
-          if (data.ok && data.undone_count > 0) {
+          undoBtn.disabled = false;
+          if (data.ok) {
+            dismissToast();
             window.location.reload();
-          } else if (!data.ok) {
-            alert(data.reason || 'Janela de desfazer encerrada.');
+          } else {
+            if (toastMsg) toastMsg.textContent = data.reason || 'Janela de desfazer encerrada.';
+            undoBtn.hidden = true;
+            currentUndoToken = null;
+            clearInterval(countdownInterval);
+            try { sessionStorage.removeItem(storageKey); } catch (error) { /* Storage opcional. */ }
           }
         })
         .catch(function () {
@@ -198,4 +239,13 @@ O QUE FAZ:
   if (closeToastBtn) {
     closeToastBtn.addEventListener('click', dismissToast);
   }
+
+  try {
+    var saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+    if (saved && saved.expires > Date.now()) {
+      showToast(saved.data, saved.label, Math.ceil((saved.expires - Date.now()) / 1000));
+    } else {
+      sessionStorage.removeItem(storageKey);
+    }
+  } catch (error) { /* Storage opcional. */ }
 })();

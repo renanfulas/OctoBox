@@ -28,75 +28,8 @@ POR QUE ELE EXISTE:
 
     var pickerId = field.dataset.pickerTarget || '';
     var picker = pickerId ? document.getElementById(pickerId) : null;
-    var button = field.parentNode ? field.parentNode.querySelector('[data-smart-date-button]') : null;
     var displayId = field.dataset.displayTarget || '';
     var display = displayId ? document.getElementById(displayId) : null;
-
-    function openTransientPicker() {
-      if (!picker) return;
-
-      // showPicker() precisa ser chamado no elemento REAL (não em clone):
-      // clonar quebra o trusted-gesture context no Chrome/Edge.
-      // Estratégia: posicionar o picker real perto do botão (para o calendário
-      // abrir ali), remover hidden temporariamente, chamar showPicker(),
-      // e restaurar o estado depois.
-
-      var anchor = button || field;
-      var rect = anchor ? anchor.getBoundingClientRect() : null;
-
-      var hadHidden = picker.hasAttribute('hidden');
-      var savedCssText = picker.style.cssText || '';
-
-      // Âncora o picker perto do botão — o calendário nativo abre próximo ao input.
-      // Importante: limpar clip/clip-path da classe .smart-paste-native-picker,
-      // senão showPicker() falha (elemento percebido como "não renderizado").
-      picker.style.cssText = [
-        'position:fixed',
-        rect ? 'left:' + Math.round(rect.left) + 'px' : 'left:0',
-        rect ? 'top:' + Math.round(rect.bottom + 4) + 'px' : 'top:0',
-        'width:1px',
-        'height:1px',
-        'opacity:0',
-        'pointer-events:none',
-        'z-index:9999',
-        'clip:auto',
-        'clip-path:none',
-        'overflow:visible',
-        'white-space:normal',
-        'margin:0',
-        'padding:0',
-        'border:0'
-      ].join(';');
-
-      if (hadHidden) picker.removeAttribute('hidden');
-      picker.removeAttribute('aria-hidden');
-
-      // Força reflow síncrono — sem isso o primeiro clique abre no topo.
-      void picker.offsetHeight;
-
-      function restore() {
-        picker.style.cssText = savedCssText;
-        if (hadHidden) picker.setAttribute('hidden', '');
-        picker.setAttribute('aria-hidden', 'true');
-      }
-
-      picker.addEventListener('change', restore, { once: true });
-      picker.addEventListener('blur', function () {
-        window.setTimeout(restore, 50);
-      }, { once: true });
-
-      if (typeof picker.showPicker === 'function') {
-        try {
-          picker.showPicker();
-        } catch (e) {
-          picker.click();
-          picker.focus();
-        }
-      } else {
-        picker.click();
-        picker.focus();
-      }
-    }
 
     function formatDisplayValue(parts) {
       return includesYear
@@ -151,18 +84,18 @@ POR QUE ELE EXISTE:
 
     if (picker) {
       picker.addEventListener('change', syncFromPicker);
+      picker.addEventListener('keydown', function (event) {
+        if ((event.key !== 'Enter' && event.key !== ' ') || typeof picker.showPicker !== 'function') return;
+        try {
+          picker.showPicker();
+          event.preventDefault();
+        } catch (error) {
+          // Mantém a interação nativa quando o navegador não permite showPicker.
+        }
+      });
       if (!isHiddenField) {
         field.addEventListener('blur', syncPickerFromText);
       }
-    }
-
-    // Se o campo está num monday-wrap, o smart_paste_week_monday.js gerencia
-    // o botão — não bindamos aqui para evitar duplo disparo.
-    var isMondayWrap = button && button.closest('[data-smart-date-monday-wrap]');
-    if (button && picker && !isMondayWrap) {
-      button.addEventListener('click', function () {
-        openTransientPicker();
-      });
     }
 
     if (picker && picker.value) {

@@ -28,9 +28,21 @@ PONTOS CRITICOS:
 
     const bySlug = new Map();
     const byLabel = new Map();
+    const aliases = new Map();
+    function normalize(value) {
+        return String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
     catalog.forEach((item) => {
         bySlug.set(String(item.slug || '').toLowerCase(), item);
-        byLabel.set(String(item.label || '').toLowerCase(), item);
+        byLabel.set(normalize(item.label), item);
+        (item.aliases || []).forEach(alias => {
+            const key = normalize(alias);
+            const previous = aliases.get(key);
+            aliases.set(key, aliases.has(key) && (!previous || previous.slug !== item.slug) ? null : item);
+        });
+    });
+    aliases.forEach((item, key) => {
+        if (item && !byLabel.has(key)) byLabel.set(key, item);
     });
 
     function setSuggestedState(form, isSuggested) {
@@ -72,7 +84,7 @@ PONTOS CRITICOS:
             return;
         }
 
-        const match = byLabel.get(String(labelField.value || '').trim().toLowerCase());
+        const match = byLabel.get(normalize(labelField.value));
         if (match) {
             slugField.value = match.slug;
             suggestLoadType(form, match);

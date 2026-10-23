@@ -33,6 +33,7 @@ from operations.forms import (
     WorkoutStoredTemplateForm,
 )
 from operations.models import ClassSession
+from operations.services.wod_paste_parser import load_wod_movement_dictionary
 from student_app.models import StudentExerciseMax, WorkoutLoadType
 
 from .workout_corridor_navigation import build_workout_corridor_tabs
@@ -201,6 +202,13 @@ def build_coach_workout_movement_catalog(view, *, workout):
                         'has_rm_data': False,
                     },
                 )
+    for slug, aliases in load_wod_movement_dictionary():
+        entry = catalog.setdefault(slug, {
+            'slug': slug,
+            'label': slug.replace('_', ' ').title(),
+            'has_rm_data': False,
+        })
+        entry['aliases'] = aliases
     return tuple(sorted(catalog.values(), key=lambda item: (item['label'].lower(), item['slug'])))
 
 

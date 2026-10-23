@@ -32,6 +32,7 @@ PONTOS CRITICOS:
         if (!popup) {
             return;
         }
+        if (popup.open) popup.close();
         popup.remove();
         var textarea = document.querySelector('[data-field="smartplan-paste"]');
         if (textarea) {
@@ -97,9 +98,20 @@ PONTOS CRITICOS:
         // Auto-foco no textarea quando o popup acabou de aparecer (recem-renderizado pelo server).
         var popup = document.querySelector('[data-panel="wod-smartplan-popup"]');
         if (popup) {
-            var primary = popup.querySelector('.wod-smartplan-popup__primary');
-            if (primary) {
-                primary.focus();
+            // A camada nativa escapa dos cartões com blur no Safari e contém o foco.
+            document.body.appendChild(popup);
+            popup.addEventListener('cancel', function (event) {
+                event.preventDefault();
+                closePopup();
+            });
+            popup.addEventListener('click', function (event) {
+                if (event.target === popup) closePopup();
+            });
+            popup.showModal();
+            var title = popup.querySelector('#wod-smartplan-popup-title');
+            if (title) {
+                title.focus({ preventScroll: true });
+                popup.scrollTop = 0;
             }
         }
     }

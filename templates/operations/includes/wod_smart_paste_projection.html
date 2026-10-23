@@ -58,15 +58,7 @@
                         data-display-target="smart-paste-target-week-display"
                     >
                     <div id="smart-paste-target-week-display" class="smart-paste-date-display">{{ target_week_display }}</div>
-                    <button class="button tertiary smart-paste-date-trigger" type="button" data-smart-date-button>Abrir calendario</button>
-                    <input
-                        type="date"
-                        id="smart-paste-target-week-picker"
-                        class="smart-paste-native-picker"
-                        value="{{ target_week_picker }}"
-                        tabindex="-1"
-                        aria-hidden="true"
-                    >
+                    {% include "operations/includes/wod_smart_paste_native_picker.html" with picker_id="smart-paste-target-week-picker" picker_value=target_week_picker picker_label="Abrir calendário" picker_aria_label="Selecionar semana de destino no calendário" only %}
                 </div>
             </label>
             {% endwith %}
@@ -85,15 +77,7 @@
                         data-display-target="smart-paste-target-week-display"
                     >
                     <div id="smart-paste-target-week-display" class="smart-paste-date-display">{{ projection_form.initial.target_week_start }}</div>
-                    <button class="button tertiary smart-paste-date-trigger" type="button" data-smart-date-button>Abrir calendario</button>
-                    <input
-                        type="date"
-                        id="smart-paste-target-week-picker"
-                        class="smart-paste-native-picker"
-                        value="{{ weekly_plan.week_start|date:'Y-m-d' }}"
-                        tabindex="-1"
-                        aria-hidden="true"
-                    >
+                    {% include "operations/includes/wod_smart_paste_native_picker.html" with picker_id="smart-paste-target-week-picker" picker_value=weekly_plan.week_start|date:'Y-m-d' picker_label="Abrir calendário" picker_aria_label="Selecionar semana de destino no calendário" only %}
                 </div>
             </label>
             {% endif %}

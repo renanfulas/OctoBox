@@ -11,11 +11,13 @@ from datetime import date
 from django import forms
 
 from operations.domain.wod_day_apply_rules import ApplyMode
+from operations.models import ClassType
 
 
 class WodDayApplyForm(forms.Form):
     target_date = forms.DateField()
     template_id = forms.IntegerField(min_value=1)
+    class_type = forms.ChoiceField(choices=ClassType.choices)
     mode = forms.ChoiceField(
         choices=[
             ('replace_empty', 'Aplicar apenas em aulas sem WOD'),

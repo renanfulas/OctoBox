@@ -17,6 +17,7 @@ PONTOS CRÍTICOS:
 """
 
 from django.http import JsonResponse
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.views import View
 
 from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
@@ -35,12 +36,17 @@ class WodDayApplyView(OperationBaseView, View):
         if not form.is_valid():
             return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 
-        result = execute_day_apply(
-            actor=request.user,
-            target_date=form.cleaned_data['target_date'],
-            template_id=form.cleaned_data['template_id'],
-            mode=form.cleaned_data['mode'],
-        )
+        try:
+            result = execute_day_apply(
+                actor=request.user,
+                target_date=form.cleaned_data['target_date'],
+                template_id=form.cleaned_data['template_id'],
+                class_type=form.cleaned_data['class_type'],
+                mode=form.cleaned_data['mode'],
+            )
+        except (PermissionDenied, ValidationError) as error:
+            reason = error.messages[0] if isinstance(error, ValidationError) else str(error)
+            return JsonResponse({'ok': False, 'reason': reason}, status=403 if isinstance(error, PermissionDenied) else 400)
 
         return JsonResponse({
             'ok': True,
@@ -59,7 +65,7 @@ class WodDayApplyUndoView(OperationBaseView, View):
         if not form.is_valid():
             return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 
-        result = execute_undo(undo_token=form.cleaned_data['undo_token'])
+        result = execute_undo(actor=request.user, undo_token=form.cleaned_data['undo_token'])
         return JsonResponse(result)
 
 

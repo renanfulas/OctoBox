@@ -25,6 +25,16 @@ PARÂMETROS (via context):
     </form>
 
     <div class="wod-day-apply__mode-wrap">
+        <label class="wod-day-apply__modality">
+            <span>Modalidade deste WOD</span>
+            <select data-wod-day-apply-class-type required>
+                <option value="">Escolha a modalidade</option>
+                {% for value, label in planner_day_apply_class_types %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <p>A aplicação afeta somente a modalidade escolhida. Coaches alteram apenas suas próprias aulas.</p>
         <p class="eyebrow">Como aplicar</p>
         <div class="wod-day-apply__mode-options" role="radiogroup" aria-label="Modo de aplicação">
             <label class="wod-day-apply__mode-option">
@@ -34,11 +44,12 @@ PARÂMETROS (via context):
             </label>
             <label class="wod-day-apply__mode-option">
                 <input type="radio" name="wod_day_apply_mode" value="overwrite">
-                <span>Substituir todas as aulas</span>
-                <small class="wod-day-apply__mode-warning">Apaga rascunhos existentes do dia.</small>
+                <span>Substituir rascunhos da modalidade</span>
+                <small class="wod-day-apply__mode-warning">Treinos publicados ou aguardando aprovação são preservados.</small>
             </label>
         </div>
     </div>
+    <p class="wod-day-apply__error" data-wod-day-apply-error role="alert" hidden></p>
 
     <div class="wod-day-apply__template-list">
         <p class="eyebrow">Templates do box</p>
