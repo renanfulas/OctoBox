@@ -39,7 +39,7 @@ def _login_with_subscription(client, *, email, plan_slug, stripe_customer_id='',
         custom_monthly_price=custom_monthly_price,
     )
     client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-        account_id=account.pk
+        account_id=account.pk, identity_verified=True
     )
     return account
 
@@ -84,11 +84,4 @@ class PaymentsLinkOnWorkoutPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Fale com o Renan')
         self.assertNotContains(response, 'data-workout-start-custom-checkout')
-        self.assertNotContains(response, 'data-billing-portal')
-
-    def test_anonymous_visitor_sees_unavailable_badge(self):
-        response = self.client.get('/renan/bruno')
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'indisponível')
         self.assertNotContains(response, 'data-billing-portal')

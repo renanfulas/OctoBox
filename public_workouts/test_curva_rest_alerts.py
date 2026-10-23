@@ -138,7 +138,7 @@ class RestAlertEndpointTest(TestCase):
 
     def test_guided_launcher_exposes_rest_alert_url_only_to_verified_login(self):
         page = self.client.get('/renan/bruno')
-        self.assertNotContains(page, 'data-rest-alert-url')
+        self.assertNotContains(page, 'data-rest-alert-url', status_code=302)
         self._login()
         page = self.client.get('/renan/bruno')
         self.assertContains(page, f'data-rest-alert-url="{self.url}"')

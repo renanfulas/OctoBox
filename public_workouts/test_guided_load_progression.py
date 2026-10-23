@@ -75,7 +75,7 @@ class GuidedLoadProgressionTest(TestCase):
         self.account = PublicWorkoutAccount.objects.create(email='supino@example.test')
         PublicWorkoutSubscription.objects.create(account=self.account, plan_slug=_SLUG)
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=self.account.pk,
+            account_id=self.account.pk, identity_verified=True
         )
 
     def _publish(self, **kwargs):

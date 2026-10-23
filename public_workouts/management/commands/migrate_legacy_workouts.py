@@ -85,7 +85,7 @@ LEGACY_PROGRAM_METADATA: dict[str, dict[str, object]] = {
     'juliana': {'program_label': 'Treino Juliana', 'weeks': 6, 'started_on': '2026-08-31'},
     'milene': {'program_label': 'Treino Milene', 'weeks': 6, 'started_on': '2026-09-01'},
     'rafael': {'program_label': 'Treino Rafael', 'weeks': 7, 'started_on': '2026-09-06'},
-    'thaislima': {'program_label': 'Treino Thais Lima', 'weeks': 4, 'started_on': '2026-09-01'},
+    'thaislima': {'program_label': 'Treino Thais', 'weeks': 4, 'started_on': '2026-09-01'},
 }
 
 

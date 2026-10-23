@@ -228,9 +228,9 @@ install faz `cache.add()` de cada um (`sw.js:38`).
 E os HTMLs contêm dado pessoal no cabeçalho:
 
 ```html
-<div class="stat"><div class="stat-l">Idade</div><div class="stat-v">27 anos</div></div>
-<div class="stat"><div class="stat-l">Body fat</div><div class="stat-v">23,6%</div></div>
-<div class="stat"><div class="stat-l">Peso</div><div class="stat-v">48,5 kg</div></div>
+<div class="stat"><div class="stat-l">Idade</div><div class="stat-v">NN anos</div></div>
+<div class="stat"><div class="stat-l">Body fat</div><div class="stat-v">NN%</div></div>
+<div class="stat"><div class="stat-l">Peso</div><div class="stat-v">NN kg</div></div>
 ```
 
 Resultado: **o celular da Giovanna tem o peso e o percentual de gordura do Bruno,

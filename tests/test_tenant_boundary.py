@@ -1161,11 +1161,17 @@ class B14PublicWorkoutViewsNeverTouchTenantAppsTest(TestCase):
     """
 
     def test_detail_page_renders_without_touching_tenant_apps(self):
+        from public_workouts.testing import sign_in_public_workout_owner
+
+        sign_in_public_workout_owner(self.client, 'giovanna')
         response = self.client.get('/renan/giovanna')
 
         self.assertEqual(response.status_code, 200)
 
     def test_assessments_json_renders_without_touching_tenant_apps(self):
+        from public_workouts.testing import sign_in_public_workout_owner
+
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie de posse do B0
 
         response = self.client.get('/renan/giovanna/avaliacoes.json')
@@ -1176,7 +1182,10 @@ class B14PublicWorkoutViewsNeverTouchTenantAppsTest(TestCase):
         from public_workouts.schema import build_example_payload
         from public_workouts.services import publish_program
 
+        from public_workouts.testing import sign_in_public_workout_owner
+
         publish_program(slug='giovanna', payload=build_example_payload())
+        sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie de posse do B0
 
         response = self.client.get('/renan/giovanna/treino.pdf')
@@ -1191,7 +1200,10 @@ class B14PublicWorkoutViewsNeverTouchTenantAppsTest(TestCase):
         from public_workouts.schema import build_example_payload
         from public_workouts.services import publish_program
 
+        from public_workouts.testing import sign_in_public_workout_owner
+
         publish_program(slug='giovanna', payload=build_example_payload())
+        sign_in_public_workout_owner(self.client, 'giovanna')
 
         response = self.client.get('/renan/giovanna/preview')
 

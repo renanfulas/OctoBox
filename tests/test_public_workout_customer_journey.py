@@ -74,7 +74,7 @@ class PublicWorkoutAccountViewTests(TestCase):
     def setUp(self):
         self.account = PublicWorkoutAccount.objects.create(email='conta@example.com')
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=self.account.pk
+            account_id=self.account.pk, identity_verified=True
         )
 
     def test_anonymous_is_sent_to_magic_login(self):
@@ -220,7 +220,7 @@ class NewCustomerLoginGateTests(TestCase):
         subscription.status = PublicWorkoutSubscriptionStatus.CANCELED
         subscription.save(update_fields=['status'])
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account.pk,
+            account_id=account.pk, identity_verified=True
         )
 
         response = self.client.post(reverse('public-workout-cold-signup'), {
