@@ -98,7 +98,7 @@ class DayApplyFlowTests(WorkoutFlowBaseTestCase):
 
     def test_overwrite_preserves_published_and_pending_workouts(self):
         for status in (SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.PENDING_APPROVAL):
-            with self.subTest(status=status):
+            with self.subTest(status=str(status)):
                 SessionWorkout.objects.all().delete()
                 workout, block, movement = self.create_existing(status=status)
                 response = self.apply(mode='overwrite')
