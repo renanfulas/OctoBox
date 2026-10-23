@@ -963,7 +963,7 @@ class PublicWorkoutSessionTests(TestCase):
         request.COOKIES[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = signing.dumps(
             {'account_id': 42}, salt=PUBLIC_WORKOUT_SESSION_SALT, compress=True,
         )
-        self.assertEqual(get_public_workout_account_id_from_request(request), 42)
+        self.assertIsNone(get_public_workout_account_id_from_request(request))
         self.assertIsNone(get_verified_public_workout_account_id_from_request(request))
 
     def test_read_empty_value_returns_none(self):
@@ -1006,14 +1006,18 @@ class PublicWorkoutSessionTests(TestCase):
         return renew_public_workout_session_cookie_if_stale(request, HttpResponse())
 
     def test_week_old_cookie_is_reissued_keeping_identity_verified(self):
-        for verified in (True, False):
-            response = self._renew(self._signed_days_ago(8, account_id=42, identity_verified=verified))
+        response = self._renew(self._signed_days_ago(8, account_id=42, identity_verified=True))
 
-            renewed = response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME]
-            data = read_public_workout_session_value(renewed.value)
-            self.assertEqual(data['account_id'], 42)
-            self.assertIs(data['identity_verified'], verified)
-            self.assertEqual(renewed['max-age'], get_public_workout_session_max_age())
+        renewed = response.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME]
+        data = read_public_workout_session_value(renewed.value)
+        self.assertEqual(data['account_id'], 42)
+        self.assertIs(data['identity_verified'], True)
+        self.assertEqual(renewed['max-age'], get_public_workout_session_max_age())
+
+    def test_week_old_link_cookie_without_verified_identity_is_never_reissued(self):
+        response = self._renew(self._signed_days_ago(8, account_id=42, identity_verified=False))
+
+        self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
 
     def test_recent_expired_or_tampered_cookie_is_not_reissued(self):
         for raw_value in (
@@ -1045,10 +1049,16 @@ class GetPublicWorkoutAccountIdFromRequestTests(TestCase):
         return request
 
     def test_returns_account_id_from_valid_cookie(self):
-        cookie_value = build_public_workout_session_value(account_id=99)
+        cookie_value = build_public_workout_session_value(account_id=99, identity_verified=True)
         request = self._request_with_cookie(cookie_value)
 
         self.assertEqual(get_public_workout_account_id_from_request(request), 99)
+
+    def test_returns_none_for_cookie_from_the_old_link_bridge(self):
+        # Antes, abrir /renan/<slug> emitia este cookie sem login.
+        request = self._request_with_cookie(build_public_workout_session_value(account_id=99))
+
+        self.assertIsNone(get_public_workout_account_id_from_request(request))
 
     def test_returns_none_without_cookie(self):
         request = self._request_with_cookie(None)
@@ -1070,7 +1080,7 @@ class PublicWorkoutSubscribeViewTests(TestCase):
 
     def _login(self, account):
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account.id
+            account_id=account.id, identity_verified=True
         )
 
     def test_without_session_cookie_returns_401(self):
@@ -1082,7 +1092,7 @@ class PublicWorkoutSubscribeViewTests(TestCase):
     def test_cookie_for_deleted_account_returns_401(self):
         # Conta apagada depois do cookie assinado ainda ser valido (ex.: GDPR/LGPD,
         # ou limpeza manual) — nao pode virar 500 nem autenticar como ninguem.
-        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=999999)
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=999999, identity_verified=True)
 
         response = self.client.post(reverse('public-workout-subscribe'), {'plan_slug': 'bruno'})
 
@@ -1312,7 +1322,7 @@ class PublicWorkoutBillingPortalViewTests(TestCase):
 
     def _login(self, account):
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account.id
+            account_id=account.id, identity_verified=True
         )
 
     def test_without_session_cookie_returns_401(self):
@@ -1322,7 +1332,7 @@ class PublicWorkoutBillingPortalViewTests(TestCase):
         self.assertEqual(response.json()['error'], 'nao_autenticado')
 
     def test_cookie_for_deleted_account_returns_401(self):
-        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=999999)
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=999999, identity_verified=True)
 
         response = self.client.post(reverse('public-workout-billing-portal'))
 
@@ -1446,7 +1456,7 @@ class PublicWorkoutCustomCheckoutViewTests(TestCase):
 
     def _login(self, account):
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=account.id
+            account_id=account.id, identity_verified=True
         )
 
     def test_without_session_cookie_returns_401(self):
@@ -1456,7 +1466,7 @@ class PublicWorkoutCustomCheckoutViewTests(TestCase):
         self.assertEqual(response.json()['error'], 'nao_autenticado')
 
     def test_cookie_for_deleted_account_returns_401(self):
-        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=999999)
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=999999, identity_verified=True)
 
         response = self.client.post(reverse('public-workout-custom-checkout'))
 

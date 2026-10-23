@@ -34,7 +34,7 @@ class PublicWorkoutTrainingIntakeViewTests(TestCase):
 
     def _login(self):
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=self.account.pk
+            account_id=self.account.pk, identity_verified=True
         )
 
     def test_get_without_session_redirects_to_login_with_next(self):

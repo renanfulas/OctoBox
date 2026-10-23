@@ -29,7 +29,7 @@ def _make_account_with_subscription(*, email, plan_slug) -> PublicWorkoutAccount
 
 
 def _login(client, account_id):
-    client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=account_id)
+    client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(account_id=account_id, identity_verified=True)
 
 
 class PublicWorkoutRecordAssessmentEndpointTests(TestCase):

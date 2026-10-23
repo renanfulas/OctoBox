@@ -79,7 +79,7 @@ class TimedSetRecordingTest(TestCase):
         movements[0].update({'movement_slug': 'forearm-plank', 'load_type': 'free', 'load_value': None})
         self.program = publish_program(slug='prancha', payload=payload)
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=self.account.pk,
+            account_id=self.account.pk, identity_verified=True
         )
         self.url = reverse('public-workout-session', kwargs={'plan_slug': 'prancha'})
 

@@ -4,6 +4,8 @@ import pytest
 from django.test import override_settings
 from playwright.sync_api import Page, expect
 
+from tests.e2e.curva_login import sign_in_owner
+
 
 @pytest.fixture(autouse=True)
 def _cleanup(django_db_blocker):
@@ -37,6 +39,7 @@ def test_assessment_report_loads_after_split(page: Page, live_server):
         measurements={'cintura': 78},
     )
 
+    sign_in_owner(page, live_server.url, 'bruno')
     response = page.goto(f'{live_server.url}/renan/bruno/preview')
     assert response.status == 200
     assert any(cookie['name'] == 'renan_slug' for cookie in page.context.cookies()), response.header_value('set-cookie')
@@ -59,6 +62,7 @@ def test_assessment_report_loads_on_legacy_page(page: Page, live_server):
         plan_slug='rafael', measured_at='2026-10-01', weight_kg=72,
         measurements={'cintura': 82},
     )
+    sign_in_owner(page, live_server.url, 'rafael')
     page.goto(f'{live_server.url}/renan/rafael')
     expect(page.locator('#assess-form')).to_be_attached()
     expect(page.locator('#assess-report-slot')).to_contain_text('Cintura')

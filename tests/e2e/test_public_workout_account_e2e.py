@@ -28,7 +28,7 @@ def test_mobile_account_hub_never_renders_blank_and_explains_payment_state(page:
         page.set_viewport_size({'width': 390, 'height': 844})
         page.context.add_cookies([{
             'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
-            'value': build_public_workout_session_value(account_id=account.pk),
+            'value': build_public_workout_session_value(account_id=account.pk, identity_verified=True),
             'url': live_server.url,
         }])
         page.goto(f'{live_server.url}/treinos/minha-conta')
@@ -61,7 +61,7 @@ def test_mobile_refund_card_is_visible_dark_and_has_no_horizontal_overflow(page:
         page.set_viewport_size({'width': 390, 'height': 844})
         page.context.add_cookies([{
             'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
-            'value': build_public_workout_session_value(account_id=account.pk),
+            'value': build_public_workout_session_value(account_id=account.pk, identity_verified=True),
             'url': live_server.url,
         }])
         page.goto(f'{live_server.url}/treinos/minha-conta')

@@ -29,7 +29,7 @@ class PublicWorkoutSignOutViewTests(TestCase):
 
     def test_signout_clears_the_login_session_cookie_not_just_the_ownership_cookie(self):
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=self.account.pk
+            account_id=self.account.pk, identity_verified=True
         )
 
         response = self.client.post(reverse('public-workout-signout', kwargs={'plan_slug': 'qualquer-slug'}))
@@ -48,7 +48,7 @@ class PublicWorkoutSignOutViewTests(TestCase):
 
     def test_after_signout_a_new_request_no_longer_resolves_the_old_account(self):
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
-            account_id=self.account.pk
+            account_id=self.account.pk, identity_verified=True
         )
 
         self.client.post(reverse('public-workout-signout', kwargs={'plan_slug': 'qualquer-slug'}))

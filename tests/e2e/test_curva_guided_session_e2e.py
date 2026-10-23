@@ -821,7 +821,7 @@ def test_account_switch_does_not_send_queued_sets_to_another_student(page: Page,
 
     page.context.add_cookies([{
         'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
-        'value': build_public_workout_session_value(account_id=other.pk),
+        'value': build_public_workout_session_value(account_id=other.pk, identity_verified=True),
         'domain': 'localhost', 'path': '/',
     }])
     page.context.set_offline(False)
@@ -831,7 +831,7 @@ def test_account_switch_does_not_send_queued_sets_to_another_student(page: Page,
 
     page.context.add_cookies([{
         'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
-        'value': build_public_workout_session_value(account_id=account.pk),
+        'value': build_public_workout_session_value(account_id=account.pk, identity_verified=True),
         'domain': 'localhost', 'path': '/',
     }])
     page.evaluate("window.dispatchEvent(new Event('online'))")

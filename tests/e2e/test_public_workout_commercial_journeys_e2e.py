@@ -72,7 +72,7 @@ def test_canceled_customer_renews_authenticated_without_login_loop(
     try:
         page.context.add_cookies([{
             'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
-            'value': build_public_workout_session_value(account_id=account.pk),
+            'value': build_public_workout_session_value(account_id=account.pk, identity_verified=True),
             'url': live_server.url,
         }])
         page.goto(f'{live_server.url}/treinos/')
@@ -106,7 +106,7 @@ def test_active_customer_opens_billing_portal_to_change_plan(
     try:
         page.context.add_cookies([{
             'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
-            'value': build_public_workout_session_value(account_id=account.pk),
+            'value': build_public_workout_session_value(account_id=account.pk, identity_verified=True),
             'url': live_server.url,
         }])
         page.goto(f'{live_server.url}/treinos/minha-conta')
@@ -171,7 +171,7 @@ def test_legacy_active_customer_with_custom_price_starts_checkout_from_the_app(
     try:
         page.context.add_cookies([{
             'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
-            'value': build_public_workout_session_value(account_id=account.pk),
+            'value': build_public_workout_session_value(account_id=account.pk, identity_verified=True),
             'url': live_server.url,
         }])
         page.goto(f'{live_server.url}/renan/bruno')
@@ -214,7 +214,7 @@ def test_legacy_active_customer_without_custom_price_sees_talk_to_renan_message(
     try:
         page.context.add_cookies([{
             'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
-            'value': build_public_workout_session_value(account_id=account.pk),
+            'value': build_public_workout_session_value(account_id=account.pk, identity_verified=True),
             'url': live_server.url,
         }])
         page.goto(f'{live_server.url}/renan/bruno')
