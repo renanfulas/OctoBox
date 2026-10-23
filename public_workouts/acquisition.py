@@ -31,6 +31,8 @@ SERVER_EVENT_TYPES = frozenset({
     'signup_submitted', 'signup_invalid', 'signup_failed', 'checkout_redirected',
     'login_required', 'checkout_failed', 'payment_failed', 'influencer_link_clicked',
 })
+# Marcos unicos por conta: reenviar a anamnese edita o perfil, nao conclui de novo.
+ONCE_PER_ACCOUNT_EVENT_TYPES = frozenset({'training_intake_completed', 'nutrition_intake_completed'})
 logger = logging.getLogger(__name__)
 
 
@@ -183,6 +185,10 @@ def record_funnel_event(
     if event_type not in SERVER_EVENT_TYPES:
         logger.warning('curva_funnel_event_rejected event_type=%s reason=not_allowlisted', event_type)
         return None
+    if event_type in ONCE_PER_ACCOUNT_EVENT_TYPES and account is not None:
+        existing = PublicWorkoutFunnelEvent.objects.filter(event_type=event_type, account=account).first()
+        if existing is not None:
+            return existing
     touch = acquisition_session
     try:
         # Savepoint isolado: uma duplicata nao "envenena" a transacao da

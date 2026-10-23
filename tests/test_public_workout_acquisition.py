@@ -173,3 +173,34 @@ class PublicWorkoutAcquisitionTests(TestCase):
         self.assertEqual(second.status_code, 202)
         self.assertEqual(rejected.status_code, 400)
         self.assertEqual(PublicWorkoutFunnelEvent.objects.filter(event_type='cta_clicked').count(), 1)
+
+    def test_resubmitted_intake_counts_once_per_account(self):
+        # Reenviar a anamnese edita o perfil; o funil contava cada envio como conclusão.
+        from public_workouts.acquisition import record_funnel_event
+        from public_workouts.models import PublicWorkoutAccount
+
+        account = PublicWorkoutAccount.objects.create(email='reenvio@example.com')
+        other = PublicWorkoutAccount.objects.create(email='outra-conta@example.com')
+
+        first = record_funnel_event('training_intake_completed', account=account)
+        again = record_funnel_event('training_intake_completed', account=account)
+        record_funnel_event('training_intake_completed', account=other)
+        record_funnel_event('nutrition_intake_completed', account=account)
+        record_funnel_event('nutrition_intake_completed', account=account)
+
+        self.assertEqual(again.pk, first.pk)
+        counts = {
+            event_type: PublicWorkoutFunnelEvent.objects.filter(event_type=event_type).count()
+            for event_type in ('training_intake_completed', 'nutrition_intake_completed')
+        }
+        self.assertEqual(counts, {'training_intake_completed': 2, 'nutrition_intake_completed': 1})
+
+    def test_repeatable_events_still_record_every_occurrence(self):
+        from public_workouts.acquisition import record_funnel_event
+        from public_workouts.models import PublicWorkoutAccount
+
+        account = PublicWorkoutAccount.objects.create(email='abre-sempre@example.com')
+        record_funnel_event('program_opened', account=account)
+        record_funnel_event('program_opened', account=account)
+
+        self.assertEqual(PublicWorkoutFunnelEvent.objects.filter(event_type='program_opened').count(), 2)
