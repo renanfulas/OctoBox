@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import logging
 import re
+from contextlib import ExitStack
 from datetime import datetime, timezone
 
 from django.contrib.auth import get_user_model
@@ -342,6 +343,14 @@ def _seed_plans(box: 'Box') -> None:
 # ---------------------------------------------------------------------------
 
 def archive_box(box: 'Box', *, reason: str = '') -> 'Box':
+    """Drain tenant work before renaming its schema and changing Box state."""
+    from control.tenant_write_fence import tenant_write_exclusive
+
+    with tenant_write_exclusive(box.schema_name):
+        return _archive_box_under_write_fence(box, reason=reason)
+
+
+def _archive_box_under_write_fence(box: 'Box', *, reason: str = '') -> 'Box':
     """
     Arquiva um Box: status ARCHIVED + renomeia schema.
 
@@ -396,6 +405,14 @@ def archive_box(box: 'Box', *, reason: str = '') -> 'Box':
 
 
 def unarchive_box(box: 'Box', *, reason: str = '', actor=None) -> 'Box':
+    """Drain tenant work before restoring the archived schema name."""
+    from control.tenant_write_fence import tenant_write_exclusive
+
+    with tenant_write_exclusive(box.schema_name):
+        return _unarchive_box_under_write_fence(box, reason=reason, actor=actor)
+
+
+def _unarchive_box_under_write_fence(box: 'Box', *, reason: str = '', actor=None) -> 'Box':
     """
     Reverte archive_box: devolve o schema ao nome original e o Box ao ciclo de vida.
 
@@ -691,31 +708,39 @@ def delete_user_safely(user) -> None:
     FK cross-schema).
     """
     from control.models import Box, Membership
+    from control.tenant_write_fence import tenant_write_exclusive
 
     username = getattr(user, 'username', user.pk)
     fk_fields = _tenant_user_fk_fields()
 
     box_ids = list(Membership.objects.filter(user=user).values_list('box_id', flat=True).distinct())
-    for box in Box.objects.filter(pk__in=box_ids):
-        with schema_context(box.schema_name):
-            for model, field_name, nullable in fk_fields:
-                qs = model.objects.filter(**{field_name: user})
-                if nullable:
-                    updated = qs.update(**{field_name: None})
-                    if updated:
-                        logger.info(
-                            'delete_user_safely: %s.%s anulado em %d registro(s) de %s (user=%s)',
-                            model.__name__, field_name, updated, box.schema_name, username,
-                        )
-                else:
-                    deleted, _ = qs.delete()
-                    if deleted:
-                        logger.info(
-                            'delete_user_safely: %d registro(s) de %s.%s removido(s) em %s (user=%s)',
-                            deleted, model.__name__, field_name, box.schema_name, username,
-                        )
+    boxes = list(Box.objects.filter(pk__in=box_ids).order_by('schema_name'))
+    # Lock every affected tenant before changing the first one, so a frozen box
+    # cannot leave a partially cleaned-up user behind.
+    with ExitStack() as locks:
+        for box in boxes:
+            locks.enter_context(tenant_write_exclusive(box.schema_name))
 
-    user.delete()
+        for box in boxes:
+            with schema_context(box.schema_name):
+                for model, field_name, nullable in fk_fields:
+                    qs = model.objects.filter(**{field_name: user})
+                    if nullable:
+                        updated = qs.update(**{field_name: None})
+                        if updated:
+                            logger.info(
+                                'delete_user_safely: %s.%s anulado em %d registro(s) de %s (user=%s)',
+                                model.__name__, field_name, updated, box.schema_name, username,
+                            )
+                    else:
+                        deleted, _ = qs.delete()
+                        if deleted:
+                            logger.info(
+                                'delete_user_safely: %d registro(s) de %s.%s removido(s) em %s (user=%s)',
+                                deleted, model.__name__, field_name, box.schema_name, username,
+                            )
+
+        user.delete()
     logger.info('delete_user_safely: user=%s deletado.', username)
 
 

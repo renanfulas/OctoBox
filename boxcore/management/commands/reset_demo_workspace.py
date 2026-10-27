@@ -20,6 +20,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
+from control.tenant_write_fence import tenant_write_guarded_command
 from boxcore.management.commands.seed_pilot_workspace import Command as SeedPilotWorkspaceCommand
 from communications.models import MessageDirection, MessageKind, StudentIntake, WhatsAppContact, WhatsAppContactStatus, WhatsAppMessageLog
 from finance.models import Enrollment, MembershipPlan, Payment
@@ -145,6 +146,7 @@ class Command(BaseCommand):
             help='Escolhe o perfil da demo ficticia a ser reconstruida.',
         )
 
+    @tenant_write_guarded_command(schema_option=None, write_option=None)
     def handle(self, *args, **options):
         today = timezone.localdate()
         scenario = options['scenario']

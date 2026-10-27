@@ -12,11 +12,12 @@ from django.contrib.auth import get_user_model
 from django_tenants.utils import schema_context
 
 from control.models import Box
+from control.tenant_write_fence import tenant_write_guard
 
 box = Box.objects.get(schema_name='box_test')
 slug = getattr(box, 'slug', None) or box.schema_name
 
-with schema_context(box.schema_name):
+with tenant_write_guard(box.schema_name), schema_context(box.schema_name):
     from students.models import Student
     from operations.models import ClassSession, Attendance, ClassType, SessionStatus, AttendanceStatus
     from student_app.models import (

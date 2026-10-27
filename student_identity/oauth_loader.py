@@ -15,9 +15,12 @@ PONTOS CRITICOS:
 """
 
 from django.conf import settings
+from django.db import connection
 from django.http import HttpResponse
+from django_tenants.utils import get_public_schema_name
 
 from auditing.models import AuditEvent
+from control.tenant_write_fence import tenant_write_guard
 
 from .security import check_student_flow_rate_limit, resolve_student_client_ip
 
@@ -32,24 +35,25 @@ def enforce_student_oauth_callback_rate_limit(*, request, provider: str):
     if allowed:
         return None
 
-    # Audit best-effort: rota /aluno/auth/* corre em schema=public por padrao.
-    # Caller (StudentOAuthCallbackView._handle_callback) ja ativou o tenant
-    # via Center Layer facade quando havia 1 box ativo. Em multi-tenant prod
-    # sem identificador ainda, audit pode falhar silenciosamente.
+    # Only write a tenant-local audit when this callback already has an
+    # attributed tenant; never create a shared audit during an unscoped callback.
     try:
-        AuditEvent.objects.create(
-            actor=None,
-            actor_role='',
-            action='student_oauth_callback.rate_limited',
-            target_model='student_identity.StudentOAuthCallback',
-            target_label=provider,
-            description='Callback social do aluno bloqueado por rajada.',
-            metadata={
-                'provider': provider,
-                'client_ip': resolve_student_client_ip(request),
-                'path': request.path,
-            },
-        )
+        schema_name = getattr(connection, 'schema_name', '')
+        if schema_name and schema_name != get_public_schema_name():
+            with tenant_write_guard(schema_name):
+                AuditEvent.objects.create(
+                    actor=None,
+                    actor_role='',
+                    action='student_oauth_callback.rate_limited',
+                    target_model='student_identity.StudentOAuthCallback',
+                    target_label=provider,
+                    description='Callback social do aluno bloqueado por rajada.',
+                    metadata={
+                        'provider': provider,
+                        'client_ip': resolve_student_client_ip(request),
+                        'path': request.path,
+                    },
+                )
     except Exception:
         pass
     response = HttpResponse('Muitas tentativas de callback social em pouco tempo. Aguarde e tente novamente.', status=429)

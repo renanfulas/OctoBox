@@ -9,17 +9,22 @@ O QUE ESTE ARQUIVO FAZ:
 2. Valida campos mínimos.
 3. Atualiza ou cria aluno usando WhatsApp como chave.
 4. Converte status, data e demais campos leves de forma controlada.
+5. Exige o schema de um Box ativo e mantém o write fence durante a importação.
 
 PONTOS CRITICOS:
 - O WhatsApp é a chave de deduplicação; mudar isso muda a lógica de importação.
 - Validações erradas aqui podem gerar duplicidade ou dados incorretos em massa.
+- Uso: `python manage.py import_students_csv alunos.csv --schema box_<slug>`.
 """
 
 import csv
 from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
+from django_tenants.utils import schema_context
 
+from control.models import Box
+from control.tenant_write_fence import tenant_write_guarded_command
 from shared_support.phone_numbers import normalize_phone_number
 from students.models import HealthIssueStatus, Student, StudentGender, StudentStatus
 
@@ -29,15 +34,23 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('csv_path', help='Caminho para o arquivo CSV.')
+        parser.add_argument('--schema', required=True, help='Schema box_<slug> ativo que receberá os alunos.')
         parser.add_argument(
             '--delimiter',
             default=',',
             help='Delimitador do CSV. Use ";" para planilhas exportadas em formato brasileiro.',
         )
 
+    @tenant_write_guarded_command(write_option=None)
     def handle(self, *args, **options):
-        csv_path = options['csv_path']
-        delimiter = options['delimiter']
+        schema_name = options['schema']
+        box = Box.objects.filter(schema_name=schema_name, status=Box.Status.ACTIVE).first()
+        if box is None:
+            raise CommandError(f'Box ativo não encontrado para schema {schema_name!r}.')
+        with schema_context(box.schema_name):
+            return self._import_csv(csv_path=options['csv_path'], delimiter=options['delimiter'])
+
+    def _import_csv(self, *, csv_path: str, delimiter: str):
         created_count = 0
         updated_count = 0
         skipped_count = 0

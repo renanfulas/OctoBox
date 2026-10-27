@@ -10,13 +10,15 @@ logger = logging.getLogger(__name__)
 _INVITE_COOKIE = 'student_invite_pending'
 _INVITE_COOKIE_MAX_AGE = 900  # 15 min
 from django.contrib import messages
+from django.db import connection
 from django.http import Http404, HttpResponse, HttpResponseNotAllowed
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView, View
-
+from django_tenants.utils import get_public_schema_name
 from shared_support.box_runtime import get_box_runtime_slug
 from auditing.models import AuditEvent
+from control.tenant_write_fence import TenantWritesFrozen, tenant_write_guard
 from .application.commands import AuthenticateStudentWithProviderCommand
 from .application.use_cases import AuthenticateStudentWithProvider
 from .facade import resolve_tenant_for_student_invite_landing
@@ -45,6 +47,16 @@ from .security import (
     check_student_flow_rate_limit,
     resolve_student_client_ip,
 )
+
+
+def _create_fenced_audit_event(**fields):
+    schema_name = getattr(connection, 'schema_name', 'public')
+    if not schema_name or schema_name == get_public_schema_name():
+        # An unattributed callback cannot safely create a shared audit record
+        # during a tenant restore/freeze window.
+        return None
+    with tenant_write_guard(schema_name):
+        return AuditEvent.objects.create(**fields)
 
 
 class StudentSignInView(TemplateView):
@@ -222,7 +234,7 @@ class StudentOAuthCallbackView(StudentSignInView):
             # nao estar ativo aqui (control_box vazio ou rota em public schema).
             # Falha silenciosa: o audit e best-effort, nao pode explodir o callback.
             try:
-                AuditEvent.objects.create(
+                _create_fenced_audit_event(
                     actor=None,
                     actor_role='',
                     action='student_oauth_callback.provider_error_received',
@@ -249,26 +261,53 @@ class StudentOAuthCallbackView(StudentSignInView):
         # find_student_candidates_by_email() que tenta Student.objects.filter()
         # em public schema (boxcore_student so existe em box_xxx).
         from student_identity.facade import resolve_tenant_for_student_oauth_callback
-        resolve_tenant_for_student_oauth_callback(
+        tenant_resolution = resolve_tenant_for_student_oauth_callback(
             invite_token=callback_input.invite_token,
             provider_subject=identity_payload.provider_subject,
             email=identity_payload.email,
         )
 
-        result = authenticate_student_oauth_identity(
-            authenticate_identity=self.authenticate_identity,
-            identity_payload=identity_payload,
-            invite_token=callback_input.invite_token,
-        )
-        return finalize_student_oauth_callback(
-            request=request,
-            provider=provider,
-            state_payload=callback_input.state_payload,
-            identity_payload=identity_payload,
-            authentication_result=result,
-            identity_repository_class=self.identity_repository_class,
-            map_failure_reason=map_student_oauth_failure_reason,
-        )
+        if tenant_resolution.box is None:
+            if callback_input.invite_token.strip():
+                message = map_student_oauth_failure_reason('invite-not-found')
+            else:
+                message = (
+                    'Não foi possível identificar o box desta conta. Abra o convite do seu box '
+                    'ou entre pelo acesso já vinculado.'
+                )
+            messages.error(request, message)
+            return redirect('student-identity-login')
+
+        def complete_callback():
+            result = authenticate_student_oauth_identity(
+                authenticate_identity=self.authenticate_identity,
+                identity_payload=identity_payload,
+                invite_token=callback_input.invite_token,
+            )
+            return finalize_student_oauth_callback(
+                request=request,
+                provider=provider,
+                state_payload=callback_input.state_payload,
+                identity_payload=identity_payload,
+                authentication_result=result,
+                identity_repository_class=self.identity_repository_class,
+                map_failure_reason=map_student_oauth_failure_reason,
+            )
+
+        try:
+            with tenant_write_guard(tenant_resolution.box.schema_name):
+                return complete_callback()
+        except TenantWritesFrozen:
+            response = HttpResponse(
+                'Este box está temporariamente pausado para uma operação de recuperação. '
+                'Inicie a autenticação novamente após a liberação.',
+                status=503,
+                content_type='text/plain; charset=utf-8',
+            )
+            response['Retry-After'] = '60'
+            response['Cache-Control'] = 'no-store'
+            response['X-Octobox-Tenant-Frozen'] = '1'
+            return response
 
     def _map_provider_callback_error(self, reason: str) -> str:
         mapping = {
@@ -348,7 +387,7 @@ class StudentInviteLandingView(TemplateView):
         )
         if not allowed:
             try:
-                AuditEvent.objects.create(
+                _create_fenced_audit_event(
                     actor=None,
                     actor_role='',
                     action='student_invite_landing.rate_limited',
@@ -405,7 +444,7 @@ class StudentInviteLandingView(TemplateView):
             # "convite invalido".
             _token_hash = hashlib.sha256(str(self.kwargs['token']).encode()).hexdigest()[:16]
             try:
-                AuditEvent.objects.create(
+                _create_fenced_audit_event(
                     actor=None,
                     actor_role='',
                     action='student_invite_landing.invalid_token_accessed',
@@ -448,7 +487,7 @@ class StudentBoxInviteLandingView(TemplateView):
         )
         if not allowed:
             try:
-                AuditEvent.objects.create(
+                _create_fenced_audit_event(
                     actor=None,
                     actor_role='',
                     action='student_box_invite_landing.rate_limited',
@@ -496,7 +535,7 @@ class StudentBoxInviteLandingView(TemplateView):
         else:
             _token_hash = hashlib.sha256(str(self.kwargs['token']).encode()).hexdigest()[:16]
             try:
-                AuditEvent.objects.create(
+                _create_fenced_audit_event(
                     actor=None,
                     actor_role='',
                     action='student_box_invite_landing.invalid_token_accessed',

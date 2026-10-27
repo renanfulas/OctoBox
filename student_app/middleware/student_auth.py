@@ -198,10 +198,13 @@ class StudentAuthMiddleware:
                 # inclusive o teste — falha com TransactionManagementError).
                 from student_identity.facade import resolve_tenant_for_student_oauth_callback
                 from django.db import connection, transaction
+                from django_tenants.utils import get_public_schema_name
+                from control.tenant_write_fence import tenant_write_guard
                 resolve_tenant_for_student_oauth_callback(
                     invite_token='', provider_subject='', email='',
                 )
-                try:
+
+                def _record_anonymous_access():
                     with transaction.atomic():
                         AuditEvent.objects.create(
                             actor=None,
@@ -218,14 +221,18 @@ class StudentAuthMiddleware:
                                 ).hexdigest()[:8],
                             },
                         )
+
+                try:
+                    schema_name = getattr(connection, 'schema_name', get_public_schema_name())
+                    if schema_name != get_public_schema_name():
+                        with tenant_write_guard(schema_name):
+                            _record_anonymous_access()
+                    else:
+                        _record_anonymous_access()
                 except Exception:
                     # AuditEvent indisponivel (schema sem tabela em prod
-                    # multi-tenant sem facade resolvido). Nao bloqueia o
-                    # redirect.
-                    pass
-                    # AuditEvent indisponivel (schema sem tabela em prod
-                    # multi-tenant sem facade resolvido). Nao bloqueia o
-                    # redirect.
+                    # multi-tenant sem facade resolvido), ou tenant em restore.
+                    # Nao bloqueia o redirect nem grava dentro de tenant congelado.
                     pass
                 messages.warning(
                     request,

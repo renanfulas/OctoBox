@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 
 from django.contrib import messages
+from django.db.models import Q
 from django.shortcuts import redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import TemplateView, View
@@ -33,13 +34,12 @@ class StudentMembershipPendingView(StudentSessionIdentityMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        pending_membership = next(
-            (
-                membership
-                for membership in self.request.student_box_memberships
-                if membership.box_root_slug == self.request.student_active_box_root_slug
-            ),
-            None,
+        active_membership = getattr(self.request, 'student_active_membership', None)
+        pending_membership = (
+            active_membership
+            if active_membership is not None
+            and active_membership.status == StudentBoxMembershipStatus.PENDING_APPROVAL
+            else None
         )
         context['pending_membership'] = pending_membership
         return self._attach_student_shell_context(context)
@@ -96,10 +96,41 @@ class StudentSwitchBoxView(StudentIdentityRequiredMixin, View):
             messages.error(request, 'Escolha um box válido para trocar o contexto.')
             return redirect('student-app-home')
 
-        target_membership = next(
-            (membership for membership in request.student_box_memberships if membership.box_root_slug == target_box_root_slug),
-            None,
-        )
+        from control.models import Box
+
+        target_box = Box.objects.filter(
+            Q(schema_name=target_box_root_slug) | Q(slug=target_box_root_slug)
+        ).first()
+        if target_box is not None:
+            if target_box.status != Box.Status.ACTIVE:
+                target_membership = None
+            else:
+                target_aliases = {target_box.schema_name, target_box.slug}
+                target_membership = next(
+                    (
+                        membership
+                        for membership in request.student_box_memberships
+                        if membership.box_id == target_box.pk
+                    ),
+                    None,
+                ) or next(
+                    (
+                        membership
+                        for membership in request.student_box_memberships
+                        if membership.box_id is None
+                        and membership.box_root_slug in target_aliases
+                    ),
+                    None,
+                )
+        else:
+            target_membership = next(
+                (
+                    membership
+                    for membership in request.student_box_memberships
+                    if membership.box_root_slug == target_box_root_slug
+                ),
+                None,
+            )
         if target_membership is None:
             messages.error(request, 'Este box não está disponível para esta conta de aluno.')
             return redirect('student-app-home')
@@ -148,7 +179,6 @@ class StudentRequestFreezeView(StudentIdentityRequiredMixin, View):
             messages.error(request, 'Informe um período entre 7 e 90 dias.')
             return redirect('student-app-settings')
 
-        reason = (request.POST.get('reason') or '').strip()[:280]
         student = request.student_identity.student
 
         AuditEvent.objects.create(
@@ -163,7 +193,7 @@ class StudentRequestFreezeView(StudentIdentityRequiredMixin, View):
                 'student_id': student.id,
                 'box_root_slug': request.student_identity.box_root_slug,
                 'days': days,
-                'reason': reason,
+                'reason': (request.POST.get('reason') or '').strip()[:280],
             },
         )
 

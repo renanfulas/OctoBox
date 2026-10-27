@@ -143,19 +143,28 @@ def submit_background_job(job_fn: Callable, job_id: str, *args, **kwargs):
 
     def thread_worker():
         from django.db import connection as thread_connection
-        from django_tenants.utils import schema_context
+        from django_tenants.utils import get_public_schema_name, schema_context
+        from control.tenant_write_fence import TenantWritesFrozen, tenant_write_guard
 
         try:
-            if schema:
+            if schema and schema != get_public_schema_name():
                 with schema_context(schema):
-                    job_fn(job_id, *args, **kwargs)
-                    mark_job_completed(job_id)
+                    with tenant_write_guard(schema):
+                        job_fn(job_id, *args, **kwargs)
+                        mark_job_completed(job_id)
             else:
                 # Sem schema resolvido no request de origem (ex.: chamado de
                 # um path publico/management command) — roda como antes,
                 # sem forcar tenant que nao existe.
                 job_fn(job_id, *args, **kwargs)
                 mark_job_completed(job_id)
+        except TenantWritesFrozen:
+            if schema and schema != get_public_schema_name():
+                with schema_context(schema):
+                    mark_job_failed(job_id, 'Operação pausada durante recuperação; reenvie após liberação do box.')
+            else:
+                mark_job_failed(job_id, 'Operação pausada durante recuperação.')
+            logger.info('background_job=%s skipped because tenant is frozen', job_id)
         except Exception as e:
             logger.exception(f"Erro nao tratado no job {job_id}")
             if schema:
@@ -206,14 +215,18 @@ def run_in_background(fn: Callable, *args, **kwargs) -> threading.Thread:
 
     def _run():
         from django.db import connection as thread_connection
-        from django_tenants.utils import schema_context
+        from django_tenants.utils import get_public_schema_name, schema_context
+        from control.tenant_write_fence import TenantWritesFrozen, tenant_write_guard
 
         try:
-            if schema:
+            if schema and schema != get_public_schema_name():
                 with schema_context(schema):
-                    fn(*args, **kwargs)
+                    with tenant_write_guard(schema):
+                        fn(*args, **kwargs)
             else:
                 fn(*args, **kwargs)
+        except TenantWritesFrozen:
+            logger.info('background operation skipped because tenant is frozen')
         except Exception:
             logger.exception('run_in_background: falha nao tratada em %r', fn)
         finally:

@@ -23,7 +23,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import redirect
 
-from .models import StudentBoxMembership, StudentBoxMembershipStatus
+from .models import StudentBoxMembershipStatus
 from .oauth_journeys import (
     handle_student_special_oauth_journey,
     record_student_entry_completed_journey,
@@ -111,10 +111,9 @@ def finalize_student_oauth_callback(
     # a identidade autenticada e sabemos para qual box ela pertence.
     _activate_identity_tenant(authentication_result.identity)
 
-    active_membership = StudentBoxMembership.objects.filter(
-        identity_id=authentication_result.identity.id,
-        box_root_slug=authentication_result.identity.box_root_slug,
-    ).first()
+    active_membership = repository.find_membership_for_identity_box(
+        authentication_result.identity
+    )
     redirect_name = 'student-app-home'
     if active_membership is not None and active_membership.status == StudentBoxMembershipStatus.PENDING_APPROVAL:
         redirect_name = 'student-app-membership-pending'

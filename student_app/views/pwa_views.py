@@ -39,6 +39,7 @@ from .base import (
     STUDENT_APP_START_URL,
     STUDENT_APP_THEME_COLOR,
     StudentAnyMembershipMixin,
+    StudentIdentityRequiredMixin,
 )
 
 
@@ -131,7 +132,7 @@ class StudentOfflineView(TemplateView):
     template_name = 'student_app/offline.html'
 
 
-class StudentPushSubscribeView(StudentAnyMembershipMixin, View):
+class StudentPushSubscribeView(StudentIdentityRequiredMixin, View):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
@@ -150,6 +151,7 @@ class StudentPushSubscribeView(StudentAnyMembershipMixin, View):
 
         subscription = upsert_student_push_subscription(
             identity=request.student_identity,
+            box=request.tenant,
             box_root_slug=request.student_active_box_root_slug,
             subscription_data=subscription_data,
             device_fingerprint=build_student_device_fingerprint(request),
@@ -178,5 +180,5 @@ class StudentPushUnsubscribeView(StudentAnyMembershipMixin, View):
         if not endpoint:
             return JsonResponse({'ok': False, 'error': 'missing-endpoint'}, status=400)
 
-        revoke_student_push_subscription(endpoint=endpoint)
+        revoke_student_push_subscription(endpoint=endpoint, identity=request.student_identity)
         return JsonResponse({'ok': True})

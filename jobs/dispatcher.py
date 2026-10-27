@@ -7,7 +7,12 @@ POR QUE ELE EXISTE:
 """
 
 from dataclasses import dataclass
+import re
 from typing import Any
+
+
+_TENANT_SCOPED_JOB_TYPES = frozenset({'student_import_csv', 'contact_import_csv'})
+_TENANT_SCHEMA_RE = re.compile(r'^box_[a-z0-9_-]{1,59}$')
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,14 +73,25 @@ def build_dispatch_context(
     actor_id: int | None,
     signal_envelope: dict[str, Any],
     payload: dict[str, Any] | None = None,
+    tenant_schema: str = '',
 ) -> dict[str, Any]:
-    return {
+    context = {
         'job_type': job_type,
         'file_path': file_path,
         'actor_id': actor_id,
         'signal_envelope': signal_envelope,
         'payload': payload or {},
     }
+    if tenant_schema:
+        context['tenant_schema'] = tenant_schema
+    return context
+
+
+def _require_tenant_schema(dispatch_context: dict[str, Any]) -> str:
+    tenant_schema = dispatch_context.get('tenant_schema')
+    if not isinstance(tenant_schema, str) or not _TENANT_SCHEMA_RE.fullmatch(tenant_schema):
+        raise ValueError('tenant-schema-required-for-tenant-job')
+    return tenant_schema
 
 
 def dispatch_async_job(*, job, dispatch_context: dict[str, Any]):
@@ -93,11 +109,17 @@ def dispatch_async_job(*, job, dispatch_context: dict[str, Any]):
             signal_envelope=dispatch_context.get('signal_envelope') or {},
         )
 
+    task_kwargs = {
+        'file_path': dispatch_context.get('file_path', ''),
+        'actor_id': dispatch_context.get('actor_id'),
+        'job_id': job.id,
+        'signal_envelope': dispatch_context.get('signal_envelope') or {},
+    }
+    if job_type in _TENANT_SCOPED_JOB_TYPES:
+        task_kwargs['tenant_schema'] = _require_tenant_schema(dispatch_context)
+
     return task.delay(
-        file_path=dispatch_context.get('file_path', ''),
-        actor_id=dispatch_context.get('actor_id'),
-        job_id=job.id,
-        signal_envelope=dispatch_context.get('signal_envelope') or {},
+        **task_kwargs,
     )
 
 
