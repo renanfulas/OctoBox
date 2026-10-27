@@ -137,7 +137,7 @@ def test_boot_validation_rejects_invalid_or_missing_active_key_without_secret_de
         ('{"Bad ID":"not a key"}', "Bad ID"),
         ("{", "good-key"),
         ('{"good-key":"not a Fernet key"}', "good-key"),
-        ('{"good-key":"' + Fernet.generate_key().decode("ascii") + '"}', "missing-key"),
+        ('{"good-key":"u1gIsNX47xEJOAY0AzpQIMvcPUNwSQiatVJHGyM9u6k="}', "missing-key"),
     ],
 )
 def test_keyring_rejects_bad_configuration_without_echoing_key_material(keyring_json, active_key_id):
