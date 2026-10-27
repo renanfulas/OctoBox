@@ -28,6 +28,7 @@ from shared_support.box_runtime import (
     get_box_runtime_namespace,
     get_box_runtime_slug,
     get_deployed_commit_sha,
+    get_loaded_release_sha,
 )
 from student_identity.resend_webhooks import (
     ResendWebhookHeaders,
@@ -78,9 +79,13 @@ class ApiV1HealthView(View):
             tenants_active = Box.objects.filter(status=Box.Status.ACTIVE).count()
         except Exception:
             pass
+        deployed_sha = get_deployed_commit_sha()
+        loaded_sha = get_loaded_release_sha()
+        release_consistent = (
+            deployed_sha is None and loaded_sha is None
+        ) or bool(deployed_sha and loaded_sha and deployed_sha == loaded_sha)
         return JsonResponse(
             {
-                'status': 'ok',
                 'version': 'v1',
                 'product': 'OctoBox Control',
                 'api_boundary': 'stable-entrypoint',
@@ -88,8 +93,11 @@ class ApiV1HealthView(View):
                 'runtime_slug': get_box_runtime_slug(),
                 'runtime_namespace': get_box_runtime_namespace(),
                 'tenants_active': tenants_active,
-                'deployed_sha': get_deployed_commit_sha(),
-                'healthy': True,
+                'deployed_sha': deployed_sha,
+                'loaded_sha': loaded_sha,
+                'healthy': release_consistent,
+                'release_consistent': release_consistent,
+                'status': 'ok' if release_consistent else 'degraded',
             }
         )
 

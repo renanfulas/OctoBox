@@ -132,6 +132,12 @@ Rodar no ambiente alvo, na ordem. Todos são idempotentes (seguro repetir).
 - **Scanner obrigatório após ativação:** instalar/ativar `octobox-payment-notifications.timer` e `.service`; carregar o mesmo ambiente e release do Gunicorn. O timer roda `run_due_payment_notifications --limit 25` a cada minuto. O wakeup pós-commit reduz latência, mas não substitui a varredura após restart/crash. A presença dos arquivos no repositório não significa instalação na VPS.
 - **Verificar:** conferir timer ativo, logs sem dados de contato e estados tenant-locais. `provider_accepted` não prova entrega; `unknown` exige reconciliação e não é reenviado automaticamente. Homologar tags, assinatura e ordenação de eventos em ambiente autorizado antes de configurar o callback. WhatsApp segue indisponível.
 
+### Release imutável e health do worker
+- **Vars geradas por release:** `OCTOBOX_RELEASE_SHA`, `OCTOBOX_STATIC_ROOT` e `OCTOBOX_MEDIA_ROOT` ficam no `.release.env` imutável. O deploy define assets para a release e mídia para `/srv/octobox/shared/media`; segredos continuam em `shared/octobox.env`.
+- **SHA publicado:** `get_deployed_commit_sha()` lê `OCTOBOX_DEPLOYED_SHA_FILE`, cujo default é `/srv/octobox/shared/deploy-state/deployed_sha`. O worker captura `OCTOBOX_RELEASE_SHA` no boot; health compara o SHA publicado e o carregado e retorna degradado se divergirem.
+- **Verificar:** após ativação autorizada, conferir `healthy=true`, `release_consistent=true` e ambos os SHAs iguais ao commit aprovado; executar o smoke por tenant do runbook. Health não prova os workers assíncronos.
+- **Operação:** o workflow seleciona um SHA exato da `main`; o script prepara release, venv, assets e migrations antes de trocar `current`. Rollback é separado e não reverte migrations. O código local não significa que o layout foi instalado na VPS.
+
 ### Backup do PostgreSQL (diário)
 - **Vars:** `OCTOBOX_BACKUP_REMOTE` (ex. `r2:octobox`, não é segredo — a credencial do provedor fica só no `rclone.conf` da VPS, nunca em env var), `OCTOBOX_BACKUP_REMOTE_PREFIX`, `OCTOBOX_BACKUP_RETENTION_DAYS`.
 - **Fora do código:** `rclone config create r2 s3 provider Cloudflare access_key_id ... secret_access_key ...` na VPS (ou `setup_r2_backup.sh`, que faz isso). A credencial do R2 nasce no painel Cloudflare, nunca no repo.

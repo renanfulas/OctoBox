@@ -10,9 +10,10 @@ Wants=network-online.target
 Type=simple
 User=octobox
 Group=octobox
-WorkingDirectory=/srv/octobox/app
+WorkingDirectory=/srv/octobox/current
+EnvironmentFile=-/srv/octobox/current/.release.env
 EnvironmentFile=/srv/octobox/shared/octobox.env
-ExecStart=/srv/octobox/venv/bin/python manage.py run_public_workout_rest_alerts
+ExecStart=/srv/octobox/current/venv/bin/python manage.py run_public_workout_rest_alerts
 Restart=always
 RestartSec=3
 # SIGTERM interrompe a espera na hora; um envio cortado vence pelo lease.

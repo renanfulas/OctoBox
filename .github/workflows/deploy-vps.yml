@@ -2,6 +2,11 @@ name: VPS Deploy (Hostgator São Paulo)
 
 on:
   workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Exact main commit to deploy (must still be the current main head)
+        required: true
+        type: string
   workflow_run:
     workflows:
       - OctoBox CI Checks (Performance & Integrity)
@@ -18,48 +23,112 @@ concurrency:
 
 jobs:
   verify-gates:
+    outputs:
+      target_sha: ${{ steps.gates.outputs.target_sha }}
+      deploy_run_id: ${{ steps.gates.outputs.deploy_run_id }}
     if: >
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
       (github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     steps:
-      - name: Verificar todos os gates obrigatórios
+      - name: Checkout do workflow de deploy
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Testar contrato do gate de deploy
+        run: node --test tests/js/deploy_gate_workflow.test.js
+
+      - name: Resolver release e verificar gates do mesmo SHA
+        id: gates
         uses: actions/github-script@v9
         with:
           script: |
-            if (context.eventName === 'workflow_dispatch') {
-              core.info('Dispatch manual — pulando verificação de gates.');
-              return;
-            }
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const headSha = context.payload.workflow_run.head_sha;
-            const branch = context.payload.workflow_run.head_branch;
+            let targetSha;
+
+            if (context.eventName === 'workflow_run') {
+              const source = context.payload.workflow_run;
+              if (source.conclusion !== 'success' || source.head_branch !== 'main' || source.event !== 'push') {
+                core.setFailed('Deploy automático só aceita workflow push concluído com sucesso na main.');
+                return;
+              }
+              const trustedRepo = `${owner}/${repo}`.toLowerCase();
+              if (source.head_repository?.full_name?.toLowerCase() !== trustedRepo ||
+                  source.repository?.full_name?.toLowerCase() !== trustedRepo) {
+                core.setFailed('Workflow de origem não pertence ao repositório confiável.');
+                return;
+              }
+              targetSha = source.head_sha;
+            } else {
+              if (context.ref !== 'refs/heads/main') {
+                core.setFailed('Dispatch de produção precisa usar o workflow da branch main.');
+                return;
+              }
+              targetSha = String(context.payload.inputs?.target_sha || '').trim();
+            }
+
+            if (!/^[0-9a-f]{40}$/i.test(targetSha)) {
+              core.setFailed('target_sha ausente ou inválido; informe um SHA completo de 40 caracteres.');
+              return;
+            }
+            targetSha = targetSha.toLowerCase();
+
             const required = [
+              'Full Test Suite',
+              'CI Gates',
               "OctoBox CI Checks (Performance & Integrity)",
               "Student Onboarding Corridors Regression",
               "Student Onboarding Real Smoke",
               "Security Scanners 🛡️",
               "CURVA Gates",
+              'WOD Mobile Gates',
             ];
             const sleep = ms => new Promise(r => setTimeout(r, ms));
             let missing = [...required];
-            // 30 x 30s = 15 min: o E2E do CURVA (Playwright) e o gate mais lento.
-            for (let i = 1; i <= 30; i++) {
-              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
-                owner, repo, branch, head_sha: headSha, per_page: 50,
-              });
-              missing = required.filter(name => {
-                const run = data.workflow_runs.find(r => r.name === name);
-                return !run || run.conclusion !== 'success';
-              });
-              if (!missing.length) return;
-              core.info(`Aguardando (${i}/30): ${missing.join(', ')}`);
+            // 120 x 30s = 60 min para aguardar todos os workflows do SHA, não
+            // apenas o workflow_run que disparou este deploy.
+            for (let i = 1; i <= 120; i++) {
+              const [{ data: main }, { data }] = await Promise.all([
+                github.rest.repos.getBranch({ owner, repo, branch: 'main' }),
+                github.rest.actions.listWorkflowRunsForRepo({
+                  owner, repo, branch: 'main', head_sha: targetSha, per_page: 100,
+                }),
+              ]);
+              if (main.commit.sha !== targetSha) {
+                core.setFailed(`Release obsoleta: main avançou para ${main.commit.sha}; alvo era ${targetSha}.`);
+                return;
+              }
+              const runs = data.workflow_runs.filter(r =>
+                r.head_sha === targetSha && r.head_branch === 'main' && r.event === 'push'
+              );
+              const selected = new Map();
+              for (const name of required) {
+                const matches = runs.filter(r => r.name === name).sort((a, b) =>
+                  new Date(b.updated_at) - new Date(a.updated_at)
+                );
+                if (matches.length) selected.set(name, matches[0]);
+              }
+              const failed = [...selected.entries()].filter(([, run]) =>
+                run.status === 'completed' && run.conclusion !== 'success'
+              );
+              if (failed.length) {
+                core.setFailed(`Gates falharam no SHA ${targetSha}: ${failed.map(([name]) => name).join(', ')}`);
+                return;
+              }
+              missing = required.filter(name => selected.get(name)?.conclusion !== 'success');
+              if (!missing.length) {
+                core.setOutput('target_sha', targetSha);
+                core.setOutput('deploy_run_id', String(context.runId));
+                return;
+              }
+              core.info(`Aguardando (${i}/120): ${missing.join(', ')}`);
               await sleep(30000);
             }
-            core.setFailed(`Gates incompletos: ${missing.join(', ')}`);
+            core.setFailed(`Gates incompletos para ${targetSha}: ${missing.join(', ')}`);
 
   deploy:
     needs: verify-gates
@@ -68,7 +137,11 @@ jobs:
     steps:
       - name: Deploy no VPS via SSH
         uses: appleboy/ssh-action@v1.2.5
+        env:
+          DEPLOY_TARGET_SHA: ${{ needs.verify-gates.outputs.target_sha }}
+          DEPLOY_RUN_ID: ${{ needs.verify-gates.outputs.deploy_run_id }}
         with:
+          envs: DEPLOY_TARGET_SHA,DEPLOY_RUN_ID
           host:    ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key:     ${{ secrets.VPS_SSH_KEY }}
@@ -77,101 +150,17 @@ jobs:
           command_timeout: 20m
           script: |
             set -euo pipefail
+            case "$DEPLOY_TARGET_SHA" in
+              (*[!0-9a-f]*|'') echo "target SHA inválido" >&2; exit 2 ;;
+            esac
+            test "${#DEPLOY_TARGET_SHA}" -eq 40
             APP=/srv/octobox/app
-            VENV=/srv/octobox/venv
-            ENV=/srv/octobox/shared/octobox.env
-            BACKUP="${ENV}.bak-$(date +%Y%m%d-%H%M%S)"
-
-            echo "==> Backup do env..."
-            cp "$ENV" "$BACKUP"
-
-            echo "==> Validando env atual..."
-            if ! grep -q '^DJANGO_SECRET_KEY=' "$ENV" || ! grep -q '^DATABASE_URL=' "$ENV"; then
-              echo "==> Env atual parece corrompido. Procurando backup válido..."
-              VALID_BACKUP="$(for file in $(ls -1t "${ENV}.bak-"* 2>/dev/null); do if grep -q '^DJANGO_SECRET_KEY=' "$file" && grep -q '^DATABASE_URL=' "$file"; then echo "$file"; break; fi; done)"
-              if [ -z "${VALID_BACKUP:-}" ]; then
-                echo "Nenhum backup válido encontrado para $ENV"
-                exit 1
-              fi
-              cp "$VALID_BACKUP" "$ENV"
-            fi
-
-            echo "==> Atualizando host routing no env..."
-            python3 - <<'PY'
-            from pathlib import Path
-
-            env_path = Path("/srv/octobox/shared/octobox.env")
-            original = env_path.read_text(encoding="utf-8")
-            updates = {
-                "DJANGO_ALLOWED_HOSTS": "octoboxfit.com.br,www.octoboxfit.com.br,app.octoboxfit.com.br",
-                "ALLOWED_HOSTS": "octoboxfit.com.br,www.octoboxfit.com.br,app.octoboxfit.com.br",
-                "DJANGO_CSRF_TRUSTED_ORIGINS": "https://octoboxfit.com.br,https://www.octoboxfit.com.br,https://app.octoboxfit.com.br",
-                "CSRF_TRUSTED_ORIGINS": "https://octoboxfit.com.br,https://www.octoboxfit.com.br,https://app.octoboxfit.com.br",
-                "STUDENT_OAUTH_PUBLIC_BASE_URL": "https://app.octoboxfit.com.br",
-            }
-
-            lines = original.splitlines()
-            found = set()
-            output = []
-
-            for line in lines:
-                stripped = line.strip()
-                if not stripped or stripped.startswith("#") or "=" not in line:
-                    output.append(line)
-                    continue
-                key, _ = line.split("=", 1)
-                key = key.strip()
-                if key in updates:
-                    output.append(f"{key}={updates[key]}")
-                    found.add(key)
-                else:
-                    output.append(line)
-
-            missing = [key for key in updates if key not in found]
-            if missing:
-                if output and output[-1].strip():
-                    output.append("")
-                output.append("# Host routing contract for www vs app")
-                for key in missing:
-                    output.append(f"{key}={updates[key]}")
-
-            env_path.write_text("\n".join(output) + "\n", encoding="utf-8")
-            PY
-
-            echo "==> Host routing aplicado no env:"
-            grep -E '^(DJANGO_ALLOWED_HOSTS|ALLOWED_HOSTS|DJANGO_CSRF_TRUSTED_ORIGINS|CSRF_TRUSTED_ORIGINS|STUDENT_OAUTH_PUBLIC_BASE_URL)=' "$ENV" || true
-
-            echo "==> Pull do repositório..."
-            git -C "$APP" fetch origin main
-            git -C "$APP" reset --hard origin/main
-
-            echo "==> Registrando SHA deployado (para o healthcheck comparar depois)..."
-            mkdir -p /srv/octobox/shared/deploy-state
-            git -C "$APP" rev-parse HEAD > /srv/octobox/shared/deploy-state/deployed_sha
-
-            echo "==> Atualizando dependências Python..."
-            "$VENV/bin/pip" install --quiet -r "$APP/requirements.txt"
-
-            echo "==> Coletando static files..."
-            RUN_WITH_ENV=("$VENV/bin/python" "$APP/scripts/linux/run_with_env_file.py" "$ENV" --)
-            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" collectstatic --noinput
-
-            echo "==> Bootstrap control (resolve InconsistentMigrationHistory)..."
-            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" bootstrap_control
-
-            echo "==> Rodando migrations..."
-            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" migrate --noinput
-
-            echo "==> Sincronizando roles..."
-            "${RUN_WITH_ENV[@]}" "$VENV/bin/python" "$APP/manage.py" bootstrap_roles
-
-            echo "==> Restaurando dono do checkout após comandos como root..."
-            chown -R octobox:octobox "$APP"
-
-            echo "==> Reiniciando Gunicorn..."
-            systemctl restart octobox-gunicorn
-
-            echo "==> Deploy concluído."
+            TOOLS=/srv/octobox/shared/deploy-tools
+            sudo -u octobox git -C "$APP" fetch origin "$DEPLOY_TARGET_SHA"
+            sudo install -d -m 0750 -o root -g octobox "$TOOLS"
+            sudo -u octobox git -C "$APP" show "$DEPLOY_TARGET_SHA:scripts/linux/deploy_octobox.sh" | sudo tee "$TOOLS/deploy-${DEPLOY_TARGET_SHA}.sh" >/dev/null
+            sudo chmod 0750 "$TOOLS/deploy-${DEPLOY_TARGET_SHA}.sh"
+            sudo OCTOBOX_APP_HOME=/srv/octobox bash "$TOOLS/deploy-${DEPLOY_TARGET_SHA}.sh" --sha "$DEPLOY_TARGET_SHA" --run-id "$DEPLOY_RUN_ID"
 
       - name: Health check pós-deploy
         run: |
@@ -186,7 +175,7 @@ jobs:
   # nao roda se o anterior falhar). Ninguem notou por semanas.
   #
   # Este job roda em `always()` — mesmo se `deploy` falhar — e compara o
-  # deployed_sha que api/v1/health/ expoe contra a HEAD real de main agora.
+  # deployed_sha e loaded_sha que api/v1/health/ expõe contra o SHA aprovado.
   # Se nao bater, falha alto (job vermelho, e-mail de falha do GitHub Actions),
   # independente de qual passo do deploy quebrou ou nao rodou.
   # ---------------------------------------------------------------------------
@@ -196,26 +185,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Checkout main (SHA de referencia)
-        uses: actions/checkout@v7
-        with:
-          ref: main
-          fetch-depth: 1
-
       - name: Confirmar que produção está no commit mais recente de main
         run: |
           set -euo pipefail
-          EXPECTED="$(git rev-parse HEAD)"
-          echo "origin/main atual: $EXPECTED"
+          EXPECTED="${{ needs.verify-gates.outputs.target_sha }}"
+          echo "SHA aprovado pelos gates: $EXPECTED"
 
           RESPONSE="$(curl --fail --silent --show-error --max-time 15 https://app.octoboxfit.com.br/api/v1/health/)"
           echo "Resposta do health check: $RESPONSE"
 
           DEPLOYED="$(echo "$RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("deployed_sha") or "ausente")')"
-          echo "Commit rodando em produção: $DEPLOYED"
+          LOADED="$(echo "$RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("loaded_sha") or "ausente")')"
+          CONSISTENT="$(echo "$RESPONSE" | python3 -c 'import json,sys; print(str(json.load(sys.stdin).get("release_consistent", False)).lower())')"
+          echo "Ponteiro deployado: $DEPLOYED"
+          echo "SHA carregado pelo processo: $LOADED"
 
-          if [ "$DEPLOYED" != "$EXPECTED" ]; then
-            echo "::error::Produção desatualizada — rodando $DEPLOYED, main atual é $EXPECTED. O job 'deploy' falhou ou não completou; veja os logs dele acima."
+          if [ "$DEPLOYED" != "$EXPECTED" ] || [ "$LOADED" != "$EXPECTED" ] || [ "$CONSISTENT" != "true" ]; then
+            echo "::error::Release divergente: esperado $EXPECTED, ponteiro $DEPLOYED, processo $LOADED, consistente=$CONSISTENT."
             exit 1
           fi
-          echo "OK: produção confirmada em $EXPECTED"
+          echo "OK: produção está executando exatamente $EXPECTED"

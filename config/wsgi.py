@@ -15,6 +15,10 @@ PONTOS CRITICOS:
 
 import os
 
+# systemd loads this from the immutable release directory before importing WSGI.
+# Preserve the value for the lifetime of this worker, including Gunicorn forks.
+os.environ.setdefault('OCTOBOX_RELEASE_SHA', '')
+
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')

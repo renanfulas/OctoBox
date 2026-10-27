@@ -25,6 +25,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from config.env_loader import load_project_env
 from config.settings.privacy import build_privacy_settings
+from config.settings.release_paths import build_release_path_settings
 from shared_support.box_runtime import box_partitioned_key_function, build_box_cache_key_prefix
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -549,8 +550,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [path for path in [BASE_DIR / 'static'] if path.exists()]
+globals().update(build_release_path_settings(BASE_DIR))
 # 🚀 Cache Estratégico (Epic 8 Performance)
 # Aumentamos o TTL para 5 minutos (300s) para evitar recomputações frequentes de contagens pesadas no shell.
 SHELL_COUNTS_CACHE_TTL_SECONDS = env_int('SHELL_COUNTS_CACHE_TTL_SECONDS', 300)

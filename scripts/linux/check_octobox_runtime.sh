@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ "${EUID}" -ne 0 ]]; then
-  echo "Execute como root." >&2
-  exit 1
-fi
-
 : "${OCTOBOX_DOMAIN:=app.octoboxfit.com.br}"
 : "${OCTOBOX_APP_HOME:=/srv/octobox}"
 : "${OCTOBOX_RUNTIME_DISK_THRESHOLD:=85}"
@@ -38,7 +33,16 @@ check_service nginx
 check_service postgresql
 check_service redis-server
 
-if ! curl -fsS --max-time 10 "${HEALTH_URL}" >/dev/null; then
+health_response="$(curl -fsS --max-time 10 "${HEALTH_URL}" 2>/dev/null || true)"
+if [[ -z "${health_response}" ]] || ! HEALTH_RESPONSE="${health_response}" python3 - <<'PY'
+import json, os, sys
+try:
+    body = json.loads(os.environ['HEALTH_RESPONSE'])
+except (KeyError, json.JSONDecodeError):
+    sys.exit(1)
+sys.exit(0 if body.get('healthy') is True and body.get('release_consistent') is True else 1)
+PY
+then
   failures+=("healthcheck falhou em ${HEALTH_URL}")
 fi
 

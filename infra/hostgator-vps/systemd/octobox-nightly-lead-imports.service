@@ -5,13 +5,14 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/srv/octobox/app
+WorkingDirectory=/srv/octobox/current
+EnvironmentFile=-/srv/octobox/current/.release.env
 Environment=OCTOBOX_APP_HOME=/srv/octobox
 Environment=OCTOBOX_ENV_FILE=/srv/octobox/shared/octobox.env
-Environment=OCTOBOX_APP_DIR=/srv/octobox/app
-Environment=OCTOBOX_VENV_PYTHON=/srv/octobox/venv/bin/python
+Environment=OCTOBOX_APP_DIR=/srv/octobox/current
+Environment=OCTOBOX_VENV_PYTHON=/srv/octobox/current/venv/bin/python
 EnvironmentFile=-/srv/octobox/shared/octobox.env
-ExecStart=/srv/octobox/app/scripts/linux/run_due_nightly_lead_import_jobs.sh
+ExecStart=/srv/octobox/current/scripts/linux/run_due_nightly_lead_import_jobs.sh
 User=root
 
 [Install]

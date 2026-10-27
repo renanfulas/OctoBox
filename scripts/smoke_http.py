@@ -9,6 +9,7 @@ POR QUE ELE EXISTE:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import urllib.error
 import urllib.parse
@@ -51,6 +52,7 @@ def main() -> int:
     parser.add_argument("--base-url", required=True, help="Base URL do ambiente, ex: https://app.example.com")
     parser.add_argument("--username", default="", help="Usuario de login para smoke autenticado.")
     parser.add_argument("--password", default="", help="Senha de login para smoke autenticado.")
+    parser.add_argument("--expected-sha", default="", help="SHA de release esperado; valida deployed_sha e loaded_sha no health.")
     parser.add_argument(
         "--public-path",
         action="append",
@@ -73,8 +75,20 @@ def main() -> int:
 
     for path in public_paths:
         url = f"{base_url}{path}"
-        status, _ = request(opener, url)
+        status, body = request(opener, url)
         assert_status(url, status, {200, 301, 302})
+        if urllib.parse.urlsplit(path).path.rstrip("/") == "/api/v1/health":
+            try:
+                health = json.loads(body)
+            except json.JSONDecodeError as exc:
+                raise RuntimeError(f"Smoke falhou: health não retornou JSON válido em {url}.") from exc
+            if health.get("healthy") is not True or health.get("release_consistent") is not True:
+                raise RuntimeError(f"Smoke falhou: health degradado em {url}.")
+            if args.expected_sha and not (
+                health.get("deployed_sha") == args.expected_sha
+                and health.get("loaded_sha") == args.expected_sha
+            ):
+                raise RuntimeError(f"Smoke falhou: release diferente do SHA esperado em {url}.")
         print(f"[public-ok] {url} -> {status}")
 
     if not (args.username and args.password):
