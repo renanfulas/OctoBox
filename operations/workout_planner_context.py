@@ -22,7 +22,7 @@ from access.roles import ROLE_COACH, ROLE_MANAGER, ROLE_OWNER
 from shared_support.page_payloads import build_page_assets, build_page_hero, build_page_payload
 
 from .workout_corridor_navigation import build_workout_corridor_tabs
-from .models import ClassType, WorkoutPlannerTemplatePickerEvent
+from .models import ClassType, WorkoutPlannerTemplatePickerEvent, WorkoutProgram
 from .workout_planner_builders import build_planner_week, load_planner_sessions, resolve_week_start
 from .workout_approval_policy import resolve_workout_approval_policy
 from .workout_planner_actions import find_previous_slot_workout
@@ -281,6 +281,7 @@ def build_workout_planner_context(*, request, current_role, page_title, page_sub
             actor=request.user,
         ),
         'planner_day_apply_class_types': ClassType.choices,
+        'planner_day_apply_programs': list(WorkoutProgram.objects.filter(is_active=True).order_by('sort_order', 'name').values_list('id', 'name')),
     }
 
 

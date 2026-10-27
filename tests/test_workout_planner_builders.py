@@ -6,9 +6,11 @@ from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from operations.models import ClassSession, WorkoutPlannerTemplatePickerEvent, WorkoutTemplate, WorkoutTemplateBlock, WorkoutTemplateMovement
+from operations.models import ClassSession, WorkoutPlannerTemplatePickerEvent, WorkoutProgram, WorkoutTemplate, WorkoutTemplateBlock, WorkoutTemplateMovement
 from operations.workout_corridor_navigation import build_workout_corridor_tabs
 from operations.workout_planner_builders import build_planner_cell, build_planner_week, load_planner_sessions, resolve_week_start
+from operations.workout_planner_actions import apply_trusted_template_to_session
+from operations.workout_templates import build_persisted_workout_template_options
 from student_app.models import SessionWorkout, SessionWorkoutRevision, SessionWorkoutRevisionEvent, SessionWorkoutStatus, WorkoutLoadType
 from tests.workout_test_support import WorkoutFlowBaseTestCase
 
@@ -266,6 +268,42 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Escolha a base da celula')
         self.assertContains(response, 'data-wod-planner-template-picker')
 
+    def test_archived_template_is_not_offered_or_applied_when_active_flag_diverges(self):
+        template = WorkoutTemplate.objects.create(
+            name='Template arquivado inconsistente',
+            created_by=self.owner,
+            is_active=True,
+            is_trusted=True,
+            archived_at=timezone.now(),
+        )
+        WorkoutTemplateBlock.objects.create(
+            template=template,
+            title='Base arquivada',
+            kind='strength',
+            sort_order=1,
+        )
+
+        options = build_persisted_workout_template_options(
+            current_role_slug='Owner',
+            actor=self.owner,
+        )
+        self.assertNotIn(template.id, {option['id'] for option in options})
+
+        result = apply_trusted_template_to_session(
+            actor=self.owner,
+            template=template,
+            target_session=self.session,
+        )
+        self.assertEqual(result, {'ok': False, 'reason': 'template_inactive'})
+        self.assertFalse(SessionWorkout.objects.filter(session=self.session).exists())
+
+        self.login_as_owner()
+        response = self.client.post(
+            reverse('workout-planner-apply-trusted-template', args=[self.session.id, template.id]),
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(SessionWorkout.objects.filter(session=self.session).exists())
+
     def test_owner_planner_renders_template_usage_panel(self):
         WorkoutTemplate.objects.create(
             name='Template quente',
@@ -477,6 +515,42 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         self.assertEqual(emit_picker_event.call_args_list[0].kwargs['event_name'], 'applied')
         self.assertEqual(emit_picker_event.call_args_list[1].kwargs['event_name'], 'completed')
 
+    def test_manager_can_apply_trusted_template_from_planner(self):
+        template = WorkoutTemplate.objects.create(
+            name='Template manager confiavel', created_by=self.owner,
+            is_active=True, is_trusted=True,
+        )
+        WorkoutTemplateBlock.objects.create(
+            template=template, title='Base', kind='strength', sort_order=1,
+        )
+        self.login_as_manager()
+
+        response = self.client.post(
+            reverse('workout-planner-apply-trusted-template', args=[self.session.id, template.id]),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        workout = SessionWorkout.objects.get(session=self.session)
+        self.assertIn(workout.status, {SessionWorkoutStatus.PUBLISHED, SessionWorkoutStatus.PENDING_APPROVAL})
+
+    def test_coach_cannot_apply_trusted_template_through_manager_owner_route(self):
+        template = WorkoutTemplate.objects.create(
+            name='Template restrito', created_by=self.owner,
+            is_active=True, is_trusted=True,
+        )
+        WorkoutTemplateBlock.objects.create(
+            template=template, title='Base', kind='strength', sort_order=1,
+        )
+
+        response = self.client.post(
+            reverse('workout-planner-apply-trusted-template', args=[self.session.id, template.id]),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(SessionWorkout.objects.filter(session=self.session).exists())
+
     def test_owner_can_duplicate_previous_slot_from_planner(self):
         previous_session = ClassSession.objects.create(
             title=self.session.title,
@@ -505,6 +579,92 @@ class WorkoutPlannerViewTests(WorkoutFlowBaseTestCase):
         self.assertEqual(duplicated_workout.title, 'WOD semana anterior')
         self.assertEqual(duplicated_workout.status, SessionWorkoutStatus.DRAFT)
         self.assertContains(response, 'WOD da semana anterior duplicado como rascunho para esta aula.')
+
+    def test_coach_cannot_duplicate_previous_slot_into_a_session_assigned_to_another_user(self):
+        other_session = ClassSession.objects.create(
+            title='Cross de outro responsável',
+            coach=self.owner,
+            scheduled_at=self.session.scheduled_at + timedelta(hours=1),
+            duration_minutes=60,
+            capacity=16,
+        )
+        previous_session = ClassSession.objects.create(
+            title=other_session.title,
+            coach=self.owner,
+            scheduled_at=other_session.scheduled_at - timedelta(days=7),
+            duration_minutes=60,
+            capacity=16,
+        )
+        SessionWorkout.objects.create(
+            session=previous_session,
+            title='WOD privado de outra coach',
+            status=SessionWorkoutStatus.PUBLISHED,
+            created_by=self.owner,
+        )
+
+        response = self.client.post(
+            reverse('workout-planner-duplicate-previous-slot', args=[other_session.id]),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SessionWorkout.objects.filter(session=other_session).exists())
+        self.assertContains(response, 'Coach so pode duplicar slot anterior para a propria aula.')
+
+    def test_coach_cannot_delete_selected_workout_from_a_session_assigned_to_another_user(self):
+        other_session = ClassSession.objects.create(
+            title='Cross de outro responsável',
+            coach=self.owner,
+            scheduled_at=self.session.scheduled_at + timedelta(hours=1),
+            duration_minutes=60,
+            capacity=16,
+        )
+        workout = SessionWorkout.objects.create(
+            session=other_session,
+            title='WOD protegido',
+            status=SessionWorkoutStatus.DRAFT,
+            created_by=self.owner,
+        )
+
+        response = self.client.post(
+            reverse('workout-planner-delete-selected-workout', args=[other_session.id]),
+            data={'week': other_session.scheduled_at.date().isoformat()},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(SessionWorkout.objects.filter(pk=workout.pk).exists())
+        self.assertContains(response, 'Coach so pode remover WOD da propria aula.')
+
+    def test_planner_will_not_duplicate_previous_slot_from_another_program(self):
+        other_program = WorkoutProgram.objects.create(
+            slug='planner-other-program', name='HYROX customizado',
+        )
+        previous_session = ClassSession.objects.create(
+            title=self.session.title,
+            class_type=self.session.class_type,
+            workout_program=other_program,
+            coach=self.coach,
+            scheduled_at=self.session.scheduled_at - timedelta(days=7),
+            duration_minutes=60,
+            capacity=16,
+        )
+        SessionWorkout.objects.create(
+            session=previous_session,
+            title='WOD da outra modalidade',
+            status=SessionWorkoutStatus.PUBLISHED,
+            created_by=self.coach,
+        )
+        self.login_as_owner()
+
+        response = self.client.post(
+            reverse('workout-planner-duplicate-previous-slot', args=[self.session.id]),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SessionWorkout.objects.filter(session=self.session).exists())
+        self.assertContains(response, 'Nao encontramos WOD do slot anterior para duplicar.')
 
     def test_coach_can_delete_selected_workout_from_planner(self):
         workout = SessionWorkout.objects.create(

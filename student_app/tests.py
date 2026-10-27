@@ -2453,6 +2453,74 @@ class StudentAppExperienceTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertNotIn('evil.example.com', response['Location'])
 
+    def test_student_wod_escapes_pasted_markup_and_omits_unsafe_movement_urls(self):
+        MovementLibrary.objects.create(
+            slug='deadlift',
+            label_pt='Deadlift',
+            reference_url='javascript:alert(1)',
+            demo_video_url='data:text/html,<script>alert(1)</script>',
+        )
+        MovementLibrary.objects.create(
+            slug='box-jump', label_pt='Box jump',
+            reference_url='https://example.test/box-jump',
+            demo_video_url='https://video.example.test/box-jump',
+        )
+        session = ClassSession.objects.create(
+            title='<script>window.pwned=1</script>',
+            scheduled_at=timezone.now() + timedelta(minutes=15),
+            status='open',
+        )
+        Attendance.objects.create(
+            student=self.student, session=session, status=AttendanceStatus.BOOKED,
+        )
+        workout = SessionWorkout.objects.create(
+            session=session,
+            title='<img src=x onerror=alert(1)>',
+            coach_notes='<svg onload=alert(1)>',
+            status=SessionWorkoutStatus.PUBLISHED,
+            is_normalized=True,
+        )
+        block = SessionWorkoutBlock.objects.create(
+            workout=workout,
+            kind=WorkoutBlockKind.STRENGTH,
+            title='<script>alert(1)</script>',
+            notes='<iframe src=javascript:alert(1)>',
+            sort_order=1,
+        )
+        SessionWorkoutMovement.objects.create(
+            block=block,
+            movement_slug='deadlift',
+            movement_label='<img src=x onerror=alert(1)>',
+            sets=3,
+            reps=5,
+            load_type=WorkoutLoadType.FIXED_KG,
+            load_value=Decimal('60.00'),
+            notes='<script>alert(1)</script>',
+            sort_order=1,
+        )
+        SessionWorkoutMovement.objects.create(
+            block=block,
+            movement_slug='box_jump',
+            movement_label='Box jump',
+            sets=3,
+            reps=5,
+            load_type=WorkoutLoadType.FREE,
+            sort_order=2,
+        )
+
+        response = self.client.get(reverse('student-app-wod'), {'session_id': session.pk})
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('&lt;script&gt;window.pwned=1&lt;/script&gt;', html)
+        self.assertIn('&lt;img src=x onerror=alert(1)&gt;', html)
+        self.assertNotIn('<script>window.pwned=1</script>', html)
+        self.assertNotIn('href="javascript:alert(1)"', html)
+        self.assertNotIn('href="data:text/html', html)
+        self.assertIn('href="https://example.test/box-jump"', html)
+        self.assertIn('href="https://video.example.test/box-jump"', html)
+
+
 
 class PublicWorkoutPwaTests(TestCase):
     # NOTA (Entrega 4, corte pra workout.html): esta classe nunca chama
