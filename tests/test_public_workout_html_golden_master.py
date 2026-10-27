@@ -268,7 +268,6 @@ def normalize_html(html: str, *, csrf_token: str | None = None) -> str:
 
 @override_settings(
     STATIC_ASSET_VERSION='golden',
-    PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS=frozenset(),
     STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY='golden-vapid-public-key',
     STUDENT_WEB_PUSH_VAPID_PRIVATE_KEY='golden-vapid-private-key',
     STUDENT_WEB_PUSH_VAPID_CLAIMS_SUBJECT='mailto:golden@example.test',

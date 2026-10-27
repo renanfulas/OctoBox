@@ -29,7 +29,6 @@ from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import redirect
-from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 from django.views.generic import View
 
@@ -55,244 +54,12 @@ from .public_workout_access import (
 )
 
 
-# Presente em qualquer pagina que estenda public_workouts/_base.html —
-# usado para distinguir template convertido de arquivo legado (ver baixo).
-_SHARED_BASE_MARKER = 'id="public-workout-install"'
-
-_LEGACY_VIEWPORT_MARKERS = (
-    '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">',
-    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-)
-
-_LEGACY_INSTALL_PROMPT_MARKUP = """
-<style>
-.public-workout-install{
-  position:fixed;
-  right:16px;
-  bottom:16px;
-  z-index:9999;
-  display:none;
-  align-items:center;
-  gap:10px;
-  max-width:min(320px,calc(100vw - 32px));
-  padding:12px 14px;
-  border-radius:18px;
-  background:rgba(17,32,59,.94);
-  color:#fff;
-  box-shadow:0 16px 34px rgba(15,23,42,.28);
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-}
-.public-workout-install.is-visible{display:flex}
-.public-workout-install__copy{font-size:13px;line-height:1.35}
-.public-workout-install__button{
-  border:0;
-  border-radius:999px;
-  padding:10px 14px;
-  background:#f5efe4;
-  color:#11203b;
-  font-weight:700;
-  font-size:13px;
-  cursor:pointer;
-  white-space:nowrap;
-}
-@media (max-width: 640px){
-  .public-workout-install{
-    left:12px;
-    right:12px;
-    bottom:12px;
-    max-width:none;
-  }
-}
-</style>
-<div class="public-workout-install" id="public-workout-install" aria-live="polite">
-  <div class="public-workout-install__copy" id="public-workout-install-copy"></div>
-  <button class="public-workout-install__button" id="public-workout-install-button" type="button"></button>
-</div>
-""".strip()
-
-_LEGACY_SW_REGISTRATION_SCRIPT = """
-<script>
-(function () {
-  var installPrompt = null;
-  var installRoot = document.getElementById('public-workout-install');
-  var installCopy = document.getElementById('public-workout-install-copy');
-  var installButton = document.getElementById('public-workout-install-button');
-  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  var isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
-
-  function showInstall(copy, buttonLabel, onClick) {
-    if (!installRoot || !installCopy || !installButton || isStandalone) {
-      return;
-    }
-    installCopy.textContent = copy;
-    installButton.textContent = buttonLabel;
-    installButton.onclick = onClick;
-    installRoot.classList.add('is-visible');
-  }
-
-  if (!('serviceWorker' in navigator)) {
-    if (isIos) {
-      showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar \\u00e0 Tela de In\\u00edcio.', 'Entendi', function () {
-        installRoot.classList.remove('is-visible');
-      });
-    }
-    return;
-  }
-
-  if (isIos) {
-    showInstall('No iPhone/iPad, toque em Compartilhar e depois em Adicionar \\u00e0 Tela de In\\u00edcio.', 'Entendi', function () {
-      installRoot.classList.remove('is-visible');
-    });
-  }
-
-  window.addEventListener('beforeinstallprompt', function (event) {
-    event.preventDefault();
-    installPrompt = event;
-    showInstall('Instale este treino na tela inicial para abrir como app, sem login.', 'Instalar app', function () {
-      if (!installPrompt) {
-        return;
-      }
-      installPrompt.prompt();
-      installPrompt.userChoice.finally(function () {
-        installPrompt = null;
-        installRoot.classList.remove('is-visible');
-      });
-    });
-  });
-
-  window.addEventListener('appinstalled', function () {
-    if (installRoot) {
-      installRoot.classList.remove('is-visible');
-    }
-  });
-
-  window.addEventListener('load', function () {
-    var ownSlug = (document.body.getAttribute('data-plan-slug') || '');
-    navigator.serviceWorker
-      .register('/renan/sw.js?slug=' + encodeURIComponent(ownSlug), { scope: '/renan/' })
-      .catch(function () {
-        // O treino continua abrindo mesmo sem o service worker.
-      });
-  });
-})();
-</script>
-""".strip()
-
-
-def _inject_public_workout_pwa(html: str, plan: PublicWorkoutPlan, asset_version: str) -> str:
-    """Injeta manifest, instalacao e service worker em shells legados.
-
-    O template unificado inclui esses recursos diretamente; esta funcao
-    atende aos arquivos HTML antigos que nao compartilham uma base.
-
-    Tambem injeta CSS/JS da aba Avaliacoes (public_workouts app): arquivos
-    legados nao consomem `stylesheet_urls`/`app.js` do design system
-    compartilhado (nao tem `{% for %}` nenhum, sao HTML cru), entao esses
-    dois assets especificos precisam de link/script proprios aqui — e
-    `data-plan-slug` no <body>, que e como assessments.js descobre qual
-    plano buscar em /renan/<slug>/avaliacoes.json.
-    """
-    head_injection_lines = [
-        f'<meta name="theme-color" content="{plan.theme_color}">',
-        '<meta name="mobile-web-app-capable" content="yes">',
-        '<meta name="apple-mobile-web-app-capable" content="yes">',
-        '<meta name="apple-mobile-web-app-status-bar-style" content="default">',
-        f'<meta name="apple-mobile-web-app-title" content="{plan.title}">',
-        f'<link rel="manifest" href="{plan.manifest_url}">',
-        f'<link rel="apple-touch-icon" href="{PUBLIC_WORKOUT_APPLE_TOUCH_ICON}">',
-        '<link rel="icon" href="/static/images/student-app-icon.svg" type="image/svg+xml">',
-        f'<link rel="icon" href="{PUBLIC_WORKOUT_ICON_192}" sizes="192x192" type="image/png">',
-    ]
-    # Entrega 4: workout.html (template unico) ja inclui assessments.css
-    # direto no <head> via {% static %} — injetar de novo duplicaria o
-    # <link>. Os 10 arquivos legados nunca tem essa string (e por isso esta
-    # injecao existe), entao a guarda nao muda nada pra eles.
-    if 'assessments.css' not in html:
-        head_injection_lines.append(
-            f'<link rel="stylesheet" href="/static/css/public_workouts/assessments.css?v={asset_version}">'
-        )
-    head_injection = '\n'.join(head_injection_lines)
-    for marker in _LEGACY_VIEWPORT_MARKERS:
-        if marker in html:
-            html = html.replace(marker, f'{marker}\n{head_injection}', 1)
-            break
-
-    if 'data-plan-slug=' not in html:
-        html = html.replace('<body>', f'<body data-plan-slug="{plan.slug}">', 1)
-
-    if "navigator.serviceWorker.register('/renan/sw.js'" not in html:
-        html = html.replace(
-            '</body>',
-            f'{_LEGACY_INSTALL_PROMPT_MARKUP}\n{_LEGACY_SW_REGISTRATION_SCRIPT}\n</body>',
-            1,
-        )
-
-    if 'assessments-report.js' not in html:
-        html = html.replace(
-            '</body>',
-            f'<script src="/static/js/public_workouts/assessments-report.js?v={asset_version}"></script>\n</body>',
-            1,
-        )
-    if 'assessments.js' not in html:
-        html = html.replace(
-            '</body>',
-            f'<script src="/static/js/public_workouts/assessments.js?v={asset_version}"></script>\n</body>',
-            1,
-        )
-    return html
-
-
-def _render_legacy_template_html(plan_slug: str) -> str:
-    """Renderiza a pagina do plano a partir do arquivo HTML por-cliente
-    (bruno.html etc.) — mecanismo original, mantido para os slugs que
-    ainda nao foram cortados pra `workout.html` (ver `_legacy_template_slugs`).
-
-    O <head>, o prompt de instalacao e o registro do service worker vem
-    de public_workouts/_base.html PARA TEMPLATES CONVERTIDOS. Arquivos
-    ainda nao convertidos (ver `_inject_legacy_pwa_head`) continuam
-    recebendo isso por substituicao de string, como era antes.
-
-    render_to_string SEM request de proposito: render(request, ...)
-    dispararia access.context_processors.role_navigation, que consulta o
-    banco com usuario anonimo no schema public. Ver pwa_views.py.
-    """
-    plan = _get_public_workout_entry(plan_slug)
-    asset_version = public_workout_asset_version()
-    try:
-        html = render_to_string(
-            f'public_workouts/{plan.template_file}',
-            {
-                'plan': plan,
-                'stylesheet_urls': PUBLIC_WORKOUT_STYLESHEETS,
-                'static_asset_version': asset_version,
-                'apple_touch_icon': PUBLIC_WORKOUT_APPLE_TOUCH_ICON,
-                'icon_192': PUBLIC_WORKOUT_ICON_192,
-            },
-        )
-    except TemplateDoesNotExist:
-        raise Http404('Arquivo de treino publico indisponivel.')
-
-    if _SHARED_BASE_MARKER not in html:
-        html = _inject_public_workout_pwa(html, plan, asset_version)
-    return html
-
-
-def _legacy_template_slugs() -> frozenset[str]:
-    """Escape hatch de rollout canario / kill switch (Entrega 4): slug
-    listado aqui continua no arquivo legado mesmo com `PublicWorkoutProgram`
-    ativo. Reverte por env var + restart, sem deploy — ver
-    `PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS` em config/settings/base.py."""
-    return getattr(settings, 'PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS', frozenset())
-
-
 def _render_public_workout_html(
-    plan_slug: str, *, account_id: int | None = None, push_identity_verified: bool = False,
+    plan_slug: str, *, account_id: int | None = None,
 ) -> str:
-    """Renderiza `/renan/<slug>` — Entrega 4: template unico
-    (`public_workouts/workout.html`) quando o slug tem `PublicWorkoutProgram`
-    ativo e nao esta na lista de escape; senao cai no arquivo legado
-    por-cliente (`_render_legacy_template_html`), mesmo comportamento de
-    sempre.
+    """Renderiza `/renan/<slug>` pelo template unico (`public_workouts/workout.html`).
+    Os arquivos HTML por aluno foram removidos: sem `PublicWorkoutProgram`
+    ativo nao ha pagina (PublicWorkoutDetailView leva o dono a Minha conta).
 
     Import tardio de `public_workouts.services`: este modulo e importado
     POR `public_workouts` (`PUBLIC_WORKOUT_LIBRARY`), um import no topo
@@ -319,8 +86,8 @@ def _render_public_workout_html(
     )
 
     program = get_active_program(slug=plan.slug)
-    if program is None or plan.slug in _legacy_template_slugs():
-        return _render_legacy_template_html(plan_slug)
+    if program is None:
+        raise Http404('Treino publico nao encontrado.')
 
     guided_session = None
     if account_id is not None:
@@ -421,7 +188,6 @@ def _render_public_workout_html(
         'show_onboarding_wizard': show_onboarding_wizard,
         'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
         'push_configured': curva_push_configured(),
-        'push_identity_verified': push_identity_verified,
     })
 
 
@@ -505,11 +271,20 @@ class PublicWorkoutDetailView(View):
             response = _private_public_workout_response(_render_payment_blocked_html(plan))
             return renew_public_workout_session_cookie_if_stale(request, response)
 
+        from public_workouts.services import get_active_program
+
+        if get_active_program(slug=plan.slug) is None:
+            # Pago e logado, mas o programa ainda nao foi publicado: Minha conta
+            # mostra "programa em preparacao" em vez de uma pagina vazia.
+            response = redirect('public-workout-account')
+            response['X-Robots-Tag'] = 'noindex, nofollow'
+            return response
+
         # O cliente do PWA envia POSTs JSON para sessão/push via cookie CSRF.
         # Força o cookie também nas páginas renderizadas por render_to_string.
         get_token(request)
         response = _private_public_workout_response(_render_public_workout_html(
-            plan_slug, account_id=account_id, push_identity_verified=True,
+            plan_slug, account_id=account_id,
         ))
         opened_subscription = PublicWorkoutSubscription.objects.select_related('account').filter(
             plan_slug=plan.slug, account_id=account_id,

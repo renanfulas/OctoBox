@@ -191,5 +191,5 @@ class Command(BaseCommand):
         if missing_slugs:
             self.stdout.write(self.style.WARNING(
                 f'{len(missing_slugs)} slug(s) classificado(s) aqui nao existem em PublicWorkoutMovement ainda '
-                f'(rode extract_movements_from_html primeiro): {sorted(missing_slugs)}'
+                f'(cadastre-os no admin de movimentos antes): {sorted(missing_slugs)}'
             ))
