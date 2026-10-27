@@ -15,7 +15,7 @@ PONTOS CRITICOS:
 from django.urls import path
 
 from .finance_views import PaymentBulkActionView, PaymentLinkView, StudentFreezeView
-from .integrations_views import WhatsAppPollWebhookView
+from .integrations_views import ResendPaymentNotificationWebhookView, WhatsAppPollWebhookView
 from .jobs_views import SecureExportDownloadView
 from knowledge.views import (
     ProjectKnowledgeAnswerView,
@@ -42,6 +42,7 @@ urlpatterns = [
     path('finance/payments/bulk-action/', PaymentBulkActionView.as_view(), name='api-v1-finance-payments-bulk'),
     path('integrations/whatsapp/webhook/poll-vote/', WhatsAppPollWebhookView.as_view(), name='api-v1-whatsapp-poll-webhook'),
     path('integrations/resend/webhook/student-invitations/', ResendInvitationWebhookView.as_view(), name='api-v1-resend-student-invitations-webhook'),
+    path('integrations/resend/webhook/payment-notifications/', ResendPaymentNotificationWebhookView.as_view(), name='api-v1-resend-payment-notifications-webhook'),
     path('project-rag/health/', ProjectKnowledgeHealthView.as_view(), name='api-v1-project-rag-health'),
     path('project-rag/search/', ProjectKnowledgeSearchView.as_view(), name='api-v1-project-rag-search'),
     path('project-rag/answer/', ProjectKnowledgeAnswerView.as_view(), name='api-v1-project-rag-answer'),

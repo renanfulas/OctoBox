@@ -16,11 +16,12 @@ from unittest.mock import patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils import timezone
 
-from api.v1.integrations_views import WhatsAppPollWebhookView
+from api.v1.integrations_views import ResendPaymentNotificationWebhookView, WhatsAppPollWebhookView
 from integrations.whatsapp.webhook_auth import (
     AuthenticatedPollRoute,
     canonical_poll_webhook_message,
 )
+from student_identity.resend_webhooks import ResendWebhookHeaders
 
 
 @override_settings(ALLOWED_HOSTS=['testserver'])
@@ -80,6 +81,47 @@ class ApiV1IntegrationsViewsTests(TestCase):
         self.assertEqual(response['Retry-After'], '60')
         schema_context_mock.assert_not_called()
         process_poll_vote_mock.assert_not_called()
+
+    @patch('api.v1.integrations_views.process_resend_payment_notification_webhook')
+    def test_resend_payment_webhook_passes_raw_body_and_svix_headers(self, process_mock):
+        process_mock.return_value = {'accepted': True, 'reason': 'processed'}
+        raw_body = b'{"type":"email.delivered"}'
+        request = self.factory.post(
+            '/api/v1/integrations/resend/webhook/payment-notifications/',
+            data=raw_body,
+            content_type='application/json',
+            HTTP_SVIX_ID='evt_123',
+            HTTP_SVIX_TIMESTAMP='1782200000',
+            HTTP_SVIX_SIGNATURE='v1,signature',
+        )
+
+        response = ResendPaymentNotificationWebhookView.as_view()(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content), {'accepted': True, 'reason': 'processed'})
+        process_mock.assert_called_once_with(
+            payload=raw_body,
+            headers=ResendWebhookHeaders(
+                webhook_id='evt_123', timestamp='1782200000', signature='v1,signature',
+            ),
+        )
+
+    @override_settings(PAYMENT_NOTIFICATION_RESEND_WEBHOOK_SECRET='whsec_test_secret')
+    def test_resend_payment_webhook_rejects_invalid_signature(self):
+        timestamp = str(int(timezone.now().timestamp()))
+        request = self.factory.post(
+            '/api/v1/integrations/resend/webhook/payment-notifications/',
+            data=b'{}',
+            content_type='application/json',
+            HTTP_SVIX_ID='evt_invalid',
+            HTTP_SVIX_TIMESTAMP=timestamp,
+            HTTP_SVIX_SIGNATURE='v1,invalid',
+        )
+
+        response = ResendPaymentNotificationWebhookView.as_view()(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(json.loads(response.content)['reason'], 'signature-mismatch')
 
     @patch('api.v1.integrations_views.process_poll_vote_webhook')
     @patch('api.v1.integrations_views.Box.objects.filter')

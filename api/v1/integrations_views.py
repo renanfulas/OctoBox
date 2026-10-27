@@ -16,10 +16,17 @@ from django.views.decorators.csrf import csrf_exempt
 from django_tenants.utils import get_public_schema_name, schema_context
 
 from control.models import Box
+from control.tenant_write_fence import TenantFenceTargetMissing, TenantWritesFrozen
+from finance.notification_webhooks import (
+    ResendPaymentWebhookConflict,
+    ResendPaymentWebhookTenantUnresolved,
+    process_resend_payment_notification_webhook,
+)
 from integrations.mesh import classify_invalid_payload, build_correlation_id
 from integrations.whatsapp.contracts import WhatsAppInboundPollVote
 from integrations.whatsapp.services import process_poll_vote_webhook
 from integrations.whatsapp.webhook_auth import MAX_POLL_WEBHOOK_BODY_BYTES, authenticate_poll_webhook
+from student_identity.resend_webhooks import ResendWebhookHeaders, ResendWebhookVerificationError
 
 
 def _resolve_request_correlation_id(request, data: dict | None = None) -> str:
@@ -165,3 +172,37 @@ class WhatsAppPollWebhookView(View):
             response['Retry-After'] = str(retry_seconds)
         response['X-OctoBox-Correlation-Id'] = correlation_id
         return response
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ResendPaymentNotificationWebhookView(View):
+    """Accept only signed Resend receipts and resolve their tenant by send tags."""
+
+    MAX_BODY_BYTES = 262144
+
+    def post(self, request, *args, **kwargs):
+        content_length = request.META.get('CONTENT_LENGTH', '')
+        if content_length.isdigit() and int(content_length) > self.MAX_BODY_BYTES:
+            return JsonResponse({'accepted': False, 'reason': 'payload-too-large'}, status=413)
+        raw_body = request.body
+        if len(raw_body) > self.MAX_BODY_BYTES:
+            return JsonResponse({'accepted': False, 'reason': 'payload-too-large'}, status=413)
+
+        headers = ResendWebhookHeaders(
+            webhook_id=request.headers.get('svix-id', '').strip(),
+            timestamp=request.headers.get('svix-timestamp', '').strip(),
+            signature=request.headers.get('svix-signature', '').strip(),
+        )
+        if not headers.webhook_id or not headers.timestamp or not headers.signature:
+            return JsonResponse({'accepted': False, 'reason': 'missing-signature-headers'}, status=400)
+        try:
+            result = process_resend_payment_notification_webhook(payload=raw_body, headers=headers)
+        except ResendWebhookVerificationError as exc:
+            return JsonResponse({'accepted': False, 'reason': str(exc)}, status=400)
+        except ResendPaymentWebhookConflict as exc:
+            return JsonResponse({'accepted': False, 'reason': str(exc)}, status=409)
+        except (ResendPaymentWebhookTenantUnresolved, TenantFenceTargetMissing, TenantWritesFrozen):
+            response = JsonResponse({'accepted': False, 'reason': 'tenant-temporarily-unavailable'}, status=503)
+            response['Retry-After'] = '60'
+            return response
+        return JsonResponse(result, status=200)

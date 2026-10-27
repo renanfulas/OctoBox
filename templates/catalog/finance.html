@@ -50,6 +50,75 @@ PONTOS CRITICOS:
         </div>
     </section>
 
+    {% with diagnostics=payment_notification_diagnostics %}
+    <section class="card card--support section-gap" aria-labelledby="payment-notification-diagnostics-title" data-panel="payment-notification-diagnostics">
+        <div class="card-header">
+            <div>
+                <h2 id="payment-notification-diagnostics-title">{{ diagnostics.title }}</h2>
+                <p>{{ diagnostics.summary }}</p>
+            </div>
+        </div>
+        <ul aria-label="Estado dos canais e da confirmação de entrega">
+            {% for channel in diagnostics.channels %}
+            <li data-channel="{{ channel.key }}" data-status="{{ channel.status }}">
+                <strong>{{ channel.label }}</strong>: {{ channel.status_label }}
+                <span data-delivery-receipt="{{ channel.delivery_receipt.status }}">
+                    Confirmação de entrega: {{ channel.delivery_receipt.status_label }}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        <p>{{ diagnostics.recipient_note }}</p>
+    </section>
+    {% endwith %}
+
+    {% with operations=payment_notification_operations %}
+    <section class="card card--support section-gap" aria-labelledby="payment-notification-operations-title" data-panel="payment-notification-operations">
+        <div class="card-header">
+            <div>
+                <h2 id="payment-notification-operations-title">Acompanhamento das confirmações</h2>
+                <p>Os estados distinguem processamento, aceite do provedor e resultado que exige conferência.</p>
+            </div>
+        </div>
+        <ul aria-label="Totais das confirmações financeiras">
+            <li>Pendentes: {{ operations.status_counts.pending }}</li>
+            <li>Em processamento: {{ operations.status_counts.leased }}</li>
+            <li>Aceitas pelo provedor: {{ operations.status_counts.provider_accepted }}</li>
+            <li>Aguardando rechecagem: {{ operations.status_counts.retry_wait }}</li>
+            <li>Resultado desconhecido: {{ operations.status_counts.unknown }}</li>
+            <li>Falha definitiva: {{ operations.status_counts.failed }}</li>
+        </ul>
+        <p data-metric="oldest-queued-age">
+            Item pendente mais antigo:
+            {% if operations.oldest_queued_age_seconds != None %}{{ operations.oldest_queued_age_seconds }} segundos{% else %}nenhum{% endif %}
+        </p>
+        <p data-metric="duplicate-suppressed-attempts">
+            Replays de intenção suprimidos: {{ operations.duplicate_suppressed_attempts }}
+        </p>
+        {% if operations.attention_by_channel %}
+        <ul aria-label="Falhas e resultados desconhecidos por canal">
+            {% for channel, total in operations.attention_by_channel.items %}
+            <li>{{ channel }}: {{ total }} para conferência</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        <h3>Fila para conferência</h3>
+        {% if operations.attention_items %}
+        <ul aria-label="Entregas financeiras para conferência">
+            {% for item in operations.attention_items %}
+            <li data-delivery-id="{{ item.delivery_id }}" data-status-label="{{ item.status_label }}">
+                <strong>{{ item.status_label }}</strong> · {{ item.channel_label }} · cobrança {{ item.payment_id|default:'removida' }} · motivo {{ item.reason_code }} · {{ item.updated_at|date:'d/m/Y H:i' }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% if operations.attention_truncated %}<p>Exibindo as entregas mais antigas; há mais itens para conferência.</p>{% endif %}
+        {% else %}
+        <p>Nenhuma entrega precisa de conferência agora.</p>
+        {% endif %}
+        <p>“Resultado desconhecido” e “falha definitiva” não oferecem reenvio automático. Confira o provedor e o pagamento antes de qualquer ação manual.</p>
+    </section>
+    {% endwith %}
+
     <div class="interactive-tab-container" data-default-panel="{{ page.behavior.default_panel }}">
         <div class="stack-16 deferred-surface deferred-surface--dense{% if page.behavior.default_panel == 'tab-finance-movements' %} is-tab-active{% endif %}" id="tab-finance-movements" data-mode-surface="traditional" aria-label="Raio-X financeiro">
             {% include "includes/catalog/finance/boards/trend_boards.html" %}

@@ -11,7 +11,7 @@ import uuid
 from datetime import timedelta
 
 from django.db import connection, transaction
-from django.conf import settings
+from django.db.models import F
 from django.utils import timezone
 
 from finance.models import PaymentNotificationDelivery, PaymentNotificationDeliveryStatus, PaymentStatus
@@ -49,6 +49,18 @@ def enqueue_payment_confirmation(payment) -> int:
             },
         )
         created_count += int(created)
+        if not created:
+            # Keep a tenant-local, durable count of idempotent enqueue replays.
+            # This is operational evidence only; it never changes send state.
+            PaymentNotificationDelivery.objects.filter(
+                logical_event_key=event_key,
+                channel=channel,
+                recipient_key=recipient_key,
+                message_version=1,
+            ).update(
+                duplicate_suppressed_count=F('duplicate_suppressed_count') + 1,
+                updated_at=timezone.now(),
+            )
 
     student_key = f'student:{payment.student_id}'
     email = (getattr(payment.student, 'email', '') or '').strip()
@@ -209,15 +221,10 @@ def dispatch_claimed_payment_notification_delivery(*, delivery_id, lease_token, 
 
 
 def _email_is_configured() -> bool:
-    provider = (getattr(settings, 'STUDENT_EMAIL_PROVIDER', 'smtp') or 'smtp').strip().lower()
-    from_email = (getattr(settings, 'STUDENT_EMAIL_FROM', '') or '').strip()
-    if provider == 'resend':
-        return bool((getattr(settings, 'STUDENT_RESEND_API_KEY', '') or '').strip() and from_email)
-    return bool(
-        provider == 'smtp'
-        and from_email
-        and (getattr(settings, 'EMAIL_HOST', '') or '').strip().lower() not in {'', 'localhost'}
-    )
+    from finance.notification_diagnostics import build_payment_notification_diagnostics
+
+    channels = {item['key']: item for item in build_payment_notification_diagnostics()['channels']}
+    return channels['email']['status'] == 'configured'
 
 
 def _push_is_configured() -> bool:

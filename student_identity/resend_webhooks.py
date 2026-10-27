@@ -62,8 +62,12 @@ def _verify_timestamp(timestamp: str) -> None:
         raise ResendWebhookVerificationError('timestamp-out-of-window')
 
 
-def verify_resend_webhook_signature(*, payload: bytes, headers: ResendWebhookHeaders) -> None:
-    secret = _get_webhook_secret()
+def verify_resend_webhook_signature(
+    *, payload: bytes, headers: ResendWebhookHeaders, webhook_secret: str | None = None,
+) -> None:
+    # Convites continuam usando o segredo histórico; integrações com endpoint
+    # próprio podem fornecer o signing secret dedicado sem compartilhar credenciais.
+    secret = (webhook_secret if webhook_secret is not None else _get_webhook_secret()).strip()
     if not secret:
         raise ResendWebhookVerificationError('webhook-secret-missing')
 
