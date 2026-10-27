@@ -21,6 +21,8 @@ from finance.model_definitions import (
     MembershipPlan,
     Payment,
     PaymentMethod,
+    PaymentNotificationDelivery,
+    PaymentNotificationDeliveryStatus,
     PaymentStatus,
 )
 
@@ -33,5 +35,7 @@ __all__ = [
     'MembershipPlan',
     'Payment',
     'PaymentMethod',
+    'PaymentNotificationDelivery',
+    'PaymentNotificationDeliveryStatus',
     'PaymentStatus',
 ]

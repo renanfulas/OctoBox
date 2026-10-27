@@ -75,6 +75,17 @@ class FinanceFollowUpOutcomeStatus(models.TextChoices):
     EXPIRED = 'expired', 'Expirado'
 
 
+class PaymentNotificationDeliveryStatus(models.TextChoices):
+    PENDING = 'pending', 'Pendente'
+    LEASED = 'leased', 'Reservado'
+    PROVIDER_ACCEPTED = 'provider_accepted', 'Aceito pelo provedor'
+    DELIVERED = 'delivered', 'Entregue'
+    RETRY_WAIT = 'retry_wait', 'Aguardando nova tentativa'
+    UNKNOWN = 'unknown', 'Resultado desconhecido'
+    FAILED = 'failed', 'Falhou'
+    SKIPPED = 'skipped', 'Ignorado'
+
+
 class MembershipPlan(TimeStampedModel):
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -247,6 +258,61 @@ class FinanceFollowUp(TimeStampedModel):
         return f'{self.student} - {self.recommended_action}'
 
 
+class PaymentNotificationDelivery(TimeStampedModel):
+    """Durable, tenant-local intent for one payment notification destination.
+
+    Recipient keys contain only internal student/subscription identifiers;
+    email addresses, phone numbers, push endpoints, and message bodies are not
+    persisted in this delivery record.
+    """
+
+    payment = models.ForeignKey(
+        HISTORICAL_BOXCORE_PAYMENT_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notification_deliveries',
+    )
+    logical_event_key = models.CharField(max_length=128)
+    channel = models.CharField(max_length=16)
+    recipient_key = models.CharField(max_length=96)
+    message_version = models.PositiveSmallIntegerField(default=1)
+    status = models.CharField(
+        max_length=24,
+        choices=PaymentNotificationDeliveryStatus.choices,
+        default=PaymentNotificationDeliveryStatus.PENDING,
+        db_index=True,
+    )
+    reason_code = models.CharField(max_length=64, blank=True)
+    attempt_count = models.PositiveSmallIntegerField(default=0)
+    available_at = models.DateTimeField(default=timezone.now, db_index=True)
+    lease_token = models.UUIDField(null=True, blank=True)
+    lease_expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    provider = models.CharField(max_length=24, blank=True)
+    provider_message_id = models.CharField(max_length=180, blank=True)
+    provider_accepted_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = HISTORICAL_BOXCORE_APP_LABEL
+        ordering = ['available_at', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('logical_event_key', 'channel', 'recipient_key', 'message_version'),
+                name='uniq_payment_notification_delivery_target',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=('status', 'available_at'), name='pnd_status_due_idx'),
+            models.Index(fields=('status', 'lease_expires_at'), name='pnd_lease_exp_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.logical_event_key} {self.channel}:{self.status}'
+
+
 __all__ = [
     'BillingCycle',
     'Enrollment',
@@ -262,5 +328,7 @@ __all__ = [
     'FinanceFollowUpStatus',
     'Payment',
     'PaymentMethod',
+    'PaymentNotificationDelivery',
+    'PaymentNotificationDeliveryStatus',
     'PaymentStatus',
 ]
