@@ -102,10 +102,16 @@ class HandleStudentSpecialOauthJourneyBoxInviteLinkTest(TestCase):
         repository.consume_box_invite_slot.assert_not_called()
         mock_record_event.assert_called_once()
 
-    def test_success_redirects_home_and_ignores_failure_reason(self):
+    @patch('student_identity.oauth_journeys.record_student_onboarding_event')
+    def test_success_redirects_home_and_ignores_failure_reason(self, mock_record_event):
         box_invite_link = _make_box_invite_link()
         repository = _make_repository(box_invite_link=box_invite_link)
-        identity_record = SimpleNamespace(id=7, box_root_slug='box-b')
+        identity_record = SimpleNamespace(
+            id=7,
+            box_root_slug='box-b',
+            student_id=42,
+            student_name='Aluno de teste',
+        )
         result = StudentIdentityAuthResult(success=True, identity=identity_record)
 
         response = handle_student_special_oauth_journey(
@@ -120,3 +126,4 @@ class HandleStudentSpecialOauthJourneyBoxInviteLinkTest(TestCase):
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, 302)
         repository.record_box_invite_acceptance.assert_not_called()
+        mock_record_event.assert_called_once()
