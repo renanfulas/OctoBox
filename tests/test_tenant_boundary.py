@@ -812,7 +812,7 @@ class WebhookIdempotencyPublicSchemaTest(SimpleTestCase):
         """Para /api/v1/integrations/*, middleware chama set_schema_to_public()."""
         factory = RequestFactory()
         request = factory.post(
-            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            '/api/v1/integrations/stripe/webhook/',
             data=json.dumps({'event_id': 'evt_test'}),
             content_type='application/json',
         )
@@ -830,6 +830,21 @@ class WebhookIdempotencyPublicSchemaTest(SimpleTestCase):
             middleware(request)
 
             mock_conn.set_schema_to_public.assert_called_once()
+
+    def test_poll_vote_keeps_tenant_schema_for_tenant_local_idempotency(self):
+        factory = RequestFactory()
+        request = factory.post(
+            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            data=json.dumps({'event_id': 'evt_tenant_local'}),
+            content_type='application/json',
+        )
+        get_response = MagicMock(return_value=JsonResponse({}))
+        middleware = WebhookIdempotencyMiddleware(get_response)
+
+        with patch('django.db.connection') as mock_conn:
+            middleware(request)
+
+            mock_conn.set_schema_to_public.assert_not_called()
 
     def test_non_webhook_path_does_not_call_set_public(self):
         """Para paths que nao sao de webhook, nao chama set_schema_to_public."""

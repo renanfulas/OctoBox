@@ -38,7 +38,7 @@ class WebhookIdempotencyMiddleware:
             # idempotency. The legacy public fingerprint could otherwise
             # suppress the same external event across two different Boxes.
             if request.path_info.rstrip('/') == '/api/v1/integrations/whatsapp/webhook/poll-vote':
-                return self.get_response(request)
+                return self.process_webhook(request, skip_dedupe=True)
 
             # Sprint 4 / §13.1 fix: WebhookEvent fica em public (SHARED_APPS).
             # Força reset para public ANTES da query de idempotência, evitando herança
@@ -52,7 +52,7 @@ class WebhookIdempotencyMiddleware:
 
         return self.get_response(request)
 
-    def process_webhook(self, request):
+    def process_webhook(self, request, *, skip_dedupe=False):
         fingerprint = None
         correlation_id = build_correlation_id(
             request.headers.get('X-Correlation-ID') or request.headers.get('X-Request-ID') or ''
@@ -87,7 +87,7 @@ class WebhookIdempotencyMiddleware:
             query |= Q(webhook_fingerprint=fingerprint)
 
         existing_event = False
-        if _webhook_event_table_available():
+        if not skip_dedupe and _webhook_event_table_available():
             try:
                 existing_event = WebhookEvent.objects.filter(
                     query,

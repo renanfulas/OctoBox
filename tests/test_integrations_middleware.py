@@ -31,7 +31,7 @@ class IntegrationsMiddlewareTests(SimpleTestCase):
         build_correlation_id_mock.return_value = 'corr-webhook-1'
         webhook_filter_mock.return_value.exists.return_value = False
         request = self.factory.post(
-            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            '/api/v1/integrations/stripe/webhook/',
             data=json.dumps({'event_id': 'evt-1'}),
             content_type='application/json',
         )
@@ -55,7 +55,7 @@ class IntegrationsMiddlewareTests(SimpleTestCase):
         build_correlation_id_mock.return_value = 'corr-webhook-2'
         webhook_filter_mock.return_value.exists.return_value = True
         request = self.factory.post(
-            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            '/api/v1/integrations/stripe/webhook/',
             data=json.dumps({'event_id': 'evt-77', 'external_id': 'ext-77'}),
             content_type='application/json',
         )
@@ -78,7 +78,7 @@ class IntegrationsMiddlewareTests(SimpleTestCase):
         webhook_table_available_mock.return_value = False
         build_correlation_id_mock.return_value = 'corr-webhook-3'
         request = self.factory.post(
-            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            '/api/v1/integrations/stripe/webhook/',
             data=json.dumps({'event_id': 'evt-missing-table'}),
             content_type='application/json',
         )
@@ -89,3 +89,28 @@ class IntegrationsMiddlewareTests(SimpleTestCase):
         webhook_filter_mock.assert_not_called()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['X-OctoBox-Correlation-Id'], 'corr-webhook-3')
+
+    @patch('integrations.middleware.WebhookEvent.objects.filter')
+    @patch('integrations.middleware.build_correlation_id')
+    @patch('integrations.middleware._webhook_event_table_available')
+    def test_poll_vote_skips_global_dedupe_but_keeps_correlation(
+        self,
+        webhook_table_available_mock,
+        build_correlation_id_mock,
+        webhook_filter_mock,
+    ):
+        webhook_table_available_mock.return_value = True
+        build_correlation_id_mock.return_value = 'corr-poll-vote-1'
+        request = self.factory.post(
+            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            data=json.dumps({'event_id': 'evt-tenant-local'}),
+            content_type='application/json',
+        )
+        middleware = WebhookIdempotencyMiddleware(lambda req: JsonResponse({'accepted': True}))
+
+        response = middleware(request)
+
+        webhook_table_available_mock.assert_not_called()
+        webhook_filter_mock.assert_not_called()
+        self.assertEqual(response['X-OctoBox-Correlation-Id'], 'corr-poll-vote-1')
+        self.assertEqual(request.octobox_correlation_id, 'corr-poll-vote-1')
