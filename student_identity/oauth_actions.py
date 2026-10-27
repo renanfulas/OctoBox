@@ -140,10 +140,18 @@ def finalize_student_oauth_callback(
             repository=repository,
             invite_token=(state_payload.get('invite_token') or '').strip(),
         )
+        invite_token = (state_payload.get('invite_token') or '').strip()
+        invitation = repository.find_invitation_by_token(invite_token) if invite_token else None
+        box_invite_link = (
+            repository.find_box_invite_link_by_token(invite_token)
+            if invite_token and invitation is None else None
+        )
         record_student_entry_completed_journey(
             provider=provider,
             result=authentication_result,
             journey=journey,
+            invitation_id=invitation.id if invitation is not None else None,
+            box_invite_link_id=box_invite_link.id if box_invite_link is not None else None,
         )
         messages.success(request, f'Acesso do aluno {authentication_result.identity.student_name} confirmado.')
     return response

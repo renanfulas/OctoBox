@@ -28,7 +28,6 @@ def build_student_invitation_operations_context(view, *, context, **kwargs):
     )
     recommendations = StudentInvitationOperationsRecommendations(
         request=view.request,
-        presenter=presenter,
     )
     box_root_slug = operations_queries.get_box_root_slug()
     active_box_invite_link = operations_queries.get_active_box_invite_link()
