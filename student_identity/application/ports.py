@@ -13,6 +13,9 @@ class StudentIdentityRepositoryPort(Protocol):
     def find_identity_by_id(self, identity_id: int):
         ...
 
+    def find_membership_for_identity_box(self, identity):
+        ...
+
     def find_live_by_student_id(self, student_id: int):
         ...
 
@@ -78,4 +81,16 @@ class StudentIdentityRepositoryPort(Protocol):
         actor_id: int | None,
         reason: str,
     ) -> tuple[StudentIdentityRecord, int]:
+        ...
+
+    def is_same_box(self, *, identity, box_root_slug: str) -> bool:
+        ...
+
+    def is_same_box_reference(
+        self,
+        *,
+        box_id: int | None,
+        box_root_slug: str,
+        target_box_root_slug: str,
+    ) -> bool:
         ...

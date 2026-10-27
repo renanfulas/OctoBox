@@ -30,6 +30,7 @@ import logging
 from dataclasses import dataclass, field
 
 from django_tenants.utils import schema_context
+from control.tenant_write_fence import TenantWritesFrozen, tenant_write_guard
 
 logger = logging.getLogger('octobox.jobs')
 
@@ -39,16 +40,21 @@ class TenantSweepResult:
     """Resultado agregado de uma varredura por tenants."""
 
     schemas_touched: int = 0
+    schemas_skipped: int = 0
     schemas_failed: int = 0
     results: list[tuple[str, object]] = field(default_factory=list)
+    skipped: list[tuple[str, str]] = field(default_factory=list)
     failures: list[tuple[str, str]] = field(default_factory=list)
 
     @property
     def schemas_total(self) -> int:
-        return self.schemas_touched + self.schemas_failed
+        return self.schemas_touched + self.schemas_skipped + self.schemas_failed
 
     def summary_line(self) -> str:
         parts = [f'{self.schemas_touched} schema(s) processado(s)']
+        if self.schemas_skipped:
+            skipped_names = ', '.join(schema for schema, _ in self.skipped)
+            parts.append(f'{self.schemas_skipped} pausado(s) ({skipped_names})')
         if self.schemas_failed:
             failed_names = ', '.join(schema for schema, _ in self.failures)
             parts.append(f'{self.schemas_failed} com falha ({failed_names})')
@@ -80,9 +86,13 @@ def sweep_active_tenants(handler, *, only_schema: str = '', raise_on_error: bool
 
     for box in iter_active_tenant_schemas(only_schema=only_schema):
         try:
-            with schema_context(box.schema_name):
-                sweep.results.append((box.schema_name, handler(box)))
+            with tenant_write_guard(box.schema_name):
+                with schema_context(box.schema_name):
+                    sweep.results.append((box.schema_name, handler(box)))
             sweep.schemas_touched += 1
+        except TenantWritesFrozen:
+            sweep.schemas_skipped += 1
+            sweep.skipped.append((box.schema_name, 'tenant_writes_frozen'))
         except Exception as exc:  # noqa: BLE001 — varredura nao pode morrer por um box
             sweep.schemas_failed += 1
             sweep.failures.append((box.schema_name, repr(exc)))

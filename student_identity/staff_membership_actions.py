@@ -26,6 +26,7 @@ from access.roles import ROLE_RECEPTION
 from auditing.models import AuditEvent
 from shared_support.box_runtime import get_box_runtime_slug
 
+from .box_scope import get_student_identity_box_scope
 from .consent import resolve_onboarding_journey_for_membership
 from .funnel_events import record_student_onboarding_event
 from .infrastructure.repositories import DjangoStudentIdentityRepository
@@ -69,8 +70,8 @@ class StudentInvitationMembershipActionsMixin:
         membership = (
             StudentBoxMembership.objects.select_related('identity')  # Sprint 2: sem 'student' (cross-schema)
             .filter(
+                get_student_identity_box_scope(request).predicate,
                 pk=request.POST.get('membership_id'),
-                box_root_slug=get_box_runtime_slug(),
                 status=StudentBoxMembershipStatus.PENDING_APPROVAL,
             )
             .first()
@@ -103,8 +104,8 @@ class StudentInvitationMembershipActionsMixin:
         return (
             StudentBoxMembership.objects.select_related('identity')  # Sprint 2: sem 'student' (cross-schema)
             .filter(
+                get_student_identity_box_scope(request).predicate,
                 pk=request.POST.get('membership_id'),
-                box_root_slug=get_box_runtime_slug(),
             )
             .first()
         )
@@ -126,9 +127,30 @@ class StudentInvitationMembershipActionsMixin:
             excluded_membership_id=affected_membership.id,
         )
         if fallback_membership is not None:
-            identity.primary_box_root_slug = fallback_membership.box_root_slug
-            identity.box_root_slug = fallback_membership.box_root_slug
-            identity.save(update_fields=['primary_box_root_slug', 'box_root_slug', 'updated_at'])
+            fallback_box = None
+            if isinstance(fallback_membership, StudentBoxMembership):
+                from .box_scope import (
+                    get_student_identity_box_scope_for_box_id,
+                    get_student_identity_box_scope_for_root,
+                )
+
+                fallback_scope = get_student_identity_box_scope_for_box_id(
+                    fallback_membership.box_id
+                ) or get_student_identity_box_scope_for_root(fallback_membership.box_root_slug)
+                fallback_box = fallback_scope.box
+                fallback_root_slug = (
+                    fallback_scope.box_root_slug if fallback_box is not None
+                    else fallback_membership.box_root_slug
+                )
+            else:
+                fallback_root_slug = fallback_membership.box_root_slug
+            identity.box = fallback_box
+            identity.primary_box = fallback_box
+            identity.primary_box_root_slug = fallback_root_slug
+            identity.box_root_slug = fallback_root_slug
+            identity.save(update_fields=[
+                'box', 'primary_box', 'primary_box_root_slug', 'box_root_slug', 'updated_at'
+            ])
 
     def _handle_change_email(self, request):
         denied_response = self._require_action_roles(
@@ -334,10 +356,32 @@ class StudentInvitationMembershipActionsMixin:
                 'updated_at',
             ]
         )
-        if not membership.identity.primary_box_root_slug:
-            membership.identity.primary_box_root_slug = membership.box_root_slug
-            membership.identity.box_root_slug = membership.box_root_slug
-            membership.identity.save(update_fields=['primary_box_root_slug', 'box_root_slug', 'updated_at'])
+        identity = membership.identity
+        update_fields = []
+        if not identity.primary_box_root_slug:
+            identity.primary_box_root_slug = membership.box_root_slug
+            identity.box_root_slug = membership.box_root_slug
+            update_fields.extend(['primary_box_root_slug', 'box_root_slug'])
+        if isinstance(membership, StudentBoxMembership) and (
+            (not identity.box_id and identity.box_root_slug == membership.box_root_slug)
+            or (not identity.primary_box_id and identity.primary_box_root_slug == membership.box_root_slug)
+        ):
+            from .box_scope import (
+                get_student_identity_box_scope_for_box_id,
+                get_student_identity_box_scope_for_root,
+            )
+
+            membership_scope = get_student_identity_box_scope_for_box_id(
+                membership.box_id
+            ) or get_student_identity_box_scope_for_root(membership.box_root_slug)
+            if not identity.box_id and identity.box_root_slug == membership.box_root_slug:
+                identity.box = membership_scope.box
+                update_fields.append('box')
+            if not identity.primary_box_id and identity.primary_box_root_slug == membership.box_root_slug:
+                identity.primary_box = membership_scope.box
+                update_fields.append('primary_box')
+        if update_fields:
+            identity.save(update_fields=[*update_fields, 'updated_at'])
         AuditEvent.objects.create(
             actor=request.user,
             actor_role=self._get_actor_role_slug(request),

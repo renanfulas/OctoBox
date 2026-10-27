@@ -29,6 +29,8 @@ POR QUE ELE EXISTE:
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 
+from control.tenant_write_fence import TenantFenceTargetMissing, TenantWritesFrozen, tenant_write_guard
+
 
 class Command(BaseCommand):
     help = 'Cria Membership para usuários staff (com Group de papel) que ainda não têm, num box.'
@@ -41,8 +43,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        from access.roles import SLUG_TO_MEMBERSHIP_ROLE
-        from control.models import Box, Membership
+        from control.models import Box
 
         slug = options['box']
         dry_run = options['dry_run']
@@ -51,6 +52,23 @@ class Command(BaseCommand):
             box = Box.objects.get(slug=slug)
         except Box.DoesNotExist:
             raise CommandError(f'Box com slug {slug!r} não encontrado.')
+
+        if dry_run:
+            return self._backfill(box=box, dry_run=True)
+
+        try:
+            with tenant_write_guard(box.schema_name):
+                return self._backfill(box=box, dry_run=False)
+        except TenantWritesFrozen as exc:
+            raise CommandError(
+                f'Box {box.schema_name} está congelado; o backfill de Membership foi recusado.'
+            ) from exc
+        except TenantFenceTargetMissing as exc:
+            raise CommandError(str(exc)) from exc
+
+    def _backfill(self, *, box, dry_run: bool):
+        from access.roles import SLUG_TO_MEMBERSHIP_ROLE
+        from control.models import Membership
 
         User = get_user_model()
         already_migrated_ids = set(
@@ -100,5 +118,5 @@ class Command(BaseCommand):
 
         verb = 'seriam migrados' if dry_run else 'migrados'
         self.stdout.write(self.style.SUCCESS(
-            f'{would_migrate_count} usuário(s) {verb} para Membership em box={slug!r}.'
+            f'{would_migrate_count} usuário(s) {verb} para Membership em box={box.slug!r}.'
         ))

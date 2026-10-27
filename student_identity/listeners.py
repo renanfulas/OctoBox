@@ -21,6 +21,7 @@ from __future__ import annotations
 
 def _on_session_cancelled(*, sender, session, box_root_slug, copy_variant, attendance_count, scheduled_at, cancellation_event, **kwargs):
     from student_identity.models import StudentPushSubscription
+    from student_identity.box_scope import get_student_identity_box_scope_for_root
     from student_identity.push_messages.session_cancelled import build_session_cancelled_payload
     from student_identity.push_notifications import send_student_web_push_notification
 
@@ -36,11 +37,12 @@ def _on_session_cancelled(*, sender, session, box_root_slug, copy_variant, atten
     if not student_ids:
         return
 
+    box_scope = get_student_identity_box_scope_for_root(box_root_slug)
     subscriptions = StudentPushSubscription.objects.filter(
+        box_scope.predicate,
         identity__student_id__in=student_ids,
-        box_root_slug=box_root_slug,
         revoked_at__isnull=True,
-    ).select_related('identity__student')
+    ).select_related('identity')
 
     session_time_label = ''
     if scheduled_at and hasattr(scheduled_at, 'strftime'):

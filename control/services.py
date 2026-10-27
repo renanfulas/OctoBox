@@ -342,6 +342,14 @@ def _seed_plans(box: 'Box') -> None:
 # ---------------------------------------------------------------------------
 
 def archive_box(box: 'Box', *, reason: str = '') -> 'Box':
+    """Drain tenant work before renaming its schema and changing Box state."""
+    from control.tenant_write_fence import tenant_write_exclusive
+
+    with tenant_write_exclusive(box.schema_name):
+        return _archive_box_under_write_fence(box, reason=reason)
+
+
+def _archive_box_under_write_fence(box: 'Box', *, reason: str = '') -> 'Box':
     """
     Arquiva um Box: status ARCHIVED + renomeia schema.
 
@@ -396,6 +404,14 @@ def archive_box(box: 'Box', *, reason: str = '') -> 'Box':
 
 
 def unarchive_box(box: 'Box', *, reason: str = '', actor=None) -> 'Box':
+    """Drain tenant work before restoring the archived schema name."""
+    from control.tenant_write_fence import tenant_write_exclusive
+
+    with tenant_write_exclusive(box.schema_name):
+        return _unarchive_box_under_write_fence(box, reason=reason, actor=actor)
+
+
+def _unarchive_box_under_write_fence(box: 'Box', *, reason: str = '', actor=None) -> 'Box':
     """
     Reverte archive_box: devolve o schema ao nome original e o Box ao ciclo de vida.
 
@@ -641,82 +657,10 @@ def _attach_support_membership(box: 'Box') -> None:
 # Exclusão segura de User (cross-schema)
 # ---------------------------------------------------------------------------
 
-def _tenant_user_fk_fields():
-    """
-    Descobre em runtime todo campo FK para User em model de TENANT_APPS.
-
-    Deliberadamente dinâmico (via User._meta.get_fields()) em vez de lista
-    hardcoded: um FK novo para User adicionado depois em qualquer app tenant
-    (dashboard, auditing, operations, student_app, etc.) cai automaticamente
-    sob a mesma proteção, sem precisar lembrar de atualizar esta função.
-
-    Retorna [(model, field_name, nullable), ...].
-    """
-    from django.conf import settings as dj_settings
-
-    tenant_labels = {entry.split('.')[0] for entry in dj_settings.TENANT_APPS}
-    fields = []
-    for rel in User._meta.get_fields():
-        if not (rel.auto_created and not rel.concrete):
-            continue
-        related_model = rel.related_model
-        if related_model._meta.app_label not in tenant_labels:
-            continue
-        fields.append((related_model, rel.field.name, rel.field.null))
-    return fields
-
-
 def delete_user_safely(user) -> None:
-    """
-    Deleta um User limpando primeiro os dados per-tenant que o ORM não alcança.
+    from control.tenant_user_lifecycle import delete_user_safely as delete_user
 
-    django.contrib.auth.User vive em SHARED_APPS (schema public). Vários
-    models de TENANT_APPS (dashboard, auditing, operations, student_app,
-    finance, guide, quick_sales, students, boxcore/onboarding — ver
-    _tenant_user_fk_fields()) têm FK para User mas só existem dentro de cada
-    schema box_xxx. O collector de delete do Django resolve nome de tabela
-    pelo search_path da conexão ativa (public) e quebra com UndefinedTable ao
-    tentar verificar essas tabelas. Por isso todos esses campos usam
-    on_delete=DO_NOTHING (ver comentário em dashboard/models.py, o primeiro
-    caso encontrado) em vez de CASCADE/SET_NULL/PROTECT — sem isso,
-    user.delete() quebra para QUALQUER user vinculado a algum box, o que é o
-    caso normal de todo Owner em produção.
-
-    Esta função é o contrato certo pra apagar um User: varre os boxes onde o
-    user tem Membership, entra no schema de cada um e replica manualmente o
-    que o on_delete original pedia — DELETE para campo not-null (ex.:
-    DashboardLayoutPreference.user), UPDATE ... SET campo=NULL para os
-    demais (todos nullable, on_delete=SET_NULL original) — antes do delete()
-    normal do ORM, que dá conta sozinho do resto (tudo em public, sem outro
-    FK cross-schema).
-    """
-    from control.models import Box, Membership
-
-    username = getattr(user, 'username', user.pk)
-    fk_fields = _tenant_user_fk_fields()
-
-    box_ids = list(Membership.objects.filter(user=user).values_list('box_id', flat=True).distinct())
-    for box in Box.objects.filter(pk__in=box_ids):
-        with schema_context(box.schema_name):
-            for model, field_name, nullable in fk_fields:
-                qs = model.objects.filter(**{field_name: user})
-                if nullable:
-                    updated = qs.update(**{field_name: None})
-                    if updated:
-                        logger.info(
-                            'delete_user_safely: %s.%s anulado em %d registro(s) de %s (user=%s)',
-                            model.__name__, field_name, updated, box.schema_name, username,
-                        )
-                else:
-                    deleted, _ = qs.delete()
-                    if deleted:
-                        logger.info(
-                            'delete_user_safely: %d registro(s) de %s.%s removido(s) em %s (user=%s)',
-                            deleted, model.__name__, field_name, box.schema_name, username,
-                        )
-
-    user.delete()
-    logger.info('delete_user_safely: user=%s deletado.', username)
+    return delete_user(user)
 
 
 def _record_platform_audit(box: 'Box', kind: str, payload: dict | None = None) -> None:
