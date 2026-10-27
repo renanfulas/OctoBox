@@ -43,7 +43,7 @@ PONTOS CRITICOS:
     </div>
     {% endif %}
 
-    <form method="post" class="wod-smartplan-form" data-form="wod-smartplan-paste">
+    <form method="post" class="wod-smartplan-form" data-form="wod-smartplan-paste" data-wod-input-draft data-draft-kind="daily" data-session-id="{{ session.id }}" data-draft-url="{% url 'wod-input-draft' %}">
         {% csrf_token %}
         <input type="hidden" name="intent" value="apply_smartplan_paste">
         <label class="wod-smartplan-form__label">
@@ -54,8 +54,12 @@ PONTOS CRITICOS:
                 rows="10"
                 placeholder="Cole a resposta inteira do GPT, com os marcadores === WOD NORMALIZADO === e === JSON ESTRUTURADO ===."
                 data-field="smartplan-paste"
+                data-wod-draft-source
             >{{ smartplan_paste_value }}</textarea>
         </label>
+        <p class="system-map-copy" data-wod-draft-status role="status" aria-live="polite">Procurando rascunho salvo…</p>
+        <button class="button tertiary" type="button" data-wod-draft-recover hidden>Recuperar versão salva</button>
+        <button class="button tertiary" type="button" data-wod-draft-discard hidden>Descartar rascunho salvo</button>
         <div class="actions actions-tight wod-smartplan-form__actions">
             <button class="button" type="submit" data-action="wod-smartplan-publish">
                 Publicar com SmartPlan

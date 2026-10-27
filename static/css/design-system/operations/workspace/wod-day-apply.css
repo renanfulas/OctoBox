@@ -124,6 +124,63 @@ CONVENÇÕES:
     display: none;
 }
 
+.wod-day-apply__review {
+    margin: 1rem 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 12px;
+    background: var(--theme-surface-secondary);
+}
+
+.wod-day-apply__review[hidden],
+.wod-day-apply__review-warning[hidden] {
+    display: none;
+}
+
+.wod-day-apply__review h4 {
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+}
+
+.wod-day-apply__review > p {
+    margin: 0.35rem 0;
+    color: var(--theme-text-secondary);
+    font-size: 0.85rem;
+}
+
+.wod-day-apply__review .wod-day-apply__review-warning {
+    color: var(--wod-warning-ink);
+    font-weight: 600;
+}
+
+.wod-day-apply__review ul {
+    display: grid;
+    gap: 0.45rem;
+    max-height: 12rem;
+    overflow-y: auto;
+    margin: 0.75rem 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wod-day-apply__review li {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
+
+.wod-day-apply__review li span {
+    color: var(--theme-text-secondary);
+}
+
+.wod-day-apply__review button:focus-visible {
+    outline: 2px solid var(--theme-accent-primary);
+    outline-offset: 3px;
+}
+
 .wod-day-apply__mode-options {
     display: flex;
     flex-direction: column;
@@ -293,6 +350,7 @@ CONVENÇÕES:
     background: var(--theme-surface-strong);
     border: 1px solid var(--theme-border-soft);
     box-shadow: var(--theme-shadow-soft);
+    color: var(--theme-text-primary);
     z-index: 9999;
     max-width: min(480px, 92vw);
     animation: wod-toast-in 0.2s ease;
@@ -345,4 +403,49 @@ CONVENÇÕES:
     font-size: 0.9rem;
     padding: 2px 4px;
     line-height: 1;
+}
+
+@media (max-width: 600px) {
+    .wod-day-apply__toast {
+        left: 12px;
+        right: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        width: auto;
+        max-width: none;
+        transform: none;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "message message"
+            "undo close";
+        align-items: center;
+        gap: 8px 12px;
+        padding: 12px 14px;
+        background: var(--theme-bg-root);
+    }
+
+    .wod-day-apply__toast-msg {
+        grid-area: message;
+        min-width: 0;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+    }
+
+    .wod-day-apply__toast-undo {
+        grid-area: undo;
+        min-height: 44px;
+        justify-self: start;
+        width: max-content;
+        max-width: 100%;
+    }
+
+    .wod-day-apply__toast-close {
+        grid-area: close;
+        justify-self: end;
+        display: grid;
+        place-items: center;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0;
+    }
 }

@@ -21,6 +21,28 @@ from access.roles import ROLE_OWNER
 from student_app.models import WorkoutFollowUpStatus
 
 
+FOLLOW_UP_ACTION_KEYS = (
+    'whatsapp-reinforce',
+    'coach-align',
+    'desk-follow-up',
+    'next-cycle-review',
+)
+
+
+def resolve_follow_up_action_label(*, action_key, current_role_slug):
+    labels = {
+        'whatsapp-reinforce': 'Reforcar chamada no WhatsApp',
+        'coach-align': 'Avisar coach',
+        'desk-follow-up': (
+            'Acompanhar recepcao'
+            if current_role_slug == ROLE_OWNER
+            else 'Acompanhar operacao agora'
+        ),
+        'next-cycle-review': 'Revisar no proximo ciclo',
+    }
+    return labels.get(action_key)
+
+
 def _push_operational_action(actions, *, key, label, copy, tone='info', href=''):
     if any(action['key'] == key for action in actions):
         return
@@ -142,7 +164,9 @@ def build_publication_follow_up_actions(*, current_role_slug, approval_category,
         _push_operational_action(
             actions,
             key='whatsapp-reinforce',
-            label='Reforcar chamada no WhatsApp',
+            label=resolve_follow_up_action_label(
+                action_key='whatsapp-reinforce', current_role_slug=current_role_slug
+            ),
             copy='Acione a trilha de mensagens para lembrar a turma de abrir o WOD antes da aula.',
             tone='warning',
             href=reverse('whatsapp-workspace'),
@@ -151,7 +175,9 @@ def build_publication_follow_up_actions(*, current_role_slug, approval_category,
         _push_operational_action(
             actions,
             key='coach-align',
-            label='Avisar coach',
+            label=resolve_follow_up_action_label(
+                action_key='coach-align', current_role_slug=current_role_slug
+            ),
             copy='Alinhe rapido com o coach para confirmar se o treino precisa de reforco verbal ou ajuste de abordagem.',
             tone='info',
         )
@@ -159,7 +185,9 @@ def build_publication_follow_up_actions(*, current_role_slug, approval_category,
         _push_operational_action(
             actions,
             key='desk-follow-up',
-            label='Acompanhar recepcao' if current_role_slug == ROLE_OWNER else 'Acompanhar operacao agora',
+            label=resolve_follow_up_action_label(
+                action_key='desk-follow-up', current_role_slug=current_role_slug
+            ),
             copy='Monitore chegada, check-in e leitura do treino no chao da operacao antes da aula travar.',
             tone='accent',
             href=reverse('reception-workspace') if current_role_slug == ROLE_OWNER else reverse('manager-workspace'),
@@ -168,7 +196,9 @@ def build_publication_follow_up_actions(*, current_role_slug, approval_category,
         _push_operational_action(
             actions,
             key='next-cycle-review',
-            label='Revisar no proximo ciclo',
+            label=resolve_follow_up_action_label(
+                action_key='next-cycle-review', current_role_slug=current_role_slug
+            ),
             copy='Leve esse caso para a revisao do proximo WOD e ajuste a estrategia de publicacao ou reforco.',
             tone='info',
             href=reverse('workout-approval-board'),

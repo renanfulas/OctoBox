@@ -13,7 +13,8 @@ PARÂMETROS (via context):
 <dialog
     class="wod-day-apply__dialog"
     data-wod-day-apply-dialog
-    data-apply-url="{% url 'wod-day-apply' %}"
+    data-apply-url="{% url 'wod-day-program-confirm' %}"
+    data-preview-url="{% url 'wod-day-program-preview' %}"
     aria-label="Aplicar template no dia"
 >
     <form method="dialog" class="wod-day-apply__dialog-head">
@@ -26,15 +27,15 @@ PARÂMETROS (via context):
 
     <div class="wod-day-apply__mode-wrap">
         <label class="wod-day-apply__modality">
-            <span>Modalidade deste WOD</span>
-            <select data-wod-day-apply-class-type required>
-                <option value="">Escolha a modalidade</option>
-                {% for value, label in planner_day_apply_class_types %}
+            <span>Programa deste WOD</span>
+            <select data-wod-day-apply-program required>
+                <option value="">Escolha o programa</option>
+                {% for value, label in planner_day_apply_programs %}
                 <option value="{{ value }}">{{ label }}</option>
                 {% endfor %}
             </select>
         </label>
-        <p>A aplicação afeta somente a modalidade escolhida. Coaches alteram apenas suas próprias aulas.</p>
+        <p>A aplicação alcança somente aulas deste programa. Coaches alteram apenas suas próprias aulas; aulas concluídas são preservadas.</p>
         <p class="eyebrow">Como aplicar</p>
         <div class="wod-day-apply__mode-options" role="radiogroup" aria-label="Modo de aplicação">
             <label class="wod-day-apply__mode-option">
@@ -44,12 +45,20 @@ PARÂMETROS (via context):
             </label>
             <label class="wod-day-apply__mode-option">
                 <input type="radio" name="wod_day_apply_mode" value="overwrite">
-                <span>Substituir rascunhos da modalidade</span>
+                <span>Substituir rascunhos do programa</span>
                 <small class="wod-day-apply__mode-warning">Treinos publicados ou aguardando aprovação são preservados.</small>
             </label>
         </div>
     </div>
     <p class="wod-day-apply__error" data-wod-day-apply-error role="alert" hidden></p>
+    <section class="wod-day-apply__review" data-wod-day-apply-review aria-live="polite" hidden>
+        <h4 data-wod-day-apply-review-title>Confira as aulas</h4>
+        <p data-wod-day-apply-review-summary></p>
+        <p class="wod-day-apply__review-warning" data-wod-day-apply-review-warning hidden></p>
+        <p>Esta conferência expira em 30 minutos. Se a grade ou o WOD mudar, será preciso conferir novamente.</p>
+        <ul data-wod-day-apply-review-list></ul>
+        <button class="button" type="button" data-wod-day-apply-confirm>Aplicar agora</button>
+    </section>
 
     <div class="wod-day-apply__template-list">
         <p class="eyebrow">Templates do box</p>
@@ -93,7 +102,7 @@ PARÂMETROS (via context):
                     data-template-id="{{ option.id }}"
                     data-template-label="{{ option.label }}"
                 >
-                    Aplicar neste dia
+                    Conferir aulas deste dia
                 </button>
             </article>
             {% endfor %}
