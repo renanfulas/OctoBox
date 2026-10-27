@@ -175,6 +175,16 @@ def test_legacy_active_customer_with_custom_price_starts_checkout_from_the_app(
             'url': live_server.url,
         }])
         page.goto(f'{live_server.url}/renan/bruno')
+
+        # The first-login tutorial is intentionally modal. Close it through
+        # the real control before testing the billing tab beneath the overlay.
+        wizard = page.locator('[data-onboarding-wizard]')
+        if wizard.get_attribute('data-onboarding-autostart') == 'true':
+            close_tutorial = wizard.get_by_role('button', name='Fechar tutorial')
+            expect(close_tutorial).to_be_visible()
+            close_tutorial.click()
+            expect(wizard).to_be_hidden()
+
         page.locator('[data-workout-tab-target="workout-panel-perfil"]').click()
 
         pagamentos = page.locator('[data-workout-start-custom-checkout]')
@@ -218,6 +228,16 @@ def test_legacy_active_customer_without_custom_price_sees_talk_to_renan_message(
             'url': live_server.url,
         }])
         page.goto(f'{live_server.url}/renan/bruno')
+
+        # A new account may start with the first-login tutorial open; dismiss
+        # its modal overlay before asserting the billing tab beneath it.
+        wizard = page.locator('[data-onboarding-wizard]')
+        if wizard.get_attribute('data-onboarding-autostart') == 'true':
+            close_tutorial = wizard.get_by_role('button', name='Fechar tutorial')
+            expect(close_tutorial).to_be_visible()
+            close_tutorial.click()
+            expect(wizard).to_be_hidden()
+
         page.locator('[data-workout-tab-target="workout-panel-perfil"]').click()
 
         perfil_panel = page.locator('#workout-panel-perfil')
