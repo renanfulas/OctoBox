@@ -102,17 +102,18 @@ def build_metrics_snapshot(*, at=None, window_days: int = 30) -> dict:
             'contribution_after_labor': str((net_revenue - labor_cost).quantize(Decimal('0.01'))),
         }
 
+    # Publicar fecha o item direto de OPEN para DONE (complete_onboarding_work_item),
+    # sem started_at: sem o fallback para created_at ele sumia da amostra de SLO.
     done = PublicWorkoutWorkItem.objects.filter(
         status=PublicWorkoutWorkItemStatus.DONE,
         completed_at__gte=since,
-        started_at__isnull=False,
-    ).values_list('started_at', 'completed_at', 'due_at')
+    ).values_list('started_at', 'created_at', 'completed_at', 'due_at')
     done_rows = list(done)
     lead_minutes = [
-        max(0, int((completed - started).total_seconds() / 60))
-        for started, completed, _due in done_rows
+        max(0, int((completed - (started or created)).total_seconds() / 60))
+        for started, created, completed, _due in done_rows
     ]
-    on_time = sum(1 for _started, completed, due in done_rows if completed <= due)
+    on_time = sum(1 for _started, _created, completed, due in done_rows if completed <= due)
     open_work = PublicWorkoutWorkItem.objects.filter(status__in=(
         PublicWorkoutWorkItemStatus.OPEN,
         PublicWorkoutWorkItemStatus.IN_PROGRESS,
