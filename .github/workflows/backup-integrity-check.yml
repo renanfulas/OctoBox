@@ -273,7 +273,7 @@ jobs:
       - name: Testes puros do manifesto
         run: |
           python3 -m pip install pytest
-          python3 -m pytest tests/test_tenant_backup_manifest.py -q
+          python3 -m pytest -c /dev/null tests/test_tenant_backup_manifest.py -q
 
   # ---------------------------------------------------------------------------
   # Tenant restore semantic checks against a real django-tenants schema.
