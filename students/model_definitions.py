@@ -64,13 +64,14 @@ class SourceResolutionMethod(models.TextChoices):
 
 class Student(TimeStampedModel):
     full_name = models.CharField(max_length=150, db_index=True)
-    phone = EncryptedCharField(max_length=255, unique=True, verbose_name='WhatsApp')
+    phone = EncryptedCharField(max_length=255, storage_max_length=2048, unique=True, verbose_name='WhatsApp')
     phone_lookup_index = models.CharField(max_length=128, db_index=True, blank=True, default='')
     email = models.EmailField(blank=True, db_index=True)
     gender = models.CharField(max_length=16, choices=StudentGender.choices, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     health_issue_status = models.CharField(max_length=8, choices=HealthIssueStatus.choices, blank=True)
-    cpf = EncryptedCharField(max_length=255, blank=True)
+    cpf = EncryptedCharField(max_length=255, storage_max_length=2048, blank=True)
+    cpf_lookup_index = models.CharField(max_length=67, blank=True, default='')
     acquisition_source = models.CharField(max_length=32, choices=ACQUISITION_CHANNEL_MODEL_CHOICES, blank=True, db_index=True)
     acquisition_source_detail = models.CharField(max_length=120, blank=True)
     resolved_acquisition_source = models.CharField(max_length=32, choices=ACQUISITION_CHANNEL_MODEL_CHOICES, blank=True, db_index=True)
@@ -118,6 +119,13 @@ class Student(TimeStampedModel):
                 condition=~models.Q(phone_lookup_index=''),
                 name='unique_non_blank_student_phone_lookup_index',
             )
+        ]
+        indexes = [
+            models.Index(
+                fields=['cpf_lookup_index'],
+                condition=~models.Q(cpf_lookup_index=''),
+                name='student_cpf_lu_idx',
+            ),
         ]
 
     def __str__(self):
@@ -178,12 +186,22 @@ class Student(TimeStampedModel):
             return None
 
     def save(self, *args, **kwargs):
-        from shared_support.crypto_fields import generate_blind_index
+        from shared_support.crypto_fields import generate_blind_index, generate_cpf_blind_index
         # Dual-Write: Sincroniza o índice determinístico com o telefone criptografado.
         if self.phone:
             self.phone_lookup_index = generate_blind_index(self.phone)
         else:
             self.phone_lookup_index = ""
+
+        self.cpf_lookup_index = generate_cpf_blind_index(self.cpf) if self.cpf else ""
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None:
+            update_fields = set(update_fields)
+            if 'phone' in update_fields:
+                update_fields.add('phone_lookup_index')
+            if 'cpf' in update_fields:
+                update_fields.add('cpf_lookup_index')
+            kwargs['update_fields'] = update_fields
         super().save(*args, **kwargs)
 
 

@@ -44,7 +44,7 @@ class MessageKind(models.TextChoices):
 
 
 class WhatsAppContact(TimeStampedModel):
-    phone = EncryptedCharField(max_length=255, unique=True)
+    phone = EncryptedCharField(max_length=255, storage_max_length=2048, unique=True)
     phone_lookup_index = models.CharField(max_length=128, db_index=True, blank=True, default='')
     external_contact_id = models.CharField(max_length=120, blank=True)
     display_name = models.CharField(max_length=150, blank=True)
