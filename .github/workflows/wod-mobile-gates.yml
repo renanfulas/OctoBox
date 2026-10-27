@@ -1,0 +1,166 @@
+name: WOD Mobile Gates
+
+# Required-check candidate for the critical WOD and class-grid browser flows.
+# Keep the workflow unfiltered at the trigger level so the fixed aggregator
+# reports success when a change does not touch these surfaces.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: wod-mobile-gates-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  DJANGO_SECRET_KEY: "a-dummy-secret-key-for-ci-wod-e2e"
+  PHONE_BLIND_INDEX_KEY: "ci-only-blind-index-key"
+  DJANGO_SETTINGS_MODULE: config.settings.test
+  DATABASE_URL: postgres://user:password@localhost:5432/test_db
+  OCTOBOX_REQUIRE_POSTGRES: "1"
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      wod_mobile: ${{ steps.detect.outputs.wod_mobile }}
+    steps:
+      - name: Detectar mudanças nas superfícies WOD/mobile
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "Evento ${{ github.event_name }}: roda a matriz WOD/mobile."
+            echo "wod_mobile=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          WOD_PATHS='^(access/|auditing/|boxcore/|config/|control/|dashboard/|operations/|shared_support/|student_app/|student_identity/|students/|templates/|static/|tests/e2e/|tests/test_(wod|workout)[^/]*\.py$|tests/workout_test_support\.py$|requirements[^/]*\.txt$|conftest\.py$|pytest\.ini$|pyproject\.toml$|\.github/workflows/(wod-mobile-gates|e2e-nightly|curva-gates)\.yml$)'
+          gh api --paginate "repos/$GH_REPO/pulls/$PR_NUMBER/files" --jq '.[].filename' > changed.txt
+          CHANGED_COUNT=$(wc -l < changed.txt)
+          if [ "$CHANGED_COUNT" -ge 300 ]; then
+            echo "A API de arquivos de PR atingiu o limite de 300; acionando a matriz de forma conservadora."
+            echo "wod_mobile=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if grep -Eq "$WOD_PATHS" changed.txt; then
+            echo "Mudanças que acionam o gate WOD/mobile:"
+            grep -E "$WOD_PATHS" changed.txt | head -50
+            echo "wod_mobile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nenhuma superfície WOD/mobile foi alterada."
+            echo "wod_mobile=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  browser-e2e:
+    needs: changes
+    if: needs.changes.outputs.wod_mobile == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+
+    services:
+      postgres:
+        image: postgres:15
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements_test.txt
+
+      - name: Install Playwright browser
+        run: playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Run critical WOD and class-grid browser journeys
+        run: |
+          python -m pytest \
+            tests/e2e/test_wod_iphone13.py \
+            tests/e2e/test_smart_paste_visual_contract.py \
+            tests/e2e/test_class_grid_modality_routing_e2e.py \
+            tests/e2e/test_wod_draft_browser_races.py \
+            --create-db --migrations \
+            --browser ${{ matrix.browser }} \
+            -m e2e \
+            --tb=short \
+            --junitxml=junit-wod-${{ matrix.browser }}.xml \
+            -o addopts='' \
+            -v
+
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-wod-${{ matrix.browser }}
+          path: junit-wod-${{ matrix.browser }}.xml
+          if-no-files-found: ignore
+
+      - name: Upload Playwright traces and screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: wod-playwright-${{ matrix.browser }}
+          path: |
+            test-results/
+            tmp/visual_contract/
+          if-no-files-found: ignore
+
+  wod-mobile-gates:
+    name: WOD Mobile Gates
+    needs: [changes, browser-e2e]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Consolidar resultado do gate
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          WOD_MOBILE: ${{ needs.changes.outputs.wod_mobile }}
+          E2E: ${{ needs.browser-e2e.result }}
+        run: |
+          echo "changes=$CHANGES wod_mobile=$WOD_MOBILE e2e=$E2E"
+          if [ "$CHANGES" != "success" ]; then
+            echo "::error::A detecção de mudanças falhou."
+            exit 1
+          fi
+          if [ "$WOD_MOBILE" != "true" ]; then
+            echo "Nenhuma superfície WOD/mobile alterada; gate concluído sem testes de browser."
+            exit 0
+          fi
+          if [ "$E2E" != "success" ]; then
+            echo "::error::Matriz WOD/mobile falhou ou foi ignorada (e2e=$E2E)."
+            exit 1
+          fi
+          echo "Gate WOD/mobile aprovado em Chromium e WebKit."
