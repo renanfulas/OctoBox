@@ -62,6 +62,14 @@ def record_student_onboarding_event(
     def _write():
         with schema_context(tenant_schema):
             with tenant_write_guard(tenant_schema):
+                from student_identity.cohort_milestones import persist_onboarding_milestone
+                persist_onboarding_milestone(
+                    journey=journey,
+                    event=event,
+                    target_model=target_model,
+                    target_id=target_id,
+                    metadata=payload,
+                )
                 return AuditEvent.objects.create(**kwargs)
 
     def _write_async():
