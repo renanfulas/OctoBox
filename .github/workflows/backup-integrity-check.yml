@@ -109,7 +109,7 @@ jobs:
       postgres:
         image: postgres:15
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U backup_check -d backup_check_source"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -131,6 +131,8 @@ jobs:
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-15
+          echo "/usr/lib/postgresql/15/bin" >> "$GITHUB_PATH"
+          export PATH="/usr/lib/postgresql/15/bin:$PATH"
           test "$(pg_dump --version | sed -E 's/.* ([0-9]+)(\..*)?/\1/')" = '15'
           test "$(pg_restore --version | sed -E 's/.* ([0-9]+)(\..*)?/\1/')" = '15'
 
