@@ -42,9 +42,9 @@ class IntakeStatus(models.TextChoices):
 
 class StudentIntake(TimeStampedModel):
     full_name = models.CharField(max_length=150, db_index=True)
-    phone = EncryptedCharField(max_length=255, db_index=True)
+    phone = EncryptedCharField(max_length=255, storage_max_length=2048, db_index=True)
     phone_lookup_index = models.CharField(max_length=128, db_index=True, blank=True, default='')
-    email = EncryptedCharField(max_length=255, blank=True, db_index=True)
+    email = EncryptedCharField(max_length=255, storage_max_length=2048, blank=True, db_index=True)
     source = models.CharField(
         max_length=16,
         choices=IntakeSource.choices,

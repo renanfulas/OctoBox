@@ -1,166 +1,181 @@
-"""
-ARQUIVO: Engine de Criptografia Simétrica do Sistema.
+"""Encrypted Django fields and stable blind-index functions.
 
-POR QUE ELE EXISTE:
-- Prevenir que backups vazados exponham PII (Personal Identifiable Information).
-- Atender a requisitos severos da LGPD/PCI-DSS para aplicacoes financeiras.
-
-O QUE ESTE ARQUIVO FAZ:
-1. Define um Campo de Banco de Dados (`EncryptedCharField`) que intercepta dados indo para o Banco e os criptografa (Fernet).
-2. Intercepta dados voltando do Banco e os descriptografa na memoria do Python de forma transparente.
-3. Possui um "Modo Fallback" para nao quebrar o sistema ao ler CPFs e Telefones antigos (plain text) que ainda nao foram re-salvos com a chave nova.
-
-PONTOS CRITICOS:
-- Se a SECRET_KEY mudar, todos os dados cifrados ficam inacessíveis. Em producao, a chave base deve ser guardada em cofre (KMS/Vault).
+The field reader understands legacy plaintext, legacy Fernet, and the G1
+versioned envelope. Explicit per-field writer gates can keep a field on
+plaintext while all readers are upgraded; once enabled, this compatibility
+writer uses the exact historical SECRET_KEY derivation. Encryption failures
+never fall back to plaintext.
 """
 
-import base64
 import hashlib
 import hmac
 import logging
-from cryptography.fernet import Fernet, InvalidToken
+
+from cryptography.fernet import Fernet
 from django.conf import settings
 from django.db import models
 from django.utils.encoding import force_bytes, force_str
 
+from shared_support.crypto_codec import decode
+from shared_support.crypto_keyring import derive_legacy_fernet_key
+
 logger = logging.getLogger(__name__)
 
-# Derivamos uma chave de 32 bytes validos em base64 a partir do SECRET_KEY do Django
-# Se não for de 32 bytes o Fernet crasha, entao fazemos um pad/slice deterministico
-_raw_key = force_bytes(settings.SECRET_KEY)[:32].ljust(32, b'O')
-CRYPTO_KEY = base64.urlsafe_b64encode(_raw_key)
+
+class EncryptedValueReadError(RuntimeError):
+    """A stored encrypted value is unreadable; the exception contains no data."""
+
+
+class EncryptedValueWriteError(RuntimeError):
+    """PII encryption failed; callers must abort the surrounding write."""
+
 
 try:
-    cipher_suite = Fernet(CRYPTO_KEY)
-except Exception as e:
-    logger.critical(f"Falha gravíssima ao instanciar Suite Criptográfica. Database será Plain-Text. Erro: {e}")
+    # Keep the old writer format for the reader-first release.
+    cipher_suite = Fernet(derive_legacy_fernet_key(settings.SECRET_KEY))
+    CRYPTO_KEY = derive_legacy_fernet_key(settings.SECRET_KEY)
+except Exception as exc:  # pragma: no cover - exercised through monkeypatch/config tests
+    logger.critical("Legacy PII encryption key could not be initialized")
     cipher_suite = None
+    CRYPTO_KEY = None
+
+
+def _prepare_encrypted_value(value):
+    if value is None or value == "":
+        return value
+    text_value = force_str(value)
+
+    # Model instances read plaintext from from_db_value; caller-supplied values
+    # are always treated as user data and encrypted, even if they resemble a
+    # ciphertext. Raw migration/backfill writes use an explicit lower-level API.
+    if cipher_suite is None:
+        raise EncryptedValueWriteError("Legacy PII encryption is unavailable")
+    try:
+        return force_str(cipher_suite.encrypt(force_bytes(text_value)))
+    except Exception as exc:
+        # Never log the value or exception text: backend exceptions may include
+        # the plaintext or ciphertext passed to the cryptographic primitive.
+        logger.error("PII encryption failed")
+        raise EncryptedValueWriteError("PII encryption failed") from exc
+
+
+def _read_encrypted_value(value):
+    if value is None or value == "":
+        return value
+    try:
+        decoded = decode(force_str(value))
+    except Exception as exc:
+        raise EncryptedValueReadError("PII key configuration is invalid") from exc
+    if decoded.is_readable:
+        return decoded.plaintext
+    # Status labels are controlled constants and do not contain stored data.
+    raise EncryptedValueReadError(f"Stored PII is unreadable ({decoded.status})")
+
 
 class EncryptedCharField(models.CharField):
+    """CharField with authenticated reads and fail-closed encrypted writes.
+
+    ``max_length`` remains the logical/input limit. ``storage_max_length`` is
+    an optional physical DB capacity used for encrypted values. A named writer
+    setting can keep this field plaintext during a reader-first rollout.
     """
-    Campo que mascara dados PII de forma transparente.
-    No banco de dados: gAAAAABkO_Pqxyz... (Criptografado AES-128)
-    No Python/Views: 123.456.789-00 (Decifrado)
-    """
-    description = "String PII criptografada com AES/Fernet"
+
+    description = "PII string encrypted with Fernet"
+
+    def __init__(self, *args, storage_max_length=None, writer_enabled_setting=None, **kwargs):
+        self.storage_max_length = storage_max_length
+        self.writer_enabled_setting = writer_enabled_setting
+        if storage_max_length is not None:
+            logical_max_length = kwargs.get("max_length")
+            if not isinstance(storage_max_length, int) or storage_max_length <= 0:
+                raise ValueError("storage_max_length must be a positive integer")
+            if logical_max_length is not None and storage_max_length < logical_max_length:
+                raise ValueError("storage_max_length cannot be smaller than max_length")
+        super().__init__(*args, **kwargs)
 
     def get_internal_type(self):
-        # Para o ORM, é apenas um CharField (que aceita base64 longo)
         return "CharField"
 
+    def db_type(self, connection):
+        if self.storage_max_length is not None:
+            data_type = connection.data_types.get("CharField")
+            if data_type is None:
+                return super().db_type(connection)
+            params = self.db_type_parameters(connection)
+            params["max_length"] = self.storage_max_length
+            if callable(data_type):
+                return data_type(params)
+            return data_type % params
+        return super().db_type(connection)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        if self.storage_max_length is not None:
+            kwargs["storage_max_length"] = self.storage_max_length
+        if self.writer_enabled_setting is not None:
+            kwargs["writer_enabled_setting"] = self.writer_enabled_setting
+        return name, path, args, kwargs
+
     def get_prep_value(self, value):
-        # Python -> Database (Cifrador)
         value = super().get_prep_value(value)
-        if value is None or value == '':
+        if (
+            self.writer_enabled_setting
+            and not getattr(settings, self.writer_enabled_setting, False)
+        ):
             return value
-
-        if not cipher_suite:
-            return value  # Fallback de desespero se engine cripto quebrar
-
-        try:
-            # Se já está criptografado (tem cabeçalho padrão Fernet gAAAAA...), nao cifra de novo.
-            str_val = force_str(value)
-            if str_val.startswith("gAAAAA"):
-                return value
-                
-            encrypted = cipher_suite.encrypt(force_bytes(value))
-            return force_str(encrypted)
-        except Exception as e:
-            logger.error(f"Erro ao criptografar PII: {e}")
-            return value
+        return _prepare_encrypted_value(value)
 
     def from_db_value(self, value, expression, connection):
-        # Database -> Python (Decifrador)
-        if value is None or value == '':
-            return value
+        return _read_encrypted_value(value)
 
-        if not cipher_suite:
-            return value
-            
-        try:
-            str_val = force_str(value)
-            # Se não parece ter o header do Fernet, assume que é legacy/plain-text (ex: telefones antigos) e retorna puro.
-            if not str_val.startswith("gAAAAA"):
-                return value
-                
-            decrypted = cipher_suite.decrypt(force_bytes(value))
-            return force_str(decrypted)
-        except InvalidToken:
-            # Token criptográfico rasgado ou migração parcial, assumimos que sobrou lixo ou é legado
-            return value
-        except Exception as e:
-            logger.error(f"Falha de decifragem PII em load: {e}")
-            return value
-
-    def to_python(self, value):
-        # Inputs e forms convertendo pra obj
-        if getattr(self, '_is_db_value', False):
-            # Se veio do DB, foi tratado no from_db_value. Aqui tratamos input sujo normal.
-            pass
-        return super().to_python(value)
 
 class EncryptedTextField(models.TextField):
-    """
-    Campo de texto longo (Notas, Corpos de Mensagem) criptografado.
-    """
-    description = "Texto longo PII criptografado com AES/Fernet"
+    """TextField with authenticated reads and fail-closed encrypted writes."""
+
+    description = "PII text encrypted with Fernet"
 
     def get_internal_type(self):
         return "TextField"
 
     def get_prep_value(self, value):
-        if value is None or value == '':
-            return value
-        if not cipher_suite:
-            return value
-        try:
-            str_val = force_str(value)
-            if str_val.startswith("gAAAAA"):
-                return value
-            encrypted = cipher_suite.encrypt(force_bytes(value))
-            return force_str(encrypted)
-        except Exception as e:
-            logger.error(f"Erro ao criptografar PII (Text): {e}")
-            return value
+        value = super().get_prep_value(value)
+        return _prepare_encrypted_value(value)
 
     def from_db_value(self, value, expression, connection):
-        if value is None or value == '':
-            return value
-        if not cipher_suite:
-            return value
-        try:
-            str_val = force_str(value)
-            if not str_val.startswith("gAAAAA"):
-                return value
-            decrypted = cipher_suite.decrypt(force_bytes(value))
-            return force_str(decrypted)
-        except InvalidToken:
-            return value
-        except Exception as e:
-            logger.error(f"Falha de decifragem PII em load (Text): {e}")
-            return value
+        return _read_encrypted_value(value)
 
 
 def generate_blind_index(value, *, key=None):
-    """
-    Gera um hash determinístico (Blind Index) para permitir busca por igualdade
-    em campos que estão criptografados.
-    """
+    """Generate the stable deterministic HMAC used for phone equality lookup."""
+
     if not value:
         return ""
-
     if key is None:
-        key = getattr(settings, 'PHONE_BLIND_INDEX_KEY', '')
-
+        key = getattr(settings, "PHONE_BLIND_INDEX_KEY", "")
     if not key:
         return ""
 
-    # Import local para evitar circular dependency
+    # Import local to avoid circular dependency.
     from shared_support.phone_numbers import normalize_phone_number
+
     normalized = normalize_phone_number(value)
+    digest = hmac.new(force_bytes(key), force_bytes(normalized), hashlib.sha256).hexdigest()
+    return f"v1:{digest}"
 
-    key_bytes = force_bytes(key)
-    msg_bytes = force_bytes(normalized)
 
-    h = hmac.new(key_bytes, msg_bytes, hashlib.sha256).hexdigest()
-    return f"v1:{h}"
+def generate_cpf_blind_index(value, *, key=None):
+    """Generate a domain-separated deterministic HMAC for exact CPF lookup."""
+
+    digits = "".join(character for character in force_str(value or "") if character.isdigit())
+    if not digits:
+        return ""
+    if key is None:
+        key = getattr(settings, "PHONE_BLIND_INDEX_KEY", "")
+    if not key:
+        return ""
+
+    # Reuse the stable blind-index root without making a CPF fingerprint
+    # correlatable with a phone containing the same digits.
+    message = f"octobox:cpf:v1:{digits}"
+    digest = hmac.new(force_bytes(key), force_bytes(message), hashlib.sha256).hexdigest()
+    return f"v1:{digest}"
