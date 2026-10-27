@@ -7,33 +7,46 @@ POR QUE ELE EXISTE:
 O QUE ESTE ARQUIVO FAZ:
 1. monta funis por jornada.
 2. calcula a prioridade do dia.
-3. gera a fila recomendada a partir do gargalo principal.
+3. gera a fila operacional e resume fatos de coorte sem inferir saúde por contagem de eventos.
 """
 
 from __future__ import annotations
 
 from datetime import timedelta
 
+from django.core.exceptions import PermissionDenied
+from django.db import connection
 from django.urls import reverse
 from django.utils import timezone
 
 from auditing.models import AuditEvent
 
 from ..funnel_events import build_student_onboarding_event_action
+from ..box_scope import get_student_identity_box_scope
 from ..models import StudentOnboardingJourney
+from ..queries.activation_cohorts import build_activation_cohort_reports
 
 
 class StudentInvitationOperationsRecommendations:
-    def __init__(self, *, request, presenter):
+    def __init__(self, *, request):
         self.request = request
-        self.presenter = presenter
 
     def build_journey_funnels(self, *, box_root_slug: str, active_box_invite_link):
+        scope = get_student_identity_box_scope(self.request)
+        schema_name = getattr(connection, 'schema_name', '')
+        if (
+            scope.box is None or schema_name != scope.box.schema_name
+            or box_root_slug not in {scope.box.schema_name, scope.box.slug}
+        ):
+            raise PermissionDenied('A leitura do funil exige o schema do box ativo.')
         window_start = timezone.now() - timedelta(days=30)
-        base_queryset = AuditEvent.objects.filter(
-            created_at__gte=window_start,
-            metadata__box_root_slug=box_root_slug,
-        )
+        activation_cohorts = {
+            report['journey']: report for report in build_activation_cohort_reports()
+        }
+        # AuditEvent já é tenant-local. A referência HMAC dos logs não é uma
+        # chave analítica: muda ao rotacionar SECRET_KEY, e o formato antigo
+        # usava box_root_slug. Ambos continuam legíveis no schema autorizado.
+        base_queryset = AuditEvent.objects.filter(created_at__gte=window_start)
         journeys = [
             {
                 'journey': StudentOnboardingJourney.MASS_BOX_INVITE,
@@ -93,42 +106,19 @@ class StudentInvitationOperationsRecommendations:
                 )
             first_step_value = steps[0]['value'] if steps else 0
             last_step_value = steps[-1]['value'] if steps else 0
-            # PONTOS CRITICOS: isto NAO e taxa de conversao de coorte. E a razao entre
-            # a contagem de dois eventos independentes na mesma janela rolante de 30
-            # dias — nao ha garantia de que quem gerou o evento final esta entre quem
-            # gerou o evento inicial (o primeiro pode ter acontecido fora da janela).
-            # Pode passar de 100% e nao suporta o alerta de "conversao baixa" que
-            # existia aqui antes (removido — ver auditoria de leads 2026-07-28,
-            # achado A7). Consertar de verdade exige coorte com janela de maturacao
-            # (ver docs/plans/leads-ml-technical-execution-guide.md, Onda 6).
-            conversion_rate = round((last_step_value / first_step_value) * 100, 1) if first_step_value else 0
-            alerts = []
-            if len(steps) >= 3 and steps[-2]['value'] > steps[-1]['value']:
-                alerts.append('Existe atrito perto da reta final: tem gente chegando quase lá e não entrando no app.')
-            biggest_drop = self._find_biggest_funnel_drop(steps=steps)
             next_action = self._build_journey_next_action(
-                journey=item['journey'],
-                first_step_value=first_step_value,
-                conversion_rate=conversion_rate,
-                biggest_drop=biggest_drop,
+                cohort=activation_cohorts.get(item['journey']),
             )
             funnels.append(
                 {
                     'journey': item['journey'],
+                    'cohort': activation_cohorts.get(item['journey']),
                     'title': item['title'],
                     'copy': item['copy'],
                     'steps': steps,
-                    'headline_value': f'{conversion_rate:.1f}% ({last_step_value}/{first_step_value})',
-                    'headline_label': 'Eventos finais / eventos iniciais (30d) — não é taxa de conversão de coorte',
-                    'headline_tone': (
-                        'ok'
-                        if conversion_rate >= 60
-                        else 'attention'
-                        if conversion_rate >= 30
-                        else 'danger'
-                        if first_step_value
-                        else 'muted'
-                    ),
+                    'headline_value': f'{last_step_value} / {first_step_value}',
+                    'headline_label': 'Contagens independentes de eventos finais / iniciais (30d).',
+                    'headline_tone': 'muted',
                     'next_action': next_action,
                     'summary_cards': [
                         {
@@ -141,30 +131,22 @@ class StudentInvitationOperationsRecommendations:
                             'eyebrow': 'Primeiro passo',
                             'value': str(first_step_value),
                             'detail': steps[0]['label'] if steps else 'Sem eventos',
-                            'tone': 'attention' if first_step_value else 'muted',
+                            'tone': 'muted',
                         },
                         {
                             'eyebrow': 'Último passo',
                             'value': str(last_step_value),
                             'detail': steps[-1]['label'] if steps else 'Sem eventos',
-                            'tone': 'ok' if last_step_value else 'muted',
+                            'tone': 'muted',
                         },
                         {
                             'eyebrow': 'Eventos finais / iniciais',
-                            'value': f'{conversion_rate:.1f}%',
-                            'detail': f'{last_step_value} de {first_step_value} — leitura de volume, não coorte fechada.',
-                            'tone': (
-                                'ok'
-                                if conversion_rate >= 60
-                                else 'attention'
-                                if conversion_rate >= 30
-                                else 'danger'
-                                if first_step_value
-                                else 'muted'
-                            ),
+                            'value': f'{last_step_value} / {first_step_value}',
+                            'detail': 'Contagens independentes de eventos na janela; sem leitura de conversão.',
+                            'tone': 'muted',
                         },
                     ],
-                    'alerts': alerts,
+                    'alerts': [],
                 }
             )
         return funnels
@@ -292,74 +274,39 @@ class StudentInvitationOperationsRecommendations:
 
         return []
 
-    def _find_biggest_funnel_drop(self, *, steps: list[dict]):
-        biggest_drop = None
-        for index in range(len(steps) - 1):
-            current_value = steps[index]['value']
-            next_value = steps[index + 1]['value']
-            drop = current_value - next_value
-            if drop <= 0:
-                continue
-            if biggest_drop is None or drop > biggest_drop['drop']:
-                biggest_drop = {
-                    'from_label': steps[index]['label'],
-                    'to_label': steps[index + 1]['label'],
-                    'drop': drop,
-                }
-        return biggest_drop
-
-    def _build_journey_next_action(self, *, journey: str, first_step_value: int, conversion_rate: float, biggest_drop):
-        if first_step_value == 0:
+    def _build_journey_next_action(self, *, cohort: dict | None):
+        if not cohort or cohort['maturity'] != 'ready' or cohort['eligible_count'] == 0:
+            immature_count = cohort['immature_count'] if cohort else 0
+            body = (
+                f'{immature_count} coortes ainda aguardam maturação; não há denominador elegível para comparar.'
+                if immature_count
+                else 'Ainda não há coortes maduras suficientes para uma leitura de ativação e retorno.'
+            )
             return {
-                'title': 'Dê atenção a este tipo de convite',
-                'body': self.presenter.build_empty_journey_copy(journey=journey),
+                'title': 'Aguardando coortes maduras',
+                'body': body,
                 'tone': 'muted',
-                'pill': 'Sem movimento',
+                'pill': 'Sem base madura',
             }
 
-        if biggest_drop is None:
-            if conversion_rate >= 60:
-                return {
-                    'title': 'Convite saudável',
-                    'body': 'A jornada está fechando bem. O melhor agora é manter volume e acompanhar se o ritmo continua.',
-                    'tone': 'ok',
-                    'pill': 'Fluxo bom',
-                }
-            return {
-                'title': 'Acompanhe a próxima rodada',
-                'body': 'O volume ainda e curto. Vale observar mais alguns alunos antes de mexer no fluxo.',
-                'tone': 'attention',
-                'pill': 'Em leitura',
-            }
-
-        from_label = biggest_drop['from_label']
-        to_label = biggest_drop['to_label']
-        journey_actions = {
-            StudentOnboardingJourney.MASS_BOX_INVITE: {
-                ('Visitas', 'OAuth concluído'): 'O grupo está clicando, mas pouca gente está entrando com Google ou Apple. Vale encurtar a copy e deixar a chamada de autenticação mais óbvia.',
-                ('OAuth concluído', 'Cadastro concluído'): 'Tem gente autenticando e travando no wizard. O melhor ajuste é simplificar campos e reforçar que o cadastro leva menos de um minuto.',
-                ('Cadastro concluído', 'Entrada no app'): 'Tem aluno terminando o cadastro e não sentando no app. Revise a mensagem final e a sensação de "pronto para usar".',
-            },
-            StudentOnboardingJourney.IMPORTED_LEAD_INVITE: {
-                ('Convites', 'WhatsApp aberto'): 'Os convites existem, mas a recepção ainda não puxou o envio da mensagem de WhatsApp. O próximo passo é trabalhar a fila de mensagens do dia.',
-                ('WhatsApp aberto', 'Landing aberta'): 'A mensagem está saindo, mas o aluno não está abrindo o link. Vale testar uma copy mais direta e pessoal no WhatsApp.',
-                ('Landing aberta', 'OAuth concluído'): 'O aluno chegou na landing, mas hesitou na autenticação. Deixe claro que basta tocar em Google ou Apple para entrar.',
-                ('OAuth concluído', 'Cadastro concluído'): 'O aluno entrou com OAuth, mas o wizard ainda está segurando gente demais. Revise os campos obrigatórios e a ordem visual.',
-                ('Cadastro concluído', 'Entrada no app'): 'A jornada termina o cadastro, mas ainda não fecha a entrada real. Revise o redirect final e a mensagem de sucesso.',
-            },
-            StudentOnboardingJourney.REGISTERED_STUDENT_INVITE: {
-                ('Convites', 'Landing aberta'): 'O convite saiu, mas pouca gente abriu. Vale reenviar para quem está quente e usar um texto mais claro no canal do box.',
-                ('Landing aberta', 'OAuth concluído'): 'A landing está atraindo clique, mas ainda falta confiança para autenticar. Simplifique a explicação e destaque que o acesso é rápido.',
-                ('OAuth concluído', 'Entrada no app'): 'Tem aluno autenticando e não chegando ao app. Revise o callback final e a mensagem de acesso confirmado.',
-            },
-        }
-        body = journey_actions.get(journey, {}).get(
-            (from_label, to_label),
-            f'O maior gargalo está entre {from_label.lower()} e {to_label.lower()}. Vale atacar esse trecho primeiro.',
-        )
+        eligible = cohort['eligible_count']
+        activated = cohort['activated_count']
+        retained = cohort['retained_count']
+        if activated < eligible:
+            detail = (
+                f"Ativação {cohort['activation_window_label']}: "
+                f'{activated} de {eligible} coortes maduras tiveram entrada autenticada no app.'
+            )
+            pill = f'{activated}/{eligible} ativadas'
+        else:
+            detail = (
+                f"Retorno {cohort['retention_window_label']}: "
+                f'{retained} de {activated} coortes ativadas tiveram atividade autenticada.'
+            )
+            pill = f'{retained}/{activated} retornaram'
         return {
-            'title': f'Próxima melhor ação: atacar {from_label.lower()} -> {to_label.lower()}',
-            'body': body,
-            'tone': 'attention' if conversion_rate >= 30 else 'danger',
-            'pill': 'Gargalo principal',
+            'title': 'Leitura da coorte madura',
+            'body': detail,
+            'tone': 'muted',
+            'pill': pill,
         }

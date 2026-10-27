@@ -1088,7 +1088,7 @@ class StudentIdentityFlowTests(TestCase):
             ).exists()
         )
 
-    def test_operations_page_shows_intelligent_next_action_for_funnel(self):
+    def test_operations_page_waits_for_mature_cohort_before_recommending_action(self):
         owner = get_user_model().objects.create_superuser(
             username='owner-funnel',
             email='owner-funnel@example.com',
@@ -1126,8 +1126,9 @@ class StudentIdentityFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Resumo deste convite')
-        self.assertContains(response, 'Próxima melhor ação: atacar visitas -&gt; oauth concluído')
-        self.assertContains(response, 'O grupo está clicando, mas pouca gente está entrando com Google ou Apple.')
+        self.assertContains(response, 'Aguardando coortes maduras')
+        self.assertContains(response, 'sem leitura de conversão')
+        self.assertNotContains(response, 'Próxima melhor ação: atacar visitas')
 
     def test_operations_page_prioritizes_stalled_invites_in_recommended_queue(self):
         owner = get_user_model().objects.create_superuser(

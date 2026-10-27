@@ -269,6 +269,25 @@
                 </article>
                 {% endfor %}
             </div>
+            {% if funnel.cohort %}
+            <div class="student-observability-grid section-gap-top-xs" aria-label="Coorte de ativação versionada">
+                <article class="student-observability-card student-observability-card-muted">
+                    <p class="eyebrow">Coorte v{{ funnel.cohort.contract_version }} · {{ funnel.cohort.cohort_unit_label }}</p>
+                    <strong>{{ funnel.cohort.maturity_label }}</strong>
+                    <p class="student-invite-detail">Cobertura desde {% if funnel.cohort.coverage_start %}{{ funnel.cohort.coverage_start|date:'d/m/Y' }}{% else %}ainda sem fatos{% endif %}. Corte em {{ funnel.cohort.data_cutoff|date:'d/m/Y H:i' }}; atraso admitido de {{ funnel.cohort.data_lateness_hours }}h. Coleta baseada no histórico autenticado do app, sem backfill.</p>
+                </article>
+                <article class="student-observability-card student-observability-card-muted">
+                    <p class="eyebrow">Ativação {{ funnel.cohort.activation_window_label }}</p>
+                    <strong>{{ funnel.cohort.activation_rate_label }}</strong>
+                    <p class="student-invite-detail">{{ funnel.cohort.activated_count }} de {{ funnel.cohort.eligible_count }} coortes maduras · {{ funnel.cohort.immature_count }} aguardam D14.</p>
+                </article>
+                <article class="student-observability-card student-observability-card-muted">
+                    <p class="eyebrow">Retorno {{ funnel.cohort.retention_window_label }}</p>
+                    <strong>{{ funnel.cohort.retention_rate_label }}</strong>
+                    <p class="student-invite-detail">{{ funnel.cohort.retained_count }} de {{ funnel.cohort.activated_count }} coortes ativadas tiveram WOD aberto ou RM criado/atualizado.</p>
+                </article>
+            </div>
+            {% endif %}
             <div class="student-invite-list section-gap-top-sm">
                 {% for step in funnel.steps %}
                 <article class="student-invite-item student-funnel-step">
