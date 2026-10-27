@@ -7,11 +7,12 @@ Requires=postgresql.service redis-server.service
 Type=simple
 User=octobox
 Group=octobox
-WorkingDirectory=/srv/octobox/app
+WorkingDirectory=/srv/octobox/current
 EnvironmentFile=/srv/octobox/shared/octobox.env
+EnvironmentFile=/srv/octobox/current/.release.env
 RuntimeDirectory=octobox
 RuntimeDirectoryMode=0755
-ExecStart=/srv/octobox/venv/bin/gunicorn \
+ExecStart=/srv/octobox/current/venv/bin/gunicorn \
   --workers 2 \
   --bind unix:/run/octobox/gunicorn.sock \
   --access-logfile - \
@@ -23,6 +24,7 @@ RestartSec=5
 TimeoutStopSec=30
 KillMode=mixed
 PrivateTmp=true
+ExecReload=/bin/kill -s HUP $MAINPID
 
 [Install]
 WantedBy=multi-user.target

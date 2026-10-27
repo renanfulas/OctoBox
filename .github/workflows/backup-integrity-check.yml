@@ -92,7 +92,14 @@ jobs:
       - name: Instalar cliente PostgreSQL
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client
+          sudo apt-get install -y -qq postgresql-common ca-certificates
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-15
+          echo "/usr/lib/postgresql/15/bin" >> "$GITHUB_PATH"
+          export PATH="/usr/lib/postgresql/15/bin:$PATH"
+          test "$(pg_dump --version | sed -E 's/.* ([0-9]+)(\..*)?/\1/')" = '15'
+          test "$(pg_restore --version | sed -E 's/.* ([0-9]+)(\..*)?/\1/')" = '15'
 
       - name: Popular banco de origem com dado de canário
         env:

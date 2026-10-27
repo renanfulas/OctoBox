@@ -8,7 +8,7 @@ Type=oneshot
 Environment=OCTOBOX_APP_HOME=/srv/octobox
 Environment=OCTOBOX_DOMAIN=app.octoboxfit.com.br
 EnvironmentFile=-/srv/octobox/shared/octobox.env
-ExecStart=/srv/octobox/app/scripts/linux/check_octobox_runtime.sh
+ExecStart=/srv/octobox/current/scripts/linux/check_octobox_runtime.sh
 User=root
 
 [Install]

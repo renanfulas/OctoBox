@@ -18,6 +18,8 @@ import re
 
 
 DEFAULT_BOX_RUNTIME_SLUG = 'control'
+# Captured once when this module is imported by the worker process.
+LOADED_RELEASE_SHA = os.getenv('OCTOBOX_RELEASE_SHA', '').strip().lower() or None
 
 
 def normalize_box_runtime_slug(value: str | None) -> str:
@@ -127,6 +129,16 @@ def get_deployed_commit_sha() -> str | None:
         return None
 
 
+def get_loaded_release_sha() -> str | None:
+    """Return the immutable SHA captured by this worker at process start.
+
+    Unlike ``get_deployed_commit_sha()``, this value comes from the worker's
+    boot environment. It therefore exposes a stale worker after `current` has
+    moved to another release.
+    """
+    return LOADED_RELEASE_SHA
+
+
 def box_scoped_export_dir(media_root: str) -> str:
     """Diretorio de exports isolado por box: ``<media_root>/exports/<slug>/``.
 
@@ -146,5 +158,6 @@ __all__ = [
     'get_box_runtime_namespace',
     'get_box_runtime_slug',
     'get_deployed_commit_sha',
+    'get_loaded_release_sha',
     'normalize_box_runtime_slug',
 ]

@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=oneshot
 Environment=OCTOBOX_APP_HOME=/srv/octobox
 EnvironmentFile=-/srv/octobox/shared/octobox.env
-ExecStart=/srv/octobox/app/scripts/linux/backup_env_secrets.sh
+ExecStart=/srv/octobox/current/scripts/linux/backup_env_secrets.sh
 User=root
 
 [Install]

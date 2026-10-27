@@ -1,35 +1,39 @@
-<!--
-ARQUIVO: runbook de ROLLBACK — HostGator VPS de producao.
-FONTE DA VERDADE (codigo vence este doc): scripts/linux/rollback_octobox.sh
--->
+<!-- FONTE DA VERDADE: scripts/linux/rollback_octobox.sh. -->
 
 # Rollback — HostGator VPS
 
-Volta o **código** pro commit anterior (registrado no último deploy). Rápido, sob estresse.
+O rollback seleciona a release anterior completa registrada pelo deploy, valida
+manifesto, venv e `manage.py check`, move `/srv/octobox/current` atomicamente,
+reinicia Gunicorn e exige que o health confirme os SHAs publicado e carregado.
+Se a validação falhar, tenta restaurar o ponteiro que estava ativo antes do
+rollback e retorna falha explícita.
 
-## Comando
+Ao restaurar o ponteiro após rollback malsucedido, reinicia também o worker
+`octobox-public-workout-rest-alerts`, caso esteja instalado, para que ele carregue
+a mesma release restaurada. Falha no restart gera alerta; verificar o worker no
+host mesmo quando Gunicorn responde, pois o health HTTP não cobre esse processo.
 
 ```bash
-sudo bash /srv/octobox/app/scripts/linux/rollback_octobox.sh
+sudo bash /srv/octobox/current/scripts/linux/rollback_octobox.sh
 ```
 
-Usa `/srv/octobox/shared/deploy-state/previous_commit` como alvo. Faz `git checkout --force`, `pip install`, `collectstatic`, `check`, `restart octobox-gunicorn`, healthcheck — e troca `previous`/`current`.
+O script compartilha lock com o deploy. Não executa migrations reversas nem
+restaura banco automaticamente: o schema vivo deve ser compatível com a release
+anterior. Migrações precisam usar expansão e contração; para migration destrutiva,
+parar antes da ativação e definir janela e plano de restore específico. O backup
+pré-deploy fica registrado em `shared/deploy-state/last_backup_path`.
 
-## ⚠️ O que o rollback NÃO faz (o próprio script avisa)
+## Conferência
 
-> *"rollback rápido reposiciona o código. Não desfaz migrações de banco automaticamente."*
+```bash
+readlink -f /srv/octobox/current
+cat /srv/octobox/shared/deploy-state/current_commit
+curl --fail --silent https://app.octoboxfit.com.br/api/v1/health/
+systemctl is-active octobox-gunicorn
+```
 
-- Se o deploy ruim rodou uma **migração destrutiva** (dropou coluna/tabela, transformou dados), voltar só o código **não basta** — o schema novo continua lá e pode quebrar o código antigo.
-- Nesse caso: **restore do banco** a partir do backup pré-deploy → [restore.md](restore.md) (o caminho está em `deploy-state/last_backup_path`).
-
-## Decisão rápida
-
-| sintoma | ação |
-|---|---|
-| bug de código, banco intacto | `rollback_octobox.sh` (basta) |
-| migração mexeu/apagou dados | rollback **+** [restore.md](restore.md) |
-| não sobe de jeito nenhum | rollback → se persistir, restore + investigar com `/master_debugger` |
-
-## Validar
-
-`systemctl is-active octobox-gunicorn` = `active` e healthcheck OK. Confira `current_commit` = o esperado.
+O health precisa trazer `healthy=true`, `release_consistent=true` e igualdade
+entre `deployed_sha` e `loaded_sha`. Depois rode o [smoke pós-deploy](smoke.md).
+O layout de releases e as alterações dos serviços descritos neste runbook ainda
+precisam ser ensaiados em homologação com sequência A → B → A antes de ativar em
+produção.
