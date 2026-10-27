@@ -76,6 +76,14 @@ def connect_student_identity_listeners():
     """Chamado por StudentIdentityConfig.ready()."""
     from operations.signals.session_cancellation import student_session_cancelled
     student_session_cancelled.connect(_on_session_cancelled, weak=False)
+    from operations.signals.student_attendance import student_attendance_checked_in
+    student_attendance_checked_in.connect(_on_student_attendance_checked_in, weak=False)
+
+
+def _on_student_attendance_checked_in(*, sender, student_id, attendance_id, occurred_at, **kwargs):
+    from student_identity.cohort_milestones import record_student_first_checkin
+
+    record_student_first_checkin(student_id=student_id, occurred_at=occurred_at)
 
 
 __all__ = ['connect_student_identity_listeners']
