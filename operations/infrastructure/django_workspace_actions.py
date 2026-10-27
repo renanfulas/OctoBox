@@ -98,6 +98,7 @@ class DjangoWorkspaceActionWriter(WorkspaceActionWriterPort):
         if decision is None:
             return None
 
+        had_check_in = attendance.check_in_at is not None
         now = self.clock.now()
         check_in_at = attendance.check_in_at
         check_out_at = attendance.check_out_at
@@ -114,6 +115,15 @@ class DjangoWorkspaceActionWriter(WorkspaceActionWriterPort):
             check_in_at=check_in_at,
             check_out_at=check_out_at,
         )
+        if not had_check_in and check_in_at is not None and decision.status in {'checked_in', 'checked_out'}:
+            from operations.signals.student_attendance import student_attendance_checked_in
+
+            student_attendance_checked_in.send(
+                sender=attendance.__class__,
+                student_id=attendance.student_id,
+                attendance_id=attendance.id,
+                occurred_at=check_in_at,
+            )
         return AttendanceActionResult(attendance_id=attendance.id, status=decision.status)
 
 

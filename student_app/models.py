@@ -644,3 +644,31 @@ class MovementLibrary(models.Model):
 # Keep the established import surface while model definitions live in a focused module.
 from student_app.model_definitions.wod_intents import WodApplyIntent, WodInputDraft  # noqa: E402
 from student_app.model_definitions.wod_generation_credits import WodGenerationCreditLedger  # noqa: E402
+
+
+class StudentJourneyMilestone(TimeStampedModel):
+    """PII-free, tenant-local first facts for versioned activation cohorts."""
+
+    idempotency_key = models.CharField(max_length=64, unique=True)
+    journey = models.CharField(max_length=32, blank=True)
+    milestone = models.CharField(max_length=40)
+    subject_kind = models.CharField(max_length=24)
+    subject_key = models.CharField(max_length=100)
+    cohort_kind = models.CharField(max_length=24)
+    cohort_key = models.CharField(max_length=100)
+    # StudentIdentity lives in public; keep only its opaque numeric ID here.
+    identity_id = models.PositiveBigIntegerField(null=True, blank=True, db_index=True)
+    occurred_at = models.DateTimeField(db_index=True)
+    timezone_name = models.CharField(max_length=64)
+    contract_version = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        ordering = ['occurred_at', 'id']
+        indexes = [
+            models.Index(fields=['journey', 'milestone', 'occurred_at'], name='journey_mile_time_idx'),
+            models.Index(fields=['journey', 'cohort_kind', 'cohort_key'], name='journey_cohort_key_idx'),
+            models.Index(fields=['identity_id', 'milestone', 'occurred_at'], name='journey_identity_mile_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.journey}:{self.milestone}:{self.subject_kind}:{self.subject_key}'

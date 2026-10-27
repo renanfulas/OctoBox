@@ -17,6 +17,7 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+from django.contrib import messages
 from django.shortcuts import redirect
 
 # Sprint 4: get_box_runtime_slug import removido — verificacao slug-vs-runtime
@@ -25,7 +26,7 @@ from student_app.onboarding_state import store_pending_student_onboarding
 
 from .funnel_events import record_student_onboarding_event
 from .infrastructure.session import attach_student_session_cookie
-from .models import StudentOnboardingJourney
+from .models import StudentBoxMembershipStatus, StudentOnboardingJourney
 from .security import build_student_device_fingerprint
 
 
@@ -85,7 +86,32 @@ def handle_student_special_oauth_journey(
         # — precisamos sobrescrever aqui agora que sabemos o box alvo.
         _activate_box_tenant(box_invite_link.box_id, box_root_slug=box_invite_link.box_root_slug)
         if result.success and result.identity is not None:
-            response = redirect('student-app-home')
+            membership = repository.find_membership_for_identity_box(result.identity)
+            membership_pending = (
+                membership is not None
+                and membership.status == StudentBoxMembershipStatus.PENDING_APPROVAL
+            )
+            if membership_pending:
+                messages.info(request, 'Sua identidade foi validada. Agora o box precisa aprovar este acesso.')
+                response = redirect('student-app-membership-pending')
+            else:
+                record_student_onboarding_event(
+                    actor=None,
+                    actor_role='',
+                    journey=StudentOnboardingJourney.MASS_BOX_INVITE,
+                    event='app_entry_completed',
+                    target_model='student_identity.StudentIdentity',
+                    target_id=str(result.identity.id),
+                    target_label=result.identity.student_name,
+                    description='Entrada no app concluída via link do grupo para identidade existente.',
+                    metadata={
+                        'box_root_slug': box_invite_link.box_root_slug,
+                        'box_invite_link_id': box_invite_link.id,
+                        'identity_id': result.identity.id,
+                        'student_id': result.identity.student_id,
+                    },
+                )
+                response = redirect('student-app-home')
             attach_student_session_cookie(
                 response,
                 identity_id=result.identity.id,
@@ -194,7 +220,14 @@ def handle_student_special_oauth_journey(
     return attach_response
 
 
-def record_student_entry_completed_journey(*, provider: str, result, journey: str):
+def record_student_entry_completed_journey(
+    *,
+    provider: str,
+    result,
+    journey: str,
+    invitation_id: int | None = None,
+    box_invite_link_id: int | None = None,
+):
     if not journey:
         return
 
@@ -211,6 +244,8 @@ def record_student_entry_completed_journey(*, provider: str, result, journey: st
             'box_root_slug': result.identity.box_root_slug,
             'identity_id': result.identity.id,
             'student_id': result.identity.student_id,
+            'invitation_id': invitation_id,
+            'box_invite_link_id': box_invite_link_id,
             'provider': provider,
         },
     )
@@ -227,6 +262,8 @@ def record_student_entry_completed_journey(*, provider: str, result, journey: st
             'box_root_slug': result.identity.box_root_slug,
             'identity_id': result.identity.id,
             'student_id': result.identity.student_id,
+            'invitation_id': invitation_id,
+            'box_invite_link_id': box_invite_link_id,
             'provider': provider,
         },
     )
