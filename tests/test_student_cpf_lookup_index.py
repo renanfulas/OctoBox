@@ -93,8 +93,9 @@ def test_quick_form_checks_cpf_duplicate_by_index():
     form = StudentQuickForm(instance=Student())
     form.cleaned_data = {"cpf": "05248434068"}
 
-    with pytest.raises(ValidationError, match="Já existe um aluno cadastrado com este CPF"):
-        form.clean_cpf()
+    with override_settings(CPF_LOOKUP_INDEX_READY=True):
+        with pytest.raises(ValidationError, match="Já existe um aluno cadastrado com este CPF"):
+            form.clean_cpf()
 
 
 def test_quick_form_blocks_cpf_until_index_backfill_is_enabled():

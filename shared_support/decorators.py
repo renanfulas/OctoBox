@@ -76,10 +76,10 @@ def idempotent_action(view_func):
 
             return response
 
-        except Exception as e:
-            logger.error(f"Erro na idempotência: {str(e)}")
+        except Exception as exc:
+            logger.error('idempotent_action_failed error_type=%s', type(exc).__name__)
             # Limpa o lock se der erro durante a execução, para permitir retry técnico
             IdempotencyKey.objects.filter(key=key).update(locked_at=None)
-            raise e
+            raise
 
     return wrapper

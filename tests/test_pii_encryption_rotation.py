@@ -26,6 +26,7 @@ def test_rotation_dry_run_apply_and_checkpoint_are_resumable(tmp_path, capsys):
     legacy_key = derive_legacy_fernet_key("test-only-secret-key")
     legacy_value = Fernet(legacy_key).encrypt(b"5511999000001").decode("ascii")
     settings = {
+        "SECRET_KEY": "test-only-secret-key",
         "PII_ENCRYPTION_KEYRING_JSON": json.dumps({active_key_id: active_key}),
         "PII_ENCRYPTION_ACTIVE_KEY_ID": active_key_id,
     }
@@ -155,6 +156,7 @@ def test_rotation_resumes_after_a_bounded_partial_batch(tmp_path, capsys):
     first_key = Fernet.generate_key().decode("ascii")
     legacy_key = derive_legacy_fernet_key("test-only-secret-key")
     settings = {
+        "SECRET_KEY": "test-only-secret-key",
         "PII_ENCRYPTION_KEYRING_JSON": json.dumps({first_key_id: first_key}),
         "PII_ENCRYPTION_ACTIVE_KEY_ID": first_key_id,
     }
