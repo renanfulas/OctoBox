@@ -52,8 +52,10 @@ def test_encrypted_email_field_keeps_a_reader_first_writer_gate():
         legacy_field = StudentAppInvitation._meta.get_field('invited_email')
         table = connection.ops.quote_name(StudentAppInvitation._meta.db_table)
         column = connection.ops.quote_name(legacy_field.column)
+        # Raw SQL verifies the stored value; identifiers are model metadata quoted by
+        # Django, while the primary key remains a bound value.
         with connection.cursor() as cursor:
-            cursor.execute(f'SELECT {column} FROM {table} WHERE id = %s', [legacy_writer.pk])
+            cursor.execute(f'SELECT {column} FROM {table} WHERE id = %s', [legacy_writer.pk])  # nosec B608
             stored_plaintext = cursor.fetchone()[0]
         legacy_writer.refresh_from_db()
         assert legacy_writer.invited_email == 'plaintext-until-readers@example.test'
@@ -69,7 +71,7 @@ def test_encrypted_email_field_keeps_a_reader_first_writer_gate():
         table = connection.ops.quote_name(StudentAppInvitation._meta.db_table)
         column = connection.ops.quote_name(field.column)
         with connection.cursor() as cursor:
-            cursor.execute(f'SELECT {column} FROM {table} WHERE id = %s', [encrypted_writer.pk])
+            cursor.execute(f'SELECT {column} FROM {table} WHERE id = %s', [encrypted_writer.pk])  # nosec B608
             stored_ciphertext = cursor.fetchone()[0]
         encrypted_writer.refresh_from_db()
 
@@ -150,8 +152,9 @@ def test_indexed_lookup_reads_email_written_as_ciphertext():
         column = connection.ops.quote_name(
             StudentAppInvitation._meta.get_field('invited_email').column,
         )
+        # Raw ciphertext assertion uses only quoted model identifiers and a bound PK.
         with connection.cursor() as cursor:
-            cursor.execute(f'SELECT {column} FROM {table} WHERE id = %s', [target.pk])
+            cursor.execute(f'SELECT {column} FROM {table} WHERE id = %s', [target.pk])  # nosec B608
             stored = cursor.fetchone()[0]
 
     assert decode(stored).status == 'legacy_fernet'

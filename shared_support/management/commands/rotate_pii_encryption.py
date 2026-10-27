@@ -211,8 +211,10 @@ class Command(BaseCommand):
                             with connection.cursor() as cursor:
                                 if not apply_changes:
                                     cursor.execute("SET TRANSACTION READ ONLY")
+                                # Model/field are scope-allowlisted above; Django quotes each
+                                # identifier and row values remain bound parameters.
                                 cursor.execute(
-                                    f"SELECT {pk_sql}, {value_sql} FROM {table_sql} "
+                                    f"SELECT {pk_sql}, {value_sql} FROM {table_sql} "  # nosec B608
                                     f"WHERE {pk_sql} > %s ORDER BY {pk_sql} LIMIT %s",
                                     [last_pk, current_batch_size],
                                 )
@@ -235,8 +237,10 @@ class Command(BaseCommand):
                                         continue
 
                                     replacement = encode(result.plaintext, keyring=keyring)
+                                    # Same allowlisted, backend-quoted identifiers; only values
+                                    # are interpolated through the DB driver's parameter binding.
                                     cursor.execute(
-                                        f"UPDATE {table_sql} SET {value_sql} = %s "
+                                        f"UPDATE {table_sql} SET {value_sql} = %s "  # nosec B608
                                         f"WHERE {pk_sql} = %s AND {value_sql} IS NOT DISTINCT FROM %s",
                                         [replacement, primary_key, raw_value],
                                     )
