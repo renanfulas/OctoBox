@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
@@ -19,6 +20,7 @@ from student_app.models import SessionWorkout, SessionWorkoutStatus
 from .wod_day_apply_state import undo_cache_key, workout_state
 
 _UNDO_TTL = 60
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -61,9 +63,22 @@ def execute_day_apply(*, actor, target_date: date, template_id: int, class_type:
             session_id__in=[session.id for session in sessions],
         )
     }
+    return apply_template_to_locked_sessions(actor=actor, template=template, sessions=sessions, workouts=workouts, mode=mode)
+
+
+def apply_template_to_locked_sessions(*, actor, template, sessions, workouts, mode,
+                                      skip_completed=False, defer_undo_cache=False,
+                                      on_undo_unavailable=None) -> DayApplyResult:
+    """Shared write path; caller owns the transaction and ordered row locks."""
     changes = []
     skipped = []
     for session in sessions:
+        if skip_completed and session.status == SessionStatus.COMPLETED:
+            skipped.append({'session_id': session.id, 'reason': 'Aula concluída preservada.', 'code': 'skipped_completed'})
+            continue
+        if session.status == SessionStatus.CANCELED:
+            skipped.append({'session_id': session.id, 'reason': 'Aula cancelada preservada.', 'code': 'skipped_canceled'})
+            continue
         workout = workouts.get(session.id)
         if workout is not None:
             if mode == 'replace_empty' or workout.status != SessionWorkoutStatus.DRAFT:
@@ -83,11 +98,29 @@ def execute_day_apply(*, actor, target_date: date, template_id: int, class_type:
 
     token = str(uuid.uuid4()) if changes else ''
     if changes:
-        cache.set(undo_cache_key(actor, token), {'changes': changes}, timeout=_UNDO_TTL)
+        if defer_undo_cache:
+            def save_undo():
+                try:
+                    stored = cache.set(undo_cache_key(actor, token), {'changes': changes}, timeout=_UNDO_TTL)
+                    if stored is False:
+                        raise RuntimeError('cache backend recusou o payload de undo')
+                except Exception as exc:
+                    logger.error('daily_wod_undo_cache_write_failed error_type=%s', type(exc).__name__)
+                    if on_undo_unavailable is not None:
+                        try:
+                            on_undo_unavailable()
+                        except Exception as callback_exc:
+                            logger.error(
+                                'daily_wod_undo_unavailable_callback_failed error_type=%s',
+                                type(callback_exc).__name__,
+                            )
+            transaction.on_commit(save_undo)
+        else:
+            cache.set(undo_cache_key(actor, token), {'changes': changes}, timeout=_UNDO_TTL)
     return DayApplyResult(
         applied_count=len(changes), skipped_count=len(skipped), undo_token=token,
         applied_session_ids=[change['session_id'] for change in changes], skipped_reasons=skipped,
     )
 
 
-__all__ = ['DayApplyResult', 'execute_day_apply']
+__all__ = ['DayApplyResult', 'execute_day_apply', 'apply_template_to_locked_sessions']

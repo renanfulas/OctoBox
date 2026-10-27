@@ -21,7 +21,7 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 
-from access.roles import ROLE_MANAGER, ROLE_OWNER
+from access.roles import ROLE_MANAGER, ROLE_OWNER, get_user_role
 from auditing import log_audit_event
 from operations.models import AttendanceStatus
 from student_app.models import (
@@ -151,7 +151,11 @@ class WorkoutFollowUpActionView(OperationBaseView, View):
     def post(self, request, workout_id, *args, **kwargs):
         with wod_action_timer(request, action='follow_up', workout_id=workout_id):
             workout = load_published_workout(workout_id=workout_id)
-            form = WorkoutFollowUpResolutionForm(request.POST)
+            role = get_user_role(request.user)
+            form = WorkoutFollowUpResolutionForm(
+                request.POST,
+                current_role_slug=getattr(role, 'slug', ''),
+            )
             if not form.is_valid():
                 messages.error(request, 'Revise o resultado da acao sugerida antes de registrar.')
                 return _redirect_to_workout_surface(request)

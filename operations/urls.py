@@ -64,7 +64,11 @@ from .workout_planner_views import (
     WorkoutPlannerTemplatePickerTelemetryView,
     WorkoutPlannerView,
 )
-from .workout_day_apply_views import WodDayApplyView, WodDayApplyUndoView
+from .workout_day_apply_views import (
+    WodDayApplyPreviewView, WodDayApplyView, WodDayApplyUndoView,
+    WodProgramApplyPreviewView, WodProgramApplyConfirmView,
+)
+from .workout_draft_views import WodInputDraftView
 from .workout_template_archive_views import (
     WorkoutTemplateArchiveView,
     WorkoutTemplateArchiveAllView,
@@ -105,6 +109,7 @@ urlpatterns = [
     path('operacao/coach/', CoachWorkspaceView.as_view(), name='coach-workspace'),
     path('operacao/wod/editor/', WorkoutEditorHomeView.as_view(), name='workout-editor-home'),
     path('operacao/wod/paste/', WorkoutSmartPasteView.as_view(), name='workout-smart-paste'),
+    path('operacao/wod/rascunho/', WodInputDraftView.as_view(), name='wod-input-draft'),
     path('operacao/wod/planner/', WorkoutPlannerView.as_view(), name='workout-planner'),
     path('operacao/wod/planner/template-picker/telemetry/', WorkoutPlannerTemplatePickerTelemetryView.as_view(), name='workout-planner-template-picker-telemetry'),
     path(
@@ -124,6 +129,9 @@ urlpatterns = [
     ),
     path('operacao/wod/planner/semana/limpar/', WorkoutPlannerClearWeekView.as_view(), name='workout-planner-clear-week'),
     path('operacao/wod/planner/dia/aplicar/', WodDayApplyView.as_view(), name='wod-day-apply'),
+    path('operacao/wod/planner/dia/conferir/', WodDayApplyPreviewView.as_view(), name='wod-day-apply-preview'),
+    path('operacao/wod/planner/dia/programa/conferir/', WodProgramApplyPreviewView.as_view(), name='wod-day-program-preview'),
+    path('operacao/wod/planner/dia/programa/confirmar/', WodProgramApplyConfirmView.as_view(), name='wod-day-program-confirm'),
     path('operacao/wod/planner/dia/desfazer/', WodDayApplyUndoView.as_view(), name='wod-day-apply-undo'),
     path('operacao/wod/templates/<int:template_id>/arquivar/', WorkoutTemplateArchiveView.as_view(), name='workout-template-archive'),
     path('operacao/wod/templates/arquivar-todos/', WorkoutTemplateArchiveAllView.as_view(), name='workout-template-archive-all'),
