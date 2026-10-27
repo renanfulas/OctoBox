@@ -37,4 +37,4 @@ def get_unlinked_whatsapp_contacts(*, limit=8):
     return WhatsAppContact.objects.filter(
         status=WhatsAppContactStatus.NEW,
         linked_student__isnull=True,
-    ).order_by('display_name', 'phone')[:limit]
+    ).order_by('display_name', 'pk')[:limit]

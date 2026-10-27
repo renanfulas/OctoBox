@@ -9,9 +9,9 @@ POR QUE ELE EXISTE:
   PublicWorkoutAccount (schema public, SHARED_APP) da mesma pessoa.
 
 PONTOS CRITICOS:
-- Resolucao por e-mail, get_or_create simples: "nao havera duplicatas"
-  (unique=True em PublicWorkoutAccount.email e' a garantia real, nao uma
-  reconciliacao elaborada). Se ja existe conta com este e-mail, o
+- Resolucao exata por e-mail passa pelo helper compatível plaintext/HMAC.
+  A unicidade atual de PublicWorkoutAccount.email continua como salvaguarda
+  concorrente durante o rollout. Se ja existe conta com este e-mail, o
   `student_identity_id` dela NUNCA e' sobrescrito aqui (mesma regra do
   resto do produto: resolvido so na criacao, D.5 da Onda A1 Fatia B).
 - Concede sessao do corredor (cookie octobox_treinos_session) direto,
@@ -42,10 +42,10 @@ class StudentPublicWorkoutLinkView(StudentIdentityRequiredMixin, View):
     corredor de consultoria, se ele tiver assinatura ativa."""
 
     def get(self, request, *args, **kwargs):
-        from public_workouts.models import PublicWorkoutAccount
+        from public_workouts.account_email_lookup import get_or_create_public_workout_account
 
         identity = request.student_identity
-        account, _created = PublicWorkoutAccount.objects.get_or_create(
+        account, _created = get_or_create_public_workout_account(
             email=identity.email,
             defaults={'student_identity_id': identity.id},
         )

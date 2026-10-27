@@ -18,16 +18,34 @@ from .models import (
 class StudentIdentityAdmin(admin.ModelAdmin):
     list_display = ('student_name', 'box_root_slug', 'provider', 'email', 'status', 'last_authenticated_at')  # Sprint 2
     list_filter = ('status', 'provider', 'box_root_slug')
-    search_fields = ('student__full_name', 'email', 'provider_subject')
+    # Student is resolved across schemas by a property, so Admin searches the
+    # tenant-independent display snapshot stored on StudentIdentity.
+    search_fields = ('student_name', 'email', 'provider_subject')
 
 
 @admin.register(StudentAppInvitation)
 class StudentAppInvitationAdmin(admin.ModelAdmin):
     list_display = ('student_name', 'box_root_slug', 'onboarding_journey', 'invited_email', 'invitation_status', 'expires_at', 'accepted_at')  # Sprint 2
     list_filter = ('box_root_slug', 'onboarding_journey')
-    search_fields = ('student__full_name', 'invited_email')
+    # Email search is exact and routed through its HMAC reader. Substring
+    # searches cannot remain valid if invited_email is encrypted later.
+    search_fields = ('student_name', 'box_root_slug')
     readonly_fields = ('invite_url',)
     actions = ('extend_selected_invites_by_7_days', 'revoke_selected_invites')
+
+    def get_search_results(self, request, queryset, search_term):
+        base_queryset = queryset
+        queryset, may_have_duplicates = super().get_search_results(
+            request, queryset, search_term,
+        )
+        if '@' not in (search_term or ''):
+            return queryset, may_have_duplicates
+        from .queries.invitation_email_lookup import invitations_for_email
+
+        matches = invitations_for_email(search_term, queryset=base_queryset)
+        if matches:
+            queryset = queryset | base_queryset.filter(pk__in=[row.pk for row in matches])
+        return queryset, may_have_duplicates
 
     def get_queryset(self, request):
         return super().get_queryset(request)  # Sprint 2: sem select_related student (cross-schema)
@@ -62,7 +80,8 @@ class StudentAppInvitationAdmin(admin.ModelAdmin):
 class StudentTransferAdmin(admin.ModelAdmin):
     list_display = ('student_id', 'from_box_root_slug', 'to_box_root_slug', 'status', 'effective_at')  # Sprint 2
     list_filter = ('status', 'from_box_root_slug', 'to_box_root_slug')
-    search_fields = ('student__full_name', 'reason')
+    # Student is a weak cross-schema reference; search its identity snapshot.
+    search_fields = ('identity__student_name', 'reason')
 
 
 @admin.register(StudentBoxInviteLink)
@@ -76,11 +95,13 @@ class StudentBoxInviteLinkAdmin(admin.ModelAdmin):
 class StudentInvitationDeliveryAdmin(admin.ModelAdmin):
     list_display = ('invitation', 'channel', 'provider', 'status', 'recipient', 'sent_at', 'failed_at')
     list_filter = ('channel', 'provider', 'status')
-    search_fields = ('invitation__student__full_name', 'recipient', 'provider_message_id', 'error_message')
+    # Recipient is encrypted; substring search would silently query ciphertext.
+    search_fields = ('provider_message_id', 'error_message')
 
 
 @admin.register(StudentInvitationDeliveryEvent)
 class StudentInvitationDeliveryEventAdmin(admin.ModelAdmin):
     list_display = ('delivery', 'provider', 'event_type', 'provider_event_id', 'occurred_at')
     list_filter = ('provider', 'event_type')
-    search_fields = ('delivery__invitation__student__full_name', 'provider_event_id', 'event_type')
+    # Invitation.student is cross-schema; the invitation stores student_name.
+    search_fields = ('delivery__invitation__student_name', 'provider_event_id', 'event_type')

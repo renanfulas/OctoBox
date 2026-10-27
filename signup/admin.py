@@ -16,6 +16,7 @@ from __future__ import annotations
 from django.contrib import admin
 from django.utils.html import format_html
 
+from .email_lookup import pending_signups_for_email
 from .models import PendingSignup, PendingSignupStatus
 
 
@@ -33,7 +34,7 @@ class PendingSignupAdmin(admin.ModelAdmin):
         'activated_at',
     )
     list_filter = ('status', 'plan', 'promo_code', 'created_at')
-    search_fields = ('email', 'full_name', 'box_name', 'phone', 'stripe_session_id', 'promo_code')
+    search_fields = ('full_name', 'box_name', 'phone', 'stripe_session_id', 'promo_code')
     readonly_fields = (
         'created_at',
         'updated_at',
@@ -47,6 +48,7 @@ class PendingSignupAdmin(admin.ModelAdmin):
         'landing_referer',
         'promo_code',
     )
+
     fieldsets = (
         ('Identificacao', {
             'fields': ('full_name', 'email', 'phone', 'box_name'),
@@ -67,6 +69,20 @@ class PendingSignupAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+    def get_search_results(self, request, queryset, search_term):
+        text_results, may_have_duplicates = super().get_search_results(
+            request,
+            queryset,
+            search_term,
+        )
+        if '@' not in (search_term or ''):
+            return text_results, may_have_duplicates
+        matches = pending_signups_for_email(search_term, queryset=queryset)
+        if not matches:
+            return text_results, may_have_duplicates
+        email_results = queryset.filter(pk__in=[row.pk for row in matches])
+        return text_results | email_results, may_have_duplicates
 
     @admin.display(description='Status', ordering='status')
     def status_badge(self, obj):

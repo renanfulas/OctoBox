@@ -33,7 +33,8 @@ from __future__ import annotations
 
 from django.core.management.base import BaseCommand, CommandError
 
-from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription
+from public_workouts.account_email_lookup import get_or_create_public_workout_account
+from public_workouts.models import PublicWorkoutSubscription
 
 
 class Command(BaseCommand):
@@ -69,7 +70,7 @@ class Command(BaseCommand):
                 self.stdout.write(f'[dry-run] criaria/confirmaria conta <-> {slug}')
                 continue
 
-            account, account_created = PublicWorkoutAccount.objects.get_or_create(email=email)
+            account, account_created = get_or_create_public_workout_account(email=email)
             subscription, sub_created = PublicWorkoutSubscription.objects.get_or_create(
                 account=account,
                 defaults={'plan_slug': slug},

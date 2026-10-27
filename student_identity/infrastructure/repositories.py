@@ -201,15 +201,13 @@ class DjangoStudentIdentityRepository:
         )
 
     def find_live_by_email_and_box(self, *, email: str, box_root_slug: str):
-        return (
-            StudentIdentity.objects
-            .filter(
-                get_student_identity_box_scope_for_root(box_root_slug).predicate,
-                email__iexact=(email or '').strip(),
-                status__in=[StudentIdentityStatus.PENDING, StudentIdentityStatus.ACTIVE],
-            )
-            .first()
+        from student_identity.queries.email_lookup import identities_for_email
+
+        queryset = StudentIdentity.objects.filter(
+            get_student_identity_box_scope_for_root(box_root_slug).predicate,
+            status__in=[StudentIdentityStatus.PENDING, StudentIdentityStatus.ACTIVE],
         )
+        return next(iter(identities_for_email(email, queryset=queryset)), None)
 
     def find_by_provider_subject(self, *, provider_subject: str):
         # Sprint 2: removido select_related('student') — cross-schema

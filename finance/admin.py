@@ -17,6 +17,7 @@ from django.contrib import admin
 
 from auditing.admin_mixins import AuditedAdminMixin
 from finance.models import Enrollment, MembershipPlan, Payment
+from shared_support.admin_search import BlindIndexPhoneSearchAdminMixin
 
 
 @admin.register(MembershipPlan)
@@ -27,18 +28,20 @@ class MembershipPlanAdmin(AuditedAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(Enrollment)
-class EnrollmentAdmin(AuditedAdminMixin, admin.ModelAdmin):
+class EnrollmentAdmin(BlindIndexPhoneSearchAdminMixin, AuditedAdminMixin, admin.ModelAdmin):
     list_display = ('student', 'plan', 'status', 'start_date', 'end_date')
     list_filter = ('status', 'plan')
-    search_fields = ('student__full_name', 'student__phone', 'plan__name')
+    search_fields = ('student__full_name', 'plan__name')
+    phone_lookup_path = 'student__phone_lookup_index'
     autocomplete_fields = ('student', 'plan')
 
 
 @admin.register(Payment)
-class PaymentAdmin(AuditedAdminMixin, admin.ModelAdmin):
+class PaymentAdmin(BlindIndexPhoneSearchAdminMixin, AuditedAdminMixin, admin.ModelAdmin):
     list_display = ('student', 'amount', 'due_date', 'status', 'method', 'paid_at')
     list_filter = ('status', 'method', 'due_date')
-    search_fields = ('student__full_name', 'student__phone', 'reference')
+    search_fields = ('student__full_name', 'reference')
+    phone_lookup_path = 'student__phone_lookup_index'
     autocomplete_fields = ('student', 'enrollment')
     exclude = ('billing_group', 'installment_number', 'installment_total')
     # Linkage Stripe: preenchido pelo webhook, nao editavel a mao. readonly (em vez

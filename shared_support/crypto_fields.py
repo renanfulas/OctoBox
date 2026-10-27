@@ -129,6 +129,16 @@ class EncryptedCharField(models.CharField):
         return _read_encrypted_value(value)
 
 
+class EncryptedEmailField(EncryptedCharField, models.EmailField):
+    """EmailField that reads both plaintext and ciphertext with optional writer gate."""
+
+    description = "Email encrypted with Fernet and readable as legacy plaintext"
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("max_length", 254)
+        super().__init__(*args, **kwargs)
+
+
 class EncryptedTextField(models.TextField):
     """TextField with authenticated reads and fail-closed encrypted writes."""
 
@@ -177,5 +187,81 @@ def generate_cpf_blind_index(value, *, key=None):
     # Reuse the stable blind-index root without making a CPF fingerprint
     # correlatable with a phone containing the same digits.
     message = f"octobox:cpf:v1:{digits}"
+    digest = hmac.new(force_bytes(key), force_bytes(message), hashlib.sha256).hexdigest()
+    return f"v1:{digest}"
+
+
+def generate_email_blind_index(value, *, key=None):
+    """Generate a domain-separated HMAC for normalized email equality lookup."""
+
+    return _generate_scoped_email_blind_index(
+        value,
+        domain="student-identity-email",
+        key=key,
+    )
+
+
+def generate_public_workout_account_email_blind_index(value, *, key=None):
+    """Generate the independent HMAC used by public workout account lookup."""
+
+    return _generate_scoped_email_blind_index(
+        value,
+        domain="public-workout-account-email",
+        key=key,
+    )
+
+
+def generate_public_workout_checkout_lead_email_blind_index(value, *, key=None):
+    """Generate the independent HMAC for unpaid checkout lead lookup."""
+
+    return _generate_scoped_email_blind_index(
+        value,
+        domain="public-workout-checkout-lead-email",
+        key=key,
+    )
+
+
+def generate_public_workout_waitlist_email_blind_index(value, *, key=None):
+    """Generate the independent HMAC for public workout waitlist lookup."""
+
+    return _generate_scoped_email_blind_index(
+        value,
+        domain="public-workout-waitlist-email",
+        key=key,
+    )
+
+
+def generate_student_app_invitation_email_blind_index(value, *, key=None):
+    """Generate the independent HMAC used for exact invitation email search."""
+
+    return _generate_scoped_email_blind_index(
+        value,
+        domain="student-app-invitation-email",
+        key=key,
+    )
+
+
+def generate_pending_signup_email_blind_index(value, *, key=None):
+    """Generate the independent HMAC used for exact PendingSignup email search."""
+
+    return _generate_scoped_email_blind_index(
+        value,
+        domain="pending-signup-email",
+        key=key,
+    )
+
+
+def _generate_scoped_email_blind_index(value, *, domain, key=None):
+    """Generate a versioned, purpose-separated HMAC for email equality."""
+
+    normalized = force_str(value or "").strip().casefold()
+    if not normalized:
+        return ""
+    if key is None:
+        key = getattr(settings, "EMAIL_BLIND_INDEX_KEY", "")
+    if not key:
+        return ""
+
+    message = f"octobox:{domain}:v1:{normalized}"
     digest = hmac.new(force_bytes(key), force_bytes(message), hashlib.sha256).hexdigest()
     return f"v1:{digest}"

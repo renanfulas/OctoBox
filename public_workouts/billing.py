@@ -27,6 +27,7 @@ from django.utils import timezone
 
 from student_app.brazilian_holidays import get_brazilian_holiday_name
 
+from .account_email_lookup import get_or_create_public_workout_account
 from .models import (
     PublicWorkoutAccount,
     PublicWorkoutCheckoutLead,
@@ -337,7 +338,7 @@ def provision_paid_checkout_lead(lead_id: int, *, customer_id: str = '', stripe_
         account = lead.account
         subscription = account.subscription
     else:
-        account, _ = PublicWorkoutAccount.objects.get_or_create(email=lead.email.lower())
+        account, _ = get_or_create_public_workout_account(email=lead.email)
         subscription = PublicWorkoutSubscription.objects.filter(account=account).first()
         if subscription is None:
             subscription = PublicWorkoutSubscription.objects.create(

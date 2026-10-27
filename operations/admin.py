@@ -17,6 +17,7 @@ from django.contrib import admin
 
 from auditing.admin_mixins import AuditedAdminMixin
 from operations.models import Attendance, BehaviorNote, ClassSession, LeadImportJob, WorkoutProgram
+from shared_support.admin_search import BlindIndexPhoneSearchAdminMixin
 
 
 @admin.register(ClassSession)
@@ -36,10 +37,11 @@ class WorkoutProgramAdmin(AuditedAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(Attendance)
-class AttendanceAdmin(AuditedAdminMixin, admin.ModelAdmin):
+class AttendanceAdmin(BlindIndexPhoneSearchAdminMixin, AuditedAdminMixin, admin.ModelAdmin):
     list_display = ('student', 'session', 'status', 'check_in_at', 'check_out_at')
     list_filter = ('status', 'session__scheduled_at')
-    search_fields = ('student__full_name', 'student__phone', 'session__title')
+    search_fields = ('student__full_name', 'session__title')
+    phone_lookup_path = 'student__phone_lookup_index'
     autocomplete_fields = ('student', 'session')
 
 

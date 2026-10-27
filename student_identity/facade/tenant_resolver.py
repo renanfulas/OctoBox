@@ -179,11 +179,15 @@ def _resolve_from_existing_identity_by_email(email: str) -> Optional[TenantResol
         return None
 
     from student_identity.models import StudentIdentity, StudentIdentityStatus
-    candidates = list(
-        StudentIdentity.objects
-        .filter(email__iexact=email.strip(), status=StudentIdentityStatus.ACTIVE)
-        .values('box_id', 'box_root_slug')
-    )
+    from student_identity.queries.email_lookup import identities_for_email
+
+    identity_queryset = StudentIdentity.objects.filter(
+        status=StudentIdentityStatus.ACTIVE,
+    ).only('pk', 'email', 'box_id', 'box_root_slug')
+    candidates = [
+        {'box_id': identity.box_id, 'box_root_slug': identity.box_root_slug}
+        for identity in identities_for_email(email, queryset=identity_queryset)
+    ]
     if len(candidates) != 1:
         return None
 

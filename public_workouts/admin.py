@@ -8,6 +8,8 @@ from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from . import nutrition_schema, schema
+from .account_email_lookup import public_workout_accounts_for_email
+from .admin_email_search import PublicWorkoutAccountExactEmailSearchMixin
 from .guided_prescription import propose_guided_prescription, validate_guided_prescription
 from .guided_draft import prepare_guided_payload
 from .models import (
@@ -15,7 +17,6 @@ from .models import (
     PublicWorkoutAssessment,
     PublicWorkoutCampaignSpend,
     PublicWorkoutAcquisitionSession,
-    PublicWorkoutCheckoutLead,
     PublicWorkoutFunnelEvent,
     PublicWorkoutMealPlan,
     PublicWorkoutMealPlanDelivery,
@@ -39,8 +40,6 @@ from .models import (
     PublicWorkoutTestimonial,
     PublicWorkoutWorkItem,
     PublicWorkoutWorkItemStatus,
-    PublicWorkoutWaitlistEntry,
-    PublicWorkoutWaitlistStatus,
 )
 from .widgets import NutritionPlanEditorWidget
 from .notifications import notify_program_ready
@@ -50,6 +49,10 @@ from .services import (
     flag_movements_against_restrictions,
     publish_meal_plan,
     reject_program_draft,
+)
+from .admin_commerce_email import (
+    PublicWorkoutCheckoutLeadAdmin as PublicWorkoutCheckoutLeadAdmin,
+    PublicWorkoutWaitlistEntryAdmin as PublicWorkoutWaitlistEntryAdmin,
 )
 
 
@@ -71,27 +74,6 @@ class PublicWorkoutAcquisitionSessionAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(PublicWorkoutCheckoutLead)
-class PublicWorkoutCheckoutLeadAdmin(admin.ModelAdmin):
-    list_display = ('email', 'tier', 'marketing_consent', 'paid_at', 'created_at')
-    list_editable = ('marketing_consent',)
-    list_filter = ('tier', 'marketing_consent', 'paid_at', 'created_at')
-    search_fields = ('email',)
-    readonly_fields = [
-        field.name for field in PublicWorkoutCheckoutLead._meta.fields
-        if field.name not in ('marketing_consent', 'marketing_consent_at')
-    ]
-    ordering = ('-created_at',)
-
-    def has_add_permission(self, request):
-        return False
-
-    def save_model(self, request, obj, form, change):
-        if 'marketing_consent' in form.changed_data:
-            obj.marketing_consent_at = timezone.now() if obj.marketing_consent else None
-        super().save_model(request, obj, form, change)
-
-
 @admin.register(PublicWorkoutFunnelEvent)
 class PublicWorkoutFunnelEventAdmin(admin.ModelAdmin):
     list_display = ('event_type', 'tier', 'partner_code', 'channel', 'source', 'campaign', 'occurred_at')
@@ -108,13 +90,13 @@ class PublicWorkoutFunnelEventAdmin(admin.ModelAdmin):
 
 
 @admin.register(PublicWorkoutWorkItem)
-class PublicWorkoutWorkItemAdmin(admin.ModelAdmin):
+class PublicWorkoutWorkItemAdmin(PublicWorkoutAccountExactEmailSearchMixin, admin.ModelAdmin):
     list_display = (
         'account', 'item_type', 'status', 'age', 'is_overdue', 'priority', 'assigned_to',
         'due_at', 'estimated_effort_minutes', 'actual_effort_minutes',
     )
     list_filter = ('status', 'item_type', 'priority', 'assigned_to', 'due_at')
-    search_fields = ('account__email', 'cycle_key', 'blocked_reason')
+    search_fields = ('cycle_key', 'blocked_reason')
     ordering = ('priority', 'due_at', 'created_at')
     readonly_fields = (
         'account', 'subscription', 'item_type', 'cycle_key', 'status', 'priority',
@@ -248,15 +230,25 @@ class AwaitingNutritionFilter(admin.SimpleListFilter):
 @admin.register(PublicWorkoutAccount)
 class PublicWorkoutAccountAdmin(admin.ModelAdmin):
     list_display = ('email', 'whatsapp', 'created_at')
+    # Retained to render Django's search control; get_search_results deliberately
+    # performs exact lookup through the plaintext/HMAC helper, never icontains.
     search_fields = ('email',)
     readonly_fields = ('created_at', 'updated_at', 'last_login_at', 'student_identity_id')
 
+    def get_search_results(self, request, queryset, search_term):
+        if not search_term:
+            return queryset, False
+        if '@' not in search_term:
+            return queryset.none(), False
+        accounts = public_workout_accounts_for_email(search_term, queryset=queryset)
+        return queryset.filter(pk__in=[account.pk for account in accounts]), False
+
 
 @admin.register(PublicWorkoutSubscription)
-class PublicWorkoutSubscriptionAdmin(admin.ModelAdmin):
+class PublicWorkoutSubscriptionAdmin(PublicWorkoutAccountExactEmailSearchMixin, admin.ModelAdmin):
     list_display = ('account', 'tier', 'status', 'plan_slug', 'custom_monthly_price', 'created_at')
     list_filter = (AwaitingActivationFilter, AwaitingNutritionFilter, 'tier', 'status')
-    search_fields = ('account__email', 'plan_slug')
+    search_fields = ('plan_slug',)
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at')
     actions = ['generate_ai_draft', 'create_guided_revision', 'generate_custom_price_checkout_link']
@@ -346,44 +338,8 @@ class PublicWorkoutProfessionalAdmin(admin.ModelAdmin):
     search_fields = ('name', 'registration_number')
 
 
-@admin.register(PublicWorkoutWaitlistEntry)
-class PublicWorkoutWaitlistEntryAdmin(admin.ModelAdmin):
-    list_display = ('email', 'tier', 'status', 'created_at', 'invited_at', 'expires_at')
-    list_filter = ('status', 'tier', 'created_at')
-    search_fields = ('email',)
-    readonly_fields = (
-        'email', 'tier', 'acquisition_session', 'consented_at', 'invited_at',
-        'expires_at', 'converted_at', 'created_at', 'updated_at',
-    )
-    actions = ('queue_invitation', 'cancel_selected')
-
-    def has_add_permission(self, request):
-        return False
-
-    @admin.action(description='Colocar convite na fila de envio')
-    def queue_invitation(self, request, queryset):
-        from .outbox import TOPIC_WAITLIST_INVITE, enqueue_outbox
-
-        queued = 0
-        for entry in queryset.filter(status=PublicWorkoutWaitlistStatus.WAITING):
-            enqueue_outbox(
-                topic=TOPIC_WAITLIST_INVITE,
-                aggregate_type='waitlist', aggregate_id=entry.pk,
-                version=max(1, entry.pk),
-            )
-            queued += 1
-        self.message_user(request, f'{queued} convite(s) colocado(s) na outbox.')
-
-    @admin.action(description='Cancelar entradas selecionadas')
-    def cancel_selected(self, request, queryset):
-        count = queryset.filter(
-            status__in=(PublicWorkoutWaitlistStatus.WAITING, PublicWorkoutWaitlistStatus.INVITED),
-        ).update(status=PublicWorkoutWaitlistStatus.CANCELED)
-        self.message_user(request, f'{count} entrada(s) cancelada(s).')
-
-
 @admin.register(PublicWorkoutNutritionProfile)
-class PublicWorkoutNutritionProfileAdmin(admin.ModelAdmin):
+class PublicWorkoutNutritionProfileAdmin(PublicWorkoutAccountExactEmailSearchMixin, admin.ModelAdmin):
     """Leitura profissional da anamnese enviada pelo cliente.
 
     A equipe nao edita respostas sensiveis em nome do aluno; correcoes voltam
@@ -391,7 +347,7 @@ class PublicWorkoutNutritionProfileAdmin(admin.ModelAdmin):
     """
 
     list_display = ('account', 'objetivo', 'consent_health_processing_at', 'updated_at')
-    search_fields = ('account__email', 'objetivo', 'comorbidades', 'alergias_restricoes')
+    search_fields = ('objetivo', 'comorbidades', 'alergias_restricoes')
     readonly_fields = (
         'account', 'comorbidades', 'alergias_restricoes', 'rotina_alimentar',
         'preferencias', 'objetivo', 'medicamentos', 'historico',
@@ -451,7 +407,7 @@ class PublicWorkoutMealPlanForm(forms.ModelForm):
 
 
 @admin.register(PublicWorkoutMealPlan)
-class PublicWorkoutMealPlanAdmin(admin.ModelAdmin):
+class PublicWorkoutMealPlanAdmin(PublicWorkoutAccountExactEmailSearchMixin, admin.ModelAdmin):
     """Cada save cria uma VERSAO NOVA (D.6, mesmo padrao de
     PublicWorkoutProgram) — nunca UPDATE numa linha existente. `version`/
     `is_active` sao computados por publish_meal_plan, nunca digitados."""
@@ -460,6 +416,7 @@ class PublicWorkoutMealPlanAdmin(admin.ModelAdmin):
     list_display = ('account', 'version', 'is_active', 'authored_by', 'created_at')
     list_filter = ('is_active',)
     search_fields = ('account__email',)
+    account_email_search_only = True
     ordering = ('-created_at',)
 
     def save_model(self, request, obj, form, change):
@@ -518,7 +475,7 @@ class PublicWorkoutProgramDraftForm(forms.ModelForm):
 
 
 @admin.register(PublicWorkoutProgramDraft)
-class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
+class PublicWorkoutProgramDraftAdmin(PublicWorkoutAccountExactEmailSearchMixin, admin.ModelAdmin):
     """A fila de revisão humana obrigatória — NENHUM PublicWorkoutProgram
     nasce de IA (ou de digitação manual, mesmo formulário, `source=manual`)
     sem passar por "Aprovar e publicar" aqui. Decisão confirmada do Renan:
@@ -529,7 +486,7 @@ class PublicWorkoutProgramDraftAdmin(admin.ModelAdmin):
     form = PublicWorkoutProgramDraftForm
     list_display = ('account', 'slug', 'status', 'source', 'base_program', 'ai_model', 'created_at', 'reviewed_at')
     list_filter = ('status', 'source')
-    search_fields = ('account__email', 'slug')
+    search_fields = ('slug',)
     ordering = ('-created_at',)
     readonly_fields = (
         'status',
@@ -685,10 +642,11 @@ class PublicWorkoutOutboxMessageAdmin(admin.ModelAdmin):
 
 
 @admin.register(PublicWorkoutRefundRequest)
-class PublicWorkoutRefundRequestAdmin(admin.ModelAdmin):
+class PublicWorkoutRefundRequestAdmin(PublicWorkoutAccountExactEmailSearchMixin, admin.ModelAdmin):
     list_display = ('subscription', 'payment', 'status', 'requested_at', 'processed_at', 'stripe_refund_id')
     list_filter = ('status', 'requested_at')
-    search_fields = ('subscription__account__email', 'payment__stripe_invoice_id', 'stripe_refund_id')
+    account_email_relation = 'subscription__account'
+    search_fields = ('payment__stripe_invoice_id', 'stripe_refund_id')
     readonly_fields = [field.name for field in PublicWorkoutRefundRequest._meta.fields]
     actions = ('process_selected_refunds', 'reject_selected')
 
@@ -722,10 +680,10 @@ class PublicWorkoutRefundRequestAdmin(admin.ModelAdmin):
 
 
 @admin.register(PublicWorkoutTestimonial)
-class PublicWorkoutTestimonialAdmin(admin.ModelAdmin):
+class PublicWorkoutTestimonialAdmin(PublicWorkoutAccountExactEmailSearchMixin, admin.ModelAdmin):
     list_display = ('display_name', 'account', 'consented_at', 'approved_at', 'published_at')
     list_filter = ('approved_at', 'published_at', 'consent_version')
-    search_fields = ('display_name', 'quote', 'account__email')
+    search_fields = ('display_name', 'quote')
     readonly_fields = ('created_at',)
     actions = ('approve_and_publish', 'unpublish')
 

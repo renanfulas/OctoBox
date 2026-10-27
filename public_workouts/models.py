@@ -55,6 +55,7 @@ from django.db import models
 from django.utils import timezone
 
 from model_support.base import TimeStampedModel
+from public_workouts import email_index_writes
 
 
 class PublicWorkoutStaffCredential(TimeStampedModel):
@@ -487,9 +488,7 @@ class PublicWorkoutProgramDraft(models.Model):
 # migration e avisa a outra frente. Colisao de migration e inconveniencia de
 # processo; modelo de um produto na tabela do outro e dano permanente.
 # ---------------------------------------------------------------------------
-
-
-class PublicWorkoutAccount(TimeStampedModel):
+class PublicWorkoutAccount(email_index_writes.PublicWorkoutAccountEmailIndexWriteMixin, TimeStampedModel):
     """Conta do corredor de treinos — so e-mail, sem senha (S1 do CORDA).
 
     Vinculo com StudentIdentity e por referencia FRACA
@@ -526,7 +525,7 @@ class PublicWorkoutAccount(TimeStampedModel):
     def save(self, *args, **kwargs):
         if self.whatsapp:
             self.whatsapp = re.sub(r'\D', '', self.whatsapp)
-        super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.email
@@ -881,7 +880,7 @@ class PublicWorkoutAcquisitionSession(models.Model):
     last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
 
 
-class PublicWorkoutCheckoutLead(TimeStampedModel):
+class PublicWorkoutCheckoutLead(email_index_writes.PublicWorkoutCheckoutLeadEmailIndexWriteMixin, TimeStampedModel):
     """Email captured during checkout; this is not a student account."""
 
     email = models.EmailField(db_index=True)
@@ -984,7 +983,7 @@ class PublicWorkoutWaitlistStatus(models.TextChoices):
     CANCELED = 'canceled', 'Cancelado'
 
 
-class PublicWorkoutWaitlistEntry(models.Model):
+class PublicWorkoutWaitlistEntry(email_index_writes.PublicWorkoutWaitlistEmailIndexWriteMixin, models.Model):
     """Demanda capturada quando o limite operacional impede novo checkout."""
 
     email = models.EmailField(db_index=True)

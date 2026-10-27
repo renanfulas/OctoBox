@@ -34,6 +34,10 @@ from django.utils.crypto import constant_time_compare
 from shared_support.platform_cache import platform_cache
 
 from .delivery_gateways import StudentEmailDeliveryError
+from public_workouts.account_email_lookup import (
+    get_or_create_public_workout_account,
+    public_workout_accounts_for_email,
+)
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutLoginToken
 
 from .models import StudentIdentity
@@ -129,7 +133,11 @@ def login_code_for_token(token) -> str:
 
 
 def _resolve_student_identity_id(*, email: str) -> int | None:
-    return StudentIdentity.objects.filter(email__iexact=email).values_list('id', flat=True).first()
+    from student_identity.queries.email_lookup import identities_for_email
+
+    identity_queryset = StudentIdentity.objects.only('pk', 'email')
+    identity = next(iter(identities_for_email(email, queryset=identity_queryset)), None)
+    return identity.pk if identity else None
 
 
 def resolve_or_create_public_workout_account(*, email: str, photo_url: str = '') -> PublicWorkoutAccount:
@@ -147,7 +155,7 @@ def resolve_or_create_public_workout_account(*, email: str, photo_url: str = '')
     que logar por Google."""
     normalized_email = email.strip().lower()
     photo_url = (photo_url or '').strip()
-    account, created = PublicWorkoutAccount.objects.get_or_create(
+    account, created = get_or_create_public_workout_account(
         email=normalized_email,
         defaults={
             'student_identity_id': _resolve_student_identity_id(email=normalized_email),
@@ -180,7 +188,7 @@ def request_login_token(*, email: str, base_url: str, next_url: str = '') -> Pub
         raise PublicWorkoutLoginRateLimitExceeded(normalized_email)
     platform_cache.set(rate_limit_key, attempts + 1, timeout=PUBLIC_WORKOUT_LOGIN_RATE_LIMIT_WINDOW_SECONDS)
 
-    account = PublicWorkoutAccount.objects.filter(email__iexact=normalized_email).first()
+    account = next(iter(public_workout_accounts_for_email(normalized_email)), None)
     if account is None or _pending_payment(account):
         return None
     token = PublicWorkoutLoginToken.objects.create(
@@ -364,10 +372,8 @@ def verify_login_code_for_email(*, email: str, code, client_ip: str) -> PublicWo
             raise PublicWorkoutLoginCodeAttemptsExceeded(ip_key)
 
     normalized_email = (email or '').strip().lower()
-    account_id = (
-        PublicWorkoutAccount.objects.filter(email__iexact=normalized_email).values_list('id', flat=True).first()
-        if normalized_email else None
-    )
+    account = next(iter(public_workout_accounts_for_email(normalized_email)), None) if normalized_email else None
+    account_id = account.pk if account is not None else None
     if account_id is None:
         _consume_code_attempt(_unknown_email_code_attempts_key(normalized_email))
         _log_login_failure('nao_encontrado', channel='login')

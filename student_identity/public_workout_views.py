@@ -53,7 +53,7 @@ from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView, View
 
-from public_workouts import billing
+from public_workouts import account_email_lookup, billing, email_lookup
 from public_workouts.billing import get_or_create_subscription
 from public_workouts.acquisition import (
     attach_acquisition_cookie,
@@ -618,7 +618,7 @@ class PublicWorkoutGoogleCallbackView(View):
         except OAuthProviderError:
             return render(request, self.template_name, {'error': 'google_falhou', 'next_url': next_url})
 
-        account = PublicWorkoutAccount.objects.filter(email__iexact=identity.email).first()
+        account = next(iter(account_email_lookup.public_workout_accounts_for_email(identity.email)), None)
         if account is None:
             return render(request, self.template_name, {'error': 'conta_nao_encontrada'})
         subscription = getattr(account, 'subscription', None)
@@ -705,7 +705,7 @@ class PublicWorkoutColdSignupView(View):
         acquisition_session = get_acquisition_session(request)
         # Contas com pagamento confirmado continuam pelo login. Contas antigas
         # que ficaram pendentes podem retomar o checkout sem ganhar sessão.
-        account = PublicWorkoutAccount.objects.filter(email__iexact=email).first()
+        account = next(iter(account_email_lookup.public_workout_accounts_for_email(email)), None)
         account_subscription = getattr(account, 'subscription', None) if account is not None else None
         session_account_id = get_public_workout_account_id_from_request(request)
         owns_account = account is not None and session_account_id == account.pk
@@ -738,13 +738,14 @@ class PublicWorkoutColdSignupView(View):
             except ValueError:
                 invite_uuid = None
             if invite_uuid is not None:
-                invited_entry = PublicWorkoutWaitlistEntry.objects.filter(
+                invited_candidates = PublicWorkoutWaitlistEntry.objects.filter(
                     invite_token=invite_uuid,
-                    email__iexact=email,
                     tier=tier,
                     status=PublicWorkoutWaitlistStatus.INVITED,
                     expires_at__gte=timezone.now(),
-                ).first()
+                )
+                invited_matches = email_lookup.waitlist_entries_for_email(email, queryset=invited_candidates)
+                invited_entry = invited_matches[0] if invited_matches else None
                 if invited_entry is None:
                     PublicWorkoutWaitlistEntry.objects.filter(
                         invite_token=invite_uuid,
@@ -752,10 +753,9 @@ class PublicWorkoutColdSignupView(View):
                         expires_at__lt=timezone.now(),
                     ).update(status=PublicWorkoutWaitlistStatus.EXPIRED)
         if not capacity['checkout_allowed'] and invited_entry is None:
-            entry, _created = PublicWorkoutWaitlistEntry.objects.get_or_create(
+            entry, _created = email_lookup.get_or_create_waiting_waitlist_entry(
                 email=email,
                 tier=tier,
-                status=PublicWorkoutWaitlistStatus.WAITING,
                 defaults={'acquisition_session': acquisition_session},
             )
             if entry.acquisition_session_id is None and acquisition_session is not None:
@@ -792,8 +792,8 @@ class PublicWorkoutColdSignupView(View):
                 return JsonResponse({'error': 'stripe_nao_configurado', 'detail': str(exc)}, status=503)
             return JsonResponse({'checkout_url': checkout_url})
         marketing_consent = request.POST.get('marketing_consent') == '1'
-        lead, _ = PublicWorkoutCheckoutLead.objects.get_or_create(
-            email=email, paid_at__isnull=True,
+        lead, _ = email_lookup.get_or_create_checkout_lead(
+            email=email,
             defaults={
                 'tier': tier,
                 'acquisition_session': acquisition_session,

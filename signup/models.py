@@ -19,7 +19,13 @@ PONTOS CRITICOS:
 """
 from __future__ import annotations
 
+from django.conf import settings
 from django.db import models
+
+from shared_support.crypto_fields import (
+    EncryptedEmailField,
+    generate_pending_signup_email_blind_index,
+)
 
 
 class PendingSignupStatus(models.TextChoices):
@@ -39,7 +45,12 @@ class PendingSignup(models.Model):
     """Captura de Early Adopter ainda nao convertido em conta ativa."""
 
     # Identificacao do interessado
-    email = models.EmailField(db_index=True)
+    email = EncryptedEmailField(
+        max_length=254,
+        storage_max_length=2048,
+        writer_enabled_setting='PENDING_SIGNUP_EMAIL_ENCRYPTION_WRITE_READY',
+    )
+    email_lookup_index = models.CharField(max_length=67, blank=True, default='', db_index=True)
     full_name = models.CharField(max_length=120)
     box_name = models.CharField(max_length=120)
     phone = models.CharField(max_length=32, blank=True)
@@ -97,6 +108,28 @@ class PendingSignup(models.Model):
             models.Index(fields=['status', 'created_at']),
             models.Index(fields=['plan', 'status']),
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._persisted_email_for_lookup = self.__dict__.get('email')
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        email_persisted = update_fields is None or 'email' in update_fields
+        email_changed = self._state.adding or self.email != self._persisted_email_for_lookup
+        should_dual_write = email_persisted and (
+            email_changed
+            or getattr(settings, 'EMAIL_BLIND_INDEX_KEY', '')
+            or getattr(settings, 'PENDING_SIGNUP_EMAIL_LOOKUP_INDEX_READY', False)
+        )
+        if should_dual_write:
+            self.email_lookup_index = generate_pending_signup_email_blind_index(self.email)
+            if update_fields is not None:
+                kwargs['update_fields'] = set(update_fields) | {'email_lookup_index'}
+        result = super().save(*args, **kwargs)
+        if email_persisted:
+            self._persisted_email_for_lookup = self.email
+        return result
 
     def __str__(self):
         return f'{self.full_name} ({self.email}) — {self.get_plan_display()} — {self.get_status_display()}'
