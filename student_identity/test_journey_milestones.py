@@ -207,9 +207,21 @@ def test_cohort_query_joins_invitation_activation_to_authenticated_student_activ
     )
     from unittest.mock import patch
     with patch('django.utils.timezone.now', return_value=return_at):
-        record_student_app_activity(student=student, kind=StudentAppActivityKind.WOD_VIEWED)
-        record_student_app_activity(student=student, kind=StudentAppActivityKind.WOD_VIEWED)
-        record_student_app_activity(student=student, kind=StudentAppActivityKind.ATTENDANCE_CONFIRMED)
+            record_student_app_activity(
+                student=student,
+                kind=StudentAppActivityKind.WOD_VIEWED,
+                identity_id=identity.id,
+            )
+            record_student_app_activity(
+                student=student,
+                kind=StudentAppActivityKind.WOD_VIEWED,
+                identity_id=identity.id,
+            )
+            record_student_app_activity(
+                student=student,
+                kind=StudentAppActivityKind.ATTENDANCE_CONFIRMED,
+                identity_id=identity.id,
+            )
 
     assert StudentJourneyMilestone.objects.filter(milestone='authenticated_return').count() == 1
 
@@ -322,7 +334,7 @@ def test_checkin_milestone_failure_rolls_back_staff_attendance_mutation(test_ten
     from unittest.mock import patch
 
     with patch(
-        'student_identity.funnel_events.record_student_first_checkin',
+        'student_identity.cohort_milestones.record_student_first_checkin',
         side_effect=RuntimeError('milestone write failed'),
     ):
         with pytest.raises(RuntimeError, match='milestone write failed'):
