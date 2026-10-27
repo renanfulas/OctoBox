@@ -77,6 +77,15 @@ class WorkoutPlannerTemplatePickerTelemetryView(OperationBaseView, View):
         template_id = request.POST.get('template_id') or None
         if event_name not in {'opened', 'selected'}:
             return HttpResponse(status=204)
+        try:
+            if session_id and not ClassSession.objects.filter(pk=int(session_id)).exists():
+                return HttpResponse(status=204)
+            if template_id and not WorkoutTemplate.objects.filter(
+                pk=int(template_id), is_active=True, archived_at__isnull=True,
+            ).exists():
+                return HttpResponse(status=204)
+        except (TypeError, ValueError):
+            return HttpResponse(status=204)
         emit_wod_planner_picker_event(
             actor=request.user,
             event_name=event_name,
@@ -96,6 +105,7 @@ class WorkoutPlannerApplyTrustedTemplateView(OperationBaseView, View):
                 WorkoutTemplate.objects.prefetch_related('blocks__movements'),
                 pk=template_id,
                 is_active=True,
+                archived_at__isnull=True,
             )
         except TEMPLATE_STORAGE_EXCEPTIONS:
             return _handle_template_storage_unavailable(request)

@@ -120,6 +120,7 @@
         <span class="pill success">{{ projection_preview.totals.sessions_creatable }} aula(s) pronta(s) para criar</span>
         <span class="pill info">{{ projection_preview.totals.sessions_found }} aula(s) encontrada(s)</span>
         {% if projection_preview.sessions_canceled_selected_total %}<span class="pill warning">{{ projection_preview.sessions_canceled_selected_total }} aula(s) cancelada(s) ignorada(s)</span>{% endif %}
+        {% if projection_preview.totals.sessions_completed_skipped %}<span class="pill warning">{{ projection_preview.totals.sessions_completed_skipped }} aula(s) concluída(s) preservada(s)</span>{% endif %}
         <span class="pill warning">{{ projection_preview.totals.discarded_blocks }} bloco(s) descartado(s)</span>
         <span class="pill danger">{{ projection_preview.totals.sessions_with_existing_workout }} aula(s) com colisao</span>
         <span class="pill accent">{{ projection_preview.totals.sessions_skipped }} aula(s) puladas</span>
@@ -169,7 +170,7 @@
             <div class="smart-paste-projection-head">
                 <div>
                     <strong>{{ entry.session_title }}</strong>
-                    <p>{{ entry.weekday_label }} · {{ entry.session_date_label }} · {{ entry.class_type_label }}</p>
+                    <p>{{ entry.weekday_label }} · {{ entry.session_date_label }} · {{ projection_preview.workout_program_label|default:entry.class_type_label }}</p>
                 </div>
                 <span class="pill {% if entry.status == 'ready' %}success{% elif 'skip' in entry.status %}warning{% else %}info{% endif %}">{{ entry.status_label }}</span>
             </div>
@@ -249,7 +250,8 @@
     >
         {% csrf_token %}
         <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
-        <input type="hidden" name="idempotency_key" value="{{ projection_form.idempotency_key.value|default:'' }}">
+        <input type="hidden" name="idempotency_key" value="{{ projection_preview.intent_id }}">
+        <input type="hidden" name="preview_token" value="{{ projection_preview.confirm_token }}">
         <input type="hidden" name="target_week_start" value="{{ projection_preview.target_week_start|date:'d/m/Y' }}">
         {% for class_type in projection_preview.class_types %}
         <input type="hidden" name="class_types" value="{{ class_type }}">

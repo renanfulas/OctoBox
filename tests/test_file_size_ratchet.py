@@ -60,7 +60,6 @@ LINE_CEILINGS = {
     'dashboard/presentation.py': 761,
     'control/services.py': 732,
     'integrations/stripe/router.py': 731,  # +21 P03: resolve Box e mantém webhook sob o write fence.
-    'operations/forms.py': 706,
     'dashboard/dashboard_snapshot_queries.py': 684,
     'student_app/models.py': 682,
     'operations/workout_editor_actions.py': 670,

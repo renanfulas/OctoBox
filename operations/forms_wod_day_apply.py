@@ -21,7 +21,7 @@ class WodDayApplyForm(forms.Form):
     mode = forms.ChoiceField(
         choices=[
             ('replace_empty', 'Aplicar apenas em aulas sem WOD'),
-            ('overwrite', 'Substituir todas as aulas do dia'),
+            ('overwrite', 'Substituir rascunhos do tipo de aula selecionado'),
         ],
         initial='replace_empty',
     )
@@ -40,4 +40,16 @@ class WodDayApplyUndoForm(forms.Form):
     undo_token = forms.CharField(max_length=64)
 
 
-__all__ = ['WodDayApplyForm', 'WodDayApplyUndoForm']
+class WodProgramApplyPreviewForm(forms.Form):
+    target_date = forms.DateField()
+    template_id = forms.IntegerField(min_value=1)
+    workout_program_id = forms.IntegerField(min_value=1)
+    mode = forms.ChoiceField(choices=[('replace_empty', 'Aplicar em aulas vazias'), ('overwrite', 'Substituir rascunhos')])
+
+
+class WodProgramApplyConfirmForm(forms.Form):
+    intent_id = forms.UUIDField()
+    fingerprint = forms.RegexField(regex=r'^[0-9a-f]{64}$')
+
+
+__all__ = ['WodDayApplyForm', 'WodDayApplyUndoForm', 'WodProgramApplyPreviewForm', 'WodProgramApplyConfirmForm']

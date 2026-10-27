@@ -35,6 +35,7 @@ WEEKDAY_LINES = (
 BLOCK_HEADERS = (
     ('mobility', ('mobilidade',)),
     ('warmup', ('aquecimento',)),
+    ('strength', ('forca',)),
     ('skill', ('skill',)),
     ('metcon', ('wod',)),
     ('cooldown', ('cooldown', 'descanso ativo')),
@@ -50,7 +51,7 @@ def _normalize_token(value: str) -> str:
 
 
 def _as_float(raw_value: str) -> float:
-    return float(raw_value.replace('.', '').replace(',', '.'))
+    return float(raw_value.replace(',', '.'))
 
 
 def _wod_movement_dictionary_path() -> Path:
@@ -85,7 +86,7 @@ def load_wod_movement_dictionary() -> list[tuple[str, tuple[str, ...]]]:
 def _match_weekday(line: str):
     normalized = _normalize_token(line.rstrip(':'))
     for weekday, label, aliases in WEEKDAY_LINES:
-        if normalized in aliases:
+        if any(normalized == _normalize_token(alias) for alias in aliases):
             return weekday, label
     return None
 
@@ -140,6 +141,13 @@ def _add_note(block: dict, note: str):
 def _parse_block_metadata(line: str):
     normalized = _normalize_token(line)
     metadata = {}
+    match = re.fullmatch(r'(amrap|for time)(?:\s+(\d+))?(?:\s*(?:m|min|mins|minuto|minutos))?', normalized)
+    if match:
+        score_type = 'amrap' if match.group(1) == 'amrap' else 'for_time'
+        metadata.update({'score_type': score_type, 'format_spec': line.strip()})
+        if match.group(2):
+            metadata['timecap_min'] = int(float(match.group(2).replace(',', '.')))
+        return metadata
     if re.fullmatch(r'\d+x', normalized):
         rounds = int(normalized[:-1])
         metadata.update({'rounds': rounds, 'format_spec': line.strip()})
@@ -150,7 +158,7 @@ def _parse_block_metadata(line: str):
         if match.group(2):
             metadata['inherited_load_percentage_rm'] = float(match.group(2).replace(',', '.'))
         return metadata
-    match = re.fullmatch(r'emom\s+(\d+)m', normalized)
+    match = re.fullmatch(r'emom\s+(\d+)\s*(?:mins|minutos|minuto|min|m)', normalized)
     if match:
         metadata.update(
             {
@@ -253,37 +261,56 @@ def _parse_single_movement(
     load_rx_male_kg = None
     load_rx_female_kg = None
     load_percentage_rm = inherited_load_percentage_rm
+    sets = None
     notes = None
     working_text = text
 
-    reps_match = re.match(r'^(?P<reps>\d+(?:[.,]\d+)?(?:/\d+(?:[.,]\d+)?)?(?:\s*a\s*\d+)?(?:/\d+)?(?:\s?(?:km|m))?)\s+(?P<name>.+)$', working_text, flags=re.IGNORECASE)
-    if reps_match:
-        reps_spec = reps_match.group('reps').strip()
-        working_text = reps_match.group('name').strip()
+    sets_match = re.match(
+        r'^(?P<name>.+?)\s+(?P<sets>\d+)\s*[x×]\s*(?P<reps>\d+(?:[.,]\d+)?(?:\s*a\s*\d+)?)(?P<tail>.*)$',
+        working_text,
+        flags=re.IGNORECASE,
+    )
+    if sets_match:
+        sets = int(sets_match.group('sets'))
+        reps_spec = sets_match.group('reps').strip()
+        working_text = f"{sets_match.group('name')} {sets_match.group('tail')}".strip()
+    else:
+        reps_match = re.match(
+            r'^(?P<reps>\d+(?:[.,]\d+)?(?:/\d+(?:[.,]\d+)?)?(?:\s*a\s*\d+)?(?:/\d+)?(?:\s?(?:minutos|minuto|mins|min|km|m))?)\s+(?P<name>.+)$',
+            working_text,
+            flags=re.IGNORECASE,
+        )
+        if reps_match:
+            reps_spec = reps_match.group('reps').strip()
+            working_text = reps_match.group('name').strip()
 
     load_match = re.match(
-        r'^(?P<name>.+?)\s+(?P<load>(?:\d+(?:[.,]\d+)?/\d+(?:[.,]\d+)?)|(?:\d+(?:[.,]\d+)?)%)$',
+        r'^(?P<name>.+?)\s+(?P<load>(?:\d+(?:[.,]\d+)?\s*/\s*\d+(?:[.,]\d+)?(?:\s*kg)?)|(?:\d+(?:[.,]\d+)?\s*kg)|(?:\d+(?:[.,]\d+)?\s*%\s*(?:rm)?))$',
         working_text,
+        flags=re.IGNORECASE,
     )
     if load_match:
         working_text = load_match.group('name').strip()
         load_spec = load_match.group('load').strip()
 
-    if load_spec and load_spec.endswith('%'):
-        load_percentage_rm = float(load_spec[:-1].replace(',', '.'))
+    if load_spec and '%' in load_spec:
+        percentage_match = re.search(r'(\d+(?:[.,]\d+)?)\s*%', load_spec)
+        if percentage_match:
+            load_percentage_rm = float(percentage_match.group(1).replace(',', '.'))
     elif load_spec and '/' in load_spec:
-        male_value, female_value = load_spec.split('/', 1)
-        load_rx_male_kg = _as_float(male_value)
-        load_rx_female_kg = _as_float(female_value)
+        pair = re.match(r'\s*(\d+(?:[.,]\d+)?)\s*/\s*(\d+(?:[.,]\d+)?)', load_spec)
+        if pair:
+            load_rx_male_kg = _as_float(pair.group(1))
+            load_rx_female_kg = _as_float(pair.group(2))
 
     movement_slug = resolve_movement_slug(working_text)
-    if movement_slug is None and reps_spec is None:
+    if movement_slug is None and reps_spec is None and load_spec is None:
         return None
 
     return {
         'movement_slug': movement_slug,
         'movement_label_raw': text,
-        'sets': None,
+        'sets': sets,
         'reps_spec': reps_spec,
         'load_spec': load_spec,
         'load_rx_male_kg': load_rx_male_kg,
@@ -294,7 +321,6 @@ def _parse_single_movement(
         'is_scaled_alternative': is_scaled_alternative,
         'sort_order': sort_order,
     }
-
 
 def _parse_movement_line(line: str, block: dict):
     emom_label = None
@@ -406,6 +432,54 @@ def parse_weekly_wod_text(text: str) -> dict:
                 if current_block['timecap_min'] is not None or current_block['format_spec'] or current_block['rounds'] is not None:
                     current_block['score_type'] = 'for_time'
             continue
+
+        category_line = re.match(r'^(?P<category>rx|scaled)\s*:\s*(?P<body>.+)$', stripped_line, flags=re.IGNORECASE)
+        if category_line:
+            category = category_line.group('category').lower()
+            movement_line = category_line.group('body').strip()
+            rounds_match = re.match(
+                r'^(?P<rounds>\d+)\s+rounds?(?:\s+de)?\s+(?P<movement>.+)$',
+                movement_line,
+                flags=re.IGNORECASE,
+            )
+            if rounds_match:
+                parsed_rounds = int(rounds_match.group('rounds'))
+                if current_block['rounds'] not in (None, parsed_rounds):
+                    result['parse_warnings'].append({
+                        'line_number': line_number,
+                        'line_text': stripped_line,
+                        'message': 'alternativas RX/Scaled declaram números de rounds diferentes',
+                    })
+                    continue
+                current_block['rounds'] = parsed_rounds
+                rounds_label = f'{parsed_rounds} rounds'
+                if rounds_label not in (current_block.get('format_spec') or ''):
+                    current_block['format_spec'] = f"{current_block.get('format_spec') or ''} {rounds_label}".strip()
+                movement_line = rounds_match.group('movement').strip()
+            movement_payloads = _parse_movement_line(movement_line, current_block)
+            if movement_payloads is None:
+                result['parse_warnings'].append({
+                    'line_number': line_number,
+                    'line_text': stripped_line,
+                    'message': 'prescrição RX/Scaled não reconhecida integralmente',
+                })
+                continue
+            for movement_payload in movement_payloads:
+                movement_payload['movement_label_raw'] = stripped_line
+                movement_payload['is_scaled_alternative'] = category == 'scaled'
+            current_block['movements'].extend(movement_payloads)
+            continue
+
+        ladder_movement = re.match(r'^(?P<scheme>\d+(?:\s*-\s*\d+)+)\s+(?P<movement>.+)$', stripped_line)
+        if ladder_movement:
+            ladder_spec = re.sub(r'\s*-\s*', '-', ladder_movement.group('scheme'))
+            existing_spec = current_block.get('format_spec') or ''
+            current_block['format_spec'] = f'{existing_spec} {ladder_spec}'.strip()
+            current_block['score_type'] = current_block.get('score_type') or 'rounds_reps'
+            movement_payloads = _parse_movement_line(ladder_movement.group('movement'), current_block)
+            if movement_payloads is not None:
+                current_block['movements'].extend(movement_payloads)
+                continue
 
         if _is_block_note_candidate(stripped_line):
             _add_note(current_block, stripped_line)
