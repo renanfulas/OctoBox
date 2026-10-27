@@ -21,7 +21,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -35,6 +35,7 @@ from students.models import Student
 from operations.workout_program_catalog import ensure_default_workout_programs
 
 
+@override_settings(CPF_LOOKUP_INDEX_READY=True)
 class CatalogViewTests(TestCase):
     def setUp(self):
         cache.clear()
