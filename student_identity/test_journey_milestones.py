@@ -141,7 +141,7 @@ def test_concurrent_retries_create_one_cohort_milestone(test_tenant):
                     metadata=metadata,
                 )
         finally:
-            close_old_connections()
+            connection.close()
 
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(lambda _index: record_from_independent_connection(), range(2)))
