@@ -83,44 +83,6 @@
 .workout-device-settings__row [hidden] { display: none; }
 .workout-device-settings__row button:disabled { cursor: not-allowed; opacity: .55; }
 
-/* Confirmação por código para quem já está logado (_push_verify.html). */
-.workout-push-verify { display: grid; gap: .5rem; min-width: 0; }
-.workout-push-verify__form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: end; }
-.workout-push-verify__form label {
-  grid-column: 1 / -1;
-  color: var(--theme-text-secondary);
-  font-size: .82rem;
-  font-weight: 700;
-}
-.workout-push-verify__form input {
-  min-width: 0;
-  min-height: 44px;
-  padding: .55rem .8rem;
-  border: 1px solid var(--theme-border-strong);
-  border-radius: 12px;
-  background: var(--theme-surface-strong);
-  color: var(--theme-text-primary);
-  font: inherit;
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: .25em;
-  font-variant-numeric: tabular-nums;
-}
-.workout-push-verify__form input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.workout-push-verify .workout-push-verify__resend {
-  grid-column: 1 / -1;
-  justify-self: start;
-  min-height: 40px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--theme-text-secondary);
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.workout-push-verify [hidden] { display: none; }
-
 @media (max-width: 560px) {
   .workout-push-prompt { align-items: stretch; flex-direction: column; }
   .workout-push-prompt__actions { display: grid; }

@@ -45,7 +45,6 @@ LINE_CEILINGS = {
     'public_workouts/services.py': 1534,
     'student_app/views/public_workout_views.py': 1332,
     'student_identity/public_workout_views.py': 1200,
-    'public_workouts/parser.py': 1088,
     'catalog/views/student_views.py': 1077,
     'public_workouts/templatetags/public_workouts_extras.py': 988,
     'templates/public_workouts/workout.html': 772,

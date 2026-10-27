@@ -1184,16 +1184,18 @@ class B14PublicWorkoutViewsNeverTouchTenantAppsTest(TestCase):
     """
 
     def test_detail_page_renders_without_touching_tenant_apps(self):
-        from public_workouts.testing import sign_in_public_workout_owner
+        from public_workouts.testing import publish_example_program, sign_in_public_workout_owner
 
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         response = self.client.get('/renan/giovanna')
 
         self.assertEqual(response.status_code, 200)
 
     def test_assessments_json_renders_without_touching_tenant_apps(self):
-        from public_workouts.testing import sign_in_public_workout_owner
+        from public_workouts.testing import publish_example_program, sign_in_public_workout_owner
 
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie de posse do B0
 

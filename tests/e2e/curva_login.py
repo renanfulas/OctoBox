@@ -24,7 +24,12 @@ def sign_in_owner(page: Page, base_url: str, plan_slug: str) -> None:
         build_public_workout_session_value,
     )
 
-    account = PublicWorkoutAccount.objects.create(email=f'{plan_slug}-e2e-{uuid.uuid4().hex[:8]}@example.test')
+    from django.utils import timezone
+
+    # Conta que ja passou pelo tutorial: o wizard de primeiro acesso cobre a tela.
+    account = PublicWorkoutAccount.objects.create(
+        email=f'{plan_slug}-e2e-{uuid.uuid4().hex[:8]}@example.test', onboarding_completed_at=timezone.now(),
+    )
     PublicWorkoutSubscription.objects.create(account=account, plan_slug=plan_slug)
     page.context.add_cookies([{
         'name': PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
