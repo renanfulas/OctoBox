@@ -24,6 +24,7 @@ import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 
 from config.env_loader import load_project_env
+from config.settings.privacy import build_privacy_settings
 from shared_support.box_runtime import box_partitioned_key_function, build_box_cache_key_prefix
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -259,8 +260,7 @@ if not SECRET_KEY:
         'DJANGO_SECRET_KEY deve ser definida como variavel de ambiente ou no arquivo .env.'
     )
 
-PHONE_BLIND_INDEX_KEY = env_str('PHONE_BLIND_INDEX_KEY', 'dev-default-blind-index-key')
-
+globals().update(build_privacy_settings(env_bool, env_list_alias, env_str))
 # Stripe — credenciais e price IDs do programa Early Adopters.
 # Os Price IDs sao criados no Stripe Dashboard (Catalog → Products) e copiados aqui via .env.
 # Quando vazios, o checkout publico degrada para fluxo manual (Renan contata via WhatsApp).
