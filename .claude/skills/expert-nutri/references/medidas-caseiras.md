@@ -16,6 +16,7 @@ do alimento específico — estes são valores de referência, não exatos.
 | Medida | Equivalência típica |
 |---|---|
 | Concha (feijão/caldo) | ~70-80g |
+| Escumadeira cheia (arroz cozido) | ~90g (convenção interna da Curva, não padronizada; confirme a porção real; ½ = ~45g) |
 | Xícara de chá | ~200ml (líquido) / ~120g (arroz cru) |
 | Pote de iogurte individual | ~170-200g |
 | Fatia (melancia/melão/mamão/abacaxi) | ~100-150g, varia muito — especificar peso junto |
