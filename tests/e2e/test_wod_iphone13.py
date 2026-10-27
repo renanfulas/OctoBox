@@ -11,7 +11,7 @@ from django.utils import timezone
 from playwright.sync_api import expect
 
 from operations.models import ClassSession, ClassType, WorkoutTemplate, WorkoutTemplateBlock, WorkoutTemplateMovement
-from student_app.models import SessionWorkout, SessionWorkoutBlock, SessionWorkoutMovement, SessionWorkoutStatus
+from student_app.models import SessionWorkout, SessionWorkoutBlock, SessionWorkoutMovement, SessionWorkoutStatus, WodInputDraft
 
 
 pytestmark = [pytest.mark.e2e, pytest.mark.django_db(transaction=True)]
@@ -62,7 +62,7 @@ def submit(page, form, name):
 def screenshot(page, name):
     directory = Path('tmp/visual_contract/iphone13')
     directory.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=directory / name)
+    page.screenshot(path=directory / name, animations='disabled')
 
 
 def assert_no_overflow(page):
@@ -178,6 +178,89 @@ def test_iphone13_creates_and_edits_one_daily_workout(
     screenshot(page, f'daily-editor-{theme}.png')
 
 
+def test_daily_draft_retries_after_committed_save_response_is_lost_and_recovers(
+    iphone13_page, live_server, e2e_owner_credentials,
+):
+    """Draft diário sobrevive a ACK perdido, retry idempotente e reload no editor da aula."""
+    page = iphone13_page
+    actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    target = create_session(actor, timezone.localdate() + timedelta(days=1), 'Aula com draft recuperável')
+    login(page, live_server, e2e_owner_credentials, 'light')
+    page.goto(f'{live_server.url}/operacao/coach/aula/{target.id}/wod/')
+
+    source = 'Aquecimento\n3 rounds\n10 agachamentos\n8 flexões — retry diário'
+    field = page.locator('textarea[name="smartplan_paste"]')
+    expect(page.locator('[data-wod-draft-status]')).to_contain_text('Edite o texto para iniciar', timeout=10_000)
+    response = {}
+
+    def commit_then_drop_save(route):
+        if route.request.method != 'POST' or route.request.post_data_json.get('action') != 'save':
+            route.continue_()
+            return
+        upstream = route.fetch()
+        response['status'] = upstream.status
+        response['request_id'] = route.request.post_data_json['request_id']
+        route.abort(error_code='failed')
+
+    page.route('**/operacao/wod/rascunho/', commit_then_drop_save)
+    field.fill(source)
+    field.blur()
+    expect(page.locator('[data-wod-draft-status]')).to_contain_text('O texto permanece neste campo', timeout=10_000)
+    assert response.get('status') == 200, 'o servidor deve ter commitado o draft antes da resposta ser descartada'
+    assert WodInputDraft.objects.filter(create_request_id=response['request_id']).count() == 1
+
+    page.unroute('**/operacao/wod/rascunho/', commit_then_drop_save)
+    field.focus()
+    field.blur()  # retry deve conservar o create_request_id incerto
+    expect(page.locator('[data-wod-draft-status]')).to_contain_text('Rascunho salvo no servidor', timeout=10_000)
+    assert WodInputDraft.objects.filter(create_request_id=response['request_id']).count() == 1
+    assert WodInputDraft.objects.filter(source_text=source).count() == 1
+
+    page.reload()
+    expect(page.locator('textarea[name="smartplan_paste"]')).to_have_value(source, timeout=10_000)
+    expect(page.locator('[data-wod-draft-status]')).to_contain_text('Rascunho recuperado do servidor', timeout=10_000)
+
+
+def test_daily_draft_can_be_edited_after_recovering_a_conflict(
+    iphone13_page, live_server, e2e_owner_credentials,
+):
+    page = iphone13_page
+    actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    target = create_session(actor, timezone.localdate(), 'Recuperação de conflito entre abas')
+    login(page, live_server, e2e_owner_credentials, 'light')
+    editor_url = f'{live_server.url}/operacao/coach/aula/{target.id}/wod/'
+    page.goto(editor_url)
+    source = page.locator('textarea[name="smartplan_paste"]')
+    status = page.locator('[data-wod-draft-status]')
+    expect(status).to_contain_text('Edite o texto para iniciar')
+    source.fill('Texto inicial')
+    source.blur()
+    expect(status).to_contain_text('Rascunho salvo no servidor')
+
+    other = page.context.new_page()
+    try:
+        other.goto(editor_url)
+        other_source = other.locator('textarea[name="smartplan_paste"]')
+        expect(other_source).to_have_value('Texto inicial')
+        other_source.fill('Texto atualizado na segunda aba')
+        other_source.blur()
+        expect(other.locator('[data-wod-draft-status]')).to_contain_text('Rascunho salvo no servidor')
+
+        source.fill('Edição concorrente na primeira aba')
+        source.blur()
+        recover = page.locator('[data-wod-draft-recover]')
+        expect(recover).to_be_visible()
+        recover.click()
+        expect(source).to_have_value('Texto atualizado na segunda aba')
+        source.fill('Nova edição após recuperar')
+        source.blur()
+        expect(status).to_contain_text('Rascunho salvo no servidor', timeout=10_000)
+        page.reload()
+        expect(source).to_have_value('Nova edição após recuperar')
+    finally:
+        other.close()
+
+
 @pytest.mark.parametrize('theme', ('light', 'dark'))
 def test_iphone13_raw_daily_paste_preserves_text_and_requires_confirmation(
     iphone13_page, live_server, e2e_owner_credentials, theme,
@@ -214,8 +297,11 @@ def test_iphone13_day_template_refreshes_calendar_and_undo_restores_draft(
     page = iphone13_page
     actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
     today = timezone.localdate()
-    target = create_session(actor, today, 'Aula com rascunho')
-    neighbour = create_session(actor, today, 'HYROX separado', ClassType.HYROX)
+    target_day = today + timedelta(days=1)
+    # Day apply preserves classes that are already concluded. Use a future
+    # fixture day so this browser scenario stays valid after noon as well.
+    target = create_session(actor, target_day, 'Aula com rascunho')
+    neighbour = create_session(actor, target_day, 'HYROX separado', ClassType.HYROX)
     workout = SessionWorkout.objects.create(session=target, title='Treino original', coach_notes='Notas originais', created_by=actor, version=3)
     original_block = SessionWorkoutBlock.objects.create(workout=workout, title='Bloco original', kind='metcon', sort_order=1)
     original_movement = SessionWorkoutMovement.objects.create(block=original_block, movement_slug='push_up', movement_label='Flexão', reps_spec='10-8-6', sort_order=1)
@@ -223,24 +309,63 @@ def test_iphone13_day_template_refreshes_calendar_and_undo_restores_draft(
     block = WorkoutTemplateBlock.objects.create(template=template, title='Força nova', kind='strength', sort_order=1)
     WorkoutTemplateMovement.objects.create(block=block, movement_slug='deadlift', movement_label='Deadlift', reps=8, sort_order=1)
     login(page, live_server, e2e_owner_credentials, theme)
-    page.goto(f'{live_server.url}/operacao/wod/planner/?week={today.isoformat()}')
-    page.locator(f'[data-wod-day-apply-trigger][data-date="{today.isoformat()}"]').tap()
+    page.goto(f'{live_server.url}/operacao/wod/planner/?week={target_day.isoformat()}')
+    page.locator(f'[data-wod-day-apply-trigger][data-date="{target_day.isoformat()}"]').tap()
     dialog = page.locator('[data-wod-day-apply-dialog]')
     apply = dialog.locator(f'[data-wod-day-apply-select][data-template-id="{template.id}"]')
     apply.tap()
-    expect(dialog.locator('[data-wod-day-apply-error]')).to_contain_text('Escolha a modalidade')
+    expect(dialog.locator('[data-wod-day-apply-error]')).to_contain_text('Escolha o programa antes de conferir os destinos')
     workout.refresh_from_db()
     assert workout.title == 'Treino original'
-    dialog.locator('[data-wod-day-apply-class-type]').select_option(ClassType.CROSS)
+    dialog.locator('[data-wod-day-apply-program]').select_option(label='CrossFit')
     dialog.locator('label:has([value="overwrite"])').tap()
     apply.tap()
+    review = dialog.locator('[data-wod-day-apply-review]')
+    expect(review).to_be_visible()
+    with page.expect_navigation(wait_until='load'):
+        dialog.locator('[data-wod-day-apply-confirm]').tap()
     cell = page.locator(f'[data-wod-planner-cell][data-planner-session-id="{target.id}"]')
     expect(cell).to_contain_text('Template para o dia')
-    expect(page.locator('[data-wod-day-apply-toast]')).to_contain_text('1 aula(s)')
+    toast = page.locator('[data-wod-day-apply-toast]')
+    expect(toast).to_contain_text('1 aula(s)')
+    toast_layout = toast.evaluate('''el => {
+        const rect = node => {
+            const box = node.getBoundingClientRect();
+            return { left: box.left, right: box.right, width: box.width, height: box.height, top: box.top, bottom: box.bottom, centerY: (box.top + box.bottom) / 2 };
+        };
+        const color = getComputedStyle(el).backgroundColor;
+        const parts = color.match(/rgba?\\((.*)\\)/)?.[1].split(/[,\\s/]+/).filter(Boolean) || [];
+        const message = el.querySelector('[data-wod-day-apply-toast-msg]');
+        const undo = el.querySelector('[data-wod-day-apply-undo-btn]');
+        const close = el.querySelector('[data-wod-day-apply-toast-close]');
+        const rgb = value => value.match(/[\\d.]+/g).slice(0, 3).map(Number).map(channel => channel / 255).map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+        const luminance = value => rgb(value).reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+        const textColor = getComputedStyle(message).color;
+        const light = Math.max(luminance(textColor), luminance(color));
+        const dark = Math.min(luminance(textColor), luminance(color));
+        return {
+            display: getComputedStyle(el).display,
+            backgroundAlpha: parts.length >= 4 ? Number(parts[3]) : 1,
+            textContrast: (light + 0.05) / (dark + 0.05),
+            toast: rect(el), message: rect(message), undo: rect(undo), close: rect(close),
+            viewportWidth: document.documentElement.clientWidth,
+        };
+    }''')
+    assert toast_layout['display'] == 'grid'
+    assert toast_layout['backgroundAlpha'] == 1
+    assert toast_layout['textContrast'] >= 4.5
+    assert toast_layout['message']['bottom'] <= toast_layout['undo']['top']
+    assert abs(toast_layout['undo']['centerY'] - toast_layout['close']['centerY']) <= 1
+    assert toast_layout['undo']['height'] >= 44
+    assert toast_layout['close']['height'] >= 44
+    assert toast_layout['undo']['left'] >= toast_layout['toast']['left'], toast_layout
+    assert toast_layout['close']['right'] <= toast_layout['toast']['right'], toast_layout
+    assert toast_layout['toast']['width'] <= toast_layout['viewportWidth']
     assert not SessionWorkout.objects.filter(session=neighbour).exists()
     assert_no_overflow(page)
     screenshot(page, f'day-applied-{theme}.png')
-    page.locator('[data-wod-day-apply-undo-btn]').tap()
+    with page.expect_navigation(wait_until='load'):
+        page.locator('[data-wod-day-apply-undo-btn]').tap()
     expect(cell).to_contain_text('Treino original')
     workout.refresh_from_db()
     original_movement.refresh_from_db()
