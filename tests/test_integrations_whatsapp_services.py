@@ -17,9 +17,44 @@ from integrations.whatsapp.services import (
     process_poll_vote_webhook,
     register_inbound_whatsapp_message,
 )
+from integrations.whatsapp.poll_processor import _lookup_student_by_phone
 
 
 class IntegrationsWhatsAppServicesTests(SimpleTestCase):
+    @patch('integrations.whatsapp.poll_processor.generate_blind_index', return_value='v1:phone')
+    @patch('integrations.whatsapp.poll_processor.Student.objects.filter')
+    def test_poll_student_lookup_uses_exact_phone_blind_index(self, student_filter, _blind_index):
+        student = object()
+        limited_queryset = student_filter.return_value.only.return_value
+        limited_queryset.__getitem__.return_value = [student]
+
+        found, failure = _lookup_student_by_phone('+55 (11) 99999-9999')
+
+        self.assertIs(found, student)
+        self.assertEqual(failure, '')
+        student_filter.assert_called_once_with(phone_lookup_index='v1:phone')
+        limited_queryset.__getitem__.assert_called_once_with(slice(None, 2, None))
+
+    @patch('integrations.whatsapp.poll_processor.generate_blind_index', return_value='v1:phone')
+    @patch('integrations.whatsapp.poll_processor.Student.objects.filter')
+    def test_poll_student_lookup_rejects_ambiguous_blind_index(self, student_filter, _blind_index):
+        limited_queryset = student_filter.return_value.only.return_value
+        limited_queryset.__getitem__.return_value = [object(), object()]
+
+        found, failure = _lookup_student_by_phone('+5511999999999')
+
+        self.assertIsNone(found)
+        self.assertEqual(failure, 'ambiguous-student-phone')
+
+    @patch('integrations.whatsapp.poll_processor.generate_blind_index', return_value='')
+    @patch('integrations.whatsapp.poll_processor.Student.objects.filter')
+    def test_poll_student_lookup_fails_closed_when_index_unavailable(self, student_filter, _blind_index):
+        found, failure = _lookup_student_by_phone('+5511999999999')
+
+        self.assertIsNone(found)
+        self.assertEqual(failure, 'phone-lookup-unavailable')
+        student_filter.assert_not_called()
+
     @patch('integrations.whatsapp.services.run_register_inbound_whatsapp_message')
     def test_register_inbound_whatsapp_message_uses_communications_facade(self, run_register_mock):
         inbound_message = WhatsAppInboundMessage(
@@ -51,7 +86,13 @@ class IntegrationsWhatsAppServicesTests(SimpleTestCase):
         expected = object()
         run_process_mock.return_value = expected
 
-        result = process_poll_vote_webhook(poll_vote=poll_vote)
+        result = process_poll_vote_webhook(
+            poll_vote=poll_vote,
+            tenant_schema='box_test',
+        )
 
         self.assertIs(result, expected)
-        run_process_mock.assert_called_once_with(poll_vote=poll_vote)
+        run_process_mock.assert_called_once_with(
+            poll_vote=poll_vote,
+            tenant_schema='box_test',
+        )

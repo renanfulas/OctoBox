@@ -35,12 +35,19 @@ def register_inbound_whatsapp_message(*, inbound_message: WhatsAppInboundMessage
     )
 
 
-def process_poll_vote_webhook(*, poll_vote: WhatsAppInboundPollVote) -> WhatsAppWebhookProcessingResult:
+def process_poll_vote_webhook(
+    *,
+    poll_vote: WhatsAppInboundPollVote,
+    tenant_schema: str,
+) -> WhatsAppWebhookProcessingResult:
     """
     Processa um voto de enquete do WhatsApp para registrar presenca.
     """
     # Encaminha para o processador dedicado
-    return run_process_poll_vote_webhook(poll_vote=poll_vote)
+    return run_process_poll_vote_webhook(
+        poll_vote=poll_vote,
+        tenant_schema=tenant_schema,
+    )
 
 
 __all__ = ['process_poll_vote_webhook', 'register_inbound_whatsapp_message']

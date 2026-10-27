@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 
 from model_support.base import TimeStampedModel
+from shared_support.crypto_fields import EncryptedCharField
 
 from integrations.mesh import FAILURE_KIND_RETRYABLE, decide_retry
 
@@ -68,3 +69,40 @@ class WebhookEvent(TimeStampedModel):
             error_message='retry-scheduled',
             reason='retry-scheduled',
         )
+
+
+class WhatsAppPollWebhookIntent(TimeStampedModel):
+    """Tenant-local, encrypted inbox row for one authenticated poll vote."""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pendente'
+        PROCESSED = 'processed', 'Processado'
+        FAILED = 'failed', 'Falhou'
+
+    provider = models.CharField(max_length=32, default='evolution')
+    event_id = models.CharField(max_length=255)
+    phone = EncryptedCharField(max_length=255, storage_max_length=2048)
+    poll_title = models.CharField(max_length=255)
+    option_voted = models.CharField(max_length=64)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    max_retries = models.PositiveSmallIntegerField(default=5)
+    next_retry_at = models.DateTimeField(null=True, blank=True)
+    last_error_code = models.CharField(max_length=64, blank=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'boxcore'
+        db_table = 'boxcore_whatsapp_poll_intent'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['provider', 'event_id'],
+                name='uq_whpoll_provider_event',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['status', 'next_retry_at'], name='whpoll_status_retry_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.provider}:{self.event_id}'
