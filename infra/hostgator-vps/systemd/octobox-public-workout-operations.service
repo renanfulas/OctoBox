@@ -8,4 +8,6 @@ WorkingDirectory=/srv/octobox/current
 EnvironmentFile=-/srv/octobox/current/.release.env
 EnvironmentFile=-/srv/octobox/shared/octobox.env
 ExecStart=/srv/octobox/current/venv/bin/python manage.py reconcile_public_workout_operations
-User=root
+User=octobox
+Group=octobox
+UMask=0077

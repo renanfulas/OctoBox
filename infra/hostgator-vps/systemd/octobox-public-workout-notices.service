@@ -9,7 +9,9 @@ WorkingDirectory=/srv/octobox/current
 EnvironmentFile=-/srv/octobox/current/.release.env
 EnvironmentFile=-/srv/octobox/shared/octobox.env
 ExecStart=/srv/octobox/current/venv/bin/python manage.py drain_public_workout_notices
-User=root
+User=octobox
+Group=octobox
+UMask=0077
 
 [Install]
 WantedBy=multi-user.target

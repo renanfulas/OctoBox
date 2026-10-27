@@ -13,7 +13,9 @@ Environment=OCTOBOX_APP_DIR=/srv/octobox/current
 Environment=OCTOBOX_VENV_PYTHON=/srv/octobox/current/venv/bin/python
 EnvironmentFile=-/srv/octobox/shared/octobox.env
 ExecStart=/srv/octobox/current/scripts/linux/run_due_nightly_lead_import_jobs.sh
-User=root
+User=octobox
+Group=octobox
+UMask=0077
 
 [Install]
 WantedBy=multi-user.target

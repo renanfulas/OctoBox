@@ -78,21 +78,31 @@ PY"
 printf '%s\n' "${backup_path}" > "${LAST_BACKUP_FILE}"
 
 backup_name="$(basename "${backup_path}")"
+backup_manifest="${backup_path}.manifest.json"
 remote_target="${OCTOBOX_BACKUP_REMOTE}/${OCTOBOX_BACKUP_REMOTE_PREFIX}/${backup_name}"
 
 echo "== OctoBOX Backup Sync =="
 echo "Backup local: ${backup_path}"
+echo "Manifesto local: ${backup_manifest}"
 echo "Destino remoto: ${remote_target}"
+echo "Manifesto remoto: ${remote_target}.manifest.json"
 
 if ! command -v rclone >/dev/null 2>&1; then
   echo "rclone nao encontrado. Instale e configure um remote antes de usar sync externo." >&2
   exit 1
 fi
 
+if [[ ! -s "${backup_manifest}" ]]; then
+  echo "Manifesto do backup ausente: ${backup_manifest}" >&2
+  exit 1
+fi
+
 rclone copyto "${backup_path}" "${remote_target}"
+rclone copyto "${backup_manifest}" "${remote_target}.manifest.json"
 printf '%s\n' "${remote_target}" > "${LAST_REMOTE_FILE}"
 
 find "${BACKUP_DIR}" -maxdepth 1 -type f -name 'octobox-*.dump' -mtime +"$((OCTOBOX_BACKUP_RETENTION_DAYS - 1))" -delete
+find "${BACKUP_DIR}" -maxdepth 1 -type f -name 'octobox-*.dump.manifest.json' -mtime +"$((OCTOBOX_BACKUP_RETENTION_DAYS - 1))" -delete
 rclone delete "${OCTOBOX_BACKUP_REMOTE}/${OCTOBOX_BACKUP_REMOTE_PREFIX}" --min-age "${OCTOBOX_BACKUP_RETENTION_DAYS}d"
 rclone rmdirs "${OCTOBOX_BACKUP_REMOTE}/${OCTOBOX_BACKUP_REMOTE_PREFIX}" --leave-root
 
@@ -101,6 +111,7 @@ if [[ -n "${OCTOBOX_BACKUP_REMOTE_SECONDARY}" ]]; then
   remote_secondary_target="${OCTOBOX_BACKUP_REMOTE_SECONDARY}/${OCTOBOX_BACKUP_REMOTE_PREFIX}/${backup_name}"
   echo "Destino remoto secundario: ${remote_secondary_target}"
   rclone copyto "${backup_path}" "${remote_secondary_target}"
+  rclone copyto "${backup_manifest}" "${remote_secondary_target}.manifest.json"
   rclone delete "${OCTOBOX_BACKUP_REMOTE_SECONDARY}/${OCTOBOX_BACKUP_REMOTE_PREFIX}" --min-age "${OCTOBOX_BACKUP_RETENTION_DAYS}d"
   rclone rmdirs "${OCTOBOX_BACKUP_REMOTE_SECONDARY}/${OCTOBOX_BACKUP_REMOTE_PREFIX}" --leave-root
 fi

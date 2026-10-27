@@ -70,8 +70,11 @@ dumpa, sobe pro R2 e aplica retenção (local + remoto).
 sudo bash /srv/octobox/app/scripts/linux/backup_and_sync_postgres.sh
 ```
 
-Saída esperada (no fim): `backup local`, `backup remoto` e `retencao`. O caminho do último
-backup fica em `/srv/octobox/shared/deploy-state/last_backup_path` e `last_backup_remote_path`.
+Saída esperada (no fim): `backup local`, `manifesto local`, `backup remoto`, `manifesto remoto`
+e `retencao`. Cada `octobox-*.dump` deve ter um `.manifest.json` irmão com SHA-256, origem,
+versão e instante do dump. O caminho do último dump fica em
+`/srv/octobox/shared/deploy-state/last_backup_path` e `last_backup_remote_path`; o manifest deve
+ser conferido ao copiar/restaurar.
 
 > Pré-requisitos que o script exige (falha cedo se faltar): rodar como root, `octobox.env`
 > presente, `OCTOBOX_BACKUP_REMOTE` definido, `rclone` instalado/configurado.
@@ -91,9 +94,10 @@ PGPASSWORD='<senha>' bash scripts/linux/backup_postgres.sh \
 ## Validar depois de CADA backup
 
 1. arquivo `octobox-*.dump` criado e **tamanho > 0**;
-2. timestamp coerente com agora;
-3. **cópia remota confirmada** (`last_backup_remote_path` aponta pro R2);
-4. `rclone lsf r2:octobox-backups/octoboxfit-production/ | tail` mostra o dump novo.
+2. arquivo `octobox-*.dump.manifest.json` criado e enviado junto;
+3. timestamp coerente com agora;
+4. **cópia remota confirmada** (`last_backup_remote_path` aponta pro R2);
+5. `rclone lsf r2:octobox-backups/octoboxfit-production/ | tail` mostra dump e manifesto novos.
 
 ## Failure checks — PARE e investigue se:
 
