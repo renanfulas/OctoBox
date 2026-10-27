@@ -18,6 +18,7 @@ import tempfile
 from pathlib import Path
 
 from django.core.management import call_command
+from django.db import connection
 from django.test import TestCase
 
 from students.models import Student
@@ -37,7 +38,7 @@ class ImportStudentsCsvCommandTests(TestCase):
             csv_path = Path(temp_dir) / 'students.csv'
             csv_path.write_text(csv_content, encoding='utf-8')
 
-            call_command('import_students_csv', str(csv_path))
+            call_command('import_students_csv', str(csv_path), schema=connection.schema_name)
 
         self.assertEqual(Student.objects.count(), 2)
         # phone e EncryptedCharField — usar phone_lookup_index (blind index)

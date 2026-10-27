@@ -524,7 +524,7 @@ class TenantWriteFenceTest(TransactionTestCase):
             reason='restore in progress',
         )
 
-        with patch('control.services._tenant_user_fk_fields', return_value=[]):
+        with patch('control.tenant_user_lifecycle._tenant_user_fk_fields', return_value=[]):
             with self.assertRaises(TenantWritesFrozen):
                 delete_user_safely(user)
 

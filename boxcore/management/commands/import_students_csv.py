@@ -21,7 +21,7 @@ import csv
 from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
-from django_tenants.utils import schema_context
+from django_tenants.utils import get_public_schema_name, schema_context
 
 from control.models import Box
 from control.tenant_write_fence import tenant_write_guarded_command
@@ -44,7 +44,8 @@ class Command(BaseCommand):
     @tenant_write_guarded_command(write_option=None)
     def handle(self, *args, **options):
         schema_name = options['schema']
-        box = Box.objects.filter(schema_name=schema_name, status=Box.Status.ACTIVE).first()
+        with schema_context(get_public_schema_name()):
+            box = Box.objects.filter(schema_name=schema_name, status=Box.Status.ACTIVE).first()
         if box is None:
             raise CommandError(f'Box ativo não encontrado para schema {schema_name!r}.')
         with schema_context(box.schema_name):
