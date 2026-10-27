@@ -15,6 +15,7 @@ PONTOS CRITICOS:
 """
 
 from shared_support.box_runtime import get_box_runtime_slug
+from student_identity.box_scope import get_student_identity_box_scope
 from student_identity.funnel_events import record_student_onboarding_event
 from student_identity.models import StudentAppInvitation, StudentBoxInviteLink, StudentIdentity, StudentOnboardingJourney
 from student_app.onboarding_state import read_pending_student_onboarding
@@ -24,7 +25,10 @@ def load_pending_student_onboarding(request):
     pending_onboarding = read_pending_student_onboarding(request)
     if pending_onboarding is None:
         return None
-    return pending_onboarding if _is_valid_pending_student_onboarding(pending_onboarding) else None
+    return pending_onboarding if _is_valid_pending_student_onboarding(
+        pending_onboarding,
+        request=request,
+    ) else None
 
 
 def ensure_student_onboarding_wizard_started(*, request, pending_onboarding):
@@ -54,12 +58,21 @@ def ensure_student_onboarding_wizard_started(*, request, pending_onboarding):
     return pending_onboarding
 
 
-def _is_valid_pending_student_onboarding(pending_onboarding) -> bool:
+def _is_valid_pending_student_onboarding(pending_onboarding, *, request) -> bool:
     journey = (pending_onboarding.get('journey') or '').strip()
     if not journey:
         return False
     box_root_slug = (pending_onboarding.get('box_root_slug') or '').strip()
     if not box_root_slug:
+        return False
+    box_scope = get_student_identity_box_scope(request)
+    if box_scope.box is not None:
+        box_aliases = {
+            value for value in (box_scope.box.schema_name, box_scope.box.slug) if value
+        }
+        if box_root_slug not in box_aliases:
+            return False
+    elif box_root_slug != box_scope.box_root_slug:
         return False
     if journey == StudentOnboardingJourney.MASS_BOX_INVITE:
         if not all(
@@ -70,8 +83,10 @@ def _is_valid_pending_student_onboarding(pending_onboarding) -> bool:
         box_invite_link_id = pending_onboarding.get('box_invite_link_id')
         if not box_invite_link_id:
             return True
-        box_invite_link = StudentBoxInviteLink.objects.filter(pk=box_invite_link_id).first()
-        return bool(box_invite_link and box_invite_link.box_root_slug == box_root_slug)
+        return StudentBoxInviteLink.objects.filter(
+            box_scope.predicate,
+            pk=box_invite_link_id,
+        ).exists()
     if journey == StudentOnboardingJourney.IMPORTED_LEAD_INVITE:
         identity_id = pending_onboarding.get('identity_id')
         student_id = pending_onboarding.get('student_id')
@@ -80,12 +95,18 @@ def _is_valid_pending_student_onboarding(pending_onboarding) -> bool:
             return False
         # Sprint 2: select_related('student') ja nao se aplica (FK removida).
         # student e cross-schema agora; eager-loading via JOIN nao funciona.
-        identity = StudentIdentity.objects.filter(pk=identity_id).first()
-        if identity is None or identity.student_id != student_id or identity.box_root_slug != box_root_slug:
+        identity = StudentIdentity.objects.filter(
+            box_scope.predicate,
+            pk=identity_id,
+        ).first()
+        if identity is None or identity.student_id != student_id:
             return False
         if invitation_id:
-            invitation = StudentAppInvitation.objects.filter(pk=invitation_id).first()
-            if invitation is None or invitation.student_id != student_id or invitation.box_root_slug != box_root_slug:
+            invitation = StudentAppInvitation.objects.filter(
+                box_scope.predicate,
+                pk=invitation_id,
+            ).first()
+            if invitation is None or invitation.student_id != student_id:
                 return False
         return True
     return True

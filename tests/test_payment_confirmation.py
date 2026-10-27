@@ -200,11 +200,18 @@ class PaymentConfirmationOnReconcileTests(TestCase):
 
         notify_mock.assert_called_once()
 
+    @patch('shared_support.background_jobs.run_in_background')
     @patch('finance.payment_notifications.notify_payment_confirmed')
-    def test_already_paid_does_not_reconfirm(self, notify_mock):
+    def test_already_paid_does_not_reconfirm(self, notify_mock, background_mock):
+        # This assertion concerns the reconciliation decision, not thread
+        # scheduling. Running the mocked delivery inline removes the race
+        # where the first fire-and-forget call lands after reset_mock().
+        background_mock.side_effect = lambda fn, *args, **kwargs: fn(*args, **kwargs)
         pid, cents = self._make_tenant_payment()
 
-        route_payment_webhook_event(self._event(event_id='evt_c1', payment_id=pid, amount_cents=cents))
+        _route_and_join_background_threads(
+            self._event(event_id='evt_c1', payment_id=pid, amount_cents=cents)
+        )
         notify_mock.reset_mock()
         route_payment_webhook_event(self._event(event_id='evt_c2', payment_id=pid, amount_cents=cents))
 

@@ -30,6 +30,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock, patch
 
+from django.db.models import Q
 from access.roles import ROLE_RECEPTION
 from student_identity.models import StudentBoxMembershipStatus
 
@@ -92,10 +93,22 @@ def _patch_membership_lookup(membership):
     )
 
 
+class MembershipActionsUnitTestCase(unittest.TestCase):
+    """Stub the active-Box predicate because these tests intentionally use no DB."""
+
+    def setUp(self):
+        scope_patcher = patch(
+            'student_identity.staff_membership_actions.get_student_identity_box_scope',
+            return_value=type('Scope', (), {'predicate': Q()})(),
+        )
+        scope_patcher.start()
+        self.addCleanup(scope_patcher.stop)
+
+
 @patch('student_identity.staff_membership_actions.redirect', return_value=REDIRECT_SENTINEL)
 @patch('student_identity.staff_membership_actions.messages')
 @patch('student_identity.staff_membership_actions.AuditEvent')
-class ApproveMembershipTest(unittest.TestCase):
+class ApproveMembershipTest(MembershipActionsUnitTestCase):
     def test_denied_role_short_circuits(self, mock_audit, mock_messages, mock_redirect):
         result = _make_view(denied=True)._handle_approve_membership(_make_request())
         self.assertEqual(result, DENIED_SENTINEL)
@@ -123,7 +136,7 @@ class ApproveMembershipTest(unittest.TestCase):
 @patch('student_identity.staff_membership_actions.AuditEvent')
 @patch('student_identity.staff_membership_actions._update_student_email_in_tenant')
 @patch('student_identity.staff_membership_actions.DjangoStudentIdentityRepository')
-class ChangeEmailTest(unittest.TestCase):
+class ChangeEmailTest(MembershipActionsUnitTestCase):
     """Onda 3 (docs/plans/student-login-magic-link-bugs-corda.md) adicionou a checagem de
     duplicidade de e-mail via DjangoStudentIdentityRepository().find_live_by_email_and_box —
     precisa ser mockada no mesmo estilo do resto da classe (sem banco real neste arquivo)."""
@@ -227,7 +240,7 @@ class ChangeEmailTest(unittest.TestCase):
 @patch('student_identity.staff_membership_actions.redirect', return_value=REDIRECT_SENTINEL)
 @patch('student_identity.staff_membership_actions.messages')
 @patch('student_identity.staff_membership_actions.AuditEvent')
-class SuspendMembershipTest(unittest.TestCase):
+class SuspendMembershipTest(MembershipActionsUnitTestCase):
     def test_denied_role_short_circuits(self, mock_audit, mock_messages, mock_redirect):
         result = _make_view(denied=True)._handle_suspend_membership(_make_request())
         self.assertEqual(result, DENIED_SENTINEL)
@@ -259,7 +272,7 @@ class SuspendMembershipTest(unittest.TestCase):
 @patch('student_identity.staff_membership_actions.redirect', return_value=REDIRECT_SENTINEL)
 @patch('student_identity.staff_membership_actions.messages')
 @patch('student_identity.staff_membership_actions.AuditEvent')
-class ReactivateMembershipTest(unittest.TestCase):
+class ReactivateMembershipTest(MembershipActionsUnitTestCase):
     def test_denied_role_short_circuits(self, mock_audit, mock_messages, mock_redirect):
         result = _make_view(denied=True)._handle_reactivate_membership(_make_request())
         self.assertEqual(result, DENIED_SENTINEL)
@@ -298,7 +311,7 @@ class ReactivateMembershipTest(unittest.TestCase):
 @patch('student_identity.staff_membership_actions.redirect', return_value=REDIRECT_SENTINEL)
 @patch('student_identity.staff_membership_actions.messages')
 @patch('student_identity.staff_membership_actions.AuditEvent')
-class RevokeMembershipTest(unittest.TestCase):
+class RevokeMembershipTest(MembershipActionsUnitTestCase):
     def test_denied_role_short_circuits(self, mock_audit, mock_messages, mock_redirect):
         result = _make_view(denied=True)._handle_revoke_membership(_make_request())
         self.assertEqual(result, DENIED_SENTINEL)
@@ -326,7 +339,7 @@ class RevokeMembershipTest(unittest.TestCase):
         mock_messages.success.assert_called_once()
 
 
-class RealignIdentityTest(unittest.TestCase):
+class RealignIdentityTest(MembershipActionsUnitTestCase):
     """L1: _realign_identity_after_membership_loss com e sem fallback ativo."""
 
     def test_fallback_found_repoints_identity(self):

@@ -52,6 +52,12 @@ class Box(TenantMixin):
         db_index=True,
     )
 
+    # Read/restore fence for one tenant. The timestamp is the durable switch;
+    # PostgreSQL advisory locks drain already-running tenant requests/jobs
+    # before a transition commits. Null means normal operation.
+    write_frozen_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    write_freeze_reason = models.CharField(max_length=255, blank=True)
+
     owner_user = models.ForeignKey(
         'auth.User',
         on_delete=models.PROTECT,

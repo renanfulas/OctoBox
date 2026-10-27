@@ -19,7 +19,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 
-from shared_support.box_runtime import get_box_runtime_slug
+from ..box_scope import get_student_identity_box_scope
 
 from ..models import (
     StudentAppInvitation,
@@ -36,7 +36,8 @@ class StudentInvitationOperationsQueries:
         self.presenter = presenter
         self.request = request
         self.access_matrix = access_matrix
-        self.box_root_slug = get_box_runtime_slug()
+        self.box_scope = get_student_identity_box_scope(request)
+        self.box_root_slug = self.box_scope.box_root_slug
 
     def get_box_root_slug(self) -> str:
         return self.box_root_slug
@@ -44,7 +45,7 @@ class StudentInvitationOperationsQueries:
     def get_active_box_invite_link(self):
         return (
             StudentBoxInviteLink.objects.filter(
-                box_root_slug=self.box_root_slug,
+                self.box_scope.predicate,
                 revoked_at__isnull=True,
             )
             .order_by('-created_at')
@@ -70,7 +71,7 @@ class StudentInvitationOperationsQueries:
             for membership in (
                 StudentBoxMembership.objects.select_related('identity', 'created_from_invite')  # Sprint 2: sem 'student'
                 .filter(
-                    box_root_slug=self.box_root_slug,
+                    self.box_scope.predicate,
                     status=StudentBoxMembershipStatus.PENDING_APPROVAL,
                 )
                 .order_by('created_at')
@@ -88,7 +89,7 @@ class StudentInvitationOperationsQueries:
             for membership in (
                 StudentBoxMembership.objects.select_related('identity')  # Sprint 2: sem 'student'
                 .filter(
-                    box_root_slug=self.box_root_slug,
+                    self.box_scope.predicate,
                     clearance_required=True,
                     cleared_at__isnull=True,
                 )
@@ -100,7 +101,7 @@ class StudentInvitationOperationsQueries:
         managed_memberships = []
         for membership in (
             StudentBoxMembership.objects.select_related('identity', 'created_from_invite')  # Sprint 2: sem 'student'
-            .filter(box_root_slug=self.box_root_slug)
+            .filter(self.box_scope.predicate)
             .exclude(status=StudentBoxMembershipStatus.INACTIVE)
             .order_by('box_root_slug')  # Sprint 2: era 'student__full_name' (cross-schema JOIN)
         ):
@@ -155,7 +156,7 @@ class StudentInvitationOperationsQueries:
             # Sprint 2: removido select_related('student') — FK cross-schema substituida.
             StudentAppInvitation.objects.select_related('created_by')
             .prefetch_related('deliveries')
-            .filter(box_root_slug=self.box_root_slug)
+            .filter(self.box_scope.predicate)
             .order_by('-created_at')[:12]
         ):
             last_email_delivery = next(
@@ -267,17 +268,17 @@ class StudentInvitationOperationsQueries:
         open_box_window_start = now - timedelta(hours=open_box_window_hours)
 
         open_box_invites_in_window = StudentAppInvitation.objects.filter(
-            box_root_slug=self.box_root_slug,
+            self.box_scope.predicate,
             invite_type=StudentInvitationType.OPEN_BOX,
             created_at__gte=open_box_window_start,
         ).count()
         accepted_invites_last_7d = StudentAppInvitation.objects.filter(
-            box_root_slug=self.box_root_slug,
+            self.box_scope.predicate,
             accepted_at__isnull=False,
             accepted_at__gte=now - timedelta(days=7),
         ).count()
         recent_invites_last_24h = StudentAppInvitation.objects.filter(
-            box_root_slug=self.box_root_slug,
+            self.box_scope.predicate,
             created_at__gte=now - timedelta(hours=24),
         ).count()
 

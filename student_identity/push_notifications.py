@@ -44,6 +44,7 @@ def _build_vapid_private_key():
 def upsert_student_push_subscription(
     *,
     identity,
+    box=None,
     box_root_slug: str,
     subscription_data: dict,
     device_fingerprint: str,
@@ -52,14 +53,18 @@ def upsert_student_push_subscription(
     endpoint = str((subscription_data or {}).get('endpoint') or '').strip()
     if not endpoint:
         raise ValueError('subscription-endpoint-missing')
+    resolved_box = box or getattr(identity, 'box', None)
     record, _created = StudentPushSubscription.objects.get_or_create(
         endpoint=endpoint,
         defaults={
             'identity': identity,
+            'box': resolved_box,
             'box_root_slug': box_root_slug or identity.box_root_slug,
         },
     )
     record.identity = identity
+    if resolved_box is not None:
+        record.box = resolved_box
     record.box_root_slug = box_root_slug or identity.box_root_slug
     record.subscription = subscription_data or {}
     record.device_fingerprint = (device_fingerprint or '').strip()
@@ -68,6 +73,7 @@ def upsert_student_push_subscription(
     record.save(
         update_fields=[
             'identity',
+            'box',
             'box_root_slug',
             'subscription',
             'device_fingerprint',
@@ -82,11 +88,15 @@ def upsert_student_push_subscription(
     return record
 
 
-def revoke_student_push_subscription(*, endpoint: str) -> bool:
+def revoke_student_push_subscription(*, endpoint: str, identity) -> bool:
+    """Revoke only a subscription owned by the authenticated student identity."""
     normalized_endpoint = (endpoint or '').strip()
     if not normalized_endpoint:
         return False
-    record = StudentPushSubscription.objects.filter(endpoint=normalized_endpoint).first()
+    record = StudentPushSubscription.objects.filter(
+        endpoint=normalized_endpoint,
+        identity=identity,
+    ).first()
     if record is None:
         return False
     record.mark_revoked(error_message='revoked-by-client')

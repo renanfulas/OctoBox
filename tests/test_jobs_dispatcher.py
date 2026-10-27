@@ -24,12 +24,14 @@ class JobsDispatcherTests(SimpleTestCase):
             file_path='C:\\temp\\students.csv',
             actor_id=7,
             signal_envelope={'correlation_id': 'corr-1'},
+            tenant_schema='box_demo',
         )
 
         self.assertEqual(context['job_type'], 'student_import_csv')
         self.assertEqual(context['file_path'], 'C:\\temp\\students.csv')
         self.assertEqual(context['actor_id'], 7)
         self.assertEqual(context['signal_envelope']['correlation_id'], 'corr-1')
+        self.assertEqual(context['tenant_schema'], 'box_demo')
 
     def test_get_registered_job_returns_known_job(self):
         registered_job = get_registered_job('student_import_csv')
@@ -55,6 +57,7 @@ class JobsDispatcherTests(SimpleTestCase):
                 file_path='C:\\temp\\students.csv',
                 actor_id=7,
                 signal_envelope={'correlation_id': 'corr-1'},
+                tenant_schema='box_demo',
             ),
         )
 
@@ -62,6 +65,24 @@ class JobsDispatcherTests(SimpleTestCase):
         delay_kwargs = delay_mock.call_args.kwargs
         self.assertEqual(delay_kwargs['job_id'], 19)
         self.assertEqual(delay_kwargs['signal_envelope']['correlation_id'], 'corr-1')
+        self.assertEqual(delay_kwargs['tenant_schema'], 'box_demo')
+
+    @patch('operations.tasks.run_csv_student_import_job.delay')
+    def test_dispatch_rejects_tenant_job_without_schema(self, delay_mock):
+        job = SimpleNamespace(id=20)
+
+        with self.assertRaisesRegex(ValueError, 'tenant-schema-required'):
+            dispatch_async_job(
+                job=job,
+                dispatch_context=build_dispatch_context(
+                    job_type='student_import_csv',
+                    file_path='C:\\temp\\students.csv',
+                    actor_id=7,
+                    signal_envelope={},
+                ),
+            )
+
+        delay_mock.assert_not_called()
 
     @patch('knowledge.tasks.run_project_knowledge_reindex.delay')
     def test_dispatch_async_job_routes_to_project_knowledge_task(self, delay_mock):
