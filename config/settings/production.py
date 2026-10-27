@@ -86,6 +86,13 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 SECURE_HSTS_SECONDS = int(__import__('os').getenv('DJANGO_SECURE_HSTS_SECONDS', '31536000'))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', True)
+# Sem isto o Django assina como webmaster@localhost / root@localhost todo e-mail
+# que nao passa pelos senders proprios (reset de senha, erros para ADMINS).
+DEFAULT_FROM_EMAIL = (
+    env_str('DEFAULT_FROM_EMAIL') or STUDENT_EMAIL_FROM or 'OctoBox <nao-responda@octoboxfit.com.br>'  # noqa: F405
+)
+SERVER_EMAIL = env_str('SERVER_EMAIL') or DEFAULT_FROM_EMAIL
+
 SECURE_HSTS_PRELOAD = env_bool('DJANGO_SECURE_HSTS_PRELOAD', True)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
