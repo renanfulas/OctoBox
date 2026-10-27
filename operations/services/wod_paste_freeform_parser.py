@@ -117,6 +117,16 @@ def _detect_scheme(text: str):
     if 'hyrox' in norm:
         return {'format_spec': text.strip()}, 'metcon'
 
+    wod_scheme_match = re.fullmatch(r'wod\s+(.+)', norm)
+    if wod_scheme_match:
+        metadata = _parse_block_metadata(wod_scheme_match.group(1))
+        if metadata and (
+            metadata.get('score_type') in ('emom', 'amrap', 'for_time')
+            or 'timecap_min' in metadata
+        ):
+            metadata['format_spec'] = text.strip()
+            return metadata, 'metcon'
+
     wod_match = re.fullmatch(r'wod(?:\s*(\d+)\s*m?)?', norm)
     if wod_match:
         meta = {'format_spec': text.strip()}

@@ -10,10 +10,10 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.contrib import messages
+from django.core import signing
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import FormView
 
@@ -44,16 +44,25 @@ from operations.forms import (
     WorkoutCreateStoredTemplateForm,
     WorkoutStudentRmQuickForm,
 )
-from operations.services.wod_paste_parser import load_wod_movement_dictionary, parse_weekly_wod_text, resolve_movement_slug
+from operations.services.wod_paste_parser import load_wod_movement_dictionary, parse_weekly_wod_text
 from operations.services.wod_paste_freeform_parser import _freeform_should_take_over, parse_weekly_wod_freeform
 from operations.services.wod_slug_resolver import apply_llm_slug_resolution
 from operations.services.wod_weekly_normalizer import normalize_weekly_wod
 from operations.services.smart_paste_rate_limit import smart_paste_rate_limit_exceeded
 from operations.services.wod_smartplan_weekly_parser import detect_and_convert_smartplan_weekly
 from operations.services.wod_projection import build_projection_preview, project_plan_to_sessions
+from operations.services.wod_preview_contracts import issue_projection_token, read_projection_token
+from operations.services.wod_drafts import link_weekly_draft
+from operations.services.wod_weekly_revision import save_weekly_plan_revision
+from operations.services.wod_weekly_view_helpers import (
+    _blocking_parse_errors, _clear_unknown_review_slugs, duplicate_weekday_errors,
+    _first_form_error, _projection_guard_error, resolve_movement_slug,
+    _resolve_known_weekly_movement_slugs,
+    _smartplan_v2_uncertainty_errors,
+)
 from operations.services.wod_replication_batches import undo_replication_batch
 from operations.workout_templates import create_persisted_template_from_weekly_plan
-from student_app.models import WeeklyWodPlan, WeeklyWodPlanStatus
+from student_app.models import ReplicationBatch, WeeklyWodPlan, WeeklyWodPlanStatus
 
 from .base_views import OperationBaseView
 
@@ -66,111 +75,6 @@ SMART_PASTE_AUTO_CLASS_TYPES = (
     ClassType.STRENGTH,
     ClassType.OPEN_GYM,
 )
-
-
-def _first_form_error(form, fallback_message):
-    if not form.errors:
-        return fallback_message
-    first_errors = next(iter(form.errors.values()), [])
-    if first_errors:
-        return first_errors[0]
-    return fallback_message
-
-
-def _blocking_parse_errors(parsed_payload):
-    """Return format errors without treating SmartPlan's advisory warnings as fatal."""
-    errors = list(parsed_payload.get('parse_errors') or [])
-    if parsed_payload.get('source_format'):
-        return errors
-    errors.extend(
-        (
-            f"Linha {warning.get('line_number', '?')}: "
-            f"{warning.get('message', 'trecho não reconhecido')} — "
-            f"“{warning.get('line_text', '')}”"
-        )
-        for warning in parsed_payload.get('parse_warnings') or []
-    )
-    return list(dict.fromkeys(errors))
-
-
-def _smartplan_v2_uncertainty_errors(normalized_text):
-    """Require the coach to resolve explicit uncertainty markers from SmartPlan."""
-    errors = []
-    for line in (normalized_text or '').splitlines():
-        if re.search(r'\[\?[^\]]*\]', line):
-            excerpt = re.sub(r'^\s*(?:[▸•*-]\s*)?', '', line).strip()
-            if excerpt:
-                errors.append(
-                    f'Especifique o movimento ou a prescrição marcada como dúvida: “{excerpt}”.'
-                )
-    return errors
-
-
-def _projection_guard_error(preview, cleaned_projection):
-    """Mensagem acionavel quando nao ha aulas para projetar; None se pode prosseguir.
-
-    Distingue 'nenhuma aula na semana' (precisa cadastrar a grade) de 'nenhuma aula do(s)
-    tipo(s) selecionado(s)' (precisa ajustar o filtro ou criar aulas desse tipo).
-    """
-    week_label = cleaned_projection['target_week_start'].strftime('%d/%m/%Y')
-    grade_path = reverse('class-grid')
-    if preview.get('sessions_in_week_total', 0) == 0:
-        return (
-            f'Nenhuma aula cadastrada na semana de {week_label}. '
-            f'Cadastre a grade em Grade de aulas ({grade_path}) antes de projetar.'
-        )
-    if (
-        preview.get('totals', {}).get('sessions_found', 0) == 0
-        and preview.get('sessions_canceled_selected_total', 0) > 0
-    ):
-        canceled_count = preview['sessions_canceled_selected_total']
-        return (
-            f'{canceled_count} aula(s) do(s) tipo(s) selecionado(s) na semana de {week_label} '
-            f'estão canceladas e não receberão WOD. Reative essas aulas ou ajuste os tipos '
-            f'em Grade de aulas ({grade_path}) antes de projetar.'
-        )
-    if preview.get('sessions_active_in_week_total', 0) == 0:
-        canceled_count = preview.get('sessions_canceled_total', 0)
-        return (
-            f'As {canceled_count} aula(s) cadastrada(s) na semana de {week_label} '
-            f'estão canceladas e não receberão WOD. Reative as aulas ou ajuste a grade '
-            f'em Grade de aulas ({grade_path}) antes de projetar.'
-        )
-    if preview.get('totals', {}).get('sessions_found', 0) == 0:
-        labels = ', '.join(str(ClassType(value).label) for value in cleaned_projection['class_types'])
-        return (
-            f'Nenhuma aula do(s) tipo(s) {labels} na semana de {week_label}. '
-            f'Ajuste os tipos de aula ou cadastre aulas desse tipo na Grade de aulas ({grade_path}).'
-        )
-    return None
-
-
-def _clear_unknown_review_slugs(parsed_payload, slug_dictionary):
-    """Reabre slugs legados digitados fora do catálogo para Haiku ou revisão manual."""
-    valid_slugs = {slug for slug, _aliases in slug_dictionary}
-    valid_slugs.add('custom')
-    for day in parsed_payload.get('days', []):
-        for block in day.get('blocks', []):
-            for movement in block.get('movements', []):
-                slug = (movement.get('movement_slug') or '').strip()
-                if slug and slug not in valid_slugs:
-                    movement['movement_slug'] = ''
-
-
-def _resolve_known_weekly_movement_slugs(parsed_payload):
-    """Resolve exact catalog aliases locally before paying for Haiku slug review.
-
-    The structural normalizer intentionally leaves every slug empty. Recovering a
-    broken week must not turn every already-known exercise into an LLM candidate.
-    """
-    for day in parsed_payload.get('days', []):
-        for block in day.get('blocks', []):
-            for movement in block.get('movements', []):
-                if movement.get('movement_slug'):
-                    continue
-                slug = resolve_movement_slug(movement.get('movement_label_raw') or '')
-                if slug:
-                    movement['movement_slug'] = slug
 
 
 class WorkoutApprovalBoardView(OperationBaseView):
@@ -269,6 +173,16 @@ class WorkoutSmartPasteView(OperationBaseView):
             auto_open_review_target=auto_open_review_target,
         )
         base_context.update(context)
+        if projection_preview is not None and plan is not None:
+            active_form = context['projection_form']
+            intent_id = active_form['idempotency_key'].value() or uuid4()
+            projection_preview['intent_id'] = str(intent_id)
+            projection_preview['confirm_token'] = issue_projection_token(
+                weekly_plan=WeeklyWodPlan.objects.select_related('workout_program').get(pk=plan.pk),
+                target_week_start=projection_preview['target_week_start'],
+                class_types=projection_preview['class_types'], actor=self.request.user,
+                preview=projection_preview, intent_id=intent_id,
+            )
         configured_gpt_url = getattr(settings, 'SMARTPLAN_GPT_URL', '') or ''
         base_context['smartplan_gpt_url'] = configured_gpt_url or SMARTPLAN_CHATGPT_FALLBACK_URL
         # O GPT especifico do SmartPlan e o destino padrao; o botao nao deve
@@ -279,7 +193,11 @@ class WorkoutSmartPasteView(OperationBaseView):
     def _update_review_item(self, *, plan, cleaned_data):
         plan = WeeklyWodPlan.objects.select_for_update().get(pk=plan.pk)
         revision = cleaned_data.get('plan_revision')
-        if plan.status != WeeklyWodPlanStatus.DRAFT or (revision and revision != plan.updated_at):
+        if (
+            plan.status != WeeklyWodPlanStatus.DRAFT
+            or (revision and revision != plan.updated_at)
+            or (cleaned_data.get('plan_version') and cleaned_data['plan_version'] != plan.revision)
+        ):
             raise ValidationError('O rascunho mudou em outra aba ou já foi confirmado. Confira a prévia atual antes de revisar.')
         payload = plan.parsed_payload or {}
         days = payload.get('days') or []
@@ -299,7 +217,7 @@ class WorkoutSmartPasteView(OperationBaseView):
         if resolution_status and not count_unresolved_smart_paste_movements(payload):
             resolution_status['state'] = 'manual_resolved'
         plan.parsed_payload = payload
-        plan.save(update_fields=['parsed_payload', 'updated_at'])
+        save_weekly_plan_revision(plan, fields=('parsed_payload',))
         return plan
 
     def get_context_data(self, **kwargs):
@@ -310,6 +228,15 @@ class WorkoutSmartPasteView(OperationBaseView):
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         plan = self._load_plan(request.POST.get('plan_id'))
+        posted_version = request.POST.get('plan_version')
+        if plan is not None and posted_version and posted_version != str(plan.revision):
+            conflict_message = 'O rascunho mudou em outra aba. Confira a versão atual antes de continuar.'
+            messages.error(request, conflict_message)
+            context = self._build_context(plan=plan)
+            context['smart_paste_review_conflict'] = conflict_message
+            if self._is_hx_request():
+                return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
+            return self.render_to_response(context)
 
         if action in {'retry_auto_resolution', 'retry_resolution'}:
             if plan is None or plan.status != WeeklyWodPlanStatus.DRAFT or not (plan.parsed_payload or {}).get('days'):
@@ -329,7 +256,12 @@ class WorkoutSmartPasteView(OperationBaseView):
                 else:
                     messages.success(request, 'Movimentos corrigidos. A semana está pronta para conferir no Calendário.')
             plan.parsed_payload = payload
-            plan.save(update_fields=['parsed_payload', 'updated_at'])
+            try:
+                save_weekly_plan_revision(plan, fields=('parsed_payload',))
+            except ValidationError as exc:
+                plan.refresh_from_db()
+                messages.error(request, exc.message)
+                payload = plan.parsed_payload or {}
             context = self._build_context(plan=plan, parsed_payload=payload)
             if self._is_hx_request():
                 return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
@@ -416,13 +348,37 @@ class WorkoutSmartPasteView(OperationBaseView):
                 return self.render_to_response(context)
             cleaned_projection = projection_form.cleaned_data
             plan = self._load_plan(cleaned_projection['plan_id'])
+            token_claim = None
+            if action == 'create_projection':
+                intent_id = cleaned_projection.get('idempotency_key')
+                token = request.POST.get('preview_token') or ''
+                existing_batch = ReplicationBatch.objects.filter(idempotency_key=intent_id).first() if intent_id else None
+                try:
+                    token_claim = read_projection_token(token, allow_expired=existing_batch is not None)
+                except (signing.BadSignature, signing.SignatureExpired):
+                    token_claim = None
+                if not intent_id or not isinstance(token_claim, dict) or not re.fullmatch(r'[0-9a-f]{64}', token_claim.get('fingerprint') or '') or token_claim != {
+                    'schema_name': connection.schema_name,
+                    'actor_id': request.user.pk,
+                    'plan_id': plan.pk,
+                    'target_week_start': cleaned_projection['target_week_start'].isoformat(),
+                    'class_types': sorted(set(cleaned_projection['class_types'])),
+                    'intent_id': str(intent_id),
+                    'fingerprint': token_claim['fingerprint'],
+                }:
+                    messages.warning(request, 'A prévia expirou ou não corresponde a este envio. Atualize a prévia antes de distribuir.')
+                    context = self._build_context(plan=plan, projection_form=projection_form)
+                    if self._is_hx_request():
+                        return self._render_partial('operations/includes/wod_smart_paste_projection.html', context)
+                    return self.render_to_response(context)
             preview = build_projection_preview(
                 weekly_plan=plan,
                 target_week_start=cleaned_projection['target_week_start'],
                 class_types=cleaned_projection['class_types'],
+                exclude_completed=True,
             )
             guard_error = _projection_guard_error(preview, cleaned_projection)
-            if guard_error:
+            if guard_error and not (action == 'create_projection' and existing_batch):
                 messages.error(request, guard_error)
                 context = self._build_context(
                     plan=plan,
@@ -436,6 +392,7 @@ class WorkoutSmartPasteView(OperationBaseView):
             unlinked_movements = list_unlinked_projection_movements(preview)
             if (
                 action == 'create_projection'
+                and not existing_batch
                 and preview['totals']['sessions_creatable']
                 and unlinked_movements
                 and request.POST.get('acknowledge_unlinked_movements') != 'yes'
@@ -475,6 +432,8 @@ class WorkoutSmartPasteView(OperationBaseView):
                         class_types=cleaned_projection['class_types'],
                         actor=request.user,
                         idempotency_key=cleaned_projection.get('idempotency_key') or uuid4(),
+                        expected_preview_fingerprint=token_claim['fingerprint'],
+                        exclude_completed=True,
                     )
                 except ValidationError as exc:
                     distribution_warning = exc.message
@@ -486,7 +445,13 @@ class WorkoutSmartPasteView(OperationBaseView):
                         weekly_plan=plan,
                         target_week_start=cleaned_projection['target_week_start'],
                         class_types=cleaned_projection['class_types'],
+                        exclude_completed=True,
                     )
+                    projection_form = WeeklyWodProjectionForm(initial={
+                        'plan_id': plan.pk, 'idempotency_key': uuid4(),
+                        'target_week_start': cleaned_projection['target_week_start'].strftime('%d/%m/%Y'),
+                        'class_types': cleaned_projection['class_types'],
+                    })
                     context = self._build_context(
                         plan=plan,
                         projection_form=projection_form,
@@ -512,6 +477,7 @@ class WorkoutSmartPasteView(OperationBaseView):
                     weekly_plan=plan,
                     target_week_start=cleaned_projection['target_week_start'],
                     class_types=cleaned_projection['class_types'],
+                    exclude_completed=True,
                 )
                 # A successfully completed request gets a fresh token for any
                 # later, intentional distribution after the schedule changes.
@@ -650,12 +616,17 @@ class WorkoutSmartPasteView(OperationBaseView):
                 if self._is_hx_request():
                     return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
                 return self.render_to_response(context)
-            parse_errors = _blocking_parse_errors(retry_payload)
+            parse_errors = _blocking_parse_errors(retry_payload, plan.source_text)
             if parse_errors:
                 retry_payload['parse_errors'] = parse_errors
             if parse_errors or not retry_payload.get('days'):
                 plan.created_by = plan.created_by or request.user
-                plan.save()
+                try:
+                    save_weekly_plan_revision(plan)
+                except ValidationError as exc:
+                    plan.refresh_from_db()
+                    messages.error(request, exc.message)
+                    return self.render_to_response(self._build_context(plan=plan))
                 message = (
                     'A semana ainda tem erro de dia ou formato. Corrija o texto antes de distribuir.'
                     if parse_errors else
@@ -705,7 +676,12 @@ class WorkoutSmartPasteView(OperationBaseView):
                     request,
                     error_message,
                 )
-                plan.save(update_fields=['parsed_payload', 'updated_at'])
+                try:
+                    save_weekly_plan_revision(plan, fields=('parsed_payload',))
+                except ValidationError as exc:
+                    plan.refresh_from_db()
+                    messages.error(request, exc.message)
+                    return self.render_to_response(self._build_context(plan=plan))
                 context = self._build_context(plan=plan, parsed_payload=plan.parsed_payload)
                 if self._is_hx_request():
                     return self._render_partial('operations/includes/wod_smart_paste_preview.html', context)
@@ -717,6 +693,7 @@ class WorkoutSmartPasteView(OperationBaseView):
         else:
             plan.status = WeeklyWodPlanStatus.DRAFT
             source_text = cleaned['source_text']
+            duplicate_errors = duplicate_weekday_errors(source_text)
             parsed = detect_and_convert_smartplan_weekly(source_text)
             is_smartplan_v2 = bool(
                 parsed and parsed.get('source_format') == 'smartplan_text_v2'
@@ -724,12 +701,24 @@ class WorkoutSmartPasteView(OperationBaseView):
             if parsed is None:
                 parsed = parse_weekly_wod_text(source_text)
                 freeform = parse_weekly_wod_freeform(source_text)
-                if _freeform_should_take_over(parsed, freeform):
+                if not duplicate_errors and _freeform_should_take_over(parsed, freeform):
+                    # A richer freeform parse must not discard diagnostics from
+                    # the canonical parser: those lines may be visible only as
+                    # raw movements and can still lose prescription semantics.
+                    warnings_by_line = {}
+                    for warning in [*(parsed.get('parse_warnings') or []), *(freeform.get('parse_warnings') or [])]:
+                        key = (warning.get('line_number'), warning.get('line_text'), warning.get('message'))
+                        warnings_by_line[key] = warning
                     parsed = freeform
+                    parsed['parse_warnings'] = sorted(
+                        warnings_by_line.values(), key=lambda warning: warning.get('line_number', 0),
+                    )
             elif is_smartplan_v2:
                 normalized_text = parsed.pop('normalized_text', '')
                 uncertainty_errors = _smartplan_v2_uncertainty_errors(normalized_text)
-                if uncertainty_errors:
+                if duplicate_errors:
+                    parsed['parse_errors'] = list(dict.fromkeys([*(parsed.get('parse_errors') or []), *duplicate_errors]))
+                elif uncertainty_errors:
                     parsed['parse_errors'] = uncertainty_errors
                     parsed['weekly_normalization'] = {
                         'status': 'needs_review',
@@ -765,8 +754,8 @@ class WorkoutSmartPasteView(OperationBaseView):
                         }
             # Linhas ignoradas pelos parsers legados podem apagar parte do WOD;
             # no fluxo semanal isso bloqueia a confirmação até revisão.
-            parsed_errors = _blocking_parse_errors(parsed)
-            if parsed_errors and not is_smartplan_v2:
+            parsed_errors = _blocking_parse_errors(parsed, source_text)
+            if parsed_errors and not is_smartplan_v2 and not duplicate_errors:
                 normalization = normalize_weekly_wod(
                     source_text=source_text,
                     parse_diagnostics=parsed_errors,
@@ -792,13 +781,21 @@ class WorkoutSmartPasteView(OperationBaseView):
             # Resolver movimento só depois de fechar a estrutura da semana.
             # Não gastar uma chamada separada nem atuar sobre payload parcial
             # quando o Haiku normalizador falhou ou pediu revisão manual.
-            if not _blocking_parse_errors(parsed):
+            if duplicate_errors:
+                parsed['parse_errors'] = list(dict.fromkeys([*(parsed.get('parse_errors') or []), *duplicate_errors]))
+            if not _blocking_parse_errors(parsed, source_text):
                 slug_dictionary = load_wod_movement_dictionary()
-                _resolve_known_weekly_movement_slugs(parsed)
+                _resolve_known_weekly_movement_slugs(parsed, resolver=resolve_movement_slug)
                 apply_llm_slug_resolution(parsed, slug_dictionary)
             plan.parsed_payload = parsed
         plan.created_by = plan.created_by or request.user
-        plan.save()
+        try:
+            save_weekly_plan_revision(plan)
+        except ValidationError as exc:
+            plan.refresh_from_db()
+            messages.error(request, exc.message)
+            return self.render_to_response(self._build_context(plan=plan))
+        link_weekly_draft(actor=request.user, plan=plan)
 
         if action == 'confirm_plan':
             messages.success(request, 'Plano semanal confirmado. Revise as aulas da semana antes de aplicar os WODs.')
@@ -807,6 +804,7 @@ class WorkoutSmartPasteView(OperationBaseView):
                 weekly_plan=plan,
                 target_week_start=plan.week_start,
                 class_types=SMART_PASTE_AUTO_CLASS_TYPES,
+                exclude_completed=True,
             )
             if preview['totals']['sessions_creatable']:
                 messages.info(

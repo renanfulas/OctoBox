@@ -1028,6 +1028,79 @@ class CoachWorkoutEditorFlowTests(WorkoutFlowBaseTestCase):
         self.assertFalse(WorkoutTemplate.objects.filter(id=duplicated.id).exists())
         self.assertContains(response, 'removido do catalogo')
 
+    def test_coach_cannot_mutate_another_authors_template_or_children(self):
+        template = WorkoutTemplate.objects.create(
+            name='Template de outro autor', created_by=self.owner,
+            description='Original', is_active=True, is_featured=False,
+            is_trusted=False,
+        )
+        first_block = WorkoutTemplateBlock.objects.create(
+            template=template, title='Bloco 1', kind='strength', sort_order=1,
+        )
+        second_block = WorkoutTemplateBlock.objects.create(
+            template=template, title='Bloco 2', kind='metcon', sort_order=2,
+        )
+        first_movement = WorkoutTemplateMovement.objects.create(
+            block=first_block, movement_slug='deadlift', movement_label='Deadlift',
+            sets=3, reps=5, load_type=WorkoutLoadType.FREE, sort_order=1,
+        )
+        second_movement = WorkoutTemplateMovement.objects.create(
+            block=first_block, movement_slug='burpee', movement_label='Burpee',
+            reps=10, load_type=WorkoutLoadType.FREE, sort_order=2,
+        )
+        self.login_as_coach()
+        actions = [
+            ('workout-template-duplicate', {'template_id': template.id}, {'name': 'Cópia indevida'}),
+            ('workout-template-delete', {'template_id': template.id}, {}),
+            ('workout-template-toggle-active', {'template_id': template.id}, {}),
+            ('workout-template-toggle-featured', {'template_id': template.id}, {}),
+            ('workout-template-update-metadata', {'template_id': template.id}, {
+                'name': 'Alterado', 'description': 'Alterada', 'is_featured': '1', 'is_trusted': '1',
+            }),
+            ('workout-template-create-block', {'template_id': template.id}, {
+                'title': 'Novo bloco', 'kind': 'skill', 'notes': '', 'sort_order': 3,
+            }),
+            ('workout-template-update-block', {'block_id': first_block.id}, {
+                'title': 'Alterado', 'kind': 'skill', 'notes': 'Alterada', 'sort_order': 3,
+            }),
+            ('workout-template-delete-block', {'block_id': first_block.id}, {}),
+            ('workout-template-move-block', {'block_id': first_block.id, 'direction': 'down'}, {}),
+            ('workout-template-create-movement', {'block_id': first_block.id}, {
+                'movement_slug': 'row', 'movement_label': 'Row', 'sets': 1, 'reps': 500,
+                'load_type': WorkoutLoadType.FREE, 'sort_order': 3,
+            }),
+            ('workout-template-update-movement', {'movement_id': first_movement.id}, {
+                'movement_slug': 'power-clean', 'movement_label': 'Power Clean',
+                'sets': 4, 'reps': 2, 'load_type': WorkoutLoadType.FIXED_KG,
+                'load_value': '60.00', 'notes': '', 'sort_order': 3,
+            }),
+            ('workout-template-delete-movement', {'movement_id': first_movement.id}, {}),
+            ('workout-template-move-movement', {'movement_id': first_movement.id, 'direction': 'down'}, {}),
+        ]
+
+        for route_name, route_kwargs, data in actions:
+            with self.subTest(route=route_name):
+                response = self.client.post(
+                    reverse(route_name, kwargs=route_kwargs), data=data, follow=True,
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'Coach so pode')
+
+        template.refresh_from_db()
+        first_block.refresh_from_db()
+        second_block.refresh_from_db()
+        first_movement.refresh_from_db()
+        second_movement.refresh_from_db()
+        self.assertEqual((template.name, template.description, template.is_active, template.is_featured, template.is_trusted),
+                         ('Template de outro autor', 'Original', True, False, False))
+        self.assertEqual(list(template.blocks.order_by('sort_order').values_list('title', 'sort_order')),
+                         [('Bloco 1', 1), ('Bloco 2', 2)])
+        self.assertEqual(template.blocks.count(), 2)
+        self.assertEqual(first_block.movements.count(), 2)
+        self.assertEqual(list(first_block.movements.order_by('sort_order').values_list('movement_label', 'sort_order')),
+                         [('Deadlift', 1), ('Burpee', 2)])
+        self.assertFalse(WorkoutTemplate.objects.filter(name='Cópia indevida').exists())
+
     def test_template_management_supports_search_and_featured_filters(self):
         WorkoutTemplate.objects.create(
             name='Forca base',

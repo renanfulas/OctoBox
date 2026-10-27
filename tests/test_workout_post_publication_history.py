@@ -18,6 +18,37 @@ from tests.workout_test_support import WorkoutFlowBaseTestCase
 
 
 class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
+    def test_history_does_not_render_unrecognized_legacy_follow_up_label(self):
+        private_marker = 'pessoa.private@example.invalid'
+        workout = SessionWorkout.objects.create(
+            session=self.session,
+            title='WOD com retorno legado',
+            status=SessionWorkoutStatus.PUBLISHED,
+            version=1,
+        )
+        SessionWorkoutRevision.objects.create(
+            workout=workout,
+            version=1,
+            event=SessionWorkoutRevisionEvent.PUBLISHED,
+            created_by=self.manager,
+            snapshot={'title': 'WOD com retorno legado', 'status': 'published', 'version': 1, 'blocks': []},
+        )
+        SessionWorkoutFollowUpAction.objects.create(
+            workout=workout,
+            action_key=private_marker,
+            action_label=private_marker,
+            status='completed',
+            resolved_by=self.manager,
+            resolved_at=timezone.now(),
+        )
+        self.login_as_coach()
+
+        response = self.client.get(reverse('workout-publication-history'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Retorno operacional anterior')
+        self.assertNotContains(response, private_marker)
+
     def test_approval_board_renders_post_publication_executive_history(self):
         first_published = SessionWorkout.objects.create(
             session=self.session,
@@ -460,11 +491,25 @@ class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
         )
         self.login_as_manager()
 
+        invalid_action_response = self.client.post(
+            reverse('workout-follow-up-action', args=[urgent_workout.id]),
+            data={
+                'action_key': 'unsupported-action',
+                'action_label': 'pessoa.private@example.invalid',
+                'result_status': 'completed',
+                'next': reverse('workout-publication-history'),
+            },
+        )
+        self.assertEqual(invalid_action_response.status_code, 302)
+        self.assertFalse(
+            SessionWorkoutFollowUpAction.objects.filter(workout=urgent_workout).exists()
+        )
+
         response = self.client.post(
             reverse('workout-follow-up-action', args=[urgent_workout.id]),
             data={
                 'action_key': 'whatsapp-reinforce',
-                'action_label': 'Reforcar chamada no WhatsApp',
+                'action_label': 'pessoa.private@example.invalid',
                 'result_status': 'completed',
                 'outcome_note': 'Recepcao reforcou no grupo e a turma confirmou leitura.',
                 'next': reverse('workout-publication-history'),
@@ -476,14 +521,18 @@ class WorkoutPostPublicationHistoryTests(WorkoutFlowBaseTestCase):
         follow_up = SessionWorkoutFollowUpAction.objects.get(workout=urgent_workout, action_key='whatsapp-reinforce')
         self.assertEqual(follow_up.status, 'completed')
         self.assertEqual(follow_up.resolved_by, self.manager)
+        self.assertEqual(follow_up.action_label, 'Reforcar chamada no WhatsApp')
         self.assertEqual(follow_up.outcome_note, 'Recepcao reforcou no grupo e a turma confirmou leitura.')
         self.assertEqual(follow_up.baseline_metrics.get('viewer_count'), 0)
         self.assertContains(response, 'Resolvido')
         self.assertContains(response, 'Recepcao reforcou no grupo e a turma confirmou leitura.')
         self.assertContains(response, 'Atualizar retorno')
-        self.assertTrue(
-            AuditEvent.objects.filter(action='session_workout_follow_up_registered', target_id=str(urgent_workout.id)).exists()
+        audit = AuditEvent.objects.get(
+            action='session_workout_follow_up_registered',
+            target_id=str(urgent_workout.id),
         )
+        self.assertEqual(audit.metadata.get('action_label'), 'Reforcar chamada no WhatsApp')
+        self.assertNotIn('pessoa.private@example.invalid', str(audit.metadata))
 
         StudentWorkoutView.objects.create(
             student=self.student_alpha,

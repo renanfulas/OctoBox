@@ -30,6 +30,7 @@ from .workout_publication_executive import (
     build_operational_memory_digest,
 )
 from .workout_publication_follow_up import (
+    FOLLOW_UP_ACTION_KEYS,
     _push_operational_action,
     build_follow_up_result_summary,
     build_live_follow_up_escalation,
@@ -209,13 +210,14 @@ def build_published_workout_history(
             follow_up_actions.append(
                 {
                     'key': action_key,
-                    'label': existing_result.action_label,
-                    'copy': 'Retorno operacional ja registrado para esta acao.',
+                    'label': 'Retorno operacional anterior',
+                    'copy': 'Um retorno legado foi preservado; a acao original nao pertence ao catalogo atual.',
                     'tone': 'info',
                     'href': '',
                 }
             )
         for action in follow_up_actions:
+            action['can_update'] = action['key'] in FOLLOW_UP_ACTION_KEYS
             result_summary = build_follow_up_result_summary(
                 existing_follow_up_results.get(action['key']),
                 action_key=action['key'],

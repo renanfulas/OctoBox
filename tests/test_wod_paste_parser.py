@@ -125,6 +125,123 @@ Wod  15m
 
 
 class WodPasteParserTests(SimpleTestCase):
+    def test_w01_preserves_weekdays_strength_reps_loads_and_amrap_timecap(self):
+        source = '''Segunda
+Aquecimento
+5 min remo
+Força
+Deadlift 5x5 75%
+WOD AMRAP 12 min
+10 burpees
+12 wall balls 9 kg
+
+Quarta
+Mobilidade
+8 min flow de quadril'''
+
+        parsed = parse_weekly_wod_text(source)
+
+        self.assertEqual([day['weekday'] for day in parsed['days']], [0, 2])
+        monday = parsed['days'][0]
+        self.assertEqual([block['kind'] for block in monday['blocks']], ['warmup', 'strength', 'metcon'])
+        self.assertEqual(monday['blocks'][0]['movements'][0]['reps_spec'], '5 min')
+        deadlift = monday['blocks'][1]['movements'][0]
+        self.assertEqual(deadlift['movement_slug'], 'deadlift')
+        self.assertEqual(deadlift['sets'], 5)
+        self.assertEqual(deadlift['reps_spec'], '5')
+        self.assertEqual(deadlift['load_spec'], '75%')
+        self.assertEqual(deadlift['load_percentage_rm'], 75.0)
+        amrap = monday['blocks'][2]
+        self.assertEqual(amrap['score_type'], 'amrap')
+        self.assertEqual(amrap['timecap_min'], 12)
+        wall_balls = amrap['movements'][1]
+        self.assertEqual(wall_balls['reps_spec'], '12')
+        self.assertEqual(wall_balls['load_spec'], '9 kg')
+        wednesday = parsed['days'][1]['blocks'][0]['movements'][0]
+        self.assertEqual(wednesday['movement_label_raw'], '8 min flow de quadril')
+        self.assertEqual(wednesday['reps_spec'], '8 min')
+        self.assertEqual(parsed['parse_warnings'], [])
+
+    def test_w07_fixed_seven_day_week_has_all_weekdays_and_no_warnings(self):
+        source = '''Segunda
+WOD AMRAP 10 min
+8 burpees
+
+Terça
+Força
+Deadlift 3x5 60%
+WOD For time 12 min
+10 push up
+
+Quarta
+WOD EMOM 10 min
+6 power snatch 40 kg
+
+Quinta
+WOD AMRAP 9 min
+10 box jump
+
+Sexta
+Força
+Back squat 3x5 70%
+WOD For time 14 min
+12 wall balls 9 kg
+
+Sábado
+WOD AMRAP 12 min
+8 lunges
+
+Domingo
+Mobilidade
+8 min flow de quadril'''
+
+        parsed = parse_weekly_wod_text(source)
+
+        self.assertEqual([day['weekday'] for day in parsed['days']], list(range(7)))
+        self.assertEqual(len(parsed['days']), 7)
+        self.assertEqual(parsed['parse_warnings'], [])
+        self.assertEqual(parsed['days'][0]['blocks'][0]['score_type'], 'amrap')
+        self.assertEqual(parsed['days'][1]['blocks'][0]['kind'], 'strength')
+        self.assertEqual(parsed['days'][4]['blocks'][0]['movements'][0]['load_spec'], '70%')
+        self.assertEqual(
+            parsed['days'][6]['blocks'][0]['movements'][0]['movement_label_raw'],
+            '8 min flow de quadril',
+        )
+
+    def test_w02_custom_movement_keeps_ladder_timecap_and_fixed_load_without_slug_guess(self):
+        parsed = parse_weekly_wod_text('''Sexta
+WOD For time 18 min
+21-15-9 Atlas carry customizado 24 kg''')
+
+        self.assertEqual(len(parsed['days']), 1)
+        self.assertEqual(parsed['days'][0]['weekday'], 4)
+        block = parsed['days'][0]['blocks'][0]
+        self.assertEqual(block['score_type'], 'for_time')
+        self.assertEqual(block['timecap_min'], 18)
+        self.assertIn('21-15-9', block['format_spec'])
+        movement = block['movements'][0]
+        self.assertIsNone(movement['movement_slug'])
+        self.assertIn('Atlas carry customizado', movement['movement_label_raw'])
+        self.assertEqual(movement['load_spec'], '24 kg')
+        self.assertEqual(parsed['parse_warnings'], [])
+
+    def test_w06_keeps_only_explicit_weekdays_and_does_not_infer_missing_days(self):
+        parsed = parse_weekly_wod_text('''Segunda
+WOD AMRAP 10 min
+8 burpees
+
+Quinta-feira
+WOD EMOM 12 min''')
+
+        self.assertEqual([day['weekday'] for day in parsed['days']], [0, 3])
+        self.assertEqual(len(parsed['days']), 2)
+        self.assertEqual(parsed['days'][0]['blocks'][0]['score_type'], 'amrap')
+        self.assertEqual(parsed['days'][0]['blocks'][0]['movements'][0]['reps_spec'], '8')
+        thursday = parsed['days'][1]['blocks'][0]
+        self.assertEqual(thursday['score_type'], 'emom')
+        self.assertEqual(thursday['timecap_min'], 12)
+        self.assertEqual(parsed['parse_warnings'], [])
+
     def test_movement_dictionary_cache_refreshes_when_file_changes(self):
         with TemporaryDirectory() as temporary_directory:
             dictionary_path = Path(temporary_directory) / 'wod-movement-dictionary.md'

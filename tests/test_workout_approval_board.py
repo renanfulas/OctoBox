@@ -370,8 +370,8 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
     def test_approval_board_renders_diff_against_last_published_revision(self):
         workout = SessionWorkout.objects.create(
             session=self.session,
-            title='WOD revisado',
-            coach_notes='Agora com bloco extra.',
+            title='<script>alert(1)</script>',
+            coach_notes='<img src=x onerror=alert(1)>',
             status=SessionWorkoutStatus.PENDING_APPROVAL,
             created_by=self.coach,
             submitted_by=self.coach,
@@ -380,14 +380,14 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         )
         warmup = SessionWorkoutBlock.objects.create(
             workout=workout,
-            title='Warmup',
+            title='<svg onload=alert(1)>',
             kind='warmup',
             sort_order=1,
         )
         SessionWorkoutMovement.objects.create(
             block=warmup,
             movement_slug='bike',
-            movement_label='Bike',
+            movement_label='<iframe src=javascript:alert(1)>',
             sets=1,
             reps=10,
             load_type=WorkoutLoadType.FREE,
@@ -399,14 +399,14 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
             event=SessionWorkoutRevisionEvent.PUBLISHED,
             created_by=self.manager,
             snapshot={
-                'title': 'WOD revisado',
-                'coach_notes': 'Versao anterior',
+                'title': 'Título anterior',
+                'coach_notes': 'Notas anteriores',
                 'status': 'published',
                 'version': 4,
                 'blocks': [
                     {
                         'sort_order': 1,
-                        'title': 'Warmup',
+                        'title': 'Aquecimento anterior',
                         'kind': 'warmup',
                         'kind_label': 'Aquecimento',
                         'notes': '',
@@ -414,7 +414,7 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
                             {
                                 'sort_order': 1,
                                 'movement_slug': 'bike',
-                                'movement_label': 'Bike',
+                                'movement_label': 'Bicicleta',
                                 'sets': 1,
                                 'reps': 8,
                                 'load_type': WorkoutLoadType.FREE,
@@ -438,6 +438,15 @@ class WorkoutApprovalBoardTests(WorkoutFlowBaseTestCase):
         self.assertContains(response, 'Preview após aprovação')
         self.assertContains(response, 'Alto impacto')
         self.assertContains(response, 'Fila de revisão')
+        html = response.content.decode()
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;', html)
+        self.assertIn('&lt;img src=x onerror=alert(1)&gt;', html)
+        self.assertIn('&lt;svg onload=alert(1)&gt;', html)
+        self.assertIn('&lt;iframe src=javascript:alert(1)&gt;', html)
+        self.assertNotIn('<script>alert(1)</script>', html)
+        self.assertNotIn('<img src=x onerror=alert(1)>', html)
+        self.assertNotIn('<svg onload=alert(1)>', html)
+        self.assertNotIn('<iframe src=javascript:alert(1)>', html)
 
     def test_approval_board_renders_decision_trail_in_timeline(self):
         workout = SessionWorkout.objects.create(
