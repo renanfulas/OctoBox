@@ -39,7 +39,10 @@ logger = logging.getLogger(__name__)
 _RESEND_ENDPOINT = 'https://api.resend.com/emails'
 
 
-def send_html_email(*, subject: str, text_body: str, html_body: str, to_email: str) -> StudentEmailDeliveryResult:
+def send_html_email(
+    *, subject: str, text_body: str, html_body: str, to_email: str,
+    tags: list[dict[str, str]] | None = None,
+) -> StudentEmailDeliveryResult:
     """Despacha email com HTML alternativo, escolhendo o provider via settings.
 
     Mesma interface do gateway compartilhado (retorna StudentEmailDeliveryResult,
@@ -47,7 +50,9 @@ def send_html_email(*, subject: str, text_body: str, html_body: str, to_email: s
     """
     provider = (getattr(settings, 'STUDENT_EMAIL_PROVIDER', 'smtp') or 'smtp').strip().lower()
     if provider == 'resend':
-        return _send_via_resend(subject=subject, text_body=text_body, html_body=html_body, to_email=to_email)
+        return _send_via_resend(
+            subject=subject, text_body=text_body, html_body=html_body, to_email=to_email, tags=tags,
+        )
     return _send_via_smtp(subject=subject, text_body=text_body, html_body=html_body, to_email=to_email)
 
 
@@ -73,7 +78,7 @@ def _send_via_smtp(*, subject, text_body, html_body, to_email) -> StudentEmailDe
     )
 
 
-def _send_via_resend(*, subject, text_body, html_body, to_email) -> StudentEmailDeliveryResult:
+def _send_via_resend(*, subject, text_body, html_body, to_email, tags=None) -> StudentEmailDeliveryResult:
     api_key = (getattr(settings, 'STUDENT_RESEND_API_KEY', '') or '').strip()
     from_email = (getattr(settings, 'STUDENT_EMAIL_FROM', '') or '').strip()
     if not api_key or not from_email:
@@ -86,6 +91,8 @@ def _send_via_resend(*, subject, text_body, html_body, to_email) -> StudentEmail
         'text': text_body,
         'html': html_body,
     }
+    if tags:
+        payload['tags'] = tags
     request = Request(
         _RESEND_ENDPOINT,
         data=json.dumps(payload).encode('utf-8'),

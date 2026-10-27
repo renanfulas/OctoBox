@@ -70,6 +70,7 @@ def execute_reconcile_payment_use_case(command: ReconcilePaymentCommand) -> Reco
     Importa os models aqui para manter o use case independente do Django no topo do módulo.
     """
     from finance.models import Payment, PaymentStatus
+    from finance.notification_outbox import enqueue_payment_confirmation
     from auditing import log_audit_event
 
     with transaction.atomic():
@@ -116,6 +117,10 @@ def execute_reconcile_payment_use_case(command: ReconcilePaymentCommand) -> Reco
             'stripe_session_id', 'stripe_payment_intent_id', 'currency',
             'updated_at',
         ])
+
+        # Persist the notification intent with the paid transition. If it
+        # cannot be committed, roll back the payment state as well.
+        enqueue_payment_confirmation(payment)
 
         log_audit_event(
             actor=None,

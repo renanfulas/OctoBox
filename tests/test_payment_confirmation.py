@@ -13,8 +13,6 @@ POR QUE EXISTE:
 
 from __future__ import annotations
 
-import threading
-import time
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -22,7 +20,7 @@ import pytest
 from django.test import TestCase, override_settings
 from django_tenants.utils import schema_context
 
-from finance.models import PaymentStatus
+from finance.models import PaymentNotificationDelivery, PaymentStatus
 from finance.payment_notifications import notify_payment_confirmed
 from integrations.stripe.models import PaymentWebhookEvent
 from integrations.stripe.router import route_payment_webhook_event
@@ -66,16 +64,6 @@ def _create_push_subscription(*, student, box_root_slug=TENANT_SCHEMA, provider_
             'keys': {'p256dh': 'fake-p256dh', 'auth': 'fake-auth'},
         },
     )
-
-
-def _route_and_join_background_threads(event, *, timeout=5.0):
-    """route_payment_webhook_event despacha a confirmacao em thread daemon
-    (run_in_background); sem juntar essa thread aqui, asserts logo em seguida
-    correm risco de rodar antes dela terminar (flake, nao bug de produto)."""
-    before = set(threading.enumerate())
-    route_payment_webhook_event(event)
-    for spawned in set(threading.enumerate()) - before:
-        spawned.join(timeout=timeout)
 
 
 class PaymentConfirmationServiceTests(TestCase):
@@ -190,58 +178,40 @@ class PaymentConfirmationOnReconcileTests(TestCase):
             },
         )
 
-    @patch('finance.payment_notifications.notify_payment_confirmed')
-    def test_reconcile_triggers_confirmation(self, notify_mock):
+    def test_reconcile_persists_notification_intents(self):
         pid, cents = self._make_tenant_payment()
+        route_payment_webhook_event(self._event(event_id='evt_confirm', payment_id=pid, amount_cents=cents))
+        with schema_context(TENANT_SCHEMA):
+            deliveries = PaymentNotificationDelivery.objects.filter(
+                logical_event_key=f'payment-confirmed:v1:{pid}',
+            )
+            self.assertEqual(deliveries.count(), 3)
+            self.assertEqual(deliveries.filter(channel='email').count(), 1)
 
-        _route_and_join_background_threads(
-            self._event(event_id='evt_confirm', payment_id=pid, amount_cents=cents)
-        )
-
-        notify_mock.assert_called_once()
-
-    @patch('finance.payment_notifications.notify_payment_confirmed')
-    def test_already_paid_does_not_reconfirm(self, notify_mock):
+    def test_already_paid_does_not_create_more_notification_intents(self):
         pid, cents = self._make_tenant_payment()
 
         route_payment_webhook_event(self._event(event_id='evt_c1', payment_id=pid, amount_cents=cents))
-        notify_mock.reset_mock()
         route_payment_webhook_event(self._event(event_id='evt_c2', payment_id=pid, amount_cents=cents))
 
-        notify_mock.assert_not_called()
+        with schema_context(TENANT_SCHEMA):
+            self.assertEqual(
+                PaymentNotificationDelivery.objects.filter(
+                    logical_event_key=f'payment-confirmed:v1:{pid}',
+                ).count(),
+                3,
+            )
 
-    @patch('finance.payment_notifications.notify_payment_confirmed')
-    def test_confirmation_does_not_block_webhook_response(self, notify_mock):
-        """A confirmacao roda em thread separada — route_payment_webhook_event
-        precisa retornar mesmo que o envio da notificacao esteja lento/travado.
-
-        Sem isso, um provedor de e-mail lento prenderia a worker do gunicorn
-        que atende ESTE endpoint para TODOS os boxes (webhook e compartilhado).
-        """
-        release_notify = threading.Event()
-
-        def _slow_notify(payment):
-            release_notify.wait(timeout=5.0)
-            return {'email': 'sent', 'whatsapp': 'skipped'}
-
-        notify_mock.side_effect = _slow_notify
-
+    @patch('shared_support.background_jobs.run_in_background')
+    def test_reconcile_wakes_async_dispatch_without_waiting_for_provider(self, run_in_background):
         pid, cents = self._make_tenant_payment()
         event = self._event(event_id='evt_slow_confirm', payment_id=pid, amount_cents=cents)
 
-        started_at = time.monotonic()
-        route_payment_webhook_event(event)
-        elapsed = time.monotonic() - started_at
+        with self.captureOnCommitCallbacks(execute=True):
+            route_payment_webhook_event(event)
 
-        # notify_mock ainda esta bloqueado (release_notify nao foi setado) —
-        # se route_payment_webhook_event tivesse retornado tao rapido por
-        # OUTRO motivo (ex.: nao ter chamado a confirmacao), isso nao provaria
-        # nada; garantimos que a chamada de fato aconteceu.
-        self.assertLess(elapsed, 1.0, 'webhook esperou a notificacao terminar — voltou a ser sincrono')
-
-        release_notify.set()
-        for _ in range(50):
-            if notify_mock.called:
-                break
-            time.sleep(0.05)
-        notify_mock.assert_called_once()
+        run_in_background.assert_called_once()
+        self.assertEqual(
+            run_in_background.call_args.args[0].__name__,
+            'run_due_payment_notification_deliveries',
+        )

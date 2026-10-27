@@ -30,6 +30,8 @@ from .finance import (
     MembershipPlan,
     Payment,
     PaymentMethod,
+    PaymentNotificationDelivery,
+    PaymentNotificationDeliveryStatus,
     PaymentStatus,
 )
 from .onboarding import IntakeSource, IntakeStatus, StudentIntake
@@ -71,6 +73,8 @@ __all__ = [
     'MembershipPlan',
     'Payment',
     'PaymentMethod',
+    'PaymentNotificationDelivery',
+    'PaymentNotificationDeliveryStatus',
     'PaymentStatus',
     'SessionStatus',
     'WorkoutProgram',

@@ -51,7 +51,7 @@ def notify_payment_confirmed(payment) -> dict:
     return result
 
 
-def _build_confirmation_copy(payment) -> tuple[str, str, str]:
+def build_payment_confirmation_copy(payment) -> tuple[str, str, str]:
     name = (getattr(payment.student, 'full_name', '') or 'Aluno').strip()
     # payment.amount e Decimal no runtime, mas coagimos defensivamente (em testes
     # / fontes diversas pode chegar como str) antes de formatar.
@@ -80,7 +80,7 @@ def _send_confirmation_email(payment) -> str:
 
     from signup.email_sender import send_html_email
 
-    subject, text_body, html_body = _build_confirmation_copy(payment)
+    subject, text_body, html_body = build_payment_confirmation_copy(payment)
     send_html_email(subject=subject, text_body=text_body, html_body=html_body, to_email=email)
     return 'sent'
 
@@ -93,16 +93,16 @@ def _send_confirmation_push(payment) -> str:
     TENANT_APP (FK para StudentIdentity/control.Box, ambos SHARED), entao a
     query roda direto no schema_context(box) ja ativo aqui.
     """
-    from shared_support.box_runtime import get_box_runtime_slug
+    from student_identity.box_scope import get_student_identity_box_scope
     from student_identity.models import StudentPushSubscription
     from student_identity.push_messages.payment_confirmed import build_payment_confirmed_payload
     from student_identity.push_notifications import send_student_web_push_notification
 
-    box_root_slug = get_box_runtime_slug()
+    box_scope = get_student_identity_box_scope()
     subscriptions = list(
         StudentPushSubscription.objects.filter(
+            box_scope.predicate,
             identity__student_id=payment.student_id,
-            box_root_slug=box_root_slug,
             revoked_at__isnull=True,
         )
     )
@@ -144,4 +144,4 @@ def _send_confirmation_whatsapp(payment) -> str:
     return 'not_implemented'
 
 
-__all__ = ['notify_payment_confirmed']
+__all__ = ['build_payment_confirmation_copy', 'notify_payment_confirmed']
