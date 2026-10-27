@@ -161,38 +161,7 @@ def _handle_student_payment(event, session, metadata):
     # faz SELECT em public e estoura 'relation does not exist'. O box e resolvido
     # pela metadata gravada no checkout (em contexto de tenant) e validado abaixo.
     with schema_context(box_schema):
-        result = execute_reconcile_payment_use_case(command)
-        # Confirmacao ao aluno na baixa (T5): so na primeira reconciliacao, dentro
-        # do schema do box (dados do aluno). Nunca falha o webhook.
-        if getattr(result, 'reconciled', False):
-            _notify_student_payment_confirmed(result.payment_id, event)
-
-
-def _notify_student_payment_confirmed(payment_id, event) -> None:
-    """Carrega o payment (sincrono, mesma conexao/schema ja resolvidos aqui) e
-    despacha a notificacao (e-mail/WhatsApp) em thread separada.
-
-    O envio e I/O de rede (SMTP ou HTTP da Resend) e NAO PODE travar a
-    resposta do webhook a Stripe — um provedor lento nesse caminho prende a
-    worker do gunicorn segurando a confirmacao de TODO pagamento (o endpoint
-    e o mesmo para todos os boxes). payment.student ja vem carregado
-    (select_related) antes de sair da thread do webhook, entao a thread de
-    background nao precisa abrir conexao nova com o banco.
-    """
-    from finance.models import Payment
-    from finance.payment_notifications import notify_payment_confirmed
-    from shared_support.background_jobs import run_in_background
-
-    try:
-        payment = Payment.objects.select_related('student').get(pk=payment_id)
-    except Exception:
-        logger.exception(
-            '_notify_student_payment_confirmed: falha ao carregar payment para notificar. payment=%s event=%s',
-            payment_id, event.event_id,
-        )
-        return
-
-    run_in_background(notify_payment_confirmed, payment)
+        execute_reconcile_payment_use_case(command)
 
 
 def _record_stripe_payment_ref(*, payment_intent_id, session_id, box_schema, payment_id) -> None:
