@@ -60,7 +60,7 @@ class AttendanceCancelResult:
     attendance: Attendance
 
 
-def confirm_student_attendance(*, student, session_id) -> AttendanceConfirmationResult:
+def confirm_student_attendance(*, student, session_id, box_root_slug: str | None = None) -> AttendanceConfirmationResult:
     with transaction.atomic():
         Student.objects.select_for_update().filter(pk=student.pk).get()
         session = (
@@ -75,7 +75,9 @@ def confirm_student_attendance(*, student, session_id) -> AttendanceConfirmation
         if session is None:
             raise AttendanceNotAvailableError('Sessão indisponível para reserva.')
 
-        box_timezone = resolve_box_timezone(box_root_slug=student.app_identity.box_root_slug)
+        identity = getattr(student, 'app_identity', None)
+        resolved_box_root_slug = box_root_slug or getattr(identity, 'box_root_slug', None)
+        box_timezone = resolve_box_timezone(box_root_slug=resolved_box_root_slug)
         now = timezone.localtime(timezone.now(), box_timezone)
         session_local = timezone.localtime(session.scheduled_at, box_timezone)
         booking_horizon = now.date() + timedelta(days=1)

@@ -13,7 +13,7 @@ import logging
 import time
 import uuid
 
-from django.http import StreamingHttpResponse
+from django.http import HttpResponseForbidden, StreamingHttpResponse
 from django.utils import timezone
 
 from monitoring.manager_realtime_metrics import (
@@ -23,15 +23,29 @@ from monitoring.manager_realtime_metrics import (
     record_manager_sse_stream_connection,
 )
 from shared_support.events import get_redis_client
+from shared_support.event_stream_tenants import current_event_tenant_schema, is_box_event_schema
 
 logger = logging.getLogger(__name__)
 
 SSE_RETRY_MS = 5000
 SSE_KEEPALIVE_SECONDS = 15
-MANAGER_EVENT_CHANNEL = 'octobox:operations:manager:events'
+
+
+def build_manager_event_channel(*, schema_name: str | None = None) -> str | None:
+    """Return the operations stream channel for one canonical Box schema."""
+
+    tenant_schema = schema_name or current_event_tenant_schema()
+    if not is_box_event_schema(tenant_schema):
+        return None
+    return f'octobox:tenant:{tenant_schema}:operations:manager:events'
 
 
 def publish_manager_stream_event(*, event_type: str, meta=None) -> None:
+    channel = build_manager_event_channel()
+    if channel is None:
+        logger.warning('manager_event_publish_skipped reason=tenant_context_missing')
+        return
+
     payload = {
         'event_id': uuid.uuid4().hex,
         'type': event_type,
@@ -40,18 +54,24 @@ def publish_manager_stream_event(*, event_type: str, meta=None) -> None:
     }
     try:
         redis_conn = get_redis_client()
-        redis_conn.publish(MANAGER_EVENT_CHANNEL, json.dumps(payload))
+        redis_conn.publish(channel, json.dumps(payload))
         record_manager_sse_event_published(event_type)
     except Exception as exc:
         logger.warning('manager_event_stream: falha ao publicar evento %s: %s', event_type, exc)
 
 
 def build_manager_event_stream():
+    # Capture the schema while the request middleware still has the resolved
+    # tenant active. The iterator runs later, after middleware has returned.
+    channel = build_manager_event_channel()
+    if channel is None:
+        return HttpResponseForbidden()
+
     def event_iterator():
         try:
             redis_conn = get_redis_client()
             pubsub = redis_conn.pubsub(ignore_subscribe_messages=True)
-            pubsub.subscribe(MANAGER_EVENT_CHANNEL)
+            pubsub.subscribe(channel)
             record_manager_sse_stream_connection('opened')
             inc_manager_sse_active_streams()
         except Exception as exc:
@@ -99,6 +119,7 @@ def build_manager_event_stream():
 
 
 __all__ = [
+    'build_manager_event_channel',
     'build_manager_event_stream',
     'publish_manager_stream_event',
 ]

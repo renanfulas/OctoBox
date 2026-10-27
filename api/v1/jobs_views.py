@@ -7,6 +7,7 @@ from django.views import View
 
 from access.permissions.mixins import RoleRequiredMixin
 from access.roles import ROLE_MANAGER, ROLE_OWNER
+from control.tenant_write_fence import TenantWritesFrozen, tenant_write_guard
 from integrations.mesh import build_correlation_id, build_signal_envelope, resolve_idempotency_key
 from jobs.dispatcher import build_dispatch_context, dispatch_async_job
 from jobs.models import AsyncJob
@@ -85,34 +86,48 @@ class AsyncImportJobView(RoleRequiredMixin, View):
         if 'file' not in request.FILES:
             return JsonResponse({'error': 'No file uploaded'}, status=400)
 
+        tenant_schema = getattr(getattr(request, 'tenant', None), 'schema_name', '')
+        if not tenant_schema:
+            return JsonResponse({'error': 'tenant_context_required'}, status=400)
+
         csv_file = request.FILES['file']
-        file_path = _persist_upload_to_tempfile(csv_file)
-        envelope = build_signal_envelope(
-            correlation_id=correlation_id,
-            idempotency_key=resolve_idempotency_key(
-                explicit_key=request.headers.get('X-Idempotency-Key', ''),
-            ),
-            source_channel='api.v1.jobs',
-            raw_reference=f'upload:{getattr(csv_file, "name", "")}',
-        )
-        dispatch_context = build_dispatch_context(
-            job_type='student_import_csv',
-            file_path=file_path,
-            actor_id=request.user.id,
-            signal_envelope=envelope.to_metadata(),
-        )
-
-        job = AsyncJob.objects.create(
-            job_type='student_import_csv',
-            created_by_id=request.user.id,
-            status='pending',
-            result={
-                'signal_envelope': envelope.to_metadata(),
-                'dispatch_context': dispatch_context,
-            },
-        )
-
-        task = dispatch_async_job(job=job, dispatch_context=dispatch_context)
+        try:
+            with tenant_write_guard(tenant_schema):
+                file_path = _persist_upload_to_tempfile(csv_file)
+                envelope = build_signal_envelope(
+                    correlation_id=correlation_id,
+                    idempotency_key=resolve_idempotency_key(
+                        explicit_key=request.headers.get('X-Idempotency-Key', ''),
+                    ),
+                    source_channel='api.v1.jobs',
+                    raw_reference=f'upload:{getattr(csv_file, "name", "")}',
+                )
+                dispatch_context = build_dispatch_context(
+                    job_type='student_import_csv',
+                    file_path=file_path,
+                    actor_id=request.user.id,
+                    signal_envelope=envelope.to_metadata(),
+                    tenant_schema=tenant_schema,
+                )
+                job = AsyncJob.objects.create(
+                    job_type='student_import_csv',
+                    created_by_id=request.user.id,
+                    status='pending',
+                    result={
+                        'signal_envelope': envelope.to_metadata(),
+                        'dispatch_context': dispatch_context,
+                    },
+                )
+                task = dispatch_async_job(job=job, dispatch_context=dispatch_context)
+        except TenantWritesFrozen:
+            return JsonResponse(
+                {
+                    'error': 'tenant_write_frozen',
+                    'message': 'Importação pausada durante recuperação. Reenvie após liberação do box.',
+                    'correlation_id': correlation_id,
+                },
+                status=503,
+            )
 
         response = JsonResponse(
             {

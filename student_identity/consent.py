@@ -20,6 +20,8 @@ PONTOS CRITICOS:
 
 from __future__ import annotations
 
+from django.db.models import Q
+
 from .models import StudentConsent, StudentConsentDocument, StudentOnboardingJourney
 
 
@@ -42,12 +44,29 @@ def get_active_consent_documents() -> dict[str, StudentConsentDocument]:
     return {document.kind: document for document in StudentConsentDocument.objects.filter(is_active=True)}
 
 
-def has_current_consent(*, identity, box_root_slug: str) -> bool:
+def has_current_consent(*, identity, box_root_slug: str, box=None) -> bool:
     active_documents = get_active_consent_documents()
     if not active_documents:
         return True
+
+    if box is None:
+        from control.models import Box
+
+        box = (
+            Box.objects.filter(schema_name=box_root_slug).first()
+            or Box.objects.filter(slug=box_root_slug).first()
+        )
+    if box is not None:
+        aliases = {
+            value for value in (getattr(box, 'schema_name', ''), getattr(box, 'slug', '')) if value
+        }
+        box_scope = Q(box_id=box.pk) | Q(box__isnull=True, box_root_slug__in=aliases)
+    else:
+        # Preserve old single-box behavior only for unbound legacy rows.
+        box_scope = Q(box__isnull=True, box_root_slug=box_root_slug)
+
     accepted_versions = set(
-        StudentConsent.objects.filter(identity=identity, box_root_slug=box_root_slug).values_list(
+        StudentConsent.objects.filter(identity=identity).filter(box_scope).values_list(
             'document_kind', 'version'
         )
     )

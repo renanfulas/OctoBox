@@ -6,8 +6,8 @@ POR QUE EXISTE:
   de referencia no crossfit.com. Idempotente: usa update_or_create por slug.
 
 USO:
-    python manage.py seed_movement_library
-    python manage.py seed_movement_library --dry-run   # imprime sem salvar
+    python manage.py seed_movement_library --schema box_<slug>
+    python manage.py seed_movement_library --schema box_<slug> --dry-run   # imprime sem salvar
 
 PONTOS CRITICOS:
 - Slugs devem bater com movement_slug usado nos payloads do SmartPlan.
@@ -15,8 +15,11 @@ PONTOS CRITICOS:
 - Nao sobrescreve reference_url manualmente editada: use o admin para isso.
 """
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
+from django_tenants.utils import schema_context
 
+from control.models import Box
+from control.tenant_write_fence import tenant_write_guarded_command
 from student_app.models import MovementLibrary
 
 
@@ -82,14 +85,23 @@ class Command(BaseCommand):
     help = 'Popula MovementLibrary com movimentos comuns do CrossFit (idempotente).'
 
     def add_arguments(self, parser):
+        parser.add_argument('--schema', required=True, help='Schema box_<slug> ativo que receberá a biblioteca.')
         parser.add_argument(
             '--dry-run',
             action='store_true',
             help='Imprime os movimentos sem salvar no banco.',
         )
 
+    @tenant_write_guarded_command(write_option=None)
     def handle(self, *args, **options):
-        dry_run = options['dry_run']
+        schema_name = options['schema']
+        box = Box.objects.filter(schema_name=schema_name, status=Box.Status.ACTIVE).first()
+        if box is None:
+            raise CommandError(f'Box ativo não encontrado para schema {schema_name!r}.')
+        with schema_context(box.schema_name):
+            return self._seed_movements(dry_run=options['dry_run'])
+
+    def _seed_movements(self, *, dry_run: bool):
         created_count = 0
         updated_count = 0
 

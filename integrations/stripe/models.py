@@ -16,6 +16,8 @@ PONTOS CRITICOS:
 - event_id vem do campo id do evento Stripe (ex: evt_xxx) — é o idempotency key externo.
 """
 
+from datetime import timedelta
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
@@ -102,6 +104,13 @@ class PaymentWebhookEvent(TimeStampedModel):
         self.status = PaymentWebhookStatus.PROCESSED
         self.next_retry_at = None
         self.last_error_message = ''
+        self.save(update_fields=['status', 'next_retry_at', 'last_error_message', 'updated_at'])
+
+    def defer_for_tenant_write_freeze(self, *, schema_name: str, retry_after_seconds: int = 60):
+        """Keep a tenant event pending without consuming retry attempts during restore."""
+        self.status = PaymentWebhookStatus.PENDING
+        self.next_retry_at = timezone.now() + timedelta(seconds=max(30, int(retry_after_seconds)))
+        self.last_error_message = f'tenant_write_frozen:{schema_name}'[:255]
         self.save(update_fields=['status', 'next_retry_at', 'last_error_message', 'updated_at'])
 
 
