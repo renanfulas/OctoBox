@@ -231,7 +231,10 @@ def log_audit_event(*, actor=None, action, target=None, description='', metadata
         target_id = str(target.pk)
         # Model __str__ often returns a student's name, email, phone or other
         # tenant data. Keep the event type and target_id as the audit locator.
-        target_label = str(target._meta.verbose_name)
+        # Some operation adapters pass a lightweight, non-ORM target with only
+        # ``model_name``. Keep their stable identifier without falling back to
+        # ``str(target)``, which may contain tenant PII.
+        target_label = str(getattr(target._meta, 'verbose_name', target_model))
 
     actor_id = getattr(actor, 'id', None)
 

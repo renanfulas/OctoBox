@@ -838,6 +838,8 @@ class WebhookIdempotencyPublicSchemaTest(SimpleTestCase):
             data=json.dumps({'event_id': 'evt_tenant_local'}),
             content_type='application/json',
         )
+        from integrations.middleware import WebhookIdempotencyMiddleware
+
         get_response = MagicMock(return_value=JsonResponse({}))
         middleware = WebhookIdempotencyMiddleware(get_response)
 
