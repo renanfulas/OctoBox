@@ -165,7 +165,9 @@ class Command(BaseCommand):
                         field = model._meta.get_field(field_name)
                         table_sql = connection.ops.quote_name(model._meta.db_table)
                         column_sql = connection.ops.quote_name(field.column)
-                        query = f"SELECT {column_sql} FROM {table_sql}"
+                        # These identifiers come only from the fixed model map
+                        # and are escaped by Django's backend quoting API.
+                        query = f"SELECT {column_sql} FROM {table_sql}"  # nosec B608
 
                         with connection.chunked_cursor() as cursor:
                             cursor.itersize = batch_size
