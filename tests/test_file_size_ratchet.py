@@ -53,13 +53,13 @@ LINE_CEILINGS = {
     'operations/manager_workspace_queries.py': 933,
     'student_app/application/use_cases.py': 915,
     'operations/workout_board_views.py': 909,
-    'config/settings/base.py': 815,
+    'config/settings/base.py': 818,  # +3 P03: instala o middleware depois da resolução tenant.
     'public_workouts/notifications.py': 813,
-    'boxcore/management/commands/seed_south_sp_box.py': 778,
+    'boxcore/management/commands/seed_south_sp_box.py': 780,  # +2 P03: aplica o fence ao seed tenant.
     'public_workouts/admin.py': 765,
     'dashboard/presentation.py': 761,
     'control/services.py': 732,
-    'integrations/stripe/router.py': 710,
+    'integrations/stripe/router.py': 731,  # +21 P03: resolve Box e mantém webhook sob o write fence.
     'operations/forms.py': 706,
     'dashboard/dashboard_snapshot_queries.py': 684,
     'student_app/models.py': 682,

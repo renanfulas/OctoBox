@@ -61,7 +61,9 @@ class StudentConsentView(StudentIdentityRequiredMixin, View):
         if membership is not None and membership.clearance_required and not membership.cleared_at:
             return redirect('student-app-clearance')
         if membership is not None and has_current_consent(
-            identity=request.student_identity, box_root_slug=membership.box_root_slug
+            identity=request.student_identity,
+            box_root_slug=membership.box_root_slug,
+            box=request.tenant,
         ):
             return redirect('student-app-home')
 
@@ -137,14 +139,25 @@ class StudentConsentView(StudentIdentityRequiredMixin, View):
             box_root_slug=box_root_slug,
             document_kind=StudentConsentDocumentKind.WAIVER,
             version=waiver_document.version,
-            defaults={'accepted_at': now, 'ip': ip, 'user_agent': user_agent},
+            defaults={
+                'box': request.tenant,
+                'accepted_at': now,
+                'ip': ip,
+                'user_agent': user_agent,
+            },
         )
         StudentConsent.objects.update_or_create(
             identity=identity,
             box_root_slug=box_root_slug,
             document_kind=StudentConsentDocumentKind.PARQ,
             version=parq_document.version,
-            defaults={'accepted_at': now, 'ip': ip, 'user_agent': user_agent, 'parq_outcome': outcome},
+            defaults={
+                'box': request.tenant,
+                'accepted_at': now,
+                'ip': ip,
+                'user_agent': user_agent,
+                'parq_outcome': outcome,
+            },
         )
         record_student_onboarding_event(
             journey=journey,

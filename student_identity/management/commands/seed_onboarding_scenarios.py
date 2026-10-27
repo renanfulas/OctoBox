@@ -14,11 +14,14 @@ Uso:
 """
 from __future__ import annotations
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django_tenants.utils import schema_context
 from django.utils import timezone
 from datetime import timedelta
 
+from control.models import Box
+from control.tenant_write_fence import TenantFenceTargetMissing, TenantWritesFrozen, tenant_write_guard
 from students.models import Student
 from student_identity.models import (
     StudentAppInvitation,
@@ -45,15 +48,24 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        box_slug = options['box_slug']
-        if options['flush']:
-            self._flush(box_slug)
+        box_slug = options['box_slug'].strip()
+        box = Box.objects.filter(slug=box_slug, status=Box.Status.ACTIVE).first()
+        if box is None:
+            raise CommandError(f'Box ativo não encontrado para slug {box_slug!r}.')
 
-        with transaction.atomic():
-            self._seed_registered_student_invite(box_slug)
-            self._seed_imported_lead_invite(box_slug)
-            self._seed_mass_box_invite(box_slug)
-            self._seed_open_box_invite(box_slug)
+        try:
+            with tenant_write_guard(box.schema_name):
+                with schema_context(box.schema_name), transaction.atomic():
+                    if options['flush']:
+                        self._flush(box_slug)
+                    self._seed_registered_student_invite(box_slug)
+                    self._seed_imported_lead_invite(box_slug)
+                    self._seed_mass_box_invite(box_slug)
+                    self._seed_open_box_invite(box_slug)
+        except TenantWritesFrozen as exc:
+            raise CommandError(f'Box {box.schema_name} está congelado; seed recusado.') from exc
+        except TenantFenceTargetMissing as exc:
+            raise CommandError(str(exc)) from exc
 
         self.stdout.write(self.style.SUCCESS(
             f'Cenários de onboarding criados para box "{box_slug}". '

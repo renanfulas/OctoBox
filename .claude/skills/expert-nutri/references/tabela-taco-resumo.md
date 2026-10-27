@@ -25,15 +25,18 @@ importa muito, está indicado).
 | Feijão carioca cozido | 76 | 4,8 | 13,6 | 0,5 |
 | Cuscuz de milho cozido | 112 | 2,0 | 25,3 | 0,3 |
 | Polvilho/goma de tapioca (seco) | 351 | 0,3 | 87,9 | 0,0 |
+| Goma de tapioca hidratada (rótulos [Guacira](https://www.guacira.com.br/produto/goma-de-tapioca-hidratada-almofada) e [Rocha](https://rochaalimentos.com.br/produtos/tapioca-tradicional/); confirme a marca) | 228-237 | 0* | 57-59 | 0-0,1 |
 | Mandioca cozida | 125 | 0,6 | 30,1 | 0,3 |
 | Pão francês | 300 | 8,0 | 58,0 | 3,1 |
+| Pão de forma tradicional (média TBCA) | 256 | 10,1 | 49,6 | 2,5 |
+| Aveia em flocos crua | 394 | 13,9 | 66,6 | 8,5 |
 
 ## Proteínas
 | Alimento | kcal | Prot | Carb | Gord |
 |---|---|---|---|---|
-| Filé de frango (peito, grelhado, sem pele) | 159 | 32,0 | 0,0 | 3,0 |
+| Filé de frango (peito, grelhado, sem pele) | 159 | 32,0 | 0,0 | 2,5 |
 | Tilápia grelhada | 128 | 26,2 | 0,0 | 2,5 |
-| Patinho grelhado (bovino magro) | 219 | 26,0 | 0,0 | 12,0 |
+| Patinho grelhado (bovino magro, sem gordura) | 219 | 35,9 | 0,0 | 7,3 |
 | Contrafilé grelhado | 235 | 25,0 | 0,0 | 14,5 |
 | Fígado bovino grelhado | 137 | 22,0 | 3,9 | 3,5 |
 | Carne moída (patinho) refogada | 212 | 26,0 | 0,0 | 11,5 |
@@ -44,6 +47,11 @@ importa muito, está indicado).
 | Chia (semente) | 486 | 16,5 | 42,1 | 30,7 |
 | Castanha de caju torrada | 570 | 18,5 | 29,1 | 46,3 |
 | Abacate | 96 | 1,2 | 6,0 | 8,4 |
+
+## Óleos
+| Alimento | kcal | Prot | Carb | Gord |
+|---|---|---|---|---|
+| Azeite de oliva extra virgem | 884 | 0,0 | 0,0 | 100,0 |
 
 ## Frutas
 | Alimento | kcal | Prot | Carb | Gord |
@@ -79,3 +87,5 @@ importa muito, está indicado).
 marca, ponto de cozimento e corte. Suficientes para orientar ajuste
 proporcional de plano (a diferença que importa é a *relativa* entre antes e
 depois), não para prescrição clínica de precisão laboratorial.
+
+**Fontes das inclusões e correções desta revisão**: [TACO 4ª edição — NEPA/Unicamp](https://nepa.unicamp.br/categoria/taco/) para frango, patinho, aveia e azeite; [TBCA — pão de forma tradicional, média de diferentes marcas](https://www.tbca.net.br/base-dados/int_composicao_alimentos.php?n0REd3kv7e86D%2BViXWYUnQ%3D%3D=qEjBIDo59ioDupngK8uAyA%3D%3D); rótulos oficiais de goma hidratada Guacira e Rocha, vinculados acima. Os valores da goma são a faixa dos dois rótulos consultados, não uma composição universal. *O “0” de proteína reproduz valores declarados/arredondados nos rótulos, não uma afirmação de ausência absoluta.

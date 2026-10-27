@@ -21,6 +21,19 @@ from .results import (
 )
 
 
+def _same_box_reference(repository, *, box_id, box_root_slug: str, target_box_root_slug: str) -> bool:
+    checker = getattr(repository, 'is_same_box_reference', None)
+    if callable(checker):
+        result = checker(
+            box_id=box_id,
+            box_root_slug=box_root_slug,
+            target_box_root_slug=target_box_root_slug,
+        )
+        if result is True or result is False:
+            return result
+    return (box_root_slug or '') == (target_box_root_slug or '')
+
+
 class CreateStudentInvitation:
     def __init__(self, repository: StudentIdentityRepositoryPort):
         self.repository = repository
@@ -35,7 +48,12 @@ class CreateStudentInvitation:
             return StudentInvitationResult(success=False, invitation=None, failure_reason='email-required')
 
         existing_identity = self.repository.find_live_by_student_id(student.id)
-        if existing_identity is not None and existing_identity.box_root_slug != command.box_root_slug:
+        if existing_identity is not None and not _same_box_reference(
+            self.repository,
+            box_id=getattr(existing_identity, 'box_id', None),
+            box_root_slug=existing_identity.box_root_slug,
+            target_box_root_slug=command.box_root_slug,
+        ):
             return StudentInvitationResult(success=False, invitation=None, failure_reason='student-box-mismatch')
 
         if command.invite_type == 'open_box':
@@ -88,7 +106,12 @@ class AuthenticateStudentWithProvider:
 
         existing_by_subject = self.repository.find_by_provider_subject(provider_subject=provider_subject)
         if existing_by_subject is not None:
-            if existing_by_subject.box_root_slug != command.box_root_slug:
+            if not _same_box_reference(
+                self.repository,
+                box_id=getattr(existing_by_subject, 'box_id', None),
+                box_root_slug=existing_by_subject.box_root_slug,
+                target_box_root_slug=command.box_root_slug,
+            ):
                 return StudentIdentityAuthResult(success=False, identity=None, failure_reason='box-root-mismatch')
             return StudentIdentityAuthResult(success=True, identity=self.repository.mark_authenticated(existing_by_subject))
 
@@ -98,7 +121,12 @@ class AuthenticateStudentWithProvider:
             invitation = self.repository.find_invitation_by_token(command.invite_token.strip())
             if invitation is None:
                 return StudentIdentityAuthResult(success=False, identity=None, failure_reason='invite-not-found')
-            if invitation.box_root_slug != command.box_root_slug:
+            if not _same_box_reference(
+                self.repository,
+                box_id=getattr(invitation, 'box_id', None),
+                box_root_slug=invitation.box_root_slug,
+                target_box_root_slug=command.box_root_slug,
+            ):
                 return StudentIdentityAuthResult(success=False, identity=None, failure_reason='invite-box-mismatch')
             if invitation.is_expired:
                 return StudentIdentityAuthResult(success=False, identity=None, failure_reason='invite-expired')
@@ -112,7 +140,12 @@ class AuthenticateStudentWithProvider:
             student = candidates[0]
 
         existing_identity = self.repository.find_live_by_student_id(student.id)
-        if existing_identity is not None and existing_identity.box_root_slug != command.box_root_slug:
+        if existing_identity is not None and not _same_box_reference(
+            self.repository,
+            box_id=getattr(existing_identity, 'box_id', None),
+            box_root_slug=existing_identity.box_root_slug,
+            target_box_root_slug=command.box_root_slug,
+        ):
             return StudentIdentityAuthResult(success=False, identity=None, failure_reason='student-box-mismatch')
 
         # Convite sem invited_email (ex.: imported_lead_invite) e "quem tem o link entra": nao ha
@@ -154,7 +187,11 @@ class TransferStudentToBox:
         identity = self.repository.find_identity_by_id(command.identity_id)
         if identity is None:
             return StudentTransferResult(success=False, identity=None, failure_reason='identity-not-found')
-        if identity.box_root_slug == command.to_box_root_slug:
+        same_box = getattr(self.repository, 'is_same_box', None)
+        same_box_result = same_box(identity=identity, box_root_slug=command.to_box_root_slug) if callable(same_box) else None
+        if same_box_result is True or (
+            same_box_result is not False and identity.box_root_slug == command.to_box_root_slug
+        ):
             return StudentTransferResult(success=False, identity=None, failure_reason='same-box')
 
         existing_in_target = self.repository.find_live_by_email_and_box(

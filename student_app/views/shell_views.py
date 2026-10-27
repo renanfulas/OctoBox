@@ -537,6 +537,7 @@ class StudentConfirmAttendanceView(StudentIdentityRequiredMixin, View):
             result = confirm_student_attendance(
                 student=request.student_identity.student,
                 session_id=session_id,
+                box_root_slug=request.student_active_box_root_slug,
             )
         except AttendanceNotAvailableError as exc:
             messages.error(request, str(exc) or 'Não consegui identificar a aula para confirmar sua presença.')

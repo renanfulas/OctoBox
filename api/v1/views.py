@@ -22,6 +22,7 @@ from django.urls import reverse
 from django.views import View
 from access.permissions.mixins import RoleRequiredMixin
 from access.roles import ROLE_COACH, ROLE_DEV, ROLE_MANAGER, ROLE_OWNER, ROLE_RECEPTION
+from control.tenant_write_fence import TenantWritesFrozen
 
 from shared_support.box_runtime import (
     get_box_runtime_namespace,
@@ -30,6 +31,7 @@ from shared_support.box_runtime import (
 )
 from student_identity.resend_webhooks import (
     ResendWebhookHeaders,
+    ResendWebhookTenantUnresolved,
     ResendWebhookVerificationError,
     process_resend_webhook,
 )
@@ -164,5 +166,21 @@ class ResendInvitationWebhookView(View):
             result = process_resend_webhook(payload=request.body, headers=headers)
         except ResendWebhookVerificationError as exc:
             return JsonResponse({'accepted': False, 'reason': str(exc)}, status=400)
+        except TenantWritesFrozen:
+            response = JsonResponse(
+                {'accepted': False, 'reason': 'tenant-temporarily-paused'},
+                status=503,
+            )
+            response['Retry-After'] = '60'
+            response['X-Octobox-Tenant-Frozen'] = '1'
+            return response
+        except ResendWebhookTenantUnresolved:
+            response = JsonResponse(
+                {'accepted': False, 'reason': 'tenant-association-unresolved'},
+                status=503,
+            )
+            response['Retry-After'] = '300'
+            response['X-Octobox-Webhook-Deferred'] = '1'
+            return response
 
         return JsonResponse(result, status=200)

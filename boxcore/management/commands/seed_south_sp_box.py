@@ -27,6 +27,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
+from control.tenant_write_fence import tenant_write_guarded_command
 from communications.models import (
     MessageDirection,
     MessageKind,
@@ -198,6 +199,7 @@ class Command(BaseCommand):
             help='Escolhe o perfil operacional do box simulado.',
         )
 
+    @tenant_write_guarded_command(schema_option=None, write_option=None)
     def handle(self, *args, **options):
         total_students = options['students']
         scenario = options['scenario']

@@ -21,6 +21,8 @@ import logging
 from datetime import datetime, timezone as dt_timezone
 
 from integrations.mesh import FAILURE_KIND_NON_RETRYABLE, FAILURE_KIND_RETRYABLE
+from control.tenant_write_fence import TenantWritesFrozen, tenant_write_guard
+from integrations.stripe.tenant_routing import tenant_schema_for_event
 
 from .models import PaymentWebhookEvent
 
@@ -34,8 +36,15 @@ def route_payment_webhook_event(event: PaymentWebhookEvent) -> None:
         return
 
     try:
-        handler(event)
+        schema_name = _tenant_schema_for_event(event)
+        if schema_name:
+            with tenant_write_guard(schema_name):
+                handler(event)
+        else:
+            handler(event)
         event.mark_processed()
+    except TenantWritesFrozen as exc:
+        event.defer_for_tenant_write_freeze(schema_name=exc.schema_name)
     except ValueError as exc:
         logger.error('route_payment_webhook_event: erro não reprocessável. event=%s err=%s', event.event_id, exc)
         event.register_failure(
@@ -615,6 +624,18 @@ def _lookup_payment_ref(payment_intent_id):
     from integrations.stripe.models import StripePaymentRef
 
     return StripePaymentRef.objects.filter(payment_intent_id=payment_intent_id).first()
+
+
+_TENANT_ROUTING_RESOLVERS = (
+    _resolve_box_schema,
+    _extract_billing_ids,
+    _resolve_box_for_billing,
+    _lookup_payment_ref,
+)
+
+
+def _tenant_schema_for_event(event: PaymentWebhookEvent) -> str:
+    return tenant_schema_for_event(event, *_TENANT_ROUTING_RESOLVERS)
 
 
 def _handle_charge_refunded(event: PaymentWebhookEvent) -> None:

@@ -12,8 +12,10 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 from django.utils.dateparse import parse_datetime
+from django_tenants.utils import schema_context
 
 from auditing.services import log_audit_event
+from control.tenant_write_fence import tenant_write_guard
 from .models import (
     StudentInvitationDelivery,
     StudentInvitationDeliveryEvent,
@@ -23,6 +25,10 @@ from .models import (
 
 class ResendWebhookVerificationError(RuntimeError):
     pass
+
+
+class ResendWebhookTenantUnresolved(RuntimeError):
+    """A delivery could not be attributed to an active Box safely."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,34 +108,22 @@ def _parse_occurred_at(value: str | None):
     return parse_datetime(value)
 
 
-def _activate_tenant_for_delivery(delivery) -> None:
-    """Ativa tenant a partir do box associado ao invitation do delivery.
+def _box_for_delivery(delivery):
+    """Resolve the tenant from the linked invitation; legacy slugs remain valid."""
+    from control.models import Box
 
-    Webhook do Resend e roteado por /api/v1/integrations/ (PUBLIC_SCHEMA_PATHS).
-    AuditEvent vive em TENANT_APP — sem ativar tenant aqui, INSERT falha
-    em public com 'relacao boxcore_auditevent nao existe'.
-    """
-    try:
-        from django.db import connection
-        from control.models import Box
-        invitation = getattr(delivery, 'invitation', None)
-        if invitation is None:
-            return
-        box_id = getattr(invitation, 'box_id', None)
-        slug = getattr(invitation, 'box_root_slug', '') or ''
-        box = None
-        if box_id:
-            box = Box.objects.filter(pk=box_id, status=Box.Status.ACTIVE).first()
-        if box is None and slug:
-            box = (
-                Box.objects.filter(schema_name=slug, status=Box.Status.ACTIVE).first()
-                or Box.objects.filter(slug=slug, status=Box.Status.ACTIVE).first()
-            )
-        if box is not None:
-            connection.set_tenant(box)
-    except Exception:
-        # Audit no webhook e nice-to-have; nao bloqueia processamento.
-        pass
+    invitation = getattr(delivery, 'invitation', None)
+    if invitation is None:
+        return None
+    box_id = getattr(invitation, 'box_id', None)
+    slug = getattr(invitation, 'box_root_slug', '') or ''
+    box = Box.objects.filter(pk=box_id, status=Box.Status.ACTIVE).first() if box_id else None
+    if box is None and slug:
+        box = (
+            Box.objects.filter(schema_name=slug, status=Box.Status.ACTIVE).first()
+            or Box.objects.filter(slug=slug, status=Box.Status.ACTIVE).first()
+        )
+    return box
 
 
 @transaction.atomic
@@ -158,11 +152,25 @@ def process_resend_webhook(*, payload: bytes, headers: ResendWebhookHeaders) -> 
     if delivery is None:
         return {'accepted': True, 'reason': 'delivery-not-found', 'event_type': event_type}
 
-    # Schema-per-tenant: webhook do Resend chega em /api/v1/integrations/
-    # (PUBLIC_SCHEMA_PATHS). StudentInvitationDelivery vive em public mas
-    # log_audit_event escreve em boxcore.AuditEvent (TENANT_APP). Ativar
-    # tenant a partir do box associado ao invitation.
-    _activate_tenant_for_delivery(delivery)
+    box = _box_for_delivery(delivery)
+    if box is None:
+        raise ResendWebhookTenantUnresolved('tenant-association-unresolved')
+
+    # The shared delivery update and tenant audit are one transaction. Holding
+    # the fence through both operations makes a freeze roll them back together.
+    with tenant_write_guard(box.schema_name):
+        with schema_context(box.schema_name):
+            return _apply_delivery_event(
+                delivery=delivery,
+                body=body,
+                data=data,
+                event_type=event_type,
+                headers=headers,
+                provider_message_id=provider_message_id,
+            )
+
+
+def _apply_delivery_event(*, delivery, body, data, event_type, headers, provider_message_id):
 
     if StudentInvitationDeliveryEvent.objects.filter(provider_event_id=headers.webhook_id).exists():
         return {'accepted': True, 'reason': 'duplicate-event', 'event_type': event_type}
@@ -206,6 +214,7 @@ def process_resend_webhook(*, payload: bytes, headers: ResendWebhookHeaders) -> 
 
 __all__ = [
     'ResendWebhookHeaders',
+    'ResendWebhookTenantUnresolved',
     'ResendWebhookVerificationError',
     'process_resend_webhook',
     'verify_resend_webhook_signature',
