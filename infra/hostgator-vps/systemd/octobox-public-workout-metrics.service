@@ -11,4 +11,6 @@ ExecStart=/srv/octobox/current/venv/bin/python manage.py capture_public_workout_
 # Resultado incompleto é esperado durante observação; --strict só é usado na
 # decisão humana de elevar orçamento.
 ExecStartPost=/srv/octobox/current/venv/bin/python manage.py evaluate_public_workout_growth_gate
-User=root
+User=octobox
+Group=octobox
+UMask=0077

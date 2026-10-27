@@ -9,7 +9,9 @@ WorkingDirectory=/srv/octobox/current
 EnvironmentFile=-/srv/octobox/current/.release.env
 EnvironmentFile=-/srv/octobox/shared/octobox.env
 ExecStart=/srv/octobox/current/venv/bin/python manage.py run_signal_mesh_retry_sweep --job-limit 25 --webhook-limit 25 --stripe-limit 25
-User=root
+User=octobox
+Group=octobox
+UMask=0077
 
 [Install]
 WantedBy=multi-user.target

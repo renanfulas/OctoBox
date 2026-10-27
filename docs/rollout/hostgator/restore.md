@@ -15,6 +15,12 @@ REGRA INEGOCIAVEL:
 
 # Restore — HostGator VPS
 
+> Este runbook trata do restore **full** em banco isolado. Para recuperar seletivamente um box,
+> o dump tenant não é autossuficiente: exige base full com referências shared e reconciliação
+> de vínculos/efeitos externos. Use o [drill de restore por tenant](../restore-and-rollback-drill.md#parte-c-drill-de-restore-por-tenant)
+> e o [inventário F1](../../testing/tenant-restore-inventory-2026-10-23.md). O F2 ainda não foi
+> executado; não rode restore tenant diretamente no banco ativo.
+
 Restore tem dois usos: **prova periódica** (provar que o backup presta) e **recuperação real**
 (desastre). Os dois usam **banco isolado** — nunca o banco vivo.
 
