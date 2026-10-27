@@ -637,11 +637,6 @@ PUBLIC_WORKOUT_SERVICE_POLICY_VERSION = env_str(
 PUBLIC_WORKOUT_TERMS_VERSION = env_str('PUBLIC_WORKOUT_TERMS_VERSION', '2026-09-20')
 PUBLIC_WORKOUT_PRIVACY_VERSION = env_str('PUBLIC_WORKOUT_PRIVACY_VERSION', '2026-09-20')
 PUBLIC_WORKOUT_PUBLIC_BASE_URL = env_str('PUBLIC_WORKOUT_PUBLIC_BASE_URL', '')
-# Entrega 4 (corte pra workout.html, docs/plans/public-workouts-produtizacao-corda.md):
-# escape hatch de rollout canario/kill switch. Slug listado aqui continua
-# servindo o template legado por-cliente (bruno.html etc.) mesmo com
-# PublicWorkoutProgram ativo — reverte por env var + restart, sem deploy.
-PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS = frozenset(filter(None, env_str('PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS', '').split(',')))
 # Quem recebe o aviso quando uma assinatura do corredor vira ACTIVE (venda
 # nova ou reativacao apos suspensao/atraso) — ver reactivate_subscription em
 # public_workouts/billing.py e notify_staff_new_subscription em notifications.py.
