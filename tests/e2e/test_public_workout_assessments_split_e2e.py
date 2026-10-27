@@ -50,19 +50,3 @@ def test_assessment_report_loads_after_split(page: Page, live_server):
     expect(panel.locator('#assess-form')).to_be_attached()
     expect(panel.locator('#assess-report-slot')).to_contain_text('Evolução de peso')
     expect(panel.locator('.assess-silhouette')).to_be_visible()
-
-
-@pytest.mark.e2e
-@pytest.mark.django_db(transaction=True)
-@override_settings(DEBUG=True)
-def test_assessment_report_loads_on_legacy_page(page: Page, live_server):
-    from public_workouts.services import record_assessment
-
-    record_assessment(
-        plan_slug='rafael', measured_at='2026-10-01', weight_kg=72,
-        measurements={'cintura': 82},
-    )
-    sign_in_owner(page, live_server.url, 'rafael')
-    page.goto(f'{live_server.url}/renan/rafael')
-    expect(page.locator('#assess-form')).to_be_attached()
-    expect(page.locator('#assess-report-slot')).to_contain_text('Cintura')

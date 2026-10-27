@@ -15,14 +15,15 @@ PONTOS CRITICOS:
 from django.contrib import admin
 
 from auditing.admin_mixins import AuditedAdminMixin
+from shared_support.admin_search import BlindIndexPhoneSearchAdminMixin
 from students.models import Student
 
 
 @admin.register(Student)
-class StudentAdmin(AuditedAdminMixin, admin.ModelAdmin):
+class StudentAdmin(BlindIndexPhoneSearchAdminMixin, AuditedAdminMixin, admin.ModelAdmin):
     list_display = ('full_name', 'phone', 'email', 'status', 'updated_at')
     list_filter = ('status', 'gender', 'health_issue_status')
-    search_fields = ('full_name', 'phone', 'email')
+    search_fields = ('full_name', 'email')
     ordering = ('full_name',)
 
 

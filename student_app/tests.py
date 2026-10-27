@@ -44,7 +44,9 @@ from student_app.models import (
     WorkoutBlockKind,
     WorkoutLoadType,
 )
-from public_workouts.testing import sign_in_public_workout_account, sign_in_public_workout_owner
+from public_workouts.testing import (
+    publish_example_program, sign_in_public_workout_account, sign_in_public_workout_owner,
+)
 from student_identity.infrastructure.session import build_student_session_value, read_student_session_value
 from student_identity.models import (
     StudentAppInvitation,
@@ -2523,14 +2525,8 @@ class StudentAppExperienceTests(TestCase):
 
 
 class PublicWorkoutPwaTests(TestCase):
-    # NOTA (Entrega 4, corte pra workout.html): esta classe nunca chama
-    # publish_program, entao PublicWorkoutProgram.objects fica vazio pra
-    # todo slug testado aqui — _render_public_workout_html cai sempre no
-    # fallback legado (_render_legacy_template_html), igual sempre foi.
-    # Os testes abaixo continuam validos SEM alteracao por isso. A
-    # cobertura do caminho novo (workout.html com programa ativo) fica em
-    # PublicWorkoutDetailViewCutoverTests, mais abaixo, que publica de
-    # verdade antes de testar.
+    # Os HTMLs por aluno foram removidos: /renan/<slug> so existe pelo template
+    # unico (workout.html), com programa publicado.
 
     def test_anonymous_visitor_is_sent_to_login_without_any_session(self):
         # O slug e' o primeiro nome do aluno: abrir o link sem login nao pode
@@ -2546,25 +2542,26 @@ class PublicWorkoutPwaTests(TestCase):
                 self.assertNotIn(PUBLIC_WORKOUT_SESSION_COOKIE_NAME, response.cookies)
                 self.assertNotIn('renan_slug', response.cookies)
 
-    def test_owner_sees_the_page_with_first_name_only_and_no_body_data(self):
-        slugs = ('juliana', 'bruno', 'milene', 'giovanna', 'thaislima', 'john', 'henrique', 'johnespanha')
-        first_names = ('Juliana', 'Bruno', 'Milene', 'Giovanna', 'Thais', 'John', 'Henrique', 'John Espanha')
-        surnames = ('Alves', 'Fulas', 'Geraldes', 'Fontes', 'Lima', 'Santos Souza')
-        for slug, first_name in zip(slugs, first_names):
+    def test_owner_without_published_program_is_sent_to_the_account_hub(self):
+        sign_in_public_workout_owner(self.client, 'juliana')
+
+        response = self.client.get('/renan/juliana')
+
+        self.assertRedirects(response, '/treinos/minha-conta', fetch_redirect_response=False)
+        self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
+
+    def test_catalog_slugs_render_the_unified_page_with_their_manifest(self):
+        for slug in ('juliana', 'bruno', 'johnespanha'):
             with self.subTest(slug=slug):
+                publish_example_program(slug)
                 sign_in_public_workout_owner(self.client, slug)
+
                 response = self.client.get(f'/renan/{slug}')
 
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
-                self.assertContains(response, first_name)
-                content = response.content.decode('utf-8')
-                for surname in surnames:
-                    self.assertNotIn(surname, content)
-                for label in ('Idade', 'Peso', 'Gordura', 'Body fat', 'Massa magra', 'IMC'):
-                    self.assertNotIn(f'stat-l">{label}<', content)
+                self.assertContains(response, 'workout-shell')
                 self.assertContains(response, f'/renan/{slug}/manifest.webmanifest')
-                self.assertContains(response, '/renan/sw.js')
 
     def test_public_workout_manifest_is_dynamic_per_slug(self):
         response = self.client.get(reverse('public-workout-manifest', kwargs={'plan_slug': 'juliana'}))
@@ -2618,105 +2615,13 @@ class PublicWorkoutPwaTests(TestCase):
         for slug in all_slugs:
             self.assertNotIn(f'/renan/{slug}', sw_content)
 
-    def test_public_workout_page_renders_install_cta(self):
-        sign_in_public_workout_owner(self.client, 'juliana')
-        response = self.client.get('/renan/juliana')
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'public-workout-install')
-        self.assertContains(response, 'beforeinstallprompt')
-        self.assertContains(response, 'Adicionar à Tela de Início')
-
-    def test_juliana_week_order_reflects_quad_frequency_program(self):
-        sign_in_public_workout_owner(self.client, 'juliana')
-        response = self.client.get('/renan/juliana')
-        content = response.content.decode()
-
-        self.assertEqual(response.status_code, 200)
-
-        # Ordem estrutural das sessoes de treino no DOM (id do dia), nao a
-        # copy do strip semanal — pega sessao fora de ordem mesmo que o
-        # rotulo visual continue certo, e resiste a redacao mudar.
-        day_ids = ('id="ter"', 'id="qua"', 'id="qui"', 'id="sab"')
-        for day_id in day_ids:
-            self.assertIn(day_id, content)
-        positions = [content.index(day_id) for day_id in day_ids]
-        self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem ter->sab')
-
-        self.assertContains(response, "goDay('qua',this)")
-
-        # Restricoes explicitamente pedidas pela cliente: quadriceps em alta
-        # frequencia (2x/semana) com os sets exatos pedidos (5 series de
-        # extensora na terca, sumo + metodo contraste na quinta) — se alguem
-        # reduzir o volume por engano, esse teste quebra. Mantido sob o
-        # limite do ADR-012 (assertContains de copy <= 8 por metodo).
-        self.assertContains(response, '5× Top (12-15) · pausa 1s no topo')
-        self.assertContains(response, 'Agachamento sumô com halteres')
-        self.assertContains(response, 'Cadeira extensora (pesado + leve)')
-        self.assertContains(response, 'Panturrilha no Smith')
-
-        # Cardio 4x/semana pedido explicitamente (2 dias de 20min + 2 dias
-        # de 30min), fora dos dois dias de quadriceps pesados.
-        self.assertContains(response, '4 sessões · 100 min')
-
-    def test_henrique_week_order_reflects_split_and_required_back_exercises(self):
-        sign_in_public_workout_owner(self.client, 'henrique')
-        response = self.client.get('/renan/henrique')
-        content = response.content.decode()
-
-        self.assertEqual(response.status_code, 200)
-
-        # Ordem estrutural das sessoes de treino no DOM (id do dia), nao a
-        # copy do strip semanal — pega sessao fora de ordem mesmo que o
-        # rotulo visual continue certo, e resiste a redacao mudar.
-        day_ids = ('id="seg"', 'id="ter"', 'id="qua"', 'id="qui"', 'id="sex"')
-        for day_id in day_ids:
-            self.assertIn(day_id, content)
-        positions = [content.index(day_id) for day_id in day_ids]
-        self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem seg->sex')
-
-        self.assertContains(response, "goDay('qua',this)")
-
-        # Exercicios exigidos explicitamente no escopo do treino (trapezio
-        # medial / deltoide posterior no dia de costas).
-        self.assertContains(response, 'Crucifixo invertido')
-        self.assertContains(response, 'Face pull no cabo')
-
-    def test_johnespanha_week_order_reflects_glute_priority_and_low_back_volume(self):
-        sign_in_public_workout_owner(self.client, 'johnespanha')
-        response = self.client.get('/renan/johnespanha')
-        content = response.content.decode()
-
-        self.assertEqual(response.status_code, 200)
-
-        # Ordem estrutural das sessoes de treino no DOM (id do dia), nao a
-        # copy do strip semanal — pega sessao fora de ordem mesmo que o
-        # rotulo visual continue certo, e resiste a redacao mudar.
-        day_ids = ('id="seg"', 'id="ter"', 'id="qua"', 'id="qui"', 'id="sex"')
-        for day_id in day_ids:
-            self.assertIn(day_id, content)
-        positions = [content.index(day_id) for day_id in day_ids]
-        self.assertEqual(positions, sorted(positions), 'sessoes de treino fora da ordem seg->sex')
-
-        self.assertContains(response, "goDay('qua',this)")
-
-        # Restricoes explicitamente pedidas pela cliente: glúteo é a única
-        # prioridade de crescimento (hip thrust como exercicio-ancora) e
-        # costas/peito ficam em volume minimo de manutencao de proposito
-        # (ela ganha massa nas costas com facilidade). Se alguem futuramente
-        # remover o hip thrust ou a nota de volume baixo, esse teste quebra.
-        self.assertContains(response, 'Hip thrust com barra')
-        self.assertContains(response, 'RIR 3 · ADM parcial no alongamento')
-
-        # 1x escada/HIIT por semana, pedido explicitamente pela cliente.
-        self.assertContains(response, 'Escada / HIIT')
-
     def test_visiting_the_page_sets_the_csrf_cookie(self):
         # Regressao: nenhum template deste corredor usa {% csrf_token %},
         # entao sem a chamada explicita a get_token() (PublicWorkoutDetailView)
         # o cookie CSRF nunca nascia — qualquer POST feito por JS depois
         # (autoavaliacao online, assessments.js) levava 403 em producao,
         # mesmo com sessao de login valida.
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         response = self.client.get('/renan/giovanna')
 
@@ -2731,6 +2636,7 @@ class PublicWorkoutSignOutViewTests(TestCase):
     """
 
     def test_clears_owner_cookie_and_redirects_to_offline(self):
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie do dono
         self.assertIn('renan_slug', self.client.cookies)
@@ -2874,27 +2780,6 @@ class PublicWorkoutDetailViewCutoverTests(TestCase):
         self.assertRegex(content, r'workout-pwa\.js\?v=[^"\']+')
         self.assertIn('data-workout-install', content)
         self.assertRegex(content, r'workout-progress\.css\?v=[^"\']+')
-
-    def test_falls_back_to_legacy_when_no_program_published(self):
-        # giovanna: nenhum publish_program chamado nesta base de teste —
-        # comportamento identico ao de sempre (PublicWorkoutPwaTests).
-        sign_in_public_workout_owner(self.client, 'giovanna')
-        response = self.client.get('/renan/giovanna')
-
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn('workout-shell', response.content.decode('utf-8'))
-
-    @override_settings(PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS=frozenset({'bruno'}))
-    def test_legacy_escape_hatch_wins_even_with_active_program(self):
-        # Kill switch de rollout (PUBLIC_WORKOUT_LEGACY_TEMPLATE_SLUGS):
-        # mesmo com programa publicado, slug listado continua no legado.
-        self._publish('bruno')
-
-        sign_in_public_workout_owner(self.client, 'bruno')
-        response = self.client.get('/renan/bruno')
-
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn('workout-shell', response.content.decode('utf-8'))
 
     def test_owner_without_loads_gets_empty_load_data(self):
         # Dono recem-logado, sem nenhuma carga: a pagina nao pode quebrar,
@@ -3063,6 +2948,7 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_returns_404_for_cookie_of_another_slug(self):
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie de giovanna
         response = self.client.get('/renan/rafael/avaliacoes.json')
@@ -3077,6 +2963,7 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_returns_empty_shape_for_plan_without_assessments(self):
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie do dono
         response = self.client.get('/renan/giovanna/avaliacoes.json')
@@ -3106,6 +2993,7 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
             weight_kg=70,
             measurements={'cintura': 82, 'pescoco': 38},
         )
+        publish_example_program('rafael')
         sign_in_public_workout_owner(self.client, 'rafael')
         self.client.get('/renan/rafael')  # seta o cookie do dono
         response = self.client.get('/renan/rafael/avaliacoes.json')
@@ -3115,15 +3003,14 @@ class PublicWorkoutAssessmentsEndpointTests(TestCase):
         self.assertIsNotNone(payload['indicators']['bmi'])
         self.assertIsNotNone(payload['indicators']['body_fat_percent'])
 
-    def test_endpoint_present_on_converted_and_legacy_pages(self):
-        # giovanna usa o design system compartilhado; johnespanha continua
-        # autocontido — os dois precisam do mesmo endpoint de leitura.
-        for slug in ('giovanna', 'johnespanha', 'rafael'):
-            sign_in_public_workout_owner(self.client, slug)
-            response = self.client.get(f'/renan/{slug}')
-            self.assertContains(response, 'assessments.js')
-            self.assertContains(response, "goTab('avaliacoes',this)")
+    def test_unified_page_loads_the_assessments_client(self):
+        publish_example_program('rafael')
+        sign_in_public_workout_owner(self.client, 'rafael')
 
+        response = self.client.get('/renan/rafael')
+
+        self.assertContains(response, 'assessments.js')
+        self.assertContains(response, 'workout-panel-avaliacao')
 
 class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
     """POST /renan/<slug>/backup-carga — item 1.7 / F-B, Onda B1 do CORDA.
@@ -3141,6 +3028,7 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_returns_404_for_cookie_of_another_slug(self):
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie de giovanna
         response = self.client.post(
@@ -3153,6 +3041,7 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
     def test_saves_raw_blob_as_is_for_owner(self):
         from public_workouts.models import PublicWorkoutLocalStorageBackup
 
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')  # seta o cookie do dono
         blob = {'sessions': [{'date': '2026-01-05', 'weight': 42}], 'anything': 'nao normalizado'}
@@ -3168,6 +3057,7 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
         self.assertEqual(backup.store_key, 'giovanna_fontes_v1')
 
     def test_rejects_malformed_json(self):
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')
         response = self.client.post(
@@ -3178,6 +3068,7 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_rejects_non_object_json(self):
+        publish_example_program('giovanna')
         sign_in_public_workout_owner(self.client, 'giovanna')
         self.client.get('/renan/giovanna')
         response = self.client.post(
@@ -3186,75 +3077,6 @@ class PublicWorkoutLocalStorageBackupEndpointTests(TestCase):
             content_type='application/json',
         )
         self.assertEqual(response.status_code, 400)
-
-
-class PublicWorkoutContentSignatureTests(TestCase):
-    """Trava o CONTEUDO das paginas publicas, nao o markup.
-
-    A maioria das paginas foi refatorada de HTML autocontido para
-    template + CSS + JS compartilhados (johnespanha ainda nao — chegou
-    depois, num PR paralelo, e continua no formato monolitico antigo).
-    Markup e classes vao mudar de proposito; o que o aluno le e o que o
-    tracker grava, nao.
-
-    A assinatura ignora classes CSS justamente para nao brigar com a
-    refatoracao, e compara ids, data-key, hrefs, texto visivel e a
-    contagem de blocos semanticos.
-
-    Para regravar a baseline depois de uma mudanca INTENCIONAL de treino:
-        UPDATE_PUBLIC_WORKOUT_GOLDEN=1 pytest \
-            student_app/tests.py::PublicWorkoutContentSignatureTests
-    e conferir o diff no git antes de commitar.
-    """
-
-    def test_public_workout_content_signature_is_stable(self):
-        import os
-
-        from scripts.public_workout_signature import (
-            build_signature,
-            golden_path,
-            iter_slugs,
-        )
-
-        updating = os.environ.get('UPDATE_PUBLIC_WORKOUT_GOLDEN') == '1'
-        slugs = iter_slugs()
-        self.assertEqual(len(slugs), 10, 'esperado 10 planos publicos em PUBLIC_WORKOUT_LIBRARY')
-
-        for slug in slugs:
-            with self.subTest(slug=slug):
-                sign_in_public_workout_owner(self.client, slug)
-                response = self.client.get(f'/renan/{slug}')
-                self.assertEqual(response.status_code, 200)
-                actual = build_signature(response.content.decode('utf-8'))
-
-                path = golden_path(slug)
-                if updating:
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    path.write_text(
-                        json.dumps(actual, ensure_ascii=False, indent=2) + '\n',
-                        encoding='utf-8',
-                    )
-                    continue
-
-                self.assertTrue(
-                    path.exists(),
-                    f'baseline ausente para {slug}: rode com UPDATE_PUBLIC_WORKOUT_GOLDEN=1',
-                )
-                expected = json.loads(path.read_text(encoding='utf-8'))
-
-                # Um subTest por campo: numa refatoracao e comum quebrar
-                # mais de um de uma vez, e ver todos juntos economiza ciclo.
-                checks = (
-                    ('block_counts', 'sumiu ou surgiu bloco semantico (sessao/exercicio/tracker)'),
-                    ('data_keys', 'data-key do tracker mudou — isso orfana o historico de carga do aluno'),
-                    ('ids', 'ids do DOM mudaram'),
-                    ('hrefs', 'links mudaram'),
-                    ('text', 'texto visivel mudou'),
-                    ('data_islands', 'dados do grafico de periodizacao mudaram'),
-                )
-                for field, why in checks:
-                    with self.subTest(slug=slug, campo=field):
-                        self.assertEqual(expected[field], actual[field], f'{slug}: {why}')
 
 
 class StudentAuthMiddlewareTests(TestCase):

@@ -49,11 +49,11 @@ def execute_bulk_action(items: Iterable[Any], action_fn: Callable[[Any], None]) 
             with transaction.atomic():
                 action_fn(item)
             results['success'].append(item)
-        except Exception as e:
-            logger.exception(f"Erro em bulk operations no item {item}: {str(e)}")
+        except Exception as exc:
+            logger.warning('bulk_action_item_failed error_type=%s', type(exc).__name__)
             results['failed'].append({
                 'item': item,
-                'error': str(e) or repr(e)
+                'error': 'Não foi possível processar este item.'
             })
 
     return results

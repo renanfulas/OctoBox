@@ -304,11 +304,16 @@ def _handle_invoice_payment_succeeded(event: PaymentWebhookEvent) -> None:
         due_date=_unix_to_date(invoice.get('period_start')),
     )
     from public_workouts.models import PublicWorkoutWaitlistEntry, PublicWorkoutWaitlistStatus
-    PublicWorkoutWaitlistEntry.objects.filter(
-        email__iexact=subscription.account.email,
+    from public_workouts.email_lookup import waitlist_entries_for_email
+    conversion_candidates = PublicWorkoutWaitlistEntry.objects.filter(
         tier=subscription.tier,
         status__in=(PublicWorkoutWaitlistStatus.WAITING, PublicWorkoutWaitlistStatus.INVITED),
-    ).update(
+    )
+    matched_waitlist_entries = waitlist_entries_for_email(
+        subscription.account.email,
+        queryset=conversion_candidates,
+    )
+    conversion_candidates.filter(pk__in=[entry.pk for entry in matched_waitlist_entries]).update(
         status=PublicWorkoutWaitlistStatus.CONVERTED,
         converted_at=timezone.now(),
     )

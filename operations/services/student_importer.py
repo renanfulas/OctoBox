@@ -2,15 +2,21 @@ import csv
 import logging
 from datetime import date
 
+from django.conf import settings
 from django.db import transaction
 
+from shared_support.crypto_fields import generate_blind_index, generate_cpf_blind_index
 from shared_support.phone_numbers import normalize_phone_number
 from shared_support.validators import validate_file_security
 from students.models import HealthIssueStatus, Student, StudentGender, StudentStatus
 
 logger = logging.getLogger('octobox.students')
 
-_UPDATE_FIELDS = ['full_name', 'email', 'gender', 'birth_date', 'health_issue_status', 'cpf', 'status', 'notes']
+_UPDATE_FIELDS = [
+    'full_name', 'email', 'gender', 'birth_date', 'health_issue_status',
+    'cpf', 'cpf_lookup_index', 'phone_lookup_index', 'status', 'notes',
+]
+_SAFE_IMPORT_ERROR = 'Falha ao processar esta linha; revise os dados e tente novamente.'
 
 
 def _emit_progress(job_id, count, failed_item=None):
@@ -26,9 +32,7 @@ def _emit_progress(job_id, count, failed_item=None):
 def _build_error_row(line_idx, student_obj, exc):
     return {
         'line': line_idx,
-        'phone': student_obj.phone,
-        'name': student_obj.full_name,
-        'error': str(exc),
+        'error': _SAFE_IMPORT_ERROR,
     }
 
 
@@ -87,15 +91,26 @@ class StudentImporter:
         error_rows = []
 
         try:
+            if not getattr(settings, 'PHONE_BLIND_INDEX_KEY', ''):
+                raise ValueError('PHONE_BLIND_INDEX_KEY is required')
+
             validate_file_security(file_path, max_size_mb=15, allowed_mimes=['text/csv', 'text/plain'])
 
             with open(file_path, encoding='utf-8-sig', newline='') as csv_file:
                 reader = csv.DictReader(csv_file, delimiter=delimiter)
 
-                existing_student_map = {p: i for p, i in Student.objects.values_list('phone', 'id').iterator()}
+                missing_index_count = Student.objects.filter(phone_lookup_index='').count()
+                if missing_index_count:
+                    raise ValueError('Student phone lookup index backfill is incomplete')
+                existing_student_map = {
+                    index: Student(id=student_id, phone_lookup_index=index)
+                    for index, student_id in Student.objects.exclude(
+                        phone_lookup_index=''
+                    ).values_list('phone_lookup_index', 'id').iterator()
+                }
 
                 to_create = []
-                to_update = []
+                to_update = {}
 
                 for row_idx, row in enumerate(reader, start=2):
                     full_name = (row.get('full_name') or row.get('Nome') or '').strip()
@@ -117,29 +132,53 @@ class StudentImporter:
                         'notes': (row.get('notes') or '').strip(),
                     }
 
-                    if phone in existing_student_map:
-                        s = Student(id=existing_student_map[phone], phone=phone, **student_data)
-                        to_update.append((row_idx, s))
-                    else:
-                        s = Student(phone=phone, **student_data)
+                    phone_index = generate_blind_index(phone)
+                    if not phone_index:
+                        raise ValueError('PHONE_BLIND_INDEX_KEY is required')
+                    cpf_index = generate_cpf_blind_index(student_data['cpf'])
+                    s = existing_student_map.get(phone_index)
+                    if s is None:
+                        s = Student(
+                            phone=phone,
+                            phone_lookup_index=phone_index,
+                            cpf_lookup_index=cpf_index,
+                            **student_data,
+                        )
+                        existing_student_map[phone_index] = s
                         to_create.append((row_idx, s))
+                    else:
+                        s.phone = phone
+                        s.phone_lookup_index = phone_index
+                        s.cpf_lookup_index = cpf_index
+                        for field_name, value in student_data.items():
+                            setattr(s, field_name, value)
+                        if s.pk is not None:
+                            to_update[s.pk] = (row_idx, s)
+                        elif not any(queued is s for _, queued in to_create):
+                            # A prior failed batch may have removed this
+                            # unsaved object from the pending create list.
+                            to_create.append((row_idx, s))
 
                     if len(to_create) >= self.batch_size:
                         created_count, error_rows = _flush_create(to_create, created_count, error_rows, job_id=job_id)
                         to_create = []
 
                     if len(to_update) >= self.batch_size:
-                        updated_count, error_rows = _flush_update(to_update, updated_count, error_rows, job_id=job_id)
-                        to_update = []
+                        updated_count, error_rows = _flush_update(
+                            list(to_update.values()), updated_count, error_rows, job_id=job_id
+                        )
+                        to_update = {}
 
                 if to_create:
                     created_count, error_rows = _flush_create(to_create, created_count, error_rows, job_id=job_id)
                 if to_update:
-                    updated_count, error_rows = _flush_update(to_update, updated_count, error_rows, job_id=job_id)
+                    updated_count, error_rows = _flush_update(
+                        list(to_update.values()), updated_count, error_rows, job_id=job_id
+                    )
 
-        except Exception as e:
-            logger.error(f"Failed to import students from {file_path}: {str(e)}", exc_info=True)
-            raise e
+        except Exception as exc:
+            logger.error('job_execution_failed error_type=%s', type(exc).__name__)
+            raise
 
         return {
             'success': created_count,

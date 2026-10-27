@@ -58,6 +58,7 @@ A [first-box-production-execution-checklist.md](first-box-production-execution-c
 | `DJANGO_ENV=production` | Liga modo produção | não |
 | `DJANGO_SECRET_KEY` | Assinatura de sessão/CSRF/magic-token | **sim** |
 | `PHONE_BLIND_INDEX_KEY` | Blind index de PII (chave separada da secret) | **sim** |
+| `EMAIL_BLIND_INDEX_KEY` | HMAC por domínio para lookup exato de email | **sim** |
 | `DATABASE_URL` | PostgreSQL real (django-tenants exige Postgres) | **sim** |
 | `REDIS_URL` | Cache/rate-limit em prod (vazio derruba o boot em prod) | **sim** |
 | `DJANGO_ALLOWED_HOSTS` / `DJANGO_CSRF_TRUSTED_ORIGINS` | Hosts e origens do `app.` | não |
@@ -103,6 +104,11 @@ Rodar no ambiente alvo, na ordem. Todos são idempotentes (seguro repetir).
 
 ### Papéis & admin
 - **Comandos:** `bootstrap_roles`, `createsuperuser`. **Var:** `DJANGO_ADMIN_URL_PATH`.
+
+### Busca exata de email com blind index (preparação G)
+- **Vars:** `EMAIL_BLIND_INDEX_KEY` e os gates `*_EMAIL_LOOKUP_INDEX_READY`; os gates de escrita `*_EMAIL_ENCRYPTION_WRITE_READY` existem somente para convites e signups.
+- **Ordem:** aplicar migrations shared/tenant conforme grafo; executar backfills por domínio em modo relatório, aplicar e verificar; habilitar primeiro o reader daquele domínio. Escrita cifrada exige reader pronto e chave HMAC configurada.
+- **Estado desta extração:** todos os gates permanecem `False`; nenhum backfill, chave operacional ou writer de produção foi ativado.
 
 ### Workspace do Manager (piloto)
 - **Var:** `OPERATIONS_MANAGER_WORKSPACE_ENABLED=True` quando o papel Manager faz parte do pacote do dia 1.

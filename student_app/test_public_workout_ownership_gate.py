@@ -14,7 +14,7 @@ POR QUE ELE EXISTE:
 from django.test import TestCase
 
 from public_workouts.models import PublicWorkoutAccount, PublicWorkoutSubscription, PublicWorkoutSubscriptionStatus
-from public_workouts.testing import sign_in_public_workout_account
+from public_workouts.testing import publish_example_program, sign_in_public_workout_account
 from student_identity.public_workout_session import (
     PUBLIC_WORKOUT_SESSION_COOKIE_NAME,
     build_public_workout_session_value,
@@ -37,6 +37,7 @@ class PublicWorkoutOwnershipGateTests(TestCase):
         self.assertRedirects(response, '/treinos/login?next=/renan/bruno', fetch_redirect_response=False)
 
     def test_logged_in_account_can_open_the_slug_it_owns(self):
+        publish_example_program('bruno')
         account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
         self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
             account_id=account.pk, identity_verified=True
@@ -113,6 +114,7 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
     tela: nao fazem sentido pra visualizacao humana."""
 
     def test_active_subscription_is_not_blocked(self):
+        publish_example_program('bruno')
         account = _make_account_with_subscription(
             email='ativo@example.com', plan_slug='bruno', status=PublicWorkoutSubscriptionStatus.ACTIVE
         )

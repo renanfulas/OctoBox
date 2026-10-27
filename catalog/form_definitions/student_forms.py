@@ -19,7 +19,8 @@ from django.utils import timezone
 from communications.models import IntakeStatus, StudentIntake
 from finance.models import EnrollmentStatus, MembershipPlan, PaymentMethod, PaymentStatus
 from onboarding.attribution import extract_acquisition_channel
-from shared_support.crypto_fields import generate_blind_index
+from shared_support.crypto_fields import generate_blind_index, generate_cpf_blind_index
+from shared_support.cpf_lookup import cpf_lookup_index_is_ready
 from shared_support.acquisition import ACQUISITION_CHANNEL_CHOICES, normalize_acquisition_channel
 from shared_support.form_inputs import (
     LenientDateField,
@@ -327,9 +328,22 @@ class StudentQuickForm(forms.ModelForm):
                     break
                 raise forms.ValidationError('CPF inválido (Dígito verificador incorreto).')
 
-        # 2. Validar Duplicidade
+        # Ciphertext uses a random nonce, so equality must use the tenant-local
+        # HMAC index. Fail closed until this tenant's backfill is verified.
+        if not cpf_lookup_index_is_ready():
+            raise forms.ValidationError(
+                'A validação segura de CPF ainda não está disponível; tente novamente.'
+            )
+
+        lookup_index = generate_cpf_blind_index(raw_cpf)
+        if not lookup_index:
+            raise forms.ValidationError(
+                'A validação segura de CPF ainda não está disponível; tente novamente.'
+            )
+
+        # 2. Validar Duplicidade pelo índice exato
         student_id = self.instance.pk if self.instance else None
-        if Student.objects.filter(cpf=f'{raw_cpf[:3]}.{raw_cpf[3:6]}.{raw_cpf[6:9]}-{raw_cpf[9:]}').exclude(pk=student_id).exists() or Student.objects.filter(cpf=raw_cpf).exclude(pk=student_id).exists():
+        if Student.objects.filter(cpf_lookup_index=lookup_index).exclude(pk=student_id).exists():
             raise forms.ValidationError('Já existe um aluno cadastrado com este CPF.')
 
         return f'{raw_cpf[:3]}.{raw_cpf[3:6]}.{raw_cpf[6:9]}-{raw_cpf[9:]}'

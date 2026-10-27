@@ -64,7 +64,9 @@ class SourceResolutionMethod(models.TextChoices):
 
 class Student(TimeStampedModel):
     full_name = models.CharField(max_length=150, db_index=True)
-    phone = EncryptedCharField(max_length=255, storage_max_length=2048, unique=True, verbose_name='WhatsApp')
+    # Plaintext uniqueness/search lives in phone_lookup_index; randomized
+    # Fernet ciphertext cannot provide either contract.
+    phone = EncryptedCharField(max_length=255, storage_max_length=2048, verbose_name='WhatsApp')
     phone_lookup_index = models.CharField(max_length=128, db_index=True, blank=True, default='')
     email = models.EmailField(blank=True, db_index=True)
     gender = models.CharField(max_length=16, choices=StudentGender.choices, blank=True)
@@ -193,7 +195,11 @@ class Student(TimeStampedModel):
         else:
             self.phone_lookup_index = ""
 
-        self.cpf_lookup_index = generate_cpf_blind_index(self.cpf) if self.cpf else ""
+        if self.cpf:
+            self.cpf_lookup_index = generate_cpf_blind_index(self.cpf)
+        else:
+            self.cpf_lookup_index = ""
+
         update_fields = kwargs.get('update_fields')
         if update_fields is not None:
             update_fields = set(update_fields)

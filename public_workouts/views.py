@@ -210,6 +210,15 @@ def _build_checkin_whatsapp_url(*, phone: str, student_label: str) -> str | None
     return f'https://wa.me/{phone}?text={quote(message)}'
 
 
+def _sort_coach_roster_rows_by_account_email(rows):
+    """Preserve roster alpha order without ordering SQL on encrypted email."""
+
+    return sorted(
+        rows,
+        key=lambda row: ((row.account.email or '').casefold(), row.account_id),
+    )
+
+
 class CoachStudentRosterView(CurvaStaffLoginRequiredMixin, ListView):
     """Painel do treinador: evolução dos alunos numa tela só (achado do
     Renan — "saber a evolução de forma fácil, a data que foi o treino").
@@ -226,7 +235,7 @@ class CoachStudentRosterView(CurvaStaffLoginRequiredMixin, ListView):
         return (
             PublicWorkoutSubscription.objects.exclude(status=PublicWorkoutSubscriptionStatus.CANCELED)
             .select_related('account')
-            .order_by('account__email')
+            .order_by('account_id')
         )
 
     def get_context_data(self, **kwargs):
@@ -236,7 +245,9 @@ class CoachStudentRosterView(CurvaStaffLoginRequiredMixin, ListView):
         from .services import build_weekly_review
 
         context = super().get_context_data(**kwargs)
-        rows = list(context[self.context_object_name])
+        rows = _sort_coach_roster_rows_by_account_email(
+            list(context[self.context_object_name]),
+        )
         account_ids = [row.account_id for row in rows]
 
         last_workout_by_account = dict(
@@ -286,8 +297,8 @@ class CoachStudentRosterView(CurvaStaffLoginRequiredMixin, ListView):
         # Risco primeiro (quem precisa de acao aparece no topo), depois
         # quem esta ha mais tempo sumido dentro do mesmo nivel -- nunca
         # ordem alfabetica de e-mail pra ISSO, so' pra fila plana abaixo
-        # dela fazer sentido visual (a ordem alfabetica original vem do
-        # get_queryset, mantida como fallback estavel de desempate).
+        # dela fazer sentido visual (a ordem alfabetica em memória fica como
+        # fallback estável de desempate após remover o ORDER BY no ciphertext).
         risk_order = {'high': 0, 'medium': 1, 'healthy': 2}
         rows.sort(key=lambda row: (
             risk_order[row.risk_level],

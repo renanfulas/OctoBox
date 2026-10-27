@@ -27,6 +27,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from student_identity import email_index_writes
 
 from model_support.base import TimeStampedModel
 from shared_support.box_runtime import get_box_runtime_slug
@@ -150,9 +151,8 @@ class StudentParqOutcome(models.TextChoices):
     FLAGGED = 'flagged', 'Risco sinalizado'
 
 
-class StudentIdentity(TimeStampedModel):
-    # Sprint 2: student_id e referencia fraca (IntegerField, sem FK constraint).
-    # A FK OneToOneField(Student) foi removida — era cross-schema (public->tenant).
+class StudentIdentity(email_index_writes.StudentIdentityEmailIndexWriteMixin, TimeStampedModel):
+    # Referência fraca cross-schema: resolver Student só no tenant correspondente.
     # Para buscar o Student: use schema_context(self.box.schema_name) + Student.objects.get(pk=self.student_id)
     student_id = models.IntegerField(null=True, blank=True, db_index=True)
     student_name = models.CharField(max_length=150, blank=True, db_index=True)  # denormalizado
@@ -224,8 +224,7 @@ class StudentIdentity(TimeStampedModel):
 
 class StudentBoxMembership(TimeStampedModel):
     identity = models.ForeignKey(StudentIdentity, on_delete=models.CASCADE, related_name='memberships')
-    # Sprint 2: student_id e referencia fraca (IntegerField, sem FK constraint).
-    # A FK ForeignKey(Student) foi removida — era cross-schema (public->tenant).
+    # Referência fraca cross-schema: resolver Student só no tenant correspondente.
     student_id = models.IntegerField(null=True, blank=True, db_index=True)
 
     # box: FK para control.Box (Sprint 2). box_root_slug mantido como campo legado (remove Sprint 4).
@@ -394,7 +393,7 @@ class StudentConsent(TimeStampedModel):
         return f'{self.identity.student_name} {self.document_kind} v{self.version}'
 
 
-class StudentAppInvitation(TimeStampedModel):
+class StudentAppInvitation(email_index_writes.StudentAppInvitationEmailIndexWriteMixin, TimeStampedModel):
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     invite_type = models.CharField(
         max_length=16,
@@ -402,8 +401,7 @@ class StudentAppInvitation(TimeStampedModel):
         default=StudentInvitationType.INDIVIDUAL,
         db_index=True,
     )
-    # Sprint 2: student_id e referencia fraca (IntegerField, sem FK constraint).
-    # A FK ForeignKey(Student) foi removida — era cross-schema (public->tenant).
+    # Referência fraca cross-schema: resolver Student só no tenant correspondente.
     student_id = models.IntegerField(null=True, blank=True, db_index=True)
     student_name = models.CharField(max_length=150, blank=True)  # denormalizado
 
@@ -418,7 +416,9 @@ class StudentAppInvitation(TimeStampedModel):
     )
     box_root_slug = models.CharField(max_length=64, db_index=True, default=_default_box_root_slug)  # legado
 
-    invited_email = models.EmailField(blank=True)
+    invited_email = email_index_writes.encrypted_invitation_email_field()
+    # Stable marker lets QA cleanup survive ciphertext.
+    is_qa_seed = models.BooleanField(default=False)
     onboarding_journey = models.CharField(
         max_length=32,
         choices=StudentOnboardingJourney.choices,
@@ -577,7 +577,7 @@ class StudentInvitationDelivery(TimeStampedModel):
         choices=StudentInvitationDeliveryStatus.choices,
         db_index=True,
     )
-    recipient = models.CharField(max_length=255)
+    recipient = email_index_writes.EncryptedCharField(max_length=255, storage_max_length=2048)
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -595,7 +595,7 @@ class StudentInvitationDelivery(TimeStampedModel):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.invitation.student_name} {self.channel} {self.status}'
+        return f'Delivery #{self.pk} {self.channel} {self.status}'
 
 
 class StudentInvitationDeliveryEvent(TimeStampedModel):
