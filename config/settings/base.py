@@ -259,7 +259,6 @@ if not SECRET_KEY:
     raise ImproperlyConfigured(
         'DJANGO_SECRET_KEY deve ser definida como variavel de ambiente ou no arquivo .env.'
     )
-
 globals().update(build_privacy_settings(env_bool, env_list_alias, env_str))
 # Stripe — credenciais e price IDs do programa Early Adopters.
 # Os Price IDs sao criados no Stripe Dashboard (Catalog → Products) e copiados aqui via .env.
