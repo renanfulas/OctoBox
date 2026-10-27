@@ -464,12 +464,11 @@
                             {% endif %}
                         </div>
                         {% endif %}
-                        {% if can_manage_weekly_checkpoint %}
+                        {% if can_manage_weekly_checkpoint and action.can_update %}
                         <form method="post" action="{% url 'workout-follow-up-action' item.workout_id %}" class="coach-wod-follow-up-form">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{{ current_surface_path }}">
                             <input type="hidden" name="action_key" value="{{ action.key }}">
-                            <input type="hidden" name="action_label" value="{{ action.label }}">
                             <label>
                                 <span>Resultado</span>
                                 <select name="result_status">

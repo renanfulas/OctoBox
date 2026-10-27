@@ -46,7 +46,10 @@ def _build_template_management_href(*, template_id, query=''):
 
 
 def build_persisted_workout_template_options(*, current_role_slug, actor, limit=12):
-    queryset = _safe_workout_template_queryset().filter(is_active=True).order_by('-is_featured', '-usage_count', '-last_used_at', 'name', '-updated_at')
+    queryset = _safe_workout_template_queryset().filter(
+        is_active=True,
+        archived_at__isnull=True,
+    ).order_by('-is_featured', '-usage_count', '-last_used_at', 'name', '-updated_at')
     if current_role_slug == ROLE_COACH:
         queryset = queryset.filter(created_by=actor)
     options = []

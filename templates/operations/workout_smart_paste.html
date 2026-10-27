@@ -46,9 +46,10 @@
                 </div>
             </div>
 
-            <form method="post" class="coach-wod-form-stack smart-paste-form">
+            <form method="post" class="coach-wod-form-stack smart-paste-form" data-wod-input-draft data-draft-kind="weekly" data-draft-url="{% url 'wod-input-draft' %}" data-initial-week="{{ weekly_plan.week_start|date:'Y-m-d' }}" data-initial-program="{{ weekly_plan.workout_program_id|default_if_none:'' }}">
                 {% csrf_token %}
                 <input type="hidden" name="plan_id" value="{{ smart_paste_form.initial.plan_id|default_if_none:'' }}">
+                <input type="hidden" name="plan_version" value="{{ weekly_plan.revision|default_if_none:'' }}">
                 <input type="hidden" name="action" value="parse_text">
                 {% include "operations/includes/wod_smart_paste_week_input.html" with field=smart_paste_form.week_start picker_id="smart-paste-week-start-picker" picker_value=smart_paste_picker_value picker_min=smart_paste_picker_min picker_max=smart_paste_picker_max label_text="Início da semana" %}
                 <label>
@@ -70,6 +71,9 @@
                     {% for error in smart_paste_form.source_text.errors %}<small class="form-error">{{ error }}</small>{% endfor %}
                     <small id="smart-paste-source-hint">Cole como recebeu, mesmo com abreviações. O texto entra na posição do cursor. Vamos separar os dias e tentar identificar os movimentos automaticamente.</small>
                     <p class="smart-paste-source-status" data-smart-paste-clipboard-status role="status" aria-live="polite" hidden></p>
+                    <p class="smart-paste-source-status" data-wod-draft-status role="status" aria-live="polite">Procurando rascunho salvo…</p>
+                    <button class="button tertiary" type="button" data-wod-draft-recover hidden>Recuperar versão salva</button>
+                    <button class="button tertiary" type="button" data-wod-draft-discard hidden>Descartar rascunho salvo</button>
                 </div>
                 <div class="actions">
                     <button class="button" type="submit">Organizar meu treino</button>

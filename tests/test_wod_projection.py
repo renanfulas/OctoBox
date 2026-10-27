@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 from decimal import Decimal
 from unittest.mock import patch
 from uuid import uuid4
@@ -15,6 +15,8 @@ from operations.services.wod_projection import (
     build_projection_preview,
     project_plan_to_sessions,
 )
+from operations.services.wod_preview_contracts import issue_projection_token, read_projection_token
+from operations.services.wod_weekly_revision import save_weekly_plan_revision
 from student_app.models import ReplicationBatch, SessionWorkout, SessionWorkoutStatus, WeeklyWodPlan
 
 
@@ -132,6 +134,38 @@ class WodProjectionTests(TestCase):
         self.assertEqual(len(mobility_entry['discarded_blocks']), 1)
         self.assertIn('metcon', mobility_entry['discarded_blocks'][0]['kind'])
 
+    def test_projection_service_default_keeps_completed_sessions_and_explicit_policy_skips(self):
+        self.cross_session.status = SessionStatus.COMPLETED
+        self.cross_session.save(update_fields=['status'])
+
+        default_preview = build_projection_preview(
+            weekly_plan=self.plan,
+            target_week_start=date(2026, 4, 20),
+            class_types=[ClassType.CROSS],
+        )
+        explicit_preview = build_projection_preview(
+            weekly_plan=self.plan,
+            target_week_start=date(2026, 4, 20),
+            class_types=[ClassType.CROSS],
+            exclude_completed=True,
+        )
+
+        self.assertEqual(default_preview['entries'][0]['status'], 'ready')
+        self.assertEqual(default_preview['totals']['sessions_creatable'], 1)
+        self.assertEqual(explicit_preview['entries'][0]['status'], 'skip_completed')
+        self.assertEqual(explicit_preview['totals']['sessions_creatable'], 0)
+
+        batch, result = project_plan_to_sessions(
+            weekly_plan=self.plan,
+            target_week_start=date(2026, 4, 20),
+            class_types=[ClassType.CROSS],
+            actor=self.user,
+            idempotency_key=uuid4(),
+        )
+        self.assertEqual(batch.sessions_created, 1)
+        self.assertEqual(result['totals']['sessions_creatable'], 1)
+        self.assertTrue(SessionWorkout.objects.filter(session=self.cross_session).exists())
+
     def test_distribution_revalidates_if_a_target_becomes_occupied_after_preview(self):
         second_cross_session = ClassSession.objects.create(
             title='Cross 13h',
@@ -171,6 +205,47 @@ class WodProjectionTests(TestCase):
         self.assertEqual(batch.sessions_created, 1)
         self.assertEqual(SessionWorkout.objects.get(session=self.cross_session).id, existing_workout.id)
         self.assertEqual(SessionWorkout.objects.filter(session=second_cross_session).count(), 1)
+
+    def test_plan_revision_after_preview_rejects_the_old_confirmation_fingerprint(self):
+        class_types = [ClassType.CROSS]
+        preview = build_projection_preview(
+            weekly_plan=self.plan,
+            target_week_start=date(2026, 4, 20),
+            class_types=class_types,
+        )
+        intent_id = uuid4()
+        token = issue_projection_token(
+            weekly_plan=self.plan,
+            target_week_start=date(2026, 4, 20),
+            class_types=class_types,
+            actor=self.user,
+            preview=preview,
+            intent_id=intent_id,
+        )
+        fingerprint = read_projection_token(token)['fingerprint']
+
+        self.plan.parsed_payload['days'][0]['blocks'][1]['notes'] = 'Revisão posterior à prévia'
+        save_weekly_plan_revision(self.plan, fields=('parsed_payload',))
+
+        with self.assertRaisesMessage(ValidationError, 'mudaram depois da prévia'):
+            project_plan_to_sessions(
+                weekly_plan=self.plan,
+                target_week_start=date(2026, 4, 20),
+                class_types=class_types,
+                actor=self.user,
+                idempotency_key=intent_id,
+                expected_preview_fingerprint=fingerprint,
+            )
+
+        self.assertEqual(self.plan.revision, 2)
+        self.plan.refresh_from_db()
+        self.assertEqual(self.plan.revision, 2)
+        self.assertEqual(
+            self.plan.parsed_payload['days'][0]['blocks'][1]['notes'],
+            'Revisão posterior à prévia',
+        )
+        self.assertFalse(ReplicationBatch.objects.exists())
+        self.assertFalse(SessionWorkout.objects.exists())
 
     def test_load_projection_preserves_pair_and_personalizes_percent_rm(self):
         paired_type, paired_value, paired_note = _summarize_load_projection({'load_spec': '40/25 kg'})
@@ -371,6 +446,125 @@ class WodProjectionTests(TestCase):
         )
         self.assertEqual([entry['session_id'] for entry in mobility_preview['entries']], [self.mobility_session.id])
         self.assertNotIn(self.cross_session.id, {entry['session_id'] for entry in mobility_preview['entries']})
+
+    def test_program_track_disambiguates_shared_operational_class_type(self):
+        program_a = WorkoutProgram.objects.create(
+            slug='same-class-program-a', name='Cross Custom A',
+            allowed_block_kinds=['warmup', 'metcon'],
+        )
+        program_b = WorkoutProgram.objects.create(
+            slug='same-class-program-b', name='Cross Custom B',
+            allowed_block_kinds=['warmup', 'metcon'],
+        )
+        self.cross_session.workout_program = program_a
+        self.cross_session.save(update_fields=['workout_program'])
+        other_session = ClassSession.objects.create(
+            title='Cross Custom B no mesmo horário',
+            scheduled_at=self.cross_session.scheduled_at,
+            duration_minutes=60,
+            capacity=14,
+            class_type=ClassType.CROSS,
+            workout_program=program_b,
+        )
+        self.plan.workout_program = program_a
+        self.plan.save(update_fields=['workout_program'])
+
+        preview = build_projection_preview(
+            weekly_plan=self.plan,
+            target_week_start=date(2026, 4, 20),
+            class_types=[ClassType.CROSS],
+        )
+        self.assertEqual([entry['session_id'] for entry in preview['entries']], [self.cross_session.id])
+        self.assertEqual(preview['totals']['sessions_found'], 1)
+
+        batch, _ = project_plan_to_sessions(
+            weekly_plan=self.plan,
+            target_week_start=date(2026, 4, 20),
+            class_types=[ClassType.CROSS],
+            actor=self.user,
+        )
+
+        self.assertEqual(batch.sessions_targeted, 1)
+        self.assertEqual(batch.sessions_created, 1)
+        self.assertTrue(SessionWorkout.objects.filter(session=self.cross_session).exists())
+        self.assertFalse(SessionWorkout.objects.filter(session=other_session).exists())
+
+    def test_full_week_projection_only_targets_selected_program_with_shared_class_type(self):
+        program_a = WorkoutProgram.objects.create(
+            slug='full-week-program-a',
+            name='HYROX customizado',
+            allowed_block_kinds=['warmup', 'strength', 'metcon', 'mobility'],
+        )
+        program_b = WorkoutProgram.objects.create(
+            slug='full-week-program-b',
+            name='CrossFit customizado',
+            allowed_block_kinds=['warmup', 'strength', 'metcon', 'mobility'],
+        )
+        self.plan.workout_program = program_a
+        weekday_labels = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+        self.plan.parsed_payload = {
+            'week_label': 'W-07 semana completa',
+            'parse_warnings': [],
+            'days': [
+                {
+                    'weekday': weekday,
+                    'weekday_label': weekday_labels[weekday],
+                    'blocks': [{'kind': 'metcon', 'title': f'WOD do dia {weekday}', 'notes': '', 'movements': []}],
+                }
+                for weekday in range(7)
+            ],
+        }
+        self.plan.save(update_fields=['workout_program', 'parsed_payload'])
+
+        selected_sessions = []
+        decoy_sessions = []
+        week_start = date(2026, 4, 20)
+        for weekday in range(7):
+            scheduled_at = timezone.make_aware(
+                timezone.datetime.combine(week_start + timedelta(days=weekday), time(hour=12))
+            )
+            selected_sessions.append(ClassSession.objects.create(
+                title=f'HYROX customizado {weekday}',
+                scheduled_at=scheduled_at,
+                duration_minutes=60,
+                capacity=14,
+                class_type=ClassType.CROSS,
+                workout_program=program_a,
+            ))
+            decoy_sessions.append(ClassSession.objects.create(
+                title=f'CrossFit customizado {weekday}',
+                scheduled_at=scheduled_at,
+                duration_minutes=60,
+                capacity=14,
+                class_type=ClassType.CROSS,
+                workout_program=program_b,
+            ))
+
+        preview = build_projection_preview(
+            weekly_plan=self.plan,
+            target_week_start=week_start,
+            class_types=[ClassType.CROSS],
+        )
+        selected_ids = {session.id for session in selected_sessions}
+        decoy_ids = {session.id for session in decoy_sessions}
+        self.assertEqual({entry['session_id'] for entry in preview['entries']}, selected_ids)
+        self.assertEqual(preview['totals']['sessions_found'], 7)
+        self.assertEqual(preview['totals']['sessions_creatable'], 7)
+
+        batch, _ = project_plan_to_sessions(
+            weekly_plan=self.plan,
+            target_week_start=week_start,
+            class_types=[ClassType.CROSS],
+            actor=self.user,
+        )
+
+        self.assertEqual(batch.sessions_targeted, 7)
+        self.assertEqual(batch.sessions_created, 7)
+        self.assertEqual(
+            set(SessionWorkout.objects.filter(session_id__in=selected_ids).values_list('session_id', flat=True)),
+            selected_ids,
+        )
+        self.assertFalse(SessionWorkout.objects.filter(session_id__in=decoy_ids).exists())
 
     def test_canceled_sessions_are_not_projection_targets_or_week_coverage(self):
         canceled_session = ClassSession.objects.create(
