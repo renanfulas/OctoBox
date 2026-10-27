@@ -1,16 +1,43 @@
 from datetime import timedelta
 from decimal import Decimal
 import random
+from contextlib import contextmanager
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
 from students.models import Student
+
+
+@contextmanager
+def _tenant_population_context(*, schema_name, box_created, connection, call_command, schema_context):
+    from django.core.management.base import CommandError
+    from control.tenant_write_fence import (
+        TenantFenceTargetMissing,
+        TenantWritesFrozen,
+        tenant_write_guard,
+    )
+
+    try:
+        with tenant_write_guard(schema_name):
+            quoted_schema = connection.ops.quote_name(schema_name)
+            with connection.cursor() as cursor:
+                cursor.execute(f'CREATE SCHEMA IF NOT EXISTS {quoted_schema}')
+            if box_created:
+                call_command('migrate_schemas', schema=schema_name, verbosity=0, interactive=False)
+            with schema_context(schema_name):
+                yield
+    except TenantWritesFrozen as exc:
+        raise CommandError(
+            f'Box {schema_name} está congelado; a população de dados foi recusada.'
+        ) from exc
+    except TenantFenceTargetMissing as exc:
+        raise CommandError(str(exc)) from exc
 
 
 class Command(BaseCommand):
@@ -65,25 +92,34 @@ class Command(BaseCommand):
             test_slug = 'test'
             test_schema = f'box_{test_slug}'
 
-            tenant_owner, _ = get_user_model().objects.get_or_create(
-                username='__perf_tenant_owner__',
-                defaults={'email': '__perf_tenant__@example.test'},
-            )
-            box, box_created = Box.objects.get_or_create(
-                slug=test_slug,
-                defaults={
-                    'schema_name': test_schema,
-                    'display_name': 'Performance Test Tenant',
-                    'status': Box.Status.ACTIVE,
-                    'owner_user': tenant_owner,
-                },
-            )
-            with connection.cursor() as cur:
-                cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{test_schema}"')
+            box = Box.objects.filter(slug=test_slug).first()
+            box_created = box is None
             if box_created:
-                call_command('migrate_schemas', schema=test_schema, verbosity=0, interactive=False)
+                tenant_owner, _ = get_user_model().objects.get_or_create(
+                    username='__perf_tenant_owner__',
+                    defaults={'email': '__perf_tenant__@example.test'},
+                )
+                box, box_created = Box.objects.get_or_create(
+                    slug=test_slug,
+                    defaults={
+                        'schema_name': test_schema,
+                        'display_name': 'Performance Test Tenant',
+                        'status': Box.Status.ACTIVE,
+                        'owner_user': tenant_owner,
+                    },
+                )
+            if box.schema_name != test_schema:
+                raise CommandError(
+                    f'O box de performance deve usar {test_schema}; encontrado {box.schema_name}.'
+                )
 
-            context_manager = schema_context(test_schema)
+            context_manager = _tenant_population_context(
+                schema_name=test_schema,
+                box_created=box_created,
+                connection=connection,
+                call_command=call_command,
+                schema_context=schema_context,
+            )
         else:
             # SQLite fallback (test.py removeu django_tenants). Roda em public.
             import contextlib

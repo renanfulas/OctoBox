@@ -466,6 +466,9 @@ MIDDLEWARE = [
 
     # Auth do aluno — resolve tenant DO ALUNO antes de qualquer query de domínio (Sprint 4)
     'student_app.middleware.student_auth.StudentAuthMiddleware',
+
+    # O fence precisa rodar após a resolução do tenant para cobrir views e writes.
+    'control.write_fence_middleware.TenantWriteFenceMiddleware',
 ]
 
 STUDENT_LOGIN_URL = '/aluno/auth/login/'

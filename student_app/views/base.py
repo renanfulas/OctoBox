@@ -12,8 +12,11 @@ O QUE ESTE ARQUIVO FAZ:
 
 from __future__ import annotations
 
+from copy import copy
+
 from django.conf import settings
 from django.contrib import messages
+from django.db import connection
 from django.shortcuts import redirect
 from django.urls import reverse
 
@@ -105,8 +108,12 @@ class StudentIdentityRequiredMixin:
         context['student_box_choices'] = [
             {
                 'box_root_slug': membership.box_root_slug,
-                'is_active': membership.box_root_slug == self.request.student_active_box_root_slug,
-                'is_primary': membership.box_root_slug == self.request.student_identity.primary_box_root_slug,
+                'is_active': membership.pk == self.request.student_active_membership.pk,
+                'is_primary': (
+                    membership.box_id == self.request.student_identity.primary_box_id
+                    if membership.box_id and self.request.student_identity.primary_box_id
+                    else membership.box_root_slug == self.request.student_identity.primary_box_root_slug
+                ),
             }
             for membership in self.request.student_box_memberships
         ]
@@ -129,7 +136,28 @@ class StudentIdentityRequiredMixin:
             or identity.primary_box_root_slug
             or identity.box_root_slug
         )
-        active_membership = next((membership for membership in memberships if membership.box_root_slug == active_box_root_slug), None)
+        active_box_id = payload.get('active_box_id')
+        active_membership = next(
+            (membership for membership in memberships if active_box_id and membership.box_id == active_box_id),
+            None,
+        )
+        if active_membership is None:
+            active_membership = next(
+                (membership for membership in memberships if membership.box_root_slug == active_box_root_slug),
+                None,
+            )
+        if active_membership is None and active_box_root_slug:
+            from control.models import Box
+
+            active_box = (
+                Box.objects.filter(schema_name=active_box_root_slug).first()
+                or Box.objects.filter(slug=active_box_root_slug).first()
+            )
+            if active_box is not None:
+                active_membership = next(
+                    (membership for membership in memberships if membership.box_id == active_box.pk),
+                    None,
+                )
         if active_membership is None:
             active_membership = next(
                 (membership for membership in memberships if membership.box_root_slug == identity.primary_box_root_slug),
@@ -138,6 +166,41 @@ class StudentIdentityRequiredMixin:
         if active_membership is None:
             active_membership = memberships[0]
         return identity, memberships, active_membership
+
+    def _bind_identity_to_active_membership(self, *, request, identity, membership):
+        """Expose the per-box Student reference without mutating the shared identity row."""
+        if membership is None:
+            return identity
+
+        from control.models import Box
+
+        box = membership.box
+        if box is None:
+            box = (
+                Box.objects.filter(schema_name=membership.box_root_slug).first()
+                or Box.objects.filter(slug=membership.box_root_slug).first()
+            )
+        if box is None:
+            # Older records may contain a root slug without a Box row. There
+            # is no physical tenant to switch to; retain the legacy binding
+            # instead of querying a missing schema in the request transaction.
+            return identity
+
+        connection.set_tenant(box)
+        request.tenant = box
+        active_box_root_slug = box.schema_name
+
+        # StudentIdentity is global; its compatibility `student` property is
+        # anchored to the primary box. Per-request consumers must instead use
+        # the student_id carried by the selected StudentBoxMembership.
+        active_identity = copy(identity)
+        active_identity._state = copy(identity._state)
+        active_identity._state.fields_cache = identity._state.fields_cache.copy()
+        active_identity.student_id = membership.student_id
+        active_identity.box_id = box.pk
+        active_identity.box_root_slug = active_box_root_slug
+        active_identity.box = box
+        return active_identity
 
     def dispatch(self, request, *args, **kwargs):
         identity, memberships, active_membership = self._resolve_student_runtime(request)
@@ -163,9 +226,17 @@ class StudentIdentityRequiredMixin:
             if runtime_memberships and len(suspended_memberships) == len(runtime_memberships):
                 return redirect('student-app-suspended-financial')
             return redirect('student-app-no-active-box')
+        identity = self._bind_identity_to_active_membership(
+            request=request, identity=identity, membership=active_membership,
+        )
         request.student_identity = identity
         request.student_box_memberships = memberships
-        request.student_active_box_root_slug = active_membership.box_root_slug if active_membership is not None else ''
+        if active_membership is None:
+            request.student_active_box_root_slug = ''
+        elif active_membership.box_id and identity.box_id == active_membership.box_id:
+            request.student_active_box_root_slug = identity.box_root_slug
+        else:
+            request.student_active_box_root_slug = active_membership.box_root_slug
         request.student_active_membership = active_membership
         # Gate de entrada (PAR-Q + termo, Onda B). So roda para membership ACTIVE
         # resolvido: telas-parede com StudentAnyMembershipMixin (active_membership
@@ -178,7 +249,11 @@ class StudentIdentityRequiredMixin:
             and active_membership.status == StudentBoxMembershipStatus.ACTIVE
             and request.path not in (reverse('student-app-consent'), reverse('student-app-clearance'))
         ):
-            if not has_current_consent(identity=identity, box_root_slug=active_membership.box_root_slug):
+            if not has_current_consent(
+                identity=identity,
+                box_root_slug=active_membership.box_root_slug,
+                box=request.tenant,
+            ):
                 return redirect('student-app-consent')
             if active_membership.clearance_required and not active_membership.cleared_at:
                 return redirect('student-app-clearance')

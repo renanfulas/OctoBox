@@ -153,7 +153,11 @@ class OnboardingWorkflow:
                 # Se o link acabou entre o OAuth e agora, o rollback do savepoint desfaz o
                 # Student/identity recem-criados.
                 box_invite_link_id = pending_onboarding.get('box_invite_link_id')
-                if box_invite_link_id and not self.identity_repository.consume_box_invite_slot(box_invite_link_id):
+                if box_invite_link_id and not self.identity_repository.consume_box_invite_slot(
+                    box_invite_link_id,
+                    box_id=pending_onboarding.get('box_id'),
+                    box_root_slug=pending_onboarding.get('box_root_slug', ''),
+                ):
                     raise _BoxInviteLinkUnavailable()
         except _BoxInviteLinkUnavailable:
             return OnboardingCompletionResult(

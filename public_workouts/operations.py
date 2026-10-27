@@ -3,20 +3,27 @@
 from __future__ import annotations
 
 import logging
+import re
+import unicodedata
 from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
 
+from .catalog import PUBLIC_WORKOUT_LIBRARY
 from .models import (
+    PublicWorkoutAssessment,
     PublicWorkoutLoadLog,
+    PublicWorkoutLocalStorageBackup,
     PublicWorkoutMealPlan,
     PublicWorkoutProfessional,
     PublicWorkoutProfessionalRole,
     PublicWorkoutProgram,
+    PublicWorkoutProgramDraft,
     PublicWorkoutSubscription,
     PublicWorkoutSubscriptionStatus,
     PublicWorkoutTier,
+    PublicWorkoutTrainingSession,
     PublicWorkoutWorkItem,
     PublicWorkoutWorkItemStatus,
     PublicWorkoutWorkItemType,
@@ -30,10 +37,57 @@ _ACTIVE_ITEM_STATUSES = (
     PublicWorkoutWorkItemStatus.IN_PROGRESS,
     PublicWorkoutWorkItemStatus.BLOCKED,
 )
+# Segmentos fixos de /renan/ (student_app/public_urls.py) que um slug nao pode ocupar.
+_RESERVED_PLAN_SLUGS = frozenset({'offline', 'sw'})
+_PLAN_SLUG_MAX_LENGTH = 40
 
 
 def _professional_for(role: str):
     return PublicWorkoutProfessional.objects.filter(role=role, is_active=True).order_by('id').first()
+
+
+def _plan_slug_in_use(slug: str) -> bool:
+    """Avaliacoes, sessoes e backups sao chaveados por slug: reaproveitar um
+    slug antigo entregaria o historico de outra pessoa ao aluno novo."""
+    return (
+        slug in _RESERVED_PLAN_SLUGS
+        or slug in PUBLIC_WORKOUT_LIBRARY
+        or PublicWorkoutSubscription.objects.filter(plan_slug=slug).exists()
+        or PublicWorkoutProgram.objects.filter(slug=slug).exists()
+        or PublicWorkoutProgramDraft.objects.filter(slug=slug).exists()
+        or PublicWorkoutAssessment.objects.filter(plan_slug=slug).exists()
+        or PublicWorkoutTrainingSession.objects.filter(plan_slug=slug).exists()
+        or PublicWorkoutLocalStorageBackup.objects.filter(plan_slug=slug).exists()
+    )
+
+
+def available_plan_slug(email: str) -> str:
+    """Slug legivel a partir do e-mail (parte local, sem acento), nunca ja usado."""
+    local_part = unicodedata.normalize('NFKD', email.split('@', 1)[0]).encode('ascii', 'ignore').decode()
+    base = re.sub(r'[^a-z0-9]', '', local_part.lower())[:_PLAN_SLUG_MAX_LENGTH] or 'aluno'
+    candidate, suffix = base, 2
+    while _plan_slug_in_use(candidate):
+        candidate = f'{base}{suffix}'
+        suffix += 1
+    return candidate
+
+
+def _assign_plan_slug_if_missing(subscription) -> None:
+    # Sem slug, o rascunho por IA recusa ("defina plan_slug antes de gerar")
+    # e a assinatura paga espera um passo manual no admin.
+    if subscription.plan_slug:
+        return
+    subscription.plan_slug = available_plan_slug(subscription.account.email)
+    subscription.save(update_fields=['plan_slug', 'updated_at'])
+    logger.info(
+        'curva_plan_slug_assigned subscription_id=%s plan_slug=%s', subscription.pk, subscription.plan_slug,
+    )
+
+
+def _enqueue_staff_work_item_alert(item) -> None:
+    from .outbox import TOPIC_STAFF_WORK_ITEM_OPENED, enqueue_outbox
+
+    enqueue_outbox(topic=TOPIC_STAFF_WORK_ITEM_OPENED, aggregate_type='work_item', aggregate_id=item.pk, version=1)
 
 
 def _create_item(*, subscription, item_type, due_hours, effort_minutes, role):
@@ -64,6 +118,7 @@ def ensure_required_work_items(subscription_id: int) -> list[PublicWorkoutWorkIt
         )
         if subscription.status != PublicWorkoutSubscriptionStatus.ACTIVE:
             return []
+        _assign_plan_slug_if_missing(subscription)
         policy = get_tier_service_policy(subscription.tier)
         account = subscription.account
 
@@ -82,6 +137,7 @@ def ensure_required_work_items(subscription_id: int) -> list[PublicWorkoutWorkIt
             )
             if created:
                 created_items.append(item)
+                _enqueue_staff_work_item_alert(item)
                 logger.info(
                     'curva_work_item_created item_id=%s subscription_id=%s item_type=%s due_at=%s',
                     item.pk, subscription.pk, item.item_type, item.due_at.isoformat(),
@@ -104,6 +160,7 @@ def ensure_required_work_items(subscription_id: int) -> list[PublicWorkoutWorkIt
             )
             if created:
                 created_items.append(item)
+                _enqueue_staff_work_item_alert(item)
                 logger.info(
                     'curva_work_item_created item_id=%s subscription_id=%s item_type=%s due_at=%s',
                     item.pk, subscription.pk, item.item_type, item.due_at.isoformat(),
@@ -236,6 +293,6 @@ def ensure_recurring_review_work_items(*, now=None) -> list[PublicWorkoutWorkIte
 
 
 __all__ = [
-    'cancel_open_work_items', 'complete_onboarding_work_item',
+    'available_plan_slug', 'cancel_open_work_items', 'complete_onboarding_work_item',
     'ensure_recurring_review_work_items', 'ensure_required_work_items', 'transition_work_item',
 ]

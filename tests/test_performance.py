@@ -27,10 +27,11 @@ def logged_client(perf_user):
 @pytest.mark.django_db
 def test_dashboard_query_count(logged_client, django_assert_num_queries):
     """
-    GARANTE: Dashboard central não ultrapassa 25 queries (Meta: Zero-Query / Snapshots).
+    GARANTE: Dashboard central não ultrapassa 26 queries (Meta: Zero-Query / Snapshots).
     PROTEGE: Escalabilidade e latência do Main Loop.
     """
-    with django_assert_num_queries(25, exact=False):
+    # O middleware de write-fence acrescenta uma consulta de estado ao request.
+    with django_assert_num_queries(26, exact=False):
         response = logged_client.get(reverse('dashboard'))
         assert response.status_code == 200
 
@@ -38,12 +39,12 @@ def test_dashboard_query_count(logged_client, django_assert_num_queries):
 def test_student_directory_query_count(logged_client, django_assert_num_queries):
     """
         GARANTE: Diretório de alunos eficiente no caminho autenticado estável,
-    não ultrapassando 18 queries com shell cache aquecido.
+        não ultrapassando 20 queries com shell cache aquecido, incluindo o fence.
 
     Sprint 4 schema-per-tenant: +1 query (resolução de Box via
     TenantBySessionMiddleware) eleva o teto de 16 → 18 (margem de 1 query).
     """
-    with django_assert_num_queries(18, exact=False):
+    with django_assert_num_queries(20, exact=False):
         response = logged_client.get(reverse('student-directory'))
         assert response.status_code == 200
 

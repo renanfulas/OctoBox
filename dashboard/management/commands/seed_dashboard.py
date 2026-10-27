@@ -1,11 +1,12 @@
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
+from django_tenants.utils import schema_context
 from django.utils import timezone
 from datetime import timedelta
 import random
 
-from django.contrib.auth import get_user_model
-User = get_user_model()
-
+from control.models import Box
+from control.tenant_write_fence import tenant_write_guarded_command
 from students.models import Student
 from finance.models import Payment, PaymentStatus
 from operations.models import ClassSession
@@ -13,22 +14,20 @@ from operations.models import ClassSession
 class Command(BaseCommand):
     help = 'Popula banco de dados com valores ficticios para testar UI do Dashboard'
 
-    def handle(self, *args, **kwargs):
-        self.stdout.write("Iniciando Seed Profundo no OctoBOX...")
+    def add_arguments(self, parser):
+        parser.add_argument('--schema', required=True, help='Schema box_<slug> ativo para receber os dados fictícios.')
 
-        user = User.objects.first()
-        if not user:
-            import os
-            # 🚀 Segurança de Elite (Epic 8): Seed dinâmico
-            admin_pass = os.getenv('OCTOBOX_SEED_ADMIN_PASS')
-            if not admin_pass:
-                # Se não houver varíavel, gera senha aleatória forte e imprime.
-                admin_pass = User.objects.make_random_password(length=14)
-                
-            user = User.objects.create_superuser('admin', email='admin@octobox.com', password=admin_pass, first_name='Oto', last_name='Owner')
-            self.stdout.write(f"Usuario criado dinamicamente. Email: {user.email}")
-            if not os.getenv('OCTOBOX_SEED_ADMIN_PASS'):
-                self.stdout.write(self.style.WARNING(f"⚠️ SENHA GERADA (Guarde em segurança): {admin_pass}"))
+    @tenant_write_guarded_command(write_option=None)
+    def handle(self, *args, **kwargs):
+        schema_name = kwargs['schema']
+        box = Box.objects.filter(schema_name=schema_name, status=Box.Status.ACTIVE).first()
+        if box is None:
+            raise CommandError(f'Box ativo não encontrado para schema {schema_name!r}.')
+        with schema_context(box.schema_name):
+            return self._seed_dashboard()
+
+    def _seed_dashboard(self):
+        self.stdout.write("Iniciando Seed Profundo no OctoBOX...")
 
         now = timezone.now()
 

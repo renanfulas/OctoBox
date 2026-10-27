@@ -23,6 +23,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
+from control.tenant_write_fence import tenant_write_guarded_command
 from finance.model_definitions import BillingCycle
 from finance.models import Enrollment, EnrollmentStatus, MembershipPlan, Payment, PaymentMethod, PaymentStatus
 from operations.models import Attendance, AttendanceStatus, ClassSession, SessionStatus
@@ -37,6 +38,7 @@ PAYMENT_REFERENCE_PREFIX = 'PILOTO-'
 class Command(BaseCommand):
     help = 'Gera planos, matriculas, pagamentos, aulas e presencas ficticias para validar o workspace piloto.'
 
+    @tenant_write_guarded_command(schema_option=None, write_option=None)
     def handle(self, *args, **options):
         students = list(Student.objects.order_by('full_name', 'id'))
         if len(students) < 8:

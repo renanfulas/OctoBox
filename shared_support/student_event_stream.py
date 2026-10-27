@@ -22,7 +22,7 @@ import logging
 import time
 import uuid
 
-from django.http import StreamingHttpResponse
+from django.http import HttpResponseForbidden, StreamingHttpResponse
 from django.utils import timezone
 
 from monitoring.student_realtime_metrics import (
@@ -32,6 +32,7 @@ from monitoring.student_realtime_metrics import (
     record_student_sse_stream_connection,
 )
 from shared_support.events import get_redis_client
+from shared_support.event_stream_tenants import current_event_tenant_schema, is_box_event_schema
 from shared_support.student_snapshot_versions import serialize_version_value
 
 logger = logging.getLogger(__name__)
@@ -40,8 +41,13 @@ SSE_RETRY_MS = 5000
 SSE_KEEPALIVE_SECONDS = 15
 
 
-def build_student_event_channel(student_id: int) -> str:
-    return f'octobox:student:{student_id}:events'
+def build_student_event_channel(student_id: int, *, schema_name: str | None = None) -> str | None:
+    """Return the channel for one student inside the active Box schema."""
+
+    tenant_schema = schema_name or current_event_tenant_schema()
+    if not is_box_event_schema(tenant_schema):
+        return None
+    return f'octobox:tenant:{tenant_schema}:student:{int(student_id)}:events'
 
 
 def publish_student_stream_event(*, student_id: int, event_type: str, meta=None, snapshot_version=None, profile_version=None) -> None:
@@ -51,6 +57,11 @@ def publish_student_stream_event(*, student_id: int, event_type: str, meta=None,
     O payload e pequeno de proposito: o browser recebe o alerta e entao
     busca o snapshot/fragments oficiais no backend.
     """
+
+    channel = build_student_event_channel(student_id)
+    if channel is None:
+        logger.warning('student_event_publish_skipped reason=tenant_context_missing')
+        return
 
     payload = {
         'event_id': uuid.uuid4().hex,
@@ -64,7 +75,7 @@ def publish_student_stream_event(*, student_id: int, event_type: str, meta=None,
 
     try:
         redis_conn = get_redis_client()
-        redis_conn.publish(build_student_event_channel(student_id), json.dumps(payload))
+        redis_conn.publish(channel, json.dumps(payload))
         record_student_sse_event_published(event_type)
     except Exception as exc:
         logger.warning('student_event_stream: falha ao publicar evento %s do aluno %s: %s', event_type, student_id, exc)
@@ -78,6 +89,8 @@ def build_student_event_stream(*, student_id: int):
     """
 
     channel = build_student_event_channel(student_id)
+    if channel is None:
+        return HttpResponseForbidden()
 
     def event_iterator():
         try:
