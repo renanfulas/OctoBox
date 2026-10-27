@@ -8,4 +8,6 @@ WorkingDirectory=/srv/octobox/current
 EnvironmentFile=-/srv/octobox/current/.release.env
 EnvironmentFile=-/srv/octobox/shared/octobox.env
 ExecStart=/srv/octobox/current/venv/bin/python manage.py drain_public_workout_outbox --limit 50
-User=root
+User=octobox
+Group=octobox
+UMask=0077

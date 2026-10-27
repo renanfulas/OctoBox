@@ -10,6 +10,8 @@ Environment=OCTOBOX_APP_USER=octobox
 EnvironmentFile=-/srv/octobox/shared/octobox.env
 ExecStart=/srv/octobox/current/scripts/linux/backup_and_sync_postgres.sh
 User=root
+Group=octobox
+UMask=0027
 
 [Install]
 WantedBy=multi-user.target

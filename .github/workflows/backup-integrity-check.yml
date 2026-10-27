@@ -10,6 +10,8 @@ name: Backup Integrity Check
 # roda os scripts reais contra um Postgres de verdade e um par de chaves
 # age de verdade, e falha o PR se o dump nao for restauravel ou se o
 # roundtrip de criptografia do env quebrar.
+# O job tenant-restore-semantic-smoke cobre o gate F2 com schemas reais
+# do django-tenants e migrations do projeto.
 #
 # Roda em todo PR/push que toque nos scripts de backup ou nos workflows.
 
@@ -20,21 +22,53 @@ on:
     paths:
       - "scripts/linux/backup_postgres.sh"
       - "scripts/linux/backup_and_sync_postgres.sh"
+      - "scripts/linux/backup_tenant_schema.sh"
+      - "scripts/linux/restore_tenant_schema.sh"
+      - "scripts/linux/tenant_restore_external_dependencies.sql"
+      - "scripts/linux/tenant_backup_manifest.py"
       - "scripts/linux/backup_env_secrets.sh"
       - "scripts/linux/setup_env_secrets_backup.sh"
       - "scripts/linux/setup_r2_backup.sh"
-      - "infra/hostgator-vps/systemd/octobox-backup.*"
-      - "infra/hostgator-vps/systemd/octobox-env-backup.*"
+      - "scripts/linux/check_octobox_runtime.sh"
+      - "control/management/commands/smoke_test_tenant.py"
+      - "operations/management/commands/restore_snapshot.py"
+      - "infra/hostgator-vps/systemd/**"
+      - "docs/rollout/hostgator/backup*.md"
+      - "docs/rollout/hostgator/restore.md"
+      - "docs/rollout/restore-and-rollback-drill.md"
+      - "docs/testing/tenant-restore-*.md"
+      - "tests/test_tenant_backup_manifest.py"
+      - "tests/test_restore_snapshot_disabled.py"
+      - "tests/test_tenant_restore_semantic_smoke.py"
+      - "tests/test_tenant_restore_external_dependencies.py"
+      - "tests/test_tenant_restore_timer_inventory.py"
+      - ".env.example"
       - ".github/workflows/backup-integrity-check.yml"
   pull_request:
     paths:
       - "scripts/linux/backup_postgres.sh"
       - "scripts/linux/backup_and_sync_postgres.sh"
+      - "scripts/linux/backup_tenant_schema.sh"
+      - "scripts/linux/restore_tenant_schema.sh"
+      - "scripts/linux/tenant_restore_external_dependencies.sql"
+      - "scripts/linux/tenant_backup_manifest.py"
       - "scripts/linux/backup_env_secrets.sh"
       - "scripts/linux/setup_env_secrets_backup.sh"
       - "scripts/linux/setup_r2_backup.sh"
-      - "infra/hostgator-vps/systemd/octobox-backup.*"
-      - "infra/hostgator-vps/systemd/octobox-env-backup.*"
+      - "scripts/linux/check_octobox_runtime.sh"
+      - "control/management/commands/smoke_test_tenant.py"
+      - "operations/management/commands/restore_snapshot.py"
+      - "infra/hostgator-vps/systemd/**"
+      - "docs/rollout/hostgator/backup*.md"
+      - "docs/rollout/hostgator/restore.md"
+      - "docs/rollout/restore-and-rollback-drill.md"
+      - "docs/testing/tenant-restore-*.md"
+      - "tests/test_tenant_backup_manifest.py"
+      - "tests/test_restore_snapshot_disabled.py"
+      - "tests/test_tenant_restore_semantic_smoke.py"
+      - "tests/test_tenant_restore_external_dependencies.py"
+      - "tests/test_tenant_restore_timer_inventory.py"
+      - ".env.example"
       - ".github/workflows/backup-integrity-check.yml"
 
 jobs:
@@ -56,15 +90,16 @@ jobs:
           shellcheck -S warning \
             scripts/linux/backup_postgres.sh \
             scripts/linux/backup_and_sync_postgres.sh \
+            scripts/linux/backup_tenant_schema.sh \
+            scripts/linux/restore_tenant_schema.sh \
             scripts/linux/backup_env_secrets.sh \
             scripts/linux/setup_env_secrets_backup.sh \
             scripts/linux/setup_r2_backup.sh \
             scripts/linux/check_octobox_runtime.sh
 
   # ---------------------------------------------------------------------------
-  # Postgres: dump real com backup_postgres.sh, restore num banco vazio
-  # separado, confere que o schema/dado sobrevive. E o teste que realmente
-  # importa — um dump corrompido ou incompleto passaria em qualquer lint.
+  # Postgres: exercise full + selected tenant archives and their manifests,
+  # restoring only into a new isolated database with a real cross-schema FK.
   # ---------------------------------------------------------------------------
   postgres-dump-restore:
     runs-on: ubuntu-latest
@@ -74,7 +109,7 @@ jobs:
       postgres:
         image: postgres:15
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U backup_check -d backup_check_source"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -101,16 +136,61 @@ jobs:
           test "$(pg_dump --version | sed -E 's/.* ([0-9]+)(\..*)?/\1/')" = '15'
           test "$(pg_restore --version | sed -E 's/.* ([0-9]+)(\..*)?/\1/')" = '15'
 
-      - name: Popular banco de origem com dado de canário
+      - name: Popular banco com dois boxes, identidade e memberships canários
         env:
           PGPASSWORD: backup_check_password
         run: |
           psql --host 127.0.0.1 --port 5432 --username backup_check --dbname backup_check_source <<'SQL'
-          CREATE TABLE backup_canary (id serial PRIMARY KEY, marker text NOT NULL);
-          INSERT INTO backup_canary (marker) VALUES ('octobox-backup-integrity-check');
+          CREATE TABLE public.backup_shared_canary (id integer PRIMARY KEY, marker text NOT NULL);
+          INSERT INTO public.backup_shared_canary VALUES (41, 'shared-backup-integrity-check');
+          CREATE TABLE public.backup_identity_canary (id integer PRIMARY KEY, marker text NOT NULL);
+          INSERT INTO public.backup_identity_canary VALUES (7, 'identity-backup-integrity-check');
+          CREATE TABLE public.backup_box_canary (schema_name text PRIMARY KEY, box_id integer NOT NULL);
+          INSERT INTO public.backup_box_canary VALUES ('box_alpha', 1), ('box_bravo', 1);
+          CREATE TABLE public.backup_membership_canary (
+            schema_name text NOT NULL REFERENCES public.backup_box_canary(schema_name),
+            student_id integer NOT NULL REFERENCES public.backup_identity_canary(id),
+            marker text NOT NULL,
+            PRIMARY KEY (schema_name, student_id)
+          );
+          INSERT INTO public.backup_membership_canary VALUES
+            ('box_alpha', 7, 'membership-alpha'), ('box_bravo', 7, 'membership-bravo');
+          CREATE SCHEMA box_alpha;
+          CREATE SCHEMA box_bravo;
+          CREATE TABLE box_alpha.backup_tenant_canary (
+            id serial PRIMARY KEY,
+            shared_id integer NOT NULL REFERENCES public.backup_shared_canary(id),
+            student_id integer NOT NULL REFERENCES public.backup_identity_canary(id),
+            marker text NOT NULL
+          );
+          CREATE TABLE box_bravo.backup_tenant_canary (
+            id serial PRIMARY KEY,
+            shared_id integer NOT NULL REFERENCES public.backup_shared_canary(id),
+            student_id integer NOT NULL REFERENCES public.backup_identity_canary(id),
+            marker text NOT NULL
+          );
+          INSERT INTO box_alpha.backup_tenant_canary(shared_id, student_id, marker)
+          VALUES (41, 7, 'tenant-alpha-before-restore');
+          INSERT INTO box_bravo.backup_tenant_canary(shared_id, student_id, marker)
+          VALUES (41, 7, 'tenant-bravo-preserve-this');
           SQL
 
-      - name: Rodar backup_postgres.sh de verdade
+      - name: Registrar fingerprint semântico inicial do box B
+        env:
+          PGPASSWORD: backup_check_password
+        run: |
+          fingerprint="$(psql --host 127.0.0.1 --port 5432 --username backup_check \
+            --dbname backup_check_source -v ON_ERROR_STOP=1 -tAc \
+            "SELECT md5(concat_ws('|', b.box_id, t.id, t.shared_id, t.student_id, t.marker, s.marker, i.marker, m.marker)) \
+             FROM box_bravo.backup_tenant_canary t \
+             JOIN public.backup_shared_canary s ON s.id=t.shared_id \
+             JOIN public.backup_identity_canary i ON i.id=t.student_id \
+             JOIN public.backup_box_canary b ON b.schema_name='box_bravo' \
+             JOIN public.backup_membership_canary m ON m.schema_name=b.schema_name AND m.student_id=t.student_id")"
+          test -n "${fingerprint}"
+          echo "BOX_BRAVO_FINGERPRINT=${fingerprint}" >> "$GITHUB_ENV"
+
+      - name: Criar backup full e dump tenant com manifestos reais
         env:
           PGPASSWORD: backup_check_password
         run: |
@@ -118,34 +198,136 @@ jobs:
             --host 127.0.0.1 --port 5432 \
             --database backup_check_source --user backup_check \
             --output-dir /tmp/backup-check-dumps
+          bash scripts/linux/backup_tenant_schema.sh \
+            --host 127.0.0.1 --port 5432 \
+            --database backup_check_source --user backup_check \
+            --slug alpha --output-dir /tmp/backup-check-dumps
+          full_dump="$(ls /tmp/backup-check-dumps/octobox-*.dump)"
+          tenant_dump="$(ls /tmp/backup-check-dumps/tenant-alpha-*.dump)"
+          test -s "${full_dump}.manifest.json"
+          test -s "${tenant_dump}.manifest.json"
+          echo "FULL_DUMP=${full_dump}" >> "$GITHUB_ENV"
+          echo "TENANT_DUMP=${tenant_dump}" >> "$GITHUB_ENV"
 
-      - name: Confere que o dump existe e nao esta vazio
-        run: |
-          dump_file="$(ls /tmp/backup-check-dumps/octobox-*.dump)"
-          size="$(stat -c%s "${dump_file}")"
-          echo "Dump: ${dump_file} (${size} bytes)"
-          if [[ "${size}" -lt 100 ]]; then
-            echo "Dump suspeito de vazio/truncado." >&2
-            exit 1
-          fi
-
-      - name: Restaurar num banco separado e validar o dado de canario
+      - name: Validar integridade e fazer restore tenant em banco novo
         env:
           PGPASSWORD: backup_check_password
         run: |
-          dump_file="$(ls /tmp/backup-check-dumps/octobox-*.dump)"
-          psql --host 127.0.0.1 --port 5432 --username backup_check --dbname postgres \
-            -c "CREATE DATABASE backup_check_restored;"
-          pg_restore --host 127.0.0.1 --port 5432 --username backup_check \
-            --dbname backup_check_restored --no-owner --no-privileges "${dump_file}"
-          marker="$(psql --host 127.0.0.1 --port 5432 --username backup_check --dbname backup_check_restored \
-            -tAc "SELECT marker FROM backup_canary LIMIT 1;")"
-          echo "Marker restaurado: ${marker}"
-          if [[ "${marker}" != "octobox-backup-integrity-check" ]]; then
-            echo "Restore nao trouxe o dado esperado — dump nao e confiavel." >&2
+          bash scripts/linux/restore_tenant_schema.sh \
+            --host 127.0.0.1 --port 5432 \
+            --user backup_check --slug alpha \
+            --target-database octobox_restore_backup_check \
+            --backup-file "${TENANT_DUMP}" \
+            --base-backup-file "${FULL_DUMP}"
+          restored="$(psql --host 127.0.0.1 --port 5432 --username backup_check \
+            --dbname octobox_restore_backup_check -tAc \
+            "SELECT t.marker || ':' || s.marker || ':' || i.marker || ':' || m.marker \
+             FROM box_alpha.backup_tenant_canary t \
+             JOIN public.backup_shared_canary s ON s.id=t.shared_id \
+             JOIN public.backup_identity_canary i ON i.id=t.student_id \
+             JOIN public.backup_membership_canary m ON m.schema_name='box_alpha' AND m.student_id=t.student_id;")"
+          if [[ "${restored}" != "tenant-alpha-before-restore:shared-backup-integrity-check:identity-backup-integrity-check:membership-alpha" ]]; then
+            echo "Restore nao preservou tenant A e as referencias shared." >&2
             exit 1
           fi
-          echo "✅ Dump do Postgres e restauravel e integro."
+          fingerprint_after="$(psql --host 127.0.0.1 --port 5432 --username backup_check \
+            --dbname octobox_restore_backup_check -v ON_ERROR_STOP=1 -tAc \
+            "SELECT md5(concat_ws('|', b.box_id, t.id, t.shared_id, t.student_id, t.marker, s.marker, i.marker, m.marker)) \
+             FROM box_bravo.backup_tenant_canary t \
+             JOIN public.backup_shared_canary s ON s.id=t.shared_id \
+             JOIN public.backup_identity_canary i ON i.id=t.student_id \
+             JOIN public.backup_box_canary b ON b.schema_name='box_bravo' \
+             JOIN public.backup_membership_canary m ON m.schema_name=b.schema_name AND m.student_id=t.student_id")"
+          if [[ "${fingerprint_after}" != "${BOX_BRAVO_FINGERPRINT}" ]]; then
+            echo "Fingerprint, box B ou membership shared mudou durante a restauracao seletiva." >&2
+            exit 1
+          fi
+          echo "✅ Restore de A isolado preservou FK/identidade/membership shared e fingerprint de B."
+
+      - name: Recusar FK entrante presente apenas no backup full
+        env:
+          PGPASSWORD: backup_check_password
+        run: |
+          psql --host 127.0.0.1 --port 5432 --username backup_check \
+            --dbname backup_check_source -v ON_ERROR_STOP=1 -c \
+            'ALTER TABLE box_bravo.backup_tenant_canary ADD CONSTRAINT incoming_alpha_fk FOREIGN KEY (id) REFERENCES box_alpha.backup_tenant_canary(id)'
+          bash scripts/linux/backup_postgres.sh \
+            --host 127.0.0.1 --port 5432 \
+            --database backup_check_source --user backup_check \
+            --output-dir /tmp/backup-check-incoming
+          incoming_full="$(ls /tmp/backup-check-incoming/octobox-*.dump)"
+          if bash scripts/linux/restore_tenant_schema.sh \
+            --host 127.0.0.1 --port 5432 --user backup_check --slug alpha \
+            --target-database octobox_restore_incoming_check \
+            --backup-file "${TENANT_DUMP}" --base-backup-file "${incoming_full}" \
+            > /tmp/restore-incoming.log 2>&1; then
+            echo 'Restore deveria recusar dependência do box B antes do DROP.' >&2
+            exit 1
+          fi
+          grep -q 'FKs ou views externas dependem do tenant' /tmp/restore-incoming.log
+          preserved="$(psql --host 127.0.0.1 --port 5432 --username backup_check \
+            --dbname octobox_restore_incoming_check -v ON_ERROR_STOP=1 -tAc \
+            "SELECT count(*) FROM pg_constraint WHERE conname='incoming_alpha_fk' AND conrelid='box_bravo.backup_tenant_canary'::regclass")"
+          test "$preserved" = '1'
+
+      - name: Testes puros do manifesto
+        run: |
+          python3 -m pip install pytest
+          python3 -m pytest -c /dev/null --confcutdir=tests tests/test_tenant_backup_manifest.py -q
+
+  # ---------------------------------------------------------------------------
+  # Tenant restore semantic checks against a real django-tenants schema.
+  # ---------------------------------------------------------------------------
+  tenant-restore-semantic-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_DB: octobox_restore_ci
+          POSTGRES_USER: octobox_restore_ci
+          POSTGRES_PASSWORD: octobox_restore_ci_password
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements_test.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements_test.txt
+
+      - name: Restore semantics, external dependencies and unit inventory
+        env:
+          DATABASE_URL: postgresql://octobox_restore_ci:octobox_restore_ci_password@127.0.0.1:5432/octobox_restore_ci
+          TEST_DATABASE_URL: postgresql://octobox_restore_ci:octobox_restore_ci_password@127.0.0.1:5432/octobox_restore_ci
+        run: |
+          python -m pytest \
+            -o "addopts=--create-db --migrations -ra" \
+            tests/test_restore_snapshot_disabled.py \
+            tests/test_tenant_restore_semantic_smoke.py \
+            tests/test_tenant_restore_external_dependencies.py \
+            tests/test_tenant_restore_timer_inventory.py \
+            --no-cov -q
 
   # ---------------------------------------------------------------------------
   # Env cifrado: roda backup_env_secrets.sh de verdade (via sudo, como na
@@ -178,6 +360,8 @@ jobs:
           cat > /tmp/octobox-ci/shared/octobox.env <<'ENVEOF'
           DJANGO_SECRET_KEY=ci-fake-secret-nao-real
           STUDENT_GOOGLE_OAUTH_CLIENT_SECRET=ci-fake-oauth-secret
+          PII_ENCRYPTION_KEYRING_JSON='{"ci-key":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}'
+          PII_ENCRYPTION_ACTIVE_KEY_ID=ci-key
           MARKER=octobox-env-backup-integrity-check
           ENVEOF
           sudo OCTOBOX_APP_HOME=/tmp/octobox-ci \
@@ -192,6 +376,10 @@ jobs:
           echo "Backup remoto: ${remote_file}"
           if grep -q "ci-fake-secret-nao-real" "${remote_file}"; then
             echo "Backup subiu em TEXTO PLANO — vazamento de segredo." >&2
+            exit 1
+          fi
+          if grep -q "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" "${remote_file}"; then
+            echo "Backup subiu com chave PII em TEXTO PLANO." >&2
             exit 1
           fi
 

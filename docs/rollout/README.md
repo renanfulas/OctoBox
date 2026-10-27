@@ -123,6 +123,7 @@ Os docs `hostinger-vps-*` antigos foram arquivados (rotulo de host trocado + alg
 | [postgres-homolog-provisioning-checklist.md](postgres-homolog-provisioning-checklist.md) | ATIVO (checklist generico) |
 | [postgres-homolog-restore-runbook.md](postgres-homolog-restore-runbook.md) | ATIVO (runbook generico) |
 | [postgres-homolog-restore-checklist-template.md](postgres-homolog-restore-checklist-template.md) | ATIVO (template para preencher por rodada) |
+| [../testing/tenant-restore-drill-template.md](../testing/tenant-restore-drill-template.md) | ATIVO (registro específico do ensaio seletivo F2 A/B) |
 
 Rodadas preenchidas datadas em [archive/postgres-homolog-provisioning-round-2026-04-13.md](archive/postgres-homolog-provisioning-round-2026-04-13.md) e [archive/postgres-homolog-restore-checklist-2026-04-13.md](archive/postgres-homolog-restore-checklist-2026-04-13.md).
 

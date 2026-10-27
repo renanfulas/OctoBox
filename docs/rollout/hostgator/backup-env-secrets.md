@@ -54,8 +54,12 @@ backup na hora.
 ## 2. Backup manual (sob demanda)
 
 ```bash
-sudo bash /srv/octobox/app/scripts/linux/backup_env_secrets.sh
+sudo systemctl start octobox-env-backup.service
+sudo systemctl status --no-pager octobox-env-backup.service
 ```
+Use the oneshot unit for a manual run: it loads `/srv/octobox/shared/octobox.env` through
+`EnvironmentFile` before invoking the script. Calling the script directly without exporting
+`OCTOBOX_ENV_BACKUP_AGE_RECIPIENT` and `OCTOBOX_BACKUP_REMOTE` fails closed.
 
 ## 3. Restaurar (quando precisar de verdade)
 
@@ -89,3 +93,17 @@ backup mais antigo.
 - `last_env_backup_remote_path` mais antigo que 11 dias (janela de 10 dias + folga);
 - a chave privada não está confirmada no cofre de senhas do time — sem ela,
   todo esse backup é decorativo.
+
+## Keyring de cifragem de PII
+
+G1 introduz o contrato `PII_ENCRYPTION_KEYRING_JSON` e
+`PII_ENCRYPTION_ACTIVE_KEY_ID`, mas ainda não habilita o writer novo. Antes de
+ativá-lo em G2, confirme que `octobox.env` inclui o keyring completo e que o
+backup/restauração age protege esse conteúdo. Todo dump retido depende das
+chaves que o cifraram; não remova uma chave até G3 provar restore de backup
+anterior e posterior à rotação. Após cada mudança de keyring ou key ID ativo,
+inicie `octobox-env-backup.service` para capturar o ambiente imediatamente,
+sem esperar o próximo disparo de 10 dias. Retenha cada chave até expirarem todos
+os dumps que possam conter dados cifrados com ela; use a maior retenção real de
+backup PostgreSQL, mais a janela de captura/restauração do ambiente, e confirme
+os overrides instalados no host. A blind-index key continua separada.
