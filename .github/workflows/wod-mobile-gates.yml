@@ -18,7 +18,7 @@ permissions:
   pull-requests: read
 
 env:
-  DJANGO_SECRET_KEY: "a-dummy-secret-key-for-ci-wod-e2e"
+  DJANGO_SECRET_KEY: "ci-wod-test-${{ github.run_id }}-${{ github.run_attempt }}"
   PHONE_BLIND_INDEX_KEY: "ci-only-blind-index-key"
   DJANGO_SETTINGS_MODULE: config.settings.test
   DATABASE_URL: postgres://user:password@localhost:5432/test_db
