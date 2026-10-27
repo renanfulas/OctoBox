@@ -157,15 +157,22 @@ def _build_blocked_response(client_ip: str) -> HttpResponse:
     return HttpResponse('A origem desta requisicao esta bloqueada pela politica de seguranca.', status=403)
 
 
+def _safe_route_label(request) -> str:
+    """Use Django's registered route template instead of a submitted URL path."""
+    resolver_match = getattr(request, 'resolver_match', None)
+    route = getattr(resolver_match, 'route', '') or ''
+    if not isinstance(route, str) or not route:
+        return 'unresolved'
+    return route.lstrip('/')[:255] or 'root'
+
+
 def _log_rate_limit_event(*, scope: str, request, client_ip: str, retry_after: int):
-    user_id = getattr(getattr(request, 'user', None), 'id', None)
     SECURITY_LOGGER.warning(
-        'security_rate_limit_triggered scope=%s client_ip=%s path=%s method=%s user_id=%s retry_after=%s',
+        'security_rate_limit_triggered scope=%s client_ip=%s route=%s method=%s retry_after=%s',
         scope,
         client_ip,
-        request.path,
+        _safe_route_label(request),
         request.method,
-        user_id,
         retry_after,
     )
 
@@ -194,10 +201,18 @@ def _emit_rate_limit_red_flag(*, scope: str, request, client_ip: str, window_sec
             actor=actor,
             action='RED_FLAG_RATE_LIMIT',
             description=f'Rate limit excedido no escopo {scope}. Origem contida pelo middleware de seguranca.',
-            metadata={'scope': scope, 'ip': client_ip, 'path': request.path, 'method': request.method},
+            metadata={
+                'scope': scope,
+                'ip': client_ip,
+                'route': _safe_route_label(request),
+                'method': request.method,
+            },
         )
-    except Exception:
-        SECURITY_LOGGER.exception('rate_limit_red_flag_audit_failed scope=%s client_ip=%s', scope, client_ip)
+    except Exception as exc:
+        SECURITY_LOGGER.error(
+            'rate_limit_red_flag_audit_failed scope=%s error_type=%s',
+            scope, type(exc).__name__,
+        )
 
 
 class RequestSecurityMiddleware:

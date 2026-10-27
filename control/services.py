@@ -37,6 +37,7 @@ from datetime import datetime, timezone
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django_tenants.utils import schema_context
+from shared_support.tenant_logging import tenant_log_ref
 
 logger = logging.getLogger('control.services')
 
@@ -153,7 +154,7 @@ def provision_box(
     if pending_signup is not None:
         try:
             box = Box.objects.get(pending_signup=pending_signup)
-            logger.info('provision_box: Box %s já existe, retomando.', box.slug)
+            logger.info('provision_box_existing box_ref=%s action=resume', tenant_log_ref(box))
             return reprovision_box(box)
         except Box.DoesNotExist:
             pass
@@ -165,7 +166,6 @@ def provision_box(
         raise ValueError(f'Slug inválido: {slug!r}. Deve ser ^[a-z][a-z0-9-]{{1,58}}$')
 
     schema_name = f'box_{slug}'
-    logger.info('provision_box: iniciando Box slug=%s schema=%s', slug, schema_name)
 
     # Criar Box em public (sem schema ainda)
     box = Box.objects.create(
@@ -221,7 +221,7 @@ def reprovision_box(box: 'Box') -> 'Box':
             box=box, step=step, status='ok'
         ).exists()
         if ok_exists:
-            logger.debug('provision_box: step=%s ja concluido para %s — pulando.', step, box.slug)
+            logger.debug('provision_box_step_skipped step=%s box_ref=%s', step, tenant_log_ref(box))
             continue
 
         evt = BoxProvisioningEvent.objects.create(box=box, step=step, status='started')
@@ -229,12 +229,15 @@ def reprovision_box(box: 'Box') -> 'Box':
             _run_step(step, box)
             evt.status = 'ok'
             evt.save(update_fields=['status'])
-            logger.info('provision_box: step=%s OK para %s', step, box.slug)
+            logger.info('provision_box_step_succeeded step=%s box_ref=%s', step, tenant_log_ref(box))
         except Exception as exc:
             evt.status = 'failed'
-            evt.detail = str(exc)
+            evt.detail = f'step_failed:{type(exc).__name__}'
             evt.save(update_fields=['status', 'detail'])
-            logger.error('provision_box: step=%s FALHOU para %s: %s', step, box.slug, exc)
+            logger.error(
+                'provision_box_step_failed step=%s box_ref=%s error_type=%s',
+                step, tenant_log_ref(box), type(exc).__name__,
+            )
             raise
 
     # Todos os steps concluídos → promover, MAS só se ainda estiver
@@ -250,12 +253,11 @@ def reprovision_box(box: 'Box') -> 'Box':
     )
     box.refresh_from_db()
     if promoted:
-        logger.info('provision_box: Box %s ATIVO em %s', box.slug, box.schema_name)
+        logger.info('provision_box_activated box_ref=%s', tenant_log_ref(box))
     else:
         logger.info(
-            'provision_box: Box %s NÃO promovido (status atual=%s, não era PROVISIONING) — '
-            'steps de provisioning concluídos, mas ativação de billing preservada.',
-            box.slug, box.status,
+            'provision_box_not_promoted box_ref=%s status=%s',
+            tenant_log_ref(box), box.status,
         )
 
     # Anexar a conta de suporte (superdev) — SEMPRE, para a equipe OctoBox poder
@@ -296,10 +298,10 @@ def _create_schema(box: 'Box') -> None:
             [box.schema_name],
         )
         if cursor.fetchone():
-            logger.info('_create_schema: schema %s já existe — pulando CREATE.', box.schema_name)
+            logger.info('tenant_schema_create_skipped box_ref=%s', tenant_log_ref(box))
             return
         cursor.execute(f'CREATE SCHEMA "{_validate_schema_ident(box.schema_name)}"')
-    logger.info('_create_schema: schema %s criado.', box.schema_name)
+    logger.info('tenant_schema_created box_ref=%s', tenant_log_ref(box))
 
 
 def _migrate_schema(box: 'Box') -> None:
@@ -308,7 +310,7 @@ def _migrate_schema(box: 'Box') -> None:
 
     # migrate_schemas com --schema=xxx aplica apenas as TENANT_APPS no schema indicado
     call_command('migrate_schemas', schema=box.schema_name, verbosity=0, interactive=False)
-    logger.info('_migrate_schema: migrations aplicadas em %s.', box.schema_name)
+    logger.info('tenant_schema_migrated box_ref=%s', tenant_log_ref(box))
 
 
 def _bootstrap_roles(box: 'Box') -> None:
@@ -317,7 +319,7 @@ def _bootstrap_roles(box: 'Box') -> None:
         from django.contrib.auth.models import Group
         for role_name in BOOTSTRAP_ROLES:
             Group.objects.get_or_create(name=role_name)
-    logger.info('_bootstrap_roles: grupos criados em %s.', box.schema_name)
+    logger.info('tenant_roles_bootstrapped box_ref=%s', tenant_log_ref(box))
 
 
 def _seed_plans(box: 'Box') -> None:
@@ -334,7 +336,7 @@ def _seed_plans(box: 'Box') -> None:
                     'billing_cycle': plan_data['billing_cycle'],
                 },
             )
-    logger.info('_seed_plans: planos default criados em %s.', box.schema_name)
+    logger.info('tenant_default_plans_seeded box_ref=%s', tenant_log_ref(box))
 
 
 # ---------------------------------------------------------------------------
@@ -364,7 +366,7 @@ def _archive_box_under_write_fence(box: 'Box', *, reason: str = '') -> 'Box':
     from django_tenants.utils import get_tenant_database_alias
 
     if box.status == box.__class__.Status.ARCHIVED:
-        logger.warning('archive_box: Box %s já está ARCHIVED.', box.slug)
+        logger.warning('archive_box_already_archived box_ref=%s', tenant_log_ref(box))
         return box
 
     ts = datetime.now(tz=timezone.utc).strftime('%Y%m%d%H%M%S')
@@ -397,7 +399,7 @@ def _archive_box_under_write_fence(box: 'Box', *, reason: str = '') -> 'Box':
             schema_name=archived_schema,
         )
     box.refresh_from_db()
-    logger.info('archive_box: %s arquivado como %s.', box.slug, archived_schema)
+    logger.info('archive_box_completed box_ref=%s', tenant_log_ref(box))
 
     _record_platform_audit(box, 'box.archived', {'reason': reason})
     return box
@@ -503,8 +505,7 @@ def _unarchive_box_under_write_fence(box: 'Box', *, reason: str = '', actor=None
 
     box.refresh_from_db()
     logger.warning(
-        'unarchive_box: %s restaurado de %s para %s — status SUSPENDED '
-        '(reativa via pagamento).', box.slug, origem, destino,
+        'unarchive_box_completed box_ref=%s status=SUSPENDED', tenant_log_ref(box),
     )
 
     _record_platform_audit(box, 'box.unarchived', {
@@ -566,8 +567,7 @@ def activate_box(box: 'Box', *, reason: str, actor=None) -> 'Box':
         )
 
     logger.warning(
-        'activate_box: Box %s REATIVADO manualmente. reason=%r actor=%s',
-        box.slug, reason, getattr(actor, 'username', None) or 'sistema',
+        'box_manually_activated box_ref=%s', tenant_log_ref(box),
     )
 
     _record_platform_audit(box, 'box.activated_manual_support', {
@@ -639,13 +639,13 @@ def _attach_support_membership(box: 'Box') -> None:
             box=box,
             defaults={'role': Membership.Role.OWNER, 'is_primary_box': False},
         )
-    except Exception:
-        logger.exception('_attach_support_membership: falha ao anexar superdev a box=%s', box.slug)
+    except Exception as exc:
+        logger.error('support_membership_attach_failed error_type=%s', type(exc).__name__)
         _record_platform_audit(box, 'membership.support_failed', {'superdev_user_id': superdev.pk})
         return
 
     if created:
-        logger.info('_attach_support_membership: superdev=%s anexado a box=%s', superdev.username, box.slug)
+        logger.info('support_membership_attached box_ref=%s', tenant_log_ref(box))
         _record_platform_audit(
             box,
             'membership.support_granted',
@@ -672,5 +672,5 @@ def _record_platform_audit(box: 'Box', kind: str, payload: dict | None = None) -
             kind=kind,
             payload=payload or {},
         )
-    except Exception:
-        logger.exception('_record_platform_audit: falha ao registrar %s para %s', kind, box.slug)
+    except Exception as exc:
+        logger.error('platform_audit_record_failed kind=%s error_type=%s', kind, type(exc).__name__)

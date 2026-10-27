@@ -35,6 +35,7 @@ CONTRATO DE MOCK (Sprint 9 — corrigido para django-tenants):
 from __future__ import annotations
 
 import uuid
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -343,18 +344,18 @@ class LogAuditEventRestoresSchemaTest(TestCase):
 
     def test_schema_returns_to_public_after_activating_tenant_for_write(self):
         from django.db import connection
-        from control.models import Membership
+        from control.models import Box, Membership
         from auditing.services import log_audit_event
 
-        # conftest._auto_membership_for_test_users já dá Membership(role=OWNER,
-        # is_primary_box=True) no box de teste a todo User criado aqui — é
-        # exatamente o que _ensure_tenant_for_audit_write.Strategy 2 precisa
-        # para resolver e ativar o tenant. Não recriar (duplicaria a unique
-        # constraint user+box).
+        # Some --keepdb setups do not install the global test-user membership
+        # fixture. Create the exact primary membership this scenario needs.
         actor = User.objects.create_user(username=_uniq('restore_actor'), email='a@x.com')
-        self.assertTrue(
-            Membership.objects.filter(user=actor, is_primary_box=True).exists(),
-            'setup inválido: fixture do conftest não deu Membership ao actor',
+        box = Box.objects.filter(status=Box.Status.ACTIVE).first()
+        self.assertIsNotNone(box, 'fixture deve disponibilizar um Box ativo')
+        Membership.objects.get_or_create(
+            user=actor,
+            box=box,
+            defaults={'role': Membership.Role.OWNER, 'is_primary_box': True},
         )
 
         self.assertEqual(connection.schema_name, self.public_schema_name)
@@ -366,6 +367,34 @@ class LogAuditEventRestoresSchemaTest(TestCase):
             'log_audit_event deixou a conexão presa no schema do tenant após escrever o evento — '
             'o restore da Onda 5a não está funcionando.',
         )
+
+    def test_generic_target_label_does_not_call_pii_bearing_str(self):
+        from django.db import connection
+        from control.models import Box, Membership
+        from auditing.services import log_audit_event
+
+        actor = User.objects.create_user(username=_uniq('target_label_actor'), email='a@x.com')
+        box = Box.objects.filter(status=Box.Status.ACTIVE).first()
+        self.assertIsNotNone(box, 'fixture deve disponibilizar um Box ativo')
+        Membership.objects.get_or_create(
+            user=actor,
+            box=box,
+            defaults={'role': Membership.Role.OWNER, 'is_primary_box': True},
+        )
+        target = SimpleNamespace(
+            pk='private-target-id',
+            _meta=SimpleNamespace(model_name='student', verbose_name='aluno'),
+        )
+
+        event = log_audit_event(
+            actor=actor,
+            action='test.audit.target_label',
+            target=target,
+        )
+
+        self.assertEqual(event.target_label, 'aluno')
+        self.assertEqual(event.target_id, 'private-target-id')
+        self.assertEqual(connection.schema_name, self.public_schema_name)
 
     def test_public_path_without_resolvable_tenant_stays_on_public(self):
         """Sem actor e sem box único ativo: _ensure_tenant_for_audit_write
@@ -491,12 +520,18 @@ class LogPlatformAuditEventTest(TestCase):
 
         event = log_platform_audit_event(
             actor=actor, kind='test.onda5b.scrub',
-            metadata={'password': 'hunter2', 'cpf': '111.222.333-44', 'path': '/login/'},
+            metadata={
+                'password': 'hunter2', 'cpf': '111.222.333-44',
+                'email': 'private@example.invalid', 'path': '/login/',
+                'route': 'login/<uidb64>/<token>/',
+            },
         )
 
         self.assertEqual(event.payload['password'], '[REDACTED]')
         self.assertEqual(event.payload['cpf'], '[REDACTED]')
-        self.assertEqual(event.payload['path'], '/login/')
+        self.assertEqual(event.payload['email'], '[REDACTED]')
+        self.assertEqual(event.payload['path'], '[REDACTED]')
+        self.assertEqual(event.payload['route'], 'login/<uidb64>/<token>/')
 
     def test_description_and_actor_role_fold_into_payload(self):
         """PlatformAuditEvent não tem campo description/actor_role dedicado
@@ -534,11 +569,16 @@ class LogPlatformAuditEventTest(TestCase):
         """Best-effort — mesma filosofia do ADR-008."""
         from auditing.services import log_platform_audit_event
 
-        with patch('control.models.PlatformAuditEvent.objects.create') as mock_create:
+        with (
+            patch('control.models.PlatformAuditEvent.objects.create') as mock_create,
+            self.assertLogs('auditing.services', level='ERROR') as captured,
+        ):
             mock_create.side_effect = RuntimeError('banco fora do ar')
             result = log_platform_audit_event(actor=None, kind='test.onda5b.db_down')
 
         self.assertIsNone(result)
+        self.assertIn('platform_audit_record_failed kind=test.onda5b.db_down error_type=RuntimeError', '\n'.join(captured.output))
+        self.assertNotIn('banco fora do ar', '\n'.join(captured.output))
 
 
 @pytest.mark.public_schema

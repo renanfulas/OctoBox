@@ -1066,12 +1066,18 @@ class B13TenantSweepTest(TestCase):
                 raise RuntimeError('boom')
             return 'ok'
 
-        sweep = sweep_active_tenants(handler)
+        with self.assertLogs('octobox.jobs', level='ERROR') as captured:
+            sweep = sweep_active_tenants(handler)
 
         self.assertEqual(sweep.schemas_failed, 1)
         self.assertGreaterEqual(sweep.schemas_touched, 1)
         self.assertIn('box_sweep_broken', [schema for schema, _ in sweep.failures])
-        self.assertIn('boom', sweep.failures[0][1])
+        self.assertEqual(sweep.failures[0][1], 'error:RuntimeError')
+        rendered_logs = '\n'.join(captured.output)
+        self.assertNotIn('box_sweep_broken', rendered_logs)
+        self.assertNotIn('boom', rendered_logs)
+        self.assertIn('box_ref=tenant:', rendered_logs)
+        self.assertNotIn('box_sweep_broken', sweep.summary_line())
 
     def test_sweep_reraises_when_asked(self):
         from shared_support.tenant_sweep import sweep_active_tenants

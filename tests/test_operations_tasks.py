@@ -85,7 +85,32 @@ class OperationsTasksTests(SimpleTestCase):
         )
 
         self.assertEqual(payload['failure_kind'], 'retryable')
+        self.assertEqual(payload['error'], 'runtimeerror')
         self.assertEqual(payload['retry_action'], 'retry')
         self.assertEqual(payload['attempt_number'], 1)
         self.assertEqual(payload['max_attempts'], 3)
         self.assertTrue(payload['next_retry_at'])
+
+    @patch('operations.tasks.StudentImporter')
+    def test_student_import_failure_is_sanitized_in_logs_and_task_error(self, importer_mock):
+        from operations.tasks import SanitizedImportJobError
+
+        marker = 'private-student-5511999991111@example.test'
+        importer_mock.return_value.import_from_file.side_effect = RuntimeError(marker)
+        task_context = SimpleNamespace(
+            request=SimpleNamespace(retries=0),
+            max_retries=3,
+        )
+
+        with self.assertLogs('octobox.jobs', level='ERROR') as captured:
+            with self.assertRaises(SanitizedImportJobError) as raised:
+                run_csv_student_import_job(
+                    task_context,
+                    file_path='C:\\tmp\\sensitive-students.csv',
+                    job_id=None,
+                )
+
+        rendered_logs = '\n'.join(captured.output)
+        self.assertNotIn(marker, rendered_logs)
+        self.assertNotIn(marker, str(raised.exception))
+        self.assertEqual(str(raised.exception), 'runtimeerror')

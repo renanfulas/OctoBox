@@ -37,5 +37,9 @@ class AuditEventAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        # Audit rows are an append-only evidence trail, including for admins.
+        return False
+
 
 __all__ = ['AuditEventAdmin']

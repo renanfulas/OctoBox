@@ -34,6 +34,12 @@ class WebhookIdempotencyMiddleware:
 
     def __call__(self, request):
         if request.method == 'POST' and '/api/v1/integrations/' in request.path:
+            # Poll votes now authenticate/route before tenant-local inbox
+            # idempotency. The legacy public fingerprint could otherwise
+            # suppress the same external event across two different Boxes.
+            if request.path_info.rstrip('/') == '/api/v1/integrations/whatsapp/webhook/poll-vote':
+                return self.get_response(request)
+
             # Sprint 4 / §13.1 fix: WebhookEvent fica em public (SHARED_APPS).
             # Força reset para public ANTES da query de idempotência, evitando herança
             # de search_path de request anterior de tenant (gunicorn worker reutilizado).
@@ -91,7 +97,10 @@ class WebhookIdempotencyMiddleware:
                 existing_event = False
 
         if existing_event:
-            logger.info('Deduplicacao ativada: %s filtrado em %s', idempotency_key or fingerprint, request.path)
+            logger.info(
+                'webhook_duplicate_ignored has_idempotency_key=%s has_fingerprint=%s',
+                bool(idempotency_key), bool(fingerprint),
+            )
             response = JsonResponse(
                 {
                     'accepted': True,

@@ -96,9 +96,20 @@ def mark_job_failed(job_id: str, error_message: str):
     if not job_data:
         return
     job_data['status'] = JobStatus.FAILED
-    job_data['error_message'] = error_message
+    is_tenant_frozen = error_message in {
+        'tenant_write_frozen',
+        'Operação pausada durante recuperação; reenvie após liberação do box.',
+        'Operação pausada durante recuperação.',
+    }
+    error_code = 'tenant_write_frozen' if is_tenant_frozen else 'job_execution_failed'
+    job_data['error_code'] = error_code
+    job_data['error_message'] = (
+        'Operação pausada durante recuperação. Reenvie após liberação do box.'
+        if is_tenant_frozen
+        else 'A operação falhou por erro interno. Revise o arquivo e tente novamente.'
+    )
     job_data['updated_at'] = timezone.now().isoformat()
-    logger.error(f"Job {job_id} falhou: {error_message}")
+    logger.error('background_job_failed job=%s code=%s', job_id, error_code)
     _save_job(job_id, job_data)
 
 
@@ -165,13 +176,13 @@ def submit_background_job(job_fn: Callable, job_id: str, *args, **kwargs):
             else:
                 mark_job_failed(job_id, 'Operação pausada durante recuperação.')
             logger.info('background_job=%s skipped because tenant is frozen', job_id)
-        except Exception as e:
-            logger.exception(f"Erro nao tratado no job {job_id}")
+        except Exception as exc:
+            logger.error('background_job_failed job=%s error_type=%s', job_id, type(exc).__name__)
             if schema:
                 with schema_context(schema):
-                    mark_job_failed(job_id, str(e))
+                    mark_job_failed(job_id, 'job_execution_failed')
             else:
-                mark_job_failed(job_id, str(e))
+                mark_job_failed(job_id, 'job_execution_failed')
         finally:
             # Em threads separadas, essencial fechar a conexao de banco manualmente
             # para evitar estourar o limite de conexoes do pool.
@@ -227,8 +238,8 @@ def run_in_background(fn: Callable, *args, **kwargs) -> threading.Thread:
                 fn(*args, **kwargs)
         except TenantWritesFrozen:
             logger.info('background operation skipped because tenant is frozen')
-        except Exception:
-            logger.exception('run_in_background: falha nao tratada em %r', fn)
+        except Exception as exc:
+            logger.error('run_in_background_failed error_type=%s', type(exc).__name__)
         finally:
             thread_connection.close()
 

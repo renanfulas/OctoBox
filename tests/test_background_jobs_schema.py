@@ -204,10 +204,16 @@ class BackgroundJobInheritsRequestSchemaTests(TestCase):
             def _job_fn(job_id_arg):
                 raise RuntimeError('linha invalida no CSV')
 
-            result = _submit_and_wait(_job_fn, job_id)
+            with self.assertLogs('shared_support.background_jobs', level='ERROR') as captured:
+                result = _submit_and_wait(_job_fn, job_id)
 
         self.assertEqual(result['status'], JobStatus.FAILED)
-        self.assertIn('linha invalida', result['error_message'])
+        self.assertEqual(result['error_code'], 'job_execution_failed')
+        self.assertEqual(
+            result['error_message'],
+            'A operação falhou por erro interno. Revise o arquivo e tente novamente.',
+        )
+        self.assertNotIn('linha invalida no CSV', '\n'.join(captured.output))
 
     def test_job_called_from_public_schema_does_not_crash(self):
         """Chamador em schema public (ex.: webhook, management command) —

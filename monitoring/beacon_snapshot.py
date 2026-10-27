@@ -53,17 +53,17 @@ def _get_known_tables(using: str) -> tuple[str, ...]:
         cached = cache.get(key)
         if cached is not None:
             return cached
-    except Exception:
+    except Exception as exc:
         # Cache backend falhou (Redis down, etc). Continua sem cache —
         # snapshot prefere lentidao a estar errado.
-        logger.warning('beacon_snapshot: cache.get falhou; usando introspeccao direta', exc_info=True)
+        logger.warning('beacon_snapshot_cache_read_failed error_type=%s', type(exc).__name__)
 
     result = tuple(connections[using].introspection.table_names())
 
     try:
         cache.set(key, result, timeout=KNOWN_TABLES_TTL_SECONDS)
-    except Exception:
-        logger.warning('beacon_snapshot: cache.set falhou; resultado nao foi cacheado', exc_info=True)
+    except Exception as exc:
+        logger.warning('beacon_snapshot_cache_write_failed error_type=%s', type(exc).__name__)
 
     return result
 
