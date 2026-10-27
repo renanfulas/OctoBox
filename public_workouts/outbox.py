@@ -16,6 +16,7 @@ TOPIC_PROGRAM_READY = 'program_ready'
 TOPIC_MEAL_PLAN_READY = 'meal_plan_ready'
 TOPIC_WAITLIST_INVITE = 'waitlist_invite'
 TOPIC_STAFF_NEW_SUBSCRIPTION = 'staff_new_subscription'
+TOPIC_STAFF_WORK_ITEM_OPENED = 'staff_work_item_opened'
 TOPIC_CLIENT_SUBSCRIPTION_ACTIVE = 'client_subscription_active'
 TOPIC_CLIENT_SUBSCRIPTION_CANCELED = 'client_subscription_canceled'
 TOPIC_TRAINING_COMPLETED = 'training_completed'
@@ -104,6 +105,17 @@ def _dispatch(message) -> bool:
         # um sucesso parcial conta como entregue pra nao reenviar pra quem
         # ja recebeu a cada retry — so falha total (ou lista vazia de nada
         # a enviar, que tambem nao e falha) volta pra fila.
+        return (not results) or any(status == 'sent' for status in results.values())
+
+    # Mesma regra do aviso de assinatura: base_url so' monta o link da fila.
+    if message.topic == TOPIC_STAFF_WORK_ITEM_OPENED:
+        from .models import PublicWorkoutWorkItem
+        from .staff_alerts import notify_staff_work_item_opened
+
+        item = PublicWorkoutWorkItem.objects.select_related('subscription', 'account', 'assigned_to').get(
+            pk=message.aggregate_id,
+        )
+        results = notify_staff_work_item_opened(item, base_url=base_url)
         return (not results) or any(status == 'sent' for status in results.values())
 
     # TOPIC_CLIENT_SUBSCRIPTION_CANCELED tambem tolera base_url ausente —
