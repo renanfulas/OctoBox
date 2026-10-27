@@ -19,6 +19,7 @@ from operations.forms import (
 )
 from operations.models import ClassType, ClassSession, SessionStatus, WorkoutProgram
 from operations.services.wod_generation_credits import get_or_create_current_ledger
+from operations.services.wod_input_contracts import duplicate_weekday_errors, duplicate_weekday_sections
 from operations.services.wod_paste_parser import load_wod_movement_dictionary
 from operations.services.wod_replication_batches import batch_can_be_undone
 from shared_support.page_payloads import attach_page_payload, build_page_assets, build_page_hero, build_page_payload
@@ -346,7 +347,7 @@ def _build_page_payload(*, current_role_slug):
                 'css/design-system/operations.css',
                 'css/design-system/operations/workspace/wod-smart-paste.css',
             ],
-            js=['js/core/forms.js', 'js/operations/wod_smart_paste.js', 'js/operations/smart_paste_week_monday.js'],
+            js=['js/core/forms.js', 'js/operations/wod_smart_paste.js', 'js/operations/smart_paste_week_monday.js', 'js/operations/wod_input_draft.js'],
         ),
     )
 
@@ -411,12 +412,19 @@ def build_weekly_wod_smart_paste_context(
         parsed_payload,
         week_start=getattr(weekly_plan, 'week_start', None),
     )
+    source_text = getattr(weekly_plan, 'source_text', '') or ''
+    duplicate_errors = duplicate_weekday_errors(source_text)
+    if duplicate_errors:
+        parsed_payload['parse_errors'] = list(dict.fromkeys([
+            *(parsed_payload.get('parse_errors') or []), *duplicate_errors,
+        ]))
     current_unresolved_item = parsed_payload.get('summary', {}).get('current_unresolved_item')
     if projection_preview:
         status_labels = {
             'ready': 'Pronta para receber WOD',
             'skip_no_day_plan': 'Sem treino para este dia',
             'skip_existing_workout': 'WOD existente preservado',
+            'skip_completed': 'Aula concluída preservada',
             'skip_no_compatible_blocks': 'Sem blocos compatíveis',
         }
         class_type_labels = dict(ClassType.choices)
@@ -458,6 +466,7 @@ def build_weekly_wod_smart_paste_context(
         ),
         'smart_paste_warnings': parsed_payload.get('parse_warnings', []),
         'smart_paste_parse_errors': parsed_payload.get('parse_errors', []),
+        'smart_paste_duplicate_weekday_sections': duplicate_weekday_sections(source_text),
         'smart_paste_weekly_normalization': parsed_payload.get('weekly_normalization', {}),
         'smart_paste_unlinked_movements': list_unlinked_projection_movements(projection_preview),
         'smart_paste_summary': parsed_payload.get('summary', {}),

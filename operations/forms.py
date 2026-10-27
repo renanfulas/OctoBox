@@ -21,6 +21,10 @@ from django.utils import timezone
 
 from operations.models import BehaviorCategory
 from operations.models import ClassType
+from operations.workout_publication_follow_up import (
+    FOLLOW_UP_ACTION_KEYS,
+    resolve_follow_up_action_label,
+)
 from shared_support.form_inputs import apply_text_input_attrs
 from student_app.models import StudentExerciseMax, WorkoutBlockKind, WorkoutLoadType, WorkoutOperationalMemoryKind
 from student_app.models import (
@@ -227,12 +231,12 @@ class WorkoutApprovalDecisionForm(forms.Form):
 
 
 class WorkoutFollowUpResolutionForm(forms.Form):
-    action_key = forms.CharField(max_length=64)
-    action_label = forms.CharField(max_length=120)
+    action_key = forms.ChoiceField(choices=tuple((key, key) for key in FOLLOW_UP_ACTION_KEYS))
     result_status = forms.ChoiceField(choices=WORKOUT_FOLLOW_UP_STATUS_CHOICES)
     outcome_note = forms.CharField(max_length=255, required=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, current_role_slug='', **kwargs):
+        self.current_role_slug = current_role_slug
         super().__init__(*args, **kwargs)
         apply_text_input_attrs(
             self.fields['outcome_note'],
@@ -246,7 +250,10 @@ class WorkoutFollowUpResolutionForm(forms.Form):
             'status': status,
             'status_label': dict(WORKOUT_FOLLOW_UP_STATUS_CHOICES).get(status, status),
             'action_key': self.cleaned_data['action_key'],
-            'action_label': self.cleaned_data['action_label'],
+            'action_label': resolve_follow_up_action_label(
+                action_key=self.cleaned_data['action_key'],
+                current_role_slug=self.current_role_slug,
+            ),
             'outcome_note': (self.cleaned_data.get('outcome_note') or '').strip(),
         }
 
@@ -411,6 +418,7 @@ SMART_PASTE_MAX_LINES = 500
 class WeeklyWodSmartPasteForm(forms.Form):
     plan_id = forms.IntegerField(required=False, min_value=1)
     plan_revision = forms.DateTimeField(required=False)
+    plan_version = forms.IntegerField(required=False, min_value=1)
     workout_program = forms.ModelChoiceField(
         queryset=None,
         empty_label='Selecione a modalidade',
@@ -474,6 +482,7 @@ class WeeklyWodSmartPasteForm(forms.Form):
                 'class': 'smart-paste-textarea',
                 'spellcheck': 'false',
                 'aria-describedby': 'smart-paste-source-hint',
+                'data-wod-draft-source': 'true',
             }
         )
 
@@ -554,6 +563,7 @@ class WeeklyWodProjectionForm(forms.Form):
 class WeeklyWodReviewMovementForm(forms.Form):
     plan_id = forms.IntegerField(min_value=1)
     plan_revision = forms.DateTimeField(required=False)
+    plan_version = forms.IntegerField(required=False, min_value=1)
     day_index = forms.IntegerField(min_value=0)
     block_index = forms.IntegerField(min_value=0)
     movement_index = forms.IntegerField(min_value=0)

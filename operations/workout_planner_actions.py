@@ -23,15 +23,18 @@ from .workout_duplication import clone_workout_to_session
 
 
 def find_previous_slot_workout(*, session):
-    previous_session = (
-        ClassSession.objects.select_related('coach', 'workout')
-        .filter(
-            title=session.title,
-            coach_id=session.coach_id,
-            scheduled_at=session.scheduled_at - timedelta(days=7),
-        )
-        .first()
+    previous_sessions = ClassSession.objects.select_related('coach', 'workout').filter(
+        title=session.title,
+        coach_id=session.coach_id,
+        scheduled_at=session.scheduled_at - timedelta(days=7),
     )
+    if session.workout_program_id:
+        previous_sessions = previous_sessions.filter(workout_program_id=session.workout_program_id)
+    else:
+        # Legacy sessions without a canonical program retain their historical
+        # operational-type matching behavior.
+        previous_sessions = previous_sessions.filter(class_type=session.class_type)
+    previous_session = previous_sessions.first()
     if previous_session is None:
         return None
     return getattr(previous_session, 'workout', None)
@@ -62,7 +65,7 @@ __all__ = ['apply_trusted_template_to_session', 'duplicate_previous_slot_workout
 
 
 def apply_trusted_template_to_session(*, actor, template, target_session):
-    if not getattr(template, 'is_active', False):
+    if not getattr(template, 'is_active', False) or getattr(template, 'archived_at', None) is not None:
         return {'ok': False, 'reason': 'template_inactive'}
     if not getattr(template, 'is_trusted', False):
         return {'ok': False, 'reason': 'template_not_trusted'}

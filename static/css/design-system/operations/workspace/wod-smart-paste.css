@@ -1083,6 +1083,27 @@ body[data-theme="dark"] .smart-paste-native-picker {
     margin: 0;
 }
 
+.smart-paste-duplicate-day {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.smart-paste-duplicate-day pre {
+    max-height: 12rem;
+    overflow: auto;
+    margin: 0;
+    padding: 0.7rem;
+    border: 1px solid var(--theme-border-soft);
+    border-radius: 8px;
+    background: var(--theme-surface-secondary);
+    color: var(--theme-text-primary);
+    font: inherit;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
 .coach-wod-form-stack label.smart-paste-normalization-acknowledgement {
     display: flex;
     align-items: flex-start;

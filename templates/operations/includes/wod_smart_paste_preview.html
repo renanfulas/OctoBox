@@ -34,8 +34,16 @@
     <div class="smart-paste-resolution-notice" role="alert" aria-live="assertive">
         <strong>Treino não foi organizado com segurança.</strong>
         <ul>{% for error in smart_paste_parse_errors %}<li>{{ error }}</li>{% endfor %}</ul>
-        <p>Solução: reformule a semana no SmartPlan GPT e cole a resposta completa novamente. Cada bloco precisa indicar um único dia (por exemplo, “SEGUNDA-FEIRA — Força”). Nenhum treino será distribuído até corrigir isso.</p>
-        <a class="button secondary" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener noreferrer">Reformular no SmartPlan GPT ↗</a>
+        {% for conflict in smart_paste_duplicate_weekday_sections %}
+        <div class="smart-paste-duplicate-day">
+            <strong>{{ conflict.label }} aparece em {{ conflict.sections|length }} seções:</strong>
+            {% for section in conflict.sections %}<pre>Linha {{ section.line_number }}
+{{ section.source_text }}</pre>{% endfor %}
+        </div>
+        {% endfor %}
+        <p>Corrija o trecho indicado no texto original e organize novamente. Cada dia deve ter uma única seção; nenhum treino será distribuído enquanto houver conflito.</p>
+        <a class="button secondary" href="#id_source_text">Editar texto original</a>
+        <a class="button tertiary" href="{{ smartplan_gpt_url }}" target="_blank" rel="noopener noreferrer">Reformular no SmartPlan GPT ↗</a>
     </div>
     {% endif %}
     {% if smart_paste_warnings %}
@@ -85,6 +93,7 @@
         {% csrf_token %}
         <input type="hidden" name="action" value="retry_auto_resolution">
         <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
+        <input type="hidden" name="plan_version" value="{{ weekly_plan.revision }}">
         <button class="button secondary" type="submit">Tentar correção automática</button>
         <span class="smart-paste-auto-retry__progress" role="status">Analisando movimentos…</span>
     </form>
@@ -126,6 +135,7 @@
                 <input type="hidden" name="action" value="update_review_item">
                 <input type="hidden" name="review_source" value="queue">
                 <input type="hidden" name="plan_revision" value="{{ weekly_plan.updated_at|date:'c' }}">
+                <input type="hidden" name="plan_version" value="{{ weekly_plan.revision }}">
                 <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
                 <input type="hidden" name="day_index" value="{{ smart_paste_summary.current_unresolved_item.day_index }}">
                 <input type="hidden" name="block_index" value="{{ smart_paste_summary.current_unresolved_item.block_index }}">
@@ -236,6 +246,7 @@
                                             {% csrf_token %}
                                             <input type="hidden" name="action" value="update_review_item">
                                             <input type="hidden" name="plan_revision" value="{{ weekly_plan.updated_at|date:'c' }}">
+                                            <input type="hidden" name="plan_version" value="{{ weekly_plan.revision }}">
                                             <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
                                             <input type="hidden" name="day_index" value="{{ day.day_index }}">
                                             <input type="hidden" name="block_index" value="{{ block.block_index }}">
@@ -280,6 +291,7 @@
         <input type="hidden" name="plan_id" value="{{ weekly_plan.id }}">
         <input type="hidden" name="week_start" value="{{ weekly_plan.week_start|date:'d/m/Y' }}">
         <input type="hidden" name="plan_revision" value="{{ weekly_plan.updated_at|date:'c' }}">
+        <input type="hidden" name="plan_version" value="{{ weekly_plan.revision }}">
         <input type="hidden" name="label" value="{{ weekly_plan.label }}">
         <input type="hidden" name="workout_program" value="{{ weekly_plan.workout_program_id }}">
         <input type="hidden" name="source_text" value="{{ weekly_plan.source_text }}">

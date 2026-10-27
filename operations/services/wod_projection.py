@@ -14,17 +14,23 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from operations.models import ClassSession, ClassType, SessionStatus
+from operations.models import ClassSession, ClassType, SessionStatus, WorkoutProgram
 from student_app.models import (
     PlanBlockKind,
+    DayPlan,
+    PlanBlock,
+    PlanMovement,
     ReplicationBatch,
     SessionWorkout,
     SessionWorkoutBlock,
     SessionWorkoutMovement,
     SessionWorkoutStatus,
+    WeeklyWodPlan,
+    WeeklyWodPlanStatus,
     WorkoutLoadType,
 )
 from operations.workout_support import route_workout_submission
+from operations.services.wod_preview_contracts import lock_workout_policy_for_actor, projection_contract_fingerprint
 
 
 CLASS_TYPE_COMPATIBILITY = {
@@ -180,7 +186,7 @@ def _summarize_load_projection(movement_payload):
         return WorkoutLoadType.FREE, None, ''
 
 
-def build_projection_preview(*, weekly_plan, target_week_start, class_types):
+def build_projection_preview(*, weekly_plan, target_week_start, class_types, exclude_completed=False):
     days = _extract_plan_days(weekly_plan)
     class_types = list(class_types or [ClassType.CROSS])
     filter_class_types = _expand_projection_class_types(class_types)
@@ -212,6 +218,7 @@ def build_projection_preview(*, weekly_plan, target_week_start, class_types):
         'sessions_skipped': 0,
         'sessions_with_existing_workout': 0,
         'sessions_without_day_plan': 0,
+        'sessions_completed_skipped': 0,
         'discarded_blocks': 0,
         'load_notes': 0,
     }
@@ -221,6 +228,18 @@ def build_projection_preview(*, weekly_plan, target_week_start, class_types):
         type_summary.setdefault(session.class_type, {'sessions_found': 0, 'sessions_creatable': 0, 'discarded_blocks': 0})
         type_summary[session.class_type]['sessions_found'] += 1
         session_weekday = timezone.localtime(session.scheduled_at).weekday()
+        if exclude_completed and session.status == SessionStatus.COMPLETED:
+            totals['sessions_completed_skipped'] += 1
+            totals['sessions_skipped'] += 1
+            entries.append({
+                'session_id': session.id, 'session_title': session.title,
+                'session_date_label': timezone.localtime(session.scheduled_at).strftime('%d/%m %H:%M'),
+                'weekday_label': _WEEKDAY_TITLES[session_weekday], 'weekday_index': session_weekday,
+                'class_type': session.class_type, 'status': 'skip_completed',
+                'discarded_blocks': [], 'projection_blocks': [], 'load_projection_notes': [],
+                'reason': 'Aula concluída preservada; nenhum WOD será criado.',
+            })
+            continue
         day_plan = days.get(session_weekday)
         if day_plan is None:
             totals['sessions_without_day_plan'] += 1
@@ -360,28 +379,26 @@ def _parse_reps(reps_spec):
     return None
 
 
-def _projection_request_fingerprint(*, weekly_plan, target_week_start, class_types, actor):
+def _legacy_projection_request_fingerprint(*, weekly_plan, target_week_start, class_types, actor):
+    """Keep direct callers replayable after their first write changes destinations."""
     request_identity = {
         'actor_id': actor.pk,
         'class_types': sorted(set(class_types)),
         'plan_id': weekly_plan.pk,
-        'workout_program_id': getattr(weekly_plan, 'workout_program_id', None),
+        'workout_program_id': weekly_plan.workout_program_id,
         'plan_label': weekly_plan.label,
         'plan_week_start': weekly_plan.week_start.isoformat(),
         'parsed_payload': weekly_plan.parsed_payload or {},
         'target_week_start': target_week_start.isoformat(),
     }
-    serialized = json.dumps(
-        request_identity,
-        sort_keys=True,
-        separators=(',', ':'),
-        ensure_ascii=False,
-        default=str,
-    )
+    serialized = json.dumps(request_identity, sort_keys=True, separators=(',', ':'), ensure_ascii=False, default=str)
     return hashlib.sha256(serialized.encode('utf-8')).hexdigest()
 
 
-def _replay_projection_batch(*, batch, fingerprint, weekly_plan, target_week_start, class_types):
+def _replay_projection_batch(*, batch, fingerprint, weekly_plan, target_week_start, class_types, exclude_completed=False):
+    if (batch.weekly_plan_id != weekly_plan.pk or batch.target_week_start != target_week_start
+            or sorted(set(batch.class_type_filter or [])) != sorted(set(class_types))):
+        raise ValidationError('Esta chave de envio já foi usada para outra semana ou outro treino. Atualize a prévia.')
     if batch.request_fingerprint != fingerprint:
         raise ValidationError('Esta chave de envio já foi usada para outra semana ou outro treino. Atualize a prévia e tente novamente.')
     if batch.undone_at:
@@ -393,6 +410,7 @@ def _replay_projection_batch(*, batch, fingerprint, weekly_plan, target_week_sta
         weekly_plan=weekly_plan,
         target_week_start=target_week_start,
         class_types=class_types,
+        exclude_completed=exclude_completed,
     )
     preview['totals']['sessions_pending_approval'] = batch.session_workouts.filter(
         status=SessionWorkoutStatus.PENDING_APPROVAL,
@@ -405,45 +423,69 @@ def _replay_projection_batch(*, batch, fingerprint, weekly_plan, target_week_sta
 
 
 @transaction.atomic
-def project_plan_to_sessions(*, weekly_plan, target_week_start, class_types, actor, idempotency_key=None):
+def project_plan_to_sessions(*, weekly_plan, target_week_start, class_types, actor, idempotency_key=None,
+                             expected_preview_fingerprint=None, exclude_completed=False):
     # Serialize concurrent distribution attempts for the same scheduled classes.
     # Replays with the same request key return the original batch; independent
     # requests rebuild the preview under lock and skip the committed collision.
     range_start, range_end = _week_range(target_week_start)
-    filter_class_types = _expand_projection_class_types(class_types)
-    list(
+    lock_workout_policy_for_actor(actor)
+    weekly_plan = WeeklyWodPlan.objects.select_for_update().get(pk=weekly_plan.pk)
+    if expected_preview_fingerprint and (weekly_plan.status != WeeklyWodPlanStatus.CONFIRMED or weekly_plan.created_by_id != actor.pk):
+        raise ValidationError('O plano semanal não está confirmado para este autor.')
+    if weekly_plan.workout_program_id:
+        list(WorkoutProgram.objects.select_for_update().filter(pk=weekly_plan.workout_program_id).values_list('id', flat=True))
+    day_ids = list(DayPlan.objects.select_for_update().filter(weekly_plan=weekly_plan).order_by('id').values_list('id', flat=True))
+    block_ids = list(PlanBlock.objects.select_for_update().filter(day_plan_id__in=day_ids).order_by('id').values_list('id', flat=True))
+    list(PlanMovement.objects.select_for_update().filter(plan_block_id__in=block_ids).order_by('id').values_list('id', flat=True))
+    locked_session_ids = list(
         _session_track_filter(
             ClassSession.objects.select_for_update().filter(
             scheduled_at__gte=range_start,
             scheduled_at__lt=range_end,
             ), weekly_plan, class_types,
         )
-        .order_by('scheduled_at', 'id')
+        .order_by('id')
         .values_list('id', flat=True)
     )
-    fingerprint = _projection_request_fingerprint(
-        weekly_plan=weekly_plan,
-        target_week_start=target_week_start,
-        class_types=class_types,
-        actor=actor,
-    )
+    list(SessionWorkout.objects.select_for_update().filter(session_id__in=locked_session_ids).order_by('session_id').values_list('id', flat=True))
     if idempotency_key:
         existing_batch = ReplicationBatch.objects.select_for_update().filter(
             idempotency_key=idempotency_key,
         ).first()
         if existing_batch:
+            if existing_batch.created_by_id != actor.pk:
+                raise ValidationError('Esta chave de envio pertence a outro autor.')
+            fingerprint = expected_preview_fingerprint or _legacy_projection_request_fingerprint(
+                weekly_plan=weekly_plan, target_week_start=target_week_start,
+                class_types=class_types, actor=actor,
+            )
             return _replay_projection_batch(
                 batch=existing_batch,
                 fingerprint=fingerprint,
                 weekly_plan=weekly_plan,
                 target_week_start=target_week_start,
                 class_types=class_types,
+                exclude_completed=exclude_completed,
             )
     preview = build_projection_preview(
         weekly_plan=weekly_plan,
         target_week_start=target_week_start,
         class_types=class_types,
+        exclude_completed=exclude_completed,
     )
+    fingerprint = (
+        projection_contract_fingerprint(
+            weekly_plan=weekly_plan, target_week_start=target_week_start,
+            class_types=class_types, actor=actor, preview=preview,
+        )
+        if expected_preview_fingerprint else _legacy_projection_request_fingerprint(
+            weekly_plan=weekly_plan, target_week_start=target_week_start,
+            class_types=class_types, actor=actor,
+        )
+    )
+    if expected_preview_fingerprint and fingerprint != expected_preview_fingerprint:
+        raise ValidationError('Aulas, plano ou política mudaram depois da prévia. Atualize a prévia antes de distribuir.')
     if not preview['totals']['sessions_creatable']:
         raise ValidationError('Nenhuma aula nova esta pronta para receber WOD. Atualize a previa antes de distribuir.')
 
@@ -467,12 +509,15 @@ def project_plan_to_sessions(*, weekly_plan, target_week_start, class_types, act
         ).first()
         if not existing_batch:
             raise
+        if existing_batch.created_by_id != actor.pk:
+            raise ValidationError('Esta chave de envio pertence a outro autor.')
         return _replay_projection_batch(
             batch=existing_batch,
             fingerprint=fingerprint,
             weekly_plan=weekly_plan,
             target_week_start=target_week_start,
             class_types=class_types,
+            exclude_completed=exclude_completed,
         )
     created_count = 0
     pending_approval_count = 0
