@@ -8,11 +8,12 @@ POR QUE ELE EXISTE:
 import hashlib
 import hmac
 import json
+import pytest
 from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from django.test import RequestFactory, SimpleTestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.utils import timezone
 
 from api.v1.integrations_views import ResendPaymentNotificationWebhookView, WhatsAppPollWebhookView
@@ -24,7 +25,8 @@ from student_identity.resend_webhooks import ResendWebhookHeaders
 
 
 @override_settings(ALLOWED_HOSTS=['testserver'])
-class ApiV1IntegrationsViewsTests(SimpleTestCase):
+@pytest.mark.django_db(transaction=True)
+class ApiV1IntegrationsViewsTests(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
