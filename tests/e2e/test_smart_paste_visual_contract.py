@@ -43,8 +43,9 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from playwright.sync_api import Browser, Page, expect
 
-from operations.models import ClassSession, ClassType, WorkoutTemplate
-from student_app.models import ReplicationBatch, SessionWorkout, SessionWorkoutStatus, WeeklyWodPlan, WeeklyWodPlanStatus
+from operations.models import ClassSession, ClassType, SessionStatus, WorkoutTemplate
+from operations.workout_program_catalog import ensure_default_workout_programs
+from student_app.models import ReplicationBatch, SessionWorkout, SessionWorkoutStatus, WeeklyWodPlan, WeeklyWodPlanStatus, WodInputDraft
 from student_identity.infrastructure.session import build_student_session_value
 from student_identity.models import StudentBoxMembership, StudentBoxMembershipStatus, StudentIdentity, StudentIdentityProvider, StudentIdentityStatus
 from students.models import Student
@@ -174,10 +175,11 @@ def test_calendar_selection_keeps_year_and_snaps_to_monday(page: Page, live_serv
     ('mouse', True), ('mouse', False), ('touch', True), ('touch', False), ('keyboard', True),
 ))
 def test_filled_calendar_reopens_after_cancel_and_same_date(
-    page: Page, live_server, e2e_owner_credentials, viewport, supports_show_picker, interaction,
+    page: Page, browser_name: str, live_server, e2e_owner_credentials, viewport, supports_show_picker, interaction,
 ):
     """Abrir/fechar com data preenchida não pode perder o próximo clique real."""
     actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    _login(page, live_server.url, e2e_owner_credentials)
     today = timezone.localdate()
     monday = today + timedelta(days=(7 - today.weekday()) % 7)
     ClassSession.objects.create(
@@ -185,7 +187,6 @@ def test_filled_calendar_reopens_after_cancel_and_same_date(
         scheduled_at=timezone.make_aware(datetime.combine(monday + timedelta(weeks=8), datetime.min.time()).replace(hour=12)),
         duration_minutes=60, capacity=16, class_type=ClassType.CROSS,
     )
-    _login(page, live_server.url, e2e_owner_credentials)
     page.set_viewport_size(viewport)
     page.goto(f'{live_server.url}/operacao/wod/paste/')
     if not supports_show_picker:
@@ -219,8 +220,18 @@ def test_filled_calendar_reopens_after_cancel_and_same_date(
     page.keyboard.press('Enter')  # confirmar a data existente também precisa permitir reabrir
     expect(field).to_have_value(original)
     open_calendar()
-    page.keyboard.press('ArrowDown')
-    page.keyboard.press('Enter')
+    if browser_name == 'webkit':
+        # Playwright WebKit não expõe a superfície nativa do input[type=date].
+        # Dispare o mesmo change que o picker do SO emite; a abertura/cancelamento
+        # continua sendo exercitada, e o picker real fica no roteiro de iPhone.
+        picker = page.locator('#smart-paste-week-start-picker')
+        picker.evaluate(
+            "(el, value) => { el.value = value; el.dispatchEvent(new Event('change', { bubbles: true })); }",
+            (original_date + timedelta(days=7)).isoformat(),
+        )
+    else:
+        page.keyboard.press('ArrowDown')
+        page.keyboard.press('Enter')
     expect(field).to_have_value((original_date + timedelta(days=7)).strftime('%d/%m/%Y'))
     if interaction == 'touch' and supports_show_picker and viewport == VIEWPORTS['mobile']:
         screenshot_dir = Path('tmp') / 'visual_contract' / 'smart_paste'
@@ -233,6 +244,7 @@ def test_filled_calendar_reopens_after_cancel_and_same_date(
 def test_planner_day_apply_modes_can_be_selected_with_keyboard(page: Page, live_server, e2e_owner_credentials):
     """Os modos de aplicação são rádios nativos acessíveis por Tab e setas."""
     actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    ensure_default_workout_programs()
     WorkoutTemplate.objects.create(name='Template de teclado E2E', created_by=actor, is_active=True)
 
     _login(page, live_server.url, e2e_owner_credentials)
@@ -240,12 +252,13 @@ def test_planner_day_apply_modes_can_be_selected_with_keyboard(page: Page, live_
     page.locator('[data-wod-day-apply-trigger]').first.click()
     dialog = page.locator('[data-wod-day-apply-dialog]')
     expect(dialog).to_be_visible()
-    assert dialog.get_attribute('data-apply-url') == '/operacao/wod/planner/dia/aplicar/'
+    assert dialog.get_attribute('data-apply-url') == '/operacao/wod/planner/dia/programa/confirmar/'
 
+    program = dialog.locator('[data-wod-day-apply-program]')
     replace_empty = dialog.locator('input[name="wod_day_apply_mode"][value="replace_empty"]')
     overwrite = dialog.locator('input[name="wod_day_apply_mode"][value="overwrite"]')
-    page.keyboard.press('Tab')
-    expect(dialog.locator('[data-wod-day-apply-class-type]')).to_be_focused()
+    program.select_option(label='CrossFit')
+    program.focus()
     page.keyboard.press('Tab')
     expect(replace_empty).to_be_focused()
     page.keyboard.press('ArrowDown')
@@ -404,10 +417,11 @@ def test_smart_paste_visual_baseline_contract(
         assert page.locator('.smart-paste-card').first.evaluate('el => getComputedStyle(el).display') == 'flex'
         assert _horizontal_overflow(page) <= 1, "overflow horizontal na tela vazia do Smart Paste"
 
-        page.locator("textarea[name=source_text]").fill(
-            "Segunda:\nAquecimento\n3 rounds\n10 agachamnto\n8 push up\n5 pull up\n"
-        )
+        source_text = "Segunda:\nAquecimento\n3 rounds\n10 agachamnto\n8 push up\n5 pull up\n"
+        page.locator("textarea[name=source_text]").fill(source_text)
         page.locator('select[name="workout_program"]').select_option(label='CrossFit')
+        # Alterar o escopo do rascunho não pode descartar texto ainda local.
+        assert page.locator("textarea[name=source_text]").input_value() == source_text
         page.locator("form.smart-paste-form button[type=submit]").click()
         page.wait_for_load_state("networkidle")
         assert _horizontal_overflow(page) <= 1, "overflow horizontal apos organizar o texto"
@@ -467,6 +481,63 @@ def test_smart_paste_visual_baseline_contract(
 
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
+def test_weekly_draft_survives_initial_program_selection_and_reload(page: Page, live_server, e2e_owner_credentials):
+    """Texto digitado antes da modalidade é salvo no escopo escolhido e volta após reload."""
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.goto(f'{live_server.url}/operacao/wod/paste/')
+
+    source = 'Segunda\nForça\n5x5 front squat 75%'
+    page.locator('textarea[name="source_text"]').fill(source)
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
+    expect(page.locator('[data-wod-draft-status]')).to_contain_text('Rascunho salvo no servidor', timeout=10_000)
+
+    page.reload()
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
+    expect(page.locator('textarea[name="source_text"]')).to_have_value(source)
+    expect(page.locator('[data-wod-draft-status]')).to_contain_text('Rascunho recuperado do servidor', timeout=10_000)
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+def test_weekly_draft_retries_after_committed_save_response_is_lost(page: Page, live_server, e2e_owner_credentials):
+    """Retry reutiliza request_id depois de commit com resposta perdida e sobrevive ao reload."""
+    _login(page, live_server.url, e2e_owner_credentials)
+    page.goto(f'{live_server.url}/operacao/wod/paste/')
+
+    source = 'Segunda\nForça\n5x5 front squat 75% — retry de rede'
+    field = page.locator('textarea[name="source_text"]')
+    field.fill(source)
+    response = {}
+
+    def commit_then_drop_save(route):
+        if route.request.method != 'POST' or route.request.post_data_json.get('action') != 'save':
+            route.continue_()
+            return
+        upstream = route.fetch()
+        response['status'] = upstream.status
+        response['request_id'] = route.request.post_data_json['request_id']
+        route.abort(error_code='failed')
+
+    page.route('**/operacao/wod/rascunho/', commit_then_drop_save)
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
+    expect(page.locator('[data-wod-draft-status]')).to_contain_text('O texto permanece neste campo', timeout=10_000)
+    assert response.get('status') == 200, 'o servidor deve ter commitado o rascunho antes da resposta ser descartada'
+    assert WodInputDraft.objects.filter(create_request_id=response['request_id']).count() == 1
+
+    page.unroute('**/operacao/wod/rascunho/', commit_then_drop_save)
+    field.blur()  # dispara retry com o mesmo request_id após a incerteza de rede
+    expect(page.locator('[data-wod-draft-status]')).to_contain_text('Rascunho salvo no servidor', timeout=10_000)
+    assert WodInputDraft.objects.filter(create_request_id=response['request_id']).count() == 1
+    assert WodInputDraft.objects.filter(source_text=source).count() == 1
+
+    page.reload()
+    page.locator('select[name="workout_program"]').select_option(label='CrossFit')
+    expect(field).to_have_value(source, timeout=10_000)
+    expect(page.locator('[data-wod-draft-status]')).to_contain_text('Rascunho recuperado do servidor', timeout=10_000)
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
 def test_iphone_dialog_review_survives_htmx_swap(browser: Browser, live_server, e2e_owner_credentials):
     """A revisão feita no modal portado volta ao preview antes do swap HTMX."""
     context = browser.new_context(
@@ -507,7 +578,7 @@ def test_iphone_dialog_review_survives_htmx_swap(browser: Browser, live_server, 
     (('crossfit', 'CrossFit', ClassType.CROSS), ('hyrox', 'HYROX', ClassType.HYROX)),
 )
 def test_smart_paste_golden_path_end_to_end(
-    page: Page, live_server, e2e_owner_credentials, program_slug, program_label, class_type,
+    page: Page, browser_name: str, live_server, e2e_owner_credentials, program_slug, program_label, class_type,
 ):
     """
     Fluxo principal ponta a ponta: colar um treino limpo (sem pendência de
@@ -570,14 +641,20 @@ def test_smart_paste_golden_path_end_to_end(
     for offset in (7, 14):
         page.get_by_role('button', name='Voltar sem distribuir').click()
         page.locator('.smart-paste-target-week-override summary').click()
-        trigger = page.locator('#smart-paste-projection-panel .smart-paste-date-trigger')
-        trigger.scroll_into_view_if_needed()
-        bounds = trigger.bounding_box()
-        assert bounds
-        page.mouse.click(bounds['x'] + bounds['width'] / 2, bounds['y'] + bounds['height'] / 2)
-        page.keyboard.press('ArrowDown')
-        page.keyboard.press('Enter')
         expected_date = selected_week_start + timedelta(days=offset)
+        if browser_name == 'webkit':
+            page.locator('#smart-paste-target-week-picker').evaluate(
+                "(el, value) => { el.value = value; el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                expected_date.isoformat(),
+            )
+        else:
+            trigger = page.locator('#smart-paste-projection-panel .smart-paste-date-trigger')
+            trigger.scroll_into_view_if_needed()
+            bounds = trigger.bounding_box()
+            assert bounds
+            page.mouse.click(bounds['x'] + bounds['width'] / 2, bounds['y'] + bounds['height'] / 2)
+            page.keyboard.press('ArrowDown')
+            page.keyboard.press('Enter')
         expect(page.locator('#id_target_week_start')).to_have_value(f'{expected_date:%d/%m/%Y}')
         expect(page.locator('#smart-paste-target-week-display')).to_have_text(f'{expected_date:%d/%m/%Y}')
         page.locator('#smart-paste-projection-panel form').first.locator('button[type="submit"]').click()
@@ -844,15 +921,15 @@ def test_smart_paste_previews_distribution_before_planner_and_keeps_approval_gat
     confirmation = approve_form.locator('input[name="confirm_sensitive_changes"]')
     if confirmation.count():
         confirmation.check()
-    with page.expect_response(
-        lambda response: '/approve/' in response.url and response.request.method == 'POST',
-        timeout=15_000,
-    ) as approval_response:
-        approve_form.get_by_role('button', name='Aprovar e publicar').click()
+    with page.expect_navigation(wait_until='networkidle', timeout=15_000):
+        with page.expect_response(
+            lambda response: '/approve/' in response.url and response.request.method == 'POST',
+            timeout=15_000,
+        ) as approval_response:
+            approve_form.get_by_role('button', name='Aprovar e publicar').click()
     assert approval_response.value.status in (200, 302), (
         f'aprovação retornou HTTP {approval_response.value.status}'
     )
-    page.wait_for_load_state('networkidle')
     workout.refresh_from_db()
     assert workout.status == SessionWorkoutStatus.PUBLISHED
 
@@ -947,16 +1024,21 @@ def test_custom_movement_requires_explicit_ack_in_mobile_distribution_dialog(
     e2e_owner_credentials,
 ):
     actor = get_user_model().objects.get(username=e2e_owner_credentials['username'])
+    _login(page, live_server.url, e2e_owner_credentials)
     today = timezone.localdate()
     target_monday = today + timedelta(days=(7 - today.weekday()) % 7)
     session = ClassSession.objects.create(
         title='Smart Paste Custom E2E',
         class_type=ClassType.CROSS,
         coach=actor,
+        status=SessionStatus.SCHEDULED,
         scheduled_at=timezone.make_aware(datetime.combine(target_monday, datetime.min.time()).replace(hour=11)),
         duration_minutes=60,
         capacity=16,
     )
+    assert session.status == SessionStatus.SCHEDULED
+    session.refresh_from_db()
+    assert session.status == SessionStatus.SCHEDULED
     plan = WeeklyWodPlan.objects.create(
         week_start=target_monday,
         label='Semana com movimento personalizado',
@@ -982,10 +1064,11 @@ def test_custom_movement_requires_explicit_ack_in_mobile_distribution_dialog(
         status=WeeklyWodPlanStatus.CONFIRMED,
     )
 
-    _login(page, live_server.url, e2e_owner_credentials)
     page.set_viewport_size({'width': 375, 'height': 667})
     page.goto(f'{live_server.url}/operacao/wod/paste/')
     page.wait_for_load_state('networkidle')
+    session.refresh_from_db()
+    assert session.status == SessionStatus.SCHEDULED
     expect(page.locator('#smart-paste-projection-panel')).to_be_visible()
     page.locator('#smart-paste-projection-panel form').first.locator('button[type="submit"]').click()
 
@@ -1141,8 +1224,8 @@ def test_weekly_normalization_review_is_explicit_and_mobile_safe(
     label_field.fill(original_label)
     expect(confirm).to_be_enabled()
     review.locator('input[type="checkbox"]').check()
-    confirm.click()
-    page.wait_for_load_state('networkidle')
+    with page.expect_navigation(wait_until='load'):
+        confirm.click()
     plan = WeeklyWodPlan.objects.get(created_by=actor)
     assert plan.status == WeeklyWodPlanStatus.CONFIRMED
     assert plan.parsed_payload['weekly_normalization']['status'] == 'coach_accepted'
