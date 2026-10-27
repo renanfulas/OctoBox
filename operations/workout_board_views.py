@@ -14,7 +14,6 @@ from django.core import signing
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import FormView
 
@@ -45,8 +44,7 @@ from operations.forms import (
     WorkoutCreateStoredTemplateForm,
     WorkoutStudentRmQuickForm,
 )
-from operations.services.wod_paste_parser import load_wod_movement_dictionary, parse_weekly_wod_text, resolve_movement_slug
-from operations.services.wod_input_contracts import duplicate_weekday_errors
+from operations.services.wod_paste_parser import load_wod_movement_dictionary, parse_weekly_wod_text
 from operations.services.wod_paste_freeform_parser import _freeform_should_take_over, parse_weekly_wod_freeform
 from operations.services.wod_slug_resolver import apply_llm_slug_resolution
 from operations.services.wod_weekly_normalizer import normalize_weekly_wod
@@ -56,6 +54,12 @@ from operations.services.wod_projection import build_projection_preview, project
 from operations.services.wod_preview_contracts import issue_projection_token, read_projection_token
 from operations.services.wod_drafts import link_weekly_draft
 from operations.services.wod_weekly_revision import save_weekly_plan_revision
+from operations.services.wod_weekly_view_helpers import (
+    _blocking_parse_errors, _clear_unknown_review_slugs, duplicate_weekday_errors,
+    _first_form_error, _projection_guard_error, resolve_movement_slug,
+    _resolve_known_weekly_movement_slugs,
+    _smartplan_v2_uncertainty_errors,
+)
 from operations.services.wod_replication_batches import undo_replication_batch
 from operations.workout_templates import create_persisted_template_from_weekly_plan
 from student_app.models import ReplicationBatch, WeeklyWodPlan, WeeklyWodPlanStatus
@@ -71,112 +75,6 @@ SMART_PASTE_AUTO_CLASS_TYPES = (
     ClassType.STRENGTH,
     ClassType.OPEN_GYM,
 )
-
-
-def _first_form_error(form, fallback_message):
-    if not form.errors:
-        return fallback_message
-    first_errors = next(iter(form.errors.values()), [])
-    if first_errors:
-        return first_errors[0]
-    return fallback_message
-
-
-def _blocking_parse_errors(parsed_payload, source_text=''):
-    """Return format errors without treating SmartPlan's advisory warnings as fatal."""
-    errors = list(parsed_payload.get('parse_errors') or [])
-    errors.extend(duplicate_weekday_errors(source_text))
-    if parsed_payload.get('source_format'):
-        return list(dict.fromkeys(errors))
-    errors.extend(
-        (
-            f"Linha {warning.get('line_number', '?')}: "
-            f"{warning.get('message', 'trecho não reconhecido')} — "
-            f"“{warning.get('line_text', '')}”"
-        )
-        for warning in parsed_payload.get('parse_warnings') or []
-    )
-    return list(dict.fromkeys(errors))
-
-
-def _smartplan_v2_uncertainty_errors(normalized_text):
-    """Require the coach to resolve explicit uncertainty markers from SmartPlan."""
-    errors = []
-    for line in (normalized_text or '').splitlines():
-        if re.search(r'\[\?[^\]]*\]', line):
-            excerpt = re.sub(r'^\s*(?:[▸•*-]\s*)?', '', line).strip()
-            if excerpt:
-                errors.append(
-                    f'Especifique o movimento ou a prescrição marcada como dúvida: “{excerpt}”.'
-                )
-    return errors
-
-
-def _projection_guard_error(preview, cleaned_projection):
-    """Mensagem acionavel quando nao ha aulas para projetar; None se pode prosseguir.
-
-    Distingue 'nenhuma aula na semana' (precisa cadastrar a grade) de 'nenhuma aula do(s)
-    tipo(s) selecionado(s)' (precisa ajustar o filtro ou criar aulas desse tipo).
-    """
-    week_label = cleaned_projection['target_week_start'].strftime('%d/%m/%Y')
-    grade_path = reverse('class-grid')
-    if preview.get('sessions_in_week_total', 0) == 0:
-        return (
-            f'Nenhuma aula cadastrada na semana de {week_label}. '
-            f'Cadastre a grade em Grade de aulas ({grade_path}) antes de projetar.'
-        )
-    if (
-        preview.get('totals', {}).get('sessions_found', 0) == 0
-        and preview.get('sessions_canceled_selected_total', 0) > 0
-    ):
-        canceled_count = preview['sessions_canceled_selected_total']
-        return (
-            f'{canceled_count} aula(s) do(s) tipo(s) selecionado(s) na semana de {week_label} '
-            f'estão canceladas e não receberão WOD. Reative essas aulas ou ajuste os tipos '
-            f'em Grade de aulas ({grade_path}) antes de projetar.'
-        )
-    if preview.get('sessions_active_in_week_total', 0) == 0:
-        canceled_count = preview.get('sessions_canceled_total', 0)
-        return (
-            f'As {canceled_count} aula(s) cadastrada(s) na semana de {week_label} '
-            f'estão canceladas e não receberão WOD. Reative as aulas ou ajuste a grade '
-            f'em Grade de aulas ({grade_path}) antes de projetar.'
-        )
-    if preview.get('totals', {}).get('sessions_found', 0) == 0:
-        labels = ', '.join(str(ClassType(value).label) for value in cleaned_projection['class_types'])
-        return (
-            f'Nenhuma aula do(s) tipo(s) {labels} na semana de {week_label}. '
-            f'Ajuste os tipos de aula ou cadastre aulas desse tipo na Grade de aulas ({grade_path}).'
-        )
-    return None
-
-
-def _clear_unknown_review_slugs(parsed_payload, slug_dictionary):
-    """Reabre slugs legados digitados fora do catálogo para Haiku ou revisão manual."""
-    valid_slugs = {slug for slug, _aliases in slug_dictionary}
-    valid_slugs.add('custom')
-    for day in parsed_payload.get('days', []):
-        for block in day.get('blocks', []):
-            for movement in block.get('movements', []):
-                slug = (movement.get('movement_slug') or '').strip()
-                if slug and slug not in valid_slugs:
-                    movement['movement_slug'] = ''
-
-
-def _resolve_known_weekly_movement_slugs(parsed_payload):
-    """Resolve exact catalog aliases locally before paying for Haiku slug review.
-
-    The structural normalizer intentionally leaves every slug empty. Recovering a
-    broken week must not turn every already-known exercise into an LLM candidate.
-    """
-    for day in parsed_payload.get('days', []):
-        for block in day.get('blocks', []):
-            for movement in block.get('movements', []):
-                if movement.get('movement_slug'):
-                    continue
-                slug = resolve_movement_slug(movement.get('movement_label_raw') or '')
-                if slug:
-                    movement['movement_slug'] = slug
 
 
 class WorkoutApprovalBoardView(OperationBaseView):
@@ -887,7 +785,7 @@ class WorkoutSmartPasteView(OperationBaseView):
                 parsed['parse_errors'] = list(dict.fromkeys([*(parsed.get('parse_errors') or []), *duplicate_errors]))
             if not _blocking_parse_errors(parsed, source_text):
                 slug_dictionary = load_wod_movement_dictionary()
-                _resolve_known_weekly_movement_slugs(parsed)
+                _resolve_known_weekly_movement_slugs(parsed, resolver=resolve_movement_slug)
                 apply_llm_slug_resolution(parsed, slug_dictionary)
             plan.parsed_payload = parsed
         plan.created_by = plan.created_by or request.user

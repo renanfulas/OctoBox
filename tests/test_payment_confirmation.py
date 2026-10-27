@@ -204,7 +204,9 @@ class PaymentConfirmationOnReconcileTests(TestCase):
     def test_already_paid_does_not_reconfirm(self, notify_mock):
         pid, cents = self._make_tenant_payment()
 
-        route_payment_webhook_event(self._event(event_id='evt_c1', payment_id=pid, amount_cents=cents))
+        _route_and_join_background_threads(
+            self._event(event_id='evt_c1', payment_id=pid, amount_cents=cents)
+        )
         notify_mock.reset_mock()
         route_payment_webhook_event(self._event(event_id='evt_c2', payment_id=pid, amount_cents=cents))
 
