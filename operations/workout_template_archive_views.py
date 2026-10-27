@@ -43,6 +43,9 @@ class WorkoutTemplateArchiveView(OperationBaseView, View):
         except TEMPLATE_STORAGE_EXCEPTIONS:
             messages.warning(request, 'Base de templates indisponível. Rode as migrations.')
             return redirect('workout-template-management')
+        if request.user.groups.filter(name=ROLE_COACH).exists() and template.created_by_id != request.user.id:
+            messages.error(request, 'Coach so pode gerenciar templates criados por ele.')
+            return redirect('workout-template-management')
 
         archive_template(template=template, actor=request.user)
         messages.success(request, f'"{template.name}" arquivado. Recuperável por 30 dias.')
@@ -76,6 +79,9 @@ class WorkoutTemplateRestoreView(OperationBaseView, View):
             template = get_object_or_404(WorkoutTemplate, pk=template_id, archived_at__isnull=False)
         except TEMPLATE_STORAGE_EXCEPTIONS:
             messages.warning(request, 'Base de templates indisponível. Rode as migrations.')
+            return redirect('workout-template-management')
+        if request.user.groups.filter(name=ROLE_COACH).exists() and template.created_by_id != request.user.id:
+            messages.error(request, 'Coach so pode gerenciar templates criados por ele.')
             return redirect('workout-template-management')
 
         restore_template(template=template)
