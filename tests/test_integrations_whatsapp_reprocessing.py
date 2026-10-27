@@ -1,10 +1,6 @@
-"""
-ARQUIVO: testes do reprocessamento de webhooks vencidos.
+"""Pure tests for tenant-aware WhatsApp poll retries and legacy containment."""
 
-POR QUE ELE EXISTE:
-- garante a simetria do corredor de retries para `WebhookEvent.next_retry_at`.
-"""
-
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -18,13 +14,20 @@ class IntegrationsWhatsAppReprocessingTests(SimpleTestCase):
     @patch('integrations.whatsapp.reprocessing.record_retry_sweep')
     @patch('integrations.whatsapp.reprocessing.get_alert_siren_defense_policy')
     @patch('integrations.whatsapp.reprocessing.WebhookEvent.objects.filter')
-    def test_reprocess_due_webhook_events_contains_queue_when_alert_siren_is_high(
+    @patch('integrations.whatsapp.reprocessing.WhatsAppPollWebhookIntent.objects.filter')
+    @patch('integrations.whatsapp.reprocessing.Box.objects.filter')
+    @patch('integrations.whatsapp.reprocessing.schema_context', return_value=nullcontext())
+    def test_retries_are_contained_when_alert_siren_is_high(
         self,
-        webhook_filter_mock,
+        _schema_context_mock,
+        box_filter_mock,
+        intent_filter_mock,
+        legacy_filter_mock,
         defense_policy_mock,
         record_retry_sweep_mock,
     ):
-        webhook_filter_mock.return_value.count.return_value = 3
+        box_filter_mock.return_value.only.return_value.order_by.return_value = []
+        legacy_filter_mock.return_value.count.return_value = 3
         defense_policy_mock.return_value = {
             'level': 'high',
             'pause_webhook_retries': True,
@@ -33,38 +36,44 @@ class IntegrationsWhatsAppReprocessingTests(SimpleTestCase):
 
         result = reprocess_due_webhook_events(
             limit=10,
-            now=datetime(2026, 4, 16, 12, 1, tzinfo=timezone.utc),
+            now=datetime(2026, 10, 23, 12, 1, tzinfo=timezone.utc),
         )
 
         self.assertEqual(result['processed_count'], 0)
+        self.assertEqual(result['legacy_unrouted_count'], 3)
         self.assertEqual(result['skipped'][0]['reason'], 'alert-siren-contained')
+        intent_filter_mock.assert_not_called()
         record_retry_sweep_mock.assert_called_once()
 
     @patch('integrations.whatsapp.reprocessing.record_retry_sweep')
     @patch('integrations.whatsapp.reprocessing.get_alert_siren_defense_policy')
     @patch('integrations.whatsapp.reprocessing.process_poll_vote_webhook')
     @patch('integrations.whatsapp.reprocessing.WebhookEvent.objects.filter')
-    def test_reprocess_due_webhook_events_processes_supported_payload(
+    @patch('integrations.whatsapp.reprocessing.WhatsAppPollWebhookIntent.objects.filter')
+    @patch('integrations.whatsapp.reprocessing.Box.objects.filter')
+    @patch('integrations.whatsapp.reprocessing.schema_context', return_value=nullcontext())
+    def test_retries_intent_inside_its_box_scope(
         self,
-        webhook_filter_mock,
+        _schema_context_mock,
+        box_filter_mock,
+        intent_filter_mock,
+        legacy_filter_mock,
         process_poll_vote_webhook_mock,
         defense_policy_mock,
         record_retry_sweep_mock,
     ):
-        due_event = SimpleNamespace(
+        box = SimpleNamespace(schema_name='box_alpha')
+        box_filter_mock.return_value.only.return_value.order_by.return_value = [box]
+        intent = SimpleNamespace(
             event_id='evt-1',
-            payload={
-                'kind': 'poll_vote',
-                'raw_payload': {
-                    'voter_phone': '+5511999999999',
-                    'poll_name': 'Check in - 23.MAR',
-                    'option_text': '18h',
-                    'event_id': 'evt-1',
-                },
-            },
+            phone='+5511999999999',
+            poll_title='Check in - 23.MAR',
+            option_voted='18h',
         )
-        webhook_filter_mock.return_value.count.return_value = 1
-        webhook_filter_mock.return_value.order_by.return_value.__getitem__.return_value = [due_event]
+        queryset = intent_filter_mock.return_value.order_by.return_value
+        queryset.count.return_value = 1
+        queryset.__getitem__.return_value = [intent]
+        legacy_filter_mock.return_value.count.return_value = 0
         defense_policy_mock.return_value = {
             'level': 'silent',
             'pause_webhook_retries': False,
@@ -78,28 +87,34 @@ class IntegrationsWhatsAppReprocessingTests(SimpleTestCase):
 
         result = reprocess_due_webhook_events(
             limit=10,
-            now=datetime(2026, 4, 16, 12, 1, tzinfo=timezone.utc),
+            now=datetime(2026, 10, 23, 12, 1, tzinfo=timezone.utc),
         )
 
         self.assertEqual(result['processed_count'], 1)
+        self.assertEqual(result['processed'][0]['tenant_schema'], 'box_alpha')
         self.assertEqual(result['processed'][0]['event_id'], 'evt-1')
+        call = process_poll_vote_webhook_mock.call_args.kwargs
+        self.assertEqual(call['tenant_schema'], 'box_alpha')
+        self.assertEqual(call['poll_vote'].event_id, 'evt-1')
         record_retry_sweep_mock.assert_called_once()
 
     @patch('integrations.whatsapp.reprocessing.record_retry_sweep')
     @patch('integrations.whatsapp.reprocessing.get_alert_siren_defense_policy')
     @patch('integrations.whatsapp.reprocessing.WebhookEvent.objects.filter')
-    def test_reprocess_due_webhook_events_skips_unsupported_payload(
+    @patch('integrations.whatsapp.reprocessing.WhatsAppPollWebhookIntent.objects.filter')
+    @patch('integrations.whatsapp.reprocessing.Box.objects.filter')
+    @patch('integrations.whatsapp.reprocessing.schema_context', return_value=nullcontext())
+    def test_legacy_public_event_is_counted_but_never_routed_by_guess(
         self,
-        webhook_filter_mock,
+        _schema_context_mock,
+        box_filter_mock,
+        intent_filter_mock,
+        legacy_filter_mock,
         defense_policy_mock,
         record_retry_sweep_mock,
     ):
-        due_event = SimpleNamespace(
-            event_id='evt-2',
-            payload={'kind': 'unknown'},
-        )
-        webhook_filter_mock.return_value.count.return_value = 1
-        webhook_filter_mock.return_value.order_by.return_value.__getitem__.return_value = [due_event]
+        box_filter_mock.return_value.only.return_value.order_by.return_value = []
+        legacy_filter_mock.return_value.count.return_value = 1
         defense_policy_mock.return_value = {
             'level': 'silent',
             'pause_webhook_retries': False,
@@ -108,9 +123,11 @@ class IntegrationsWhatsAppReprocessingTests(SimpleTestCase):
 
         result = reprocess_due_webhook_events(
             limit=10,
-            now=datetime(2026, 4, 16, 12, 1, tzinfo=timezone.utc),
+            now=datetime(2026, 10, 23, 12, 1, tzinfo=timezone.utc),
         )
 
         self.assertEqual(result['processed_count'], 0)
-        self.assertEqual(result['skipped'][0]['reason'], 'unsupported-or-incomplete-payload')
+        self.assertEqual(result['legacy_unrouted_count'], 1)
+        self.assertEqual(result['skipped'][0]['reason'], 'legacy-event-without-tenant-route')
+        intent_filter_mock.assert_not_called()
         record_retry_sweep_mock.assert_called_once()
