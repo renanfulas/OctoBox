@@ -1,6 +1,9 @@
 from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
+import base64
+import hashlib
+import hmac
 import json
 from threading import Barrier
 from unittest.mock import patch
@@ -10,6 +13,7 @@ import pytest
 from django.db import close_old_connections
 from django.db import transaction
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 from django_tenants.utils import schema_context
 
@@ -18,7 +22,10 @@ from finance.notification_outbox import (
     claim_due_payment_notification_deliveries,
     dispatch_claimed_payment_notification_delivery,
     run_due_payment_notification_deliveries,
+    _finalize_claim,
 )
+from finance.notification_webhooks import process_resend_payment_notification_webhook
+from finance.notification_status import build_payment_notification_operations_snapshot
 from finance.application.commands import ReconcilePaymentCommand
 from finance.application.use_cases import execute_reconcile_payment_use_case
 from student_identity.delivery_gateways import StudentEmailDeliveryResult
@@ -28,11 +35,25 @@ from student_identity.models import (
     StudentIdentityStatus,
     StudentPushSubscription,
 )
+from student_identity.resend_webhooks import ResendWebhookHeaders
 from control.models import Box
 from tests.factories import PaymentFactory, StudentFactory, UserFactory
 
 
 TENANT_SCHEMA = 'box_test'
+
+
+def _resend_headers(*, event_id, event_time, payload):
+    timestamp = str(int(event_time.timestamp()))
+    signed = b'.'.join([event_id.encode(), timestamp.encode(), payload])
+    signature = base64.b64encode(
+        hmac.new(b'test_secret', signed, hashlib.sha256).digest(),
+    ).decode()
+    return ResendWebhookHeaders(
+        webhook_id=event_id,
+        timestamp=timestamp,
+        signature=f'v1,{signature}',
+    )
 
 
 @pytest.mark.public_schema
@@ -106,6 +127,173 @@ class PaymentNotificationOutboxTests(TestCase):
         self.assertEqual(delivery.status, PaymentNotificationDeliveryStatus.SKIPPED)
         self.assertEqual(delivery.reason_code, 'push_subscription_unavailable')
         send_push.assert_not_called()
+
+    @override_settings(PAYMENT_NOTIFICATION_RESEND_WEBHOOK_SECRET='whsec_test_secret')
+    def test_resend_delivery_webhook_is_idempotent_and_reconciles_out_of_order_events(self):
+        from finance.models import PaymentNotificationDeliveryEvent
+
+        self._ensure_active_box_registry()
+        _payment_id, delivery_id = self._create_due_email()
+        event_time = timezone.now().replace(microsecond=0)
+        with schema_context(TENANT_SCHEMA):
+            delivery = PaymentNotificationDelivery.objects.get(pk=delivery_id)
+            delivery.status = PaymentNotificationDeliveryStatus.LEASED
+            delivery.lease_token = uuid4()
+            delivery.lease_expires_at = event_time + timedelta(minutes=5)
+            delivery.save(update_fields=['status', 'lease_token', 'lease_expires_at', 'updated_at'])
+            lease_token = delivery.lease_token
+
+        tags = {'octobox_box': TENANT_SCHEMA, 'octobox_delivery': str(delivery_id)}
+        delivered_payload = json.dumps({
+            'type': 'email.delivered',
+            'created_at': event_time.isoformat(),
+            'data': {'email_id': 'resend-email-123', 'tags': tags},
+        }).encode('utf-8')
+        delivered_headers = _resend_headers(
+            event_id='evt_resend_delivered', event_time=event_time, payload=delivered_payload,
+        )
+        endpoint = reverse('api-v1-resend-payment-notifications-webhook')
+        result = self.client.post(
+            endpoint,
+            data=delivered_payload,
+            content_type='application/json',
+            HTTP_SVIX_ID=delivered_headers.webhook_id,
+            HTTP_SVIX_TIMESTAMP=delivered_headers.timestamp,
+            HTTP_SVIX_SIGNATURE=delivered_headers.signature,
+        )
+        duplicate = self.client.post(
+            endpoint,
+            data=delivered_payload,
+            content_type='application/json',
+            HTTP_SVIX_ID=delivered_headers.webhook_id,
+            HTTP_SVIX_TIMESTAMP=delivered_headers.timestamp,
+            HTTP_SVIX_SIGNATURE=delivered_headers.signature,
+        )
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(duplicate.status_code, 200)
+
+        with schema_context(TENANT_SCHEMA):
+            delivery = PaymentNotificationDelivery.objects.get(pk=delivery_id)
+            self.assertEqual(delivery.status, PaymentNotificationDeliveryStatus.DELIVERED)
+            self.assertEqual(delivery.provider_message_id, 'resend-email-123')
+            self.assertIsNone(delivery.lease_token)
+            self.assertEqual(PaymentNotificationDeliveryEvent.objects.filter(delivery_id=delivery_id).count(), 1)
+            late_sent_payload = json.dumps({
+                'type': 'email.sent',
+                'created_at': (event_time - timedelta(seconds=5)).isoformat(),
+                'data': {'email_id': 'resend-email-123', 'tags': tags},
+            }).encode('utf-8')
+            late_sent_headers = _resend_headers(
+                event_id='evt_resend_sent_old', event_time=event_time, payload=late_sent_payload,
+            )
+            late_sent = self.client.post(
+                endpoint,
+                data=late_sent_payload,
+                content_type='application/json',
+                HTTP_SVIX_ID=late_sent_headers.webhook_id,
+                HTTP_SVIX_TIMESTAMP=late_sent_headers.timestamp,
+                HTTP_SVIX_SIGNATURE=late_sent_headers.signature,
+            )
+            self.assertEqual(late_sent.status_code, 200)
+            delivery.refresh_from_db()
+            self.assertEqual(delivery.status, PaymentNotificationDeliveryStatus.DELIVERED)
+            self.assertEqual(PaymentNotificationDeliveryEvent.objects.filter(delivery_id=delivery_id).count(), 2)
+            late_worker = _finalize_claim(
+                delivery_id,
+                lease_token,
+                status=PaymentNotificationDeliveryStatus.PROVIDER_ACCEPTED,
+                reason='',
+                provider='resend',
+                provider_message_id='resend-email-123',
+                now=event_time,
+            )
+
+        self.assertEqual(result.json()['reason'], 'processed')
+        self.assertEqual(duplicate.json()['reason'], 'duplicate-event')
+        self.assertEqual(late_sent.json()['reason'], 'out-of-order-event-recorded')
+        self.assertEqual(late_worker, 'lease_lost')
+
+    @override_settings(PAYMENT_NOTIFICATION_RESEND_WEBHOOK_SECRET='whsec_test_secret')
+    def test_resend_delivery_webhook_reconciles_a_previously_unknown_outcome(self):
+        self._ensure_active_box_registry()
+        _payment_id, delivery_id = self._create_due_email()
+        event_time = timezone.now().replace(microsecond=0)
+        with schema_context(TENANT_SCHEMA):
+            delivery = PaymentNotificationDelivery.objects.get(pk=delivery_id)
+            delivery.status = PaymentNotificationDeliveryStatus.UNKNOWN
+            delivery.reason_code = 'email_outcome_unknown'
+            delivery.finished_at = event_time
+            delivery.save(update_fields=['status', 'reason_code', 'finished_at', 'updated_at'])
+
+        payload = json.dumps({
+            'type': 'email.delivered',
+            'created_at': event_time.isoformat(),
+            'data': {
+                'email_id': 'resend-email-recovered',
+                'tags': {'octobox_box': TENANT_SCHEMA, 'octobox_delivery': str(delivery_id)},
+            },
+        }).encode('utf-8')
+        result = process_resend_payment_notification_webhook(
+            payload=payload,
+            headers=_resend_headers(
+                event_id='evt_resend_reconcile_unknown', event_time=event_time, payload=payload,
+            ),
+        )
+
+        with schema_context(TENANT_SCHEMA):
+            delivery = PaymentNotificationDelivery.objects.get(pk=delivery_id)
+        self.assertEqual(result['reason'], 'processed')
+        self.assertEqual(delivery.status, PaymentNotificationDeliveryStatus.DELIVERED)
+        self.assertEqual(delivery.reason_code, '')
+        self.assertEqual(delivery.provider_message_id, 'resend-email-recovered')
+
+    @override_settings(PAYMENT_NOTIFICATION_RESEND_WEBHOOK_SECRET='whsec_test_secret')
+    def test_informational_complaint_cannot_hide_a_delayed_delivery_receipt(self):
+        self._ensure_active_box_registry()
+        _payment_id, delivery_id = self._create_due_email()
+        received_at = timezone.now().replace(microsecond=0)
+        for index, (event_type, occurred_at) in enumerate((
+            ('email.complained', received_at),
+            ('email.delivered', received_at - timedelta(seconds=5)),
+        )):
+            payload = json.dumps({
+                'type': event_type, 'created_at': occurred_at.isoformat(),
+                'data': {'email_id': 'resend-order-complaint', 'tags': {
+                    'octobox_box': TENANT_SCHEMA, 'octobox_delivery': str(delivery_id),
+                }},
+            }).encode()
+            process_resend_payment_notification_webhook(
+                payload=payload, headers=_resend_headers(
+                    event_id=f'evt_complaint_order_{index}', event_time=received_at, payload=payload,
+                ),
+            )
+        with schema_context(TENANT_SCHEMA):
+            delivery = PaymentNotificationDelivery.objects.get(pk=delivery_id)
+            self.assertEqual(delivery.status, PaymentNotificationDeliveryStatus.DELIVERED)
+            self.assertEqual(delivery.provider_events.count(), 2)
+
+    @override_settings(PAYMENT_NOTIFICATION_RESEND_WEBHOOK_SECRET='whsec_test_secret')
+    def test_equal_timestamp_events_use_highest_priority_not_last_inserted_event(self):
+        self._ensure_active_box_registry()
+        _payment_id, delivery_id = self._create_due_email()
+        received_at = timezone.now().replace(microsecond=0)
+        for index, event_type in enumerate(('email.failed', 'email.sent', 'email.delivery_delayed')):
+            payload = json.dumps({
+                'type': event_type, 'created_at': received_at.isoformat(),
+                'data': {'email_id': 'resend-order-tie', 'tags': {
+                    'octobox_box': TENANT_SCHEMA, 'octobox_delivery': str(delivery_id),
+                }},
+            }).encode()
+            process_resend_payment_notification_webhook(
+                payload=payload, headers=_resend_headers(
+                    event_id=f'evt_equal_time_{index}', event_time=received_at, payload=payload,
+                ),
+            )
+        with schema_context(TENANT_SCHEMA):
+            delivery = PaymentNotificationDelivery.objects.get(pk=delivery_id)
+            self.assertEqual(delivery.status, PaymentNotificationDeliveryStatus.FAILED)
+            self.assertEqual(delivery.reason_code, 'resend_email_failed')
+            self.assertEqual(delivery.provider_events.count(), 3)
 
     @override_settings(
         STUDENT_EMAIL_PROVIDER='resend',
@@ -221,27 +409,45 @@ class PaymentNotificationOutboxTests(TestCase):
         self.assertEqual(delivery.status, PaymentNotificationDeliveryStatus.UNKNOWN)
         self.assertEqual(delivery.reason_code, 'lease_expired_delivery_unknown')
 
-    def test_duplicate_enqueue_is_idempotent(self):
+    def test_intervention_queue_is_safe_and_counts_all_outbox_states(self):
+        _payment_id, delivery_id = self._create_due_email()
+        with schema_context(TENANT_SCHEMA):
+            delivery = PaymentNotificationDelivery.objects.get(pk=delivery_id)
+            delivery.status = PaymentNotificationDeliveryStatus.UNKNOWN
+            delivery.reason_code = 'provider timeout with private details'
+            delivery.save(update_fields=['status', 'reason_code', 'updated_at'])
+
+            snapshot = build_payment_notification_operations_snapshot()
+
+        self.assertEqual(snapshot['status_counts']['unknown'], 1)
+        self.assertEqual(snapshot['attention_count'], 1)
+        item = snapshot['attention_items'][0]
+        self.assertEqual(item['delivery_id'], delivery_id)
+        self.assertEqual(item['reason_code'], 'unclassified_reason')
+        self.assertNotIn('recipient_key', item)
+        self.assertNotIn('@', repr(snapshot))
+        self.assertEqual(snapshot['attention_by_channel'], {'email': 1})
+        self.assertEqual(snapshot['duplicate_suppressed_attempts'], 0)
+
+    def test_duplicate_enqueue_is_counted_and_queue_age_is_reported(self):
         with schema_context(TENANT_SCHEMA):
             student = StudentFactory(email='learner@example.test')
             payment = PaymentFactory(student=student, amount=Decimal('149.90'), status=PaymentStatus.PAID)
             with transaction.atomic():
                 from finance.notification_outbox import enqueue_payment_confirmation
 
-                first_created = enqueue_payment_confirmation(payment)
-                second_created = enqueue_payment_confirmation(payment)
+                enqueue_payment_confirmation(payment)
+                enqueue_payment_confirmation(payment)
             email_delivery = PaymentNotificationDelivery.objects.get(
                 logical_event_key=f'payment-confirmed:v1:{payment.pk}',
                 channel='email',
             )
-            total = PaymentNotificationDelivery.objects.filter(
-                logical_event_key=f'payment-confirmed:v1:{payment.pk}',
-            ).count()
+            snapshot = build_payment_notification_operations_snapshot()
 
-        self.assertEqual(first_created, 3)
-        self.assertEqual(second_created, 0)
-        self.assertEqual(total, 3)
-        self.assertEqual(email_delivery.status, PaymentNotificationDeliveryStatus.PENDING)
+        self.assertEqual(email_delivery.duplicate_suppressed_count, 1)
+        self.assertEqual(snapshot['duplicate_suppressed_attempts'], 3)
+        self.assertIsNotNone(snapshot['oldest_queued_at'])
+        self.assertGreaterEqual(snapshot['oldest_queued_age_seconds'], 0)
 
     @override_settings(
         STUDENT_EMAIL_PROVIDER='resend',
@@ -327,6 +533,7 @@ class PaymentNotificationOutboxTests(TestCase):
         self.assertEqual(delivery.reason_code, 'email_outcome_unknown')
         self.assertEqual(next_claims, [])
         send_email.assert_called_once()
+
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.requires_postgres

@@ -285,6 +285,7 @@ class PaymentNotificationDelivery(TimeStampedModel):
     )
     reason_code = models.CharField(max_length=64, blank=True)
     attempt_count = models.PositiveSmallIntegerField(default=0)
+    duplicate_suppressed_count = models.PositiveIntegerField(default=0)
     available_at = models.DateTimeField(default=timezone.now, db_index=True)
     lease_token = models.UUIDField(null=True, blank=True)
     lease_expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
@@ -313,6 +314,27 @@ class PaymentNotificationDelivery(TimeStampedModel):
         return f'{self.logical_event_key} {self.channel}:{self.status}'
 
 
+class PaymentNotificationDeliveryEvent(TimeStampedModel):
+    """PII-free provider event ledger for one tenant-local delivery."""
+
+    delivery = models.ForeignKey(
+        PaymentNotificationDelivery,
+        on_delete=models.CASCADE,
+        related_name='provider_events',
+    )
+    provider_event_id = models.CharField(max_length=120, unique=True)
+    provider = models.CharField(max_length=24, default='resend')
+    event_type = models.CharField(max_length=64, db_index=True)
+    occurred_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    class Meta:
+        app_label = HISTORICAL_BOXCORE_APP_LABEL
+        ordering = ['-occurred_at', '-id']
+
+    def __str__(self):
+        return f'{self.provider} {self.event_type} for delivery {self.delivery_id}'
+
+
 __all__ = [
     'BillingCycle',
     'Enrollment',
@@ -329,6 +351,7 @@ __all__ = [
     'Payment',
     'PaymentMethod',
     'PaymentNotificationDelivery',
+    'PaymentNotificationDeliveryEvent',
     'PaymentNotificationDeliveryStatus',
     'PaymentStatus',
 ]

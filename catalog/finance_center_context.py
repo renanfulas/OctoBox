@@ -16,12 +16,16 @@ from catalog.finance_queries import build_finance_snapshot
 from catalog.presentation import build_finance_center_page
 from catalog.presentation.shared import attach_catalog_page_payload
 from catalog.services.operational_queue import build_operational_queue_snapshot
+from finance.notification_diagnostics import build_payment_notification_diagnostics
+from finance.notification_status import build_payment_notification_operations_snapshot
 
 
 def build_finance_center_view_context(view, *, context, form):
     started_at = perf_counter()
     base_context = view.get_base_context()
     context.update(base_context)
+    context['payment_notification_diagnostics'] = build_payment_notification_diagnostics()
+    context['payment_notification_operations'] = build_payment_notification_operations_snapshot()
 
     operational_queue_started_at = perf_counter()
     operational_queue = build_operational_queue_snapshot()

@@ -21,7 +21,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.core.serializers.json import DjangoJSONEncoder
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -60,6 +60,26 @@ class FinanceCenterRequestTests(TestCase):
         response = self.client.get(reverse("finance-center"))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Disponibilidade das confirmações de pagamento')
+        self.assertContains(response, 'data-channel="whatsapp" data-status="not_implemented"')
+        self.assertContains(response, 'Nenhuma entrega precisa de conferência agora.')
+
+    @override_settings(
+        STUDENT_EMAIL_PROVIDER='resend',
+        STUDENT_EMAIL_FROM='billing@example.invalid',
+        STUDENT_RESEND_API_KEY='test-resend-key',
+        PAYMENT_NOTIFICATION_RESEND_WEBHOOK_SECRET='test-webhook-secret',
+    )
+    def test_finance_center_distinguishes_send_configuration_from_unverified_receipt(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse('finance-center'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-channel="email" data-status="configured"')
+        self.assertContains(response, 'data-delivery-receipt="endpoint_unverified"')
+        self.assertContains(response, 'cadastro do endpoint Resend ainda não verificado')
+        self.assertNotContains(response, 'test-webhook-secret')
 
     def test_finance_transport_payload_is_json_serializable(self):
         today = timezone.localdate()

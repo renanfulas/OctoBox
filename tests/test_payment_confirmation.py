@@ -1,14 +1,11 @@
 """
-ARQUIVO: testes da confirmacao ao aluno na baixa do pagamento (T5).
+ARQUIVO: testes do outbox de confirmacao financeira e do sender legado.
 
 POR QUE EXISTE:
-- Garante que a baixa do pagamento dispara a confirmacao (e-mail real + WhatsApp
-  como fundacao) sem nunca falhar o webhook, e que a segunda passagem do mesmo
-  evento (already_paid) nao reconfirma.
-- Garante tambem que a confirmacao NAO trava a resposta do webhook: o envio
-  (SMTP/HTTP) roda em thread separada (run_in_background), entao os testes
-  que verificam a chamada precisam esperar essa thread antes de assertar —
-  mesmo padrao ja usado em tests/test_background_jobs_schema.py.
+- Garante que a baixa cria uma intenção durável por canal/destinatário na mesma
+  transação e que eventos repetidos não duplicam as intenções.
+- Garante que o webhook não executa rede e que o sender legado permanece
+  isolado dos eventos já cobertos pelo outbox.
 """
 
 from __future__ import annotations
@@ -20,7 +17,8 @@ import pytest
 from django.test import TestCase, override_settings
 from django_tenants.utils import schema_context
 
-from finance.models import PaymentNotificationDelivery, PaymentStatus
+from finance.models import PaymentNotificationDelivery, PaymentNotificationDeliveryStatus, PaymentStatus
+from finance.notification_outbox import run_due_payment_notification_deliveries
 from finance.payment_notifications import notify_payment_confirmed
 from integrations.stripe.models import PaymentWebhookEvent
 from integrations.stripe.router import route_payment_webhook_event
@@ -178,40 +176,57 @@ class PaymentConfirmationOnReconcileTests(TestCase):
             },
         )
 
-    def test_reconcile_persists_notification_intents(self):
+    @patch('finance.payment_notifications.notify_payment_confirmed')
+    def test_reconcile_persists_one_delivery_per_channel_destination(self, legacy_dispatch_mock):
         pid, cents = self._make_tenant_payment()
-        route_payment_webhook_event(self._event(event_id='evt_confirm', payment_id=pid, amount_cents=cents))
-        with schema_context(TENANT_SCHEMA):
-            deliveries = PaymentNotificationDelivery.objects.filter(
-                logical_event_key=f'payment-confirmed:v1:{pid}',
-            )
-            self.assertEqual(deliveries.count(), 3)
-            self.assertEqual(deliveries.filter(channel='email').count(), 1)
 
-    def test_already_paid_does_not_create_more_notification_intents(self):
+        route_payment_webhook_event(self._event(event_id='evt_confirm', payment_id=pid, amount_cents=cents))
+
+        with schema_context(TENANT_SCHEMA):
+            deliveries = list(PaymentNotificationDelivery.objects.filter(payment_id=pid).order_by('channel'))
+        self.assertEqual(len(deliveries), 3)
+        self.assertEqual(
+            {delivery.channel: delivery.status for delivery in deliveries},
+            {
+                'email': PaymentNotificationDeliveryStatus.PENDING,
+                'push': PaymentNotificationDeliveryStatus.SKIPPED,
+                'whatsapp': PaymentNotificationDeliveryStatus.SKIPPED,
+            },
+        )
+        self.assertEqual(len({delivery.logical_event_key for delivery in deliveries}), 1)
+        legacy_dispatch_mock.assert_not_called()
+
+    @patch('finance.payment_notifications.notify_payment_confirmed')
+    def test_replay_does_not_duplicate_persisted_delivery_intents(self, legacy_dispatch_mock):
         pid, cents = self._make_tenant_payment()
 
         route_payment_webhook_event(self._event(event_id='evt_c1', payment_id=pid, amount_cents=cents))
         route_payment_webhook_event(self._event(event_id='evt_c2', payment_id=pid, amount_cents=cents))
 
         with schema_context(TENANT_SCHEMA):
-            self.assertEqual(
-                PaymentNotificationDelivery.objects.filter(
-                    logical_event_key=f'payment-confirmed:v1:{pid}',
-                ).count(),
-                3,
-            )
+            self.assertEqual(PaymentNotificationDelivery.objects.filter(payment_id=pid).count(), 3)
+        legacy_dispatch_mock.assert_not_called()
 
-    @patch('shared_support.background_jobs.run_in_background')
-    def test_reconcile_wakes_async_dispatch_without_waiting_for_provider(self, run_in_background):
+    @patch('finance.payment_notifications.notify_payment_confirmed')
+    def test_webhook_persists_intents_without_calling_legacy_network_dispatcher(self, legacy_dispatch_mock):
         pid, cents = self._make_tenant_payment()
         event = self._event(event_id='evt_slow_confirm', payment_id=pid, amount_cents=cents)
 
-        with self.captureOnCommitCallbacks(execute=True):
-            route_payment_webhook_event(event)
+        route_payment_webhook_event(event)
+        legacy_dispatch_mock.assert_not_called()
+        with schema_context(TENANT_SCHEMA):
+            self.assertTrue(PaymentNotificationDelivery.objects.filter(payment_id=pid).exists())
 
-        run_in_background.assert_called_once()
-        self.assertEqual(
-            run_in_background.call_args.args[0].__name__,
-            'run_due_payment_notification_deliveries',
-        )
+    @patch('shared_support.background_jobs.run_in_background')
+    def test_on_commit_wakeup_uses_scanner_as_best_effort_fast_path(self, background_mock):
+        pid, cents = self._make_tenant_payment()
+
+        with self.captureOnCommitCallbacks(execute=True) as callbacks:
+            route_payment_webhook_event(self._event(
+                event_id='evt_outbox_wakeup',
+                payment_id=pid,
+                amount_cents=cents,
+            ))
+
+        self.assertEqual(len(callbacks), 1)
+        background_mock.assert_called_once_with(run_due_payment_notification_deliveries, limit=25)

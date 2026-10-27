@@ -77,11 +77,7 @@ def execute_reconcile_payment_use_case(command: ReconcilePaymentCommand) -> Reco
         try:
             payment = Payment.objects.select_for_update().get(pk=command.payment_id)
         except Payment.DoesNotExist:
-            logger.error(
-                'ReconcilePayment: payment %s não encontrado. stripe_event=%s',
-                command.payment_id,
-                command.stripe_event_id,
-            )
+            logger.error('stripe_payment_reconcile_target_missing')
             raise
 
         if payment.status == PaymentStatus.PAID:
@@ -92,12 +88,7 @@ def execute_reconcile_payment_use_case(command: ReconcilePaymentCommand) -> Reco
             )
 
         if int(payment.amount * 100) != command.amount_cents:
-            logger.error(
-                'ReconcilePayment: inconsistência de valor. payment=%s esperado=%s recebido=%s',
-                command.payment_id,
-                int(payment.amount * 100),
-                command.amount_cents,
-            )
+            logger.error('stripe_payment_reconcile_amount_mismatch')
             raise ValueError(
                 f'Valor divergente: esperado {int(payment.amount * 100)} cents, recebido {command.amount_cents} cents.'
             )
@@ -118,16 +109,16 @@ def execute_reconcile_payment_use_case(command: ReconcilePaymentCommand) -> Reco
             'updated_at',
         ])
 
-        # Persist the notification intent with the paid transition. If it
-        # cannot be committed, roll back the payment state as well.
+        # O pagamento e a intenção de notificação compartilham a mesma
+        # transação/schema. Falha ao persistir a intenção também aborta a baixa.
         enqueue_payment_confirmation(payment)
 
         log_audit_event(
             actor=None,
             action='payment_reconciled_via_stripe',
             target=payment,
-            description=f'Pagamento reconciliado via evento Stripe {command.stripe_event_id}',
-            metadata={'stripe_event_id': command.stripe_event_id},
+            description='Pagamento reconciliado via Stripe.',
+            metadata={},
         )
 
     return ReconcilePaymentResult(
@@ -161,10 +152,7 @@ def execute_refund_payment_from_stripe_use_case(
         try:
             payment = Payment.objects.select_for_update().get(pk=payment_id)
         except Payment.DoesNotExist:
-            logger.error(
-                'RefundPayment: payment %s nao encontrado. stripe_event=%s',
-                payment_id, stripe_event_id,
-            )
+            logger.error('stripe_refund_target_missing')
             raise
 
         if payment.status == PaymentStatus.REFUNDED:
@@ -180,8 +168,8 @@ def execute_refund_payment_from_stripe_use_case(
             actor=None,
             action='payment_refunded_via_stripe',
             target=payment,
-            description=f'Pagamento estornado via evento Stripe {stripe_event_id}',
-            metadata={'stripe_event_id': stripe_event_id, 'stripe_charge_id': stripe_charge_id},
+            description='Pagamento estornado via Stripe.',
+            metadata={},
         )
 
     return RefundPaymentResult(payment_id=payment.id, already_refunded=False, refunded=True)

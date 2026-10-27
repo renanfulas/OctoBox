@@ -67,8 +67,8 @@ def _send_via_smtp(*, subject, text_body, html_body, to_email) -> StudentEmailDe
     msg.attach_alternative(html_body, 'text/html')
     try:
         sent_count = msg.send(fail_silently=False)
-    except Exception as exc:
-        raise StudentEmailDeliveryError(f'smtp-send-error:{exc}') from exc
+    except Exception:
+        raise StudentEmailDeliveryError('smtp-send-failed') from None
     if sent_count <= 0:
         raise StudentEmailDeliveryError('smtp-send-returned-zero')
     return StudentEmailDeliveryResult(
@@ -107,8 +107,7 @@ def _send_via_resend(*, subject, text_body, html_body, to_email, tags=None) -> S
             body = response.read().decode('utf-8') or '{}'
             response_payload = json.loads(body)
     except HTTPError as exc:
-        detail = exc.read().decode('utf-8', errors='ignore') if hasattr(exc, 'read') else ''
-        raise StudentEmailDeliveryError(f'resend-http-error:{exc.code}:{detail}') from exc
+        raise StudentEmailDeliveryError(f'resend-http-error:{exc.code}') from None
     except URLError as exc:
         raise StudentEmailDeliveryError('resend-network-error') from exc
 

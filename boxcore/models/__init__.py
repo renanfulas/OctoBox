@@ -31,6 +31,7 @@ from .finance import (
     Payment,
     PaymentMethod,
     PaymentNotificationDelivery,
+    PaymentNotificationDeliveryEvent,
     PaymentNotificationDeliveryStatus,
     PaymentStatus,
 )
@@ -74,6 +75,7 @@ __all__ = [
     'Payment',
     'PaymentMethod',
     'PaymentNotificationDelivery',
+    'PaymentNotificationDeliveryEvent',
     'PaymentNotificationDeliveryStatus',
     'PaymentStatus',
     'SessionStatus',

@@ -32,20 +32,20 @@ def notify_payment_confirmed(payment) -> dict:
 
     try:
         result['email'] = _send_confirmation_email(payment)
-    except Exception:
-        logger.exception('notify_payment_confirmed: falha no e-mail. payment=%s', getattr(payment, 'id', None))
+    except Exception as exc:
+        logger.error('notify_payment_confirmed_failed channel=email error_type=%s', type(exc).__name__)
         result['email'] = 'error'
 
     try:
         result['push'] = _send_confirmation_push(payment)
-    except Exception:
-        logger.exception('notify_payment_confirmed: falha no push. payment=%s', getattr(payment, 'id', None))
+    except Exception as exc:
+        logger.error('notify_payment_confirmed_failed channel=push error_type=%s', type(exc).__name__)
         result['push'] = 'error'
 
     try:
         result['whatsapp'] = _send_confirmation_whatsapp(payment)
-    except Exception:
-        logger.exception('notify_payment_confirmed: falha no whatsapp. payment=%s', getattr(payment, 'id', None))
+    except Exception as exc:
+        logger.error('notify_payment_confirmed_failed channel=whatsapp error_type=%s', type(exc).__name__)
         result['whatsapp'] = 'error'
 
     return result
