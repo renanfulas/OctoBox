@@ -298,6 +298,7 @@ class StudentWodView(StudentIdentityRequiredMixin, FormView):
                 kind=StudentAppActivityKind.WOD_VIEWED,
                 source_object_id=payload['workout'].id,
                 metadata={'workout_title': payload['workout_day'].workout_title},
+                identity_id=self.request.student_identity.id,
             )
         return self._attach_student_shell_context(context)
 
@@ -388,6 +389,7 @@ class StudentAddRmView(StudentIdentityRequiredMixin, View):
             kind=StudentAppActivityKind.RM_CREATED if created else StudentAppActivityKind.RM_UPDATED,
             source_object_id=obj.id,
             metadata={'exercise_slug': obj.exercise_slug, 'exercise_label': obj.exercise_label},
+            identity_id=request.student_identity.id,
         )
         messages.success(request, f'RM de {label} salvo como {kg} kg.')
         return redirect('student-app-rm')
@@ -424,6 +426,7 @@ class StudentUpdateRmView(StudentIdentityRequiredMixin, View):
             kind=StudentAppActivityKind.RM_UPDATED,
             source_object_id=record.id,
             metadata={'exercise_slug': record.exercise_slug, 'exercise_label': record.exercise_label},
+            identity_id=request.student_identity.id,
         )
         messages.success(request, f'RM de {record.exercise_label} atualizado para {record.one_rep_max_kg} kg.')
         return redirect('student-app-rm')
