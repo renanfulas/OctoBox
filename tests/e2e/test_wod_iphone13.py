@@ -16,6 +16,8 @@ from student_app.models import SessionWorkout, SessionWorkoutBlock, SessionWorko
 
 pytestmark = [pytest.mark.e2e, pytest.mark.django_db(transaction=True)]
 
+NAVIGATION_TIMEOUT_MS = 15_000
+
 
 @pytest.fixture
 def iphone13_page(browser, playwright, request):
@@ -24,7 +26,7 @@ def iphone13_page(browser, playwright, request):
     context = browser.new_context(**profile, locale='pt-BR', timezone_id='America/Sao_Paulo')
     page = context.new_page()
     page.set_default_timeout(6000)
-    page.set_default_navigation_timeout(15000)
+    page.set_default_navigation_timeout(NAVIGATION_TIMEOUT_MS)
     try:
         yield page
     finally:
@@ -36,8 +38,9 @@ def login(page, live_server, credentials, theme):
     page.goto(f'{live_server.url}/login/funcionario/')
     page.locator('#id_username').fill(credentials['username'])
     page.locator('#id_password').fill(credentials['password'])
-    page.locator('button[type="submit"]').click()
-    page.wait_for_url('**/operacao/**')
+    # WebKit can need the full navigation budget for the login submit to finish.
+    page.locator('button[type="submit"]').click(timeout=NAVIGATION_TIMEOUT_MS)
+    page.wait_for_url('**/operacao/**', timeout=NAVIGATION_TIMEOUT_MS)
     page.evaluate('theme => localStorage.setItem("octobox-theme", theme)', theme)
 
 
