@@ -56,6 +56,7 @@ class IntakeCenterStudentInviteSmokeTests(TestCase):
         )
 
     def test_intake_center_one_click_whatsapp_invite_is_blocked_for_non_imported_sources(self):
+        invitation_ids_before = set(StudentAppInvitation.objects.values_list('pk', flat=True))
         self.intake.source = IntakeSource.WHATSAPP
         self.intake.save(update_fields=['source'])
 
@@ -72,7 +73,8 @@ class IntakeCenterStudentInviteSmokeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.intake.refresh_from_db()
         self.assertIsNone(self.intake.linked_student_id)
-        self.assertFalse(StudentAppInvitation.objects.exists())
+        invitation_ids_after = set(StudentAppInvitation.objects.values_list('pk', flat=True))
+        self.assertSetEqual(invitation_ids_after, invitation_ids_before)
 
     def test_quick_create_intake_starts_in_reviewing_status(self):
         form = IntakeQuickCreateForm(

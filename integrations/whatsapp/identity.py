@@ -47,10 +47,7 @@ def resolve_whatsapp_channel_identity(*, phone: str, external_contact_id: str = 
         # Busca controlada para detectar ambiguidade
         contact_candidates = list(contact_queryset.filter(phone_lookup_index=phone_index)[:2])
         if len(contact_candidates) > 1:
-            logger.critical(
-                f"AMBIGUIDADE: Multiplos WhatsAppContact para o mesmo blind index: {phone_index}. "
-                f"IDs envolvidos: {[c.id for c in contact_candidates]}"
-            )
+            logger.critical('whatsapp_contact_identity_ambiguous candidate_count=%s', len(contact_candidates))
             # Nao auto-resolve por indice quando ambigulo
             contact = None
         elif contact_candidates:
@@ -61,10 +58,7 @@ def resolve_whatsapp_channel_identity(*, phone: str, external_contact_id: str = 
         # Busca controlada de Student para detectar duplicidade
         student_candidates = list(Student.objects.filter(phone_lookup_index=phone_index)[:2])
         if len(student_candidates) > 1:
-            logger.critical(
-                f"AMBIGUIDADE: Multiplos Student para o mesmo blind index: {phone_index}. "
-                f"IDs envolvidos: {[s.id for s in student_candidates]}"
-            )
+            logger.critical('whatsapp_student_identity_ambiguous candidate_count=%s', len(student_candidates))
             fallback_student = None
         elif student_candidates:
             fallback_student = student_candidates[0]

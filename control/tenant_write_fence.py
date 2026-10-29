@@ -15,6 +15,7 @@ import re
 
 from django.db import connection, transaction
 from django_tenants.utils import get_public_schema_name, schema_context
+from shared_support.tenant_logging import tenant_log_ref
 
 logger = logging.getLogger('control.tenant_write_fence')
 _TENANT_SCHEMA_RE = re.compile(r'^box_[a-z0-9_-]{1,59}$')
@@ -50,9 +51,7 @@ def tenant_write_guard(schema_name: str):
 
     key = _lock_key(schema_name)
     acquired = False
-    # Avoid logging tenant identifiers here; the shared PII-safe reference
-    # helper belongs to a later privacy package and is not a runtime dependency.
-    box_ref = 'tenant'
+    box_ref = tenant_log_ref(schema_name)
     try:
         with connection.cursor() as cursor:
             cursor.execute('SELECT pg_advisory_lock_shared(%s)', [key])
@@ -65,6 +64,7 @@ def tenant_write_guard(schema_name: str):
         ).first()
         if box is None:
             raise TenantFenceTargetMissing(f'Box desconhecido para schema {schema_name}')
+        box_ref = tenant_log_ref(box)
         if box.write_frozen_at is not None:
             raise TenantWritesFrozen(schema_name, box.write_freeze_reason)
         yield box

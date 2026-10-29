@@ -224,7 +224,8 @@ class ProvisionBoxTest(TestCase):
 
         failed_evt = BoxProvisioningEvent.objects.filter(status='failed').first()
         self.assertIsNotNone(failed_evt, 'Evento de falha não foi criado')
-        self.assertIn('DDL falhou', failed_evt.detail)
+        self.assertEqual(failed_evt.detail, 'step_failed:RuntimeError')
+        self.assertNotIn('DDL falhou', failed_evt.detail)
 
     @patch('control.services._run_step')
     def test_reprovision_skips_completed_steps(self, mock_step):

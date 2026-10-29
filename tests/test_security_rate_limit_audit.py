@@ -12,6 +12,7 @@ POR QUE EXISTE:
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth.models import AnonymousUser
@@ -34,12 +35,19 @@ class RateLimitRedFlagAuditTests(TestCase):
 
     @patch('auditing.services.log_audit_event')
     def test_emits_red_flag_on_first_breach(self, mock_audit):
-        _emit_rate_limit_red_flag(scope='login', request=self._req(), client_ip='9.9.9.9', window_seconds=60)
+        request = self._req()
+        request.path = '/login/senha/redefinir/user-id/PII-CAPABILITY-SENTINEL/'
+        request.resolver_match = SimpleNamespace(
+            route='login/senha/redefinir/<uidb64>/<token>/', view_name='password-reset-confirm',
+        )
+        _emit_rate_limit_red_flag(scope='login', request=request, client_ip='9.9.9.9', window_seconds=60)
         self.assertEqual(mock_audit.call_count, 1)
         kwargs = mock_audit.call_args.kwargs
         self.assertEqual(kwargs['action'], 'RED_FLAG_RATE_LIMIT')
         self.assertEqual(kwargs['metadata']['scope'], 'login')
         self.assertEqual(kwargs['metadata']['ip'], '9.9.9.9')
+        self.assertEqual(kwargs['metadata']['route'], 'login/senha/redefinir/<uidb64>/<token>/')
+        self.assertNotIn('PII-CAPABILITY-SENTINEL', repr(kwargs['metadata']))
 
     @patch('auditing.services.log_audit_event')
     def test_deduped_within_window_same_scope_token(self, mock_audit):

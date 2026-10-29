@@ -78,7 +78,7 @@ def publish_student_stream_event(*, student_id: int, event_type: str, meta=None,
         redis_conn.publish(channel, json.dumps(payload))
         record_student_sse_event_published(event_type)
     except Exception as exc:
-        logger.warning('student_event_stream: falha ao publicar evento %s do aluno %s: %s', event_type, student_id, exc)
+        logger.warning('student_event_publish_failed error_type=%s', type(exc).__name__)
 
 
 def build_student_event_stream(*, student_id: int):
@@ -101,7 +101,7 @@ def build_student_event_stream(*, student_id: int):
             inc_student_sse_active_streams()
         except Exception as exc:
             record_student_sse_stream_connection('redis_error')
-            logger.warning('student_event_stream: Redis indisponivel para stream do aluno %s: %s', student_id, exc)
+            logger.warning('student_event_stream_unavailable error_type=%s', type(exc).__name__)
             yield f'retry: {SSE_RETRY_MS}\n'
             yield 'event: stream.error\n'
             yield 'data: {"status":"redis_unavailable"}\n\n'

@@ -26,6 +26,10 @@ from operations.services.student_importer import StudentImporter
 logger = logging.getLogger('octobox.jobs')
 
 
+class SanitizedImportJobError(RuntimeError):
+    """Retry signal whose message cannot contain data from an imported row."""
+
+
 @shared_task()
 def run_lead_import_job(lead_import_job_id):
     job = run_lead_import_job_service(job_id=lead_import_job_id)
@@ -111,7 +115,7 @@ def _build_failed_job_payload(
         success=False,
         message='failed',
         metadata={
-            'error': str(error),
+            'error': failure.reason or 'job_execution_failed',
             'failure_kind': failure.kind,
             'retryable': decision.should_retry,
             **decision.to_metadata(),
@@ -121,7 +125,7 @@ def _build_failed_job_payload(
     return {
         'status': 'failed',
         'message': result.message,
-        'error': str(error),
+        'error': failure.reason or 'job_execution_failed',
         'failure_kind': failure.kind,
         'retryable': decision.should_retry,
         'retry_action': decision.action,
@@ -171,11 +175,10 @@ def run_csv_contact_import_job(self, file_path, actor_id=None, job_id=None, sign
             max_attempts=max_attempts,
         )
         logger.error(
-            'Falha no Job %s (corr=%s): %s',
+            'contact_import_job_failed job=%s corr=%s error_type=%s',
             job_id,
             envelope.correlation_id,
-            str(exc),
-            exc_info=True,
+            type(exc).__name__,
         )
         if job:
             if failed_payload['retryable'] and failed_payload['retry_action'] == 'retry':
@@ -192,11 +195,11 @@ def run_csv_contact_import_job(self, file_path, actor_id=None, job_id=None, sign
                 )
             else:
                 job.fail(
-                    error=exc,
+                    error=failed_payload['error'],
                     result=failed_payload,
                     failure_kind=failed_payload['failure_kind'],
                 )
-        raise
+        raise SanitizedImportJobError(failed_payload['error']) from None
 
 
 @shared_task(
@@ -238,11 +241,10 @@ def run_csv_student_import_job(self, file_path, actor_id=None, job_id=None, sign
             max_attempts=max_attempts,
         )
         logger.error(
-            'Student Import Job Failed %s (corr=%s): %s',
+            'student_import_job_failed job=%s corr=%s error_type=%s',
             job_id,
             envelope.correlation_id,
-            str(exc),
-            exc_info=True,
+            type(exc).__name__,
         )
         if job:
             if failed_payload['retryable'] and failed_payload['retry_action'] == 'retry':
@@ -259,8 +261,8 @@ def run_csv_student_import_job(self, file_path, actor_id=None, job_id=None, sign
                 )
             else:
                 job.fail(
-                    error=exc,
+                    error=failed_payload['error'],
                     result=failed_payload,
                     failure_kind=failed_payload['failure_kind'],
                 )
-        raise
+        raise SanitizedImportJobError(failed_payload['error']) from None

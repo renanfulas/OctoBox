@@ -34,7 +34,7 @@ class SharedPIIAdminContractTests(SimpleTestCase):
         self.assertNotIn("recipient", model_admin.search_fields)
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_shared_census_and_rotation_cover_delivery_recipient(capsys, tmp_path):
     recipient = "shared-pii-census@example.test"
     public_schema = get_public_schema_name()

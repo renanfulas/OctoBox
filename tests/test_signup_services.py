@@ -360,7 +360,7 @@ class ActivatePendingSignupTest(TestCase):
 
     # Success path: Owner Group presente
     def test_adds_user_to_owner_group_when_it_exists(self):
-        owner_group = Group.objects.create(name='Owner')
+        owner_group, _ = Group.objects.get_or_create(name='Owner')
 
         user = activate_pending_signup(
             pending_signup=self.pending,

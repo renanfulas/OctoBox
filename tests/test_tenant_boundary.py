@@ -812,7 +812,7 @@ class WebhookIdempotencyPublicSchemaTest(SimpleTestCase):
         """Para /api/v1/integrations/*, middleware chama set_schema_to_public()."""
         factory = RequestFactory()
         request = factory.post(
-            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            '/api/v1/integrations/stripe/webhook/',
             data=json.dumps({'event_id': 'evt_test'}),
             content_type='application/json',
         )
@@ -830,6 +830,23 @@ class WebhookIdempotencyPublicSchemaTest(SimpleTestCase):
             middleware(request)
 
             mock_conn.set_schema_to_public.assert_called_once()
+
+    def test_poll_vote_keeps_tenant_schema_for_tenant_local_idempotency(self):
+        factory = RequestFactory()
+        request = factory.post(
+            '/api/v1/integrations/whatsapp/webhook/poll-vote/',
+            data=json.dumps({'event_id': 'evt_tenant_local'}),
+            content_type='application/json',
+        )
+        from integrations.middleware import WebhookIdempotencyMiddleware
+
+        get_response = MagicMock(return_value=JsonResponse({}))
+        middleware = WebhookIdempotencyMiddleware(get_response)
+
+        with patch('django.db.connection') as mock_conn:
+            middleware(request)
+
+            mock_conn.set_schema_to_public.assert_not_called()
 
     def test_non_webhook_path_does_not_call_set_public(self):
         """Para paths que nao sao de webhook, nao chama set_schema_to_public."""
@@ -1066,12 +1083,18 @@ class B13TenantSweepTest(TestCase):
                 raise RuntimeError('boom')
             return 'ok'
 
-        sweep = sweep_active_tenants(handler)
+        with self.assertLogs('octobox.jobs', level='ERROR') as captured:
+            sweep = sweep_active_tenants(handler)
 
         self.assertEqual(sweep.schemas_failed, 1)
         self.assertGreaterEqual(sweep.schemas_touched, 1)
         self.assertIn('box_sweep_broken', [schema for schema, _ in sweep.failures])
-        self.assertIn('boom', sweep.failures[0][1])
+        self.assertEqual(sweep.failures[0][1], 'error:RuntimeError')
+        rendered_logs = '\n'.join(captured.output)
+        self.assertNotIn('box_sweep_broken', rendered_logs)
+        self.assertNotIn('boom', rendered_logs)
+        self.assertIn('box_ref=tenant:', rendered_logs)
+        self.assertNotIn('box_sweep_broken', sweep.summary_line())
 
     def test_sweep_reraises_when_asked(self):
         from shared_support.tenant_sweep import sweep_active_tenants

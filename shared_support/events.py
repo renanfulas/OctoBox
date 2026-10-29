@@ -48,4 +48,4 @@ def publish_checkin_event(box_id, student_id, student_name, student_photo_url, a
             redis_conn.publish(owner_channel, json.dumps(payload))
 
     except Exception as exc:
-        logger.error(f"Falha ao propagar evento de check-in (PubSub): {exc}")
+        logger.error('checkin_event_publish_failed error_type=%s', type(exc).__name__)

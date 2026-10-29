@@ -56,7 +56,8 @@ class SecurityGuardTests(TestCase):
             password='senha-forte-123',
             is_staff=True,
         )
-        manager.groups.add(Group.objects.create(name=ROLE_MANAGER))
+        manager_group, _ = Group.objects.get_or_create(name=ROLE_MANAGER)
+        manager.groups.add(manager_group)
         self.client.force_login(manager)
 
         response = self.client.get(reverse('admin:index'))

@@ -42,7 +42,11 @@ PONTOS CRITICOS:
   nome que nao promete o que o codigo nao faz.
 """
 
+import logging
+
 from django.apps import apps
+
+logger = logging.getLogger('auditing.services')
 
 
 def _ensure_tenant_for_audit_write(actor):
@@ -103,8 +107,8 @@ def _write_audit_event(actor_id, action, target_model, target_id, target_label, 
     apesar do ADR-008 prescrever o trio "facade + savepoint + try/except" e
     listar este arquivo como implementação. Sem savepoint, uma falha aqui
     (ex.: schema sem boxcore_auditevent) corrompe qualquer transação externa
-    que já estivesse em andamento — o próximo `except Exception: pass` pega a
-    exceção, mas a transação já morreu, e a PRÓXIMA query de QUALQUER tipo,
+    que já estivesse em andamento — o `except` abaixo registra a classe e
+    devolve falha sem propagá-la ao fluxo principal, e a PRÓXIMA query de QUALQUER tipo,
     inclusive fora deste módulo, levanta TransactionManagementError. Django
     trata atomic() aninhado como SAVEPOINT automaticamente — não precisa de
     lógica extra para detectar se já existe uma transação em andamento.
@@ -135,13 +139,15 @@ def _write_audit_event(actor_id, action, target_model, target_id, target_label, 
                 description=description,
                 metadata=PIIScrubber.sanitize(metadata or {}),
             )
-    except Exception:
+        return True
+    except Exception as exc:
         # Audit best-effort: se schema sem boxcore_auditevent e
         # _ensure_tenant_for_audit_write nao conseguiu ativar tenant (ex.:
         # multi-tenant prod com actor sem primary_box), nao bloquear o
         # fluxo principal (login/logout/webhook). O savepoint acima garante
         # que so o INSERT falho e desfeito — a transacao externa sobrevive.
-        pass
+        logger.error('tenant_audit_record_failed error_type=%s', type(exc).__name__)
+        return False
     finally:
         if getattr(connection, 'tenant', None) is not previous_tenant:
             if previous_tenant is not None:
@@ -202,11 +208,15 @@ def log_platform_audit_event(*, actor=None, kind, target_box=None, description='
             kind=kind,
             payload=PIIScrubber.sanitize(payload),
         )
-    except Exception:
+    except Exception as exc:
         # Mesma filosofia best-effort do ADR-008: auditoria nunca derruba
         # o fluxo principal (login/logout). Diferente do caminho antigo,
         # a falha aqui só pode vir de algo genuinamente excepcional (banco
         # fora do ar) — não de "não achei schema pra ativar".
+        logger.error(
+            'platform_audit_record_failed kind=%s error_type=%s',
+            kind, type(exc).__name__,
+        )
         return None
 
 
@@ -219,7 +229,12 @@ def log_audit_event(*, actor=None, action, target=None, description='', metadata
     if target is not None and hasattr(target, '_meta'):
         target_model = target._meta.model_name
         target_id = str(target.pk)
-        target_label = str(target)
+        # Model __str__ often returns a student's name, email, phone or other
+        # tenant data. Keep the event type and target_id as the audit locator.
+        # Some operation adapters pass a lightweight, non-ORM target with only
+        # ``model_name``. Keep their stable identifier without falling back to
+        # ``str(target)``, which may contain tenant PII.
+        target_label = str(getattr(target._meta, 'verbose_name', target_model))
 
     actor_id = getattr(actor, 'id', None)
 

@@ -30,7 +30,9 @@ import logging
 from dataclasses import dataclass, field
 
 from django_tenants.utils import schema_context
+
 from control.tenant_write_fence import TenantWritesFrozen, tenant_write_guard
+from shared_support.tenant_logging import tenant_log_ref
 
 logger = logging.getLogger('octobox.jobs')
 
@@ -52,12 +54,12 @@ class TenantSweepResult:
 
     def summary_line(self) -> str:
         parts = [f'{self.schemas_touched} schema(s) processado(s)']
-        if self.schemas_skipped:
-            skipped_names = ', '.join(schema for schema, _ in self.skipped)
-            parts.append(f'{self.schemas_skipped} pausado(s) ({skipped_names})')
         if self.schemas_failed:
-            failed_names = ', '.join(schema for schema, _ in self.failures)
+            failed_names = ', '.join(tenant_log_ref(schema) for schema, _ in self.failures)
             parts.append(f'{self.schemas_failed} com falha ({failed_names})')
+        if self.schemas_skipped:
+            skipped_names = ', '.join(tenant_log_ref(schema) for schema, _ in self.skipped)
+            parts.append(f'{self.schemas_skipped} pausado(s) ({skipped_names})')
         return '; '.join(parts) + '.'
 
 
@@ -95,11 +97,10 @@ def sweep_active_tenants(handler, *, only_schema: str = '', raise_on_error: bool
             sweep.skipped.append((box.schema_name, 'tenant_writes_frozen'))
         except Exception as exc:  # noqa: BLE001 — varredura nao pode morrer por um box
             sweep.schemas_failed += 1
-            sweep.failures.append((box.schema_name, repr(exc)))
-            logger.exception(
-                'tenant_sweep falhou no schema %s',
-                box.schema_name,
-                extra={'schema_name': box.schema_name},
+            sweep.failures.append((box.schema_name, f'error:{type(exc).__name__}'))
+            logger.error(
+                'tenant_sweep_failed box_ref=%s error_type=%s',
+                tenant_log_ref(box), type(exc).__name__,
             )
             if raise_on_error:
                 raise

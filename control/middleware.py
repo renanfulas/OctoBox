@@ -32,6 +32,7 @@ from django.db import connection
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django_tenants.utils import get_public_schema_name
+from shared_support.tenant_logging import tenant_log_ref
 
 logger = logging.getLogger('control.middleware')
 
@@ -190,11 +191,7 @@ class TenantBySessionMiddleware:
             if has_membership or request.user.is_superuser:
                 return redirect(f'/box/?{REDIRECT_FIELD_NAME}={request.path}')
 
-            logger.warning(
-                'TenantBySessionMiddleware: user=%s sem Box resolvido para path=%s',
-                request.user.pk,
-                request.path,
-            )
+            logger.warning('tenant_by_session_box_unresolved')
             return HttpResponseForbidden('Nenhum box associado a este usuário.')
 
         # Onda 1c: expõe o Membership do box ativo em request.user para
@@ -299,8 +296,8 @@ class TenantBySessionMiddleware:
                 else:
                     # Box na session mas user não tem mais Membership → limpar session
                     logger.warning(
-                        'active_box_id=%s na session mas user=%s sem Membership — limpando.',
-                        active_box_id, request.user.pk,
+                        'active_box_membership_missing box_ref=%s action=session_cleared',
+                        tenant_log_ref(box),
                     )
                     del request.session['active_box_id']
             except Box.DoesNotExist:
@@ -319,7 +316,7 @@ class TenantBySessionMiddleware:
                 request.session['active_box_id'] = membership.box_id
                 request._resolved_membership = membership
                 return membership.box
-        except Exception:
-            logger.exception('Erro ao resolver Membership para user=%s', request.user.pk)
+        except Exception as exc:
+            logger.error('membership_resolution_failed error_type=%s', type(exc).__name__)
 
         return None

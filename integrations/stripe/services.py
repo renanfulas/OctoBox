@@ -108,9 +108,9 @@ def create_checkout_session(
             actor=actor,
             action='stripe_checkout_failed',
             target=payment,
-            description=f'Falha na malha da Stripe: {str(exc)}',
+            description=f'Falha na malha da Stripe ({type(exc).__name__}).',
         )
-        raise RuntimeError(f'Erro de comunicacao com a adquirente: {str(exc)}')
+        raise RuntimeError('stripe_checkout_failed') from None
 
 
 def refund_payment(payment: Payment) -> str:
@@ -151,9 +151,9 @@ def refund_payment(payment: Payment) -> str:
             actor=None,
             action='stripe_refund_failed',
             target=payment,
-            description=f'Falha ao estornar na Stripe: {str(exc)}',
+            description=f'Falha ao estornar na Stripe ({type(exc).__name__}).',
         )
-        raise RuntimeError(f'Erro ao estornar na adquirente: {str(exc)}')
+        raise RuntimeError('stripe_refund_failed') from None
 
 
 def get_stripe_payment_state(payment_intent_id: str) -> dict | None:

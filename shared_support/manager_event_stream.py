@@ -57,7 +57,7 @@ def publish_manager_stream_event(*, event_type: str, meta=None) -> None:
         redis_conn.publish(channel, json.dumps(payload))
         record_manager_sse_event_published(event_type)
     except Exception as exc:
-        logger.warning('manager_event_stream: falha ao publicar evento %s: %s', event_type, exc)
+        logger.warning('manager_event_publish_failed error_type=%s', type(exc).__name__)
 
 
 def build_manager_event_stream():
@@ -76,7 +76,7 @@ def build_manager_event_stream():
             inc_manager_sse_active_streams()
         except Exception as exc:
             record_manager_sse_stream_connection('redis_error')
-            logger.warning('manager_event_stream: Redis indisponivel: %s', exc)
+            logger.warning('manager_event_stream_unavailable error_type=%s', type(exc).__name__)
             yield f'retry: {SSE_RETRY_MS}\n'
             yield 'event: stream.error\n'
             yield 'data: {"status":"redis_unavailable"}\n\n'

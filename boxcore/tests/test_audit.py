@@ -17,6 +17,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from auditing.models import AuditEvent
+from auditing.scrubber import PIIScrubber
 from control.models import PlatformAuditEvent
 from finance.models import PaymentStatus
 from tests.factories import PaymentFactory, StudentFactory, UserFactory
@@ -51,7 +52,7 @@ class AuditTrailTests(TestCase):
         event = PlatformAuditEvent.objects.filter(kind='auth.login', actor_user=self.user).first()
         self.assertIsNotNone(event)
         self.assertIsNone(event.target_box, 'login nao deve adivinhar box — ver docstring de log_platform_audit_event')
-        self.assertEqual(event.payload.get('path'), reverse('login'))
+        self.assertEqual(event.payload.get('path'), PIIScrubber.REDACTED_MARKER)
 
     def test_logout_creates_platform_audit_event(self):
         self.client.force_login(self.user)
