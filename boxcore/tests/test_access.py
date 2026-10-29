@@ -126,7 +126,8 @@ class AccessViewTests(TestCase):
             first_name='Joao',
             last_name='Time',
         )
-        target_user.groups.add(Group.objects.create(name=ROLE_RECEPTION))
+        reception_group, _ = Group.objects.get_or_create(name=ROLE_RECEPTION)
+        target_user.groups.add(reception_group)
         self.client.force_login(self.user)
 
         response = self.client.post(
