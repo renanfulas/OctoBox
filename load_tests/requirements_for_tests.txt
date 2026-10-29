@@ -1,2 +1,2 @@
-psycopg2-binary>=2.9
+psycopg2-binary>=2.9.13
 prometheus_client>=0.16.0
