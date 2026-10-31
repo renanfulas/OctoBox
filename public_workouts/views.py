@@ -327,6 +327,33 @@ class CoachStudentRosterView(CurvaStaffLoginRequiredMixin, ListView):
         return context
 
 
+class CoachAnalyticsView(CurvaStaffLoginRequiredMixin, TemplateView):
+    """Analytics do treino dos alunos: adesao, uso do app (abre? no
+    celular?), execucao da sessao, carga/RIR e horario -- com a decisao
+    sugerida no topo pra o treinador agir em poucos minutos. So leitura;
+    regras e thresholds vivem em coach_analytics.py."""
+
+    template_name = 'public_workouts/coach_analytics.html'
+
+    def get_context_data(self, **kwargs):
+        from .coach_analytics import DEFAULT_WINDOW_DAYS, build_coach_analytics
+
+        context = super().get_context_data(**kwargs)
+        try:
+            window_days = int(self.request.GET.get('periodo', DEFAULT_WINDOW_DAYS))
+        except ValueError:
+            window_days = DEFAULT_WINDOW_DAYS
+        context['analytics'] = build_coach_analytics(window_days=window_days)
+        context['hero'] = build_page_hero(
+            eyebrow='Curva · analytics',
+            title='Como os alunos estão treinando',
+            copy='Comece pelas decisões: cada bloco diz quem precisa de quê. Os números abaixo explicam o porquê.',
+            heading_level='h1',
+        )
+        context['staff_username'] = self.request.session.get(SESSION_KEY, '')
+        return context
+
+
 class CoachStudentDetailView(CurvaStaffLoginRequiredMixin, View):
     """Ficha do aluno: evolução por movimento, versões do programa e as
     duas ações pedidas — chamar no WhatsApp e gerar novo rascunho de
@@ -409,6 +436,6 @@ class CoachStudentDetailView(CurvaStaffLoginRequiredMixin, View):
 
 
 __all__ = [
-    'CoachStudentDetailView', 'CoachStudentRosterView', 'CurvaStaffLoginView', 'CurvaStaffLogoutView',
+    'CoachAnalyticsView', 'CoachStudentDetailView', 'CoachStudentRosterView', 'CurvaStaffLoginView', 'CurvaStaffLogoutView',
     'PublicWorkoutActivationQueueView',
 ]
