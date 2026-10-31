@@ -290,6 +290,12 @@ class PublicWorkoutDetailView(View):
             plan_slug=plan.slug, account_id=account_id,
         ).first()
         if opened_subscription is not None:
+            from public_workouts.coach_analytics import record_program_open
+
+            record_program_open(
+                account=opened_subscription.account, plan_slug=plan.slug,
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            )
             active_program = PublicWorkoutProgram.objects.filter(
                 slug=plan.slug, is_active=True,
             ).first()
