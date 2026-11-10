@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do workflow de deploy
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Testar contrato do gate de deploy
         run: node --test tests/js/deploy_gate_workflow.test.js
