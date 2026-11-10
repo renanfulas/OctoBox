@@ -107,7 +107,10 @@ class TenantScopedEventStreamTests(SimpleTestCase):
                 iterator = iter(response.streaming_content)
                 next(iterator)
         pubsub.subscribe.assert_called_once_with('octobox:tenant:box_alpha:operations:manager:events')
-        response.close()
+        # Sem request_finished: num SimpleTestCase ele tocaria a conexão de banco
+        # deixada por outro teste do mesmo worker (dependência de ordem no xdist).
+        with patch('django.http.response.signals.request_finished.send'):
+            response.close()
 
     def test_student_stream_captures_box_channel_before_iterator_runs(self):
         redis = Mock()
@@ -126,4 +129,7 @@ class TenantScopedEventStreamTests(SimpleTestCase):
                 iterator = iter(response.streaming_content)
                 next(iterator)
         pubsub.subscribe.assert_called_once_with('octobox:tenant:box_bravo:student:42:events')
-        response.close()
+        # Sem request_finished: num SimpleTestCase ele tocaria a conexão de banco
+        # deixada por outro teste do mesmo worker (dependência de ordem no xdist).
+        with patch('django.http.response.signals.request_finished.send'):
+            response.close()
