@@ -234,7 +234,7 @@ def start_checkout_lead_session(*, lead, success_url: str, cancel_url: str) -> s
     session = stripe.checkout.Session.create(
         mode='subscription', payment_method_types=['card'],
         line_items=[{'price': price_id, 'quantity': 1}],
-        allow_promotion_codes=(lead.tier == PublicWorkoutTier.COMPLETO),
+        allow_promotion_codes=(lead.tier in (PublicWorkoutTier.ESSENCIAL, PublicWorkoutTier.COMPLETO)),
         customer_email=lead.email, client_reference_id=f'lead-{lead.pk}',
         success_url=success_url, cancel_url=cancel_url,
         metadata=metadata, subscription_data={'metadata': metadata},
