@@ -624,8 +624,23 @@ def test_app_opens_complete_without_network_and_syncs_when_it_returns(page: Page
     page.locator('[data-workout-guided-weight]').fill('42.5')
     page.locator('[data-workout-guided-reps]').fill('8')
     page.locator('[data-workout-guided-set]').click()
-    expect(page.locator('[data-workout-guided-status]')).to_contain_text('salva neste aparelho')
-    expect(page.locator('[data-sync-badge]')).to_contain_text('1 registro a enviar')
+    # O texto do status depende de navigator.onLine ("salva neste aparelho" com
+    # false; "Envio pendente" quando o aparelho acha que tem rede e o envio
+    # falha — o Chromium do CI fica nesse segundo caso). Nos dois, a série
+    # tem que estar na fila do aparelho: é isso que importa.
+    queued_set = """async () => {
+      const scope = localStorage.getItem('curva-guided-scope:bruno');
+      const rows = await window.CurvaGuidedOutbox.list(scope);
+      return rows.some((row) => row.payload.action === 'set' && String(row.payload.weight_kg) === '42.5');
+    }"""
+    for _ in range(100):
+        if page.evaluate(queued_set):
+            break
+        page.wait_for_timeout(100)
+    else:
+        raise AssertionError('a série feita sem rede não ficou na fila do aparelho')
+    expect(page.locator('[data-sync-badge]')).to_contain_text('a enviar')
+    assert not PublicWorkoutTrainingSession.objects.filter(account=account).exists()
 
     page.context.set_offline(False)
     page.evaluate("window.dispatchEvent(new Event('online'))")
