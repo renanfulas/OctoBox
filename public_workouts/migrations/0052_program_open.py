@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('public_workouts', '0049_commerce_email_lookup_indexes'),
+        ('public_workouts', '0051_assessment_idempotency_key'),
     ]
 
     operations = [

@@ -41,7 +41,10 @@ LINE_CEILINGS = {
     # +1 no #357: campo PublicWorkoutTrainingSet.duration_seconds (isometria). Mover
     # model de arquivo dentro de um PR de feature é mais arriscado que 1 linha; o
     # split de models é a Fase 5 do plano.
-    'public_workouts/models.py': 1540,
+    # +1 no #386: o model novo foi para program_open_models.py (28 linhas a menos
+    # aqui); a linha que sobra é a fachada que o reexporta, somada ao campo
+    # idempotency_key do #393.
+    'public_workouts/models.py': 1541,
     'public_workouts/services.py': 1534,
     'student_app/views/public_workout_views.py': 1332,
     'student_identity/public_workout_views.py': 1200,
