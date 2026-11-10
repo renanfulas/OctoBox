@@ -56,6 +56,13 @@
   function markComplete() {
     if (completed || !completeUrl) { return; }
     completed = true;
+    // F2 offline-first: tutorial fechado sem rede não volta a abrir sozinho;
+    // a marca sobe pela fila quando a conexão voltar (chave fixa: uma só).
+    if (window.CurvaOfflineData) {
+      window.CurvaOfflineData.submit({ kind: 'onboarding', key: 'onboarding', url: completeUrl })
+        .then(function (result) { if (result.state === 'failed') completed = false; });
+      return;
+    }
     window.fetch(completeUrl, {
       method: 'POST',
       credentials: 'same-origin',

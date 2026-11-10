@@ -56,12 +56,19 @@
     return countStore(GUIDED_DB, 'commands');
   }
 
+  // F2: avaliações e onboarding na fila de offline-data.js.
+  function countOtherWrites() {
+    var data = window.CurvaOfflineData;
+    return data ? data.pending().then(function (total) { return total || 0; }, function () { return 0; }) : Promise.resolve(0);
+  }
+
   function paint() {
     return Promise.all([
       countGuided(),
       countStore(LOADS_DB, 'pending-loads'),
+      countOtherWrites(),
     ]).then(function (counts) {
-      var total = counts[0] + counts[1];
+      var total = counts[0] + counts[1] + counts[2];
       if (!total) {
         badge.hidden = true;
         badge.textContent = '';

@@ -668,6 +668,67 @@ def test_app_opens_complete_without_network_and_syncs_when_it_returns(page: Page
     assert not any('/renan/bruno' in url and not url.endswith('.webmanifest') for url in cached), cached
 
 
+def _wait_for_saved_read(page: Page, account_id: int, url: str):
+    """Espera offline-data.js guardar a leitura JSON no banco da conta (F2)."""
+    script = """({ scope, url }) => new Promise((resolve) => {
+      const request = indexedDB.open('curva-offline-data:' + scope, 1);
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore('reads', { keyPath: 'url' });
+        request.result.createObjectStore('writes', { keyPath: 'key' });
+      };
+      request.onerror = () => resolve(false);
+      request.onsuccess = () => {
+        const db = request.result;
+        const read = db.transaction('reads').objectStore('reads').get(url);
+        read.onsuccess = () => { db.close(); resolve(Boolean(read.result)); };
+        read.onerror = () => { db.close(); resolve(false); };
+      };
+    })"""
+    for _ in range(100):
+        if page.evaluate(script, {'scope': str(account_id), 'url': url}):
+            return
+        page.wait_for_timeout(100)
+    raise AssertionError(f'offline-data.js não guardou {url}')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_assessment_recorded_offline_reaches_the_server_once(page: Page, live_server):
+    """F2 offline-first: a aba Avaliação abre da cópia local e a avaliação
+    feita sem rede sobe uma única vez quando a conexão volta."""
+    from public_workouts.models import PublicWorkoutAssessment
+
+    account, token = _prepare_guided_student()
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    _wait_for_offline_scope(page)
+    page.evaluate("async () => { await navigator.serviceWorker.ready; }")
+    page.reload()
+    _wait_for_saved_page(page)
+    _wait_for_saved_read(page, account.pk, '/renan/bruno/avaliacoes.json')
+
+    page.context.set_offline(True)
+    page.reload()
+    page.locator('[data-workout-cycle-nav][data-cycle-key="avaliacao"]').click()
+    notes = page.locator('.assess-offline-notes')
+    expect(notes).to_contain_text('Sem conexão: avaliações salvas neste aparelho em')
+    page.locator('#assess-f-weight').fill('79.4')
+    page.locator('.assess-form-submit').click()
+    expect(page.locator('#assess-f-feedback')).to_contain_text('Salva neste aparelho')
+    expect(notes).to_contain_text('1 avaliação aguardando envio')
+    expect(page.locator('[data-sync-badge]')).to_contain_text('1 registro a enviar · sem conexão')
+    assert not PublicWorkoutAssessment.objects.filter(plan_slug='bruno').exists()
+
+    page.context.set_offline(False)
+    page.evaluate("window.dispatchEvent(new Event('online'))")
+    expect(page.locator('[data-sync-badge]')).to_be_hidden(timeout=15000)
+    expect(notes).to_be_hidden()
+    rows = PublicWorkoutAssessment.objects.filter(plan_slug='bruno')
+    assert rows.count() == 1
+    assert rows.get().weight_kg == Decimal('79.40')
+    assert rows.get().idempotency_key
+
+
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)

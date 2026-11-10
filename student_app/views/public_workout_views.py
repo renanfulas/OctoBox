@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 
 from django.conf import settings
+from django.db import IntegrityError
 from django.http import Http404, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import redirect
@@ -964,6 +965,11 @@ class PublicWorkoutRecordAssessmentView(View):
         weight_kg = payload.get('weight_kg')
         measurements = payload.get('measurements')
         skinfolds = payload.get('skinfolds')
+        # F2 offline-first: chave da fila offline (offline-data.js); opcional
+        # para quem posta online sem ela.
+        idempotency_key = payload.get('idempotency_key') or None
+        if idempotency_key is not None and (not isinstance(idempotency_key, str) or len(idempotency_key) > 64):
+            return JsonResponse({'error': 'idempotency_key invalida'}, status=400)
         if not measured_at:
             return JsonResponse({'error': 'measured_at e obrigatorio'}, status=400)
         if measurements is not None and not isinstance(measurements, dict):
@@ -1055,10 +1061,14 @@ class PublicWorkoutRecordAssessmentView(View):
                 notes=notes,
                 sex=profile['sex'] or '',
                 height_cm=profile['height_cm'],
+                idempotency_key=idempotency_key,
                 **body_fat_kwargs,
             )
         except (AssessmentValueError, ValueError) as exc:
             return JsonResponse({'error': str(exc)}, status=400)
+        except IntegrityError:
+            # Chave já usada por OUTRO aluno: nunca devolve a avaliação dele.
+            return JsonResponse({'error': 'idempotency_key ja usada'}, status=409)
 
         return JsonResponse(result, status=200)
 

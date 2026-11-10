@@ -22,9 +22,12 @@ const DAY = 86400000;
 function fakeIndexedDB() {
   const databases = new Map();
   return {
-    rows(name) {
+    rows(name, store = 'pages') {
       const data = databases.get(name);
-      return data && data.stores.get('pages') ? data.stores.get('pages') : new Map();
+      return data && data.stores.get(store) ? data.stores.get(store) : new Map();
+    },
+    seed(name, stores) {
+      databases.set(name, { version: 1, stores: new Map(Object.entries(stores).map(([store, rows]) => [store, new Map(rows)])) });
     },
     open(name, version) {
       const request = {};
@@ -43,6 +46,7 @@ function fakeIndexedDB() {
               get: (key) => op(() => (rows.has(key) ? structuredClone(rows.get(key)) : undefined)),
               put: (value) => op(() => { rows.set(value.slug, structuredClone(value)); }),
               delete: (key) => op(() => { rows.delete(key); }),
+              clear: () => op(() => { rows.clear(); }),
             });
             setImmediate(() => tx.oncomplete());
             return tx;
@@ -227,6 +231,18 @@ test('"Sair da conta" apaga a cópia sem interceptar o POST', async () => {
   assert.equal(signOut.responded, null);
   await signOut.settled();
   assert.equal(pages(sw).has('bruno'), false);
+});
+
+test('"Sair da conta" limpa as leituras salvas da conta, mas não a fila de escritas', async () => {
+  const sw = worker({ fetch: () => assert.fail('o POST segue direto para a rede') });
+  await sw.seed({ slug: 'bruno', scope: '990', html: PAGE_HTML, saved_at: sw.state.now });
+  sw.idb.seed('curva-offline-data:990', {
+    reads: [['/renan/bruno/avaliacoes.json', { url: '/renan/bruno/avaliacoes.json', data: { assessments: [] } }]],
+    writes: [['k1', { key: 'k1', kind: 'assessment' }]],
+  });
+  await sw.navigate('/renan/bruno/sair', 'POST').settled();
+  assert.equal(sw.idb.rows('curva-offline-data:990', 'reads').size, 0);
+  assert.equal(sw.idb.rows('curva-offline-data:990', 'writes').size, 1);
 });
 
 test('página offline genérica e JSON de saúde não entram no IndexedDB', async () => {

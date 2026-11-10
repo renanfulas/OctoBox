@@ -212,6 +212,24 @@
     line-height: 1.5;
 }
 
+/* F2 offline-first: cópia local / avaliações na fila (assessments.js). */
+.workout-assessment-panel .assess-offline-notes {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--theme-border-soft));
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--brand) 9%, var(--theme-surface-secondary));
+    color: var(--theme-text-primary);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.workout-assessment-panel .assess-offline-notes p {
+    margin: 0;
+}
+
 @media (max-width: 600px) {
     .workout-assessment-panel .assess-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));

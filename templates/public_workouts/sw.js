@@ -50,8 +50,41 @@ function pageStore(mode, work) {
   }));
 }
 
-function forgetPage(slug) {
-  return pageStore('readwrite', (store) => store.delete(slug));
+// F2: as leituras JSON salvas da conta (offline-data.js) saem junto com a
+// página. Só o store "reads" — escrita ainda na fila nunca some sem aviso.
+function clearSavedReads(scope) {
+  return new Promise((resolve) => {
+    const request = indexedDB.open(`curva-offline-data:${scope}`, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains('reads')) {
+        request.result.createObjectStore('reads', { keyPath: 'url' });
+      }
+      if (!request.result.objectStoreNames.contains('writes')) {
+        request.result.createObjectStore('writes', { keyPath: 'key' });
+      }
+    };
+    request.onerror = () => resolve();
+    request.onblocked = () => resolve();
+    request.onsuccess = () => {
+      const db = request.result;
+      try {
+        const tx = db.transaction('reads', 'readwrite');
+        tx.objectStore('reads').clear();
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); resolve(); };
+        tx.onabort = () => { db.close(); resolve(); };
+      } catch (_) {
+        db.close();
+        resolve();
+      }
+    };
+  });
+}
+
+async function forgetPage(slug) {
+  const record = await pageStore('readonly', (store) => store.get(slug)).catch(() => null);
+  await pageStore('readwrite', (store) => store.delete(slug));
+  if (record && record.scope) await clearSavedReads(record.scope);
 }
 
 async function rememberPage(slug, response) {

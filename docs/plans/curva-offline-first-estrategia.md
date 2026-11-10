@@ -69,9 +69,9 @@ online".
 |---|---|
 | Sessão guiada (séries, pulos, encerramento) | ✅ outbox IndexedDB (`guided-outbox.js` + `guided-sync.js`) |
 | Carga confirmada | ✅ outbox com `idempotency_key` (`load-storage.js` + `load-sync.js`) |
-| Avaliações (`/avaliacoes`) | ❌ POST direto, falha offline |
-| Revisão semanal | ❌ POST direto |
-| Onboarding | ❌ POST direto |
+| Avaliações (`/avaliacoes`) | ❌ POST direto, falha offline — ✅ fila + idempotência desde a F2 |
+| Revisão semanal | ❌ leitura só online (é GET, não escrita) — ✅ cópia local desde a F2 |
+| Onboarding | ❌ POST direto — ✅ fila desde a F2 |
 
 ---
 
@@ -259,6 +259,39 @@ IndexedDB (`curva-offline-pages`, chave = slug) e a serve sem rede:
   e o e2e `test_app_opens_complete_without_network_and_syncs_when_it_returns`
   (navegador real: abre offline, treina pelo guiado, sincroniza ao voltar,
   e nenhuma página do aluno no Cache Storage).
+
+**F2 — entregue (epoch 26).** Novo `offline-data.js`: um banco por conta
+(`curva-offline-data:<conta>`) com dois stores.
+
+- *Leituras (`reads`, chave = URL):* nutrição (`nutricao.json`), avaliações
+  (`avaliacoes.json`), dicas de carga (`pacote.json`) e revisão semanal
+  guardam a última resposta boa; sem rede ou com 5xx abrem a cópia (30 dias)
+  com "Sem conexão: … salvo neste aparelho em dd/mm às hh:mm"; 401/403/404
+  apagam a cópia daquela URL. Continua fora do Cache Storage (B0).
+- *Escritas (`writes`, chave = `idempotency_key`):* autoavaliação e fim do
+  onboarding passam pela fila write-ahead; 2xx e recusa 4xx saem da fila,
+  401/5xx/sem rede ficam; drena ao abrir, no `online` e ao voltar o foco; o
+  selo de pendências soma esta fila. Recusa de uma avaliação enviada depois
+  aparece no formulário (`curva:offline-write-settled`).
+- *Servidor:* `PublicWorkoutAssessment.idempotency_key` (unique, migration
+  0051) — reenvio devolve a mesma linha; chave de outro aluno dá 409 e nunca
+  devolve a avaliação dele. `measured_at` já é a data do aparelho.
+- *Limpeza:* "Sair da conta" e as revogações do §4.1 limpam o store `reads`
+  da conta no SW; o store `writes` fica (mesma regra da fila do guiado —
+  apagar pendência com aviso é F3).
+- *Limites:* a avaliação nova só entra no relatório depois do envio (o
+  %gordura é calculado no servidor) — até lá o relatório mostra "N avaliações
+  aguardando envio". O tutorial de onboarding pode reaparecer na cópia
+  offline até a marca subir.
+- *Revisão semanal:* só leitura (GET); não havia escrita a cobrir.
+- *Provas:* `tests/js/curva_offline_data.test.js`, SW/selo estendidos,
+  `PublicWorkoutRecordAssessmentIdempotencyTests` e o e2e
+  `test_assessment_recorded_offline_reaches_the_server_once`.
+
+**O que resta (F3, endurecimento):** apagar fila pendente no "Sair da conta"
+com aviso de perda; Background Sync no Android; UX de conflito unificada;
+telemetria de idade da fila; e2e offline de nutrição (hoje coberto só por
+teste unitário de `offline-data.js`).
 
 ## 5. Riscos e decisões em aberto
 

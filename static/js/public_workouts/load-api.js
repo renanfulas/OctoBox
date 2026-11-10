@@ -36,9 +36,14 @@
 
   function lastTopSetByMovement(slug) {
     if (!slug) return Promise.resolve({});
-    return window.fetch('/renan/' + slug + '/pacote.json', { credentials: 'same-origin' })
-      .then(function (response) { return response.ok ? response.json() : {}; })
-      .then(function (data) { return data.last_top_set_by_movement || {}; })
+    var url = '/renan/' + slug + '/pacote.json';
+    // F2 offline-first: sem rede, as dicas de "última carga" vêm da cópia local.
+    var read = window.CurvaOfflineData
+      ? window.CurvaOfflineData.readJson(url).then(function (result) { return result.data; })
+      : window.fetch(url, { credentials: 'same-origin' })
+        .then(function (response) { return response.ok ? response.json() : {}; });
+    return read
+      .then(function (data) { return (data && data.last_top_set_by_movement) || {}; })
       .catch(function () { return {}; });
   }
 

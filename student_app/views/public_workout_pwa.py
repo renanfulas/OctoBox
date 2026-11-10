@@ -71,7 +71,10 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # Bump 24->25: F1 offline-first — o sw.js guarda a página do dono no IndexedDB
 # e a serve sem rede; offline-banner.js (novo no precache) e a faixa de
 # "modo offline" no HTML.
-PUBLIC_WORKOUT_CACHE_EPOCH = 25
+# Bump 25->26: F2 offline-first — offline-data.js (novo no precache) guarda
+# as leituras JSON por conta e enfileira avaliação/onboarding; nutrition,
+# weekly_review, assessments, onboarding, load-api e sync-badge mudam.
+PUBLIC_WORKOUT_CACHE_EPOCH = 26
 
 # F1 offline-first: o service worker só guarda no IndexedDB a resposta que
 # traz este header (valor = conta dona da página). Literal repetido em
@@ -175,6 +178,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/workout-push.js',
     '/static/js/public_workouts/sync-badge.js',
     '/static/js/public_workouts/offline-banner.js',
+    '/static/js/public_workouts/offline-data.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}

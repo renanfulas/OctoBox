@@ -62,6 +62,7 @@ function load(options) {
     indexedDB: idb.factory,
     addEventListener(type, fn) { windowListeners[type] = fn; },
     CurvaGuidedOutbox: options.outbox,
+    CurvaOfflineData: options.offlineData,
   };
   class CustomEvent { constructor(type) { this.type = type; } }
   vm.runInNewContext(source, { window, document, navigator, setTimeout, CustomEvent });
@@ -123,6 +124,16 @@ test('com o guiado na página, conta pela conexão dele sem abrir o banco de nov
   assert.equal(badge.textContent, '3 registros a enviar');
   assert.ok(asked.includes('990:bruno'));
   assert.ok(!idb.opened.includes('curva-guided:990:bruno'));
+});
+
+test('avaliação e onboarding na fila offline também entram no total', async () => {
+  const { window, badge } = load({
+    slug: 'bruno', accountScope: '990',
+    offlineData: { pending: () => Promise.resolve(2) },
+    counts: { 'curva-guided:990:bruno': { commands: 1 } },
+  });
+  await window.CurvaSyncBadge.refresh();
+  assert.equal(badge.textContent, '3 registros a enviar');
 });
 
 test('banco sem o store (conta nova) conta zero sem quebrar', async () => {
