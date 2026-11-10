@@ -179,10 +179,10 @@ echo "== OctoBOX Release Deploy =="
 echo "Target SHA: ${TARGET_SHA}"
 echo "Current SHA: ${current_sha:-none}"
 
-git_as_app fetch --no-tags origin "${TARGET_SHA}"
+git_as_app fetch --no-tags https://github.com/renanfulas/OctoBox.git "${TARGET_SHA}"
 resolved_sha="$(git_as_app rev-parse "${TARGET_SHA}^{commit}")"
 [[ "${resolved_sha}" == "${TARGET_SHA}" ]] || { echo "SHA resolvido não corresponde ao alvo." >&2; exit 1; }
-main_sha="$(git_as_app ls-remote origin refs/heads/main | awk 'NR == 1 {print $1}')"
+main_sha="$(git_as_app ls-remote https://github.com/renanfulas/OctoBox.git refs/heads/main | awk 'NR == 1 {print $1}')"
 [[ "${main_sha}" == "${TARGET_SHA}" ]] || { echo "Release obsoleta: origin/main=${main_sha}, alvo=${TARGET_SHA}." >&2; exit 1; }
 
 guard_existing_release

@@ -23,6 +23,7 @@
     fixed_kg: 'Carga definida pelo profissional',
     percent_of_top: 'Aproximação calculada pela série principal',
     percent_of_rm: 'Calculada pelo seu RM',
+    percent_range_of_rm: 'Calculada pela faixa do seu RM',
     suggested_top: 'Referência para a série principal',
   };
   var numberFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });

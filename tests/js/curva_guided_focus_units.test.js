@@ -88,6 +88,9 @@ test('carga alvo da Top explica a sugestão e orienta quando falta kg', () => {
   const ramp = { ...mixed, loadKind: 'free', topTargetKg: 100 };
   const derived = { role: 'feeder', top_factor: 0.7 };
   assert.equal(format.loadSource(ramp, derived), 'Calculada pela sua Top alvo');
+  assert.equal(format.loadSource({ ...ramp, topTargetKg: null },
+    { role: 'max_set', load_source: 'percent_range_of_rm', top_factor: null }),
+    'Calculada pela faixa do seu RM');
   assert.equal(format.weightSource(ramp, derived, { weight: 70, base: 70 }).text, 'Calculada pela sua Top alvo · ajuste se precisar');
   const noTarget = { ...mixed, loadKind: 'free', topTargetKg: null };
   assert.equal(

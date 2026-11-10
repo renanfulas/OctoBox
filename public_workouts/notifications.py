@@ -349,7 +349,7 @@ def notify_staff_new_subscription(subscription, *, previous_status: str, base_ur
     pagamento (mesma regra do resto deste modulo).
     """
     from signup.email_sender import send_html_email
-
+    from .staff_alert_recipients import staff_alert_recipients
     account = subscription.account
     tier_label = subscription.get_tier_display()
     amount = _latest_paid_amount(subscription)
@@ -376,7 +376,7 @@ def notify_staff_new_subscription(subscription, *, previous_status: str, base_ur
         intake_url=intake_url, previous_status_label=previous_status_label,
     )
     result = {}
-    for staff_email in getattr(settings, 'PUBLIC_WORKOUT_STAFF_ALERT_EMAILS', []):
+    for staff_email in staff_alert_recipients(subscription):
         try:
             send_html_email(subject=subject, text_body=body, html_body=html_body, to_email=staff_email)
             result[staff_email] = 'sent'

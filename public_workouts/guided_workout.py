@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import re
 import math
+import logging
 
 from .warmup_ramp import stage_ramp_factors, stage_ramp_kg
 from .guided_prescription import expand_guided_prescription
+
+logger = logging.getLogger(__name__)
 
 _SET_PREFIX = re.compile(r'^\s*\d+(?:\s*[-–]\s*\d+)?\s*[x×]', re.I)
 _SET_RANGE = re.compile(r'^\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*[x×]', re.I)
@@ -123,7 +126,11 @@ def build_guided_series(movement: dict, top_weight_kg=None, one_rep_max_kg=None)
     """Usa a prescrição publicada; texto legado é somente fallback."""
     guided = (movement or {}).get('guided_prescription')
     if guided is not None:
-        return expand_guided_prescription(
-            guided, top_weight_kg=top_weight_kg, one_rep_max_kg=one_rep_max_kg,
-        )
+        try:
+            return expand_guided_prescription(
+                guided, top_weight_kg=top_weight_kg, one_rep_max_kg=one_rep_max_kg,
+            )
+        except ValueError as exc:
+            logger.error('Prescricao guiada invalida para movimento %s: %s',
+                         (movement or {}).get('movement_slug'), exc)
     return build_legacy_series(movement, top_weight_kg)
