@@ -154,7 +154,7 @@ jobs:
             test "${#DEPLOY_TARGET_SHA}" -eq 40
             APP=/srv/octobox/app
             TOOLS=/srv/octobox/shared/deploy-tools
-            sudo -u octobox git -C "$APP" fetch origin "$DEPLOY_TARGET_SHA"
+            sudo -u octobox git -C "$APP" fetch --no-tags https://github.com/renanfulas/OctoBox.git "$DEPLOY_TARGET_SHA"
             sudo install -d -m 0750 -o root -g octobox "$TOOLS"
             sudo -u octobox git -C "$APP" show "$DEPLOY_TARGET_SHA:scripts/linux/deploy_octobox.sh" | sudo tee "$TOOLS/deploy-${DEPLOY_TARGET_SHA}.sh" >/dev/null
             sudo chmod 0750 "$TOOLS/deploy-${DEPLOY_TARGET_SHA}.sh"
