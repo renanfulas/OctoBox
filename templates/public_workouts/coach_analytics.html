@@ -1,0 +1,281 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Analytics — Curva</title>
+<link rel="stylesheet" href="{% static 'css/public_workouts/account.css' %}">
+<link rel="stylesheet" href="{% static 'css/public_workouts/staff_ops.css' %}">
+</head>
+<body class="curva-ops">
+<main class="curva-ops-shell">
+  <header class="curva-ops-topbar">
+    <a href="{% url 'public-workout-coach-roster' %}" class="curva-ops-brand">Cur<span>va</span> · operação</a>
+    <nav class="curva-ops-nav">
+      <a href="{% url 'public-workout-activation-queue' %}">Fila de ativação</a>
+      <a href="{% url 'public-workout-coach-roster' %}">Alunos</a>
+      <a href="{% url 'public-workout-coach-analytics' %}" aria-current="page">Analytics</a>
+    </nav>
+    <div class="curva-ops-user">
+      <span>{{ staff_username }}</span>
+      <form method="post" action="{% url 'public-workout-staff-logout' %}">{% csrf_token %}<button type="submit">Sair</button></form>
+    </div>
+  </header>
+
+  <section class="curva-ops-hero curva-an-hero">
+    <div>
+      <p class="curva-ops-eyebrow">{{ hero.eyebrow }}</p>
+      <h1>{{ hero.title }}</h1>
+      <p>{{ hero.copy }}</p>
+    </div>
+    <nav class="curva-an-period" aria-label="Período">
+      {% for days in analytics.window_choices %}
+      <a href="?periodo={{ days }}"{% if days == analytics.window_days %} aria-current="true"{% endif %}>{{ days }} dias</a>
+      {% endfor %}
+    </nav>
+  </section>
+
+  <nav class="curva-an-jump" aria-label="Seções">
+    <a href="#decisoes">Decisões</a><a href="#adesao">Adesão</a><a href="#app">Uso do app</a><a href="#horario">Horário</a><a href="#cargas">Cargas</a><a href="#alunos">Por aluno</a>
+  </nav>
+
+  <section id="decisoes" class="curva-an-section" aria-labelledby="decisoes-title">
+    <h2 id="decisoes-title" class="curva-ops-section-title">1 · O que fazer agora</h2>
+    {% for exercise in analytics.load_evolution.stalled_exercises %}
+    <a href="#cargas" class="curva-an-callout">⚠️ <strong>{{ exercise.label }}</strong> travado em {{ exercise.plateau|add:exercise.declining }} de {{ exercise.students }} alunos → rever a programação desse exercício</a>
+    {% endfor %}
+    {% if analytics.decisions %}
+    <div class="curva-an-decisions">
+      {% for group in analytics.decisions %}
+      <article class="curva-an-decision is-{{ group.tone }}">
+        <header>
+          <strong class="curva-an-decision__count">{{ group.students|length }}</strong>
+          <div><h3>{{ group.title }}</h3><p>→ {{ group.cta }}</p></div>
+        </header>
+        <ul>
+          {% for student in group.students|slice:":4" %}
+          <li>
+            <a href="{% url 'public-workout-coach-student-detail' account_id=student.account_id %}">{{ student.label }}</a>
+            <span>{{ student.reason }}</span>
+            {% if student.whatsapp_url and group.tone != 'adjust' %}<a href="{{ student.whatsapp_url }}" target="_blank" rel="noopener" class="curva-ops-whatsapp-button">Chamar</a>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% if group.students|length > 4 %}
+        <details><summary>+{{ group.students|length|add:"-4" }} aluno(s)</summary>
+          <ul>
+            {% for student in group.students|slice:"4:" %}
+            <li>
+              <a href="{% url 'public-workout-coach-student-detail' account_id=student.account_id %}">{{ student.label }}</a>
+              <span>{{ student.reason }}</span>
+              {% if student.whatsapp_url and group.tone != 'adjust' %}<a href="{{ student.whatsapp_url }}" target="_blank" rel="noopener" class="curva-ops-whatsapp-button">Chamar</a>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="curva-ops-empty curva-ops-card">Nada pedindo ação nos últimos {{ analytics.window_days }} dias. 🎯</p>
+    {% endif %}
+  </section>
+
+  <section class="curva-an-section" aria-labelledby="kpi-title">
+    <h2 id="kpi-title" class="curva-ops-section-title">2 · Termômetro dos últimos {{ analytics.window_days }} dias</h2>
+    <div class="curva-an-kpis">
+      {% for kpi in analytics.kpis %}
+      <article class="curva-ops-stat curva-an-kpi">
+        <span>{{ kpi.label }}</span>
+        <strong>{{ kpi.value }}</strong>
+        <p>{{ kpi.hint }}{% if kpi.delta is not None %} · <b class="{% if kpi.delta >= 0 %}is-up{% else %}is-down{% endif %}">{% if kpi.delta >= 0 %}▲{% else %}▼{% endif %} {{ kpi.delta }}%</b>{% endif %}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="curva-an-grid">
+    <section id="adesao" class="curva-ops-card curva-an-section" aria-labelledby="adesao-title">
+      <h2 id="adesao-title" class="curva-ops-section-title">3 · Adesão — últimas 8 semanas</h2>
+      <p class="curva-ops-meta curva-an-legend"><i class="is-train"></i> dias de treino <i class="is-open"></i> aberturas do treino</p>
+      <div class="curva-an-bars" role="img" aria-label="Dias de treino e aberturas por semana">
+        {% for week in analytics.weekly_trend %}
+        <div class="curva-an-bars__week{% if week.is_current %} is-current{% endif %}" title="Semana de {{ week.label }}: {{ week.training_days }} dia(s) de treino, {{ week.opens }} abertura(s), {{ week.students }} aluno(s) treinando">
+          <div class="curva-an-bars__pair">
+            <span class="is-train" style="height:{{ week.training_height }}%"></span>
+            <span class="is-open" style="height:{{ week.opens_height }}%"></span>
+          </div>
+          <small>{{ week.label }}</small>
+          <small class="curva-an-bars__students">{{ week.students }} 👤</small>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="app" class="curva-ops-card curva-an-section" aria-labelledby="app-title">
+      <h2 id="app-title" class="curva-ops-section-title">4 · Uso do app</h2>
+      {% if analytics.device_split %}
+      <p class="curva-ops-meta">Onde abrem o treino</p>
+      <div class="curva-an-split">
+        {% for item in analytics.device_split %}<span class="is-{{ item.key }}" style="flex:{{ item.count }}" title="{{ item.label }}: {{ item.count }}"></span>{% endfor %}
+      </div>
+      <ul class="curva-an-split-legend">
+        {% for item in analytics.device_split %}<li><i class="is-{{ item.key }}"></i>{{ item.label }} <b>{{ item.percent }}%</b></li>{% endfor %}
+      </ul>
+      {% else %}
+      <p class="curva-ops-empty">Ainda sem aberturas registradas no período.</p>
+      {% endif %}
+      <p class="curva-ops-meta curva-an-tip">Abriu e não treinou costuma ser falta de tempo ou treino longo demais — pergunte antes de mudar o programa.</p>
+    </section>
+
+    <section id="horario" class="curva-ops-card curva-an-section curva-an-grid__wide" aria-labelledby="horario-title">
+      <h2 id="horario-title" class="curva-ops-section-title">5 · Quando treinam</h2>
+      {% if analytics.time_heatmap.total %}
+      <p class="curva-ops-meta">Pico: <strong>{{ analytics.time_heatmap.best_slot }}</strong> — bom horário pra mandar lembrete ou mensagem.</p>
+      <table class="curva-an-heat">
+        <thead><tr><th></th>{% for day in analytics.time_heatmap.weekdays %}<th>{{ day }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in analytics.time_heatmap.rows %}
+          <tr><th>{{ row.label }}</th>{% for cell in row.cells %}<td class="is-l{{ cell.level }}" title="{{ cell.value }} treino(s)">{% if cell.value %}{{ cell.value }}{% endif %}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="curva-ops-empty">Sem treinos no período.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  {% with evo=analytics.load_evolution %}
+  <section id="cargas" class="curva-ops-card curva-an-section" aria-labelledby="cargas-title">
+    <h2 id="cargas-title" class="curva-ops-section-title">6 · Evolução das cargas <span class="curva-ops-meta">— só séries principais, início do período → agora</span></h2>
+    {% if evo.students %}
+    <div class="curva-an-evo-top">
+      <div>
+        <h3 class="curva-an-subtitle">Por exercício</h3>
+        <table class="curva-an-evo-table">
+          <thead><tr><th>Exercício</th><th>Alunos</th><th title="subindo · platô · caindo">Tendência</th><th>Média</th></tr></thead>
+          <tbody>
+            {% for exercise in evo.exercises %}
+            <tr{% if exercise.is_stalled %} class="is-stalled"{% endif %}>
+              <td>{{ exercise.label }}{% if exercise.is_stalled %} <span class="curva-ops-pill is-warning">travado</span>{% endif %}</td>
+              <td>{{ exercise.students }}</td>
+              <td>
+                <div class="curva-an-trend-bar" title="{{ exercise.improving }} subindo · {{ exercise.plateau }} platô · {{ exercise.declining }} caindo">
+                  {% if exercise.improving %}<span class="is-up" style="flex:{{ exercise.improving }}"></span>{% endif %}
+                  {% if exercise.plateau %}<span class="is-flat" style="flex:{{ exercise.plateau }}"></span>{% endif %}
+                  {% if exercise.declining %}<span class="is-down" style="flex:{{ exercise.declining }}"></span>{% endif %}
+                </div>
+                <small class="curva-ops-meta">↑{{ exercise.improving }} →{{ exercise.plateau }} ↓{{ exercise.declining }}</small>
+              </td>
+              <td>{% if exercise.avg_delta_percent is not None %}<b class="curva-an-delta {% if exercise.avg_delta_percent >= 0 %}is-up{% else %}is-down{% endif %}">{% if exercise.avg_delta_percent > 0 %}+{% endif %}{{ exercise.avg_delta_percent }}%</b>{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 class="curva-an-subtitle">🏆 Maiores ganhos</h3>
+        {% if evo.top_gains %}
+        <ol class="curva-an-gains">
+          {% for gain in evo.top_gains %}
+          <li><a href="{% url 'public-workout-coach-student-detail' account_id=gain.account_id %}">{{ gain.student_label }}</a> · {{ gain.label }}
+            <span>{{ gain.baseline_kg }} → <strong>{{ gain.current_kg }} kg</strong> <b class="curva-an-delta is-up">{{ gain.delta_kg_label }} kg{% if gain.delta_percent %} · +{{ gain.delta_percent }}%{% endif %}</b></span></li>
+          {% endfor %}
+        </ol>
+        {% else %}
+        <p class="curva-ops-meta">Ninguém subiu carga no período ainda.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <h3 class="curva-an-subtitle">Por aluno <span class="curva-ops-meta">— quem tem mais exercício travado aparece primeiro; clique para abrir</span></h3>
+    <div class="curva-an-evo-students">
+      {% for student in evo.students %}
+      <details class="curva-an-evo-student"{% if forloop.first %} open{% endif %}>
+        <summary>
+          <strong>{{ student.label }}</strong>
+          <span class="curva-an-evo-chips">
+            {% if student.improving %}<span class="curva-ops-pill is-success">↑ {{ student.improving }}</span>{% endif %}
+            {% if student.plateau %}<span class="curva-ops-pill is-warning">→ {{ student.plateau }}</span>{% endif %}
+            {% if student.declining %}<span class="curva-ops-pill is-danger">↓ {{ student.declining }}</span>{% endif %}
+            {% if student.avg_delta_percent is not None %}<span class="curva-ops-meta">média {% if student.avg_delta_percent > 0 %}+{% endif %}{{ student.avg_delta_percent }}%</span>{% endif %}
+          </span>
+        </summary>
+        <ul class="curva-an-evo-list">
+          {% for m in student.movements %}
+          <li class="is-{{ m.trend }}">
+            <div class="curva-an-evo-name"><strong>{{ m.label }}</strong><small class="curva-ops-meta">{{ m.sessions }} treino(s) · último {{ m.last_on|date:"d/m" }}</small></div>
+            <svg class="curva-an-evo-spark" viewBox="{{ evo.spark_viewbox }}" preserveAspectRatio="none" aria-hidden="true">{% if m.spark_points %}<polyline points="{{ m.spark_points }}"/>{% endif %}</svg>
+            <div class="curva-an-evo-load">{{ m.baseline_kg }} → <strong>{{ m.current_kg }} kg</strong>{% if m.current_reps %} <small>× {{ m.current_reps }}</small>{% endif %}
+              <b class="curva-an-delta {% if m.delta_kg > 0 %}is-up{% elif m.delta_kg < 0 %}is-down{% endif %}">{{ m.delta_kg_label }} kg</b></div>
+            <div class="curva-an-evo-meta">{% if m.one_rep_max_kg %}1RM ~{{ m.one_rep_max_kg }} kg · {% endif %}<span class="curva-an-trend is-{{ m.trend }}">{{ m.trend_label }}</span></div>
+          </li>
+          {% endfor %}
+        </ul>
+        <a href="{% url 'public-workout-coach-student-detail' account_id=student.account_id %}" class="curva-risk-card__link">Ver gráficos completos →</a>
+      </details>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="curva-ops-empty">Ninguém registrou série principal com carga no período.</p>
+    {% endif %}
+  </section>
+  {% endwith %}
+
+  <section id="alunos" class="curva-ops-card curva-an-section" aria-labelledby="alunos-title">
+    <h2 id="alunos-title" class="curva-ops-section-title">7 · Por aluno <span class="curva-ops-meta">— quem precisa de ação aparece primeiro</span></h2>
+    {% if analytics.students %}
+    <table class="curva-ops-table curva-an-table">
+      <thead>
+        <tr>
+          <th>Aluno</th>
+          <th title="Dias de treino por semana · último treino">Adesão</th>
+          <th title="Aberturas do treino · % que viraram treino · % no celular">App</th>
+          <th title="Sessões guiadas concluídas · duração média · séries puladas">Sessão</th>
+          <th title="Volume (kg × reps) · variação vs período anterior · RIR médio · recordes">Carga</th>
+          <th>Próximo passo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in analytics.students %}
+        <tr class="is-{{ s.tone }}">
+          <td>
+            <a href="{% url 'public-workout-coach-student-detail' account_id=s.account_id %}" class="curva-ops-student-link"><strong>{{ s.label }}</strong></a>
+            <p class="curva-ops-meta">{{ s.tier }}{% if s.push_enabled %} · 🔔{% endif %}</p>
+          </td>
+          <td>
+            <strong>{{ s.days_per_week }}x</strong>/sem
+            <p class="curva-ops-meta">{% if s.last_workout_on %}último {{ s.last_workout_on|date:"d/m" }} ({{ s.days_since_last_workout }}d){% else %}nunca treinou{% endif %}</p>
+          </td>
+          <td>
+            <strong>{{ s.opens }}</strong> abert.
+            <p class="curva-ops-meta">{% if s.open_to_train_percent is not None %}{{ s.open_to_train_percent }}% viram treino{% else %}—{% endif %}{% if s.mobile_percent is not None %} · 📱 {{ s.mobile_percent }}%{% endif %}</p>
+          </td>
+          <td>
+            {% if s.sessions_started %}<strong>{{ s.sessions_completed }}/{{ s.sessions_started }}</strong>
+            <p class="curva-ops-meta">{% if s.avg_session_minutes %}{{ s.avg_session_minutes }} min{% endif %}{% if s.skipped_percent %} · {{ s.skipped_percent }}% puladas{% endif %}</p>
+            {% else %}<span class="curva-ops-meta">sem sessão guiada</span>{% endif %}
+          </td>
+          <td>
+            <strong>{{ s.volume_kg }} kg</strong>
+            {% if s.volume_delta_percent is not None %}<b class="curva-an-delta {% if s.volume_delta_percent >= 0 %}is-up{% else %}is-down{% endif %}">{% if s.volume_delta_percent >= 0 %}▲{% else %}▼{% endif %}{{ s.volume_delta_percent }}%</b>{% endif %}
+            <p class="curva-ops-meta">{% if s.avg_rir is not None %}RIR {{ s.avg_rir }}{% else %}RIR —{% endif %}{% if s.records %} · 🏆 {{ s.records }}{% endif %}</p>
+          </td>
+          <td>
+            {% with action=s.actions.0 %}
+            {% if action %}<span class="curva-ops-pill curva-an-pill is-{{ action.tone }}">{{ action.cta }}</span><p class="curva-ops-meta">{{ action.reason }}</p>
+            {% else %}<span class="curva-ops-pill is-success">tudo certo</span>{% endif %}
+            {% endwith %}
+            {% if s.whatsapp_url %}<a href="{{ s.whatsapp_url }}" target="_blank" rel="noopener" class="curva-ops-whatsapp-button curva-an-row-cta">Chamar</a>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="curva-ops-empty">Nenhum aluno ativo ainda.</div>
+    {% endif %}
+  </section>
+
+  <p class="curva-ops-footer">Aberturas contam a partir desta versão (recarregar a página em até 30 min não conta de novo). Volume = séries de trabalho (sem aquecimento/aproximação).</p>
+</main>
+</body></html>

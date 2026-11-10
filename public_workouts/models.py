@@ -53,6 +53,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
+from .program_open_models import PublicWorkoutProgramOpen, PublicWorkoutProgramOpenDevice  # noqa: F401
 
 from model_support.base import TimeStampedModel
 from public_workouts import email_index_writes
