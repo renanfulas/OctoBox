@@ -81,6 +81,16 @@
     });
   }
 
+  // F0 offline-first: o selo global de pendências (sync-badge.js) escuta a
+  // camada de armazenamento — o único ponto por onde toda mudança da fila
+  // passa, seja do guiado online, do write-ahead ou do shell offline.
+  function announceChange(result) {
+    try {
+      document.dispatchEvent(new CustomEvent('curva:outbox-changed'));
+    } catch (_) {}
+    return result;
+  }
+
   function queue(scope, command) {
     return run(scope, ['commands', 'state'], 'readwrite', 'Fila local cancelada.', function (tx) {
       var commands = tx.objectStore('commands');
@@ -97,15 +107,20 @@
         };
       }
       return function () { return command; };
-    });
+    }).then(announceChange);
   }
 
   function list(scope) {
     return transact(scope, 'commands', 'readonly', 'getAll');
   }
 
+  // Para o selo de pendências: pela conexão viva, sem abrir o banco de novo.
+  function count(scope) {
+    return transact(scope, 'commands', 'readonly', 'count');
+  }
+
   function remove(scope, key) {
-    return transact(scope, 'commands', 'readwrite', 'delete', key);
+    return transact(scope, 'commands', 'readwrite', 'delete', key).then(announceChange);
   }
 
   function save(scope, snapshot) {
@@ -197,7 +212,7 @@
   }
 
   window.CurvaGuidedOutbox = {
-    queue: queue, list: list, remove: remove, save: save, restore: restore, clear: clear,
+    queue: queue, list: list, count: count, remove: remove, save: save, restore: restore, clear: clear,
     savePlan: savePlan, restorePlan: restorePlan,
     mapSession: mapSession, lookupSession: lookupSession,
     acquireLease: acquireLease, releaseLease: releaseLease,

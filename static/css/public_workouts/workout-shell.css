@@ -219,6 +219,24 @@ body[data-plan-slug] .card-decor-topstripe::before { display: none; }
     min-width: 0;
 }
 
+/* Selo global de pendências de envio (F0 offline-first): aparece entre a
+   saudação e a marca quando há registro local aguardando sincronização. */
+.workout-sync-badge {
+    flex: none;
+    max-width: 46vw;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: color-mix(in srgb, var(--brand) 72%, var(--theme-text-primary) 28%);
+    background: color-mix(in srgb, var(--brand) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--brand) 30%, transparent);
+}
+
 /* A marca como letreiro: no escuro acende (camada neon no fim do arquivo). */
 .workout-wordmark {
     flex: none;
@@ -715,6 +733,38 @@ body.workout-keyboard-open .workout-mobile-nav {
 
 .workout-install-prompt[hidden] {
     display: none;
+}
+
+/* F1 offline-first: faixa de conexão (offline-banner.js), acima das abas. */
+.workout-offline-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--theme-border-soft));
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--brand) 9%, var(--theme-surface-secondary));
+    color: var(--theme-text-primary);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.workout-offline-banner[hidden],
+.workout-offline-banner button[hidden] {
+    display: none;
+}
+
+.workout-offline-banner button {
+    flex: none;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--brand);
+    color: #061b40;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
 }
 
 .workout-install-prompt button {

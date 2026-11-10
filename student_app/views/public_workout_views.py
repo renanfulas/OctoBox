@@ -38,7 +38,7 @@ from public_workouts.catalog import (
 )
 from .public_workout_pwa import (
     PUBLIC_WORKOUT_SCOPE, PUBLIC_WORKOUT_OFFLINE_URL, PUBLIC_WORKOUT_CACHE_EPOCH,
-    PUBLIC_WORKOUT_ICON_192, PUBLIC_WORKOUT_ICON_512,
+    PUBLIC_WORKOUT_OFFLINE_SCOPE_HEADER, PUBLIC_WORKOUT_ICON_192, PUBLIC_WORKOUT_ICON_512,
     PUBLIC_WORKOUT_ICON_MASKABLE_512, PUBLIC_WORKOUT_APPLE_TOUCH_ICON,
     PUBLIC_WORKOUT_STATIC_ASSETS, PUBLIC_WORKOUT_STYLESHEETS, PUBLIC_WORKOUT_SCRIPTS,
     PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS, PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS,
@@ -286,6 +286,12 @@ class PublicWorkoutDetailView(View):
         response = _private_public_workout_response(_render_public_workout_html(
             plan_slug, account_id=account_id,
         ))
+        # F1 offline-first: único ponto que autoriza o service worker a guardar
+        # esta página no IndexedDB do aparelho (nunca no Cache Storage, A4).
+        # Só a página real do dono logado leva a marca; qualquer outra resposta
+        # deste caminho (login, 404, pagamento bloqueado) faz o SW apagar a cópia.
+        if account_id is not None:
+            response[PUBLIC_WORKOUT_OFFLINE_SCOPE_HEADER] = str(account_id)
         opened_subscription = PublicWorkoutSubscription.objects.select_related('account').filter(
             plan_slug=plan.slug, account_id=account_id,
         ).first()

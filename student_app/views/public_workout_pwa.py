@@ -64,7 +64,19 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # (guided-format/focus.js, workout-guided.js, CSS e HTML do foco).
 # Bump 22->23: isometria por tempo no modo foco (campo de tempo, 3-2-1 e
 # cronômetro) muda guided-format/focus/sync, workout-guided e o HTML do foco.
-PUBLIC_WORKOUT_CACHE_EPOCH = 23
+# Bump 23->24: F0 offline-first (docs/plans/curva-offline-first-estrategia.md)
+# — selo global de pendências (sync-badge.js, novo no precache), TTL da ficha
+# offline 7->30 dias (workout-offline.js), storage.persist() (workout-pwa.js)
+# e eventos de mudança da fila (guided-outbox.js / load-storage.js).
+# Bump 24->25: F1 offline-first — o sw.js guarda a página do dono no IndexedDB
+# e a serve sem rede; offline-banner.js (novo no precache) e a faixa de
+# "modo offline" no HTML.
+PUBLIC_WORKOUT_CACHE_EPOCH = 25
+
+# F1 offline-first: o service worker só guarda no IndexedDB a resposta que
+# traz este header (valor = conta dona da página). Literal repetido em
+# templates/public_workouts/sw.js — os testes amarram os dois.
+PUBLIC_WORKOUT_OFFLINE_SCOPE_HEADER = 'X-Curva-Offline-Scope'
 PUBLIC_WORKOUT_ICON_192 = STUDENT_APP_ICON_192
 PUBLIC_WORKOUT_ICON_512 = STUDENT_APP_ICON_512
 PUBLIC_WORKOUT_ICON_MASKABLE_512 = STUDENT_APP_ICON_MASKABLE_512
@@ -161,6 +173,8 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/workout-offline.js',
     '/static/js/public_workouts/workout-pwa.js',
     '/static/js/public_workouts/workout-push.js',
+    '/static/js/public_workouts/sync-badge.js',
+    '/static/js/public_workouts/offline-banner.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}

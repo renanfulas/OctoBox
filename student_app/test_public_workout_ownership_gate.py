@@ -208,3 +208,64 @@ class PublicWorkoutSubscriptionStatusGateTests(TestCase):
         response = self.client.get('/renan/bruno')
 
         self.assertContains(response, '/treinos/billing-portal')
+
+
+class PublicWorkoutOfflineSnapshotConsentTests(TestCase):
+    """F1 offline-first (docs/plans/curva-offline-first-estrategia.md): o
+    service worker só guarda no IndexedDB a resposta de /renan/<slug> que
+    leva PUBLIC_WORKOUT_OFFLINE_SCOPE_HEADER — e apaga a cópia diante de
+    qualquer outra. A garantia de privacidade está em QUEM recebe a marca:
+    só a página real do dono logado, nunca login, 404 ou tela de bloqueio."""
+
+    def setUp(self):
+        from student_app.views.public_workout_pwa import PUBLIC_WORKOUT_OFFLINE_SCOPE_HEADER
+
+        self.header = PUBLIC_WORKOUT_OFFLINE_SCOPE_HEADER
+
+    def _sign_in(self, account):
+        self.client.cookies[PUBLIC_WORKOUT_SESSION_COOKIE_NAME] = build_public_workout_session_value(
+            account_id=account.pk, identity_verified=True
+        )
+
+    def test_owner_page_is_marked_with_the_owner_account(self):
+        publish_example_program('bruno')
+        account = _make_account_with_subscription(email='dono-offline@example.com', plan_slug='bruno')
+        self._sign_in(account)
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response[self.header], str(account.pk))
+        # A marca nunca libera cache HTTP: a cópia é só do IndexedDB do aparelho.
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
+
+    def test_visitor_without_session_is_not_marked(self):
+        response = self.client.get('/renan/bruno')
+
+        self.assertFalse(response.has_header(self.header))
+
+    def test_someone_elses_slug_is_not_marked(self):
+        account = _make_account_with_subscription(email='outro-offline@example.com', plan_slug='bruno')
+        self._sign_in(account)
+
+        response = self.client.get('/renan/juliana')
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(response.has_header(self.header))
+
+    def test_payment_blocked_screen_is_not_marked(self):
+        account = _make_account_with_subscription(
+            email='bloqueado-offline@example.com', plan_slug='bruno',
+            status=PublicWorkoutSubscriptionStatus.SUSPENDED,
+        )
+        self._sign_in(account)
+
+        response = self.client.get('/renan/bruno')
+
+        self.assertContains(response, 'Atualizar pagamento')
+        self.assertFalse(response.has_header(self.header))
+
+    def test_service_worker_reads_the_same_header(self):
+        response = self.client.get('/renan/sw.js', {'slug': 'bruno'})
+
+        self.assertIn(f"get('{self.header}')", response.content.decode('utf-8'))

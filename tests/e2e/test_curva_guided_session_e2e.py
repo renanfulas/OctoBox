@@ -596,6 +596,78 @@ def test_guided_start_and_set_sync_after_network_returns(page: Page, live_server
     assert session.sets.get().weight_kg == Decimal('52.50')
 
 
+def _wait_for_saved_page(page: Page, plan_slug: str = 'bruno'):
+    """Espera o service worker guardar a página do dono (F1, curva-offline-pages)."""
+    script = """(slug) => new Promise((resolve) => {
+      const request = indexedDB.open('curva-offline-pages', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('pages', { keyPath: 'slug' });
+      request.onerror = () => resolve(false);
+      request.onsuccess = () => {
+        const db = request.result;
+        const read = db.transaction('pages').objectStore('pages').get(slug);
+        read.onsuccess = () => { db.close(); resolve(Boolean(read.result && read.result.html)); };
+        read.onerror = () => { db.close(); resolve(false); };
+      };
+    })"""
+    for _ in range(100):
+        if page.evaluate(script, plan_slug):
+            return
+        page.wait_for_timeout(100)
+    raise AssertionError('o service worker não guardou a página do treino no IndexedDB')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_app_opens_complete_without_network_and_syncs_when_it_returns(page: Page, live_server):
+    """F1 offline-first: academia sem sinal abre o MESMO app, treina pelo
+    guiado e, com a conexão de volta, o servidor recebe tudo — sem a página
+    do aluno passar pelo Cache Storage (A4)."""
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    account, token = _prepare_guided_student()
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    _wait_for_offline_scope(page)
+    page.evaluate("async () => { await navigator.serviceWorker.ready; }")
+    # Primeira visita já com o service worker no controle: é ela que guarda a página.
+    page.reload()
+    _wait_for_saved_page(page)
+
+    page.context.set_offline(True)
+    page.reload()
+    banner = page.locator('[data-offline-banner]')
+    expect(banner).to_be_visible()
+    expect(banner).to_contain_text('Modo offline · treino salvo em')
+    assert page.locator('[data-offline-open]').count() == 0, 'abriu o modo de emergência, não o app'
+    assert page.evaluate('Boolean(document.body.dataset.offlineSnapshot)')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
+    page.locator('[data-workout-guided-weight]').fill('42.5')
+    page.locator('[data-workout-guided-reps]').fill('8')
+    page.locator('[data-workout-guided-set]').click()
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('salva neste aparelho')
+    expect(page.locator('[data-sync-badge]')).to_contain_text('a enviar · sem conexão')
+
+    page.context.set_offline(False)
+    page.evaluate("window.dispatchEvent(new Event('online'))")
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=15000)
+    expect(banner).to_contain_text('Conexão de volta')
+    expect(page.locator('[data-offline-banner-reload]')).to_be_visible()
+    expect(page.locator('[data-sync-badge]')).to_be_hidden()
+    session = PublicWorkoutTrainingSession.objects.get(account=account)
+    assert session.sets.get().weight_kg == Decimal('42.50')
+
+    cached = page.evaluate("""async () => {
+      const urls = [];
+      for (const name of await caches.keys()) {
+        for (const request of await (await caches.open(name)).keys()) urls.push(request.url);
+      }
+      return urls;
+    }""")
+    assert not any('/renan/bruno' in url and not url.endswith('.webmanifest') for url in cached), cached
+
+
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)

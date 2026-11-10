@@ -83,8 +83,13 @@ if (localStorage.getItem('octobox-theme') === 'light') document.body.dataset.the
 <span class="workout-avatar" aria-hidden="true">G</span>
 <strong class="workout-topbar-greeting">Bom dia, Gm-caio</strong>
 </div>
+<span class="workout-sync-badge" data-sync-badge hidden aria-live="polite"></span>
 <span class="workout-wordmark">curva<span aria-hidden="true">.</span></span>
 </header>
+<aside class="workout-offline-banner" data-offline-banner hidden role="status">
+<span data-offline-banner-copy></span>
+<button type="button" data-offline-banner-reload hidden>Atualizar</button>
+</aside>
 <div class="interactive-tab-container" data-default-panel="workout-panel-inicio">
 <section id="workout-panel-inicio" class="is-tab-active" data-workout-tab-panel>
 <aside class="workout-install-prompt" data-workout-install hidden>
@@ -1429,5 +1434,7 @@ Ver treino todo
 <script src="/static/js/public_workouts/guided-focus.js?v=<asset>" defer></script>
 <script src="/static/js/public_workouts/workout-guided.js?v=<asset>" defer></script>
 <script src="/static/js/public_workouts/workout-push.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/sync-badge.js?v=<asset>" defer></script>
+<script src="/static/js/public_workouts/offline-banner.js?v=<asset>" defer></script>
 </body>
 </html>

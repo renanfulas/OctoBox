@@ -86,8 +86,14 @@ PONTOS CRITICOS:
       <span class="workout-avatar" aria-hidden="true">{% if student_photo_url %}<img src="{{ student_photo_url }}" alt="" width="42" height="42" loading="lazy">{% else %}{{ student_name|initial }}{% endif %}</span>
       <strong class="workout-topbar-greeting">{% workout_greeting student_name %}</strong>
     </div>
+    <span class="workout-sync-badge" data-sync-badge hidden aria-live="polite"></span>
     <span class="workout-wordmark">curva<span aria-hidden="true">.</span></span>
   </header>
+
+  <aside class="workout-offline-banner" data-offline-banner hidden role="status">
+    <span data-offline-banner-copy></span>
+    <button type="button" data-offline-banner-reload hidden>Atualizar</button>
+  </aside>
 
   <div class="interactive-tab-container" data-default-panel="workout-panel-inicio">
 
@@ -768,5 +774,7 @@ PONTOS CRITICOS:
 <script src="{% static 'js/public_workouts/guided-focus.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/workout-guided.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/workout-push.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/sync-badge.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/offline-banner.js' %}?v={{ asset_version }}" defer></script>
 </body>
 </html>
