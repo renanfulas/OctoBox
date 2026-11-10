@@ -74,7 +74,11 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # Bump 25->26: F2 offline-first — offline-data.js (novo no precache) guarda
 # as leituras JSON por conta e enfileira avaliação/onboarding; nutrition,
 # weekly_review, assessments, onboarding, load-api e sync-badge mudam.
-PUBLIC_WORKOUT_CACHE_EPOCH = 26
+# Bump 26->27: F3 offline-first — selo vira botão com painel de pendências
+# (HTML + sync-badge.js), "Sair da conta" limpa o aparelho (workout-shell.js,
+# offline-data.js) e envios drenados levam X-Curva-Queued-Ms (guided-api,
+# guided-sync, load-api, load-sync).
+PUBLIC_WORKOUT_CACHE_EPOCH = 27
 
 # F1 offline-first: o service worker só guarda no IndexedDB a resposta que
 # traz este header (valor = conta dona da página). Literal repetido em

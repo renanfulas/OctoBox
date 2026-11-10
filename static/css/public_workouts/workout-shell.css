@@ -235,6 +235,40 @@ body[data-plan-slug] .card-decor-topstripe::before { display: none; }
     color: color-mix(in srgb, var(--brand) 72%, var(--theme-text-primary) 28%);
     background: color-mix(in srgb, var(--brand) 16%, transparent);
     border: 1px solid color-mix(in srgb, var(--brand) 30%, transparent);
+    font-family: inherit;
+    line-height: inherit;
+    cursor: pointer;
+}
+
+.workout-sync-badge[hidden] {
+    display: none;
+}
+
+/* F3 offline-first: painel aberto pelo selo — o que está em cada fila, a
+   idade do mais antigo e o que precisa de revisão (sync-badge.js). */
+.workout-sync-panel {
+    display: grid;
+    gap: 4px;
+    padding: 10px 14px;
+    border: 1px solid color-mix(in srgb, var(--brand) 30%, var(--theme-border-soft));
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--brand) 9%, var(--theme-surface-secondary));
+    color: var(--theme-text-primary);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.workout-sync-panel[hidden] {
+    display: none;
+}
+
+.workout-sync-panel p {
+    margin: 0;
+}
+
+.workout-sync-panel p.is-warning {
+    font-weight: 700;
+    color: color-mix(in srgb, #f5a524 70%, var(--theme-text-primary) 30%);
 }
 
 /* A marca como letreiro: no escuro acende (camada neon no fim do arquivo). */

@@ -114,11 +114,6 @@
     return transact(scope, 'commands', 'readonly', 'getAll');
   }
 
-  // Para o selo de pendências: pela conexão viva, sem abrir o banco de novo.
-  function count(scope) {
-    return transact(scope, 'commands', 'readonly', 'count');
-  }
-
   function remove(scope, key) {
     return transact(scope, 'commands', 'readwrite', 'delete', key).then(announceChange);
   }
@@ -212,7 +207,7 @@
   }
 
   window.CurvaGuidedOutbox = {
-    queue: queue, list: list, count: count, remove: remove, save: save, restore: restore, clear: clear,
+    queue: queue, list: list, remove: remove, save: save, restore: restore, clear: clear,
     savePlan: savePlan, restorePlan: restorePlan,
     mapSession: mapSession, lookupSession: lookupSession,
     acquireLease: acquireLease, releaseLease: releaseLease,

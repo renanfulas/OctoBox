@@ -7,14 +7,21 @@
     return part ? decodeURIComponent(part.slice(name.length + 1)) : '';
   }
 
+  // F3 offline-first: comando drenado da fila diz há quanto tempo esperava
+  // (relógio do próprio aparelho, sem depender do horário do servidor).
+  function queuedHeaders(headers, meta) {
+    if (meta && meta.queuedAt) headers['X-Curva-Queued-Ms'] = String(Math.max(0, Date.now() - meta.queuedAt));
+    return headers;
+  }
+
   function create(url, accountScope) {
-    return function request(method, data) {
+    return function request(method, data, meta) {
       if (method === 'POST' && data && accountScope) {
         data = Object.assign({}, data, { account_scope: accountScope });
       }
       return fetch(url, {
         method: method, credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': cookie('csrftoken') },
+        headers: queuedHeaders({ 'Content-Type': 'application/json', 'X-CSRFToken': cookie('csrftoken') }, meta),
         body: data ? JSON.stringify(data) : undefined,
       }).then(function (response) {
         return response.text().then(function (body) {

@@ -12,6 +12,7 @@ from django.utils import timezone
 from playwright.sync_api import Page, expect
 
 from tests.e2e.curva_focus import LOCK_SCREEN, RESET_SPIES, SPY_AUDIO, SPY_VIBRATION
+from tests.e2e.curva_offline import visit_once_under_service_worker, wait_for_saved_read
 from tests.e2e.curva_login import enter_with_magic_link
 
 
@@ -596,26 +597,6 @@ def test_guided_start_and_set_sync_after_network_returns(page: Page, live_server
     assert session.sets.get().weight_kg == Decimal('52.50')
 
 
-def _wait_for_saved_page(page: Page, plan_slug: str = 'bruno'):
-    """Espera o service worker guardar a página do dono (F1, curva-offline-pages)."""
-    script = """(slug) => new Promise((resolve) => {
-      const request = indexedDB.open('curva-offline-pages', 1);
-      request.onupgradeneeded = () => request.result.createObjectStore('pages', { keyPath: 'slug' });
-      request.onerror = () => resolve(false);
-      request.onsuccess = () => {
-        const db = request.result;
-        const read = db.transaction('pages').objectStore('pages').get(slug);
-        read.onsuccess = () => { db.close(); resolve(Boolean(read.result && read.result.html)); };
-        read.onerror = () => { db.close(); resolve(false); };
-      };
-    })"""
-    for _ in range(100):
-        if page.evaluate(script, plan_slug):
-            return
-        page.wait_for_timeout(100)
-    raise AssertionError('o service worker não guardou a página do treino no IndexedDB')
-
-
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
@@ -628,10 +609,7 @@ def test_app_opens_complete_without_network_and_syncs_when_it_returns(page: Page
     account, token = _prepare_guided_student()
     enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     _wait_for_offline_scope(page)
-    page.evaluate("async () => { await navigator.serviceWorker.ready; }")
-    # Primeira visita já com o service worker no controle: é ela que guarda a página.
-    page.reload()
-    _wait_for_saved_page(page)
+    visit_once_under_service_worker(page)
 
     page.context.set_offline(True)
     page.reload()
@@ -668,29 +646,6 @@ def test_app_opens_complete_without_network_and_syncs_when_it_returns(page: Page
     assert not any('/renan/bruno' in url and not url.endswith('.webmanifest') for url in cached), cached
 
 
-def _wait_for_saved_read(page: Page, account_id: int, url: str):
-    """Espera offline-data.js guardar a leitura JSON no banco da conta (F2)."""
-    script = """({ scope, url }) => new Promise((resolve) => {
-      const request = indexedDB.open('curva-offline-data:' + scope, 1);
-      request.onupgradeneeded = () => {
-        request.result.createObjectStore('reads', { keyPath: 'url' });
-        request.result.createObjectStore('writes', { keyPath: 'key' });
-      };
-      request.onerror = () => resolve(false);
-      request.onsuccess = () => {
-        const db = request.result;
-        const read = db.transaction('reads').objectStore('reads').get(url);
-        read.onsuccess = () => { db.close(); resolve(Boolean(read.result)); };
-        read.onerror = () => { db.close(); resolve(false); };
-      };
-    })"""
-    for _ in range(100):
-        if page.evaluate(script, {'scope': str(account_id), 'url': url}):
-            return
-        page.wait_for_timeout(100)
-    raise AssertionError(f'offline-data.js não guardou {url}')
-
-
 @pytest.mark.e2e
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
@@ -702,10 +657,8 @@ def test_assessment_recorded_offline_reaches_the_server_once(page: Page, live_se
     account, token = _prepare_guided_student()
     enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
     _wait_for_offline_scope(page)
-    page.evaluate("async () => { await navigator.serviceWorker.ready; }")
-    page.reload()
-    _wait_for_saved_page(page)
-    _wait_for_saved_read(page, account.pk, '/renan/bruno/avaliacoes.json')
+    visit_once_under_service_worker(page)
+    wait_for_saved_read(page, account.pk, '/renan/bruno/avaliacoes.json')
 
     page.context.set_offline(True)
     page.reload()

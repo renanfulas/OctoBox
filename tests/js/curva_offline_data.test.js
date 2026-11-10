@@ -16,6 +16,11 @@ function fakeIndexedDB() {
       const data = databases.get(name);
       return data && data.stores.get(store) ? data.stores.get(store) : new Map();
     },
+    deleteDatabase(name) {
+      const request = {};
+      setImmediate(() => { databases.delete(name); request.onsuccess(); });
+      return request;
+    },
     open(name, version) {
       const request = {};
       setImmediate(() => {
@@ -84,14 +89,17 @@ function load({ accountScope = '990', onLine = true, fetch, now = Date.UTC(2026,
     },
   };
   class CustomEvent { constructor(type, init) { this.type = type; this.detail = init && init.detail; } }
+  const storage = new Map([['curva-guided-scope:bruno', accountScope + ':bruno']]);
+  window.localStorage = { removeItem: (key) => storage.delete(key) };
   const navigator = { onLine };
+  const unrefTimeout = (fn, ms) => { const timer = setTimeout(fn, ms); timer.unref(); return timer; };
   vm.runInNewContext(source, {
-    window, document, navigator, CustomEvent, Promise, JSON, setImmediate,
+    window, document, navigator, CustomEvent, Promise, JSON, setImmediate, setTimeout: unrefTimeout,
     Date: { now: () => state.now }, Object, Array, Math,
   });
   const db = 'curva-offline-data:' + accountScope;
   return {
-    api: window.CurvaOfflineData, idb, sent, events, state, navigator, windowListeners,
+    api: window.CurvaOfflineData, idb, sent, events, state, navigator, windowListeners, storage,
     reads: () => idb.rows(db, 'reads'), writes: () => idb.rows(db, 'writes'),
   };
 }
@@ -209,4 +217,28 @@ test('sem conta autenticada não há fila: falha de rede vira "failed"', async (
   const result = await view.api.submit({ kind: 'assessment', url: '/renan/bruno/avaliacoes', payload: {} });
   assert.equal(result.state, 'failed');
   assert.equal(view.idb.databases.size, 0);
+});
+
+
+test('envio drenado da fila diz há quanto tempo esperava', async () => {
+  const view = load({ fetch: () => Promise.reject(new TypeError('Failed to fetch')) });
+  await flush();
+  await view.api.submit({ kind: 'assessment', url: '/renan/bruno/avaliacoes', payload: {} });
+  view.state.now += 2 * 3600000;
+  view.state.fetch = () => Promise.resolve(jsonResponse(200, {}));
+  await view.api.drain();
+  const last = view.sent.at(-1);
+  assert.equal(last.options.headers['X-Curva-Queued-Ms'], String(2 * 3600000));
+});
+
+test('sair da conta apaga os três bancos da conta e o marcador de posse', async () => {
+  const view = load({ fetch: () => Promise.reject(new TypeError('Failed to fetch')) });
+  await flush();
+  await view.api.submit({ kind: 'assessment', url: '/renan/bruno/avaliacoes', payload: {} });
+  view.idb.databases.set('curva-guided:990:bruno', { version: 2, stores: new Map(), keyPaths: new Map() });
+  view.idb.databases.set('public-workout-outbox:account:990', { version: 2, stores: new Map(), keyPaths: new Map() });
+  view.idb.databases.set('curva-guided:777:juliana', { version: 2, stores: new Map(), keyPaths: new Map() });
+  await view.api.forgetAccount('bruno');
+  assert.deepEqual(Array.from(view.idb.databases.keys()), ['curva-guided:777:juliana'], 'só a outra conta fica');
+  assert.equal(view.storage.has('curva-guided-scope:bruno'), false);
 });

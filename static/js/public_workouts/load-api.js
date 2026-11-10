@@ -13,15 +13,18 @@
     return '';
   }
 
-  function postLoad(slug, entry) {
+  function postLoad(slug, entry, meta) {
+    var headers = {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken'),
+      'X-Requested-With': 'XMLHttpRequest',
+    };
+    // F3 offline-first: carga drenada da fila diz há quanto tempo esperava.
+    if (meta && meta.queuedAt) headers['X-Curva-Queued-Ms'] = String(Math.max(0, Date.now() - meta.queuedAt));
     return window.fetch('/renan/' + slug + '/carga', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken'),
-        'X-Requested-With': 'XMLHttpRequest',
-      },
+      headers: headers,
       body: JSON.stringify(entry || {}),
     }).then(function (response) {
       return response.text().then(function (text) {

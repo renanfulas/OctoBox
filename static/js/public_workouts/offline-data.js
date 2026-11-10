@@ -118,6 +118,8 @@
         'Content-Type': 'application/json',
         'X-CSRFToken': cookie('csrftoken'),
         'X-Requested-With': 'XMLHttpRequest',
+        // F3: há quanto tempo esperava na fila (telemetria de atraso).
+        'X-Curva-Queued-Ms': String(Math.max(0, Date.now() - entry.created_at)),
       },
       body: JSON.stringify(body),
     }).then(function (response) {
@@ -185,6 +187,37 @@
     return draining;
   }
 
+  /* ── sair da conta ────────────────────────────────────────── */
+
+  // Aparelho de recepção é compartilhado: sair apaga TUDO desta conta — fila e
+  // ficha do guiado, cargas e rascunhos, leituras e escritas deste módulo, e o
+  // marcador de posse do modo de emergência. A cópia da página sai no SW (POST
+  // /sair). Quem chama avisa antes se ainda há registro não enviado.
+  // Os bancos abertos por outras camadas fecham sozinhos no versionchange;
+  // o prazo garante que a saída nunca fica presa num banco bloqueado.
+  function deleteDatabase(name) {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish() { if (!done) { done = true; resolve(); } }
+      setTimeout(finish, 3000);
+      try {
+        var request = window.indexedDB.deleteDatabase(name);
+        request.onsuccess = finish;
+        request.onerror = finish;
+      } catch (_) { finish(); }
+    });
+  }
+
+  function forgetAccount(slug) {
+    if (!accountScope || !window.indexedDB) return Promise.resolve();
+    try { window.localStorage.removeItem('curva-guided-scope:' + slug); } catch (_) {}
+    return Promise.all([
+      deleteDatabase('curva-guided:' + accountScope + ':' + slug),
+      deleteDatabase('public-workout-outbox:account:' + accountScope),
+      deleteDatabase('curva-offline-data:' + accountScope),
+    ]).then(function () {});
+  }
+
   function pad(value) { return (value < 10 ? '0' : '') + value; }
 
   // "08/11 às 19:42" — mesma forma da faixa de modo offline.
@@ -197,9 +230,11 @@
   window.CurvaOfflineData = {
     readJson: readJson,
     savedLabel: savedLabel,
+    forgetAccount: forgetAccount,
     submit: submit,
     drain: drain,
     pending: function (kind) { return pendingWrites(kind).then(function (rows) { return rows.length; }); },
+    list: pendingWrites,
   };
 
   if (!accountScope) return;

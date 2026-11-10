@@ -60,7 +60,7 @@
           }
           var result;
           try {
-            result = await api.postLoad(options.planSlug(), sendable(entry));
+            result = await api.postLoad(options.planSlug(), sendable(entry), { queuedAt: entry.queued_at });
           } catch (_) {
             if (options.onDeferred) options.onDeferred(entry, { status: 0 });
             return { state: 'retry_later', entry: entry };

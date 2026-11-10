@@ -86,9 +86,11 @@ PONTOS CRITICOS:
       <span class="workout-avatar" aria-hidden="true">{% if student_photo_url %}<img src="{{ student_photo_url }}" alt="" width="42" height="42" loading="lazy">{% else %}{{ student_name|initial }}{% endif %}</span>
       <strong class="workout-topbar-greeting">{% workout_greeting student_name %}</strong>
     </div>
-    <span class="workout-sync-badge" data-sync-badge hidden aria-live="polite"></span>
+    <button type="button" class="workout-sync-badge" data-sync-badge hidden aria-live="polite" aria-expanded="false" aria-controls="workout-sync-panel"></button>
     <span class="workout-wordmark">curva<span aria-hidden="true">.</span></span>
   </header>
+
+  <div id="workout-sync-panel" class="workout-sync-panel" data-sync-panel hidden role="region" aria-label="Registros a enviar"></div>
 
   <aside class="workout-offline-banner" data-offline-banner hidden role="status">
     <span data-offline-banner-copy></span>

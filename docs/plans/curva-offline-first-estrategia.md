@@ -288,10 +288,36 @@ IndexedDB (`curva-offline-pages`, chave = slug) e a serve sem rede:
   `PublicWorkoutRecordAssessmentIdempotencyTests` e o e2e
   `test_assessment_recorded_offline_reaches_the_server_once`.
 
-**O que resta (F3, endurecimento):** apagar fila pendente no "Sair da conta"
-com aviso de perda; Background Sync no Android; UX de conflito unificada;
-telemetria de idade da fila; e2e offline de nutrição (hoje coberto só por
-teste unitário de `offline-data.js`).
+**F3 — entregue (epoch 27).**
+
+- *"Sair da conta" limpa o aparelho:* `CurvaOfflineData.forgetAccount`
+  apaga os três bancos da conta (fila/ficha do guiado, cargas e rascunhos,
+  leituras/escritas de `offline-data.js`) e o marcador de posse; o SW apaga a
+  cópia da página no POST. Antes de confirmar, `workout-shell.js` conta as
+  pendências pelo selo e avisa "Há N registros … ainda não enviados … serão
+  apagados e não poderão ser recuperados". Sem conexão o app não deixa sair
+  (só o servidor encerra a sessão; limpar só o aparelho deixaria o aluno
+  logado).
+- *Painel de pendências (UX de conflito unificada):* o selo virou botão;
+  abre um painel com o que há em cada fila (guiado, cargas, avaliações,
+  tutorial), a idade do registro mais antigo e o que o servidor recusou —
+  com o lugar onde se resolve (treino guiado ou aba Cargas, que já têm UI de
+  conflito). Com recusa pendente o selo diz "· revisar".
+- *Telemetria de atraso:* todo envio drenado de fila (guiado, cargas,
+  avaliação, onboarding) leva `X-Curva-Queued-Ms`, medido no relógio do
+  aparelho; `public_workout_offline_telemetry.py` registra
+  `curva_offline_sync_lag kind=… bucket=… lag_s=…` no logger
+  `octobox.curva.offline` quando passa de 1 min — sem conta, slug ou valor.
+- *e2e:* `test_curva_offline_signout_e2e.py` (aviso, cancelar, confirmar e
+  aparelho limpo) e `test_dieta_opens_from_the_device_copy_without_network`.
+  Os helpers de espera do IndexedDB moraram em `tests/e2e/curva_offline.py`.
+- *Background Sync (Android) — decidido NÃO fazer.* Só tem valor se o SW
+  drenar com o app fechado, e o SW não consegue: não lê o cookie CSRF, não
+  tem o mapa `local_session_id → session_id` nem a UI de conflito, e o iOS
+  não tem a API. A drenagem ao abrir o app, no `online` e ao voltar o foco
+  cobre o caso real (o aluno abre o app ao sair da academia); o painel e a
+  telemetria mostram se algo ficar preso. Reabrir só se a telemetria mostrar
+  atraso grande recorrente em Android.
 
 ## 5. Riscos e decisões em aberto
 

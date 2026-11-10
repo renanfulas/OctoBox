@@ -150,13 +150,6 @@ test('gravar e drenar a fila anunciam a mudança ao selo de pendências', async 
   assert.equal(announced.length, 2);
 });
 
-test('count serve o selo pela mesma conexão', async () => {
-  const { outbox, idb } = load();
-  await outbox.queue('conta', { key: 'a', payload: {}, created_at: 1 });
-  await outbox.queue('conta', { key: 'b', payload: {}, created_at: 2 });
-  assert.equal(await outbox.count('conta'), 2);
-  assert.deepEqual(idb.opened, ['curva-guided:conta']);
-});
 
 test('chamadas simultâneas antes da primeira abertura compartilham a conexão', async () => {
   const { outbox, idb } = load();

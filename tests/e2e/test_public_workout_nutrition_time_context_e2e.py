@@ -224,3 +224,38 @@ def test_ver_dieta_completa_toggle_shows_all_meals_and_back_button_returns_to_co
     content.get_by_role('button', name='Ver só o horário de agora').click()
     expect(content).to_contain_text('Almoço E2E')
     expect(content).not_to_contain_text('Jantar E2E')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_dieta_opens_from_the_device_copy_without_network(page: Page, live_server):
+    """F2/F3 offline-first: sem internet na academia, a aba Dieta abre o plano
+    salvo no aparelho (IndexedDB da conta, nunca Cache Storage) e diz de
+    quando é a cópia."""
+    from public_workouts.models import PublicWorkoutAccount
+
+    from tests.e2e.curva_offline import visit_once_under_service_worker, wait_for_saved_read
+
+    _publish_minimal_program('bruno')
+    token = _login_token_for_unlocked_account_with_meal_plan('bruno')
+    account = PublicWorkoutAccount.objects.get(email=_TEST_EMAIL)
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token}&next=/renan/bruno')
+    page.wait_for_url('**/renan/bruno**')
+    visit_once_under_service_worker(page)
+    nutrition_url = page.locator('[data-workout-nutrition]').get_attribute('data-nutrition-url')
+    wait_for_saved_read(page, account.pk, nutrition_url)
+
+    page.context.set_offline(True)
+    page.reload()
+    wizard = page.locator('[data-onboarding-wizard]')
+    if wizard.is_visible():
+        wizard.get_by_role('button', name='Fechar tutorial').click()
+    avaliacao_cycle = page.locator('[data-workout-cycle-nav][data-cycle-key="avaliacao"]')
+    avaliacao_cycle.click()
+    avaliacao_cycle.click()
+    expect(page.locator('[data-workout-nutrition-status]')).to_contain_text('Sem conexão: plano salvo neste aparelho em')
+    content = page.locator('[data-workout-nutrition-content]')
+    content.get_by_role('button', name='Ver dieta completa').click()
+    for meal in ('Café da manhã E2E', 'Almoço E2E', 'Jantar E2E'):
+        expect(content).to_contain_text(meal)

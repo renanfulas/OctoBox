@@ -43,3 +43,16 @@ test('lê última Top e retorna mapa vazio se o pacote falhar', async () => {
   const unavailable = createApi(() => Promise.reject(new Error('offline')));
   assert.equal(Object.keys(await unavailable.lastTopSetByMovement('bruno')).length, 0);
 });
+
+
+test('carga drenada da fila diz há quanto tempo esperava', async () => {
+  let request;
+  const api = createApi((url, options) => {
+    request = options;
+    return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve('{}') });
+  });
+  await api.postLoad('bruno', {}, { queuedAt: Date.now() - 90000 });
+  assert.ok(Number(request.headers['X-Curva-Queued-Ms']) >= 90000);
+  await api.postLoad('bruno', {});
+  assert.equal('X-Curva-Queued-Ms' in request.headers, false);
+});

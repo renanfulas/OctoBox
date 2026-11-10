@@ -83,9 +83,10 @@ if (localStorage.getItem('octobox-theme') === 'light') document.body.dataset.the
 <span class="workout-avatar" aria-hidden="true">G</span>
 <strong class="workout-topbar-greeting">Bom dia, Gm-caio</strong>
 </div>
-<span class="workout-sync-badge" data-sync-badge hidden aria-live="polite"></span>
+<button type="button" class="workout-sync-badge" data-sync-badge hidden aria-live="polite" aria-expanded="false" aria-controls="workout-sync-panel"></button>
 <span class="workout-wordmark">curva<span aria-hidden="true">.</span></span>
 </header>
+<div id="workout-sync-panel" class="workout-sync-panel" data-sync-panel hidden role="region" aria-label="Registros a enviar"></div>
 <aside class="workout-offline-banner" data-offline-banner hidden role="status">
 <span data-offline-banner-copy></span>
 <button type="button" data-offline-banner-reload hidden>Atualizar</button>

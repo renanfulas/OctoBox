@@ -46,6 +46,7 @@ from .public_workout_pwa import (
     public_workout_asset_version, PublicWorkoutManifestView,
     PublicWorkoutServiceWorkerView, PublicWorkoutOfflineView,
 )
+from .public_workout_offline_telemetry import log_offline_sync_lag
 from .public_workout_access import (
     PUBLIC_WORKOUT_OWNER_COOKIE, PUBLIC_WORKOUT_OWNER_COOKIE_SALT,
     PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE, _synthesize_public_workout_plan,
@@ -567,6 +568,7 @@ class PublicWorkoutOnboardingCompleteView(View):
             return JsonResponse({'error': 'login necessario'}, status=401)
 
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        log_offline_sync_lag(request, 'onboarding')
 
         PublicWorkoutAccount.objects.filter(
             pk=account_id, onboarding_completed_at__isnull=True,
@@ -824,6 +826,7 @@ class PublicWorkoutRecordLoadView(View):
             return JsonResponse({'error': 'login necessario'}, status=401)
 
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        log_offline_sync_lag(request, 'load')
 
         try:
             payload = json.loads(request.body.decode('utf-8') or '{}')
@@ -947,6 +950,7 @@ class PublicWorkoutRecordAssessmentView(View):
             return JsonResponse({'error': 'login necessario'}, status=401)
 
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        log_offline_sync_lag(request, 'assessment')
 
         try:
             payload = json.loads(request.body.decode('utf-8') or '{}')
