@@ -357,6 +357,9 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
     expect(page.locator('[data-workout-guided-timer]')).to_contain_text('Descanso')
     expect(page.locator('[data-guided-receipt]')).to_contain_text('50 kg')
 
+    # Recarregar com a série ainda no ar a deixa sob o lease da aba morta e o
+    # encerramento vira "pendente de envio" (ver _wait_for_empty_guided_queue).
+    _wait_for_empty_guided_queue(page)
     page.reload()
     expect(page.locator('[data-workout-guided-active]')).to_be_visible()
     expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
