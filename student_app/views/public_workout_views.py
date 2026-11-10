@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 
 from django.conf import settings
+from django.db import IntegrityError
 from django.http import Http404, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import redirect
@@ -38,13 +39,14 @@ from public_workouts.catalog import (
 )
 from .public_workout_pwa import (
     PUBLIC_WORKOUT_SCOPE, PUBLIC_WORKOUT_OFFLINE_URL, PUBLIC_WORKOUT_CACHE_EPOCH,
-    PUBLIC_WORKOUT_ICON_192, PUBLIC_WORKOUT_ICON_512,
+    PUBLIC_WORKOUT_OFFLINE_SCOPE_HEADER, PUBLIC_WORKOUT_ICON_192, PUBLIC_WORKOUT_ICON_512,
     PUBLIC_WORKOUT_ICON_MASKABLE_512, PUBLIC_WORKOUT_APPLE_TOUCH_ICON,
     PUBLIC_WORKOUT_STATIC_ASSETS, PUBLIC_WORKOUT_STYLESHEETS, PUBLIC_WORKOUT_SCRIPTS,
     PUBLIC_WORKOUT_UNIFIED_TEMPLATE_STYLESHEETS, PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS,
     public_workout_asset_version, PublicWorkoutManifestView,
     PublicWorkoutServiceWorkerView, PublicWorkoutOfflineView,
 )
+from .public_workout_offline_telemetry import log_offline_sync_lag
 from .public_workout_access import (
     PUBLIC_WORKOUT_OWNER_COOKIE, PUBLIC_WORKOUT_OWNER_COOKIE_SALT,
     PUBLIC_WORKOUT_OWNER_COOKIE_MAX_AGE, _synthesize_public_workout_plan,
@@ -286,6 +288,12 @@ class PublicWorkoutDetailView(View):
         response = _private_public_workout_response(_render_public_workout_html(
             plan_slug, account_id=account_id,
         ))
+        # F1 offline-first: único ponto que autoriza o service worker a guardar
+        # esta página no IndexedDB do aparelho (nunca no Cache Storage, A4).
+        # Só a página real do dono logado leva a marca; qualquer outra resposta
+        # deste caminho (login, 404, pagamento bloqueado) faz o SW apagar a cópia.
+        if account_id is not None:
+            response[PUBLIC_WORKOUT_OFFLINE_SCOPE_HEADER] = str(account_id)
         opened_subscription = PublicWorkoutSubscription.objects.select_related('account').filter(
             plan_slug=plan.slug, account_id=account_id,
         ).first()
@@ -560,6 +568,7 @@ class PublicWorkoutOnboardingCompleteView(View):
             return JsonResponse({'error': 'login necessario'}, status=401)
 
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        log_offline_sync_lag(request, 'onboarding')
 
         PublicWorkoutAccount.objects.filter(
             pk=account_id, onboarding_completed_at__isnull=True,
@@ -817,6 +826,7 @@ class PublicWorkoutRecordLoadView(View):
             return JsonResponse({'error': 'login necessario'}, status=401)
 
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        log_offline_sync_lag(request, 'load')
 
         try:
             payload = json.loads(request.body.decode('utf-8') or '{}')
@@ -940,6 +950,7 @@ class PublicWorkoutRecordAssessmentView(View):
             return JsonResponse({'error': 'login necessario'}, status=401)
 
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        log_offline_sync_lag(request, 'assessment')
 
         try:
             payload = json.loads(request.body.decode('utf-8') or '{}')
@@ -958,6 +969,11 @@ class PublicWorkoutRecordAssessmentView(View):
         weight_kg = payload.get('weight_kg')
         measurements = payload.get('measurements')
         skinfolds = payload.get('skinfolds')
+        # F2 offline-first: chave da fila offline (offline-data.js); opcional
+        # para quem posta online sem ela.
+        idempotency_key = payload.get('idempotency_key') or None
+        if idempotency_key is not None and (not isinstance(idempotency_key, str) or len(idempotency_key) > 64):
+            return JsonResponse({'error': 'idempotency_key invalida'}, status=400)
         if not measured_at:
             return JsonResponse({'error': 'measured_at e obrigatorio'}, status=400)
         if measurements is not None and not isinstance(measurements, dict):
@@ -1049,10 +1065,14 @@ class PublicWorkoutRecordAssessmentView(View):
                 notes=notes,
                 sex=profile['sex'] or '',
                 height_cm=profile['height_cm'],
+                idempotency_key=idempotency_key,
                 **body_fat_kwargs,
             )
         except (AssessmentValueError, ValueError) as exc:
             return JsonResponse({'error': str(exc)}, status=400)
+        except IntegrityError:
+            # Chave já usada por OUTRO aluno: nunca devolve a avaliação dele.
+            return JsonResponse({'error': 'idempotency_key ja usada'}, status=409)
 
         return JsonResponse(result, status=200)
 

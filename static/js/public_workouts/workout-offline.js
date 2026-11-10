@@ -38,6 +38,29 @@
     var hex = Array.from(bytes, function (byte) { return byte.toString(16).padStart(2, '0'); }).join('');
     return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
   }
+  // F1: a cópia da página que o service worker guardou (curva-offline-pages,
+  // ver sw.js) sai junto com os registros. Mesma versão/upgrade do SW, para
+  // nunca criar o banco sem o store.
+  function forgetSavedPage() {
+    return new Promise(function (resolve) {
+      var request;
+      try { request = indexedDB.open('curva-offline-pages', 1); } catch (_) { resolve(); return; }
+      request.onupgradeneeded = function () {
+        if (!request.result.objectStoreNames.contains('pages')) {
+          request.result.createObjectStore('pages', { keyPath: 'slug' });
+        }
+      };
+      request.onerror = function () { resolve(); };
+      request.onsuccess = function () {
+        var db = request.result;
+        try {
+          var tx = db.transaction('pages', 'readwrite');
+          tx.objectStore('pages').delete(slug);
+          tx.oncomplete = tx.onerror = tx.onabort = function () { db.close(); resolve(); };
+        } catch (_) { db.close(); resolve(); }
+      };
+    });
+  }
   function itemKey(index, number) { return index + ':' + number; }
   function selectedDay() {
     return plan.days.find(function (day) { return day.day_id === dayField.value; });
@@ -118,7 +141,9 @@
         plan = items[0];
         saved = items[1];
         commands = items[2];
-        if (!plan || plan.plan_slug !== slug || Date.now() - plan.saved_at > 7 * 86400000) {
+        // 30 dias (F0 offline-first): academia com internet ruim fica semanas
+        // sem sincronizar; 7 dias expirava a ficha de quem mais precisa dela.
+        if (!plan || plan.plan_slug !== slug || Date.now() - plan.saved_at > 30 * 86400000) {
           status.textContent = 'A ficha salva expirou. Abra o app com internet para atualizá-la.';
           guide.hidden = false;
           return;
@@ -236,7 +261,7 @@
     var request = indexedDB.deleteDatabase('curva-guided:' + scope);
     request.onsuccess = function () {
       try { localStorage.removeItem('curva-guided-scope:' + slug); } catch (_) {}
-      location.reload();
+      forgetSavedPage().then(function () { location.reload(); });
     };
     request.onerror = function () { status.textContent = 'Não foi possível apagar os dados locais.'; };
     request.onblocked = function () { status.textContent = 'Feche outras abas do Curva e tente novamente.'; };

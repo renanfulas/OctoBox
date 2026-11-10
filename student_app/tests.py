@@ -2595,6 +2595,8 @@ class PublicWorkoutPwaTests(TestCase):
             self.assertNotIn(f'/renan/{other_slug}', sw_content, f'{other_slug} nao deveria estar no precache da juliana')
         self.assertIn('/renan/offline/', sw_content)
         self.assertNotIn('const PAGE_CACHE', sw_content)
+        # F1: a página do dono vai para o IndexedDB, nunca para o Cache Storage.
+        self.assertIn("const PAGE_DB = 'curva-offline-pages'", sw_content)
         self.assertIn('const validCaches = [STATIC_CACHE]', sw_content)
         self.assertIn('return await caches.match(OFFLINE_URL', sw_content)
         self.assertEqual(offline_response.status_code, 200)

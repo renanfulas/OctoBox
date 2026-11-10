@@ -204,7 +204,10 @@
                 return mappedId ? Object.assign({}, command.payload, { session_id: mappedId }) : command.payload;
               });
             }
-            return sendPayload.then(function (payload) { sent = payload; return request('POST', payload); }).catch(function (error) {
+            return sendPayload.then(function (payload) {
+              sent = payload;
+              return request('POST', payload, { queuedAt: command.created_at });
+            }).catch(function (error) {
               if (error.retryable || error.status === 401) throw error;
               command.blocked = true;
               command.error = error.message;

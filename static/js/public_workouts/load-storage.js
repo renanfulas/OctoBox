@@ -57,12 +57,23 @@
       });
     }
 
+    // F0 offline-first: o selo global de pendências (sync-badge.js) escuta a
+    // camada de armazenamento — todo put/delete da outbox de cargas passa aqui.
+    function announceChange(result) {
+      try {
+        document.dispatchEvent(new CustomEvent('curva:outbox-changed'));
+      } catch (_) {}
+      return result;
+    }
+
     function queueEntry(entry) {
-      return withStore(STORE_NAME, 'readwrite', function (store) { store.put(entry); return entry; });
+      return withStore(STORE_NAME, 'readwrite', function (store) { store.put(entry); return entry; })
+        .then(announceChange);
     }
 
     function removeEntry(idempotencyKey) {
-      return withStore(STORE_NAME, 'readwrite', function (store) { store.delete(idempotencyKey); });
+      return withStore(STORE_NAME, 'readwrite', function (store) { store.delete(idempotencyKey); })
+        .then(announceChange);
     }
 
     function listEntries() {
@@ -77,7 +88,7 @@
     }
 
     function clearOutbox() {
-      return withStore(STORE_NAME, 'readwrite', function (store) { store.clear(); });
+      return withStore(STORE_NAME, 'readwrite', function (store) { store.clear(); }).then(announceChange);
     }
 
     /* ══ RASCUNHO (IndexedDB, store separado da outbox confirmada) ══ */

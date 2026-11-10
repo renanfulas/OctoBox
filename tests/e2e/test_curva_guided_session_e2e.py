@@ -12,6 +12,7 @@ from django.utils import timezone
 from playwright.sync_api import Page, expect
 
 from tests.e2e.curva_focus import LOCK_SCREEN, RESET_SPIES, SPY_AUDIO, SPY_VIBRATION
+from tests.e2e.curva_offline import visit_once_under_service_worker, wait_for_saved_read
 from tests.e2e.curva_login import enter_with_magic_link
 
 
@@ -356,6 +357,9 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
     expect(page.locator('[data-workout-guided-timer]')).to_contain_text('Descanso')
     expect(page.locator('[data-guided-receipt]')).to_contain_text('50 kg')
 
+    # Recarregar com a série ainda no ar a deixa sob o lease da aba morta e o
+    # encerramento vira "pendente de envio" (ver _wait_for_empty_guided_queue).
+    _wait_for_empty_guided_queue(page)
     page.reload()
     expect(page.locator('[data-workout-guided-active]')).to_be_visible()
     expect(page.locator('[data-guided-screen="rest"]')).to_be_visible()
@@ -594,6 +598,106 @@ def test_guided_start_and_set_sync_after_network_returns(page: Page, live_server
     session = PublicWorkoutTrainingSession.objects.get(account=account)
     assert session.outcome == 'completed'
     assert session.sets.get().weight_kg == Decimal('52.50')
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_app_opens_complete_without_network_and_syncs_when_it_returns(page: Page, live_server):
+    """F1 offline-first: academia sem sinal abre o MESMO app, treina pelo
+    guiado e, com a conexão de volta, o servidor recebe tudo — sem a página
+    do aluno passar pelo Cache Storage (A4)."""
+    from public_workouts.models import PublicWorkoutTrainingSession
+
+    account, token = _prepare_guided_student()
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    _wait_for_offline_scope(page)
+    visit_once_under_service_worker(page)
+
+    page.context.set_offline(True)
+    page.reload()
+    banner = page.locator('[data-offline-banner]')
+    expect(banner).to_be_visible()
+    expect(banner).to_contain_text('Modo offline · treino salvo em')
+    assert page.locator('[data-offline-open]').count() == 0, 'abriu o modo de emergência, não o app'
+    assert page.evaluate('Boolean(document.body.dataset.offlineSnapshot)')
+    page.locator('[data-workout-cycle-nav][data-cycle-key="treino"]').click()
+    _start_guided(page)
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('iniciado neste aparelho')
+    page.locator('[data-workout-guided-weight]').fill('42.5')
+    page.locator('[data-workout-guided-reps]').fill('8')
+    page.locator('[data-workout-guided-set]').click()
+    # O texto do status depende de navigator.onLine ("salva neste aparelho" com
+    # false; "Envio pendente" quando o aparelho acha que tem rede e o envio
+    # falha — o Chromium do CI fica nesse segundo caso). Nos dois, a série
+    # tem que estar na fila do aparelho: é isso que importa.
+    queued_set = """async () => {
+      const scope = localStorage.getItem('curva-guided-scope:bruno');
+      const rows = await window.CurvaGuidedOutbox.list(scope);
+      return rows.some((row) => row.payload.action === 'set' && String(row.payload.weight_kg) === '42.5');
+    }"""
+    for _ in range(100):
+        if page.evaluate(queued_set):
+            break
+        page.wait_for_timeout(100)
+    else:
+        raise AssertionError('a série feita sem rede não ficou na fila do aparelho')
+    expect(page.locator('[data-sync-badge]')).to_contain_text('a enviar')
+    assert not PublicWorkoutTrainingSession.objects.filter(account=account).exists()
+
+    page.context.set_offline(False)
+    page.evaluate("window.dispatchEvent(new Event('online'))")
+    expect(page.locator('[data-workout-guided-status]')).to_contain_text('Tudo enviado', timeout=15000)
+    expect(banner).to_contain_text('Conexão de volta')
+    expect(page.locator('[data-offline-banner-reload]')).to_be_visible()
+    expect(page.locator('[data-sync-badge]')).to_be_hidden()
+    session = PublicWorkoutTrainingSession.objects.get(account=account)
+    assert session.sets.get().weight_kg == Decimal('42.50')
+
+    cached = page.evaluate("""async () => {
+      const urls = [];
+      for (const name of await caches.keys()) {
+        for (const request of await (await caches.open(name)).keys()) urls.push(request.url);
+      }
+      return urls;
+    }""")
+    assert not any('/renan/bruno' in url and not url.endswith('.webmanifest') for url in cached), cached
+
+
+@pytest.mark.e2e
+@pytest.mark.django_db(transaction=True)
+@override_settings(DEBUG=True)
+def test_assessment_recorded_offline_reaches_the_server_once(page: Page, live_server):
+    """F2 offline-first: a aba Avaliação abre da cópia local e a avaliação
+    feita sem rede sobe uma única vez quando a conexão volta."""
+    from public_workouts.models import PublicWorkoutAssessment
+
+    account, token = _prepare_guided_student()
+    enter_with_magic_link(page, f'{live_server.url}/treinos/login?token={token.token}&next=/renan/bruno')
+    _wait_for_offline_scope(page)
+    visit_once_under_service_worker(page)
+    wait_for_saved_read(page, account.pk, '/renan/bruno/avaliacoes.json')
+
+    page.context.set_offline(True)
+    page.reload()
+    page.locator('[data-workout-cycle-nav][data-cycle-key="avaliacao"]').click()
+    notes = page.locator('.assess-offline-notes')
+    expect(notes).to_contain_text('Sem conexão: avaliações salvas neste aparelho em')
+    page.locator('#assess-f-weight').fill('79.4')
+    page.locator('.assess-form-submit').click()
+    expect(page.locator('#assess-f-feedback')).to_contain_text('Salva neste aparelho')
+    expect(notes).to_contain_text('1 avaliação aguardando envio')
+    expect(page.locator('[data-sync-badge]')).to_contain_text('1 registro a enviar')
+    assert not PublicWorkoutAssessment.objects.filter(plan_slug='bruno').exists()
+
+    page.context.set_offline(False)
+    page.evaluate("window.dispatchEvent(new Event('online'))")
+    expect(page.locator('[data-sync-badge]')).to_be_hidden(timeout=15000)
+    expect(notes).to_be_hidden()
+    rows = PublicWorkoutAssessment.objects.filter(plan_slug='bruno')
+    assert rows.count() == 1
+    assert rows.get().weight_kg == Decimal('79.40')
+    assert rows.get().idempotency_key
 
 
 @pytest.mark.e2e

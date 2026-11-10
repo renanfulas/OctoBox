@@ -70,6 +70,12 @@
   navigator.serviceWorker.register('/renan/sw.js?slug=' + encodeURIComponent(slug), {
     scope: '/renan/',
   }).catch(function () {});
+  // F0 offline-first: a ficha e as filas (IndexedDB) não podem ser expurgadas
+  // pelo navegador com registros pendentes de envio. O pedido é silencioso
+  // (sem prompt no Chrome/Safari para PWA instalado) e a recusa é inofensiva.
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(function () {});
+  }
 
   showAvailable();
   window.addEventListener('beforeinstallprompt', function (event) {

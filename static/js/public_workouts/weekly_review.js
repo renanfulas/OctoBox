@@ -32,6 +32,14 @@
 (function () {
   'use strict';
 
+  function readJson(url) {
+    if (window.CurvaOfflineData) return window.CurvaOfflineData.readJson(url);
+    return window.fetch(url, { credentials: 'same-origin' }).then(function (response) {
+      if (!response.ok) { throw new Error('http-' + response.status); }
+      return response.json().then(function (data) { return { data: data, savedAt: null }; });
+    });
+  }
+
   function initWeeklyReview(root) {
     var url = root.getAttribute('data-weekly-review-url');
     var textEl = root.querySelector('[data-workout-weekly-review-text]');
@@ -49,12 +57,10 @@
       if (button) { button.disabled = true; }
       setStatus('Gerando…');
 
-      window.fetch(url, { credentials: 'same-origin' })
-        .then(function (response) {
-          if (!response.ok) { throw new Error('http-' + response.status); }
-          return response.json();
-        })
-        .then(function (data) {
+      // F2 offline-first: sem rede, mostra a última revisão salva no aparelho.
+      readJson(url)
+        .then(function (result) {
+          var data = result.data;
           if (data && data.review_text) {
             if (textEl) {
               textEl.textContent = data.review_text;

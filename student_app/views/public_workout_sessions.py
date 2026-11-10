@@ -11,6 +11,7 @@ from student_app.views.public_workout_access import (
     _confirm_login_session_owns_slug_or_404,
     _get_public_workout_entry,
 )
+from student_app.views.public_workout_offline_telemetry import log_offline_sync_lag
 from student_app.views.public_workout_session_commands import handle_session_decision
 from student_app.views.public_workout_request import json_payload
 
@@ -66,6 +67,7 @@ class PublicWorkoutSessionView(View):
         if account_id is None:
             return JsonResponse({'error': 'login necessario'}, status=401)
         _confirm_login_session_owns_slug_or_404(request, plan.slug)
+        log_offline_sync_lag(request, 'guided')
         data = json_payload(request)
         if data is None:
             return HttpResponse(status=400)

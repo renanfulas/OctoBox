@@ -56,6 +56,13 @@
   function markComplete() {
     if (completed || !completeUrl) { return; }
     completed = true;
+    // F2 offline-first: tutorial fechado sem rede não volta a abrir sozinho;
+    // a marca sobe pela fila quando a conexão voltar (chave fixa: uma só).
+    if (window.CurvaOfflineData) {
+      window.CurvaOfflineData.submit({ kind: 'onboarding', key: 'onboarding', url: completeUrl })
+        .then(function (result) { if (result.state === 'failed') completed = false; });
+      return;
+    }
     window.fetch(completeUrl, {
       method: 'POST',
       credentials: 'same-origin',
@@ -128,6 +135,14 @@
   if (card) { card.setAttribute('tabindex', '-1'); }
 
   if (root.getAttribute('data-onboarding-autostart') === 'true') {
-    window.setTimeout(open, 400);
+    // A cópia offline da página foi salva antes de o aluno fechar o tutorial:
+    // com a marca de "concluído" ainda na fila do aparelho, não reabre.
+    var queued = window.CurvaOfflineData
+      ? window.CurvaOfflineData.pending('onboarding').catch(function () { return 0; })
+      : Promise.resolve(0);
+    queued.then(function (count) {
+      if (count) { completed = true; return; }
+      window.setTimeout(open, 400);
+    });
   }
 })();

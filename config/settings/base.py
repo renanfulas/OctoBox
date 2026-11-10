@@ -23,6 +23,7 @@ from pathlib import Path
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 
+from config.asset_version import static_asset_version
 from config.env_loader import load_project_env
 from config.settings.privacy import build_privacy_settings
 from config.settings.release_paths import build_release_path_settings
@@ -559,7 +560,7 @@ STUDENT_HOME_CACHE_TTL_SECONDS = env_int('STUDENT_HOME_CACHE_TTL_SECONDS', 30)
 STUDENT_RM_CACHE_TTL_SECONDS = env_int('STUDENT_RM_CACHE_TTL_SECONDS', 300)
 STUDENT_WOD_CACHE_TTL_SECONDS = env_int('STUDENT_WOD_CACHE_TTL_SECONDS', 21600)
 STATIC_ASSET_SCAN_TTL_SECONDS = env_int('STATIC_ASSET_SCAN_TTL_SECONDS', 300)
-STATIC_ASSET_VERSION = env_str('STATIC_ASSET_VERSION', env_str('RENDER_GIT_COMMIT', '1'))
+STATIC_ASSET_VERSION = static_asset_version(os.environ)
 # URL publica do GPT customizado SmartPlan (configurar apos publicar no chat.openai.com).
 # Enquanto vazio, o card SmartPlan no editor mostra estado "em configuracao".
 SMARTPLAN_GPT_URL = env_str('SMARTPLAN_GPT_URL', '')
