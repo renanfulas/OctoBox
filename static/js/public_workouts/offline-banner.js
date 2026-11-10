@@ -7,6 +7,10 @@
  *   sempre à vista com a data da cópia; quando a rede volta, oferece
  *   "Atualizar" (não recarrega sozinha — o aluno pode estar no meio de uma
  *   série; o guiado e as cargas já drenam a fila no evento `online`).
+ *   A cópia começa SEMPRE em "modo offline", mesmo com navigator.onLine
+ *   true: ela abriu porque a rede falhou — inclusive na internet "conectada,
+ *   mas sem resposta" da academia, em que onLine mente. Só o evento `online`
+ *   (a conexão voltou de fato) troca para "Conexão de volta".
  * - página viva da rede: a faixa só aparece enquanto o aparelho está sem
  *   conexão e some quando ela volta.
  */
@@ -18,6 +22,7 @@
   var copy = banner.querySelector('[data-offline-banner-copy]');
   var reload = banner.querySelector('[data-offline-banner-reload]');
   var savedAt = Number(document.body.dataset.offlineSnapshot || 0);
+  var reconnected = false;
 
   function pad(value) { return (value < 10 ? '0' : '') + value; }
 
@@ -28,17 +33,17 @@
   }
 
   function paint() {
-    var online = navigator.onLine;
     if (savedAt) {
       banner.hidden = false;
-      banner.dataset.state = online ? 'reconnected' : 'offline';
-      copy.textContent = online
+      banner.dataset.state = reconnected ? 'reconnected' : 'offline';
+      copy.textContent = reconnected
         ? 'Conexão de volta. Seus registros estão sendo enviados; atualize para ver os dados mais recentes.'
         : 'Modo offline · treino salvo em ' + savedLabel()
           + '. Seus registros ficam neste aparelho e são enviados quando a conexão voltar.';
-      reload.hidden = !online;
+      reload.hidden = !reconnected;
       return;
     }
+    var online = navigator.onLine;
     banner.hidden = online;
     banner.dataset.state = 'offline';
     copy.textContent = online ? '' : 'Sem conexão. Seus registros ficam neste aparelho e são enviados quando a conexão voltar.';
@@ -46,7 +51,7 @@
   }
 
   reload.addEventListener('click', function () { window.location.reload(); });
-  window.addEventListener('online', paint);
-  window.addEventListener('offline', paint);
+  window.addEventListener('online', function () { reconnected = true; paint(); });
+  window.addEventListener('offline', function () { reconnected = false; paint(); });
   paint();
 }());

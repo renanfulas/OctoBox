@@ -59,6 +59,14 @@ test('cópia salva aberta sem rede mostra a data da cópia', () => {
   assert.equal(reload.hidden, true);
 });
 
+test('cópia aberta com navigator.onLine mentindo (rede sem resposta) continua em modo offline', () => {
+  const { banner, copy, reload } = load({ snapshot: Date.now(), onLine: true });
+  assert.equal(banner.hidden, false);
+  assert.equal(banner.dataset.state, 'offline');
+  assert.match(copy.textContent, /^Modo offline · treino salvo em /);
+  assert.equal(reload.hidden, true);
+});
+
 test('cópia salva com a rede de volta oferece atualizar, sem recarregar sozinha', () => {
   const view = load({ snapshot: Date.now(), onLine: false });
   view.navigator.onLine = true;

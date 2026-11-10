@@ -625,7 +625,7 @@ def test_app_opens_complete_without_network_and_syncs_when_it_returns(page: Page
     page.locator('[data-workout-guided-reps]').fill('8')
     page.locator('[data-workout-guided-set]').click()
     expect(page.locator('[data-workout-guided-status]')).to_contain_text('salva neste aparelho')
-    expect(page.locator('[data-sync-badge]')).to_contain_text('a enviar · sem conexão')
+    expect(page.locator('[data-sync-badge]')).to_contain_text('1 registro a enviar')
 
     page.context.set_offline(False)
     page.evaluate("window.dispatchEvent(new Event('online'))")
@@ -669,7 +669,7 @@ def test_assessment_recorded_offline_reaches_the_server_once(page: Page, live_se
     page.locator('.assess-form-submit').click()
     expect(page.locator('#assess-f-feedback')).to_contain_text('Salva neste aparelho')
     expect(notes).to_contain_text('1 avaliação aguardando envio')
-    expect(page.locator('[data-sync-badge]')).to_contain_text('1 registro a enviar · sem conexão')
+    expect(page.locator('[data-sync-badge]')).to_contain_text('1 registro a enviar')
     assert not PublicWorkoutAssessment.objects.filter(plan_slug='bruno').exists()
 
     page.context.set_offline(False)
