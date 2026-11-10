@@ -210,7 +210,7 @@ class RecordSuccessfulInvoicePaymentTests(TestCase):
             (PublicWorkoutTier.COMPLETO, ['renan@example.com', 'giovannafontesrios@outlook.com']),
             (PublicWorkoutTier.PREMIUM, ['renan@example.com', 'giovannafontesrios@outlook.com']),
         ):
-            with self.subTest(tier=tier):
+            with self.subTest(tier=str(tier)):
                 self.subscription.tier = tier
                 self.subscription.save(update_fields=['tier'])
                 mail.outbox.clear()
