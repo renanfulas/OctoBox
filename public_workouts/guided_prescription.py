@@ -7,7 +7,7 @@ import re
 from decimal import Decimal
 
 ROLES = frozenset({'warmup', 'feeder', 'top_set', 'max_set', 'freeform'})
-LOAD_RULES = frozenset({'manual', 'fixed_kg', 'percent_of_top', 'percent_of_rm', 'suggested_top'})
+LOAD_RULES = frozenset({'manual', 'fixed_kg', 'percent_of_top', 'percent_of_rm', 'percent_range_of_rm', 'suggested_top'})
 _STAGE_ID = re.compile(r'^[a-z][a-z0-9_-]{0,31}$')
 
 
@@ -93,6 +93,10 @@ def validate_guided_prescription(value, *, path='guided_prescription') -> list[s
             errors.append(f'{prefix}.load_rule.value_kg: kg inválido')
         if kind == 'percent_of_rm' and not _number(rule.get('percent'), minimum=1, maximum=200):
             errors.append(f'{prefix}.load_rule.percent: percentual inválido')
+        if kind == 'percent_range_of_rm':
+            low, high = rule.get('min_percent'), rule.get('max_percent')
+            if not _number(low, minimum=1, maximum=200) or not _number(high, minimum=1, maximum=200) or low > high:
+                errors.append(f'{prefix}.load_rule: faixa percentual de 1RM inválida')
         if kind == 'percent_of_top':
             low, high = rule.get('start_percent'), rule.get('end_percent')
             if not _number(low, minimum=1, maximum=100) or not _number(high, minimum=1, maximum=100) or low > high:
@@ -131,6 +135,10 @@ def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_k
                     weight = _rounded(top_weight_kg, step)
             elif kind == 'percent_of_rm' and _number(one_rep_max_kg, minimum=0, maximum=9999.99):
                 weight = _rounded(float(one_rep_max_kg) * rule['percent'] / 100, step)
+            elif kind == 'percent_range_of_rm' and _number(one_rep_max_kg, minimum=0, maximum=9999.99):
+                low, high = rule['min_percent'], rule['max_percent']
+                percent = (low + high) / 2 if count == 1 else low + (high - low) * (ordinal - 1) / (count - 1)
+                weight = _rounded(float(one_rep_max_kg) * percent / 100, step)
             elif kind == 'percent_of_top':
                 low = rule['start_percent']
                 high = rule['end_percent']

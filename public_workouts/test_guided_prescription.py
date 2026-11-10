@@ -44,6 +44,33 @@ class GuidedPrescriptionContractTest(SimpleTestCase):
         self.assertEqual(rows[0]['weight_kg'], 20)
         self.assertIsNone(rows[0]['top_factor'])
 
+    def test_percent_range_of_rm_expands_single_amrap_and_multiple_sets(self):
+        guided = _guided()
+        guided['stages'][0]['max_sets'] = 1
+        guided['stages'][0]['load_rule'] = {
+            'kind': 'percent_range_of_rm', 'min_percent': 65, 'max_percent': 75,
+        }
+        self.assertEqual(validate_guided_prescription(guided), [])
+        rows = expand_guided_prescription(guided, one_rep_max_kg=100)
+        self.assertEqual(rows[0]['weight_kg'], 70)
+        self.assertEqual(rows[0]['load_source'], 'percent_range_of_rm')
+        self.assertIsNone(expand_guided_prescription(guided)[0]['weight_kg'])
+
+        guided['stages'][0]['max_sets'] = 3
+        rows = expand_guided_prescription(guided, one_rep_max_kg=100)
+        self.assertEqual([row['weight_kg'] for row in rows[:3]], [65, 70, 75])
+
+    def test_invalid_rm_range_is_rejected_and_render_falls_back(self):
+        guided = _guided()
+        guided['stages'][0]['load_rule'] = {
+            'kind': 'percent_range_of_rm', 'min_percent': 75, 'max_percent': 65,
+        }
+        self.assertTrue(validate_guided_prescription(guided))
+        movement = {'movement_slug': 'hack', 'reps_spec': '2x10', 'guided_prescription': guided}
+        with self.assertLogs('public_workouts.guided_workout', level='ERROR'):
+            rows = build_guided_series(movement)
+        self.assertEqual(len(rows), 2)
+
     def test_legacy_ramp_exposes_same_factors_without_an_anchor(self):
         rows = build_guided_series({'reps_spec': '2× Prep → 1× Feeder → 2× Top (6-8)'})
         self.assertEqual([row['top_factor'] for row in rows], [.4, .55, .7, 1.0, 1.0])
