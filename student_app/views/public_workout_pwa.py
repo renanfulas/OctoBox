@@ -78,7 +78,11 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # (HTML + sync-badge.js), "Sair da conta" limpa o aparelho (workout-shell.js,
 # offline-data.js) e envios drenados levam X-Curva-Queued-Ms (guided-api,
 # guided-sync, load-api, load-sync).
-PUBLIC_WORKOUT_CACHE_EPOCH = 27
+# Bump 27->28: onboarding.js não reabre o tutorial na cópia offline quando a
+# marca de concluído ainda está na fila. A partir daqui, com o deploy da VPS
+# gravando OCTOBOX_RELEASE_SHA, a versão dos assets troca a cada deploy
+# (config/asset_version.py) e este epoch fica só para expurgo de segurança.
+PUBLIC_WORKOUT_CACHE_EPOCH = 28
 
 # F1 offline-first: o service worker só guarda no IndexedDB a resposta que
 # traz este header (valor = conta dona da página). Literal repetido em
@@ -191,17 +195,14 @@ _ASSET_VERSION_CACHE: dict[str, str] = {}
 def public_workout_asset_version() -> str:
     """Versao usada no ?v= dos assets e no nome do cache do service worker.
 
-    ATENCAO: `STATIC_ASSET_VERSION` esta SEMPRE definida em settings, com
-    valor '1' quando o ambiente nao seta nada — e nenhum deploy seta
-    (`RENDER_GIT_COMMIT` era do Render, e o projeto migrou para VPS). Ou
-    seja: na producao de hoje o ?v= fica congelado em 1 para sempre, o
-    cache do navegador nunca invalida e o service worker nunca troca de
-    versao. Enquanto o CSS era inline isso nao aparecia, porque o estilo
-    chegava junto com o HTML. Agora que e arquivo externo, apareceria.
+    `STATIC_ASSET_VERSION` vem de config/asset_version.py: explicita, ou
+    o SHA da release que o deploy da VPS grava (`OCTOBOX_RELEASE_SHA`), ou
+    '1' quando nada disso existe. Com o SHA, cada deploy troca o ?v= e o
+    nome do cache do service worker sozinho (pilar 6 de
+    docs/plans/curva-offline-first-estrategia.md).
 
-    Quando o ambiente define a variavel de verdade, respeitamos. Caso
-    contrario caimos no mtime dos proprios assets, que muda sozinho a
-    cada deploy que altere um arquivo.
+    Com '1' (nao configurado) caimos no mtime dos proprios assets, que
+    muda sozinho a cada deploy que altere um arquivo.
     """
     configured = getattr(settings, 'STATIC_ASSET_VERSION', '1')
     if configured and configured != '1':

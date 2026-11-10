@@ -281,8 +281,8 @@ IndexedDB (`curva-offline-pages`, chave = slug) e a serve sem rede:
   apagar pendência com aviso é F3).
 - *Limites:* a avaliação nova só entra no relatório depois do envio (o
   %gordura é calculado no servidor) — até lá o relatório mostra "N avaliações
-  aguardando envio". O tutorial de onboarding pode reaparecer na cópia
-  offline até a marca subir.
+  aguardando envio". (O tutorial reaparecendo na cópia offline foi resolvido
+  depois, ver "Pilar 6 e acabamento".)
 - *Revisão semanal:* só leitura (GET); não havia escrita a cobrir.
 - *Provas:* `tests/js/curva_offline_data.test.js`, SW/selo estendidos,
   `PublicWorkoutRecordAssessmentIdempotencyTests` e o e2e
@@ -318,6 +318,26 @@ IndexedDB (`curva-offline-pages`, chave = slug) e a serve sem rede:
   cobre o caso real (o aluno abre o app ao sair da academia); o painel e a
   telemetria mostram se algo ficar preso. Reabrir só se a telemetria mostrar
   atraso grande recorrente em Android.
+
+**Pilar 6 (versão por deploy) e acabamento — epoch 28.**
+
+- `config/asset_version.py`: `STATIC_ASSET_VERSION` explícita > SHA da
+  release (`OCTOBOX_RELEASE_SHA`, 12 caracteres) > `RENDER_GIT_COMMIT` > '1'.
+  O SHA só existe quando o deploy por releases imutáveis da VPS
+  (`scripts/linux/deploy_octobox.sh` gravando `.release.env`) estiver no ar;
+  até lá vale o fallback por mtime de sempre. Com ele, cada deploy troca o
+  `?v=` e o cache do SW sozinho, e `PUBLIC_WORKOUT_CACHE_EPOCH` fica só para
+  expurgo forçado de segurança. O processo do Gunicorn enxerga o SHA pelo
+  `EnvironmentFile=/srv/octobox/current/.release.env` da unit
+  `infra/hostgator-vps/systemd/octobox-gunicorn.service` (parte do mesmo
+  trabalho de releases imutáveis).
+- Onboarding: a cópia offline não reabre o tutorial quando a marca de
+  "concluído" ainda está na fila do aparelho (limite da F2 resolvido).
+
+**Limite que continua (por desenho):** a cópia da página mostra o estado da
+última visita online; o que foi feito offline aparece pelo estado local do
+guiado/cargas e pelas notas de pendência, e o resto se atualiza na próxima
+visita com rede.
 
 ## 5. Riscos e decisões em aberto
 
