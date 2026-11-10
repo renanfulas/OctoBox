@@ -41,6 +41,7 @@ from django.db import models as django_models
 from django.db import transaction
 from django.utils import timezone
 
+from .assessment_idempotency import create_assessment_once
 from .catalog import PUBLIC_WORKOUT_LIBRARY
 from .formulas import (
     Sex,
@@ -123,20 +124,9 @@ def record_assessment(
     measurements: dict | None = None,
     notes: str = '',
     sex: str = '',
-    height_cm=None,
-    idempotency_key: str | None = None,
+    height_cm=None, idempotency_key: str | None = None,
 ) -> dict:
-    """Grava uma avaliação. Com `idempotency_key` (fila offline, F2), o
-    reenvio devolve a linha já gravada em vez de duplicar. A recuperação
-    filtra também pelo `plan_slug`: uma chave de outro aluno nunca devolve a
-    avaliação dele — cai no IntegrityError original."""
     _validate_plan_slug(plan_slug)
-    if idempotency_key:
-        existing = PublicWorkoutAssessment.objects.filter(
-            idempotency_key=idempotency_key, plan_slug=plan_slug,
-        ).first()
-        if existing is not None:
-            return _serialize(existing)
     if weight_kg is not None and weight_kg <= 0:
         raise AssessmentValueError(f'weight_kg deve ser positivo: {weight_kg!r}')
     if sex and sex not in _VALID_SEXES:
@@ -149,30 +139,11 @@ def record_assessment(
     # chamador manda measured_at como string (o caso comum vindo de JSON).
     if isinstance(measured_at, str):
         measured_at = date.fromisoformat(measured_at)
-    try:
-        # Savepoint: o IntegrityError não envenena a transação de quem chama
-        # antes da consulta de recuperação (mesmo motivo de record_load).
-        with transaction.atomic():
-            assessment = PublicWorkoutAssessment.objects.create(
-                plan_slug=plan_slug,
-                measured_at=measured_at,
-                weight_kg=weight_kg,
-                body_fat_percent=body_fat_percent,
-                body_fat_source=body_fat_source,
-                measurements=measurements or {},
-                notes=notes,
-                sex=sex or '',
-                height_cm=height_cm,
-                idempotency_key=idempotency_key or None,
-            )
-    except IntegrityError:
-        if not idempotency_key:
-            raise
-        assessment = PublicWorkoutAssessment.objects.filter(
-            idempotency_key=idempotency_key, plan_slug=plan_slug,
-        ).first()
-        if assessment is None:
-            raise
+    assessment = create_assessment_once(
+        idempotency_key=idempotency_key, plan_slug=plan_slug, measured_at=measured_at, weight_kg=weight_kg,
+        body_fat_percent=body_fat_percent, body_fat_source=body_fat_source, measurements=measurements or {},
+        notes=notes, sex=sex or '', height_cm=height_cm,
+    )
     return _serialize(assessment)
 
 

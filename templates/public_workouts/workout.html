@@ -749,35 +749,6 @@ PONTOS CRITICOS:
 
 {% include 'public_workouts/partials/_guided_focus.html' %}
 
-<script src="{% static 'js/public_workouts/workout-shell.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/workout-curve.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/workout-pwa.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/offline-data.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/core/shell.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/load-storage.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/load-plate-calculator.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/load-api.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/load-sync.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/load_tracker.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/weekly_review.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/nutrition.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/assessments-report.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/assessments.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/account.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/onboarding.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-outbox.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-api.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-sync.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-timer.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-rest-alert.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-state.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-loads.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-format.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-ring.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-focus.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/workout-guided.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/workout-push.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/sync-badge.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/offline-banner.js' %}?v={{ asset_version }}" defer></script>
+{% include 'public_workouts/partials/_workout_scripts.html' %}
 </body>
 </html>

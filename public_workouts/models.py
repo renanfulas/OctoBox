@@ -178,11 +178,7 @@ class PublicWorkoutAssessment(models.Model):
     # (build_report usa o valor mais recente quando o plano nao declara).
     sex = models.CharField(max_length=1, blank=True, default='')
     height_cm = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
-    # F2 offline-first: chave gerada no aparelho para a autoavaliação que
-    # passa pela fila offline (offline-data.js). Reenvio depois de resposta
-    # perdida resolve para a MESMA linha — o unique do banco é a trava, como
-    # em PublicWorkoutLoadLog. Nula nas avaliações do treinador e nas antigas.
-    idempotency_key = models.CharField(max_length=64, null=True, blank=True, unique=True)
+    idempotency_key = models.CharField(max_length=64, null=True, blank=True, unique=True)  # fila offline (F2)
 
     class Meta:
         db_table = 'public_workout_assessments'
