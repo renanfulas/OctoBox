@@ -201,6 +201,26 @@ class RecordSuccessfulInvoicePaymentTests(TestCase):
         self.assertEqual(sent_to, ['renan@example.com', 'giovanna@example.com'])
 
     @override_settings(
+        PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com', 'giovannafontesrios@outlook.com'],
+        PUBLIC_WORKOUT_PUBLIC_BASE_URL='',
+    )
+    def test_giovanna_receives_staff_alert_only_for_other_plans(self):
+        for tier, expected in (
+            (PublicWorkoutTier.ESSENCIAL, ['renan@example.com']),
+            (PublicWorkoutTier.COMPLETO, ['renan@example.com', 'giovannafontesrios@outlook.com']),
+            (PublicWorkoutTier.PREMIUM, ['renan@example.com', 'giovannafontesrios@outlook.com']),
+        ):
+            with self.subTest(tier=tier):
+                self.subscription.tier = tier
+                self.subscription.save(update_fields=['tier'])
+                mail.outbox.clear()
+                notify_staff_new_subscription(
+                    self.subscription,
+                    previous_status=PublicWorkoutSubscriptionStatus.PENDING_PAYMENT,
+                )
+                self.assertEqual([recipient for msg in mail.outbox for recipient in msg.to], expected)
+
+    @override_settings(
         PUBLIC_WORKOUT_STAFF_ALERT_EMAILS=['renan@example.com'],
         PUBLIC_WORKOUT_PUBLIC_BASE_URL='',
     )

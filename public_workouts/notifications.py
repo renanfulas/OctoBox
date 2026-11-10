@@ -349,6 +349,7 @@ def notify_staff_new_subscription(subscription, *, previous_status: str, base_ur
     pagamento (mesma regra do resto deste modulo).
     """
     from signup.email_sender import send_html_email
+    from .models import PublicWorkoutTier
 
     account = subscription.account
     tier_label = subscription.get_tier_display()
@@ -377,6 +378,11 @@ def notify_staff_new_subscription(subscription, *, previous_status: str, base_ur
     )
     result = {}
     for staff_email in getattr(settings, 'PUBLIC_WORKOUT_STAFF_ALERT_EMAILS', []):
+        if (
+            subscription.tier == PublicWorkoutTier.ESSENCIAL
+            and staff_email.strip().casefold() == 'giovannafontesrios@outlook.com'
+        ):
+            continue
         try:
             send_html_email(subject=subject, text_body=body, html_body=html_body, to_email=staff_email)
             result[staff_email] = 'sent'
