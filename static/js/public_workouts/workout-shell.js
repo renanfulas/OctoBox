@@ -248,16 +248,46 @@
     }
     return '';
   }
+  // F3 offline-first: sair apaga os dados deste aparelho (offline-data.js
+  // forgetAccount). Registro ainda não enviado se perderia — o aviso diz
+  // quantos antes de confirmar. Sem conexão não dá para sair: o servidor é
+  // quem encerra a sessão, e apagar só o aparelho deixaria o aluno logado.
+  function pendingCount() {
+    if (!window.CurvaSyncBadge) return Promise.resolve(0);
+    return window.CurvaSyncBadge.refresh().then(function (total) { return total || 0; }, function () { return 0; });
+  }
+
+  function signOutMessage(pending) {
+    if (!pending) return 'Sair da conta? O treino salvo neste aparelho para usar sem internet será apagado.';
+    var warning = pending === 1
+      ? 'Há 1 registro deste aparelho ainda não enviado ao servidor. Se sair agora, ele será apagado e não poderá ser recuperado.'
+      : 'Há ' + pending + ' registros deste aparelho ainda não enviados ao servidor. Se sair agora, eles serão apagados e não poderão ser recuperados.';
+    return warning + '\n\nPara não perder, cancele e aguarde o selo de envio sumir.\n\nSair mesmo assim?';
+  }
+
   var signOutButton = document.querySelector('[data-workout-signout]');
   if (signOutButton) {
     signOutButton.addEventListener('click', function () {
-      if (!window.confirm('Sair da conta?')) return;
-      window.fetch(signOutButton.getAttribute('data-signout-url'), {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') },
-      }).then(function () {
-        window.location.href = '/renan/offline/';
+      if (navigator.onLine === false) {
+        window.alert('Sem conexão. Conecte-se à internet para sair da conta.');
+        return;
+      }
+      pendingCount().then(function (pending) {
+        if (!window.confirm(signOutMessage(pending))) return;
+        signOutButton.disabled = true;
+        return window.fetch(signOutButton.getAttribute('data-signout-url'), {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        }).then(function () {
+          var forget = window.CurvaOfflineData
+            ? window.CurvaOfflineData.forgetAccount(document.body.dataset.planSlug)
+            : Promise.resolve();
+          return forget.then(function () { window.location.href = '/renan/offline/'; });
+        }, function () {
+          signOutButton.disabled = false;
+          window.alert('Não foi possível sair agora. Verifique a conexão e tente de novo.');
+        });
       });
     });
   }

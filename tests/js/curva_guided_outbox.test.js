@@ -113,8 +113,13 @@ function load() {
   const idb = fakeIndexedDB();
   const listeners = {};
   const window = { indexedDB: idb.factory, addEventListener(type, fn) { listeners[type] = fn; } };
-  vm.runInNewContext(source, { window, indexedDB: idb.factory, setImmediate });
-  return { outbox: window.CurvaGuidedOutbox, idb, listeners };
+  // F0 offline-first: queue/remove anunciam a mudança da fila ao selo de
+  // pendências via document.dispatchEvent('curva:outbox-changed').
+  const announced = [];
+  const document = { dispatchEvent(event) { announced.push(event.type); } };
+  class CustomEvent { constructor(type) { this.type = type; } }
+  vm.runInNewContext(source, { window, indexedDB: idb.factory, setImmediate, document, CustomEvent });
+  return { outbox: window.CurvaGuidedOutbox, idb, listeners, announced };
 }
 
 const flush = () => new Promise((resolve) => setImmediate(resolve));
@@ -133,6 +138,18 @@ test('uma série inteira reaproveita a mesma conexão', async () => {
   await outbox.list('conta');
   assert.deepEqual(idb.opened, ['curva-guided:conta']);
 });
+
+test('gravar e drenar a fila anunciam a mudança ao selo de pendências', async () => {
+  const { outbox, announced } = load();
+  await outbox.queue('conta', { key: 's:set:0:1', payload: { action: 'set' }, created_at: 1 });
+  assert.deepEqual(announced, ['curva:outbox-changed']);
+  await outbox.remove('conta', 's:set:0:1');
+  assert.deepEqual(announced, ['curva:outbox-changed', 'curva:outbox-changed']);
+  // Leitura não anuncia nada: só escrita muda o selo.
+  await outbox.list('conta');
+  assert.equal(announced.length, 2);
+});
+
 
 test('chamadas simultâneas antes da primeira abertura compartilham a conexão', async () => {
   const { outbox, idb } = load();

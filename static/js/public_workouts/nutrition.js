@@ -230,6 +230,14 @@
     container.hidden = false;
   }
 
+  function readJson(url) {
+    if (window.CurvaOfflineData) return window.CurvaOfflineData.readJson(url);
+    return window.fetch(url, { credentials: 'same-origin' }).then(function (response) {
+      if (!response.ok) { throw new Error('http-' + response.status); }
+      return response.json().then(function (data) { return { data: data, savedAt: null }; });
+    });
+  }
+
   function initNutrition(root) {
     var url = root.getAttribute('data-nutrition-url');
     var contentEl = root.querySelector('[data-workout-nutrition-content]');
@@ -238,13 +246,15 @@
 
     if (statusEl) { statusEl.textContent = 'Carregando…'; }
 
-    window.fetch(url, { credentials: 'same-origin' })
-      .then(function (response) {
-        if (!response.ok) { throw new Error('http-' + response.status); }
-        return response.json();
-      })
-      .then(function (data) {
-        if (statusEl) { statusEl.textContent = ''; }
+    // F2 offline-first: sem rede, abre o plano salvo neste aparelho.
+    readJson(url)
+      .then(function (result) {
+        var data = result.data;
+        if (statusEl) {
+          statusEl.textContent = result.savedAt
+            ? 'Sem conexão: plano salvo neste aparelho em ' + window.CurvaOfflineData.savedLabel(result.savedAt) + '.'
+            : '';
+        }
         if (contentEl) { renderMealPlan(contentEl, data && data.meal_plan); }
       })
       .catch(function () {

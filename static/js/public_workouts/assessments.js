@@ -114,6 +114,57 @@
     });
   }
 
+  // F2 offline-first: com a fila offline (offline-data.js), a avaliação é
+  // gravada no aparelho antes de ir para a rede e sobe quando a conexão
+  // voltar, sem duplicar (idempotency_key). Sem a fila, POST direto.
+  // Estados: sent | queued (no aparelho) | rejected (servidor recusou) |
+  // failed (sem rede e sem armazenamento local).
+  function submitAssessment(url, payload) {
+    if (window.CurvaOfflineData) {
+      return window.CurvaOfflineData.submit({ kind: 'assessment', url: url, payload: payload });
+    }
+    return postJson(url, payload).then(function (result) {
+      return {
+        state: result.ok ? 'sent' : 'rejected', status: result.status, data: result.data,
+      };
+    }, function () { return { state: 'failed', status: 0, data: {} }; });
+  }
+
+  function readReport(url) {
+    if (window.CurvaOfflineData) return window.CurvaOfflineData.readJson(url);
+    return fetch(url).then(function (response) {
+      if (!response.ok) throw new Error('bad status');
+      return response.json().then(function (data) { return { data: data, savedAt: null }; });
+    });
+  }
+
+  // Avisos no topo do relatório: cópia local e avaliações ainda na fila (o
+  // %gordura é calculado no servidor, então a nova só aparece depois do envio).
+  function paintOfflineNotes(reportSlot, savedAt) {
+    var notes = [];
+    if (savedAt) {
+      notes.push('Sem conexão: avaliações salvas neste aparelho em '
+        + window.CurvaOfflineData.savedLabel(savedAt) + '.');
+    }
+    var pending = window.CurvaOfflineData ? window.CurvaOfflineData.pending('assessment') : Promise.resolve(0);
+    return pending.then(function (count) {
+      if (count) {
+        notes.push(count === 1
+          ? '1 avaliação aguardando envio — aparece aqui quando a conexão voltar.'
+          : count + ' avaliações aguardando envio — aparecem aqui quando a conexão voltar.');
+      }
+      var box = reportSlot.querySelector('.assess-offline-notes');
+      if (!notes.length) { if (box) box.remove(); return; }
+      if (!box) {
+        box = document.createElement('div');
+        box.className = 'assess-offline-notes';
+        box.setAttribute('role', 'status');
+        reportSlot.insertBefore(box, reportSlot.firstChild);
+      }
+      box.innerHTML = notes.map(function (note) { return '<p>' + escapeHtml(note) + '</p>'; }).join('');
+    }, function () {});
+  }
+
   // Idade so entra na formula de dobras cutaneas (Jackson-Pollock) — nao e
   // persistida no backend (mesmo padrao do --age do management command:
   // entra so na hora do calculo). Guardar no localStorage evita perguntar
@@ -312,23 +363,37 @@
       if (submitBtn) submitBtn.disabled = true;
       setFeedback(feedback, null, 'Salvando…');
 
-      postJson('/renan/' + slug + '/avaliacoes', payload)
+      submitAssessment('/renan/' + slug + '/avaliacoes', payload)
         .then(function (result) {
           if (submitBtn) submitBtn.disabled = false;
           if (result.status === 401) {
+            // Na fila offline a avaliação não se perde: sobe depois do login.
+            var kept = result.state === 'queued';
             setFeedback(feedback, 'error', 'Sua sessão expirou — ');
             var link = document.createElement('a');
             link.href = '/treinos/login?next=' + encodeURIComponent('/renan/' + slug);
             link.textContent = 'faça login novamente';
             feedback.appendChild(link);
-            feedback.appendChild(document.createTextNode(' e tente de novo.'));
+            feedback.appendChild(document.createTextNode(kept
+              ? '. A avaliação ficou salva neste aparelho e será enviada depois.'
+              : ' e tente de novo.'));
+            if (kept) {
+              if (payload.age) rememberAge(String(payload.age));
+              clearEnteredValues(form);
+            }
             return;
           }
-          if (!result.ok) {
+          if (result.state === 'failed') {
+            setFeedback(feedback, 'error', 'Falha de conexão. Tente de novo.');
+            return;
+          }
+          if (result.state === 'rejected') {
             setFeedback(feedback, 'error', (result.data && result.data.error) || 'Não foi possível salvar. Tente de novo.');
             return;
           }
-          setFeedback(feedback, 'success', 'Avaliação salva ✓');
+          setFeedback(feedback, 'success', result.state === 'queued'
+            ? 'Salva neste aparelho ✓ Será enviada quando a conexão voltar.'
+            : 'Avaliação salva ✓');
           if (payload.age) rememberAge(String(payload.age));
           clearEnteredValues(form);
           if (onSaved) onSaved();
@@ -383,14 +448,12 @@
 
   function loadReport(panel, formSlot, form, reportSlot) {
     var slug = planSlug();
-    return fetch('/renan/' + slug + '/avaliacoes.json')
-      .then(function (response) {
-        if (!response.ok) throw new Error('bad status');
-        return response.json();
-      })
-      .then(function (report) {
+    return readReport('/renan/' + slug + '/avaliacoes.json')
+      .then(function (result) {
+        var report = result.data;
         var isUnified = panel.id === 'workout-panel-avaliacao';
         reportSlot.innerHTML = assessmentReport.buildPanel(report, isUnified);
+        paintOfflineNotes(reportSlot, result.savedAt);
         var hasHistory = report.assessments.length > 0;
         if (isUnified) {
           panel.classList.toggle('has-assessment-history', hasHistory);
@@ -426,6 +489,19 @@
     var dateEl = form.querySelector('#assess-f-date');
     if (dateEl) dateEl.value = todayIso();
     bindForm(form, function () { loadReport(panel, formSlot, form, reportSlot); });
+
+    // Fila drenada em segundo plano (voltou a conexão): a avaliação enviada
+    // entra no relatório; a recusada avisa no formulário.
+    document.addEventListener('curva:offline-write-settled', function (event) {
+      var result = event.detail || {};
+      if (result.kind !== 'assessment') return;
+      if (result.state === 'sent') loadReport(panel, formSlot, form, reportSlot);
+      if (result.state === 'rejected') {
+        setFeedback(form.querySelector('#assess-f-feedback'), 'error',
+          'Uma avaliação salva offline foi recusada: '
+          + ((result.data && result.data.error) || 'confira os valores e registre de novo.'));
+      }
+    });
 
     loadReport(panel, formSlot, form, reportSlot);
   }

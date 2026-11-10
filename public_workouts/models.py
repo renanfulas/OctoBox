@@ -179,6 +179,7 @@ class PublicWorkoutAssessment(models.Model):
     # (build_report usa o valor mais recente quando o plano nao declara).
     sex = models.CharField(max_length=1, blank=True, default='')
     height_cm = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    idempotency_key = models.CharField(max_length=64, null=True, blank=True, unique=True)  # fila offline (F2)
 
     class Meta:
         db_table = 'public_workout_assessments'

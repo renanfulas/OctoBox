@@ -8,6 +8,137 @@ const ALLOWLIST = [
 {% for asset_url in static_asset_urls %}  '{{ asset_url }}',
 {% endfor %}];
 
+// F1 offline-first (docs/plans/curva-offline-first-estrategia.md): a página
+// do treino que o PRÓPRIO dono abriu online fica no IndexedDB, nunca no Cache
+// Storage (A4). Só grava a resposta que o servidor marca com
+// X-Curva-Offline-Scope — ele só marca a página real do dono logado. Login
+// expirado, 404 de posse, pagamento bloqueado e "Sair da conta" apagam a
+// cópia: com servidor alcançável, a decisão dele vale sobre o aparelho.
+const PAGE_DB = 'curva-offline-pages';
+const PAGE_STORE = 'pages';
+const PAGE_TTL_MS = 30 * 86400000;
+// Internet de academia costuma ser "conectada, mas sem resposta": depois
+// disso a cópia salva abre e a resposta da rede, se vier, só atualiza a cópia.
+const PAGE_NETWORK_TIMEOUT_MS = 5000;
+
+function planSlugFromPath(pathname) {
+  if (pathname === OFFLINE_URL) return null;
+  const match = /^\/renan\/([^/.]+)\/?$/.exec(pathname);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function openPages() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(PAGE_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(PAGE_STORE)) {
+        request.result.createObjectStore(PAGE_STORE, { keyPath: 'slug' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function pageStore(mode, work) {
+  return openPages().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(PAGE_STORE, mode);
+    const request = work(tx.objectStore(PAGE_STORE));
+    tx.oncomplete = () => { db.close(); resolve(request.result); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+    tx.onabort = () => { db.close(); reject(tx.error); };
+  }));
+}
+
+// F2: as leituras JSON salvas da conta (offline-data.js) saem junto com a
+// página. Só o store "reads" — escrita ainda na fila nunca some sem aviso.
+function clearSavedReads(scope) {
+  return new Promise((resolve) => {
+    const request = indexedDB.open(`curva-offline-data:${scope}`, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains('reads')) {
+        request.result.createObjectStore('reads', { keyPath: 'url' });
+      }
+      if (!request.result.objectStoreNames.contains('writes')) {
+        request.result.createObjectStore('writes', { keyPath: 'key' });
+      }
+    };
+    request.onerror = () => resolve();
+    request.onblocked = () => resolve();
+    request.onsuccess = () => {
+      const db = request.result;
+      try {
+        const tx = db.transaction('reads', 'readwrite');
+        tx.objectStore('reads').clear();
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); resolve(); };
+        tx.onabort = () => { db.close(); resolve(); };
+      } catch (_) {
+        db.close();
+        resolve();
+      }
+    };
+  });
+}
+
+async function forgetPage(slug) {
+  const record = await pageStore('readonly', (store) => store.get(slug)).catch(() => null);
+  await pageStore('readwrite', (store) => store.delete(slug));
+  if (record && record.scope) await clearSavedReads(record.scope);
+}
+
+async function rememberPage(slug, response) {
+  if (response.type === 'opaqueredirect' || [401, 403, 404].includes(response.status)) {
+    return forgetPage(slug);
+  }
+  // 5xx/rede instável: o servidor não decidiu nada, a cópia continua.
+  if (!response.ok) return null;
+  const scope = response.headers.get('X-Curva-Offline-Scope');
+  if (!scope) return forgetPage(slug);
+  const html = await response.text();
+  return pageStore('readwrite', (store) => store.put({ slug, scope, html, saved_at: Date.now() }));
+}
+
+async function savedPage(slug) {
+  try {
+    const record = await pageStore('readonly', (store) => store.get(slug));
+    if (!record) return null;
+    if (Date.now() - record.saved_at > PAGE_TTL_MS) {
+      await forgetPage(slug);
+      return null;
+    }
+    return record;
+  } catch (_) {
+    return null;
+  }
+}
+
+function savedPageResponse(record) {
+  // A página sabe que veio da cópia (faixa "modo offline" + data da cópia).
+  const html = record.html.replace(/<body(?=[\s>])/, `<body data-offline-snapshot="${record.saved_at}"`);
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
+  });
+}
+
+async function respondWithPlanPage(slug, network) {
+  const fromNetwork = network.then(({ response }) => response);
+  fromNetwork.catch(() => {});
+  const saved = savedPage(slug);
+  const slow = saved.then((record) => (record
+    ? new Promise((resolve) => setTimeout(() => resolve(null), PAGE_NETWORK_TIMEOUT_MS))
+    : fromNetwork));
+  try {
+    const response = await Promise.race([fromNetwork, slow]);
+    if (response && !(response.status >= 500 && await saved)) return response;
+  } catch (_) {
+    // Sem rede: cai para a cópia salva.
+  }
+  const record = await saved;
+  if (record) return savedPageResponse(record);
+  return await caches.match(OFFLINE_URL, { ignoreSearch: true });
+}
+
 function isAllowedStaticAsset(requestUrl) {
   if (requestUrl.origin !== self.location.origin) {
     return false;
@@ -90,6 +221,12 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(request.url);
 
   if (request.method !== 'GET') {
+    // "Sair da conta" (POST /renan/<slug>/sair): aparelho de recepção é
+    // compartilhado — a cópia da página sai junto com a sessão.
+    const signOut = /^\/renan\/([^/.]+)\/sair\/?$/.exec(requestUrl.pathname);
+    if (request.method === 'POST' && signOut) {
+      event.waitUntil(forgetPage(decodeURIComponent(signOut[1])).catch(() => {}));
+    }
     return;
   }
 
@@ -108,6 +245,14 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     if (!requestUrl.pathname.startsWith(APP_SCOPE)) {
+      return;
+    }
+    const slug = planSlugFromPath(requestUrl.pathname);
+    if (slug) {
+      // O clone nasce antes de o navegador consumir o corpo da resposta.
+      const network = fetch(request).then((response) => ({ response, copy: response.clone() }));
+      event.waitUntil(network.then(({ copy }) => rememberPage(slug, copy)).catch(() => {}));
+      event.respondWith(respondWithPlanPage(slug, network));
       return;
     }
     event.respondWith(

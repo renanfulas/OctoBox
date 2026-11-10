@@ -42,6 +42,7 @@ class PublicWorkoutAccessSplitTests(SimpleTestCase):
         self.assertEqual(plan.store_key, 'novo-aluno_v1')
 
     def test_new_sync_assets_load_before_controllers(self):
-        template = Path('templates/public_workouts/workout.html').read_text(encoding='utf-8')
+        # Os <script> de workout.html moram no partial (ratchet de tamanho).
+        template = Path('templates/public_workouts/partials/_workout_scripts.html').read_text(encoding='utf-8')
         self.assertLess(template.index('load-sync.js'), template.index('load_tracker.js'))
         self.assertLess(template.index('guided-sync.js'), template.index('workout-guided.js'))

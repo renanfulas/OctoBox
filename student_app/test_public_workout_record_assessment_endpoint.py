@@ -391,3 +391,66 @@ class PublicWorkoutRecordAssessmentSkinfoldTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+
+
+class PublicWorkoutRecordAssessmentIdempotencyTests(TestCase):
+    """F2 offline-first: a autoavaliação feita sem rede sobe pela fila
+    (offline-data.js) com idempotency_key. Reenvio depois de resposta perdida
+    nunca duplica, e a chave de um aluno nunca devolve a avaliação de outro."""
+
+    def _url(self, slug='bruno'):
+        return reverse('public-workout-record-assessment', kwargs={'plan_slug': slug})
+
+    def _post(self, slug, payload):
+        return self.client.post(self._url(slug), data=json.dumps(payload), content_type='application/json')
+
+    def test_resend_with_same_key_returns_the_same_row(self):
+        from public_workouts.models import PublicWorkoutAssessment
+
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+        payload = {'measured_at': '2026-11-08', 'weight_kg': 80.5, 'idempotency_key': 'k-offline-1'}
+
+        first = self._post('bruno', payload)
+        again = self._post('bruno', payload)
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(again.status_code, 200)
+        self.assertEqual(again.json(), first.json())
+        self.assertEqual(PublicWorkoutAssessment.objects.filter(plan_slug='bruno').count(), 1)
+        # A data é a do aparelho (feita offline no sábado), não a do envio.
+        self.assertEqual(first.json()['measured_at'], '2026-11-08')
+
+    def test_without_key_each_post_is_a_new_row(self):
+        from public_workouts.models import PublicWorkoutAssessment
+
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        self._post('bruno', {'measured_at': '2026-11-08', 'weight_kg': 80.5})
+        self._post('bruno', {'measured_at': '2026-11-08', 'weight_kg': 80.5})
+
+        self.assertEqual(PublicWorkoutAssessment.objects.filter(plan_slug='bruno').count(), 2)
+
+    def test_key_of_another_student_never_returns_their_assessment(self):
+        from public_workouts.models import PublicWorkoutAssessment
+
+        juliana = _make_account_with_subscription(email='juliana@example.com', plan_slug='juliana')
+        _login(self.client, juliana.pk)
+        self._post('juliana', {'measured_at': '2026-11-08', 'weight_kg': 61, 'idempotency_key': 'k-shared'})
+
+        bruno = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, bruno.pk)
+        response = self._post('bruno', {'measured_at': '2026-11-08', 'weight_kg': 80, 'idempotency_key': 'k-shared'})
+
+        self.assertEqual(response.status_code, 409)
+        self.assertNotIn('61', response.content.decode('utf-8'))
+        self.assertFalse(PublicWorkoutAssessment.objects.filter(plan_slug='bruno').exists())
+
+    def test_invalid_key_is_rejected(self):
+        account = _make_account_with_subscription(email='bruno@example.com', plan_slug='bruno')
+        _login(self.client, account.pk)
+
+        response = self._post('bruno', {'measured_at': '2026-11-08', 'weight_kg': 80, 'idempotency_key': 'x' * 65})
+
+        self.assertEqual(response.status_code, 400)
