@@ -39,7 +39,7 @@ EXPECTED_LIBRARY: dict[str, tuple[str, tuple[str, ...], str]] = {
     'day_short': ('filter', (), '(day_id)'),
     'dict_get': ('filter', (), '(dictionary, key)'),
     'glossary_highlight': ('filter', (), '(text, ramp=None)'),
-    'guided_series': ('simple_tag', (), '(movement, top_weight_kg=None, one_rep_max_by_movement=None)'),
+    'guided_series': ('simple_tag', (), '(movement, top_weight_kg=None, one_rep_max_by_movement=None, current_phase=None)'),
     'hero_progress_chart': ('simple_tag', (), '(progress_snapshots, movement_labels=None)'),
     'humanize_movement_slug': ('filter', (), '(movement_slug)'),
     'initial': ('filter', (), '(name)'),

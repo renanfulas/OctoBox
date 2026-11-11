@@ -10,7 +10,7 @@ import re
 
 
 _STAGE = re.compile(
-    r'^\s*(Preparat\.?|Prep|Feeder|Top(?:\s+Set)?|AMRAP|Max)\s+'
+    r'^\s*(Preparat[oó]ria|Preparat\.?|Prep|Feeder|Top(?:\s+Set)?|AMRAP|Max)\s+'
     r'(\d+)(?:\s*[-–]\s*(\d+))?\s*[x×]\s*(.*?)\s*$', re.I,
 )
 _REPS = re.compile(r'^(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?(?:\s*reps?)?$', re.I)
@@ -21,9 +21,9 @@ _OPTIONAL = re.compile(r'^(?:Opcional|(.+?)\s+Opcional)\s*$', re.I)
 def _stage_details(label: str):
     key = label.lower()
     if key.startswith(('preparat', 'prep')):
-        return 'prep', 'warmup', {'kind': 'percent_of_top', 'start_percent': 40, 'end_percent': 55}
+        return 'prep', 'warmup', {'kind': 'percent_range_of_rm', 'min_percent': 60, 'max_percent': 75}
     if key == 'feeder':
-        return 'feeder', 'feeder', {'kind': 'percent_of_top', 'start_percent': 60, 'end_percent': 80}
+        return 'feeder', 'feeder', {'kind': 'percent_of_rm', 'percent': 50}
     if key.startswith('top'):
         return 'top', 'top_set', {'kind': 'suggested_top'}
     return 'max', 'max_set', {'kind': 'suggested_top'}
@@ -81,17 +81,21 @@ que o movimento inteiro permaneça livre; nunca descartamos uma parte do texto.
                 return None
             stage_load_rule = load_rule.copy()
             if split_reps and role == 'warmup':
-                percent = 40 if pair_index == 0 else 55
-                stage_load_rule.update(start_percent=percent, end_percent=percent)
-            stages.append({
+                percent = 60 if pair_index == 0 else 75
+                stage_load_rule.update(min_percent=percent, max_percent=percent)
+            rest_seconds = 25 if role == 'feeder' else 52 if role == 'warmup' else 240 if role == 'max_set' else 90
+            stage = {
                 'stage_id': f'{stage_key}-{len(stages) + 1}',
                 'role': role,
                 'min_sets': 0 if optional else (1 if split_reps else minimum),
                 'max_sets': 1 if split_reps else maximum,
                 'reps_min': reps_min,
                 'reps_max': reps_max,
-                'rest_seconds': 90,
+                'rest_seconds': rest_seconds,
                 'load_rule': stage_load_rule,
-            })
+            }
+            if role in {'warmup', 'top_set', 'max_set'}:
+                stage['rest_policy'] = 'percentage_of_1rm'
+            stages.append(stage)
 
     return {'version': 1, 'stages': stages} if stages else None

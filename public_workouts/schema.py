@@ -81,6 +81,25 @@ def _validate_movement(movement: dict, *, path: str, errors: list[str]) -> None:
             movement['guided_prescription'], path=f'{path}.guided_prescription',
         ))
 
+    rest_seconds = movement.get('rest_seconds')
+    _require(
+        rest_seconds is None or (isinstance(rest_seconds, int) and not isinstance(rest_seconds, bool) and 0 <= rest_seconds <= 900),
+        errors,
+        f'{path}.rest_seconds: inteiro entre 0 e 900 ou ausente',
+    )
+    rest_spec = movement.get('rest_spec')
+    _require(
+        rest_spec is None or (isinstance(rest_spec, str) and len(rest_spec) <= 120),
+        errors,
+        f'{path}.rest_spec: string de até 120 caracteres ou ausente',
+    )
+    rest_policy = movement.get('rest_policy')
+    _require(
+        rest_policy is None or rest_policy == 'percentage_of_1rm',
+        errors,
+        f'{path}.rest_policy: ausente ou percentage_of_1rm',
+    )
+
     allow_load_registration = movement.get('allow_load_registration')
     _require(
         allow_load_registration is None or isinstance(allow_load_registration, bool),
@@ -133,7 +152,32 @@ def _validate_block(block: dict, *, path: str, errors: list[str]) -> None:
 
     movements = block.get('movements')
     _require(isinstance(movements, list) and len(movements) > 0, errors, f'{path}.movements: lista nao vazia')
+    group_type = block.get('group_type')
+    _require(group_type is None or group_type == 'biset', errors, f'{path}.group_type: ausente ou biset')
+    group_rest_seconds = block.get('rest_seconds')
+    _require(
+        group_rest_seconds is None or (
+            isinstance(group_rest_seconds, int) and not isinstance(group_rest_seconds, bool)
+            and 0 <= group_rest_seconds <= 900
+        ),
+        errors,
+        f'{path}.rest_seconds: inteiro entre 0 e 900 ou ausente',
+    )
+    group_rest_spec = block.get('rest_spec')
+    _require(
+        group_rest_spec is None or (isinstance(group_rest_spec, str) and len(group_rest_spec) <= 120),
+        errors,
+        f'{path}.rest_spec: string de até 120 caracteres ou ausente',
+    )
     if isinstance(movements, list):
+        if group_type == 'biset':
+            _require(len(movements) >= 2, errors, f'{path}: bi-set precisa de pelo menos dois movimentos')
+            _require(
+                isinstance(group_rest_seconds, int) and not isinstance(group_rest_seconds, bool)
+                and 90 <= group_rest_seconds <= 120,
+                errors,
+                f'{path}.rest_seconds: bi-set precisa de 90 a 120 segundos',
+            )
         for index, movement in enumerate(movements):
             _validate_movement(movement, path=f'{path}.movements[{index}]', errors=errors)
 

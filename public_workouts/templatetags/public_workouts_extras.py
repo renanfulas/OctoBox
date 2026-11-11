@@ -295,14 +295,16 @@ def _detect_phase(segment: str) -> str:
 
 
 @register.simple_tag
-def guided_series(movement: dict, top_weight_kg=None, one_rep_max_by_movement=None) -> str:
+def guided_series(movement: dict, top_weight_kg=None, one_rep_max_by_movement=None,
+                  current_phase=None) -> str:
     """Serializa a prescrição do módulo guiado para o controlador do template."""
     estimate = (one_rep_max_by_movement or {}).get(movement.get('movement_slug'))
     one_rep_max_kg = estimate.get('value_kg') if estimate else None
     return json.dumps(
-        build_guided_series(movement, top_weight_kg, one_rep_max_kg),
+        build_guided_series(movement, top_weight_kg, one_rep_max_kg, current_phase),
         ensure_ascii=False, separators=(',', ':'),
     )
+
 
 
 @register.filter

@@ -8,6 +8,7 @@ import logging
 
 from .warmup_ramp import stage_ramp_factors, stage_ramp_kg
 from .guided_prescription import expand_guided_prescription
+from .rest_policy import phase_midpoint_percent, rest_seconds_for
 
 logger = logging.getLogger(__name__)
 
@@ -64,14 +65,47 @@ def _timed_series(spec: str) -> list[dict] | None:
     } for index in range(set_count)]
 
 
-def build_legacy_series(movement: dict, top_weight_kg=None) -> list[dict]:
+def _apply_rest_policy(series: list[dict], movement: dict, *, top_weight_kg=None,
+                       one_rep_max_kg=None, phase_profile=None) -> list[dict]:
+    movement = movement or {}
+    policy = movement.get('rest_policy')
+    explicit = movement.get('rest_seconds')
+    for row in series:
+        fallback = explicit if isinstance(explicit, int) and not isinstance(explicit, bool) else 90
+        if policy == 'percentage_of_1rm':
+            percent = None
+            try:
+                if top_weight_kg is not None and one_rep_max_kg is not None and float(one_rep_max_kg) > 0:
+                    percent = float(top_weight_kg) / float(one_rep_max_kg) * 100
+            except (TypeError, ValueError, ZeroDivisionError):
+                percent = None
+            if percent is None:
+                percent = phase_midpoint_percent(phase_profile)
+            row['rest_seconds'] = rest_seconds_for(
+                role=row.get('role'), percent_of_1rm=percent, fallback_seconds=fallback,
+            )
+        elif isinstance(explicit, int) and not isinstance(explicit, bool):
+            row['rest_seconds'] = explicit
+        elif 'rest_seconds' not in row:
+            row['rest_seconds'] = 90
+    return series
+
+
+def build_legacy_series(movement: dict, top_weight_kg=None, *, one_rep_max_kg=None,
+                        phase_profile=None) -> list[dict]:
     """Adapta texto publicado antes do contrato estruturado."""
     spec = str((movement or {}).get('reps_spec') or '').strip()
     if not spec:
-        return _freeform_series()
+        return _apply_rest_policy(
+            _freeform_series(), movement, top_weight_kg=top_weight_kg,
+            one_rep_max_kg=one_rep_max_kg, phase_profile=phase_profile,
+        )
     timed = _timed_series(spec)
     if timed is not None:
-        return timed
+        return _apply_rest_policy(
+            timed, movement, top_weight_kg=top_weight_kg,
+            one_rep_max_kg=one_rep_max_kg, phase_profile=phase_profile,
+        )
     segments = [part.strip() for part in spec.split('→') if part.strip()] or [spec]
     result = []
     try:
@@ -82,15 +116,24 @@ def build_legacy_series(movement: dict, top_weight_kg=None) -> list[dict]:
         anchor = None
     for segment in segments:
         if not _SET_PREFIX.match(segment):
-            return _freeform_series()
+            return _apply_rest_policy(
+                _freeform_series(), movement, top_weight_kg=top_weight_kg,
+                one_rep_max_kg=one_rep_max_kg, phase_profile=phase_profile,
+            )
         stage = _phase(segment)
         count_match = _SET_RANGE.match(segment)
         minimum = int(count_match.group(1))
         set_count = int(count_match.group(2) or minimum)
         if minimum < 1 or set_count < minimum:
-            return _freeform_series()
+            return _apply_rest_policy(
+                _freeform_series(), movement, top_weight_kg=top_weight_kg,
+                one_rep_max_kg=one_rep_max_kg, phase_profile=phase_profile,
+            )
         if set_count > 30 or len(result) + set_count > 100:
-            return _freeform_series()
+            return _apply_rest_policy(
+                _freeform_series(), movement, top_weight_kg=top_weight_kg,
+                one_rep_max_kg=one_rep_max_kg, phase_profile=phase_profile,
+            )
         reps_match = re.search(r'\((\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?\)', segment)
         if reps_match is None:
             after_count = re.sub(r'^\s*\d+(?:\s*[-–]\s*\d+)?\s*[x×]\s*', '', segment, flags=re.I)
@@ -104,7 +147,10 @@ def build_legacy_series(movement: dict, top_weight_kg=None) -> list[dict]:
         reps_target = int(reps_match.group(1)) if reps_match else None
         reps_max = int(reps_match.group(2)) if reps_match and reps_match.group(2) else reps_target
         if reps_max is not None and reps_max < reps_target:
-            return _freeform_series()
+            return _apply_rest_policy(
+                _freeform_series(), movement, top_weight_kg=top_weight_kg,
+                one_rep_max_kg=one_rep_max_kg, phase_profile=phase_profile,
+            )
         weights = stage_ramp_kg(stage=stage, set_count=set_count, top_weight_kg=anchor)
         role = {'prep': 'warmup', 'feeder': 'feeder', 'top': 'top_set', 'max': 'max_set'}.get(stage, 'top_set')
         factors = stage_ramp_factors(stage=stage, set_count=set_count)
@@ -119,18 +165,26 @@ def build_legacy_series(movement: dict, top_weight_kg=None) -> list[dict]:
                 'top_factor': factors[index] if index < len(factors) else None,
                 'rounding_step_kg': 2.5,
             })
-    return result
+    return _apply_rest_policy(
+        result, movement, top_weight_kg=top_weight_kg,
+        one_rep_max_kg=one_rep_max_kg, phase_profile=phase_profile,
+    )
 
 
-def build_guided_series(movement: dict, top_weight_kg=None, one_rep_max_kg=None) -> list[dict]:
+def build_guided_series(movement: dict, top_weight_kg=None, one_rep_max_kg=None,
+                        phase_profile=None) -> list[dict]:
     """Usa a prescrição publicada; texto legado é somente fallback."""
     guided = (movement or {}).get('guided_prescription')
     if guided is not None:
         try:
             return expand_guided_prescription(
                 guided, top_weight_kg=top_weight_kg, one_rep_max_kg=one_rep_max_kg,
+                phase_profile=phase_profile,
             )
         except ValueError as exc:
             logger.error('Prescricao guiada invalida para movimento %s: %s',
                          (movement or {}).get('movement_slug'), exc)
-    return build_legacy_series(movement, top_weight_kg)
+    return build_legacy_series(
+        movement, top_weight_kg, one_rep_max_kg=one_rep_max_kg,
+        phase_profile=phase_profile,
+    )

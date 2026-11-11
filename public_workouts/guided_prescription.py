@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 import re
 from decimal import Decimal
+from .rest_policy import phase_midpoint_percent, rest_seconds_for
 
 ROLES = frozenset({'warmup', 'feeder', 'top_set', 'max_set', 'freeform'})
 LOAD_RULES = frozenset({'manual', 'fixed_kg', 'percent_of_top', 'percent_of_rm', 'percent_range_of_rm', 'suggested_top'})
@@ -84,6 +85,9 @@ def validate_guided_prescription(value, *, path='guided_prescription') -> list[s
         rest = stage.get('rest_seconds')
         if not isinstance(rest, int) or isinstance(rest, bool) or not 0 <= rest <= 900:
             errors.append(f'{prefix}.rest_seconds: inteiro entre 0 e 900')
+        rest_policy = stage.get('rest_policy')
+        if rest_policy not in (None, 'percentage_of_1rm'):
+            errors.append(f'{prefix}.rest_policy: ausente ou percentage_of_1rm')
         rule = stage.get('load_rule')
         if not isinstance(rule, dict) or not isinstance(rule.get('kind'), str) or rule['kind'] not in LOAD_RULES:
             errors.append(f'{prefix}.load_rule.kind: regra inválida')
@@ -113,7 +117,8 @@ def _rounded(value, step):
     return round(float(value) / float(step)) * float(step)
 
 
-def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_kg=None) -> list[dict]:
+def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_kg=None,
+                               phase_profile=None) -> list[dict]:
     """Expande um contrato validado; sugestão de kg nunca é fato realizado."""
     errors = validate_guided_prescription(value)
     if errors:
@@ -127,6 +132,7 @@ def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_k
             kind = rule['kind']
             weight = None
             top_factor = None
+            load_percent = None
             if kind == 'fixed_kg':
                 weight = rule['value_kg']
             elif kind == 'suggested_top':
@@ -134,11 +140,15 @@ def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_k
                 if _number(top_weight_kg, minimum=0, maximum=9999.99):
                     weight = _rounded(top_weight_kg, step)
             elif kind == 'percent_of_rm' and _number(one_rep_max_kg, minimum=0, maximum=9999.99):
+                load_percent = float(rule['percent'])
                 weight = _rounded(float(one_rep_max_kg) * rule['percent'] / 100, step)
-            elif kind == 'percent_range_of_rm' and _number(one_rep_max_kg, minimum=0, maximum=9999.99):
-                low, high = rule['min_percent'], rule['max_percent']
-                percent = (low + high) / 2 if count == 1 else low + (high - low) * (ordinal - 1) / (count - 1)
-                weight = _rounded(float(one_rep_max_kg) * percent / 100, step)
+            elif kind == 'percent_of_rm':
+                load_percent = float(rule['percent'])
+            elif kind == 'percent_range_of_rm':
+                low, high = float(rule['min_percent']), float(rule['max_percent'])
+                load_percent = (low + high) / 2 if count == 1 else low + (high - low) * (ordinal - 1) / (count - 1)
+                if _number(one_rep_max_kg, minimum=0, maximum=9999.99):
+                    weight = _rounded(float(one_rep_max_kg) * load_percent / 100, step)
             elif kind == 'percent_of_top':
                 low = rule['start_percent']
                 high = rule['end_percent']
@@ -146,6 +156,19 @@ def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_k
                 top_factor = percent / 100
                 if _number(top_weight_kg, minimum=0, maximum=9999.99):
                     weight = _rounded(float(top_weight_kg) * top_factor, step)
+            rest_seconds = stage['rest_seconds']
+            if stage.get('rest_policy') == 'percentage_of_1rm':
+                percent = None
+                if load_percent is not None:
+                    percent = load_percent
+                elif weight is not None and _number(one_rep_max_kg, minimum=0.01, maximum=9999.99):
+                    percent = float(weight) / float(one_rep_max_kg) * 100
+                if percent is None:
+                    percent = phase_midpoint_percent(phase_profile)
+                rest_seconds = rest_seconds_for(
+                    role=stage['role'], percent_of_1rm=percent,
+                    fallback_seconds=stage['rest_seconds'],
+                )
             series.append({
                 'stage': stage['stage_id'], 'stage_id': stage['stage_id'],
                 'stage_ordinal': ordinal,
@@ -153,7 +176,7 @@ def expand_guided_prescription(value: dict, *, top_weight_kg=None, one_rep_max_k
                 'set_number': len(series) + 1,
                 'required': ordinal <= stage['min_sets'],
                 'reps': stage.get('reps_min'), 'reps_max': stage.get('reps_max') or stage.get('reps_min'),
-                'rir_target': stage.get('rir_target'), 'rest_seconds': stage['rest_seconds'],
+                'rir_target': stage.get('rir_target'), 'rest_seconds': rest_seconds,
                 'weight_kg': weight, 'load_source': kind,
                 'top_factor': top_factor, 'rounding_step_kg': step,
                 'hold_seconds': stage.get('hold_seconds_min'),
@@ -194,17 +217,21 @@ def propose_guided_prescription(movement: dict) -> dict | None:
             })
             continue
         if role == 'warmup':
-            rule = {'kind': 'percent_of_top', 'start_percent': 40, 'end_percent': 55}
+            rule = {'kind': 'percent_range_of_rm', 'min_percent': 60, 'max_percent': 75}
         elif role == 'feeder':
-            rule = {'kind': 'percent_of_top', 'start_percent': 60, 'end_percent': 80}
+            rule = {'kind': 'percent_of_rm', 'percent': 50}
         elif role in {'top_set', 'max_set'}:
             rule = {'kind': 'suggested_top'}
-        stages.append({
+        stage = {
             'stage_id': f'{row["stage"]}-{len(stages) + 1}', '_stage': row['stage'],
             'role': role, 'min_sets': int(row['required']), 'max_sets': 1,
             'reps_min': row['reps'], 'reps_max': row['reps_max'],
-            'rest_seconds': 90, 'load_rule': rule,
-        })
+            'rest_seconds': 25 if role == 'feeder' else 52 if role == 'warmup' else 240 if role == 'max_set' else 90,
+            'load_rule': rule,
+        }
+        if role in {'warmup', 'top_set', 'max_set'}:
+            stage['rest_policy'] = 'percentage_of_1rm'
+        stages.append(stage)
     for stage in stages:
         del stage['_stage']
     return {'version': 1, 'stages': stages}
