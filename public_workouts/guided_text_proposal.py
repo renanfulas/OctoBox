@@ -21,9 +21,13 @@ _OPTIONAL = re.compile(r'^(?:Opcional|(.+?)\s+Opcional)\s*$', re.I)
 def _stage_details(label: str):
     key = label.lower()
     if key.startswith(('preparat', 'prep')):
-        return 'prep', 'warmup', {'kind': 'percent_range_of_rm', 'min_percent': 60, 'max_percent': 75}
+        # Rampa relativa à Top (40-55%, feeder ~70%): aquecimento nunca passa da
+        # série de trabalho. Em %1RM fixo (60-75%) a preparatória de uma Top de
+        # 8-12 reps (~67-72% 1RM) ficava MAIS pesada que a própria Top, e o
+        # feeder (50%) mais leve que a preparatória.
+        return 'prep', 'warmup', {'kind': 'percent_of_top', 'start_percent': 40, 'end_percent': 55}
     if key == 'feeder':
-        return 'feeder', 'feeder', {'kind': 'percent_of_rm', 'percent': 50}
+        return 'feeder', 'feeder', {'kind': 'percent_of_top', 'start_percent': 60, 'end_percent': 80}
     if key.startswith('top'):
         return 'top', 'top_set', {'kind': 'suggested_top'}
     return 'max', 'max_set', {'kind': 'suggested_top'}
@@ -81,8 +85,8 @@ que o movimento inteiro permaneça livre; nunca descartamos uma parte do texto.
                 return None
             stage_load_rule = load_rule.copy()
             if split_reps and role == 'warmup':
-                percent = 60 if pair_index == 0 else 75
-                stage_load_rule.update(min_percent=percent, max_percent=percent)
+                percent = 40 if pair_index == 0 else 55
+                stage_load_rule.update(start_percent=percent, end_percent=percent)
             rest_seconds = 25 if role == 'feeder' else 52 if role == 'warmup' else 240 if role == 'max_set' else 90
             stage = {
                 'stage_id': f'{stage_key}-{len(stages) + 1}',

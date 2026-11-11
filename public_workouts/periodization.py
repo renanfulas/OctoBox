@@ -45,6 +45,7 @@ PONTOS CRÍTICOS:
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import date
 
@@ -107,6 +108,24 @@ _DOUBLE_PROGRESSION_PCT = 0.025
 # progressão dupla faz o resto nas semanas seguintes.
 _PHASE_SHIFT_MIN_RATIO = 0.85
 _PHASE_SHIFT_MAX_RATIO = 1.10
+# Saindo do deload a carga só VOLTA ao nível de antes (a entrada cortou até
+# 15%); o teto de +10% ali faria o aluno recomeçar abaixo do pré-deload.
+_DELOAD_EXIT_MAX_RATIO = 1 / _PHASE_SHIFT_MIN_RATIO
+
+
+def _intensity_fraction(reps: float, rir: float) -> float:
+    """%1RM (fração) para `reps` com `rir` em reserva — Epley invertido, o
+    mesmo `1 + reps_efetivas/30` de `one_rep_max.py`."""
+    return 1 / (1 + (reps + rir) / 30)
+
+
+def _program_week_index(payload: dict, day: date) -> int | None:
+    """Semana do PROGRAMA (conta a partir de `started_on`, sem ciclar) — não a
+    semana ISO: um programa que começa na quarta vira a semana na quarta."""
+    started_on_raw = payload.get('started_on')
+    if not started_on_raw:
+        return None
+    return (day - date.fromisoformat(started_on_raw)).days // 7
 
 
 def _phase_midpoint(phase: PhaseProfile) -> float:
@@ -135,6 +154,57 @@ def _hit_double_progression(last_log: dict, phase: PhaseProfile, reps_max_target
         return float(rir) >= phase.rir_target - 0.5
     except (TypeError, ValueError):
         return False
+
+
+def _phase_shift_ratio(*, last_log: dict, phase_when_logged: PhaseProfile, current_phase: PhaseProfile,
+                       target_reps: float | None, target_rir: float | None) -> float:
+    """Fator de carga na virada de fase.
+
+    - Saindo do deload: razão de %RM-meio (desfaz o corte da entrada); o
+      registro do deload subestima a capacidade (o aluno segurou de propósito).
+    - Entrando no deload: o menor entre %RM-meio e reps/RIR — garante a queda
+      de intensidade clássica.
+    - Demais viradas: o que o aluno FEZ (reps/RIR do registro) contra o que a
+      semana pede (reps/RIR prescritos), para carga e reps andarem juntas; sem
+      reps no registro, %RM-meio das fases.
+    Limitado a -15%/+10% (saída do deload: só até voltar ao pré-deload)."""
+    midpoint_ratio = _phase_midpoint(current_phase) / _phase_midpoint(phase_when_logged)
+    if phase_when_logged.key == 'deload':
+        return min(max(midpoint_ratio, _PHASE_SHIFT_MIN_RATIO), _DELOAD_EXIT_MAX_RATIO)
+
+    ratio = midpoint_ratio
+    logged_reps = last_log.get('reps')
+    if logged_reps is not None and target_reps is not None:
+        try:
+            logged_rir = last_log.get('rir')
+            logged_rir = float(logged_rir) if logged_rir is not None else phase_when_logged.rir_target
+            wanted_rir = float(target_rir) if target_rir is not None else current_phase.rir_target
+            ratio = (_intensity_fraction(float(target_reps), wanted_rir)
+                     / _intensity_fraction(float(logged_reps), logged_rir))
+        except (TypeError, ValueError):
+            ratio = midpoint_ratio
+    if current_phase.key == 'deload':
+        ratio = min(ratio, midpoint_ratio)
+    return min(max(ratio, _PHASE_SHIFT_MIN_RATIO), _PHASE_SHIFT_MAX_RATIO)
+
+
+_COACH_WEEK_REPS = re.compile(r'^\s*(\d{1,2})\s*[-–]\s*(\d{1,2})\s*(?:reps?|repetições)?\s*$', re.I)
+
+
+def coach_week_reps(payload: dict | None, week_number: int | None) -> tuple[int, int] | None:
+    """Faixa de reps que o treinador escreveu para a semana na planilha
+    (`periodization.weeks_table[semana-1].reps`). Só texto que é SÓ uma faixa
+    ("8-12 reps"); "Livre", "Faixas de cada exercício" ou "RIR 4-5" não contam.
+    Achado real: o "Peak" da Milene é 8-12 reps (o perfil canônico diria 1-3)."""
+    table = ((payload or {}).get('periodization') or {}).get('weeks_table') or []
+    if week_number is None or not 1 <= week_number <= len(table):
+        return None
+    row = table[week_number - 1]
+    match = _COACH_WEEK_REPS.match(str(row.get('reps') or '')) if isinstance(row, dict) else None
+    if match is None:
+        return None
+    low, high = int(match.group(1)), int(match.group(2))
+    return (low, high) if 1 <= low <= high else None
 
 
 def current_week_number(payload: dict, *, today: date | None = None) -> int | None:
@@ -172,7 +242,7 @@ def current_phase_profile(payload: dict, *, today: date | None = None) -> PhaseP
     return None
 
 
-def build_chart_points_from_weeks(weeks: list[dict]) -> list[dict]:
+def build_chart_points_from_weeks(weeks: list[dict], payload: dict | None = None) -> list[dict]:
     """`periodization.weeks` (canônico) -> pontos do gráfico no MESMO
     formato que `periodization.chart` (legado) já usa -- o markup do
     gráfico em `workout.html` não muda, só a fonte do dado muda.
@@ -192,7 +262,7 @@ def build_chart_points_from_weeks(weeks: list[dict]) -> list[dict]:
         points.append({
             'label': f"S{row.get('week_number')}",
             'focus': phase.label,
-            'reps': f"{phase.reps_target_range[0]}-{phase.reps_target_range[1]}",
+            'reps': '{}-{}'.format(*(coach_week_reps(payload, row.get('week_number')) or phase.reps_target_range)),
             'color': phase.color,
             'bg': phase.color,
             'fg': phase.color,
@@ -209,6 +279,8 @@ def suggest_progressive_load_kg(
     last_log: dict | None,
     one_rep_max_kg: float | None = None,
     reps_max_target: int | None = None,
+    target_reps: float | None = None,
+    target_rir: float | None = None,
     today: date | None = None,
 ) -> float | None:
     """kg sugerido pra ESTA semana = última carga REAL registrada nesse
@@ -255,12 +327,12 @@ def suggest_progressive_load_kg(
     # nesta fase; cortar pelo teto sugeria menos do que ele tinha feito.
     if phase_when_logged is not None and phase_when_logged.key == current_phase.key:
         weight = float(last_log['weight_kg'])
-        # Só de uma semana para a outra: no mesmo microciclo repete a carga.
-        same_week = (
-            logged_on_raw is not None
-            and date.fromisoformat(logged_on_raw).isocalendar()[:2] == (today or date.today()).isocalendar()[:2]
-        )
-        if (not current_phase.hold_load and not same_week
+        # Só de uma semana DO PROGRAMA para a outra: no mesmo microciclo repete.
+        logged_week = _program_week_index(payload, date.fromisoformat(logged_on_raw))
+        this_week = _program_week_index(payload, today or date.today())
+        same_week = logged_week is None or logged_week == this_week
+        # Deload não progride: é semana de recuperação.
+        if (not current_phase.hold_load and current_phase.key != 'deload' and not same_week
                 and _hit_double_progression(last_log, current_phase, reps_max_target)):
             return max(
                 _round_to_nearest_load(weight * (1 + _DOUBLE_PROGRESSION_PCT)),
@@ -274,8 +346,10 @@ def suggest_progressive_load_kg(
         if phase_when_logged is None:
             return None
 
-        ratio = _phase_midpoint(current_phase) / _phase_midpoint(phase_when_logged)
-        ratio = min(max(ratio, _PHASE_SHIFT_MIN_RATIO), _PHASE_SHIFT_MAX_RATIO)
+        ratio = _phase_shift_ratio(
+            last_log=last_log, phase_when_logged=phase_when_logged, current_phase=current_phase,
+            target_reps=target_reps, target_rir=target_rir,
+        )
         suggested = float(last_log['weight_kg']) * ratio
 
     if one_rep_max_kg:
@@ -290,6 +364,7 @@ __all__ = [
     'PHASE_TYPE_KEYS',
     'PhaseProfile',
     'build_chart_points_from_weeks',
+    'coach_week_reps',
     'current_phase_profile',
     'current_week_number',
     'suggest_progressive_load_kg',

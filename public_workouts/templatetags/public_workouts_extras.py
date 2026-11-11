@@ -50,6 +50,7 @@ from public_workouts.load_resolution import resolve_movement_load
 from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.periodization import (
     build_chart_points_from_weeks,
+    coach_week_reps,
     current_phase_profile,
     current_week_number,
 )
@@ -861,7 +862,8 @@ def periodization_chart_points(periodization: dict | None) -> list[dict]:
         return []
     weeks = periodization.get('weeks')
     if weeks:
-        return build_chart_points_from_weeks(weeks)
+        # O filtro recebe só `periodization`; a planilha do treinador mora nele.
+        return build_chart_points_from_weeks(weeks, {'periodization': periodization})
     return [dict(point, week_number=None) for point in (periodization.get('chart') or [])]
 
 
@@ -891,15 +893,23 @@ def periodization_phase_banner(payload: dict) -> dict:
         return {'visible': False}
 
     weeks = (payload.get('periodization') or {}).get('weeks') or []
+    week_number = current_week_number(payload)
+    coach_reps = coach_week_reps(payload, week_number)
+    reps_min, reps_max = coach_reps or phase.reps_target_range
+    pct_mid = round(sum(phase.intensity_pct_range) / 2)
+    if coach_reps:
+        # Reps do treinador para a semana: o %RM mostrado segue essas reps + RIR
+        # (Epley), não o perfil da fase — senão "8-12 reps · ~94% RM".
+        pct_mid = round(100 / (1 + ((reps_min + reps_max) / 2 + phase.rir_target) / 30))
     return {
         'visible': True,
-        'week_number': current_week_number(payload),
+        'week_number': week_number,
         'total_weeks': len(weeks),
         'phase_label': phase.label,
-        'reps_min': phase.reps_target_range[0],
-        'reps_max': phase.reps_target_range[1],
+        'reps_min': reps_min,
+        'reps_max': reps_max,
         'rir_target': phase.rir_target,
-        'pct_mid': round(sum(phase.intensity_pct_range) / 2),
+        'pct_mid': pct_mid,
     }
 
 

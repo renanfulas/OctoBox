@@ -8,13 +8,41 @@ import logging
 
 from .warmup_ramp import stage_ramp_factors, stage_ramp_kg
 from .guided_prescription import expand_guided_prescription
-from .phase_prescription import apply_phase_to_series, reference_phase
+from .phase_prescription import apply_phase_to_series, reference_phase, week_reps_override
 from .rest_policy import phase_midpoint_percent, rest_seconds_for
 
 logger = logging.getLogger(__name__)
 
 _SET_PREFIX = re.compile(r'^\s*\d+(?:\s*[-–]\s*\d+)?\s*[x×]', re.I)
 _SET_RANGE = re.compile(r'^\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*[x×]', re.I)
+# "Preparatória 2× 8 / 5", "Top Set 3× 8-10", "Max Set 1× AMRAP": rótulo antes
+# da contagem. Vira "2× 8 / 5 Preparatória" — a contagem na frente, o rótulo
+# continua no texto para `_phase` reconhecer o estágio.
+_LABEL_FIRST = re.compile(
+    r'^\s*(?P<label>(?:Preparat[oó]ria|Preparat\.?|Prep|Feeder|Top(?:\s+Set)?|Max(?:\s+Set)?|AMRAP))\s+'
+    r'(?P<rest>\d+(?:\s*[-–]\s*\d+)?\s*[x×].*)$',
+    re.I,
+)
+
+
+# Depois da contagem só pode vir reps ("8", "8-10", "8 / 5"), AMRAP e um
+# parêntese de comentário. Qualquer outra instrução ("dropset", "Opcional")
+# mantém o registro livre — o treinador precisa estruturar isso.
+_LABEL_FIRST_TAIL = re.compile(
+    r'^\s*\d+(?:\s*[-–]\s*\d+)?\s*[x×]\s*(?:\d+(?:\s*[-–/]\s*\d+)*\s*)?(?:AMRAP\s*)?(?:\([^)]*\)\s*)?$',
+    re.I,
+)
+
+
+def _count_first_segments(segments: list[str]) -> list[str]:
+    """Só converte quando TODOS os segmentos são "Rótulo N× reps" limpos."""
+    converted = []
+    for segment in segments:
+        match = _LABEL_FIRST.match(segment)
+        if match is None or not _LABEL_FIRST_TAIL.match(match.group('rest')):
+            return segments
+        converted.append(f"{match.group('rest')} {match.group('label')}")
+    return converted
 
 _PHASE_PATTERNS = (
     ('prep', re.compile(r'\bprep', re.I)),
@@ -107,7 +135,7 @@ def build_legacy_series(movement: dict, top_weight_kg=None, *, one_rep_max_kg=No
             timed, movement, top_weight_kg=top_weight_kg,
             one_rep_max_kg=one_rep_max_kg, phase_profile=phase_profile,
         )
-    segments = [part.strip() for part in spec.split('→') if part.strip()] or [spec]
+    segments = _count_first_segments([part.strip() for part in spec.split('→') if part.strip()] or [spec])
     result = []
     try:
         anchor = float(top_weight_kg) if top_weight_kg is not None else None
@@ -172,15 +200,30 @@ def build_legacy_series(movement: dict, top_weight_kg=None, *, one_rep_max_kg=No
     )
 
 
+_PER_SIDE = re.compile(r'\b(?:por|cada)\s+(?:lado|perna|braço)\b', re.I)
+
+
+def _alternating_sides(movement: dict, series: list[dict]) -> bool:
+    """Prescrição estruturada que lista cada lado como uma linha: o texto diz
+    "N× ... por lado" e há 2N séries de trabalho (caso real: búlgaro da
+    Daniela, "3× 8 por lado" = 6 linhas alternadas)."""
+    spec = str((movement or {}).get('reps_spec') or '')
+    if not _PER_SIDE.search(spec):
+        return False
+    count = _SET_RANGE.match(_count_first_segments([spec.split('→')[-1].strip()])[0])
+    work = sum(1 for row in series if row.get('role') == 'top_set')
+    return bool(count) and work == 2 * int(count.group(2) or count.group(1))
+
+
 def build_guided_series(movement: dict, top_weight_kg=None, one_rep_max_kg=None,
-                        phase_profile=None, payload=None) -> list[dict]:
+                        phase_profile=None, payload=None, on=None) -> list[dict]:
     """Usa a prescrição publicada; texto legado é somente fallback.
 
     Com `payload` (periodização canônica), séries/reps/RIR de trabalho são
     ajustados à fase da semana — ver `phase_prescription.py`."""
     guided = (movement or {}).get('guided_prescription')
+    series = None
     if guided is not None:
-        series = None
         try:
             series = expand_guided_prescription(
                 guided, top_weight_kg=top_weight_kg, one_rep_max_kg=one_rep_max_kg,
@@ -189,13 +232,15 @@ def build_guided_series(movement: dict, top_weight_kg=None, one_rep_max_kg=None,
         except ValueError as exc:
             logger.error('Prescricao guiada invalida para movimento %s: %s',
                          (movement or {}).get('movement_slug'), exc)
-    else:
-        series = None
     if series is None:
         series = build_legacy_series(
             movement, top_weight_kg, one_rep_max_kg=one_rep_max_kg,
             phase_profile=phase_profile,
         )
     if payload is not None:
-        series = apply_phase_to_series(series, phase=phase_profile, reference=reference_phase(payload))
+        series = apply_phase_to_series(
+            series, phase=phase_profile, reference=reference_phase(payload),
+            week_reps=week_reps_override(payload, on=on),
+            paired_sides=_alternating_sides(movement, series),
+        )
     return series

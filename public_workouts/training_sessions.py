@@ -22,7 +22,7 @@ class TrainingSessionConflict(Exception):
     """A sessão mudou de estado ou a série já foi registrada diferente."""
 
 
-def day_plan(program: PublicWorkoutProgram, day_id: str) -> list[dict]:
+def day_plan(program: PublicWorkoutProgram, day_id: str, *, on=None) -> list[dict]:
     """Índices coincidem com a lista de movimentos guiáveis renderizada."""
     day = next((item for item in program.payload.get('days', ()) if item.get('day_id') == day_id), None)
     if day is None:
@@ -30,10 +30,12 @@ def day_plan(program: PublicWorkoutProgram, day_id: str) -> list[dict]:
     movements = []
     # Mesma fase que a ficha renderiza: o número de séries do servidor precisa
     # bater com o que o aluno vê nesta semana.
-    phase = current_phase_profile(program.payload)
+    # `on` = dia em que a sessão começou: uma sessão que atravessa a virada da
+    # semana continua com as séries da semana em que foi aberta.
+    phase = current_phase_profile(program.payload, today=on)
     for block in day.get('blocks', ()):
         for movement in block.get('movements', ()):
-            series = build_guided_series(movement, phase_profile=phase, payload=program.payload)
+            series = build_guided_series(movement, phase_profile=phase, payload=program.payload, on=on)
             if series:
                 movements.append({
                     'slug': movement['movement_slug'],
@@ -95,7 +97,7 @@ def record_set(*, account_id, plan_slug, session_id, movement_index, set_number,
         raise TrainingSessionConflict('sessão já encerrada')
     if session.program is None:
         raise TrainingSessionConflict('sessão antiga sem versão de programa; inicie outra sessão')
-    movements = day_plan(session.program, session.day_id)
+    movements = day_plan(session.program, session.day_id, on=timezone.localtime(session.started_at).date())
     if not 0 <= movement_index < len(movements):
         raise TrainingSessionInvalid('movimento não pertence a este dia')
     movement = movements[movement_index]
@@ -164,7 +166,7 @@ def finish_session(*, account_id, plan_slug, session_id, partial=False):
         return session, False
     if session.program is None:
         raise TrainingSessionConflict('sessão antiga sem versão de programa; inicie outra sessão')
-    movements = day_plan(session.program, session.day_id)
+    movements = day_plan(session.program, session.day_id, on=timezone.localtime(session.started_at).date())
     performed = session.sets.filter(status='performed')
     summary = performed.aggregate(sets=Count('id'), movements=Count('movement_index', distinct=True))
     recorded = set(performed.values_list('movement_index', 'set_number'))
