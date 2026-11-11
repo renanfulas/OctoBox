@@ -10,7 +10,7 @@ POR QUE ELE EXISTE:
   assinatura quebra a tela sem erro claro.
 
 O QUE ESTE ARQUIVO FAZ:
-- Le o `register` real e compara, para cada um dos 37 registros: o tipo
+- Le o `register` real e compara, para cada um dos 38 registros: o tipo
   (filter, simple_tag...), as opcoes ligadas (is_safe, needs_autoescape,
   expects_localtime, takes_context) e a assinatura sem anotacoes.
 
@@ -35,11 +35,12 @@ _FILTER_FLAGS = ('expects_localtime', 'is_safe', 'needs_autoescape')
 EXPECTED_LIBRARY: dict[str, tuple[str, tuple[str, ...], str]] = {
     'current_period_phase': ('simple_tag', (), '(payload)'),
     'current_period_week_number': ('filter', (), '(payload)'),
+    'phase_week_prescription_note': ('simple_tag', (), '(movement, current_phase=None, payload=None)'),
     'cycle_summary_rows': ('simple_tag', (), '(progress_snapshots, movement_labels)'),
     'day_short': ('filter', (), '(day_id)'),
     'dict_get': ('filter', (), '(dictionary, key)'),
     'glossary_highlight': ('filter', (), '(text, ramp=None)'),
-    'guided_series': ('simple_tag', (), '(movement, top_weight_kg=None, one_rep_max_by_movement=None, current_phase=None)'),
+    'guided_series': ('simple_tag', (), '(movement, top_weight_kg=None, one_rep_max_by_movement=None, current_phase=None, payload=None)'),
     'hero_progress_chart': ('simple_tag', (), '(progress_snapshots, movement_labels=None)'),
     'humanize_movement_slug': ('filter', (), '(movement_slug)'),
     'initial': ('filter', (), '(name)'),
@@ -127,5 +128,5 @@ def test_library_registrations_match_snapshot():
     assert not added, f'registros novos sem snapshot (adicione em EXPECTED_LIBRARY): {added}'
 
 
-def test_library_has_37_registrations():
-    assert len(describe_library()) == 37
+def test_library_has_38_registrations():
+    assert len(describe_library()) == 38

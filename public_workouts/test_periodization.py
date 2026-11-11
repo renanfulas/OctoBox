@@ -171,7 +171,8 @@ class SuggestProgressiveLoadKgTests(SimpleTestCase):
 
         result = suggest_progressive_load_kg(payload=payload, current_phase=PHASE_PROFILES['volume'], last_log=log)
 
-        expected_raw = 80.0 * (67 / 56)
+        # A razão 67/56 (+19,6%) é limitada a +10% por virada de fase.
+        expected_raw = 80.0 * 1.10
         expected_rounded = round(expected_raw / 2.5) * 2.5
         self.assertEqual(result, expected_rounded)
         self.assertGreater(result, 80.0)  # Volume > Adaptacao em intensidade -> sugere mais peso

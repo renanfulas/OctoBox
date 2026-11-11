@@ -8,6 +8,7 @@ import logging
 
 from .warmup_ramp import stage_ramp_factors, stage_ramp_kg
 from .guided_prescription import expand_guided_prescription
+from .phase_prescription import apply_phase_to_series, reference_phase
 from .rest_policy import phase_midpoint_percent, rest_seconds_for
 
 logger = logging.getLogger(__name__)
@@ -172,19 +173,29 @@ def build_legacy_series(movement: dict, top_weight_kg=None, *, one_rep_max_kg=No
 
 
 def build_guided_series(movement: dict, top_weight_kg=None, one_rep_max_kg=None,
-                        phase_profile=None) -> list[dict]:
-    """Usa a prescrição publicada; texto legado é somente fallback."""
+                        phase_profile=None, payload=None) -> list[dict]:
+    """Usa a prescrição publicada; texto legado é somente fallback.
+
+    Com `payload` (periodização canônica), séries/reps/RIR de trabalho são
+    ajustados à fase da semana — ver `phase_prescription.py`."""
     guided = (movement or {}).get('guided_prescription')
     if guided is not None:
+        series = None
         try:
-            return expand_guided_prescription(
+            series = expand_guided_prescription(
                 guided, top_weight_kg=top_weight_kg, one_rep_max_kg=one_rep_max_kg,
                 phase_profile=phase_profile,
             )
         except ValueError as exc:
             logger.error('Prescricao guiada invalida para movimento %s: %s',
                          (movement or {}).get('movement_slug'), exc)
-    return build_legacy_series(
-        movement, top_weight_kg, one_rep_max_kg=one_rep_max_kg,
-        phase_profile=phase_profile,
-    )
+    else:
+        series = None
+    if series is None:
+        series = build_legacy_series(
+            movement, top_weight_kg, one_rep_max_kg=one_rep_max_kg,
+            phase_profile=phase_profile,
+        )
+    if payload is not None:
+        series = apply_phase_to_series(series, phase=phase_profile, reference=reference_phase(payload))
+    return series

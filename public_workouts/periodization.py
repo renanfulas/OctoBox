@@ -99,6 +99,15 @@ PHASE_TYPE_KEYS = tuple(PHASE_PROFILES.keys())
 
 _LOAD_ROUNDING_KG = 2.5
 
+# Progressão dupla dentro da mesma fase: bateu o teto de reps com o RIR alvo
+# (ou mais folga) -> sobe ~2,5% (mínimo um passo de 2,5 kg).
+_DOUBLE_PROGRESSION_PCT = 0.025
+# Troca de fase: a razão de %RM entre fases pode passar de +19% (Adaptação ->
+# Volume). Limita cada virada a -15%/+10% — reentrada conservadora; a
+# progressão dupla faz o resto nas semanas seguintes.
+_PHASE_SHIFT_MIN_RATIO = 0.85
+_PHASE_SHIFT_MAX_RATIO = 1.10
+
 
 def _phase_midpoint(phase: PhaseProfile) -> float:
     return sum(phase.intensity_pct_range) / 2
@@ -106,6 +115,26 @@ def _phase_midpoint(phase: PhaseProfile) -> float:
 
 def _round_to_nearest_load(value: float) -> float:
     return round(value / _LOAD_ROUNDING_KG) * _LOAD_ROUNDING_KG
+
+
+def _hit_double_progression(last_log: dict, phase: PhaseProfile, reps_max_target: int | None) -> bool:
+    """Teto de reps atingido com RIR >= alvo da fase (meio ponto de
+    tolerância). Sem RIR registrado, basta o teto de reps."""
+    reps = last_log.get('reps')
+    if reps is None or reps_max_target is None:
+        return False
+    try:
+        if int(reps) < int(reps_max_target):
+            return False
+    except (TypeError, ValueError):
+        return False
+    rir = last_log.get('rir')
+    if rir is None:
+        return True
+    try:
+        return float(rir) >= phase.rir_target - 0.5
+    except (TypeError, ValueError):
+        return False
 
 
 def current_week_number(payload: dict, *, today: date | None = None) -> int | None:
@@ -179,6 +208,8 @@ def suggest_progressive_load_kg(
     current_phase: PhaseProfile,
     last_log: dict | None,
     one_rep_max_kg: float | None = None,
+    reps_max_target: int | None = None,
+    today: date | None = None,
 ) -> float | None:
     """kg sugerido pra ESTA semana = última carga REAL registrada nesse
     movimento dentro do PROGRAMA ATUAL, escalada pela razão entre o
@@ -223,7 +254,19 @@ def suggest_progressive_load_kg(
     # passar pelo teto do 1RM. O aluno acabou de mostrar que aguenta esse peso
     # nesta fase; cortar pelo teto sugeria menos do que ele tinha feito.
     if phase_when_logged is not None and phase_when_logged.key == current_phase.key:
-        return _round_to_nearest_load(float(last_log['weight_kg']))
+        weight = float(last_log['weight_kg'])
+        # Só de uma semana para a outra: no mesmo microciclo repete a carga.
+        same_week = (
+            logged_on_raw is not None
+            and date.fromisoformat(logged_on_raw).isocalendar()[:2] == (today or date.today()).isocalendar()[:2]
+        )
+        if (not current_phase.hold_load and not same_week
+                and _hit_double_progression(last_log, current_phase, reps_max_target)):
+            return max(
+                _round_to_nearest_load(weight * (1 + _DOUBLE_PROGRESSION_PCT)),
+                _round_to_nearest_load(weight) + _LOAD_ROUNDING_KG,
+            )
+        return _round_to_nearest_load(weight)
 
     if current_phase.hold_load:
         suggested = float(last_log['weight_kg'])
@@ -232,6 +275,7 @@ def suggest_progressive_load_kg(
             return None
 
         ratio = _phase_midpoint(current_phase) / _phase_midpoint(phase_when_logged)
+        ratio = min(max(ratio, _PHASE_SHIFT_MIN_RATIO), _PHASE_SHIFT_MAX_RATIO)
         suggested = float(last_log['weight_kg']) * ratio
 
     if one_rep_max_kg:

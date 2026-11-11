@@ -57,6 +57,7 @@ from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementE
 from public_workouts.substitutions import suggest_substitutes
 from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
 from public_workouts.guided_workout import build_guided_series
+from public_workouts.phase_prescription import phase_week_note, reference_phase
 
 register = template.Library()
 
@@ -296,15 +297,25 @@ def _detect_phase(segment: str) -> str:
 
 @register.simple_tag
 def guided_series(movement: dict, top_weight_kg=None, one_rep_max_by_movement=None,
-                  current_phase=None) -> str:
+                  current_phase=None, payload=None) -> str:
     """Serializa a prescrição do módulo guiado para o controlador do template."""
     estimate = (one_rep_max_by_movement or {}).get(movement.get('movement_slug'))
     one_rep_max_kg = estimate.get('value_kg') if estimate else None
     return json.dumps(
-        build_guided_series(movement, top_weight_kg, one_rep_max_kg, current_phase),
+        build_guided_series(movement, top_weight_kg, one_rep_max_kg, current_phase, payload=payload),
         ensure_ascii=False, separators=(',', ':'),
     )
 
+
+@register.simple_tag
+def phase_week_prescription_note(movement: dict, current_phase=None, payload=None) -> str:
+    """'Esta semana (Deload): 2 séries de trabalho · RIR 4,5' — '' quando a
+    fase da semana é a de referência (prescrição publicada vale como está)."""
+    if current_phase is None or payload is None:
+        return ''
+    reference = reference_phase(payload)
+    series = build_guided_series(movement, phase_profile=current_phase, payload=payload)
+    return phase_week_note(series, phase=current_phase, reference=reference)
 
 
 @register.filter

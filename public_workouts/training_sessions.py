@@ -7,6 +7,7 @@ from django.db.models import Count
 from django.utils import timezone
 
 from .guided_workout import build_guided_series
+from .periodization import current_phase_profile
 from .models import (
     PublicWorkoutAccount, PublicWorkoutLoadLog, PublicWorkoutProgram, PublicWorkoutPushSubscription,
     PublicWorkoutTrainingSession, PublicWorkoutTrainingSet,
@@ -27,9 +28,12 @@ def day_plan(program: PublicWorkoutProgram, day_id: str) -> list[dict]:
     if day is None:
         raise TrainingSessionInvalid('dia não pertence ao programa publicado')
     movements = []
+    # Mesma fase que a ficha renderiza: o número de séries do servidor precisa
+    # bater com o que o aluno vê nesta semana.
+    phase = current_phase_profile(program.payload)
     for block in day.get('blocks', ()):
         for movement in block.get('movements', ()):
-            series = build_guided_series(movement)
+            series = build_guided_series(movement, phase_profile=phase, payload=program.payload)
             if series:
                 movements.append({
                     'slug': movement['movement_slug'],

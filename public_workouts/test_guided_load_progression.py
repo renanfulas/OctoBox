@@ -140,14 +140,15 @@ class GuidedLoadProgressionTest(TestCase):
 
         # 100 x 8 com RIR 2 estima 1RM ~133,3 kg, que define o teto de cada fase.
         expected = {
-            # 100 x 76/67 = 113,4, teto 80% de 133,3 = 106,7 -> 107,5
+            # 100 x 76/67 = 113,4, limitado a +10% (110), teto 80% de 133,3 = 106,7 -> 107,5
             _WEEK_2: 107.5,
-            # 100 x 85/67 = 126,9, teto 90% de 133,3 = 120 -> 120
-            _WEEK_3: 120.0,
+            # 100 x 85/67 = 126,9, limitado a +10% por virada de fase -> 110
+            _WEEK_3: 110.0,
             # deload: 100 x 57,5/67 = 85,8 (abaixo do teto de 86,7) -> 85
             _WEEK_4: 85.0,
-            # o mesociclo recomeça em Volume, a fase do registro: repete os 100 kg
-            _WEEK_5: 100.0,
+            # volta a Volume, a fase do registro: 8 reps = teto da faixa 6-8 com
+            # RIR 2 -> progressão dupla, +2,5 kg
+            _WEEK_5: 102.5,
         }
         for moment, kg in expected.items():
             with self.subTest(semana=moment), freeze_time(moment):
