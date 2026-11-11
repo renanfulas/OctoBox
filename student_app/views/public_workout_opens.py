@@ -61,9 +61,8 @@ class PublicWorkoutProgramOpenView(View):
         opened_at = min(opened_at, now) if opened_at <= now + MAX_CLOCK_AHEAD else None
         if opened_at is None:
             return JsonResponse({'error': 'opened_at no futuro'}, status=400)
-        account = PublicWorkoutAccount.objects.filter(pk=account_id).first()
-        if account is None:
-            return JsonResponse({'error': 'login necessario'}, status=401)
+        # A posse do slug acima já exige a assinatura desta conta.
+        account = PublicWorkoutAccount.objects.get(pk=account_id)
         opened = record_program_open(
             account=account, plan_slug=plan.slug, user_agent=request.META.get('HTTP_USER_AGENT', ''), at=opened_at,
         )

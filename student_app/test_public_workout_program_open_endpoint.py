@@ -80,6 +80,12 @@ class PublicWorkoutProgramOpenEndpointTests(TestCase):
             self.assertEqual(self._post({'opened_at': value}).status_code, 400, value)
         self.assertFalse(PublicWorkoutProgramOpen.objects.exists())
 
+    def test_malformed_body_and_absurd_timestamp_are_rejected(self):
+        url = reverse('public-workout-program-open', kwargs={'plan_slug': 'bruno'})
+        self.assertEqual(self.client.post(url, data='{nao-json', content_type='application/json').status_code, 400)
+        self.assertEqual(self._post({'opened_at': 10 ** 20}).status_code, 400)
+        self.assertFalse(PublicWorkoutProgramOpen.objects.exists())
+
     def test_requires_login_and_ownership(self):
         self.assertEqual(self._post({'opened_at': _ms(timezone.now())}, slug='juliana').status_code, 404)
         self.client.cookies.clear()
