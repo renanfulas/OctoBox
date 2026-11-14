@@ -34,6 +34,7 @@ from .views import (
     PublicWorkoutTemplatePreviewView,
     PublicWorkoutWeeklyReviewView,
 )
+from .views.public_workout_opens import PublicWorkoutProgramOpenView
 from .views.public_workout_sessions import PublicWorkoutSessionView
 from .views.public_workout_push import (
     PublicWorkoutPushSubscriptionView, PublicWorkoutRestAlertView,
@@ -54,6 +55,7 @@ urlpatterns = [
         name='public-workout-backup-carga',
     ),
     path('<slug:plan_slug>/carga', PublicWorkoutRecordLoadView.as_view(), name='public-workout-record-load'),
+    path('<slug:plan_slug>/abertura', PublicWorkoutProgramOpenView.as_view(), name='public-workout-program-open'),
     path(
         '<slug:plan_slug>/onboarding',
         PublicWorkoutOnboardingCompleteView.as_view(),

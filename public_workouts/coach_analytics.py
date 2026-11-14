@@ -105,8 +105,11 @@ def record_program_open(*, account, plan_slug: str, user_agent: str, at=None) ->
     OPEN_DEDUPE_MINUTES no mesmo dispositivo nao conta como abertura nova."""
     at = at or timezone.now()
     device = classify_device(user_agent)
+    # Janela para os dois lados: a abertura offline chega depois (fila do
+    # aparelho) e pode ser mais antiga que uma já gravada.
+    window = timedelta(minutes=OPEN_DEDUPE_MINUTES)
     recent = PublicWorkoutProgramOpen.objects.filter(
-        account=account, device=device, opened_at__gte=at - timedelta(minutes=OPEN_DEDUPE_MINUTES),
+        account=account, device=device, opened_at__gte=at - window, opened_at__lte=at + window,
     ).exists()
     if recent:
         return None
