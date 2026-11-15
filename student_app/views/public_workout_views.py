@@ -190,6 +190,7 @@ def _render_public_workout_html(
         'show_onboarding_wizard': show_onboarding_wizard,
         'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
         'push_configured': curva_push_configured(),
+        'coach_voice_enabled': getattr(settings, 'CURVA_COACH_VOICE_ENABLED', False),
     })
 
 
@@ -440,6 +441,7 @@ class PublicWorkoutPreviewView(View):
             'account_email': account_email,
             'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
             'push_configured': curva_push_configured(),
+            'coach_voice_enabled': getattr(settings, 'CURVA_COACH_VOICE_ENABLED', False),
         })
         response = _private_public_workout_response(html)
         response.set_signed_cookie(

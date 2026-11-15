@@ -1,0 +1,156 @@
+# Coach de voz do treino guiado (Curva): fonte da verdade das falas.
+# Plano: docs/plans/curva-coach-voz-guiada.md
+#
+# Regras de escrita (aprendidas no teste de escuta de 2026-11-12):
+# - Frases com número de carga são geradas INTEIRAS, uma por carga
+#   (pedaços curtos saem com sílabas "comidas").
+# - Nenhuma fala abaixo de ~1,5 s: frase curta demais o modelo atropela.
+# - Números sempre por extenso no texto ("oitenta e dois", nunca "82").
+# - Tom: treinador do lado, direto, sem gritar. Frases ≤ 4 s.
+# - `variants`: o app sorteia sem repetir na mesma sessão.
+#
+# Quando falar (regra de ouro: silêncio durante a série):
+#   a PRÓXIMA série é anunciada faltando ~15 s do descanso, nesta ordem:
+#     top set : set_top__kg<kg>                 → set_reps → [set_last]
+#     demais  : set_<fase>__v*  → load__kg<kg>  → set_reps → [set_last]
+#   Carga fora do pacote (ex.: 83,75 kg): set_top_noload / load_unknown.
+#   A 1ª série de cada exercício é anunciada logo após exercise_start.
+#
+# Placeholders (o gerador expande em todos os valores da faixa):
+#   {kg}    → carga por extenso + "quilos"   (faixas em `ranges.kg`)
+#   {reps}  → reps por extenso + "repetições" (faixa em `ranges.reps`)
+#   {seg}   → descanso por extenso com unidade ("noventa segundos",
+#             "dois minutos", "um minuto e meio"); faixa em `ranges.rest`
+#
+# Volume: 2 templates por carga × 152 cargas + ~70 fixas ≈ 380 falas.
+# O app NÃO baixa tudo: o service worker cacheia só as cargas da prescrição.
+
+version: 2
+
+voice:
+  engine: voicestudio
+  profile_id: "4db30ba2"      # Renan (clone)
+  language: pt
+  speed: 0.88
+  steps: 64
+  seed: 42                   # mesma frase → mesmo áudio se for regerada
+  master: wav_f32            # ponto flutuante 32 bits, fora do repo
+  delivery: mp3_mono_96k
+
+ranges:
+  # Halter e máquina: de 1 em 1 kg (+ os "e meio" de anilha 1,25) até 40 kg;
+  # barra acima disso: de 2,5 em 2,5 kg.
+  kg:
+    - { min: 1, max: 40, step: 1 }
+    - { values: [2.5, 7.5, 12.5, 17.5, 22.5, 27.5, 32.5, 37.5] }
+    - { min: 42.5, max: 300, step: 2.5 }
+  reps: { min: 1, max: 30 }
+  rest: [30, 45, 60, 75, 90, 105, 120, 150, 180, 240, 300]
+
+events:
+
+  workout_start:
+    variants:
+      - "Bora começar. Eu vou te guiando série por série, é só seguir a minha voz."
+      - "Treino de hoje começando. Fica comigo que eu te falo tudo na hora certa."
+
+  exercise_start:
+    variants:
+      - "Próximo exercício. Ajeita o equipamento com calma."
+      - "Vamos pro próximo exercício. Se posiciona antes de começar."
+
+  # ---------------------------------------------------------------- fases
+  # stage: prep (sem carga)
+  set_prep:
+    variants:
+      - "Série preparatória. Pega o equipamento, sem peso. Movimento controlado, só aquecendo."
+      - "Preparatória agora. Leve, sem carga. É pra acordar o músculo, não pra cansar."
+
+  # stage: prep COM carga prescrita (rampa: 40 %, 55 %…) → seguida de load__kg<kg>
+  set_prep_loaded:
+    variants:
+      - "Série preparatória. Carga leve, movimento controlado."
+      - "Preparatória agora. Peso leve, só pra aquecer o movimento."
+
+  # stage: feeder → seguida de load__kg<kg>
+  set_feeder:
+    variants:
+      - "Série de aproximação. Sente a carga, sem forçar."
+      - "Agora a aproximação. É pra sentir o peso, não pra cansar."
+
+  # stage: top → frase inteira por carga (aprovada no teste B)
+  set_top:
+    per_load: true
+    template: "Agora é a top set. {kg}. Foco total, essa é a melhor série do dia."
+
+  # stage: top, carga fora do pacote
+  set_top_noload:
+    variants:
+      - "Agora é a top set. Confere a carga na tela. Foco total, essa é a melhor série do dia."
+
+  # stage: max (AMRAP) → seguida de load__kg<kg>
+  set_max:
+    variants:
+      - "Série máxima. Vai até onde der, sempre com técnica."
+      - "Agora é a série máxima. Faz o máximo de repetições com qualidade."
+
+  # stage: plain → seguida de load__kg<kg>
+  set_plain:
+    variants:
+      - "Bora pra próxima série, mesmo ritmo."
+      - "Vamos pra próxima. Mantém a técnica."
+
+  # ---------------------------------------------------------------- carga
+  # Frase de carga compartilhada por feeder, max e plain (≥ 1,5 s).
+  load:
+    per_load: true
+    template: "A carga dessa série é {kg}."
+
+  load_unknown:
+    variants:
+      - "Confere a carga na tela antes de começar."
+
+  # Reps em frase própria, depois da carga. Evita gerar kg × reps.
+  set_reps:
+    per_value: reps
+    template: "Vamos fazer {reps}, com técnica."
+
+  set_last:
+    variants:
+      - "É a última. Deixa tudo aqui."
+      - "Última série desse exercício. Capricha."
+      - "Última. Termina forte, com qualidade."
+
+  # ---------------------------------------------------------------- descanso
+  rest_start:
+    per_value: rest
+    template: "Descansa. {seg}. Respira e solta o corpo."
+
+  # Só se a próxima série ainda não foi anunciada (ex.: descanso curto).
+  rest_10s:
+    variants:
+      - "Faltam dez segundos. Volta pro equipamento."
+      - "Dez segundos. Prepara, respira fundo."
+
+  superset_next:
+    variants:
+      - "Sem descanso. Vai direto pro próximo exercício."
+      - "Bi-set. Emenda direto no próximo, sem parar."
+
+  set_logged:
+    variants:
+      - "Boa. Série registrada."
+      - "Isso. Anotado, segue o jogo."
+
+  workout_end:
+    variants:
+      - "Acabou. Treino concluído, mandou muito bem hoje."
+      - "Fim de treino. Registra como foi e descansa, você mereceu."
+
+# --------------------------------------------------------------------------
+# Fora do MVP (não gerar ainda)
+# --------------------------------------------------------------------------
+later:
+  - exercise_name   # um áudio por exercício do catálogo
+  - rir_cue         # "deixa duas no tanque"
+  - percent_1rm     # "noventa por cento"

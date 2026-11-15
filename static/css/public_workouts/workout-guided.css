@@ -98,3 +98,39 @@ body[data-plan-slug]:not([data-theme="light"]) .workout-guided__cta {
 @media (prefers-reduced-motion: reduce) {
   .workout-guided__cta { transition: none; }
 }
+
+/* Coach de voz (beta): toggle + regra de volume para o aluno (guided-voice.js). */
+.workout-guided__voice {
+  margin-top: 1rem;
+  padding-top: .9rem;
+  border-top: 1px solid var(--curva-hero-edge);
+  display: grid;
+  gap: .6rem;
+}
+
+.workout-guided__voice[hidden],
+.workout-guided__voice-help[hidden] { display: none; }
+
+.workout-guided__voice-toggle {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  min-height: 44px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.workout-guided__voice-toggle input { width: 1.25rem; height: 1.25rem; accent-color: var(--brand); }
+.workout-guided__voice-toggle small { color: var(--theme-text-secondary); font-weight: 600; }
+
+.workout-guided__voice-help { color: var(--theme-text-secondary); font-size: .92rem; line-height: 1.45; }
+.workout-guided__voice-help p,
+.workout-guided__voice-help ol { margin: 0 0 .5rem; }
+.workout-guided__voice-help ol { padding-left: 1.2rem; }
+
+.workout-guided .workout-guided__voice-test {
+  min-height: 44px;
+  background: transparent;
+  color: var(--theme-text-primary);
+  border: 1px solid var(--curva-hero-edge);
+}

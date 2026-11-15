@@ -262,6 +262,11 @@ if not SECRET_KEY:
         'DJANGO_SECRET_KEY deve ser definida como variavel de ambiente ou no arquivo .env.'
     )
 globals().update(build_privacy_settings(env_bool, env_list_alias, env_str))
+
+# Coach de voz do treino guiado (docs/plans/curva-coach-voz-guiada.md). Desligado
+# por padrão: com ele, o lançador oferece o toggle e o pacote static/audio/coach/.
+CURVA_COACH_VOICE_ENABLED = env_bool('CURVA_COACH_VOICE_ENABLED', False)
+
 # Stripe — credenciais e price IDs do programa Early Adopters.
 # Os Price IDs sao criados no Stripe Dashboard (Catalog → Products) e copiados aqui via .env.
 # Quando vazios, o checkout publico degrada para fluxo manual (Renan contata via WhatsApp).

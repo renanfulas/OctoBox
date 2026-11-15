@@ -60,6 +60,7 @@
         // push devolve o 3-2-1 ao app já neste tick.
         restAlert.tick(rest.remainingMs);
         focus.restTick(rest, restAlert.covers());
+        voiceDo('restTick', rest.remainingMs);
       }
       paintLauncher();
     },
@@ -76,6 +77,18 @@
       return step ? { exercise: step.movement.label, setNumber: step.setNumber } : {};
     },
   }) : { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop, covers: noop };
+
+  // Coach de voz (guided-voice.js). Só existe com o pacote publicado
+  // (data-coach-voice-manifest) e o aluno ligando o toggle; sem isso, tudo é no-op.
+  var voice = window.CurvaGuidedVoice && root.dataset.coachVoiceManifest ? window.CurvaGuidedVoice.create({
+    manifestUrl: root.dataset.coachVoiceManifest, baseUrl: root.dataset.coachVoiceBase,
+  }) : null;
+  function voiceDo(method) {
+    if (!voice) return;
+    var args = Array.prototype.slice.call(arguments, 1);
+    try { voice[method].apply(voice, args); } catch (_) { /* voz é conforto: nunca trava o treino */ }
+  }
+  setupCoachVoice();
 
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
@@ -182,6 +195,38 @@
   function stopRest() {
     timer.stop();
     restAlert.cleared();
+  }
+
+  /* ---------- coach de voz ---------- */
+  function setupCoachVoice() {
+    var box = root.querySelector('[data-coach-voice]');
+    if (!voice || !box) return;
+    var toggle = box.querySelector('[data-coach-voice-toggle]');
+    var help = box.querySelector('[data-coach-voice-help]');
+    voice.load().then(function (manifest) {
+      if (!manifest) return; // pacote fora do ar: o lançador segue sem a opção
+      box.hidden = false;
+      toggle.checked = voice.enabled();
+      help.hidden = !toggle.checked;
+    });
+    toggle.addEventListener('change', function () {
+      voice.setEnabled(toggle.checked);
+      help.hidden = !toggle.checked;
+      if (toggle.checked) voice.unlock();
+    });
+    box.querySelector('[data-coach-voice-test]').addEventListener('click', function () {
+      voice.unlock();
+      voice.test();
+    });
+  }
+
+  // As falas deste treino passam pelo service worker, que as guarda para o
+  // modo offline (cache curva-coach-audio-*). Uma por vez: rede de academia.
+  function precacheCoachVoice(preview) {
+    if (!voice || !voice.enabled() || !window.fetch) return;
+    voice.urlsFor(preview).reduce(function (chain, url) {
+      return chain.then(function () { return fetch(url, { credentials: 'same-origin' }).catch(function () {}); });
+    }, Promise.resolve());
   }
 
   /* ---------- estado e view model ---------- */
@@ -579,6 +624,9 @@
     startButton.disabled = true;
     ended = null;
     screen = 'exercise';
+    // Ainda dentro do toque: o iOS só libera o áudio assim.
+    voiceDo('unlock');
+    precacheCoachVoice(preview);
     var startPayload = {
       action: 'start', day_id: dayId, start_key: id,
       program_version: root.dataset.programVersion, local_session_id: id,
@@ -601,7 +649,11 @@
       });
       return Promise.race([started, timeout]);
     }).then(function (outcome) {
-      if (outcome.session) { activate(outcome.session, { open: true }); return; }
+      if (outcome.session) {
+        activate(outcome.session, { open: true });
+        voiceDo('started', project().current);
+        return;
+      }
       var error = outcome.error;
       if (!error.retryable || !outbox || !scope || !root.dataset.programVersion) {
         focus.close();
@@ -615,6 +667,7 @@
           session_id: id, day_id: dayId, program_version: root.dataset.programVersion,
           started_at: new Date().toISOString(), recorded: [], skipped: [],
         }, { open: true });
+        voiceDo('started', project().current);
         status.textContent = 'Treino iniciado neste aparelho. O início será confirmado ao voltar a conexão.';
         if (navigator.onLine) setTimeout(drain, 5000);
       }).catch(function () {
@@ -671,6 +724,10 @@
     if (!project().next) { skipRest(); screen = 'summary'; }
     else if (restSeconds > 0) { startRest(restSeconds); screen = 'rest'; }
     else { skipRest(); screen = 'exercise'; }
+    voiceDo('setRecorded', {
+      step: step, next: project().next, restSeconds: screen === 'rest' ? restSeconds : 0,
+      superset: !!step.movement.supersetGroup && screen === 'exercise',
+    });
     render();
     focus.announce(screen === 'rest'
       ? 'Série registrada. Descanso de ' + format.spokenDuration(restSeconds) + '.'
@@ -794,6 +851,7 @@
     deliver({ action: outcome, session_id: sessionId }).then(function (result) {
       var titles = { complete: 'Treino registrado no Curva', partial: 'Treino parcial registrado', cancel: 'Sessão cancelada' };
       stopRest();
+      voiceDo('finished', outcome);
       stored(sessionStorage, 'removeItem', startKey(selectedDayId()));
       ended = {
         outcome: outcome,
@@ -850,6 +908,7 @@
   on('skip-set', skipSet);
   on('skip-rest', function () {
     skipRest();
+    voiceDo('restSkipped');
     screen = nextScreenAfterSet();
     render();
     focus.announce('Descanso pulado');

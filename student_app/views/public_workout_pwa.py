@@ -178,6 +178,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/guided-sync.js',
     '/static/js/public_workouts/guided-timer.js',
     '/static/js/public_workouts/guided-rest-alert.js',
+    '/static/js/public_workouts/guided-voice.js',
     '/static/js/public_workouts/guided-state.js',
     '/static/js/public_workouts/guided-loads.js',
     '/static/js/public_workouts/guided-format.js',

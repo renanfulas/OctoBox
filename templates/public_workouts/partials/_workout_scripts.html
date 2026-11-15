@@ -26,7 +26,8 @@ também precisa estar no precache do service worker (public_workout_pwa.py).
 <script src="{% static 'js/public_workouts/guided-api.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/guided-sync.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/guided-timer.js' %}?v={{ asset_version }}" defer></script>
-<script src="{% static 'js/public_workouts/guided-rest-alert.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/public_workouts/guided-rest-alert.js' %}?v={{ asset_version }}" defer></script>{% if coach_voice_enabled %}
+<script src="{% static 'js/public_workouts/guided-voice.js' %}?v={{ asset_version }}" defer></script>{% endif %}
 <script src="{% static 'js/public_workouts/guided-state.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/guided-loads.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/public_workouts/guided-format.js' %}?v={{ asset_version }}" defer></script>

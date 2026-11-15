@@ -2,6 +2,9 @@ const VERSION = 'public-workouts-{{ asset_version }}-e{{ cache_epoch }}';
 const STATIC_CACHE = `${VERSION}-static`;
 const OFFLINE_URL = '{{ offline_url }}';
 const APP_SCOPE = '{{ app_scope }}';
+// Pacote vigente do coach de voz (guided-voice.js). Pacotes antigos saem no activate.
+const COACH_CACHE_PREFIX = 'curva-coach-audio-';
+const COACH_PACK = 'v2';
 const ALLOWLIST = [
 {% for slug in plan_slugs %}  '/renan/{{ slug }}/manifest.webmanifest',
 {% endfor %}  OFFLINE_URL,
@@ -170,7 +173,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   // HTML de aluno não pertence ao cache compartilhado do navegador.
-  const validCaches = [STATIC_CACHE];
+  const validCaches = [STATIC_CACHE, `${COACH_CACHE_PREFIX}${COACH_PACK}`];
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((key) => !validCaches.includes(key)).map((key) => caches.delete(key)))
@@ -280,6 +283,26 @@ self.addEventListener('fetch', (event) => {
         if (response.ok) cache.put(request, response.clone());
         return cached || response;
       } catch (error) { return cached || caches.match(OFFLINE_URL); }
+    }));
+    return;
+  }
+
+  // Coach de voz: cada pacote (static/audio/coach/v<n>/) tem cache próprio,
+  // fora do STATIC_CACHE, para sobreviver às trocas de versão do app; o
+  // manifest.json do pacote revalida na rede, os MP3 nunca mudam no lugar.
+  const coach = /^\/static\/audio\/coach\/(v\d+)\//.exec(requestUrl.pathname);
+  if (coach) {
+    event.respondWith(caches.open(`${COACH_CACHE_PREFIX}${coach[1]}`).then(async (cache) => {
+      const cached = await cache.match(request, { ignoreSearch: true });
+      const isManifest = requestUrl.pathname.endsWith('/manifest.json');
+      if (cached && !isManifest) return cached;
+      try {
+        const response = await fetch(request);
+        if (response.ok) cache.put(request, response.clone());
+        return response;
+      } catch (error) {
+        return cached || Response.error();
+      }
     }));
     return;
   }
