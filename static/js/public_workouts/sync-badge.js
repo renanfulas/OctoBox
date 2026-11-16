@@ -73,6 +73,9 @@
     function seen(at) { if (at && (oldest === null || at < oldest)) oldest = at; }
     guided.forEach(function (row) { seen(row.created_at); });
     loads.forEach(function (row) { seen(row.queued_at); });
+    // Aberturas do app (app-open.js) vão pela mesma fila, mas não são
+    // registros do aluno: não entram no selo nem no aviso de "Sair".
+    others = others.filter(function (row) { return row.kind !== 'open'; });
     others.forEach(function (row) { seen(row.created_at); });
     return {
       total: guided.length + loads.length + others.length,

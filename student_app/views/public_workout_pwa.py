@@ -82,7 +82,9 @@ PUBLIC_WORKOUT_OFFLINE_URL = '/renan/offline/'
 # marca de concluído ainda está na fila. A partir daqui, com o deploy da VPS
 # gravando OCTOBOX_RELEASE_SHA, a versão dos assets troca a cada deploy
 # (config/asset_version.py) e este epoch fica só para expurgo de segurança.
-PUBLIC_WORKOUT_CACHE_EPOCH = 28
+# Bump 28->29: app-open.js (novo no precache) registra a abertura do app
+# feita da cópia offline e a volta ao app depois de 30 min fora.
+PUBLIC_WORKOUT_CACHE_EPOCH = 29
 
 # F1 offline-first: o service worker só guarda no IndexedDB a resposta que
 # traz este header (valor = conta dona da página). Literal repetido em
@@ -187,6 +189,7 @@ PUBLIC_WORKOUT_UNIFIED_TEMPLATE_SCRIPTS: tuple[str, ...] = (
     '/static/js/public_workouts/sync-badge.js',
     '/static/js/public_workouts/offline-banner.js',
     '/static/js/public_workouts/offline-data.js',
+    '/static/js/public_workouts/app-open.js',
 )
 
 _ASSET_VERSION_CACHE: dict[str, str] = {}

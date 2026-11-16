@@ -121,6 +121,19 @@ test('soma as três filas e mostra o total', async () => {
   assert.equal(badge.textContent, '4 registros a enviar');
 });
 
+test('aberturas do app na fila não contam como registro a enviar', async () => {
+  const { window, badge } = load({
+    slug: 'bruno', accountScope: '990',
+    stores: { [GUIDED]: { commands: rows(1) } },
+    offlineData: { list: () => Promise.resolve([
+      { key: 'open:1', kind: 'open', created_at: NOW - 48 * HOUR },
+      { key: 'a', kind: 'assessment', created_at: NOW },
+    ]) },
+  });
+  assert.equal(await window.CurvaSyncBadge.refresh(), 2);
+  assert.equal(badge.textContent, '2 registros a enviar');
+});
+
 test('singular e aviso de desconexão', async () => {
   const { window, badge } = load({
     slug: 'bruno', accountScope: '990', onLine: false,
