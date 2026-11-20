@@ -4,7 +4,7 @@ djangorestframework==3.18.3
 dj-database-url==3.1.2
 gunicorn==26.2.0
 psycopg[binary]==3.2.13
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.13
 reportlab==4.4.1
 openpyxl==3.1.5
 chardet<6
