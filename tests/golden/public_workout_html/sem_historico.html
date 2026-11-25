@@ -1053,7 +1053,7 @@ Ver treino todo
 <p>Use a carga que pretende tentar na série principal. O guia calcula a preparação e a aproximação; cada carga realizada continua editável.</p>
 <label class="guided-field__label" for="guided-top-input">Carga alvo da Top</label>
 <div class="guided-top__row">
-<span class="guided-top__value"><input id="guided-top-input" class="guided-top__input" data-workout-guided-top-input inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="—"><span class="guided-stepper__unit">kg</span></span>
+<span class="guided-top__value"><input id="guided-top-input" class="guided-top__input" data-workout-guided-top-input inputmode="decimal" maxlength="6" autocomplete="off" enterkeyhint="done" placeholder="—"><span class="guided-stepper__unit">kg</span></span>
 <button type="button" class="guided-cta guided-cta--quiet guided-top__apply" data-workout-guided-top-apply>Aplicar</button>
 </div>
 </div>
@@ -1071,7 +1071,7 @@ Ver treino todo
 </div>
 <div class="guided-stepper">
 <button type="button" class="guided-stepper__button" data-guided-step="weight" data-delta="-1" aria-label="Diminuir carga">−</button>
-<span class="guided-stepper__value"><input id="guided-weight" class="guided-stepper__input" data-workout-guided-weight inputmode="decimal" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-weight-source"><span class="guided-stepper__unit">kg</span></span>
+<span class="guided-stepper__value"><input id="guided-weight" class="guided-stepper__input" data-workout-guided-weight inputmode="decimal" maxlength="6" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-weight-source"><span class="guided-stepper__unit">kg</span></span>
 <button type="button" class="guided-stepper__button" data-guided-step="weight" data-delta="1" aria-label="Aumentar carga">+</button>
 </div>
 <p class="guided-field__note" id="guided-weight-source"><span data-guided-weight-source></span> <button type="button" class="guided-link guided-link--inline" data-guided-weight-reset hidden></button></p>
@@ -1090,7 +1090,7 @@ Ver treino todo
 <div class="guided-field__label"><label for="guided-reps">Repetições</label><span class="guided-field__hint" data-guided-reps-target></span></div>
 <div class="guided-stepper">
 <button type="button" class="guided-stepper__button" data-guided-step="reps" data-delta="-1" aria-label="Uma repetição a menos">−</button>
-<span class="guided-stepper__value"><input id="guided-reps" class="guided-stepper__input guided-stepper__input--reps" data-workout-guided-reps inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-reps-hint"><span class="guided-stepper__unit">reps</span></span>
+<span class="guided-stepper__value"><input id="guided-reps" class="guided-stepper__input guided-stepper__input--reps" data-workout-guided-reps inputmode="numeric" maxlength="3" autocomplete="off" enterkeyhint="done" placeholder="—" aria-describedby="guided-reps-hint"><span class="guided-stepper__unit">reps</span></span>
 <button type="button" class="guided-stepper__button" data-guided-step="reps" data-delta="1" aria-label="Uma repetição a mais">+</button>
 </div>
 <p class="guided-field__note" id="guided-reps-hint" data-guided-reps-hint></p>
@@ -1239,7 +1239,7 @@ Ver treino todo
 <label class="guided-field__label" for="guided-correct-weight">Carga</label>
 <div class="guided-stepper">
 <button type="button" class="guided-stepper__button" data-guided-step="correct-weight" data-delta="-1" aria-label="Diminuir carga">−</button>
-<span class="guided-stepper__value"><input id="guided-correct-weight" class="guided-stepper__input" data-workout-guided-correct-weight inputmode="decimal" autocomplete="off" placeholder="—"><span class="guided-stepper__unit">kg</span></span>
+<span class="guided-stepper__value"><input id="guided-correct-weight" class="guided-stepper__input" data-workout-guided-correct-weight inputmode="decimal" maxlength="6" autocomplete="off" placeholder="—"><span class="guided-stepper__unit">kg</span></span>
 <button type="button" class="guided-stepper__button" data-guided-step="correct-weight" data-delta="1" aria-label="Aumentar carga">+</button>
 </div>
 </div>
@@ -1247,7 +1247,7 @@ Ver treino todo
 <label class="guided-field__label" for="guided-correct-reps">Repetições</label>
 <div class="guided-stepper">
 <button type="button" class="guided-stepper__button" data-guided-step="correct-reps" data-delta="-1" aria-label="Uma repetição a menos">−</button>
-<span class="guided-stepper__value"><input id="guided-correct-reps" class="guided-stepper__input guided-stepper__input--reps" data-workout-guided-correct-reps inputmode="numeric" autocomplete="off" placeholder="—"><span class="guided-stepper__unit">reps</span></span>
+<span class="guided-stepper__value"><input id="guided-correct-reps" class="guided-stepper__input guided-stepper__input--reps" data-workout-guided-correct-reps inputmode="numeric" maxlength="3" autocomplete="off" placeholder="—"><span class="guided-stepper__unit">reps</span></span>
 <button type="button" class="guided-stepper__button" data-guided-step="correct-reps" data-delta="1" aria-label="Uma repetição a mais">+</button>
 </div>
 </div>

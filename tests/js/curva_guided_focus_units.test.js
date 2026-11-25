@@ -112,6 +112,15 @@ test('validação aceita vírgula e recusa texto parcial ou fração de rep', ()
   assert.equal(format.parseReps('0'), undefined);
   assert.equal(format.stepWeight(0.1, 0.2), 0.3);
   assert.equal(format.stepWeight(2.5, -5), 0);
+  // Limites do registro: carga de até 3 dígitos (999 kg) e até 300 reps.
+  assert.equal(format.parseWeight('999'), 999);
+  assert.equal(format.parseWeight('999,5'), undefined);
+  assert.equal(format.parseWeight('1000'), undefined);
+  assert.equal(format.parseWeight('2500'), undefined);
+  assert.equal(format.parseReps('300'), 300);
+  assert.equal(format.parseReps('301'), undefined);
+  assert.equal(format.stepWeight(997.5, 2.5), 999);
+  assert.equal(format.stepWeight(999, 2.5), 999);
 });
 
 test('relógio e textos de tempo', () => {

@@ -180,12 +180,16 @@
     return minutes + (minutes > 1 ? ' minutos' : ' minuto') + (rest ? ' e ' + rest + ' segundos' : '');
   }
 
+  // Limites do registro (os mesmos do servidor): carga de 3 dígitos, reps até 300.
+  var MAX_WEIGHT_KG = 999;
+  var MAX_REPS = 300;
+
   function parseWeight(text) {
     var normalized = String(text == null ? '' : text).trim().replace(',', '.');
     if (!normalized) return null;
-    if (!/^\d{1,4}(\.\d{1,2})?$/.test(normalized)) return undefined;
+    if (!/^\d{1,3}(\.\d{1,2})?$/.test(normalized)) return undefined;
     var parsed = Number(normalized);
-    return parsed <= 9999.99 ? parsed : undefined;
+    return parsed <= MAX_WEIGHT_KG ? parsed : undefined;
   }
 
   function parseReps(text) {
@@ -193,12 +197,12 @@
     if (!normalized) return null;
     if (!/^\d{1,3}$/.test(normalized)) return undefined;
     var parsed = Number(normalized);
-    return parsed >= 1 ? parsed : undefined;
+    return parsed >= 1 && parsed <= MAX_REPS ? parsed : undefined;
   }
 
   /* Passo do stepper sem acumular erro de ponto flutuante (2,5 + 2,5 + ...). */
   function stepWeight(value, delta) {
-    return Math.max(0, Math.round((value + delta) * 100) / 100);
+    return Math.min(MAX_WEIGHT_KG, Math.max(0, Math.round((value + delta) * 100) / 100));
   }
 
   /* Tempo digitado em segundos inteiros (1 a 3600). undefined = inválido. */
@@ -278,7 +282,7 @@
   }
 
   window.CurvaGuidedFormat = {
-    ROLE: ROLE, decimal: decimal, kg: kg, setLabel: setLabel, setShortLabel: setShortLabel,
+    ROLE: ROLE, MAX_WEIGHT_KG: MAX_WEIGHT_KG, MAX_REPS: MAX_REPS, decimal: decimal, kg: kg, setLabel: setLabel, setShortLabel: setShortLabel,
     repsText: repsText, metaText: metaText, loadSource: loadSource, weightSource: weightSource,
     ctaText: ctaText, valueText: valueText, rirText: rirText, clock: clock,
     spokenDuration: spokenDuration, parseWeight: parseWeight, parseReps: parseReps,

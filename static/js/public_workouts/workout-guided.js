@@ -882,7 +882,7 @@
     var raw = String(detail.raw == null ? '' : detail.raw).trim();
     var target = raw ? guidedLoads.parseTarget(raw) : null;
     if (raw && target == null) {
-      focus.error('Informe uma carga alvo entre 0,01 e 9.999,99 kg, com até duas casas decimais.');
+      focus.error('Informe uma carga alvo entre 0,01 e 999 kg, com até duas casas decimais.');
       return;
     }
     guidedLoads.applyTopTarget(step.movement, target);
