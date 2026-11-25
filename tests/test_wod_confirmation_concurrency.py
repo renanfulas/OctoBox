@@ -653,7 +653,9 @@ def test_daily_and_weekly_apply_fingerprints_are_tenant_local_with_colliding_ids
     weekly_plan_id = 3_000_000_006
     today = timezone.localdate()
     target_date = today + timedelta(days=1)
-    target_week_start = today + timedelta(days=7 - today.weekday())
+    # Next Monday after the daily target: on Sundays "tomorrow" is already next Monday,
+    # so anchoring on today would put both sessions on the same date.
+    target_week_start = target_date + timedelta(days=7 - target_date.weekday())
     daily_at = timezone.make_aware(datetime.combine(target_date, time(hour=12)))
     weekly_at = timezone.make_aware(datetime.combine(target_week_start, time(hour=12)))
     weekly_key = uuid4()
@@ -1373,7 +1375,8 @@ def test_daily_and_weekly_apply_http_routes_follow_active_tenant_and_membership_
         cursor.execute(f'CREATE SCHEMA "{other_schema}"')
 
     target_date = timezone.localdate() + timedelta(days=1)
-    target_week_start = timezone.localdate() + timedelta(days=7 - timezone.localdate().weekday())
+    # Next Monday after the daily target (see the fingerprint test above for why).
+    target_week_start = target_date + timedelta(days=7 - target_date.weekday())
     # Keep the separate manager daily destination outside the weekly projection
     # window; otherwise the confirmed program-scoped weekly plan must include it.
     manager_daily_date = target_date - timedelta(days=1)
