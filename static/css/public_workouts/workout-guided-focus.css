@@ -264,6 +264,16 @@ html.guided-focus-open { overflow: hidden; }
 .guided-toast { position: absolute; left: 16px; right: 16px; bottom: 156px; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-radius: 14px; background: var(--gf-ink); color: var(--gf-bg); font-weight: 700; font-size: .95rem; box-shadow: var(--gf-float); animation: guided-screen-in 220ms var(--gf-ease) both; }
 .guided-toast__action { min-height: 40px; padding: 0 4px; color: var(--gf-bg); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
 
+/* Coach de voz: contagem intra-série (top set e AMRAP). Botões grandes: o aluno
+   toca "Parei" com a mão cansada, às vezes ainda no equipamento. */
+.guided-repcount { display: grid; gap: 10px; }
+/* Contando: a tela inteira vira o "Parei" (alvo de toque do tamanho do celular). */
+.guided-repcount__live { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); background: var(--gf-bg); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.guided-repcount__value { display: flex; align-items: baseline; gap: 10px; margin: 0; font-size: clamp(6rem, 32vw, 11rem); font-weight: 800; line-height: 1; color: var(--gf-ink); font-variant-numeric: tabular-nums; }
+.guided-repcount__value small { font-size: 1.5rem; font-weight: 700; color: var(--gf-muted); }
+.guided-repcount__hint { margin: 0; font-size: 1.125rem; color: var(--gf-ink-2); text-align: center; }
+.guided-repcount__stop { width: min(100%, 420px); min-height: 72px; background: var(--gf-danger); color: #fff; }
+
 @media (prefers-reduced-motion: reduce) {
   .guided-focus[open], .guided-screen, .guided-countdown, .guided-sheet__panel, .guided-sheet__scrim, .guided-toast { animation: none; }
   .guided-cta, .guided-stepper__button, .guided-effort__chip, .guided-switch, .guided-switch span, .guided-effort summary svg, .guided-top summary svg { transition: none; }

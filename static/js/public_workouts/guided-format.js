@@ -68,10 +68,12 @@
     return label + ' ' + ordinal;
   }
 
+  function repWord(n) { return Number(n) === 1 ? 'rep' : 'reps'; }
+
   function repsText(series) {
     if (!series || series.reps == null) return '';
     return series.reps_max != null && series.reps_max !== series.reps
-      ? series.reps + '–' + series.reps_max + ' reps' : series.reps + ' reps';
+      ? series.reps + '–' + series.reps_max + ' reps' : series.reps + ' ' + repWord(series.reps);
   }
 
   /* Isometria (prancha): a série é medida em segundos. */
@@ -145,7 +147,7 @@
     if (movement.allowLoad && draft.weight != null && draft.reps != null) {
       return 'Registrar ' + decimal(draft.weight) + ' kg × ' + draft.reps;
     }
-    if (draft.reps != null) return 'Registrar ' + draft.reps + ' reps';
+    if (draft.reps != null) return 'Registrar ' + draft.reps + ' ' + repWord(draft.reps);
     if (movement.allowLoad && draft.weight != null && !draft.repsRequired) return 'Registrar ' + kg(draft.weight);
     return 'Registrar série';
   }
@@ -156,7 +158,7 @@
     var reps = toNumber(entry.reps);
     var main = movement.allowLoad && weight !== null
       ? decimal(weight) + ' kg' + (reps !== null ? ' × ' + reps : '')
-      : (reps !== null ? reps + ' reps' : 'Série feita');
+      : (reps !== null ? reps + ' ' + repWord(reps) : 'Série feita');
     var rir = toNumber(entry.rir);
     return main + (withRir !== false && rir !== null ? ' · RIR ' + decimal(rir) : '');
   }
@@ -281,6 +283,6 @@
     ctaText: ctaText, valueText: valueText, rirText: rirText, clock: clock,
     spokenDuration: spokenDuration, parseWeight: parseWeight, parseReps: parseReps,
     stepWeight: stepWeight, loadPlan: loadPlan, whenLabel: whenLabel, anchorFrom: anchorFrom, periodFrom: periodFrom,
-    isTimed: isTimed, seconds: seconds, holdText: holdText, parseSeconds: parseSeconds,
+    isTimed: isTimed, seconds: seconds, holdText: holdText, parseSeconds: parseSeconds, repWord: repWord,
   };
 }());

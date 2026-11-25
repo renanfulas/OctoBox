@@ -4,7 +4,7 @@ const OFFLINE_URL = '{{ offline_url }}';
 const APP_SCOPE = '{{ app_scope }}';
 // Pacote vigente do coach de voz (guided-voice.js). Pacotes antigos saem no activate.
 const COACH_CACHE_PREFIX = 'curva-coach-audio-';
-const COACH_PACK = 'v2';
+const COACH_PACK = 'v3';
 const ALLOWLIST = [
 {% for slug in plan_slugs %}  '/renan/{{ slug }}/manifest.webmanifest',
 {% endfor %}  OFFLINE_URL,
@@ -163,9 +163,12 @@ self.addEventListener('install', (event) => {
   // cache.add() item a item, e nao addAll(): o addAll rejeita o install
   // INTEIRO se um unico recurso der 404, e ai o aluno fica sem modo
   // offline por causa de um caminho errado numa lista de 40 entradas.
+  // cache: 'reload' — a lista nao tem ?v=, entao o cache HTTP do navegador
+  // devolveria o asset da versao ANTERIOR, e o fetch abaixo (ignoreSearch)
+  // serviria essa copia velha para o ?v= novo.
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) =>
-      Promise.all(ALLOWLIST.map((url) => cache.add(url).catch(() => null)))
+      Promise.all(ALLOWLIST.map((url) => cache.add(new Request(url, { cache: 'reload' })).catch(() => null)))
     )
   );
   self.skipWaiting();

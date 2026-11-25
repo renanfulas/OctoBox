@@ -78,6 +78,9 @@ test('CTA reflete os dados e a origem da carga explica o valor preenchido', () =
   assert.equal(format.ctaText(mixed, { weight: 62.5, reps: 8 }), 'Registrar 62,5 kg × 8');
   assert.equal(format.ctaText(mixed, { weight: 62.5, reps: null, repsRequired: true }), 'Registrar série');
   assert.equal(format.ctaText({ allowLoad: false }, { weight: null, reps: 12 }), 'Registrar 12 reps');
+  assert.equal(format.ctaText({ allowLoad: false }, { weight: null, reps: 1 }), 'Registrar 1 rep');
+  assert.equal(format.repWord(1), 'rep');
+  assert.equal(format.repWord(0), 'reps');
   assert.equal(format.weightSource(mixed, mixed.series[1], { weight: 60, base: 60 }).text, 'Sugestão da fase · ajuste se precisar');
   const changed = format.weightSource(mixed, mixed.series[1], { weight: 62.5, base: 60 });
   assert.equal(changed.reset, 'Voltar para 60 kg');

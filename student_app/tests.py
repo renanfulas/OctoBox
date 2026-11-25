@@ -2597,7 +2597,10 @@ class PublicWorkoutPwaTests(TestCase):
         self.assertNotIn('const PAGE_CACHE', sw_content)
         # F1: a página do dono vai para o IndexedDB, nunca para o Cache Storage.
         self.assertIn("const PAGE_DB = 'curva-offline-pages'", sw_content)
-        self.assertIn('const validCaches = [STATIC_CACHE]', sw_content)
+        # Só o cache estático e o pacote vigente do coach de voz sobrevivem ao activate.
+        self.assertIn('const validCaches = [STATIC_CACHE, `${COACH_CACHE_PREFIX}${COACH_PACK}`]', sw_content)
+        # Pré-cache sem ?v= fura o cache HTTP: senão guardaria o asset da versão anterior.
+        self.assertIn("cache.add(new Request(url, { cache: 'reload' }))", sw_content)
         self.assertIn('return await caches.match(OFFLINE_URL', sw_content)
         self.assertEqual(offline_response.status_code, 200)
         self.assertContains(offline_response, 'Sem conexão agora.')

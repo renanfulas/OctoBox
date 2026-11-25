@@ -266,6 +266,9 @@ globals().update(build_privacy_settings(env_bool, env_list_alias, env_str))
 # Coach de voz do treino guiado (docs/plans/curva-coach-voz-guiada.md). Desligado
 # por padrão: com ele, o lançador oferece o toggle e o pacote static/audio/coach/.
 CURVA_COACH_VOICE_ENABLED = env_bool('CURVA_COACH_VOICE_ENABLED', False)
+# Beta por aluno: slugs de plano (/renan/<slug>) que ganham a voz mesmo com a
+# flag geral desligada. Ex.: CURVA_COACH_VOICE_PLANS=andressa-cristina
+CURVA_COACH_VOICE_PLANS = env_list('CURVA_COACH_VOICE_PLANS')
 
 # Stripe — credenciais e price IDs do programa Early Adopters.
 # Os Price IDs sao criados no Stripe Dashboard (Catalog → Products) e copiados aqui via .env.

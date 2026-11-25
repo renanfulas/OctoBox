@@ -21,11 +21,25 @@
 #   {reps}  → reps por extenso + "repetições" (faixa em `ranges.reps`)
 #   {seg}   → descanso por extenso com unidade ("noventa segundos",
 #             "dois minutos", "um minuto e meio"); faixa em `ranges.rest`
+#   {N}     → número da repetição por extenso, maiúsculo ("Vinte e um"),
+#             em eventos `per_value: count` (faixa em `range`, padrão 1–30)
+#
+# Contagem intra-série (v3, só top set e AMRAP): o app NÃO vê a repetição;
+# a voz dita o ritmo (~3 s por rep, mais lento perto da falha) e o aluno
+# acompanha. O número sai no alto da subida, a dica cai na descida seguinte.
+# Número e dica numa frase só: número sozinho sai "comido".
+#   top set (meta N): count_setup_top → bips 3-2-1 → count_go → count__r<n>
+#     (count_half na metade, count_left2, count_left1) → count_push →
+#     count_last__r<N> → count_done_top
+#   AMRAP (meta N): count_setup_max → … → count_goal__r<N> →
+#     count_safety__r<N+1> → count_beyond__r<n>_v* … → "Parei" → count_stop__r<n>
+#   Aluno tocou "Parei" antes da meta: count_stop__r<n>.
+# Eventos com `voice:` sobrescrevem a voz (speed 0.95 = mais urgente no fim).
 #
 # Volume: 2 templates por carga × 152 cargas + ~70 fixas ≈ 380 falas.
 # O app NÃO baixa tudo: o service worker cacheia só as cargas da prescrição.
 
-version: 2
+version: 3
 
 voice:
   engine: voicestudio
@@ -146,6 +160,90 @@ events:
     variants:
       - "Acabou. Treino concluído, mandou muito bem hoje."
       - "Fim de treino. Registra como foi e descansa, você mereceu."
+
+  # ---------------------------------------------------------------- contagem
+  count_setup_top:
+    variants:
+      - "Top set. Posiciona, pés firmes, respira fundo e trava o corpo."
+      - "Top set. Ajeita a pegada, respira fundo e trava o corpo."
+
+  count_setup_max:
+    variants:
+      - "Série máxima. Posiciona e respira fundo. Uma de cada vez, sempre com técnica."
+      - "Série máxima. Se ajeita e respira fundo. Vai até onde der, sem perder a técnica."
+
+  count_go:
+    variants:
+      - "Valendo! Desce controlando."
+      - "Valendo! Controla a descida."
+
+  # Ritmo, antes da reta final. O app reveza as dicas em ordem.
+  count:
+    per_value: count
+    templates:
+      - "{N}. Isso, devagar na descida."
+      - "{N}. Amplitude completa."
+      - "{N}. Sobe com força."
+      - "{N}. Mantém o ritmo."
+
+  count_half:
+    per_value: count
+    range: { min: 1, max: 15 }
+    template: "{N}. Metade. Tá bonito."
+
+  count_left2:
+    per_value: count
+    range: { min: 1, max: 28 }
+    voice: { speed: 0.95 }
+    template: "{N}! Faltam duas. Agora é cabeça."
+
+  count_left1:
+    per_value: count
+    range: { min: 1, max: 29 }
+    voice: { speed: 0.95 }
+    template: "{N}! Falta uma. Vai!"
+
+  # Na subida da última repetição da top set (antes do número).
+  count_push:
+    voice: { speed: 0.95 }
+    variants:
+      - "Sobe! Sobe! Empurra!"
+      - "Vai! Vai! Empurra!"
+
+  count_last:
+    per_value: count
+    voice: { speed: 0.95 }
+    template: "{N}! Isso! Pode soltar."
+
+  count_done_top:
+    variants:
+      - "Série de respeito. Respira, registra e descansa."
+      - "Isso é top set. Respira e registra."
+
+  # AMRAP
+  count_goal:
+    per_value: count
+    voice: { speed: 0.95 }
+    template: "{N}! Meta batida. Agora é tudo seu."
+
+  count_safety:
+    per_value: count
+    range: { min: 2, max: 30 }
+    voice: { speed: 0.95 }
+    template: "{N}! Se a técnica quebrar, para."
+
+  count_beyond:
+    per_value: count
+    range: { min: 2, max: 30 }
+    voice: { speed: 0.95 }
+    templates:
+      - "{N}! Respira lá em cima e vai."
+      - "{N}! Tá voando!"
+      - "{N}! Tem mais uma? Vai!"
+
+  count_stop:
+    per_value: count
+    template: "Fechou em {reps}. Isso é evolução. Anota aí."
 
 # --------------------------------------------------------------------------
 # Fora do MVP (não gerar ainda)

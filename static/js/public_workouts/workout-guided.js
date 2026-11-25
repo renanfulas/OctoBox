@@ -89,6 +89,7 @@
     try { voice[method].apply(voice, args); } catch (_) { /* voz é conforto: nunca trava o treino */ }
   }
   setupCoachVoice();
+  setupCoachCount();
 
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
@@ -217,6 +218,59 @@
     box.querySelector('[data-coach-voice-test]').addEventListener('click', function () {
       voice.unlock();
       voice.test();
+    });
+  }
+
+  // Contagem intra-série (top set e AMRAP): "Contar comigo" liga a voz ditando o
+  // ritmo; "Parei" (ou o fim da top set) preenche as repetições contadas.
+  var countBox; // preenchido em setupCoachCount(), que roda antes desta linha
+  var countKey = null;
+  function currentKey() {
+    var step = movements.length ? project().current : null;
+    return step ? key(step.movementIndex, step.setNumber) : null;
+  }
+  function paintCount() {
+    if (!countBox || !voice) return;
+    var counting = voice.counting();
+    // Saiu da série que estava contando (registrou, pulou, minimizou): a voz para.
+    if (counting && (screen !== 'exercise' || !focus.isOpen() || countKey !== currentKey())) {
+      voice.countCancel();
+      counting = false;
+    }
+    var step = movements.length && sessionId ? project().current : null;
+    var show = screen === 'exercise' && focus.isOpen() && !!step && (counting || voice.countable(step));
+    countBox.hidden = !show;
+    countBox.querySelector('[data-guided-count-start]').hidden = counting;
+    countBox.querySelector('[data-guided-count-live]').hidden = !counting;
+  }
+  function setupCoachCount() {
+    countBox = dialog.querySelector('[data-guided-count]');
+    if (!countBox || !voice) return;
+    var value = countBox.querySelector('[data-guided-count-value]');
+    var unit = countBox.querySelector('[data-guided-count-unit]');
+    var live = countBox.querySelector('[data-guided-count-live]');
+    var show = function (n) { value.textContent = String(n); if (unit) unit.textContent = format.repWord(n); };
+    countBox.querySelector('[data-guided-count-start]').addEventListener('click', function () {
+      var step = project().current;
+      if (!step) return;
+      voice.unlock();
+      countKey = key(step.movementIndex, step.setNumber);
+      var setKey = countKey;
+      show(0);
+      voice.countStart(step, {
+        onRep: show,
+        onDone: function (n) { focus.fillReps(setKey, n); paintCount(); },
+      });
+      paintCount();
+      countBox.querySelector('[data-guided-count-stop]').focus({ preventScroll: true });
+    });
+    // Durante a contagem a tela inteira é o "Parei": o aluno acabou de largar a
+    // barra e não vai mirar num botão. O botão continua lá para teclado/leitor.
+    live.addEventListener('click', function () {
+      if (!voice.counting()) return;
+      var reps = voice.countStop();
+      focus.fillReps(countKey, reps);
+      paintCount();
     });
   }
 
@@ -361,6 +415,7 @@
   }
 
   function paintLauncher() {
+    paintCount();
     var state = movements.length ? project() : null;
     var rest = timer.snapshot();
     // Sinal lido pelo widget de carga da grade (load_tracker.js): com sessão guiada
@@ -506,6 +561,9 @@
         label: card.dataset.movementLabel || (heading ? heading.textContent.trim() : 'Exercício'),
         referenceUrl: card.dataset.referenceUrl || '',
         rirSpec: card.dataset.rirSpec || '',
+        supersetGroup: card.dataset.guidedSupersetGroup || '',
+        supersetOrder: Number(card.dataset.guidedSupersetOrder || 0),
+        supersetRestSeconds: Number(card.dataset.guidedSupersetRestSeconds || 105),
         loadKind: card.dataset.loadKind, loadStep: step,
         allowLoad: card.dataset.allowLoadRegistration !== 'false',
         series: series, freeform: series.length === 1 && series[0].role === 'legacy_unknown',
@@ -719,8 +777,17 @@
     lastFreeformIndex = step.movement.freeform ? step.movementIndex : null;
     lastSkipped = null;
     receiptKey = setKey;
+    if (step.movement.supersetGroup) focusIndex = null;
     clearFocusIfDone();
+    var nextSet = project().next;
     var restSeconds = step.series.rest_seconds == null ? 90 : Number(step.series.rest_seconds);
+    if (step.movement.supersetGroup) {
+      var nextIsPairedMovementInSameRound = nextSet
+        && nextSet.movementIndex !== step.movementIndex
+        && nextSet.movement.supersetGroup === step.movement.supersetGroup
+        && nextSet.setNumber === step.setNumber;
+      restSeconds = nextIsPairedMovementInSameRound ? 0 : Number(step.movement.supersetRestSeconds || 105);
+    }
     if (!project().next) { skipRest(); screen = 'summary'; }
     else if (restSeconds > 0) { startRest(restSeconds); screen = 'rest'; }
     else { skipRest(); screen = 'exercise'; }
@@ -749,7 +816,8 @@
       setSync.delete(setKey);
       if (receiptKey === setKey) { receiptKey = null; skipRest(); }
       var next = project().next;
-      focusIndex = next && next.movementIndex === step.movementIndex ? null : step.movementIndex;
+      focusIndex = step.movement.supersetGroup || (next && next.movementIndex === step.movementIndex)
+        ? null : step.movementIndex;
       screen = 'exercise';
       status.textContent = error.message;
       render();
@@ -768,11 +836,26 @@
     }).then(function (result) {
       lastSkipped = setKey;
       skipped.add(setKey);
+      if (step.movement.supersetGroup) focusIndex = null;
       clearFocusIfDone();
       status.textContent = waitsForNetwork(result)
         ? 'Pulo salvo neste aparelho; ainda não confirmado no Curva.'
         : (step.series.required ? 'Série pulada. Encerre como parcial para registrar o treino.' : 'Série opcional pulada.');
-      screen = nextScreenAfterSet();
+      var nextStep = project().next;
+      if (!nextStep) {
+        skipRest();
+        screen = 'summary';
+      } else if (step.movement.supersetGroup) {
+        var nextIsPairedMovementInSameRound = nextStep.movementIndex !== step.movementIndex
+          && nextStep.movement.supersetGroup === step.movement.supersetGroup
+          && nextStep.setNumber === step.setNumber;
+        var restSeconds = nextIsPairedMovementInSameRound
+          ? 0 : Number(step.movement.supersetRestSeconds || 105);
+        if (restSeconds > 0) { startRest(restSeconds); screen = 'rest'; }
+        else { skipRest(); screen = 'exercise'; }
+      } else {
+        screen = 'exercise';
+      }
       render();
       focus.toast('Série pulada', 'Desfazer', undoSkip);
       return snapshot();
@@ -797,7 +880,8 @@
     unskip(setKey).then(function (result) {
       var movementIndex = Number(setKey.split(':')[0]);
       var next = project().next;
-      focusIndex = next && next.movementIndex === movementIndex ? null : movementIndex;
+      focusIndex = movements[movementIndex] && movements[movementIndex].supersetGroup
+        ? null : (next && next.movementIndex === movementIndex ? null : movementIndex);
       screen = 'exercise';
       status.textContent = waitsForNetwork(result) ? 'Desfazer salvo neste aparelho; envio pendente.' : 'Série disponível novamente.';
       render();

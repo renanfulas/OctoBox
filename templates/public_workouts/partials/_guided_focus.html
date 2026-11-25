@@ -94,7 +94,16 @@ Modo foco do treino guiado (docs/plans/curva-treino-guiado-modo-foco-plan.md).
             <button type="button" class="guided-stepper__button" data-guided-step="reps" data-delta="1" aria-label="Uma repetição a mais">+</button>
           </div>
           <p class="guided-field__note" id="guided-reps-hint" data-guided-reps-hint></p>
-        </div>
+        </div>{% if coach_voice_enabled %}
+        <div class="guided-repcount" data-guided-count hidden>
+          <button type="button" class="guided-cta guided-cta--quiet guided-repcount__start" data-guided-count-start>Contar comigo</button>
+          <div class="guided-repcount__live" data-guided-count-live hidden>
+            <p class="guided-repcount__value" aria-live="off"><span data-guided-count-value>0</span><small data-guided-count-unit>reps</small></p>
+            <p class="guided-repcount__hint">Terminou? Toque em qualquer lugar da tela.</p>
+            <button type="button" class="guided-cta guided-repcount__stop" data-guided-count-stop>Parei</button>
+          </div>
+          <p class="guided-field__note" data-guided-count-note>A voz dita o ritmo e conta com você. Quando terminar, toque em qualquer lugar da tela.</p>
+        </div>{% endif %}
         <details class="guided-effort" data-guided-effort>
           <summary><span>Esforço · opcional</span><span class="guided-effort__value" data-guided-effort-value></span><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></summary>
           <div class="guided-effort__body">
