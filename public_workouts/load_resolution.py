@@ -3,6 +3,7 @@
 import json
 from dataclasses import dataclass
 
+from .guided_workout import build_guided_series
 from .load_suggestion import suggest_movement_load
 from .periodization import suggest_progressive_load_kg
 
@@ -45,6 +46,23 @@ class LoadResolution:
 
 def _round_to_nearest_load(value, step=2.5):
     return round(value / step) * step
+
+
+def _work_target(movement: dict, phase, payload: dict) -> dict:
+    """Reps/RIR da série de trabalho desta semana (já ajustados à fase)."""
+    try:
+        series = build_guided_series(movement, phase_profile=phase, payload=payload)
+    except ValueError:
+        return {}
+    work = next((row for row in series if row.get('role') == 'top_set' and row.get('reps')), None)
+    if work is None:
+        return {}
+    reps_max = work.get('reps_max') or work['reps']
+    return {
+        'reps_max_target': reps_max,
+        'target_reps': (work['reps'] + reps_max) / 2,
+        'target_rir': work.get('rir_target'),
+    }
 
 
 def resolve_movement_load(*, movement: dict, payload: dict, phase,
@@ -92,6 +110,7 @@ def resolve_movement_load(*, movement: dict, payload: dict, phase,
         value = suggest_progressive_load_kg(
             payload=payload, current_phase=phase, last_log=last_log,
             one_rep_max_kg=one_rep_max_kg,
+            **_work_target(movement, phase, payload),
         )
         if value is not None:
             return LoadResolution(

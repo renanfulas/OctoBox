@@ -52,11 +52,13 @@ from public_workouts.periodization import (
     build_chart_points_from_weeks,
     current_phase_profile,
     current_week_number,
+    phase_banner,
 )
 from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementEquipment
 from public_workouts.substitutions import suggest_substitutes
 from public_workouts.warmup_ramp import extract_leading_set_count, stage_ramp_kg
 from public_workouts.guided_workout import build_guided_series
+from public_workouts.phase_prescription import phase_week_note, reference_phase
 
 register = template.Library()
 
@@ -295,14 +297,26 @@ def _detect_phase(segment: str) -> str:
 
 
 @register.simple_tag
-def guided_series(movement: dict, top_weight_kg=None, one_rep_max_by_movement=None) -> str:
+def guided_series(movement: dict, top_weight_kg=None, one_rep_max_by_movement=None,
+                  current_phase=None, payload=None) -> str:
     """Serializa a prescrição do módulo guiado para o controlador do template."""
     estimate = (one_rep_max_by_movement or {}).get(movement.get('movement_slug'))
     one_rep_max_kg = estimate.get('value_kg') if estimate else None
     return json.dumps(
-        build_guided_series(movement, top_weight_kg, one_rep_max_kg),
+        build_guided_series(movement, top_weight_kg, one_rep_max_kg, current_phase, payload=payload),
         ensure_ascii=False, separators=(',', ':'),
     )
+
+
+@register.simple_tag
+def phase_week_prescription_note(movement: dict, current_phase=None, payload=None) -> str:
+    """'Esta semana (Deload): 2 séries de trabalho · RIR 4,5' — '' quando a
+    fase da semana é a de referência (prescrição publicada vale como está)."""
+    if current_phase is None or payload is None:
+        return ''
+    reference = reference_phase(payload)
+    series = build_guided_series(movement, phase_profile=current_phase, payload=payload)
+    return phase_week_note(series, phase=current_phase, reference=reference)
 
 
 @register.filter
@@ -848,7 +862,8 @@ def periodization_chart_points(periodization: dict | None) -> list[dict]:
         return []
     weeks = periodization.get('weeks')
     if weeks:
-        return build_chart_points_from_weeks(weeks)
+        # O filtro recebe só `periodization`; a planilha do treinador mora nele.
+        return build_chart_points_from_weeks(weeks, {'periodization': periodization})
     return [dict(point, week_number=None) for point in (periodization.get('chart') or [])]
 
 
@@ -869,25 +884,8 @@ def current_period_phase(payload: dict):
 
 @register.simple_tag
 def periodization_phase_banner(payload: dict) -> dict:
-    """Banner "Semana 3 de 6 · Força-Hipertrofia — alvo 6-8 reps · RIR 1-2
-    · ~76% RM" no topo da aba Treino — só aparece (`visible=True`) quando o
-    programa já tem `periodization.weeks` (modelo canônico); `visible=
-    False` pros outros clientes, nada muda pra eles."""
-    phase = current_phase_profile(payload)
-    if phase is None:
-        return {'visible': False}
-
-    weeks = (payload.get('periodization') or {}).get('weeks') or []
-    return {
-        'visible': True,
-        'week_number': current_week_number(payload),
-        'total_weeks': len(weeks),
-        'phase_label': phase.label,
-        'reps_min': phase.reps_target_range[0],
-        'reps_max': phase.reps_target_range[1],
-        'rir_target': phase.rir_target,
-        'pct_mid': round(sum(phase.intensity_pct_range) / 2),
-    }
+    """Banner da semana no topo da aba Treino (ver periodization.phase_banner)."""
+    return phase_banner(payload)
 
 
 @register.simple_tag

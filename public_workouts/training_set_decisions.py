@@ -22,7 +22,7 @@ def _locked_session(*, account_id, plan_slug, session_id):
 
 
 def _prescribed(*, session, movement_index, set_number, movement_slug, role):
-    movements = day_plan(session.program, session.day_id)
+    movements = day_plan(session.program, session.day_id, on=timezone.localtime(session.started_at).date())
     if not 0 <= movement_index < len(movements):
         raise TrainingSessionInvalid('movimento não pertence a este dia')
     movement = movements[movement_index]

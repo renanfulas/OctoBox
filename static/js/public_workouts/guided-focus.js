@@ -975,6 +975,15 @@
       openCorrection: openCorrection,
       correctionError: correctionError,
       error: setError,
+      // Contagem do coach de voz: preenche as repetições que a voz contou.
+      fillReps: function (setKey, reps) {
+        if (!draft || draft.key !== setKey || draft.timed || !(reps > 0)) return;
+        draft.reps = reps;
+        draft.invalidReps = false;
+        writeDraftInputs();
+        setError('');
+        paintDraft();
+      },
       toast: toast,
       announce: announce,
       close: close,

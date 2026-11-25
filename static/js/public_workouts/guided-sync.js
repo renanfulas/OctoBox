@@ -313,5 +313,96 @@
       removeBlocked: removeBlocked, replaceBlocked: replaceBlocked, forget: forget, release: release };
   }
 
-  window.CurvaGuidedSync = { create: create, commandKey: commandKey, commandOrder: commandOrder, applyQueued: applyQueued };
+  // Painel "um registro precisa de atenção" do treino guiado: o servidor recusou um
+  // comando da fila. O aluno exporta o rascunho, fica com o registro do servidor ou
+  // (409 numa série) reenvia como correção. `deps` vem de workout-guided.js.
+  function conflictPanel(root, deps) {
+    var panel = root.querySelector('[data-workout-guided-conflict]');
+    var message = root.querySelector('[data-workout-guided-conflict-message]');
+    var server = root.querySelector('[data-workout-guided-conflict-server]');
+    var correct = root.querySelector('[data-workout-guided-conflict-correct]');
+    var sync = deps.sync;
+    var status = deps.status;
+
+    function exportDraft() {
+      return deps.outbox.list(deps.scope).then(function (commands) {
+        var data = JSON.stringify({ exported_at: new Date().toISOString(), scope: deps.scope, commands: commands }, null, 2);
+        var url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'curva-treino-pendente.json';
+        link.click();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        return commands;
+      });
+    }
+
+    root.querySelector('[data-workout-guided-conflict-export]').addEventListener('click', function () {
+      exportDraft().catch(function () { status.textContent = 'Não foi possível exportar o rascunho local.'; });
+    });
+
+    server.addEventListener('click', function () {
+      var command = sync.blocked();
+      if (!command) return;
+      var question = command.payload.action === 'start'
+        ? 'Exportar o rascunho, descartar esta fila e abrir a ficha atual?'
+        : 'Descartar este comando local e usar o registro do servidor?';
+      if (!window.confirm(question)) return;
+      if (command.payload.action === 'start') {
+        var localId = command.payload.local_session_id;
+        exportDraft().then(function (commands) {
+          var sameSession = commands.filter(function (item) {
+            return item.payload.local_session_id === localId || item.payload.session_id === localId;
+          });
+          return sameSession.reduce(function (chain, item) {
+            return chain.then(function () { return sync.forget(item.key); });
+          }, Promise.resolve());
+        }).then(function () { return deps.outbox.clear(deps.scope); }).then(function () {
+          location.reload();
+        }).catch(function () {
+          status.textContent = 'Não foi possível exportar e limpar a fila. Seus dados locais foram preservados.';
+        });
+        return;
+      }
+      sync.removeBlocked().then(function () {
+        panel.hidden = true;
+        return deps.request('GET');
+      }).then(function (result) {
+        if (result.session) deps.activate(result.session);
+        return deps.snapshot();
+      }).then(deps.drain).catch(function (error) { status.textContent = error.message; });
+    });
+
+    correct.addEventListener('click', function () {
+      var command = sync.blocked();
+      if (!command || command.payload.action !== 'set') return;
+      var replacement = Object.assign({}, command.payload, { action: 'correct', command_key: deps.newId() });
+      sync.replaceBlocked(replacement).then(function () {
+        panel.hidden = true;
+        status.textContent = 'Correção preparada; enviando em ordem.';
+        return deps.drain();
+      }).catch(function (error) { status.textContent = error.message; });
+    });
+
+    return {
+      show: function (command) {
+        panel.hidden = false;
+        message.textContent = command.error || 'O servidor não aceitou este registro.';
+        correct.hidden = command.payload.action !== 'set' || command.error_status !== 409;
+        server.textContent = command.payload.action === 'start'
+          ? 'Exportar e abrir a ficha atual' : 'Usar registro do servidor';
+        if (deps.focus.isOpen()) {
+          deps.focus.toast('Um registro precisa de atenção', 'Resolver', function () {
+            deps.minimize();
+            panel.scrollIntoView({ block: 'center' });
+          }, true);
+        }
+      },
+    };
+  }
+
+  window.CurvaGuidedSync = {
+    create: create, commandKey: commandKey, commandOrder: commandOrder, applyQueued: applyQueued,
+    conflictPanel: conflictPanel,
+  };
 }());

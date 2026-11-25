@@ -19,11 +19,6 @@
   var launchTitle = root.querySelector('[data-guided-launch-title]');
   var launchText = root.querySelector('[data-guided-launch-text]');
   var launchMeta = root.querySelector('[data-guided-launch-meta]');
-  var conflictPanel = root.querySelector('[data-workout-guided-conflict]');
-  var conflictMessage = root.querySelector('[data-workout-guided-conflict-message]');
-  var conflictExport = root.querySelector('[data-workout-guided-conflict-export]');
-  var conflictServer = root.querySelector('[data-workout-guided-conflict-server]');
-  var conflictCorrect = root.querySelector('[data-workout-guided-conflict-correct]');
   var format = window.CurvaGuidedFormat;
   var focus = window.CurvaGuidedFocus.create(dialog, { period: format.periodFrom(root.dataset) });
   var scope = root.dataset.accountScope && document.body.dataset.planSlug
@@ -60,6 +55,7 @@
         // push devolve o 3-2-1 ao app já neste tick.
         restAlert.tick(rest.remainingMs);
         focus.restTick(rest, restAlert.covers());
+        voiceDo('restTick', rest.remainingMs);
       }
       paintLauncher();
     },
@@ -77,6 +73,16 @@
     },
   }) : { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop, covers: noop };
 
+  // Coach de voz (guided-voice.js): sem o script ou sem o pacote publicado, no-op.
+  var coach = window.CurvaGuidedVoice ? window.CurvaGuidedVoice.attach(root, dialog, {
+    step: function () { return movements.length && sessionId ? project().current : null; },
+    key: function (step) { return key(step.movementIndex, step.setNumber); },
+    inExercise: function () { return screen === 'exercise' && focus.isOpen(); },
+    fillReps: function (setKey, reps) { focus.fillReps(setKey, reps); },
+    repWord: format.repWord,
+  }) : { call: noop, paint: noop, precache: noop };
+  var voiceDo = coach.call;
+
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
     // set/skip/unskip vão para a fila local antes do POST (onda 3 do modo foco).
@@ -90,7 +96,7 @@
         setSync.set(setKey, 'blocked');
         render();
       }
-      showConflict(command);
+      conflict.show(command);
     },
     onSent: function (payload) {
       if (payload.session_id !== sessionId || (payload.action !== 'set' && payload.action !== 'correct')) return;
@@ -316,6 +322,7 @@
   }
 
   function paintLauncher() {
+    coach.paint();
     var state = movements.length ? project() : null;
     var rest = timer.snapshot();
     // Sinal lido pelo widget de carga da grade (load_tracker.js): com sessão guiada
@@ -355,79 +362,11 @@
     });
   }
 
-  /* ---------- conflito da fila ---------- */
-  function showConflict(command) {
-    conflictPanel.hidden = false;
-    conflictMessage.textContent = command.error || 'O servidor não aceitou este registro.';
-    conflictCorrect.hidden = command.payload.action !== 'set' || command.error_status !== 409;
-    conflictServer.textContent = command.payload.action === 'start'
-      ? 'Exportar e abrir a ficha atual' : 'Usar registro do servidor';
-    if (focus.isOpen()) {
-      focus.toast('Um registro precisa de atenção', 'Resolver', function () {
-        minimize();
-        conflictPanel.scrollIntoView({ block: 'center' });
-      }, true);
-    }
-  }
-
-  function exportDraft() {
-    return outbox.list(scope).then(function (commands) {
-      var data = JSON.stringify({ exported_at: new Date().toISOString(), scope: scope, commands: commands }, null, 2);
-      var url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
-      var link = document.createElement('a');
-      link.href = url;
-      link.download = 'curva-treino-pendente.json';
-      link.click();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-      return commands;
-    });
-  }
-
-  conflictExport.addEventListener('click', function () {
-    exportDraft().catch(function () { status.textContent = 'Não foi possível exportar o rascunho local.'; });
-  });
-
-  conflictServer.addEventListener('click', function () {
-    var command = sync.blocked();
-    if (!command) return;
-    var question = command.payload.action === 'start'
-      ? 'Exportar o rascunho, descartar esta fila e abrir a ficha atual?'
-      : 'Descartar este comando local e usar o registro do servidor?';
-    if (!window.confirm(question)) return;
-    if (command.payload.action === 'start') {
-      var localId = command.payload.local_session_id;
-      exportDraft().then(function (commands) {
-        var sameSession = commands.filter(function (item) {
-          return item.payload.local_session_id === localId || item.payload.session_id === localId;
-        });
-        return sameSession.reduce(function (chain, item) {
-          return chain.then(function () { return sync.forget(item.key); });
-        }, Promise.resolve());
-      }).then(function () { return outbox.clear(scope); }).then(function () {
-        location.reload();
-      }).catch(function () {
-        status.textContent = 'Não foi possível exportar e limpar a fila. Seus dados locais foram preservados.';
-      });
-      return;
-    }
-    sync.removeBlocked().then(function () {
-      conflictPanel.hidden = true;
-      return request('GET');
-    }).then(function (result) {
-      if (result.session) activate(result.session);
-      return snapshot();
-    }).then(drain).catch(function (error) { status.textContent = error.message; });
-  });
-
-  conflictCorrect.addEventListener('click', function () {
-    var command = sync.blocked();
-    if (!command || command.payload.action !== 'set') return;
-    var replacement = Object.assign({}, command.payload, { action: 'correct', command_key: newId() });
-    sync.replaceBlocked(replacement).then(function () {
-      conflictPanel.hidden = true;
-      status.textContent = 'Correção preparada; enviando em ordem.';
-      return drain();
-    }).catch(function (error) { status.textContent = error.message; });
+  /* ---------- conflito da fila (painel em guided-sync.js) ---------- */
+  var conflict = window.CurvaGuidedSync.conflictPanel(root, {
+    sync: sync, outbox: outbox, scope: scope, status: status, focus: focus, newId: newId,
+    request: request, drain: drain, snapshot: snapshot, minimize: function () { minimize(); },
+    activate: function (session) { activate(session); },
   });
 
   /* ---------- ficha do dia ---------- */
@@ -461,6 +400,9 @@
         label: card.dataset.movementLabel || (heading ? heading.textContent.trim() : 'Exercício'),
         referenceUrl: card.dataset.referenceUrl || '',
         rirSpec: card.dataset.rirSpec || '',
+        supersetGroup: card.dataset.guidedSupersetGroup || '',
+        supersetOrder: Number(card.dataset.guidedSupersetOrder || 0),
+        supersetRestSeconds: Number(card.dataset.guidedSupersetRestSeconds || 105),
         loadKind: card.dataset.loadKind, loadStep: step,
         allowLoad: card.dataset.allowLoadRegistration !== 'false',
         series: series, freeform: series.length === 1 && series[0].role === 'legacy_unknown',
@@ -579,6 +521,9 @@
     startButton.disabled = true;
     ended = null;
     screen = 'exercise';
+    // Ainda dentro do toque: o iOS só libera o áudio assim.
+    voiceDo('unlock');
+    coach.precache(preview);
     var startPayload = {
       action: 'start', day_id: dayId, start_key: id,
       program_version: root.dataset.programVersion, local_session_id: id,
@@ -601,7 +546,11 @@
       });
       return Promise.race([started, timeout]);
     }).then(function (outcome) {
-      if (outcome.session) { activate(outcome.session, { open: true }); return; }
+      if (outcome.session) {
+        activate(outcome.session, { open: true });
+        voiceDo('started', project().current);
+        return;
+      }
       var error = outcome.error;
       if (!error.retryable || !outbox || !scope || !root.dataset.programVersion) {
         focus.close();
@@ -615,6 +564,7 @@
           session_id: id, day_id: dayId, program_version: root.dataset.programVersion,
           started_at: new Date().toISOString(), recorded: [], skipped: [],
         }, { open: true });
+        voiceDo('started', project().current);
         status.textContent = 'Treino iniciado neste aparelho. O início será confirmado ao voltar a conexão.';
         if (navigator.onLine) setTimeout(drain, 5000);
       }).catch(function () {
@@ -666,11 +616,17 @@
     lastFreeformIndex = step.movement.freeform ? step.movementIndex : null;
     lastSkipped = null;
     receiptKey = setKey;
+    if (step.movement.supersetGroup) focusIndex = null;
     clearFocusIfDone();
-    var restSeconds = step.series.rest_seconds == null ? 90 : Number(step.series.rest_seconds);
+    var restSeconds = window.CurvaGuidedState.supersetRest(step, project().next);
+    if (restSeconds == null) restSeconds = step.series.rest_seconds == null ? 90 : Number(step.series.rest_seconds);
     if (!project().next) { skipRest(); screen = 'summary'; }
     else if (restSeconds > 0) { startRest(restSeconds); screen = 'rest'; }
     else { skipRest(); screen = 'exercise'; }
+    voiceDo('setRecorded', {
+      step: step, next: project().next, restSeconds: screen === 'rest' ? restSeconds : 0,
+      superset: !!step.movement.supersetGroup && screen === 'exercise',
+    });
     render();
     focus.announce(screen === 'rest'
       ? 'Série registrada. Descanso de ' + format.spokenDuration(restSeconds) + '.'
@@ -692,7 +648,8 @@
       setSync.delete(setKey);
       if (receiptKey === setKey) { receiptKey = null; skipRest(); }
       var next = project().next;
-      focusIndex = next && next.movementIndex === step.movementIndex ? null : step.movementIndex;
+      focusIndex = step.movement.supersetGroup || (next && next.movementIndex === step.movementIndex)
+        ? null : step.movementIndex;
       screen = 'exercise';
       status.textContent = error.message;
       render();
@@ -711,11 +668,16 @@
     }).then(function (result) {
       lastSkipped = setKey;
       skipped.add(setKey);
+      if (step.movement.supersetGroup) focusIndex = null;
       clearFocusIfDone();
       status.textContent = waitsForNetwork(result)
         ? 'Pulo salvo neste aparelho; ainda não confirmado no Curva.'
         : (step.series.required ? 'Série pulada. Encerre como parcial para registrar o treino.' : 'Série opcional pulada.');
-      screen = nextScreenAfterSet();
+      var restSeconds = window.CurvaGuidedState.supersetRest(step, project().next);
+      if (!project().next) { skipRest(); screen = 'summary'; }
+      else if (restSeconds > 0) { startRest(restSeconds); screen = 'rest'; }
+      else if (restSeconds === 0) { skipRest(); screen = 'exercise'; }
+      else screen = 'exercise'; // fora de bi-set, pular não abre descanso
       render();
       focus.toast('Série pulada', 'Desfazer', undoSkip);
       return snapshot();
@@ -740,7 +702,8 @@
     unskip(setKey).then(function (result) {
       var movementIndex = Number(setKey.split(':')[0]);
       var next = project().next;
-      focusIndex = next && next.movementIndex === movementIndex ? null : movementIndex;
+      focusIndex = movements[movementIndex] && movements[movementIndex].supersetGroup
+        ? null : (next && next.movementIndex === movementIndex ? null : movementIndex);
       screen = 'exercise';
       status.textContent = waitsForNetwork(result) ? 'Desfazer salvo neste aparelho; envio pendente.' : 'Série disponível novamente.';
       render();
@@ -794,6 +757,7 @@
     deliver({ action: outcome, session_id: sessionId }).then(function (result) {
       var titles = { complete: 'Treino registrado no Curva', partial: 'Treino parcial registrado', cancel: 'Sessão cancelada' };
       stopRest();
+      voiceDo('finished', outcome);
       stored(sessionStorage, 'removeItem', startKey(selectedDayId()));
       ended = {
         outcome: outcome,
@@ -850,6 +814,7 @@
   on('skip-set', skipSet);
   on('skip-rest', function () {
     skipRest();
+    voiceDo('restSkipped');
     screen = nextScreenAfterSet();
     render();
     focus.announce('Descanso pulado');

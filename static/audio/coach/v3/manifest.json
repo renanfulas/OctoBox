@@ -1,0 +1,7698 @@
+{
+ "version": 3,
+ "voice": {
+  "engine": "voicestudio",
+  "profile_id": "4db30ba2",
+  "language": "pt",
+  "speed": 0.88,
+  "steps": 64,
+  "seed": 42,
+  "master": "wav_f32",
+  "delivery": "mp3_mono_96k"
+ },
+ "beep": "bip.mp3",
+ "tick": "tick.mp3",
+ "go": "go.mp3",
+ "clips": {
+  "workout_start__v1": {
+   "event": "workout_start",
+   "variant": 1,
+   "text": "Bora começar. Eu vou te guiando série por série, é só seguir a minha voz.",
+   "file": "workout_start__v1.mp3",
+   "hash": "2cd0b4f6adb5a66e",
+   "duration_s": 5.34,
+   "qa": 1.0
+  },
+  "workout_start__v2": {
+   "event": "workout_start",
+   "variant": 2,
+   "text": "Treino de hoje começando. Fica comigo que eu te falo tudo na hora certa.",
+   "file": "workout_start__v2.mp3",
+   "hash": "0c24260e2d59f32f",
+   "duration_s": 5.44,
+   "qa": 1.0
+  },
+  "exercise_start__v1": {
+   "event": "exercise_start",
+   "variant": 1,
+   "text": "Próximo exercício. Ajeita o equipamento com calma.",
+   "file": "exercise_start__v1.mp3",
+   "hash": "3e0b1654584da2fc",
+   "duration_s": 3.81,
+   "qa": 1.0
+  },
+  "exercise_start__v2": {
+   "event": "exercise_start",
+   "variant": 2,
+   "text": "Vamos pro próximo exercício. Se posiciona antes de começar.",
+   "file": "exercise_start__v2.mp3",
+   "hash": "24951901712c55cc",
+   "duration_s": 4.48,
+   "qa": 0.89
+  },
+  "set_prep__v1": {
+   "event": "set_prep",
+   "variant": 1,
+   "text": "Série preparatória. Pega o equipamento, sem peso. Movimento controlado, só aquecendo.",
+   "file": "set_prep__v1.mp3",
+   "hash": "7762f846382829ce",
+   "duration_s": 6.6,
+   "qa": 1.0
+  },
+  "set_prep__v2": {
+   "event": "set_prep",
+   "variant": 2,
+   "text": "Preparatória agora. Leve, sem carga. É pra acordar o músculo, não pra cansar.",
+   "file": "set_prep__v2.mp3",
+   "hash": "796534ee1a14c2b0",
+   "duration_s": 6.0,
+   "qa": 0.92
+  },
+  "set_prep_loaded__v1": {
+   "event": "set_prep_loaded",
+   "variant": 1,
+   "text": "Série preparatória. Carga leve, movimento controlado.",
+   "file": "set_prep_loaded__v1.mp3",
+   "hash": "da39e5392eab42a0",
+   "duration_s": 4.04,
+   "qa": 1.0
+  },
+  "set_prep_loaded__v2": {
+   "event": "set_prep_loaded",
+   "variant": 2,
+   "text": "Preparatória agora. Peso leve, só pra aquecer o movimento.",
+   "file": "set_prep_loaded__v2.mp3",
+   "hash": "928ba76b2998a6b2",
+   "duration_s": 4.35,
+   "qa": 0.78
+  },
+  "set_feeder__v1": {
+   "event": "set_feeder",
+   "variant": 1,
+   "text": "Série de aproximação. Sente a carga, sem forçar.",
+   "file": "set_feeder__v1.mp3",
+   "hash": "2abfcd58cc3c4e52",
+   "duration_s": 3.7,
+   "qa": 1.0
+  },
+  "set_feeder__v2": {
+   "event": "set_feeder",
+   "variant": 2,
+   "text": "Agora a aproximação. É pra sentir o peso, não pra cansar.",
+   "file": "set_feeder__v2.mp3",
+   "hash": "ca40fdad951c3914",
+   "duration_s": 4.09,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "set_top__kg1": {
+   "event": "set_top",
+   "kg": 1,
+   "text": "Agora é a top set. Um quilo. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg1.mp3",
+   "hash": "550a0408772da75f",
+   "duration_s": 5.08,
+   "qa": 0.86
+  },
+  "set_top__kg2": {
+   "event": "set_top",
+   "kg": 2,
+   "text": "Agora é a top set. Dois quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg2.mp3",
+   "hash": "f6c0392cc626f457",
+   "duration_s": 5.42,
+   "qa": 0.93
+  },
+  "set_top__kg2_5": {
+   "event": "set_top",
+   "kg": 2.5,
+   "text": "Agora é a top set. Dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg2_5.mp3",
+   "hash": "149d25b02c4e4bb0",
+   "duration_s": 5.81,
+   "qa": 0.93
+  },
+  "set_top__kg3": {
+   "event": "set_top",
+   "kg": 3,
+   "text": "Agora é a top set. Três quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg3.mp3",
+   "hash": "70de2c59554093d3",
+   "duration_s": 5.19,
+   "qa": 0.93
+  },
+  "set_top__kg4": {
+   "event": "set_top",
+   "kg": 4,
+   "text": "Agora é a top set. Quatro quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg4.mp3",
+   "hash": "e428410ef5f53a29",
+   "duration_s": 5.49,
+   "qa": 0.93
+  },
+  "set_top__kg5": {
+   "event": "set_top",
+   "kg": 5,
+   "text": "Agora é a top set. Cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg5.mp3",
+   "hash": "01a2dfaa4f6ce62c",
+   "duration_s": 5.59,
+   "qa": 0.93
+  },
+  "set_top__kg6": {
+   "event": "set_top",
+   "kg": 6,
+   "text": "Agora é a top set. Seis quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg6.mp3",
+   "hash": "3b1db7daeb90cc1a",
+   "duration_s": 5.13,
+   "qa": 0.93
+  },
+  "set_top__kg7": {
+   "event": "set_top",
+   "kg": 7,
+   "text": "Agora é a top set. Sete quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg7.mp3",
+   "hash": "43745ba82e4d4fde",
+   "duration_s": 5.21,
+   "qa": 0.93
+  },
+  "set_top__kg7_5": {
+   "event": "set_top",
+   "kg": 7.5,
+   "text": "Agora é a top set. Sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg7_5.mp3",
+   "hash": "affdd5dec36778d2",
+   "duration_s": 5.79,
+   "qa": 0.93
+  },
+  "set_top__kg8": {
+   "event": "set_top",
+   "kg": 8,
+   "text": "Agora é a top set. Oito quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg8.mp3",
+   "hash": "24406856d668811a",
+   "duration_s": 5.35,
+   "qa": 0.93
+  },
+  "set_top__kg9": {
+   "event": "set_top",
+   "kg": 9,
+   "text": "Agora é a top set. Nove quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg9.mp3",
+   "hash": "04cda1387d448e17",
+   "duration_s": 5.48,
+   "qa": 0.93
+  },
+  "set_top__kg10": {
+   "event": "set_top",
+   "kg": 10,
+   "text": "Agora é a top set. Dez quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg10.mp3",
+   "hash": "0e5156b6dcdddb5e",
+   "duration_s": 5.42,
+   "qa": 0.93
+  },
+  "set_top__kg11": {
+   "event": "set_top",
+   "kg": 11,
+   "text": "Agora é a top set. Onze quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg11.mp3",
+   "hash": "bd1f834689bff67c",
+   "duration_s": 5.38,
+   "qa": 0.93
+  },
+  "set_top__kg12": {
+   "event": "set_top",
+   "kg": 12,
+   "text": "Agora é a top set. Doze quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg12.mp3",
+   "hash": "9bf3d22b6d9b37c7",
+   "duration_s": 5.07,
+   "qa": 0.93
+  },
+  "set_top__kg12_5": {
+   "event": "set_top",
+   "kg": 12.5,
+   "text": "Agora é a top set. Doze quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg12_5.mp3",
+   "hash": "3cd0ff86fe38ade4",
+   "duration_s": 5.78,
+   "qa": 0.93
+  },
+  "set_top__kg13": {
+   "event": "set_top",
+   "kg": 13,
+   "text": "Agora é a top set. Treze quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg13.mp3",
+   "hash": "ea7e39641c3cf206",
+   "duration_s": 5.53,
+   "qa": 0.93
+  },
+  "set_top__kg14": {
+   "event": "set_top",
+   "kg": 14,
+   "text": "Agora é a top set. Catorze quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg14.mp3",
+   "hash": "94813e626ef92e41",
+   "duration_s": 5.89,
+   "qa": 0.93
+  },
+  "set_top__kg15": {
+   "event": "set_top",
+   "kg": 15,
+   "text": "Agora é a top set. Quinze quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg15.mp3",
+   "hash": "a608dbbcad5fc233",
+   "duration_s": 5.51,
+   "qa": 0.93
+  },
+  "set_top__kg16": {
+   "event": "set_top",
+   "kg": 16,
+   "text": "Agora é a top set. Dezesseis quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg16.mp3",
+   "hash": "fbe3b6996e0e600c",
+   "duration_s": 5.89,
+   "qa": 0.93
+  },
+  "set_top__kg17": {
+   "event": "set_top",
+   "kg": 17,
+   "text": "Agora é a top set. Dezessete quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg17.mp3",
+   "hash": "8be3ddd6dd787371",
+   "duration_s": 5.73,
+   "qa": 0.86
+  },
+  "set_top__kg17_5": {
+   "event": "set_top",
+   "kg": 17.5,
+   "text": "Agora é a top set. Dezessete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg17_5.mp3",
+   "hash": "27d7537c655047b0",
+   "duration_s": 6.18,
+   "qa": 0.93
+  },
+  "set_top__kg18": {
+   "event": "set_top",
+   "kg": 18,
+   "text": "Agora é a top set. Dezoito quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg18.mp3",
+   "hash": "23302c1a2ae99dfb",
+   "duration_s": 5.76,
+   "qa": 0.93
+  },
+  "set_top__kg19": {
+   "event": "set_top",
+   "kg": 19,
+   "text": "Agora é a top set. Dezenove quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg19.mp3",
+   "hash": "e948ad18dce7423d",
+   "duration_s": 5.56,
+   "qa": 0.93
+  },
+  "set_top__kg20": {
+   "event": "set_top",
+   "kg": 20,
+   "text": "Agora é a top set. Vinte quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg20.mp3",
+   "hash": "49b021cb26c2ec4e",
+   "duration_s": 5.59,
+   "qa": 0.93
+  },
+  "set_top__kg21": {
+   "event": "set_top",
+   "kg": 21,
+   "text": "Agora é a top set. Vinte e um quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg21.mp3",
+   "hash": "13a1b3aff737bfe8",
+   "duration_s": 5.96,
+   "qa": 0.93
+  },
+  "set_top__kg22": {
+   "event": "set_top",
+   "kg": 22,
+   "text": "Agora é a top set. Vinte e dois quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg22.mp3",
+   "hash": "7ec34b9c63218e04",
+   "duration_s": 6.1,
+   "qa": 0.93
+  },
+  "set_top__kg22_5": {
+   "event": "set_top",
+   "kg": 22.5,
+   "text": "Agora é a top set. Vinte e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg22_5.mp3",
+   "hash": "08cef5a7d2430ff3",
+   "duration_s": 6.55,
+   "qa": 0.94
+  },
+  "set_top__kg23": {
+   "event": "set_top",
+   "kg": 23,
+   "text": "Agora é a top set. Vinte e três quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg23.mp3",
+   "hash": "769c30b4a9b1af0f",
+   "duration_s": 6.09,
+   "qa": 0.93
+  },
+  "set_top__kg24": {
+   "event": "set_top",
+   "kg": 24,
+   "text": "Agora é a top set. Vinte e quatro quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg24.mp3",
+   "hash": "584b5b6dd77bc9bc",
+   "duration_s": 6.03,
+   "qa": 0.93
+  },
+  "set_top__kg25": {
+   "event": "set_top",
+   "kg": 25,
+   "text": "Agora é a top set. Vinte e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg25.mp3",
+   "hash": "890d1b72b216c181",
+   "duration_s": 6.05,
+   "qa": 0.93
+  },
+  "set_top__kg26": {
+   "event": "set_top",
+   "kg": 26,
+   "text": "Agora é a top set. Vinte e seis quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg26.mp3",
+   "hash": "e5beb0413ead96c7",
+   "duration_s": 6.02,
+   "qa": 0.93
+  },
+  "set_top__kg27": {
+   "event": "set_top",
+   "kg": 27,
+   "text": "Agora é a top set. Vinte e sete quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg27.mp3",
+   "hash": "06888d39975aa155",
+   "duration_s": 6.02,
+   "qa": 0.93
+  },
+  "set_top__kg27_5": {
+   "event": "set_top",
+   "kg": 27.5,
+   "text": "Agora é a top set. Vinte e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg27_5.mp3",
+   "hash": "417d96a82265b3e2",
+   "duration_s": 6.52,
+   "qa": 0.94
+  },
+  "set_top__kg28": {
+   "event": "set_top",
+   "kg": 28,
+   "text": "Agora é a top set. Vinte e oito quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg28.mp3",
+   "hash": "2059039cb2c8c120",
+   "duration_s": 6.1,
+   "qa": 0.93
+  },
+  "set_top__kg29": {
+   "event": "set_top",
+   "kg": 29,
+   "text": "Agora é a top set. Vinte e nove quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg29.mp3",
+   "hash": "a878db4f91cb23bd",
+   "duration_s": 6.11,
+   "qa": 0.93
+  },
+  "set_top__kg30": {
+   "event": "set_top",
+   "kg": 30,
+   "text": "Agora é a top set. Trinta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg30.mp3",
+   "hash": "7f055c56047eaef8",
+   "duration_s": 5.46,
+   "qa": 0.93
+  },
+  "set_top__kg31": {
+   "event": "set_top",
+   "kg": 31,
+   "text": "Agora é a top set. Trinta e um quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg31.mp3",
+   "hash": "8f2dbff1f4bd8747",
+   "duration_s": 5.78,
+   "qa": 0.93
+  },
+  "set_top__kg32": {
+   "event": "set_top",
+   "kg": 32,
+   "text": "Agora é a top set. Trinta e dois quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg32.mp3",
+   "hash": "068e47770ba4a8f7",
+   "duration_s": 6.09,
+   "qa": 0.93
+  },
+  "set_top__kg32_5": {
+   "event": "set_top",
+   "kg": 32.5,
+   "text": "Agora é a top set. Trinta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg32_5.mp3",
+   "hash": "6ab0c215c93b05e0",
+   "duration_s": 6.26,
+   "qa": 0.94
+  },
+  "set_top__kg33": {
+   "event": "set_top",
+   "kg": 33,
+   "text": "Agora é a top set. Trinta e três quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg33.mp3",
+   "hash": "13b6685c07717ff7",
+   "duration_s": 6.13,
+   "qa": 0.93
+  },
+  "set_top__kg34": {
+   "event": "set_top",
+   "kg": 34,
+   "text": "Agora é a top set. Trinta e quatro quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg34.mp3",
+   "hash": "79ab1246a81ebe4e",
+   "duration_s": 5.95,
+   "qa": 0.93
+  },
+  "set_top__kg35": {
+   "event": "set_top",
+   "kg": 35,
+   "text": "Agora é a top set. Trinta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg35.mp3",
+   "hash": "64efb5ec3db3cffa",
+   "duration_s": 5.97,
+   "qa": 0.93
+  },
+  "set_top__kg36": {
+   "event": "set_top",
+   "kg": 36,
+   "text": "Agora é a top set. Trinta e seis quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg36.mp3",
+   "hash": "279a310114f52f81",
+   "duration_s": 5.87,
+   "qa": 0.93
+  },
+  "set_top__kg37": {
+   "event": "set_top",
+   "kg": 37,
+   "text": "Agora é a top set. Trinta e sete quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg37.mp3",
+   "hash": "a8ae264b8c13cce5",
+   "duration_s": 6.05,
+   "qa": 0.93
+  },
+  "set_top__kg37_5": {
+   "event": "set_top",
+   "kg": 37.5,
+   "text": "Agora é a top set. Trinta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg37_5.mp3",
+   "hash": "d9c949a27a82ae0b",
+   "duration_s": 6.34,
+   "qa": 0.94
+  },
+  "set_top__kg38": {
+   "event": "set_top",
+   "kg": 38,
+   "text": "Agora é a top set. Trinta e oito quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg38.mp3",
+   "hash": "ffb039fa2e6815f4",
+   "duration_s": 5.87,
+   "qa": 0.93
+  },
+  "set_top__kg39": {
+   "event": "set_top",
+   "kg": 39,
+   "text": "Agora é a top set. Trinta e nove quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg39.mp3",
+   "hash": "58717f9794fa6795",
+   "duration_s": 6.2,
+   "qa": 0.93
+  },
+  "set_top__kg40": {
+   "event": "set_top",
+   "kg": 40,
+   "text": "Agora é a top set. Quarenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg40.mp3",
+   "hash": "b3f02aadeb899a45",
+   "duration_s": 5.98,
+   "qa": 0.93
+  },
+  "set_top__kg42_5": {
+   "event": "set_top",
+   "kg": 42.5,
+   "text": "Agora é a top set. Quarenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg42_5.mp3",
+   "hash": "08a7bf6575fcff08",
+   "duration_s": 6.86,
+   "qa": 0.94
+  },
+  "set_top__kg45": {
+   "event": "set_top",
+   "kg": 45.0,
+   "text": "Agora é a top set. Quarenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg45.mp3",
+   "hash": "45186f98f3000edc",
+   "duration_s": 6.28,
+   "qa": 0.93
+  },
+  "set_top__kg47_5": {
+   "event": "set_top",
+   "kg": 47.5,
+   "text": "Agora é a top set. Quarenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg47_5.mp3",
+   "hash": "c18540993767b962",
+   "duration_s": 6.83,
+   "qa": 0.94
+  },
+  "set_top__kg50": {
+   "event": "set_top",
+   "kg": 50.0,
+   "text": "Agora é a top set. Cinquenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg50.mp3",
+   "hash": "922a023891c17784",
+   "duration_s": 5.97,
+   "qa": 0.93
+  },
+  "set_top__kg52_5": {
+   "event": "set_top",
+   "kg": 52.5,
+   "text": "Agora é a top set. Cinquenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg52_5.mp3",
+   "hash": "1ff5d3b2c661f2b7",
+   "duration_s": 6.86,
+   "qa": 0.94
+  },
+  "set_top__kg55": {
+   "event": "set_top",
+   "kg": 55.0,
+   "text": "Agora é a top set. Cinquenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg55.mp3",
+   "hash": "aa09e849c246d78f",
+   "duration_s": 6.55,
+   "qa": 0.93
+  },
+  "set_top__kg57_5": {
+   "event": "set_top",
+   "kg": 57.5,
+   "text": "Agora é a top set. Cinquenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg57_5.mp3",
+   "hash": "8588278cee201c2c",
+   "duration_s": 6.77,
+   "qa": 0.94
+  },
+  "set_top__kg60": {
+   "event": "set_top",
+   "kg": 60.0,
+   "text": "Agora é a top set. Sessenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg60.mp3",
+   "hash": "c5e5a5c7ebf35662",
+   "duration_s": 5.98,
+   "qa": 0.93
+  },
+  "set_top__kg62_5": {
+   "event": "set_top",
+   "kg": 62.5,
+   "text": "Agora é a top set. Sessenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg62_5.mp3",
+   "hash": "c415787a144e21b2",
+   "duration_s": 6.8,
+   "qa": 0.94
+  },
+  "set_top__kg65": {
+   "event": "set_top",
+   "kg": 65.0,
+   "text": "Agora é a top set. Sessenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg65.mp3",
+   "hash": "601ec664f274b1d8",
+   "duration_s": 5.96,
+   "qa": 0.93
+  },
+  "set_top__kg67_5": {
+   "event": "set_top",
+   "kg": 67.5,
+   "text": "Agora é a top set. Sessenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg67_5.mp3",
+   "hash": "dd9f6dafe8ee51e0",
+   "duration_s": 6.92,
+   "qa": 0.94
+  },
+  "set_top__kg70": {
+   "event": "set_top",
+   "kg": 70.0,
+   "text": "Agora é a top set. Setenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg70.mp3",
+   "hash": "8b85fbd9499ee0f2",
+   "duration_s": 5.73,
+   "qa": 0.93
+  },
+  "set_top__kg72_5": {
+   "event": "set_top",
+   "kg": 72.5,
+   "text": "Agora é a top set. Setenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg72_5.mp3",
+   "hash": "0fbca97844bb003d",
+   "duration_s": 6.64,
+   "qa": 0.94
+  },
+  "set_top__kg75": {
+   "event": "set_top",
+   "kg": 75.0,
+   "text": "Agora é a top set. Setenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg75.mp3",
+   "hash": "5eb5e2fe31726053",
+   "duration_s": 6.08,
+   "qa": 0.93
+  },
+  "set_top__kg77_5": {
+   "event": "set_top",
+   "kg": 77.5,
+   "text": "Agora é a top set. Setenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg77_5.mp3",
+   "hash": "c5a3d5407bdedeee",
+   "duration_s": 6.8,
+   "qa": 0.94
+  },
+  "set_top__kg80": {
+   "event": "set_top",
+   "kg": 80.0,
+   "text": "Agora é a top set. Oitenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg80.mp3",
+   "hash": "a81d412277e880d7",
+   "duration_s": 5.83,
+   "qa": 0.93
+  },
+  "set_top__kg82_5": {
+   "event": "set_top",
+   "kg": 82.5,
+   "text": "Agora é a top set. Oitenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg82_5.mp3",
+   "hash": "f1f1e1d500b74819",
+   "duration_s": 6.76,
+   "qa": 0.94
+  },
+  "set_top__kg85": {
+   "event": "set_top",
+   "kg": 85.0,
+   "text": "Agora é a top set. Oitenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg85.mp3",
+   "hash": "a1a8426eefec0089",
+   "duration_s": 5.86,
+   "qa": 0.93
+  },
+  "set_top__kg87_5": {
+   "event": "set_top",
+   "kg": 87.5,
+   "text": "Agora é a top set. Oitenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg87_5.mp3",
+   "hash": "690907951bd31f9c",
+   "duration_s": 6.62,
+   "qa": 0.94
+  },
+  "set_top__kg90": {
+   "event": "set_top",
+   "kg": 90.0,
+   "text": "Agora é a top set. Noventa quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg90.mp3",
+   "hash": "c545552c1e776274",
+   "duration_s": 5.71,
+   "qa": 0.93
+  },
+  "set_top__kg92_5": {
+   "event": "set_top",
+   "kg": 92.5,
+   "text": "Agora é a top set. Noventa e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg92_5.mp3",
+   "hash": "50f919a0031e93d9",
+   "duration_s": 6.86,
+   "qa": 0.94
+  },
+  "set_top__kg95": {
+   "event": "set_top",
+   "kg": 95.0,
+   "text": "Agora é a top set. Noventa e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg95.mp3",
+   "hash": "7320d919e79aaedb",
+   "duration_s": 6.08,
+   "qa": 0.93
+  },
+  "set_top__kg97_5": {
+   "event": "set_top",
+   "kg": 97.5,
+   "text": "Agora é a top set. Noventa e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg97_5.mp3",
+   "hash": "6dda4782f306c4ae",
+   "duration_s": 6.68,
+   "qa": 0.94
+  },
+  "set_top__kg100": {
+   "event": "set_top",
+   "kg": 100.0,
+   "text": "Agora é a top set. Cem quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg100.mp3",
+   "hash": "fcb7ec51aaffb6b1",
+   "duration_s": 5.18,
+   "qa": 0.93
+  },
+  "set_top__kg102_5": {
+   "event": "set_top",
+   "kg": 102.5,
+   "text": "Agora é a top set. Cento e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg102_5.mp3",
+   "hash": "4decca468a9d780c",
+   "duration_s": 6.52,
+   "qa": 0.94
+  },
+  "set_top__kg105": {
+   "event": "set_top",
+   "kg": 105.0,
+   "text": "Agora é a top set. Cento e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg105.mp3",
+   "hash": "b19563932679bf9e",
+   "duration_s": 6.01,
+   "qa": 0.93
+  },
+  "set_top__kg107_5": {
+   "event": "set_top",
+   "kg": 107.5,
+   "text": "Agora é a top set. Cento e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg107_5.mp3",
+   "hash": "3cb5d0ee3ceb8a35",
+   "duration_s": 6.46,
+   "qa": 0.94
+  },
+  "set_top__kg110": {
+   "event": "set_top",
+   "kg": 110.0,
+   "text": "Agora é a top set. Cento e dez quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg110.mp3",
+   "hash": "15493d43ce8eeed6",
+   "duration_s": 5.73,
+   "qa": 0.93
+  },
+  "set_top__kg112_5": {
+   "event": "set_top",
+   "kg": 112.5,
+   "text": "Agora é a top set. Cento e doze quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg112_5.mp3",
+   "hash": "9fbb71990b6f6715",
+   "duration_s": 6.43,
+   "qa": 0.94
+  },
+  "set_top__kg115": {
+   "event": "set_top",
+   "kg": 115.0,
+   "text": "Agora é a top set. Cento e quinze quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg115.mp3",
+   "hash": "7a4ff8f7d127000b",
+   "duration_s": 5.93,
+   "qa": 0.93
+  },
+  "set_top__kg117_5": {
+   "event": "set_top",
+   "kg": 117.5,
+   "text": "Agora é a top set. Cento e dezessete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg117_5.mp3",
+   "hash": "62b6a6b6321c88bb",
+   "duration_s": 6.97,
+   "qa": 0.94
+  },
+  "set_top__kg120": {
+   "event": "set_top",
+   "kg": 120.0,
+   "text": "Agora é a top set. Cento e vinte quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg120.mp3",
+   "hash": "27e1ea0d302052f8",
+   "duration_s": 6.08,
+   "qa": 0.93
+  },
+  "set_top__kg122_5": {
+   "event": "set_top",
+   "kg": 122.5,
+   "text": "Agora é a top set. Cento e vinte e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg122_5.mp3",
+   "hash": "8c0074d610301bf7",
+   "duration_s": 7.17,
+   "qa": 0.94
+  },
+  "set_top__kg125": {
+   "event": "set_top",
+   "kg": 125.0,
+   "text": "Agora é a top set. Cento e vinte e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg125.mp3",
+   "hash": "017c1163756069cc",
+   "duration_s": 6.81,
+   "qa": 0.94
+  },
+  "set_top__kg127_5": {
+   "event": "set_top",
+   "kg": 127.5,
+   "text": "Agora é a top set. Cento e vinte e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg127_5.mp3",
+   "hash": "b573ef8821c44a79",
+   "duration_s": 7.09,
+   "qa": 0.94
+  },
+  "set_top__kg130": {
+   "event": "set_top",
+   "kg": 130.0,
+   "text": "Agora é a top set. Cento e trinta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg130.mp3",
+   "hash": "7e3553a8e74829a0",
+   "duration_s": 5.93,
+   "qa": 0.93
+  },
+  "set_top__kg132_5": {
+   "event": "set_top",
+   "kg": 132.5,
+   "text": "Agora é a top set. Cento e trinta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg132_5.mp3",
+   "hash": "4cfde7290fe2b295",
+   "duration_s": 7.02,
+   "qa": 0.94
+  },
+  "set_top__kg135": {
+   "event": "set_top",
+   "kg": 135.0,
+   "text": "Agora é a top set. Cento e trinta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg135.mp3",
+   "hash": "93c78d20851e78bf",
+   "duration_s": 6.76,
+   "qa": 0.94
+  },
+  "set_top__kg137_5": {
+   "event": "set_top",
+   "kg": 137.5,
+   "text": "Agora é a top set. Cento e trinta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg137_5.mp3",
+   "hash": "91be932ddfccaf76",
+   "duration_s": 7.03,
+   "qa": 0.94
+  },
+  "set_top__kg140": {
+   "event": "set_top",
+   "kg": 140.0,
+   "text": "Agora é a top set. Cento e quarenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg140.mp3",
+   "hash": "9eb988c47b296fb1",
+   "duration_s": 6.29,
+   "qa": 0.93
+  },
+  "set_top__kg142_5": {
+   "event": "set_top",
+   "kg": 142.5,
+   "text": "Agora é a top set. Cento e quarenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg142_5.mp3",
+   "hash": "847678a1bd0593e2",
+   "duration_s": 7.47,
+   "qa": 0.94
+  },
+  "set_top__kg145": {
+   "event": "set_top",
+   "kg": 145.0,
+   "text": "Agora é a top set. Cento e quarenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg145.mp3",
+   "hash": "dffb4aacd13323eb",
+   "duration_s": 6.91,
+   "qa": 0.94
+  },
+  "set_top__kg147_5": {
+   "event": "set_top",
+   "kg": 147.5,
+   "text": "Agora é a top set. Cento e quarenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg147_5.mp3",
+   "hash": "1487308ca96b89a1",
+   "duration_s": 7.52,
+   "qa": 0.94
+  },
+  "set_top__kg150": {
+   "event": "set_top",
+   "kg": 150.0,
+   "text": "Agora é a top set. Cento e cinquenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg150.mp3",
+   "hash": "10baad8f96517f19",
+   "duration_s": 6.16,
+   "qa": 0.93
+  },
+  "set_top__kg152_5": {
+   "event": "set_top",
+   "kg": 152.5,
+   "text": "Agora é a top set. Cento e cinquenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg152_5.mp3",
+   "hash": "a3938d03c32f34fc",
+   "duration_s": 7.66,
+   "qa": 0.94
+  },
+  "set_top__kg155": {
+   "event": "set_top",
+   "kg": 155.0,
+   "text": "Agora é a top set. Cento e cinquenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg155.mp3",
+   "hash": "368ceb02eb052e44",
+   "duration_s": 7.08,
+   "qa": 0.94
+  },
+  "set_top__kg157_5": {
+   "event": "set_top",
+   "kg": 157.5,
+   "text": "Agora é a top set. Cento e cinquenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg157_5.mp3",
+   "hash": "a5634f0719a57723",
+   "duration_s": 7.54,
+   "qa": 0.94
+  },
+  "set_top__kg160": {
+   "event": "set_top",
+   "kg": 160.0,
+   "text": "Agora é a top set. Cento e sessenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg160.mp3",
+   "hash": "adc4a88dbb124d75",
+   "duration_s": 6.4,
+   "qa": 0.93
+  },
+  "set_top__kg162_5": {
+   "event": "set_top",
+   "kg": 162.5,
+   "text": "Agora é a top set. Cento e sessenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg162_5.mp3",
+   "hash": "7bb473e35bea2ebe",
+   "duration_s": 7.59,
+   "qa": 0.94
+  },
+  "set_top__kg165": {
+   "event": "set_top",
+   "kg": 165.0,
+   "text": "Agora é a top set. Cento e sessenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg165.mp3",
+   "hash": "4767dcc4c0079147",
+   "duration_s": 6.94,
+   "qa": 0.94
+  },
+  "set_top__kg167_5": {
+   "event": "set_top",
+   "kg": 167.5,
+   "text": "Agora é a top set. Cento e sessenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg167_5.mp3",
+   "hash": "1acb97f6afa61507",
+   "duration_s": 7.57,
+   "qa": 0.94
+  },
+  "set_top__kg170": {
+   "event": "set_top",
+   "kg": 170.0,
+   "text": "Agora é a top set. Cento e setenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg170.mp3",
+   "hash": "b3ab94456edb9ed9",
+   "duration_s": 6.07,
+   "qa": 0.93
+  },
+  "set_top__kg172_5": {
+   "event": "set_top",
+   "kg": 172.5,
+   "text": "Agora é a top set. Cento e setenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg172_5.mp3",
+   "hash": "75e59ccd31a7d73d",
+   "duration_s": 7.43,
+   "qa": 0.94
+  },
+  "set_top__kg175": {
+   "event": "set_top",
+   "kg": 175.0,
+   "text": "Agora é a top set. Cento e setenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg175.mp3",
+   "hash": "772a2e95b3b4cab3",
+   "duration_s": 7.0,
+   "qa": 0.94
+  },
+  "set_top__kg177_5": {
+   "event": "set_top",
+   "kg": 177.5,
+   "text": "Agora é a top set. Cento e setenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg177_5.mp3",
+   "hash": "3d903834f27c819b",
+   "duration_s": 7.47,
+   "qa": 0.94
+  },
+  "set_top__kg180": {
+   "event": "set_top",
+   "kg": 180.0,
+   "text": "Agora é a top set. Cento e oitenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg180.mp3",
+   "hash": "7e1df585f9cdef9f",
+   "duration_s": 5.83,
+   "qa": 0.93
+  },
+  "set_top__kg182_5": {
+   "event": "set_top",
+   "kg": 182.5,
+   "text": "Agora é a top set. Cento e oitenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg182_5.mp3",
+   "hash": "fbb367cc096ff8f1",
+   "duration_s": 7.44,
+   "qa": 0.94
+  },
+  "set_top__kg185": {
+   "event": "set_top",
+   "kg": 185.0,
+   "text": "Agora é a top set. Cento e oitenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg185.mp3",
+   "hash": "9c5f2be3632f4de6",
+   "duration_s": 6.89,
+   "qa": 0.94
+  },
+  "set_top__kg187_5": {
+   "event": "set_top",
+   "kg": 187.5,
+   "text": "Agora é a top set. Cento e oitenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg187_5.mp3",
+   "hash": "a858a0b7060f0178",
+   "duration_s": 7.43,
+   "qa": 0.94
+  },
+  "set_top__kg190": {
+   "event": "set_top",
+   "kg": 190.0,
+   "text": "Agora é a top set. Cento e noventa quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg190.mp3",
+   "hash": "d225747162933c38",
+   "duration_s": 6.03,
+   "qa": 0.93
+  },
+  "set_top__kg192_5": {
+   "event": "set_top",
+   "kg": 192.5,
+   "text": "Agora é a top set. Cento e noventa e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg192_5.mp3",
+   "hash": "9d1cd122926c4b7c",
+   "duration_s": 7.32,
+   "qa": 0.94
+  },
+  "set_top__kg195": {
+   "event": "set_top",
+   "kg": 195.0,
+   "text": "Agora é a top set. Cento e noventa e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg195.mp3",
+   "hash": "04dbff79b030d569",
+   "duration_s": 7.08,
+   "qa": 0.94
+  },
+  "set_top__kg197_5": {
+   "event": "set_top",
+   "kg": 197.5,
+   "text": "Agora é a top set. Cento e noventa e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg197_5.mp3",
+   "hash": "3850987805eade01",
+   "duration_s": 7.5,
+   "qa": 0.94
+  },
+  "set_top__kg200": {
+   "event": "set_top",
+   "kg": 200.0,
+   "text": "Agora é a top set. Duzentos quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg200.mp3",
+   "hash": "283e69230a95de73",
+   "duration_s": 5.72,
+   "qa": 0.93
+  },
+  "set_top__kg202_5": {
+   "event": "set_top",
+   "kg": 202.5,
+   "text": "Agora é a top set. Duzentos e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg202_5.mp3",
+   "hash": "276e03fbd70b6e40",
+   "duration_s": 6.88,
+   "qa": 0.94
+  },
+  "set_top__kg205": {
+   "event": "set_top",
+   "kg": 205.0,
+   "text": "Agora é a top set. Duzentos e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg205.mp3",
+   "hash": "b46ca2e149e8354e",
+   "duration_s": 6.38,
+   "qa": 0.93
+  },
+  "set_top__kg207_5": {
+   "event": "set_top",
+   "kg": 207.5,
+   "text": "Agora é a top set. Duzentos e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg207_5.mp3",
+   "hash": "54dfba3f7714d692",
+   "duration_s": 6.86,
+   "qa": 0.94
+  },
+  "set_top__kg210": {
+   "event": "set_top",
+   "kg": 210.0,
+   "text": "Agora é a top set. Duzentos e dez quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg210.mp3",
+   "hash": "6c163495e7072e63",
+   "duration_s": 6.18,
+   "qa": 0.93
+  },
+  "set_top__kg212_5": {
+   "event": "set_top",
+   "kg": 212.5,
+   "text": "Agora é a top set. Duzentos e doze quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg212_5.mp3",
+   "hash": "e960172c0877bc4f",
+   "duration_s": 6.85,
+   "qa": 0.94
+  },
+  "set_top__kg215": {
+   "event": "set_top",
+   "kg": 215.0,
+   "text": "Agora é a top set. Duzentos e quinze quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg215.mp3",
+   "hash": "9d99b1db8c55b328",
+   "duration_s": 6.57,
+   "qa": 0.93
+  },
+  "set_top__kg217_5": {
+   "event": "set_top",
+   "kg": 217.5,
+   "text": "Agora é a top set. Duzentos e dezessete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg217_5.mp3",
+   "hash": "15e7a6672d74b828",
+   "duration_s": 7.24,
+   "qa": 0.94
+  },
+  "set_top__kg220": {
+   "event": "set_top",
+   "kg": 220.0,
+   "text": "Agora é a top set. Duzentos e vinte quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg220.mp3",
+   "hash": "ef157ff3cfa29c00",
+   "duration_s": 5.96,
+   "qa": 0.93
+  },
+  "set_top__kg222_5": {
+   "event": "set_top",
+   "kg": 222.5,
+   "text": "Agora é a top set. Duzentos e vinte e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg222_5.mp3",
+   "hash": "d9face811751fed9",
+   "duration_s": 6.93,
+   "qa": 0.94
+  },
+  "set_top__kg225": {
+   "event": "set_top",
+   "kg": 225.0,
+   "text": "Agora é a top set. Duzentos e vinte e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg225.mp3",
+   "hash": "bc8dda9d739dc51c",
+   "duration_s": 7.06,
+   "qa": 0.94
+  },
+  "set_top__kg227_5": {
+   "event": "set_top",
+   "kg": 227.5,
+   "text": "Agora é a top set. Duzentos e vinte e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg227_5.mp3",
+   "hash": "51091f1762d38a8b",
+   "duration_s": 7.62,
+   "qa": 0.94
+  },
+  "set_top__kg230": {
+   "event": "set_top",
+   "kg": 230.0,
+   "text": "Agora é a top set. Duzentos e trinta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg230.mp3",
+   "hash": "f87eade9319945a6",
+   "duration_s": 6.51,
+   "qa": 0.93
+  },
+  "set_top__kg232_5": {
+   "event": "set_top",
+   "kg": 232.5,
+   "text": "Agora é a top set. Duzentos e trinta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg232_5.mp3",
+   "hash": "a162374a81998193",
+   "duration_s": 7.54,
+   "qa": 0.94
+  },
+  "set_top__kg235": {
+   "event": "set_top",
+   "kg": 235.0,
+   "text": "Agora é a top set. Duzentos e trinta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg235.mp3",
+   "hash": "453b5e09b23c0a42",
+   "duration_s": 7.01,
+   "qa": 0.94
+  },
+  "set_top__kg237_5": {
+   "event": "set_top",
+   "kg": 237.5,
+   "text": "Agora é a top set. Duzentos e trinta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg237_5.mp3",
+   "hash": "2eac9b849545865f",
+   "duration_s": 7.55,
+   "qa": 0.94
+  },
+  "set_top__kg240": {
+   "event": "set_top",
+   "kg": 240.0,
+   "text": "Agora é a top set. Duzentos e quarenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg240.mp3",
+   "hash": "4c75a3470d67abac",
+   "duration_s": 6.64,
+   "qa": 0.93
+  },
+  "set_top__kg242_5": {
+   "event": "set_top",
+   "kg": 242.5,
+   "text": "Agora é a top set. Duzentos e quarenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg242_5.mp3",
+   "hash": "b1c9f61bbeb162d2",
+   "duration_s": 7.68,
+   "qa": 0.94
+  },
+  "set_top__kg245": {
+   "event": "set_top",
+   "kg": 245.0,
+   "text": "Agora é a top set. Duzentos e quarenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg245.mp3",
+   "hash": "09794c57bfc20e20",
+   "duration_s": 7.21,
+   "qa": 0.94
+  },
+  "set_top__kg247_5": {
+   "event": "set_top",
+   "kg": 247.5,
+   "text": "Agora é a top set. Duzentos e quarenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg247_5.mp3",
+   "hash": "59b5d5a6247d2d05",
+   "duration_s": 7.68,
+   "qa": 0.94
+  },
+  "set_top__kg250": {
+   "event": "set_top",
+   "kg": 250.0,
+   "text": "Agora é a top set. Duzentos e cinquenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg250.mp3",
+   "hash": "1160328f43af5c35",
+   "duration_s": 6.85,
+   "qa": 0.93
+  },
+  "set_top__kg252_5": {
+   "event": "set_top",
+   "kg": 252.5,
+   "text": "Agora é a top set. Duzentos e cinquenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg252_5.mp3",
+   "hash": "c8443eb37c2b1948",
+   "duration_s": 7.7,
+   "qa": 0.94
+  },
+  "set_top__kg255": {
+   "event": "set_top",
+   "kg": 255.0,
+   "text": "Agora é a top set. Duzentos e cinquenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg255.mp3",
+   "hash": "2285990d6a82e24f",
+   "duration_s": 7.58,
+   "qa": 0.94
+  },
+  "set_top__kg257_5": {
+   "event": "set_top",
+   "kg": 257.5,
+   "text": "Agora é a top set. Duzentos e cinquenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg257_5.mp3",
+   "hash": "7424a7db4997736c",
+   "duration_s": 7.64,
+   "qa": 0.94
+  },
+  "set_top__kg260": {
+   "event": "set_top",
+   "kg": 260.0,
+   "text": "Agora é a top set. Duzentos e sessenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg260.mp3",
+   "hash": "fcc50bf3263fc0e0",
+   "duration_s": 6.47,
+   "qa": 0.93
+  },
+  "set_top__kg262_5": {
+   "event": "set_top",
+   "kg": 262.5,
+   "text": "Agora é a top set. Duzentos e sessenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg262_5.mp3",
+   "hash": "de8d57e6e7e8454c",
+   "duration_s": 7.59,
+   "qa": 0.94
+  },
+  "set_top__kg265": {
+   "event": "set_top",
+   "kg": 265.0,
+   "text": "Agora é a top set. Duzentos e sessenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg265.mp3",
+   "hash": "57168cc18a11af1f",
+   "duration_s": 7.17,
+   "qa": 0.94
+  },
+  "set_top__kg267_5": {
+   "event": "set_top",
+   "kg": 267.5,
+   "text": "Agora é a top set. Duzentos e sessenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg267_5.mp3",
+   "hash": "494b9eec78295ba3",
+   "duration_s": 7.69,
+   "qa": 0.94
+  },
+  "set_top__kg270": {
+   "event": "set_top",
+   "kg": 270.0,
+   "text": "Agora é a top set. Duzentos e setenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg270.mp3",
+   "hash": "1aaee4ee7601e855",
+   "duration_s": 6.81,
+   "qa": 0.93
+  },
+  "set_top__kg272_5": {
+   "event": "set_top",
+   "kg": 272.5,
+   "text": "Agora é a top set. Duzentos e setenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg272_5.mp3",
+   "hash": "451c3933b77e052a",
+   "duration_s": 7.23,
+   "qa": 0.94
+  },
+  "set_top__kg275": {
+   "event": "set_top",
+   "kg": 275.0,
+   "text": "Agora é a top set. Duzentos e setenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg275.mp3",
+   "hash": "2a5ac9be06e21d97",
+   "duration_s": 7.02,
+   "qa": 0.94
+  },
+  "set_top__kg277_5": {
+   "event": "set_top",
+   "kg": 277.5,
+   "text": "Agora é a top set. Duzentos e setenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg277_5.mp3",
+   "hash": "cffeba288f366999",
+   "duration_s": 7.63,
+   "qa": 0.94
+  },
+  "set_top__kg280": {
+   "event": "set_top",
+   "kg": 280.0,
+   "text": "Agora é a top set. Duzentos e oitenta quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg280.mp3",
+   "hash": "e663d17d97ebc8ac",
+   "duration_s": 6.62,
+   "qa": 0.93
+  },
+  "set_top__kg282_5": {
+   "event": "set_top",
+   "kg": 282.5,
+   "text": "Agora é a top set. Duzentos e oitenta e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg282_5.mp3",
+   "hash": "6785d02e0eb6034f",
+   "duration_s": 7.58,
+   "qa": 0.94
+  },
+  "set_top__kg285": {
+   "event": "set_top",
+   "kg": 285.0,
+   "text": "Agora é a top set. Duzentos e oitenta e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg285.mp3",
+   "hash": "2339cad567dbba3d",
+   "duration_s": 7.07,
+   "qa": 0.94
+  },
+  "set_top__kg287_5": {
+   "event": "set_top",
+   "kg": 287.5,
+   "text": "Agora é a top set. Duzentos e oitenta e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg287_5.mp3",
+   "hash": "37b93ed85b8f89b6",
+   "duration_s": 7.61,
+   "qa": 0.94
+  },
+  "set_top__kg290": {
+   "event": "set_top",
+   "kg": 290.0,
+   "text": "Agora é a top set. Duzentos e noventa quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg290.mp3",
+   "hash": "5c4b00d20f154ece",
+   "duration_s": 6.77,
+   "qa": 0.93
+  },
+  "set_top__kg292_5": {
+   "event": "set_top",
+   "kg": 292.5,
+   "text": "Agora é a top set. Duzentos e noventa e dois quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg292_5.mp3",
+   "hash": "7f2b0567ca72edae",
+   "duration_s": 7.37,
+   "qa": 0.94
+  },
+  "set_top__kg295": {
+   "event": "set_top",
+   "kg": 295.0,
+   "text": "Agora é a top set. Duzentos e noventa e cinco quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg295.mp3",
+   "hash": "3deb0046cd7be3bb",
+   "duration_s": 6.96,
+   "qa": 0.94
+  },
+  "set_top__kg297_5": {
+   "event": "set_top",
+   "kg": 297.5,
+   "text": "Agora é a top set. Duzentos e noventa e sete quilos e meio. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg297_5.mp3",
+   "hash": "17ca7d5c76c4df82",
+   "duration_s": 7.36,
+   "qa": 1.0
+  },
+  "set_top__kg300": {
+   "event": "set_top",
+   "kg": 300.0,
+   "text": "Agora é a top set. Trezentos quilos. Foco total, essa é a melhor série do dia.",
+   "file": "set_top__kg300.mp3",
+   "hash": "5aabae93e40bfca7",
+   "duration_s": 5.87,
+   "qa": 1.0
+  },
+  "set_top_noload__v1": {
+   "event": "set_top_noload",
+   "variant": 1,
+   "text": "Agora é a top set. Confere a carga na tela. Foco total, essa é a melhor série do dia.",
+   "file": "set_top_noload__v1.mp3",
+   "hash": "5f9432312138a0ab",
+   "duration_s": 5.98,
+   "qa": 1.0
+  },
+  "set_max__v1": {
+   "event": "set_max",
+   "variant": 1,
+   "text": "Série máxima. Vai até onde der, sempre com técnica.",
+   "file": "set_max__v1.mp3",
+   "hash": "d909b29f52d0f6f1",
+   "duration_s": 3.77,
+   "qa": 1.0
+  },
+  "set_max__v2": {
+   "event": "set_max",
+   "variant": 2,
+   "text": "Agora é a série máxima. Faz o máximo de repetições com qualidade.",
+   "file": "set_max__v2.mp3",
+   "hash": "bd8ef9741f950276",
+   "duration_s": 4.51,
+   "qa": 1.0
+  },
+  "set_plain__v1": {
+   "event": "set_plain",
+   "variant": 1,
+   "text": "Bora pra próxima série, mesmo ritmo.",
+   "file": "set_plain__v1.mp3",
+   "hash": "514c19d31addaac2",
+   "duration_s": 2.68,
+   "qa": 1.0
+  },
+  "set_plain__v2": {
+   "event": "set_plain",
+   "variant": 2,
+   "text": "Vamos pra próxima. Mantém a técnica.",
+   "file": "set_plain__v2.mp3",
+   "hash": "243c03377cae41a2",
+   "duration_s": 2.74,
+   "seed": 242,
+   "qa": 1.0
+  },
+  "load__kg1": {
+   "event": "load",
+   "kg": 1,
+   "text": "A carga dessa série é um quilo.",
+   "file": "load__kg1.mp3",
+   "hash": "5b6cf27e0ba00c18",
+   "duration_s": 1.94,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "load__kg2": {
+   "event": "load",
+   "kg": 2,
+   "text": "A carga dessa série é dois quilos.",
+   "file": "load__kg2.mp3",
+   "hash": "a50ee28145b97310",
+   "duration_s": 2.45,
+   "qa": 1.0
+  },
+  "load__kg2_5": {
+   "event": "load",
+   "kg": 2.5,
+   "text": "A carga dessa série é dois quilos e meio.",
+   "file": "load__kg2_5.mp3",
+   "hash": "fe93ac2c911ec06e",
+   "duration_s": 2.82,
+   "qa": 1.0
+  },
+  "load__kg3": {
+   "event": "load",
+   "kg": 3,
+   "text": "A carga dessa série é três quilos.",
+   "file": "load__kg3.mp3",
+   "hash": "f9db89c8498d3544",
+   "duration_s": 2.45,
+   "qa": 1.0
+  },
+  "load__kg4": {
+   "event": "load",
+   "kg": 4,
+   "text": "A carga dessa série é quatro quilos.",
+   "file": "load__kg4.mp3",
+   "hash": "c22568c2b1ec45a1",
+   "duration_s": 2.65,
+   "qa": 1.0
+  },
+  "load__kg5": {
+   "event": "load",
+   "kg": 5,
+   "text": "A carga dessa série é cinco quilos.",
+   "file": "load__kg5.mp3",
+   "hash": "18ac6d9c46fa4409",
+   "duration_s": 2.51,
+   "qa": 1.0
+  },
+  "load__kg6": {
+   "event": "load",
+   "kg": 6,
+   "text": "A carga dessa série é seis quilos.",
+   "file": "load__kg6.mp3",
+   "hash": "ca225f0f853ac124",
+   "duration_s": 2.06,
+   "qa": 1.0
+  },
+  "load__kg7": {
+   "event": "load",
+   "kg": 7,
+   "text": "A carga dessa série é sete quilos.",
+   "file": "load__kg7.mp3",
+   "hash": "efe64dc72c5b44ab",
+   "duration_s": 2.1,
+   "qa": 1.0
+  },
+  "load__kg7_5": {
+   "event": "load",
+   "kg": 7.5,
+   "text": "A carga dessa série é sete quilos e meio.",
+   "file": "load__kg7_5.mp3",
+   "hash": "4a40381b7668bbc3",
+   "duration_s": 2.74,
+   "qa": 1.0
+  },
+  "load__kg8": {
+   "event": "load",
+   "kg": 8,
+   "text": "A carga dessa série é oito quilos.",
+   "file": "load__kg8.mp3",
+   "hash": "fb69747f05a5064d",
+   "duration_s": 2.45,
+   "qa": 1.0
+  },
+  "load__kg9": {
+   "event": "load",
+   "kg": 9,
+   "text": "A carga dessa série é nove quilos.",
+   "file": "load__kg9.mp3",
+   "hash": "1411c62c3277686c",
+   "duration_s": 2.3,
+   "qa": 1.0
+  },
+  "load__kg10": {
+   "event": "load",
+   "kg": 10,
+   "text": "A carga dessa série é dez quilos.",
+   "file": "load__kg10.mp3",
+   "hash": "2faac68c27774d41",
+   "duration_s": 2.34,
+   "qa": 1.0
+  },
+  "load__kg11": {
+   "event": "load",
+   "kg": 11,
+   "text": "A carga dessa série é onze quilos.",
+   "file": "load__kg11.mp3",
+   "hash": "cea2fda4dce9d5cf",
+   "duration_s": 2.38,
+   "qa": 1.0
+  },
+  "load__kg12": {
+   "event": "load",
+   "kg": 12,
+   "text": "A carga dessa série é doze quilos.",
+   "file": "load__kg12.mp3",
+   "hash": "ee54929c7cca223e",
+   "duration_s": 2.46,
+   "qa": 1.0
+  },
+  "load__kg12_5": {
+   "event": "load",
+   "kg": 12.5,
+   "text": "A carga dessa série é doze quilos e meio.",
+   "file": "load__kg12_5.mp3",
+   "hash": "fb01eac838de98b5",
+   "duration_s": 2.78,
+   "qa": 1.0
+  },
+  "load__kg13": {
+   "event": "load",
+   "kg": 13,
+   "text": "A carga dessa série é treze quilos.",
+   "file": "load__kg13.mp3",
+   "hash": "f17ce018c3719513",
+   "duration_s": 2.44,
+   "qa": 1.0
+  },
+  "load__kg14": {
+   "event": "load",
+   "kg": 14,
+   "text": "A carga dessa série é catorze quilos.",
+   "file": "load__kg14.mp3",
+   "hash": "4f57ccf23609c086",
+   "duration_s": 2.76,
+   "qa": 1.0
+  },
+  "load__kg15": {
+   "event": "load",
+   "kg": 15,
+   "text": "A carga dessa série é quinze quilos.",
+   "file": "load__kg15.mp3",
+   "hash": "f8f3d8a1f0fac102",
+   "duration_s": 2.56,
+   "qa": 1.0
+  },
+  "load__kg16": {
+   "event": "load",
+   "kg": 16,
+   "text": "A carga dessa série é dezesseis quilos.",
+   "file": "load__kg16.mp3",
+   "hash": "9714952821cd6755",
+   "duration_s": 2.83,
+   "qa": 1.0
+  },
+  "load__kg17": {
+   "event": "load",
+   "kg": 17,
+   "text": "A carga dessa série é dezessete quilos.",
+   "file": "load__kg17.mp3",
+   "hash": "4b3a74923254a5ac",
+   "duration_s": 2.73,
+   "qa": 1.0
+  },
+  "load__kg17_5": {
+   "event": "load",
+   "kg": 17.5,
+   "text": "A carga dessa série é dezessete quilos e meio.",
+   "file": "load__kg17_5.mp3",
+   "hash": "6dd18044093a63e5",
+   "duration_s": 3.4,
+   "qa": 1.0
+  },
+  "load__kg18": {
+   "event": "load",
+   "kg": 18,
+   "text": "A carga dessa série é dezoito quilos.",
+   "file": "load__kg18.mp3",
+   "hash": "447df73c467d7c14",
+   "duration_s": 2.71,
+   "qa": 1.0
+  },
+  "load__kg19": {
+   "event": "load",
+   "kg": 19,
+   "text": "A carga dessa série é dezenove quilos.",
+   "file": "load__kg19.mp3",
+   "hash": "c04056204d8e9721",
+   "duration_s": 2.74,
+   "qa": 1.0
+  },
+  "load__kg20": {
+   "event": "load",
+   "kg": 20,
+   "text": "A carga dessa série é vinte quilos.",
+   "file": "load__kg20.mp3",
+   "hash": "eb5aabdbd678dffa",
+   "duration_s": 2.4,
+   "qa": 1.0
+  },
+  "load__kg21": {
+   "event": "load",
+   "kg": 21,
+   "text": "A carga dessa série é vinte e um quilos.",
+   "file": "load__kg21.mp3",
+   "hash": "a742e6a48efec030",
+   "duration_s": 2.81,
+   "qa": 1.0
+  },
+  "load__kg22": {
+   "event": "load",
+   "kg": 22,
+   "text": "A carga dessa série é vinte e dois quilos.",
+   "file": "load__kg22.mp3",
+   "hash": "cd279941a2f7558a",
+   "duration_s": 3.21,
+   "qa": 1.0
+  },
+  "load__kg22_5": {
+   "event": "load",
+   "kg": 22.5,
+   "text": "A carga dessa série é vinte e dois quilos e meio.",
+   "file": "load__kg22_5.mp3",
+   "hash": "680307a677e255cb",
+   "duration_s": 3.38,
+   "qa": 1.0
+  },
+  "load__kg23": {
+   "event": "load",
+   "kg": 23,
+   "text": "A carga dessa série é vinte e três quilos.",
+   "file": "load__kg23.mp3",
+   "hash": "6ee1f69675636e8d",
+   "duration_s": 2.89,
+   "qa": 1.0
+  },
+  "load__kg24": {
+   "event": "load",
+   "kg": 24,
+   "text": "A carga dessa série é vinte e quatro quilos.",
+   "file": "load__kg24.mp3",
+   "hash": "df37794c962553e1",
+   "duration_s": 3.2,
+   "qa": 1.0
+  },
+  "load__kg25": {
+   "event": "load",
+   "kg": 25,
+   "text": "A carga dessa série é vinte e cinco quilos.",
+   "file": "load__kg25.mp3",
+   "hash": "dbae77b2157fca92",
+   "duration_s": 3.13,
+   "qa": 1.0
+  },
+  "load__kg26": {
+   "event": "load",
+   "kg": 26,
+   "text": "A carga dessa série é vinte e seis quilos.",
+   "file": "load__kg26.mp3",
+   "hash": "520c511ee6ab49c8",
+   "duration_s": 2.91,
+   "qa": 1.0
+  },
+  "load__kg27": {
+   "event": "load",
+   "kg": 27,
+   "text": "A carga dessa série é vinte e sete quilos.",
+   "file": "load__kg27.mp3",
+   "hash": "a4e430e62e6cbe7e",
+   "duration_s": 2.8,
+   "qa": 1.0
+  },
+  "load__kg27_5": {
+   "event": "load",
+   "kg": 27.5,
+   "text": "A carga dessa série é vinte e sete quilos e meio.",
+   "file": "load__kg27_5.mp3",
+   "hash": "1f92dc01381cee84",
+   "duration_s": 3.39,
+   "qa": 1.0
+  },
+  "load__kg28": {
+   "event": "load",
+   "kg": 28,
+   "text": "A carga dessa série é vinte e oito quilos.",
+   "file": "load__kg28.mp3",
+   "hash": "b0d9cb56fbaa58f5",
+   "duration_s": 2.88,
+   "qa": 1.0
+  },
+  "load__kg29": {
+   "event": "load",
+   "kg": 29,
+   "text": "A carga dessa série é vinte e nove quilos.",
+   "file": "load__kg29.mp3",
+   "hash": "926328564f3b87e2",
+   "duration_s": 3.17,
+   "qa": 1.0
+  },
+  "load__kg30": {
+   "event": "load",
+   "kg": 30,
+   "text": "A carga dessa série é trinta quilos.",
+   "file": "load__kg30.mp3",
+   "hash": "39f6c2e8cdc7806a",
+   "duration_s": 2.65,
+   "qa": 1.0
+  },
+  "load__kg31": {
+   "event": "load",
+   "kg": 31,
+   "text": "A carga dessa série é trinta e um quilos.",
+   "file": "load__kg31.mp3",
+   "hash": "0788440a187100db",
+   "duration_s": 2.9,
+   "qa": 1.0
+  },
+  "load__kg32": {
+   "event": "load",
+   "kg": 32,
+   "text": "A carga dessa série é trinta e dois quilos.",
+   "file": "load__kg32.mp3",
+   "hash": "82e4f2a3f9973b4e",
+   "duration_s": 3.19,
+   "qa": 1.0
+  },
+  "load__kg32_5": {
+   "event": "load",
+   "kg": 32.5,
+   "text": "A carga dessa série é trinta e dois quilos e meio.",
+   "file": "load__kg32_5.mp3",
+   "hash": "2f465b066ebb95ac",
+   "duration_s": 3.49,
+   "qa": 1.0
+  },
+  "load__kg33": {
+   "event": "load",
+   "kg": 33,
+   "text": "A carga dessa série é trinta e três quilos.",
+   "file": "load__kg33.mp3",
+   "hash": "d6f8c603ea52b165",
+   "duration_s": 3.1,
+   "qa": 1.0
+  },
+  "load__kg34": {
+   "event": "load",
+   "kg": 34,
+   "text": "A carga dessa série é trinta e quatro quilos.",
+   "file": "load__kg34.mp3",
+   "hash": "32809a194945d5a4",
+   "duration_s": 2.88,
+   "qa": 1.0
+  },
+  "load__kg35": {
+   "event": "load",
+   "kg": 35,
+   "text": "A carga dessa série é trinta e cinco quilos.",
+   "file": "load__kg35.mp3",
+   "hash": "cde0cce026445562",
+   "duration_s": 3.14,
+   "qa": 1.0
+  },
+  "load__kg36": {
+   "event": "load",
+   "kg": 36,
+   "text": "A carga dessa série é trinta e seis quilos.",
+   "file": "load__kg36.mp3",
+   "hash": "15c84d923876ad30",
+   "duration_s": 2.95,
+   "qa": 1.0
+  },
+  "load__kg37": {
+   "event": "load",
+   "kg": 37,
+   "text": "A carga dessa série é trinta e sete quilos.",
+   "file": "load__kg37.mp3",
+   "hash": "baf1a4d29940e15f",
+   "duration_s": 3.17,
+   "qa": 1.0
+  },
+  "load__kg37_5": {
+   "event": "load",
+   "kg": 37.5,
+   "text": "A carga dessa série é trinta e sete quilos e meio.",
+   "file": "load__kg37_5.mp3",
+   "hash": "565ce7db8dfb8dde",
+   "duration_s": 3.55,
+   "qa": 1.0
+  },
+  "load__kg38": {
+   "event": "load",
+   "kg": 38,
+   "text": "A carga dessa série é trinta e oito quilos.",
+   "file": "load__kg38.mp3",
+   "hash": "d3d3276c53a49673",
+   "duration_s": 3.14,
+   "qa": 1.0
+  },
+  "load__kg39": {
+   "event": "load",
+   "kg": 39,
+   "text": "A carga dessa série é trinta e nove quilos.",
+   "file": "load__kg39.mp3",
+   "hash": "fb1f08fe4f991fb6",
+   "duration_s": 3.18,
+   "qa": 1.0
+  },
+  "load__kg40": {
+   "event": "load",
+   "kg": 40,
+   "text": "A carga dessa série é quarenta quilos.",
+   "file": "load__kg40.mp3",
+   "hash": "f1326ed7c02a30a8",
+   "duration_s": 2.68,
+   "qa": 1.0
+  },
+  "load__kg42_5": {
+   "event": "load",
+   "kg": 42.5,
+   "text": "A carga dessa série é quarenta e dois quilos e meio.",
+   "file": "load__kg42_5.mp3",
+   "hash": "fdb8a689efb4c125",
+   "duration_s": 3.93,
+   "qa": 1.0
+  },
+  "load__kg45": {
+   "event": "load",
+   "kg": 45.0,
+   "text": "A carga dessa série é quarenta e cinco quilos.",
+   "file": "load__kg45.mp3",
+   "hash": "6b37facd833ac440",
+   "duration_s": 3.35,
+   "qa": 1.0
+  },
+  "load__kg47_5": {
+   "event": "load",
+   "kg": 47.5,
+   "text": "A carga dessa série é quarenta e sete quilos e meio.",
+   "file": "load__kg47_5.mp3",
+   "hash": "bef2ed2f3ed70c80",
+   "duration_s": 3.76,
+   "qa": 1.0
+  },
+  "load__kg50": {
+   "event": "load",
+   "kg": 50.0,
+   "text": "A carga dessa série é cinquenta quilos.",
+   "file": "load__kg50.mp3",
+   "hash": "49bf485b9925219b",
+   "duration_s": 2.61,
+   "qa": 1.0
+  },
+  "load__kg52_5": {
+   "event": "load",
+   "kg": 52.5,
+   "text": "A carga dessa série é cinquenta e dois quilos e meio.",
+   "file": "load__kg52_5.mp3",
+   "hash": "52f86645c0701bea",
+   "duration_s": 4.01,
+   "qa": 1.0
+  },
+  "load__kg55": {
+   "event": "load",
+   "kg": 55.0,
+   "text": "A carga dessa série é cinquenta e cinco quilos.",
+   "file": "load__kg55.mp3",
+   "hash": "da733b1250484335",
+   "duration_s": 3.52,
+   "qa": 1.0
+  },
+  "load__kg57_5": {
+   "event": "load",
+   "kg": 57.5,
+   "text": "A carga dessa série é cinquenta e sete quilos e meio.",
+   "file": "load__kg57_5.mp3",
+   "hash": "4124a542afdf67d4",
+   "duration_s": 3.76,
+   "qa": 1.0
+  },
+  "load__kg60": {
+   "event": "load",
+   "kg": 60.0,
+   "text": "A carga dessa série é sessenta quilos.",
+   "file": "load__kg60.mp3",
+   "hash": "e45e46f6fc5f2c0e",
+   "duration_s": 2.71,
+   "qa": 1.0
+  },
+  "load__kg62_5": {
+   "event": "load",
+   "kg": 62.5,
+   "text": "A carga dessa série é sessenta e dois quilos e meio.",
+   "file": "load__kg62_5.mp3",
+   "hash": "05c3b4cb83ed32ac",
+   "duration_s": 3.9,
+   "qa": 1.0
+  },
+  "load__kg65": {
+   "event": "load",
+   "kg": 65.0,
+   "text": "A carga dessa série é sessenta e cinco quilos.",
+   "file": "load__kg65.mp3",
+   "hash": "b7c5ef3c5e6110de",
+   "duration_s": 3.09,
+   "qa": 1.0
+  },
+  "load__kg67_5": {
+   "event": "load",
+   "kg": 67.5,
+   "text": "A carga dessa série é sessenta e sete quilos e meio.",
+   "file": "load__kg67_5.mp3",
+   "hash": "0c8033a545283c39",
+   "duration_s": 3.73,
+   "qa": 1.0
+  },
+  "load__kg70": {
+   "event": "load",
+   "kg": 70.0,
+   "text": "A carga dessa série é setenta quilos.",
+   "file": "load__kg70.mp3",
+   "hash": "e7dc6761523329be",
+   "duration_s": 2.71,
+   "qa": 1.0
+  },
+  "load__kg72_5": {
+   "event": "load",
+   "kg": 72.5,
+   "text": "A carga dessa série é setenta e dois quilos e meio.",
+   "file": "load__kg72_5.mp3",
+   "hash": "65d5e29f525a5244",
+   "duration_s": 3.58,
+   "qa": 1.0
+  },
+  "load__kg75": {
+   "event": "load",
+   "kg": 75.0,
+   "text": "A carga dessa série é setenta e cinco quilos.",
+   "file": "load__kg75.mp3",
+   "hash": "6368b7becda9cfa7",
+   "duration_s": 3.14,
+   "qa": 1.0
+  },
+  "load__kg77_5": {
+   "event": "load",
+   "kg": 77.5,
+   "text": "A carga dessa série é setenta e sete quilos e meio.",
+   "file": "load__kg77_5.mp3",
+   "hash": "f78fb701f03461ef",
+   "duration_s": 3.58,
+   "qa": 1.0
+  },
+  "load__kg80": {
+   "event": "load",
+   "kg": 80.0,
+   "text": "A carga dessa série é oitenta quilos.",
+   "file": "load__kg80.mp3",
+   "hash": "0be4610cc5e57907",
+   "duration_s": 2.62,
+   "qa": 1.0
+  },
+  "load__kg82_5": {
+   "event": "load",
+   "kg": 82.5,
+   "text": "A carga dessa série é oitenta e dois quilos e meio.",
+   "file": "load__kg82_5.mp3",
+   "hash": "2681e5afd371f20f",
+   "duration_s": 3.61,
+   "qa": 1.0
+  },
+  "load__kg85": {
+   "event": "load",
+   "kg": 85.0,
+   "text": "A carga dessa série é oitenta e cinco quilos.",
+   "file": "load__kg85.mp3",
+   "hash": "0d81886197b53cd4",
+   "duration_s": 3.3,
+   "qa": 1.0
+  },
+  "load__kg87_5": {
+   "event": "load",
+   "kg": 87.5,
+   "text": "A carga dessa série é oitenta e sete quilos e meio.",
+   "file": "load__kg87_5.mp3",
+   "hash": "84d7c51a001da415",
+   "duration_s": 3.52,
+   "qa": 1.0
+  },
+  "load__kg90": {
+   "event": "load",
+   "kg": 90.0,
+   "text": "A carga dessa série é noventa quilos.",
+   "file": "load__kg90.mp3",
+   "hash": "8b9911381266f896",
+   "duration_s": 2.59,
+   "qa": 1.0
+  },
+  "load__kg92_5": {
+   "event": "load",
+   "kg": 92.5,
+   "text": "A carga dessa série é noventa e dois quilos e meio.",
+   "file": "load__kg92_5.mp3",
+   "hash": "8a88585ee430f09d",
+   "duration_s": 3.53,
+   "qa": 1.0
+  },
+  "load__kg95": {
+   "event": "load",
+   "kg": 95.0,
+   "text": "A carga dessa série é noventa e cinco quilos.",
+   "file": "load__kg95.mp3",
+   "hash": "814451e29c633b43",
+   "duration_s": 3.19,
+   "qa": 1.0
+  },
+  "load__kg97_5": {
+   "event": "load",
+   "kg": 97.5,
+   "text": "A carga dessa série é noventa e sete quilos e meio.",
+   "file": "load__kg97_5.mp3",
+   "hash": "400de4971bbb0b72",
+   "duration_s": 3.54,
+   "qa": 1.0
+  },
+  "load__kg100": {
+   "event": "load",
+   "kg": 100.0,
+   "text": "A carga dessa série é cem quilos.",
+   "file": "load__kg100.mp3",
+   "hash": "11379f6bad625a8b",
+   "duration_s": 2.22,
+   "qa": 1.0
+  },
+  "load__kg102_5": {
+   "event": "load",
+   "kg": 102.5,
+   "text": "A carga dessa série é cento e dois quilos e meio.",
+   "file": "load__kg102_5.mp3",
+   "hash": "2e0e96c485d016b7",
+   "duration_s": 3.4,
+   "qa": 1.0
+  },
+  "load__kg105": {
+   "event": "load",
+   "kg": 105.0,
+   "text": "A carga dessa série é cento e cinco quilos.",
+   "file": "load__kg105.mp3",
+   "hash": "f090b8c182253369",
+   "duration_s": 3.17,
+   "qa": 1.0
+  },
+  "load__kg107_5": {
+   "event": "load",
+   "kg": 107.5,
+   "text": "A carga dessa série é cento e sete quilos e meio.",
+   "file": "load__kg107_5.mp3",
+   "hash": "5fa7eeaae039f102",
+   "duration_s": 3.4,
+   "qa": 1.0
+  },
+  "load__kg110": {
+   "event": "load",
+   "kg": 110.0,
+   "text": "A carga dessa série é cento e dez quilos.",
+   "file": "load__kg110.mp3",
+   "hash": "16c8e5a45b00e81d",
+   "duration_s": 2.82,
+   "qa": 1.0
+  },
+  "load__kg112_5": {
+   "event": "load",
+   "kg": 112.5,
+   "text": "A carga dessa série é cento e doze quilos e meio.",
+   "file": "load__kg112_5.mp3",
+   "hash": "5a2edfa17a0d175f",
+   "duration_s": 3.24,
+   "qa": 1.0
+  },
+  "load__kg115": {
+   "event": "load",
+   "kg": 115.0,
+   "text": "A carga dessa série é cento e quinze quilos.",
+   "file": "load__kg115.mp3",
+   "hash": "c8436845bfe88f78",
+   "duration_s": 3.07,
+   "qa": 1.0
+  },
+  "load__kg117_5": {
+   "event": "load",
+   "kg": 117.5,
+   "text": "A carga dessa série é cento e dezessete quilos e meio.",
+   "file": "load__kg117_5.mp3",
+   "hash": "731efc786899ca1a",
+   "duration_s": 3.95,
+   "qa": 1.0
+  },
+  "load__kg120": {
+   "event": "load",
+   "kg": 120.0,
+   "text": "A carga dessa série é cento e vinte quilos.",
+   "file": "load__kg120.mp3",
+   "hash": "1d7267ad5e2a5429",
+   "duration_s": 3.09,
+   "qa": 1.0
+  },
+  "load__kg122_5": {
+   "event": "load",
+   "kg": 122.5,
+   "text": "A carga dessa série é cento e vinte e dois quilos e meio.",
+   "file": "load__kg122_5.mp3",
+   "hash": "42a7a640b37e195a",
+   "duration_s": 4.01,
+   "qa": 1.0
+  },
+  "load__kg125": {
+   "event": "load",
+   "kg": 125.0,
+   "text": "A carga dessa série é cento e vinte e cinco quilos.",
+   "file": "load__kg125.mp3",
+   "hash": "40263aeb9bfafaa2",
+   "duration_s": 3.61,
+   "qa": 1.0
+  },
+  "load__kg127_5": {
+   "event": "load",
+   "kg": 127.5,
+   "text": "A carga dessa série é cento e vinte e sete quilos e meio.",
+   "file": "load__kg127_5.mp3",
+   "hash": "0e0d310692786afb",
+   "duration_s": 3.63,
+   "qa": 1.0
+  },
+  "load__kg130": {
+   "event": "load",
+   "kg": 130.0,
+   "text": "A carga dessa série é cento e trinta quilos.",
+   "file": "load__kg130.mp3",
+   "hash": "68af456eb0432e27",
+   "duration_s": 3.1,
+   "qa": 1.0
+  },
+  "load__kg132_5": {
+   "event": "load",
+   "kg": 132.5,
+   "text": "A carga dessa série é cento e trinta e dois quilos e meio.",
+   "file": "load__kg132_5.mp3",
+   "hash": "8d902caec5417885",
+   "duration_s": 4.36,
+   "qa": 1.0
+  },
+  "load__kg135": {
+   "event": "load",
+   "kg": 135.0,
+   "text": "A carga dessa série é cento e trinta e cinco quilos.",
+   "file": "load__kg135.mp3",
+   "hash": "c50e4f226b5af545",
+   "duration_s": 3.67,
+   "qa": 1.0
+  },
+  "load__kg137_5": {
+   "event": "load",
+   "kg": 137.5,
+   "text": "A carga dessa série é cento e trinta e sete quilos e meio.",
+   "file": "load__kg137_5.mp3",
+   "hash": "9ef9a517735d2c98",
+   "duration_s": 4.25,
+   "qa": 1.0
+  },
+  "load__kg140": {
+   "event": "load",
+   "kg": 140.0,
+   "text": "A carga dessa série é cento e quarenta quilos.",
+   "file": "load__kg140.mp3",
+   "hash": "c6a7e4ec4b2b3784",
+   "duration_s": 3.25,
+   "qa": 1.0
+  },
+  "load__kg142_5": {
+   "event": "load",
+   "kg": 142.5,
+   "text": "A carga dessa série é cento e quarenta e dois quilos e meio.",
+   "file": "load__kg142_5.mp3",
+   "hash": "a1344467d15502bc",
+   "duration_s": 4.48,
+   "qa": 1.0
+  },
+  "load__kg145": {
+   "event": "load",
+   "kg": 145.0,
+   "text": "A carga dessa série é cento e quarenta e cinco quilos.",
+   "file": "load__kg145.mp3",
+   "hash": "c0ca7ba77854c42d",
+   "duration_s": 3.84,
+   "qa": 1.0
+  },
+  "load__kg147_5": {
+   "event": "load",
+   "kg": 147.5,
+   "text": "A carga dessa série é cento e quarenta e sete quilos e meio.",
+   "file": "load__kg147_5.mp3",
+   "hash": "2c3e390d316d0340",
+   "duration_s": 4.51,
+   "qa": 1.0
+  },
+  "load__kg150": {
+   "event": "load",
+   "kg": 150.0,
+   "text": "A carga dessa série é cento e cinquenta quilos.",
+   "file": "load__kg150.mp3",
+   "hash": "8dd6e234831dc353",
+   "duration_s": 3.45,
+   "qa": 1.0
+  },
+  "load__kg152_5": {
+   "event": "load",
+   "kg": 152.5,
+   "text": "A carga dessa série é cento e cinquenta e dois quilos e meio.",
+   "file": "load__kg152_5.mp3",
+   "hash": "6ffc2c0e4464804a",
+   "duration_s": 4.49,
+   "qa": 1.0
+  },
+  "load__kg155": {
+   "event": "load",
+   "kg": 155.0,
+   "text": "A carga dessa série é cento e cinquenta e cinco quilos.",
+   "file": "load__kg155.mp3",
+   "hash": "af9150fd756b12bf",
+   "duration_s": 3.62,
+   "qa": 1.0
+  },
+  "load__kg157_5": {
+   "event": "load",
+   "kg": 157.5,
+   "text": "A carga dessa série é cento e cinquenta e sete quilos e meio.",
+   "file": "load__kg157_5.mp3",
+   "hash": "6980f93e21b72dcd",
+   "duration_s": 4.52,
+   "qa": 1.0
+  },
+  "load__kg160": {
+   "event": "load",
+   "kg": 160.0,
+   "text": "A carga dessa série é cento e sessenta quilos.",
+   "file": "load__kg160.mp3",
+   "hash": "163ad2f4069b5155",
+   "duration_s": 3.2,
+   "qa": 1.0
+  },
+  "load__kg162_5": {
+   "event": "load",
+   "kg": 162.5,
+   "text": "A carga dessa série é cento e sessenta e dois quilos e meio.",
+   "file": "load__kg162_5.mp3",
+   "hash": "2580fca3f093c869",
+   "duration_s": 4.15,
+   "qa": 1.0
+  },
+  "load__kg165": {
+   "event": "load",
+   "kg": 165.0,
+   "text": "A carga dessa série é cento e sessenta e cinco quilos.",
+   "file": "load__kg165.mp3",
+   "hash": "8c1f1454d318de45",
+   "duration_s": 3.9,
+   "qa": 1.0
+  },
+  "load__kg167_5": {
+   "event": "load",
+   "kg": 167.5,
+   "text": "A carga dessa série é cento e sessenta e sete quilos e meio.",
+   "file": "load__kg167_5.mp3",
+   "hash": "5c59c732f3fdf864",
+   "duration_s": 4.5,
+   "qa": 1.0
+  },
+  "load__kg170": {
+   "event": "load",
+   "kg": 170.0,
+   "text": "A carga dessa série é cento e setenta quilos.",
+   "file": "load__kg170.mp3",
+   "hash": "ef5d5c3578094616",
+   "duration_s": 3.03,
+   "qa": 1.0
+  },
+  "load__kg172_5": {
+   "event": "load",
+   "kg": 172.5,
+   "text": "A carga dessa série é cento e setenta e dois quilos e meio.",
+   "file": "load__kg172_5.mp3",
+   "hash": "2d9bd903098bacc3",
+   "duration_s": 4.3,
+   "qa": 1.0
+  },
+  "load__kg175": {
+   "event": "load",
+   "kg": 175.0,
+   "text": "A carga dessa série é cento e setenta e cinco quilos.",
+   "file": "load__kg175.mp3",
+   "hash": "f92b96fa736b2d22",
+   "duration_s": 3.73,
+   "qa": 1.0
+  },
+  "load__kg177_5": {
+   "event": "load",
+   "kg": 177.5,
+   "text": "A carga dessa série é cento e setenta e sete quilos e meio.",
+   "file": "load__kg177_5.mp3",
+   "hash": "36d419f5f48310b0",
+   "duration_s": 4.34,
+   "qa": 1.0
+  },
+  "load__kg180": {
+   "event": "load",
+   "kg": 180.0,
+   "text": "A carga dessa série é cento e oitenta quilos.",
+   "file": "load__kg180.mp3",
+   "hash": "c99c540289f4bc32",
+   "duration_s": 2.96,
+   "qa": 1.0
+  },
+  "load__kg182_5": {
+   "event": "load",
+   "kg": 182.5,
+   "text": "A carga dessa série é cento e oitenta e dois quilos e meio.",
+   "file": "load__kg182_5.mp3",
+   "hash": "00cfa3b136fdf765",
+   "duration_s": 4.3,
+   "qa": 1.0
+  },
+  "load__kg185": {
+   "event": "load",
+   "kg": 185.0,
+   "text": "A carga dessa série é cento e oitenta e cinco quilos.",
+   "file": "load__kg185.mp3",
+   "hash": "db5e87b230a79c63",
+   "duration_s": 3.87,
+   "qa": 1.0
+  },
+  "load__kg187_5": {
+   "event": "load",
+   "kg": 187.5,
+   "text": "A carga dessa série é cento e oitenta e sete quilos e meio.",
+   "file": "load__kg187_5.mp3",
+   "hash": "0a06df1fefbc3f7e",
+   "duration_s": 4.31,
+   "qa": 1.0
+  },
+  "load__kg190": {
+   "event": "load",
+   "kg": 190.0,
+   "text": "A carga dessa série é cento e noventa quilos.",
+   "file": "load__kg190.mp3",
+   "hash": "b2ffd2381e3d6bf1",
+   "duration_s": 3.14,
+   "qa": 1.0
+  },
+  "load__kg192_5": {
+   "event": "load",
+   "kg": 192.5,
+   "text": "A carga dessa série é cento e noventa e dois quilos e meio.",
+   "file": "load__kg192_5.mp3",
+   "hash": "dbde64cf95a16c64",
+   "duration_s": 4.32,
+   "qa": 1.0
+  },
+  "load__kg195": {
+   "event": "load",
+   "kg": 195.0,
+   "text": "A carga dessa série é cento e noventa e cinco quilos.",
+   "file": "load__kg195.mp3",
+   "hash": "9481b7573b79d69a",
+   "duration_s": 3.79,
+   "qa": 1.0
+  },
+  "load__kg197_5": {
+   "event": "load",
+   "kg": 197.5,
+   "text": "A carga dessa série é cento e noventa e sete quilos e meio.",
+   "file": "load__kg197_5.mp3",
+   "hash": "56f9bd380088b71f",
+   "duration_s": 4.36,
+   "qa": 1.0
+  },
+  "load__kg200": {
+   "event": "load",
+   "kg": 200.0,
+   "text": "A carga dessa série é duzentos quilos.",
+   "file": "load__kg200.mp3",
+   "hash": "30c50a8a4ac32902",
+   "duration_s": 2.79,
+   "qa": 1.0
+  },
+  "load__kg202_5": {
+   "event": "load",
+   "kg": 202.5,
+   "text": "A carga dessa série é duzentos e dois quilos e meio.",
+   "file": "load__kg202_5.mp3",
+   "hash": "45351fbb5fb87341",
+   "duration_s": 3.86,
+   "qa": 1.0
+  },
+  "load__kg205": {
+   "event": "load",
+   "kg": 205.0,
+   "text": "A carga dessa série é duzentos e cinco quilos.",
+   "file": "load__kg205.mp3",
+   "hash": "0a9ac6fbd82af349",
+   "duration_s": 3.22,
+   "qa": 1.0
+  },
+  "load__kg207_5": {
+   "event": "load",
+   "kg": 207.5,
+   "text": "A carga dessa série é duzentos e sete quilos e meio.",
+   "file": "load__kg207_5.mp3",
+   "hash": "14d5b40a60bf563f",
+   "duration_s": 3.77,
+   "qa": 1.0
+  },
+  "load__kg210": {
+   "event": "load",
+   "kg": 210.0,
+   "text": "A carga dessa série é duzentos e dez quilos.",
+   "file": "load__kg210.mp3",
+   "hash": "17eab04b4eff1c3d",
+   "duration_s": 3.14,
+   "qa": 1.0
+  },
+  "load__kg212_5": {
+   "event": "load",
+   "kg": 212.5,
+   "text": "A carga dessa série é duzentos e doze quilos e meio.",
+   "file": "load__kg212_5.mp3",
+   "hash": "d1615926d07cbb53",
+   "duration_s": 3.64,
+   "qa": 1.0
+  },
+  "load__kg215": {
+   "event": "load",
+   "kg": 215.0,
+   "text": "A carga dessa série é duzentos e quinze quilos.",
+   "file": "load__kg215.mp3",
+   "hash": "778b4c0f3a87b003",
+   "duration_s": 3.23,
+   "qa": 1.0
+  },
+  "load__kg217_5": {
+   "event": "load",
+   "kg": 217.5,
+   "text": "A carga dessa série é duzentos e dezessete quilos e meio.",
+   "file": "load__kg217_5.mp3",
+   "hash": "43649abee3b306cd",
+   "duration_s": 4.15,
+   "qa": 1.0
+  },
+  "load__kg220": {
+   "event": "load",
+   "kg": 220.0,
+   "text": "A carga dessa série é duzentos e vinte quilos.",
+   "file": "load__kg220.mp3",
+   "hash": "104f91dcb5752cb5",
+   "duration_s": 3.3,
+   "qa": 1.0
+  },
+  "load__kg222_5": {
+   "event": "load",
+   "kg": 222.5,
+   "text": "A carga dessa série é duzentos e vinte e dois quilos e meio.",
+   "file": "load__kg222_5.mp3",
+   "hash": "f7225007180a97b8",
+   "duration_s": 4.22,
+   "qa": 1.0
+  },
+  "load__kg225": {
+   "event": "load",
+   "kg": 225.0,
+   "text": "A carga dessa série é duzentos e vinte e cinco quilos.",
+   "file": "load__kg225.mp3",
+   "hash": "bb544ae0d2b4dd94",
+   "duration_s": 3.91,
+   "qa": 1.0
+  },
+  "load__kg227_5": {
+   "event": "load",
+   "kg": 227.5,
+   "text": "A carga dessa série é duzentos e vinte e sete quilos e meio.",
+   "file": "load__kg227_5.mp3",
+   "hash": "132b57fad268e9f4",
+   "duration_s": 4.29,
+   "qa": 1.0
+  },
+  "load__kg230": {
+   "event": "load",
+   "kg": 230.0,
+   "text": "A carga dessa série é duzentos e trinta quilos.",
+   "file": "load__kg230.mp3",
+   "hash": "c80035807ce6e6b1",
+   "duration_s": 3.19,
+   "qa": 1.0
+  },
+  "load__kg232_5": {
+   "event": "load",
+   "kg": 232.5,
+   "text": "A carga dessa série é duzentos e trinta e dois quilos e meio.",
+   "file": "load__kg232_5.mp3",
+   "hash": "eeaa0dddec8137b3",
+   "duration_s": 4.5,
+   "qa": 1.0
+  },
+  "load__kg235": {
+   "event": "load",
+   "kg": 235.0,
+   "text": "A carga dessa série é duzentos e trinta e cinco quilos.",
+   "file": "load__kg235.mp3",
+   "hash": "d4a481764bd0cecb",
+   "duration_s": 3.53,
+   "qa": 1.0
+  },
+  "load__kg237_5": {
+   "event": "load",
+   "kg": 237.5,
+   "text": "A carga dessa série é duzentos e trinta e sete quilos e meio.",
+   "file": "load__kg237_5.mp3",
+   "hash": "f992a7b509034a33",
+   "duration_s": 4.59,
+   "qa": 1.0
+  },
+  "load__kg240": {
+   "event": "load",
+   "kg": 240.0,
+   "text": "A carga dessa série é duzentos e quarenta quilos.",
+   "file": "load__kg240.mp3",
+   "hash": "cf4cd28fc730878b",
+   "duration_s": 3.49,
+   "qa": 1.0
+  },
+  "load__kg242_5": {
+   "event": "load",
+   "kg": 242.5,
+   "text": "A carga dessa série é duzentos e quarenta e dois quilos e meio.",
+   "file": "load__kg242_5.mp3",
+   "hash": "c910ffb4258aaeeb",
+   "duration_s": 4.6,
+   "qa": 1.0
+  },
+  "load__kg245": {
+   "event": "load",
+   "kg": 245.0,
+   "text": "A carga dessa série é duzentos e quarenta e cinco quilos.",
+   "file": "load__kg245.mp3",
+   "hash": "6e1a9a1d6814f3c9",
+   "duration_s": 4.39,
+   "qa": 1.0
+  },
+  "load__kg247_5": {
+   "event": "load",
+   "kg": 247.5,
+   "text": "A carga dessa série é duzentos e quarenta e sete quilos e meio.",
+   "file": "load__kg247_5.mp3",
+   "hash": "da74e88c6152c9c3",
+   "duration_s": 4.59,
+   "qa": 1.0
+  },
+  "load__kg250": {
+   "event": "load",
+   "kg": 250.0,
+   "text": "A carga dessa série é duzentos e cinquenta quilos.",
+   "file": "load__kg250.mp3",
+   "hash": "250f858ca5c13e73",
+   "duration_s": 3.84,
+   "qa": 1.0
+  },
+  "load__kg252_5": {
+   "event": "load",
+   "kg": 252.5,
+   "text": "A carga dessa série é duzentos e cinquenta e dois quilos e meio.",
+   "file": "load__kg252_5.mp3",
+   "hash": "7d70177f6f2113fd",
+   "duration_s": 4.66,
+   "qa": 1.0
+  },
+  "load__kg255": {
+   "event": "load",
+   "kg": 255.0,
+   "text": "A carga dessa série é duzentos e cinquenta e cinco quilos.",
+   "file": "load__kg255.mp3",
+   "hash": "d36fb28fc86606ad",
+   "duration_s": 4.34,
+   "qa": 1.0
+  },
+  "load__kg257_5": {
+   "event": "load",
+   "kg": 257.5,
+   "text": "A carga dessa série é duzentos e cinquenta e sete quilos e meio.",
+   "file": "load__kg257_5.mp3",
+   "hash": "b13cdc9424598744",
+   "duration_s": 4.74,
+   "qa": 1.0
+  },
+  "load__kg260": {
+   "event": "load",
+   "kg": 260.0,
+   "text": "A carga dessa série é duzentos e sessenta quilos.",
+   "file": "load__kg260.mp3",
+   "hash": "ad171795c24747c1",
+   "duration_s": 3.56,
+   "qa": 1.0
+  },
+  "load__kg262_5": {
+   "event": "load",
+   "kg": 262.5,
+   "text": "A carga dessa série é duzentos e sessenta e dois quilos e meio.",
+   "file": "load__kg262_5.mp3",
+   "hash": "c439eda4ebfcc75f",
+   "duration_s": 4.53,
+   "qa": 1.0
+  },
+  "load__kg265": {
+   "event": "load",
+   "kg": 265.0,
+   "text": "A carga dessa série é duzentos e sessenta e cinco quilos.",
+   "file": "load__kg265.mp3",
+   "hash": "8d2f94475a8de29b",
+   "duration_s": 4.33,
+   "qa": 1.0
+  },
+  "load__kg267_5": {
+   "event": "load",
+   "kg": 267.5,
+   "text": "A carga dessa série é duzentos e sessenta e sete quilos e meio.",
+   "file": "load__kg267_5.mp3",
+   "hash": "1f3005210513de95",
+   "duration_s": 4.74,
+   "qa": 1.0
+  },
+  "load__kg270": {
+   "event": "load",
+   "kg": 270.0,
+   "text": "A carga dessa série é duzentos e setenta quilos.",
+   "file": "load__kg270.mp3",
+   "hash": "314ad10d2f0b7791",
+   "duration_s": 3.48,
+   "qa": 1.0
+  },
+  "load__kg272_5": {
+   "event": "load",
+   "kg": 272.5,
+   "text": "A carga dessa série é duzentos e setenta e dois quilos e meio.",
+   "file": "load__kg272_5.mp3",
+   "hash": "b7f426c618030d1d",
+   "duration_s": 4.65,
+   "qa": 1.0
+  },
+  "load__kg275": {
+   "event": "load",
+   "kg": 275.0,
+   "text": "A carga dessa série é duzentos e setenta e cinco quilos.",
+   "file": "load__kg275.mp3",
+   "hash": "05fb1689b2d7bc33",
+   "duration_s": 4.03,
+   "qa": 1.0
+  },
+  "load__kg277_5": {
+   "event": "load",
+   "kg": 277.5,
+   "text": "A carga dessa série é duzentos e setenta e sete quilos e meio.",
+   "file": "load__kg277_5.mp3",
+   "hash": "67da2c6b600a1010",
+   "duration_s": 4.56,
+   "qa": 1.0
+  },
+  "load__kg280": {
+   "event": "load",
+   "kg": 280.0,
+   "text": "A carga dessa série é duzentos e oitenta quilos.",
+   "file": "load__kg280.mp3",
+   "hash": "c40e1541818c13b7",
+   "duration_s": 3.45,
+   "qa": 1.0
+  },
+  "load__kg282_5": {
+   "event": "load",
+   "kg": 282.5,
+   "text": "A carga dessa série é duzentos e oitenta e dois quilos e meio.",
+   "file": "load__kg282_5.mp3",
+   "hash": "e6979bdb09b447a8",
+   "duration_s": 4.63,
+   "qa": 1.0
+  },
+  "load__kg285": {
+   "event": "load",
+   "kg": 285.0,
+   "text": "A carga dessa série é duzentos e oitenta e cinco quilos.",
+   "file": "load__kg285.mp3",
+   "hash": "0ee41d2d0fdbc6d5",
+   "duration_s": 4.28,
+   "qa": 1.0
+  },
+  "load__kg287_5": {
+   "event": "load",
+   "kg": 287.5,
+   "text": "A carga dessa série é duzentos e oitenta e sete quilos e meio.",
+   "file": "load__kg287_5.mp3",
+   "hash": "aafbeb204e40a86a",
+   "duration_s": 4.62,
+   "qa": 1.0
+  },
+  "load__kg290": {
+   "event": "load",
+   "kg": 290.0,
+   "text": "A carga dessa série é duzentos e noventa quilos.",
+   "file": "load__kg290.mp3",
+   "hash": "8cc72e4c4adb9a63",
+   "duration_s": 3.46,
+   "qa": 1.0
+  },
+  "load__kg292_5": {
+   "event": "load",
+   "kg": 292.5,
+   "text": "A carga dessa série é duzentos e noventa e dois quilos e meio.",
+   "file": "load__kg292_5.mp3",
+   "hash": "1b55ade76d0c6288",
+   "duration_s": 4.54,
+   "qa": 1.0
+  },
+  "load__kg295": {
+   "event": "load",
+   "kg": 295.0,
+   "text": "A carga dessa série é duzentos e noventa e cinco quilos.",
+   "file": "load__kg295.mp3",
+   "hash": "7fa3dd8b916e76d3",
+   "duration_s": 4.24,
+   "qa": 1.0
+  },
+  "load__kg297_5": {
+   "event": "load",
+   "kg": 297.5,
+   "text": "A carga dessa série é duzentos e noventa e sete quilos e meio.",
+   "file": "load__kg297_5.mp3",
+   "hash": "eda4e61cd5792761",
+   "duration_s": 4.6,
+   "qa": 1.0
+  },
+  "load__kg300": {
+   "event": "load",
+   "kg": 300.0,
+   "text": "A carga dessa série é trezentos quilos.",
+   "file": "load__kg300.mp3",
+   "hash": "d4e37de6f419d6c4",
+   "duration_s": 2.97,
+   "qa": 1.0
+  },
+  "load_unknown__v1": {
+   "event": "load_unknown",
+   "variant": 1,
+   "text": "Confere a carga na tela antes de começar.",
+   "file": "load_unknown__v1.mp3",
+   "hash": "c7fb2cd140a20e58",
+   "duration_s": 3.1,
+   "qa": 1.0
+  },
+  "set_reps__r1": {
+   "event": "set_reps",
+   "reps": 1,
+   "text": "Vamos fazer uma repetição, com técnica.",
+   "file": "set_reps__r1.mp3",
+   "hash": "1a9d2754ba5d0026",
+   "duration_s": 2.9,
+   "qa": 1.0
+  },
+  "set_reps__r2": {
+   "event": "set_reps",
+   "reps": 2,
+   "text": "Vamos fazer duas repetições, com técnica.",
+   "file": "set_reps__r2.mp3",
+   "hash": "e7746ed4157aa9b4",
+   "duration_s": 3.15,
+   "qa": 1.0
+  },
+  "set_reps__r3": {
+   "event": "set_reps",
+   "reps": 3,
+   "text": "Vamos fazer três repetições, com técnica.",
+   "file": "set_reps__r3.mp3",
+   "hash": "9f347331b8fde25c",
+   "duration_s": 3.09,
+   "qa": 1.0
+  },
+  "set_reps__r4": {
+   "event": "set_reps",
+   "reps": 4,
+   "text": "Vamos fazer quatro repetições, com técnica.",
+   "file": "set_reps__r4.mp3",
+   "hash": "19fb8e73fa34af5e",
+   "duration_s": 3.44,
+   "qa": 1.0
+  },
+  "set_reps__r5": {
+   "event": "set_reps",
+   "reps": 5,
+   "text": "Vamos fazer cinco repetições, com técnica.",
+   "file": "set_reps__r5.mp3",
+   "hash": "ec940e04960eed93",
+   "duration_s": 3.38,
+   "qa": 1.0
+  },
+  "set_reps__r6": {
+   "event": "set_reps",
+   "reps": 6,
+   "text": "Vamos fazer seis repetições, com técnica.",
+   "file": "set_reps__r6.mp3",
+   "hash": "c680efbd0965c944",
+   "duration_s": 3.17,
+   "qa": 1.0
+  },
+  "set_reps__r7": {
+   "event": "set_reps",
+   "reps": 7,
+   "text": "Vamos fazer sete repetições, com técnica.",
+   "file": "set_reps__r7.mp3",
+   "hash": "daf614d4d45c715c",
+   "duration_s": 3.12,
+   "qa": 1.0
+  },
+  "set_reps__r8": {
+   "event": "set_reps",
+   "reps": 8,
+   "text": "Vamos fazer oito repetições, com técnica.",
+   "file": "set_reps__r8.mp3",
+   "hash": "b0c5c5cec54e7706",
+   "duration_s": 3.2,
+   "qa": 1.0
+  },
+  "set_reps__r9": {
+   "event": "set_reps",
+   "reps": 9,
+   "text": "Vamos fazer nove repetições, com técnica.",
+   "file": "set_reps__r9.mp3",
+   "hash": "adab9181b9068d5b",
+   "duration_s": 3.22,
+   "qa": 1.0
+  },
+  "set_reps__r10": {
+   "event": "set_reps",
+   "reps": 10,
+   "text": "Vamos fazer dez repetições, com técnica.",
+   "file": "set_reps__r10.mp3",
+   "hash": "e3f4acfeda18c18b",
+   "duration_s": 3.14,
+   "qa": 1.0
+  },
+  "set_reps__r11": {
+   "event": "set_reps",
+   "reps": 11,
+   "text": "Vamos fazer onze repetições, com técnica.",
+   "file": "set_reps__r11.mp3",
+   "hash": "a4d99613e08785d9",
+   "duration_s": 3.15,
+   "qa": 1.0
+  },
+  "set_reps__r12": {
+   "event": "set_reps",
+   "reps": 12,
+   "text": "Vamos fazer doze repetições, com técnica.",
+   "file": "set_reps__r12.mp3",
+   "hash": "fccfc90116c86e40",
+   "duration_s": 3.25,
+   "qa": 1.0
+  },
+  "set_reps__r13": {
+   "event": "set_reps",
+   "reps": 13,
+   "text": "Vamos fazer treze repetições, com técnica.",
+   "file": "set_reps__r13.mp3",
+   "hash": "420750b1a1a1ddac",
+   "duration_s": 3.26,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "set_reps__r14": {
+   "event": "set_reps",
+   "reps": 14,
+   "text": "Vamos fazer catorze repetições, com técnica.",
+   "file": "set_reps__r14.mp3",
+   "hash": "677f621827687589",
+   "duration_s": 3.5,
+   "qa": 1.0
+  },
+  "set_reps__r15": {
+   "event": "set_reps",
+   "reps": 15,
+   "text": "Vamos fazer quinze repetições, com técnica.",
+   "file": "set_reps__r15.mp3",
+   "hash": "bbc15dd23a60b003",
+   "duration_s": 3.53,
+   "qa": 1.0
+  },
+  "set_reps__r16": {
+   "event": "set_reps",
+   "reps": 16,
+   "text": "Vamos fazer dezesseis repetições, com técnica.",
+   "file": "set_reps__r16.mp3",
+   "hash": "ef3ad3d34bbfa44c",
+   "duration_s": 3.57,
+   "qa": 1.0
+  },
+  "set_reps__r17": {
+   "event": "set_reps",
+   "reps": 17,
+   "text": "Vamos fazer dezessete repetições, com técnica.",
+   "file": "set_reps__r17.mp3",
+   "hash": "ecc2790a346e1f9b",
+   "duration_s": 3.68,
+   "qa": 1.0
+  },
+  "set_reps__r18": {
+   "event": "set_reps",
+   "reps": 18,
+   "text": "Vamos fazer dezoito repetições, com técnica.",
+   "file": "set_reps__r18.mp3",
+   "hash": "aac639e5e4a0b60f",
+   "duration_s": 3.42,
+   "qa": 1.0
+  },
+  "set_reps__r19": {
+   "event": "set_reps",
+   "reps": 19,
+   "text": "Vamos fazer dezenove repetições, com técnica.",
+   "file": "set_reps__r19.mp3",
+   "hash": "cad759390b0ebd90",
+   "duration_s": 3.45,
+   "qa": 1.0
+  },
+  "set_reps__r20": {
+   "event": "set_reps",
+   "reps": 20,
+   "text": "Vamos fazer vinte repetições, com técnica.",
+   "file": "set_reps__r20.mp3",
+   "hash": "88a8f2369ec4b0f7",
+   "duration_s": 3.35,
+   "qa": 1.0
+  },
+  "set_reps__r21": {
+   "event": "set_reps",
+   "reps": 21,
+   "text": "Vamos fazer vinte e uma repetições, com técnica.",
+   "file": "set_reps__r21.mp3",
+   "hash": "92bbb27230fb5bf8",
+   "duration_s": 3.73,
+   "qa": 1.0
+  },
+  "set_reps__r22": {
+   "event": "set_reps",
+   "reps": 22,
+   "text": "Vamos fazer vinte e duas repetições, com técnica.",
+   "file": "set_reps__r22.mp3",
+   "hash": "fec76839df637fd4",
+   "duration_s": 3.7,
+   "qa": 1.0
+  },
+  "set_reps__r23": {
+   "event": "set_reps",
+   "reps": 23,
+   "text": "Vamos fazer vinte e três repetições, com técnica.",
+   "file": "set_reps__r23.mp3",
+   "hash": "2b16ecbe6ceccfa6",
+   "duration_s": 3.68,
+   "qa": 1.0
+  },
+  "set_reps__r24": {
+   "event": "set_reps",
+   "reps": 24,
+   "text": "Vamos fazer vinte e quatro repetições, com técnica.",
+   "file": "set_reps__r24.mp3",
+   "hash": "4ec02f89c1890d72",
+   "duration_s": 3.88,
+   "qa": 1.0
+  },
+  "set_reps__r25": {
+   "event": "set_reps",
+   "reps": 25,
+   "text": "Vamos fazer vinte e cinco repetições, com técnica.",
+   "file": "set_reps__r25.mp3",
+   "hash": "63c4574c882f0ea5",
+   "duration_s": 3.84,
+   "qa": 1.0
+  },
+  "set_reps__r26": {
+   "event": "set_reps",
+   "reps": 26,
+   "text": "Vamos fazer vinte e seis repetições, com técnica.",
+   "file": "set_reps__r26.mp3",
+   "hash": "6db71f155e96d979",
+   "duration_s": 3.91,
+   "qa": 1.0
+  },
+  "set_reps__r27": {
+   "event": "set_reps",
+   "reps": 27,
+   "text": "Vamos fazer vinte e sete repetições, com técnica.",
+   "file": "set_reps__r27.mp3",
+   "hash": "c99a6dc768677dce",
+   "duration_s": 3.54,
+   "qa": 1.0
+  },
+  "set_reps__r28": {
+   "event": "set_reps",
+   "reps": 28,
+   "text": "Vamos fazer vinte e oito repetições, com técnica.",
+   "file": "set_reps__r28.mp3",
+   "hash": "9c8ed84ca01134d0",
+   "duration_s": 3.73,
+   "qa": 1.0
+  },
+  "set_reps__r29": {
+   "event": "set_reps",
+   "reps": 29,
+   "text": "Vamos fazer vinte e nove repetições, com técnica.",
+   "file": "set_reps__r29.mp3",
+   "hash": "027c0e687ec9bc4e",
+   "duration_s": 3.7,
+   "qa": 1.0
+  },
+  "set_reps__r30": {
+   "event": "set_reps",
+   "reps": 30,
+   "text": "Vamos fazer trinta repetições, com técnica.",
+   "file": "set_reps__r30.mp3",
+   "hash": "95f708a6bf9ca061",
+   "duration_s": 3.49,
+   "qa": 1.0
+  },
+  "set_last__v1": {
+   "event": "set_last",
+   "variant": 1,
+   "text": "É a última. Deixa tudo aqui.",
+   "file": "set_last__v1.mp3",
+   "hash": "5a17b2823a90dab8",
+   "duration_s": 1.83,
+   "qa": 1.0
+  },
+  "set_last__v2": {
+   "event": "set_last",
+   "variant": 2,
+   "text": "Última série desse exercício. Capricha.",
+   "file": "set_last__v2.mp3",
+   "hash": "cf8cb52e85a5b6e6",
+   "duration_s": 3.02,
+   "qa": 1.0
+  },
+  "set_last__v3": {
+   "event": "set_last",
+   "variant": 3,
+   "text": "Última. Termina forte, com qualidade.",
+   "file": "set_last__v3.mp3",
+   "hash": "a9c0355265c803e1",
+   "duration_s": 2.58,
+   "qa": 1.0
+  },
+  "rest_start__s30": {
+   "event": "rest_start",
+   "seconds": 30,
+   "text": "Descansa. Trinta segundos. Respira e solta o corpo.",
+   "file": "rest_start__s30.mp3",
+   "hash": "25249d048017e45a",
+   "duration_s": 3.76,
+   "qa": 1.0
+  },
+  "rest_start__s45": {
+   "event": "rest_start",
+   "seconds": 45,
+   "text": "Descansa. Quarenta e cinco segundos. Respira e solta o corpo.",
+   "file": "rest_start__s45.mp3",
+   "hash": "51130db289feefbb",
+   "duration_s": 4.55,
+   "qa": 1.0
+  },
+  "rest_start__s60": {
+   "event": "rest_start",
+   "seconds": 60,
+   "text": "Descansa. Um minuto. Respira e solta o corpo.",
+   "file": "rest_start__s60.mp3",
+   "hash": "b335fb81d8a05b16",
+   "duration_s": 3.35,
+   "qa": 1.0
+  },
+  "rest_start__s75": {
+   "event": "rest_start",
+   "seconds": 75,
+   "text": "Descansa. Setenta e cinco segundos. Respira e solta o corpo.",
+   "file": "rest_start__s75.mp3",
+   "hash": "0ab656bb60701c7a",
+   "duration_s": 4.64,
+   "qa": 1.0
+  },
+  "rest_start__s90": {
+   "event": "rest_start",
+   "seconds": 90,
+   "text": "Descansa. Um minuto e meio. Respira e solta o corpo.",
+   "file": "rest_start__s90.mp3",
+   "hash": "221fb87ce13baa86",
+   "duration_s": 3.82,
+   "qa": 1.0
+  },
+  "rest_start__s105": {
+   "event": "rest_start",
+   "seconds": 105,
+   "text": "Descansa. Cento e cinco segundos. Respira e solta o corpo.",
+   "file": "rest_start__s105.mp3",
+   "hash": "926e105534f070f8",
+   "duration_s": 4.38,
+   "qa": 1.0
+  },
+  "rest_start__s120": {
+   "event": "rest_start",
+   "seconds": 120,
+   "text": "Descansa. Dois minutos. Respira e solta o corpo.",
+   "file": "rest_start__s120.mp3",
+   "hash": "e8bef24fd2172021",
+   "duration_s": 3.49,
+   "qa": 1.0
+  },
+  "rest_start__s150": {
+   "event": "rest_start",
+   "seconds": 150,
+   "text": "Descansa. Dois minutos e meio. Respira e solta o corpo.",
+   "file": "rest_start__s150.mp3",
+   "hash": "da7df6c4b0849f6b",
+   "duration_s": 3.88,
+   "qa": 1.0
+  },
+  "rest_start__s180": {
+   "event": "rest_start",
+   "seconds": 180,
+   "text": "Descansa. Três minutos. Respira e solta o corpo.",
+   "file": "rest_start__s180.mp3",
+   "hash": "7cc07cfc27f03895",
+   "duration_s": 3.58,
+   "qa": 1.0
+  },
+  "rest_start__s240": {
+   "event": "rest_start",
+   "seconds": 240,
+   "text": "Descansa. Quatro minutos. Respira e solta o corpo.",
+   "file": "rest_start__s240.mp3",
+   "hash": "f3afffb52bb67fe9",
+   "duration_s": 3.62,
+   "qa": 1.0
+  },
+  "rest_start__s300": {
+   "event": "rest_start",
+   "seconds": 300,
+   "text": "Descansa. Cinco minutos. Respira e solta o corpo.",
+   "file": "rest_start__s300.mp3",
+   "hash": "2c4a3cca785f263d",
+   "duration_s": 3.64,
+   "qa": 1.0
+  },
+  "rest_10s__v1": {
+   "event": "rest_10s",
+   "variant": 1,
+   "text": "Faltam dez segundos. Volta pro equipamento.",
+   "file": "rest_10s__v1.mp3",
+   "hash": "76804b79f18221ff",
+   "duration_s": 3.42,
+   "qa": 0.83,
+   "qa_ouvido": "Faltam 10 segundos. Volta para o equipamento."
+  },
+  "rest_10s__v2": {
+   "event": "rest_10s",
+   "variant": 2,
+   "text": "Dez segundos. Prepara, respira fundo.",
+   "file": "rest_10s__v2.mp3",
+   "hash": "052c59957376a190",
+   "duration_s": 2.59,
+   "qa": 1.0
+  },
+  "superset_next__v1": {
+   "event": "superset_next",
+   "variant": 1,
+   "text": "Sem descanso. Vai direto pro próximo exercício.",
+   "file": "superset_next__v1.mp3",
+   "hash": "61243455641011d5",
+   "duration_s": 3.54,
+   "qa": 1.0
+  },
+  "superset_next__v2": {
+   "event": "superset_next",
+   "variant": 2,
+   "text": "Bi-set. Emenda direto no próximo, sem parar.",
+   "file": "superset_next__v2.mp3",
+   "hash": "048f15301c7fc85a",
+   "duration_s": 3.17,
+   "qa": 0.75,
+   "qa_ouvido": "B7. Emenda direto no próximo, sem parar."
+  },
+  "set_logged__v1": {
+   "event": "set_logged",
+   "variant": 1,
+   "text": "Boa. Série registrada.",
+   "file": "set_logged__v1.mp3",
+   "hash": "37fc2545685e6b41",
+   "duration_s": 1.61,
+   "qa": 1.0
+  },
+  "set_logged__v2": {
+   "event": "set_logged",
+   "variant": 2,
+   "text": "Isso. Anotado, segue o jogo.",
+   "file": "set_logged__v2.mp3",
+   "hash": "8f43fd3fb370cf4e",
+   "duration_s": 2.16,
+   "qa": 1.0
+  },
+  "workout_end__v1": {
+   "event": "workout_end",
+   "variant": 1,
+   "text": "Acabou. Treino concluído, mandou muito bem hoje.",
+   "file": "workout_end__v1.mp3",
+   "hash": "88101487318a70d4",
+   "duration_s": 3.77,
+   "qa": 1.0
+  },
+  "workout_end__v2": {
+   "event": "workout_end",
+   "variant": 2,
+   "text": "Fim de treino. Registra como foi e descansa, você mereceu.",
+   "file": "workout_end__v2.mp3",
+   "hash": "6a4918b18abb85d2",
+   "duration_s": 4.41,
+   "qa": 1.0
+  },
+  "count_setup_top__v1": {
+   "event": "count_setup_top",
+   "variant": 1,
+   "text": "Top set. Posiciona, pés firmes, respira fundo e trava o corpo.",
+   "file": "count_setup_top__v1.mp3",
+   "hash": "0e2edd53f7d19ba2",
+   "duration_s": 4.68,
+   "qa": 1.0
+  },
+  "count_setup_top__v2": {
+   "event": "count_setup_top",
+   "variant": 2,
+   "text": "Top set. Ajeita a pegada, respira fundo e trava o corpo.",
+   "file": "count_setup_top__v2.mp3",
+   "hash": "4fe81911db2c1b14",
+   "duration_s": 4.0,
+   "qa": 1.0
+  },
+  "count_setup_max__v1": {
+   "event": "count_setup_max",
+   "variant": 1,
+   "text": "Série máxima. Posiciona e respira fundo. Uma de cada vez, sempre com técnica.",
+   "file": "count_setup_max__v1.mp3",
+   "hash": "e14a73c31d353e69",
+   "duration_s": 5.99,
+   "qa": 1.0
+  },
+  "count_setup_max__v2": {
+   "event": "count_setup_max",
+   "variant": 2,
+   "text": "Série máxima. Se ajeita e respira fundo. Vai até onde der, sem perder a técnica.",
+   "file": "count_setup_max__v2.mp3",
+   "hash": "035edfff7579a4a1",
+   "duration_s": 5.74,
+   "qa": 1.0
+  },
+  "count_go__v1": {
+   "event": "count_go",
+   "variant": 1,
+   "text": "Valendo! Desce controlando.",
+   "file": "count_go__v1.mp3",
+   "hash": "e239389622566b5a",
+   "duration_s": 1.9,
+   "qa": 1.0
+  },
+  "count_go__v2": {
+   "event": "count_go",
+   "variant": 2,
+   "text": "Valendo! Controla a descida.",
+   "file": "count_go__v2.mp3",
+   "hash": "9a7fdf7040bc0ae8",
+   "duration_s": 2.0,
+   "qa": 1.0
+  },
+  "count__r1_v1": {
+   "event": "count",
+   "reps": 1,
+   "variant": 1,
+   "text": "Um. Isso, devagar na descida.",
+   "file": "count__r1_v1.mp3",
+   "hash": "ba019b84efb26325",
+   "duration_s": 1.91,
+   "qa": 1.0
+  },
+  "count__r1_v2": {
+   "event": "count",
+   "reps": 1,
+   "variant": 2,
+   "text": "Um. Amplitude completa.",
+   "file": "count__r1_v2.mp3",
+   "hash": "c312d36445dec6c3",
+   "duration_s": 1.75,
+   "qa": 1.0
+  },
+  "count__r1_v3": {
+   "event": "count",
+   "reps": 1,
+   "variant": 3,
+   "text": "Um. Sobe com força.",
+   "file": "count__r1_v3.mp3",
+   "hash": "7a6b293bc1df3172",
+   "duration_s": 1.55,
+   "qa": 1.0
+  },
+  "count__r1_v4": {
+   "event": "count",
+   "reps": 1,
+   "variant": 4,
+   "text": "Um. Mantém o ritmo.",
+   "file": "count__r1_v4.mp3",
+   "hash": "93e926cd5b8e4990",
+   "duration_s": 1.45,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count__r2_v1": {
+   "event": "count",
+   "reps": 2,
+   "variant": 1,
+   "text": "Dois. Isso, devagar na descida.",
+   "file": "count__r2_v1.mp3",
+   "hash": "bdc518cc4d989d81",
+   "duration_s": 2.15,
+   "qa": 1.0
+  },
+  "count__r2_v2": {
+   "event": "count",
+   "reps": 2,
+   "variant": 2,
+   "text": "Dois. Amplitude completa.",
+   "file": "count__r2_v2.mp3",
+   "hash": "a4b270575f8dcc59",
+   "duration_s": 1.8,
+   "qa": 1.0
+  },
+  "count__r2_v3": {
+   "event": "count",
+   "reps": 2,
+   "variant": 3,
+   "text": "Dois. Sobe com força.",
+   "file": "count__r2_v3.mp3",
+   "hash": "3063a51ecbad851c",
+   "duration_s": 1.63,
+   "qa": 1.0
+  },
+  "count__r2_v4": {
+   "event": "count",
+   "reps": 2,
+   "variant": 4,
+   "text": "Dois. Mantém o ritmo.",
+   "file": "count__r2_v4.mp3",
+   "hash": "46883f1ec0d2dcd5",
+   "duration_s": 1.53,
+   "qa": 1.0
+  },
+  "count__r3_v1": {
+   "event": "count",
+   "reps": 3,
+   "variant": 1,
+   "text": "Três. Isso, devagar na descida.",
+   "file": "count__r3_v1.mp3",
+   "hash": "181556b7dab14998",
+   "duration_s": 2.13,
+   "qa": 1.0
+  },
+  "count__r3_v2": {
+   "event": "count",
+   "reps": 3,
+   "variant": 2,
+   "text": "Três. Amplitude completa.",
+   "file": "count__r3_v2.mp3",
+   "hash": "1f21b0d18dde6973",
+   "duration_s": 1.94,
+   "qa": 1.0
+  },
+  "count__r3_v3": {
+   "event": "count",
+   "reps": 3,
+   "variant": 3,
+   "text": "Três. Sobe com força.",
+   "file": "count__r3_v3.mp3",
+   "hash": "85d6dadd3cbd4c3b",
+   "duration_s": 1.74,
+   "qa": 1.0
+  },
+  "count__r3_v4": {
+   "event": "count",
+   "reps": 3,
+   "variant": 4,
+   "text": "Três. Mantém o ritmo.",
+   "file": "count__r3_v4.mp3",
+   "hash": "b0367459a3b0fa80",
+   "duration_s": 1.52,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count__r4_v1": {
+   "event": "count",
+   "reps": 4,
+   "variant": 1,
+   "text": "Quatro. Isso, devagar na descida.",
+   "file": "count__r4_v1.mp3",
+   "hash": "c277452049285c11",
+   "duration_s": 2.22,
+   "qa": 1.0
+  },
+  "count__r4_v2": {
+   "event": "count",
+   "reps": 4,
+   "variant": 2,
+   "text": "Quatro. Amplitude completa.",
+   "file": "count__r4_v2.mp3",
+   "hash": "04bdbaa8ba29e8dd",
+   "duration_s": 1.94,
+   "qa": 1.0
+  },
+  "count__r4_v3": {
+   "event": "count",
+   "reps": 4,
+   "variant": 3,
+   "text": "Quatro. Sobe com força.",
+   "file": "count__r4_v3.mp3",
+   "hash": "24c21201fef2fc81",
+   "duration_s": 1.72,
+   "qa": 1.0
+  },
+  "count__r4_v4": {
+   "event": "count",
+   "reps": 4,
+   "variant": 4,
+   "text": "Quatro. Mantém o ritmo.",
+   "file": "count__r4_v4.mp3",
+   "hash": "9bab7b36e7a75315",
+   "duration_s": 1.55,
+   "qa": 1.0
+  },
+  "count__r5_v1": {
+   "event": "count",
+   "reps": 5,
+   "variant": 1,
+   "text": "Cinco. Isso, devagar na descida.",
+   "file": "count__r5_v1.mp3",
+   "hash": "031118dab233f750",
+   "duration_s": 2.43,
+   "qa": 1.0
+  },
+  "count__r5_v2": {
+   "event": "count",
+   "reps": 5,
+   "variant": 2,
+   "text": "Cinco. Amplitude completa.",
+   "file": "count__r5_v2.mp3",
+   "hash": "ddae38090bc175cd",
+   "duration_s": 1.82,
+   "qa": 1.0
+  },
+  "count__r5_v3": {
+   "event": "count",
+   "reps": 5,
+   "variant": 3,
+   "text": "Cinco. Sobe com força.",
+   "file": "count__r5_v3.mp3",
+   "hash": "24f2e4c1141be109",
+   "duration_s": 1.66,
+   "qa": 1.0
+  },
+  "count__r5_v4": {
+   "event": "count",
+   "reps": 5,
+   "variant": 4,
+   "text": "Cinco. Mantém o ritmo.",
+   "file": "count__r5_v4.mp3",
+   "hash": "9f20f8bd09251eed",
+   "duration_s": 1.49,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count__r6_v1": {
+   "event": "count",
+   "reps": 6,
+   "variant": 1,
+   "text": "Seis. Isso, devagar na descida.",
+   "file": "count__r6_v1.mp3",
+   "hash": "bb2a5b78b2104334",
+   "duration_s": 2.16,
+   "qa": 1.0
+  },
+  "count__r6_v2": {
+   "event": "count",
+   "reps": 6,
+   "variant": 2,
+   "text": "Seis. Amplitude completa.",
+   "file": "count__r6_v2.mp3",
+   "hash": "f2d95b912cddc193",
+   "duration_s": 1.99,
+   "qa": 1.0
+  },
+  "count__r6_v3": {
+   "event": "count",
+   "reps": 6,
+   "variant": 3,
+   "text": "Seis. Sobe com força.",
+   "file": "count__r6_v3.mp3",
+   "hash": "60acac41f1ff58ed",
+   "duration_s": 1.65,
+   "qa": 1.0
+  },
+  "count__r6_v4": {
+   "event": "count",
+   "reps": 6,
+   "variant": 4,
+   "text": "Seis. Mantém o ritmo.",
+   "file": "count__r6_v4.mp3",
+   "hash": "63b259d566715bda",
+   "duration_s": 1.64,
+   "qa": 1.0
+  },
+  "count__r7_v1": {
+   "event": "count",
+   "reps": 7,
+   "variant": 1,
+   "text": "Sete. Isso, devagar na descida.",
+   "file": "count__r7_v1.mp3",
+   "hash": "2e3bb2596b934488",
+   "duration_s": 2.16,
+   "qa": 1.0
+  },
+  "count__r7_v2": {
+   "event": "count",
+   "reps": 7,
+   "variant": 2,
+   "text": "Sete. Amplitude completa.",
+   "file": "count__r7_v2.mp3",
+   "hash": "effe7c9e59ca1ea6",
+   "duration_s": 2.02,
+   "qa": 1.0
+  },
+  "count__r7_v3": {
+   "event": "count",
+   "reps": 7,
+   "variant": 3,
+   "text": "Sete. Sobe com força.",
+   "file": "count__r7_v3.mp3",
+   "hash": "062a3020a6736006",
+   "duration_s": 1.65,
+   "qa": 1.0
+  },
+  "count__r7_v4": {
+   "event": "count",
+   "reps": 7,
+   "variant": 4,
+   "text": "Sete. Mantém o ritmo.",
+   "file": "count__r7_v4.mp3",
+   "hash": "74da9bcb43e00448",
+   "duration_s": 1.66,
+   "qa": 1.0
+  },
+  "count__r8_v1": {
+   "event": "count",
+   "reps": 8,
+   "variant": 1,
+   "text": "Oito. Isso, devagar na descida.",
+   "file": "count__r8_v1.mp3",
+   "hash": "6cf880898df95e85",
+   "duration_s": 2.09,
+   "qa": 1.0
+  },
+  "count__r8_v2": {
+   "event": "count",
+   "reps": 8,
+   "variant": 2,
+   "text": "Oito. Amplitude completa.",
+   "file": "count__r8_v2.mp3",
+   "hash": "fda66cb24e781920",
+   "duration_s": 1.73,
+   "qa": 1.0
+  },
+  "count__r8_v3": {
+   "event": "count",
+   "reps": 8,
+   "variant": 3,
+   "text": "Oito. Sobe com força.",
+   "file": "count__r8_v3.mp3",
+   "hash": "ef2bfeb4f64ba85e",
+   "duration_s": 1.61,
+   "qa": 1.0
+  },
+  "count__r8_v4": {
+   "event": "count",
+   "reps": 8,
+   "variant": 4,
+   "text": "Oito. Mantém o ritmo.",
+   "file": "count__r8_v4.mp3",
+   "hash": "21516fd515db157e",
+   "duration_s": 1.46,
+   "qa": 1.0
+  },
+  "count__r9_v1": {
+   "event": "count",
+   "reps": 9,
+   "variant": 1,
+   "text": "Nove. Isso, devagar na descida.",
+   "file": "count__r9_v1.mp3",
+   "hash": "7a386e5f44b03f09",
+   "duration_s": 2.12,
+   "qa": 1.0
+  },
+  "count__r9_v2": {
+   "event": "count",
+   "reps": 9,
+   "variant": 2,
+   "text": "Nove. Amplitude completa.",
+   "file": "count__r9_v2.mp3",
+   "hash": "8e48cee915e4311f",
+   "duration_s": 1.77,
+   "qa": 1.0
+  },
+  "count__r9_v3": {
+   "event": "count",
+   "reps": 9,
+   "variant": 3,
+   "text": "Nove. Sobe com força.",
+   "file": "count__r9_v3.mp3",
+   "hash": "d962fd22de83834d",
+   "duration_s": 1.57,
+   "qa": 1.0
+  },
+  "count__r9_v4": {
+   "event": "count",
+   "reps": 9,
+   "variant": 4,
+   "text": "Nove. Mantém o ritmo.",
+   "file": "count__r9_v4.mp3",
+   "hash": "a7e06ab4d68469e2",
+   "duration_s": 1.5,
+   "qa": 0.75,
+   "qa_ouvido": "Nove. Mantenha o ritmo."
+  },
+  "count__r10_v1": {
+   "event": "count",
+   "reps": 10,
+   "variant": 1,
+   "text": "Dez. Isso, devagar na descida.",
+   "file": "count__r10_v1.mp3",
+   "hash": "0a8412dfdf035229",
+   "duration_s": 2.07,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count__r10_v2": {
+   "event": "count",
+   "reps": 10,
+   "variant": 2,
+   "text": "Dez. Amplitude completa.",
+   "file": "count__r10_v2.mp3",
+   "hash": "c5518988c13f7521",
+   "duration_s": 1.75,
+   "qa": 1.0
+  },
+  "count__r10_v3": {
+   "event": "count",
+   "reps": 10,
+   "variant": 3,
+   "text": "Dez. Sobe com força.",
+   "file": "count__r10_v3.mp3",
+   "hash": "0cab477605d00193",
+   "duration_s": 1.56,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count__r10_v4": {
+   "event": "count",
+   "reps": 10,
+   "variant": 4,
+   "text": "Dez. Mantém o ritmo.",
+   "file": "count__r10_v4.mp3",
+   "hash": "67c1ff3386b6231c",
+   "duration_s": 1.52,
+   "qa": 1.0
+  },
+  "count__r11_v1": {
+   "event": "count",
+   "reps": 11,
+   "variant": 1,
+   "text": "Onze. Isso, devagar na descida.",
+   "file": "count__r11_v1.mp3",
+   "hash": "45b09337f73b5107",
+   "duration_s": 2.16,
+   "qa": 1.0
+  },
+  "count__r11_v2": {
+   "event": "count",
+   "reps": 11,
+   "variant": 2,
+   "text": "Onze. Amplitude completa.",
+   "file": "count__r11_v2.mp3",
+   "hash": "0e2e2f8860cdd690",
+   "duration_s": 1.79,
+   "qa": 1.0
+  },
+  "count__r11_v3": {
+   "event": "count",
+   "reps": 11,
+   "variant": 3,
+   "text": "Onze. Sobe com força.",
+   "file": "count__r11_v3.mp3",
+   "hash": "f09507aaa06e4929",
+   "duration_s": 1.54,
+   "qa": 1.0
+  },
+  "count__r11_v4": {
+   "event": "count",
+   "reps": 11,
+   "variant": 4,
+   "text": "Onze. Mantém o ritmo.",
+   "file": "count__r11_v4.mp3",
+   "hash": "5a66b003d4771640",
+   "duration_s": 1.51,
+   "qa": 1.0
+  },
+  "count__r12_v1": {
+   "event": "count",
+   "reps": 12,
+   "variant": 1,
+   "text": "Doze. Isso, devagar na descida.",
+   "file": "count__r12_v1.mp3",
+   "hash": "7689e24195054f3a",
+   "duration_s": 2.2,
+   "qa": 1.0
+  },
+  "count__r12_v2": {
+   "event": "count",
+   "reps": 12,
+   "variant": 2,
+   "text": "Doze. Amplitude completa.",
+   "file": "count__r12_v2.mp3",
+   "hash": "c42d4468e27b8d90",
+   "duration_s": 1.9,
+   "qa": 1.0
+  },
+  "count__r12_v3": {
+   "event": "count",
+   "reps": 12,
+   "variant": 3,
+   "text": "Doze. Sobe com força.",
+   "file": "count__r12_v3.mp3",
+   "hash": "9e601fdf082469c3",
+   "duration_s": 1.69,
+   "qa": 1.0
+  },
+  "count__r12_v4": {
+   "event": "count",
+   "reps": 12,
+   "variant": 4,
+   "text": "Doze. Mantém o ritmo.",
+   "file": "count__r12_v4.mp3",
+   "hash": "e3aa25853d9ebc01",
+   "duration_s": 1.55,
+   "qa": 1.0
+  },
+  "count__r13_v1": {
+   "event": "count",
+   "reps": 13,
+   "variant": 1,
+   "text": "Treze. Isso, devagar na descida.",
+   "file": "count__r13_v1.mp3",
+   "hash": "33063fba3e277fb1",
+   "duration_s": 2.36,
+   "qa": 1.0
+  },
+  "count__r13_v2": {
+   "event": "count",
+   "reps": 13,
+   "variant": 2,
+   "text": "Treze. Amplitude completa.",
+   "file": "count__r13_v2.mp3",
+   "hash": "f8b6351ce8ddffd5",
+   "duration_s": 1.88,
+   "qa": 1.0
+  },
+  "count__r13_v3": {
+   "event": "count",
+   "reps": 13,
+   "variant": 3,
+   "text": "Treze. Sobe com força.",
+   "file": "count__r13_v3.mp3",
+   "hash": "36bd8c153a9e98d4",
+   "duration_s": 1.55,
+   "qa": 1.0
+  },
+  "count__r13_v4": {
+   "event": "count",
+   "reps": 13,
+   "variant": 4,
+   "text": "Treze. Mantém o ritmo.",
+   "file": "count__r13_v4.mp3",
+   "hash": "0b6f574fda22aad2",
+   "duration_s": 1.57,
+   "qa": 1.0
+  },
+  "count__r14_v1": {
+   "event": "count",
+   "reps": 14,
+   "variant": 1,
+   "text": "Catorze. Isso, devagar na descida.",
+   "file": "count__r14_v1.mp3",
+   "hash": "2ef619c9f83bc21b",
+   "duration_s": 2.48,
+   "qa": 1.0
+  },
+  "count__r14_v2": {
+   "event": "count",
+   "reps": 14,
+   "variant": 2,
+   "text": "Catorze. Amplitude completa.",
+   "file": "count__r14_v2.mp3",
+   "hash": "d7ecc40af9f37e1b",
+   "duration_s": 2.05,
+   "qa": 1.0
+  },
+  "count__r14_v3": {
+   "event": "count",
+   "reps": 14,
+   "variant": 3,
+   "text": "Catorze. Sobe com força.",
+   "file": "count__r14_v3.mp3",
+   "hash": "bac2a1864914ddbf",
+   "duration_s": 1.95,
+   "qa": 1.0
+  },
+  "count__r14_v4": {
+   "event": "count",
+   "reps": 14,
+   "variant": 4,
+   "text": "Catorze. Mantém o ritmo.",
+   "file": "count__r14_v4.mp3",
+   "hash": "b2fd6ed5d209289d",
+   "duration_s": 1.93,
+   "qa": 1.0
+  },
+  "count__r15_v1": {
+   "event": "count",
+   "reps": 15,
+   "variant": 1,
+   "text": "Quinze. Isso, devagar na descida.",
+   "file": "count__r15_v1.mp3",
+   "hash": "72fcd409eec68fa3",
+   "duration_s": 2.29,
+   "qa": 1.0
+  },
+  "count__r15_v2": {
+   "event": "count",
+   "reps": 15,
+   "variant": 2,
+   "text": "Quinze. Amplitude completa.",
+   "file": "count__r15_v2.mp3",
+   "hash": "7f5c305461f5b73c",
+   "duration_s": 1.92,
+   "qa": 1.0
+  },
+  "count__r15_v3": {
+   "event": "count",
+   "reps": 15,
+   "variant": 3,
+   "text": "Quinze. Sobe com força.",
+   "file": "count__r15_v3.mp3",
+   "hash": "f19028067b20441a",
+   "duration_s": 1.55,
+   "qa": 1.0
+  },
+  "count__r15_v4": {
+   "event": "count",
+   "reps": 15,
+   "variant": 4,
+   "text": "Quinze. Mantém o ritmo.",
+   "file": "count__r15_v4.mp3",
+   "hash": "28c2d1f71c4c477f",
+   "duration_s": 1.68,
+   "qa": 1.0
+  },
+  "count__r16_v1": {
+   "event": "count",
+   "reps": 16,
+   "variant": 1,
+   "text": "Dezesseis. Isso, devagar na descida.",
+   "file": "count__r16_v1.mp3",
+   "hash": "38ac8cd37de99d79",
+   "duration_s": 2.53,
+   "qa": 1.0
+  },
+  "count__r16_v2": {
+   "event": "count",
+   "reps": 16,
+   "variant": 2,
+   "text": "Dezesseis. Amplitude completa.",
+   "file": "count__r16_v2.mp3",
+   "hash": "1a656ce8b4d66276",
+   "duration_s": 2.15,
+   "qa": 1.0
+  },
+  "count__r16_v3": {
+   "event": "count",
+   "reps": 16,
+   "variant": 3,
+   "text": "Dezesseis. Sobe com força.",
+   "file": "count__r16_v3.mp3",
+   "hash": "a76dd3d9d4ab90bd",
+   "duration_s": 2.26,
+   "qa": 1.0
+  },
+  "count__r16_v4": {
+   "event": "count",
+   "reps": 16,
+   "variant": 4,
+   "text": "Dezesseis. Mantém o ritmo.",
+   "file": "count__r16_v4.mp3",
+   "hash": "23c490b534a6b4d2",
+   "duration_s": 2.14,
+   "qa": 1.0
+  },
+  "count__r17_v1": {
+   "event": "count",
+   "reps": 17,
+   "variant": 1,
+   "text": "Dezessete. Isso, devagar na descida.",
+   "file": "count__r17_v1.mp3",
+   "hash": "2ec12ed32846a60f",
+   "duration_s": 2.54,
+   "qa": 1.0
+  },
+  "count__r17_v2": {
+   "event": "count",
+   "reps": 17,
+   "variant": 2,
+   "text": "Dezessete. Amplitude completa.",
+   "file": "count__r17_v2.mp3",
+   "hash": "f59b9d0f87b8cfe3",
+   "duration_s": 2.15,
+   "qa": 1.0
+  },
+  "count__r17_v3": {
+   "event": "count",
+   "reps": 17,
+   "variant": 3,
+   "text": "Dezessete. Sobe com força.",
+   "file": "count__r17_v3.mp3",
+   "hash": "133c9a40bbdfa9ee",
+   "duration_s": 2.21,
+   "qa": 1.0
+  },
+  "count__r17_v4": {
+   "event": "count",
+   "reps": 17,
+   "variant": 4,
+   "text": "Dezessete. Mantém o ritmo.",
+   "file": "count__r17_v4.mp3",
+   "hash": "a95429759f47d15c",
+   "duration_s": 2.18,
+   "qa": 0.75,
+   "qa_ouvido": "17. Mantenha o ritmo."
+  },
+  "count__r18_v1": {
+   "event": "count",
+   "reps": 18,
+   "variant": 1,
+   "text": "Dezoito. Isso, devagar na descida.",
+   "file": "count__r18_v1.mp3",
+   "hash": "b531c2c2f96c9644",
+   "duration_s": 2.37,
+   "qa": 1.0
+  },
+  "count__r18_v2": {
+   "event": "count",
+   "reps": 18,
+   "variant": 2,
+   "text": "Dezoito. Amplitude completa.",
+   "file": "count__r18_v2.mp3",
+   "hash": "ab3fe4f2e35d9cdc",
+   "duration_s": 2.12,
+   "qa": 1.0
+  },
+  "count__r18_v3": {
+   "event": "count",
+   "reps": 18,
+   "variant": 3,
+   "text": "Dezoito. Sobe com força.",
+   "file": "count__r18_v3.mp3",
+   "hash": "5e616f904e53e791",
+   "duration_s": 2.19,
+   "qa": 1.0
+  },
+  "count__r18_v4": {
+   "event": "count",
+   "reps": 18,
+   "variant": 4,
+   "text": "Dezoito. Mantém o ritmo.",
+   "file": "count__r18_v4.mp3",
+   "hash": "1a14ea451495f84d",
+   "duration_s": 1.64,
+   "qa": 0.75,
+   "qa_ouvido": "18. Mantenha o ritmo."
+  },
+  "count__r19_v1": {
+   "event": "count",
+   "reps": 19,
+   "variant": 1,
+   "text": "Dezenove. Isso, devagar na descida.",
+   "file": "count__r19_v1.mp3",
+   "hash": "0bf1f33a8c5a974e",
+   "duration_s": 2.52,
+   "qa": 1.0
+  },
+  "count__r19_v2": {
+   "event": "count",
+   "reps": 19,
+   "variant": 2,
+   "text": "Dezenove. Amplitude completa.",
+   "file": "count__r19_v2.mp3",
+   "hash": "76c46ed6eb313969",
+   "duration_s": 2.19,
+   "qa": 1.0
+  },
+  "count__r19_v3": {
+   "event": "count",
+   "reps": 19,
+   "variant": 3,
+   "text": "Dezenove. Sobe com força.",
+   "file": "count__r19_v3.mp3",
+   "hash": "4b2652c839c5ce7e",
+   "duration_s": 2.01,
+   "qa": 1.0
+  },
+  "count__r19_v4": {
+   "event": "count",
+   "reps": 19,
+   "variant": 4,
+   "text": "Dezenove. Mantém o ritmo.",
+   "file": "count__r19_v4.mp3",
+   "hash": "66bc66dded7c058e",
+   "duration_s": 2.21,
+   "qa": 1.0
+  },
+  "count__r20_v1": {
+   "event": "count",
+   "reps": 20,
+   "variant": 1,
+   "text": "Vinte. Isso, devagar na descida.",
+   "file": "count__r20_v1.mp3",
+   "hash": "11268fe9155acd76",
+   "duration_s": 2.14,
+   "qa": 1.0
+  },
+  "count__r20_v2": {
+   "event": "count",
+   "reps": 20,
+   "variant": 2,
+   "text": "Vinte. Amplitude completa.",
+   "file": "count__r20_v2.mp3",
+   "hash": "f022f493d6a0ecfb",
+   "duration_s": 1.87,
+   "qa": 1.0
+  },
+  "count__r20_v3": {
+   "event": "count",
+   "reps": 20,
+   "variant": 3,
+   "text": "Vinte. Sobe com força.",
+   "file": "count__r20_v3.mp3",
+   "hash": "0b75d8d05540bbd6",
+   "duration_s": 1.68,
+   "qa": 1.0
+  },
+  "count__r20_v4": {
+   "event": "count",
+   "reps": 20,
+   "variant": 4,
+   "text": "Vinte. Mantém o ritmo.",
+   "file": "count__r20_v4.mp3",
+   "hash": "592b4631b369ead3",
+   "duration_s": 2.02,
+   "seed": 242,
+   "qa": 1.0
+  },
+  "count__r21_v1": {
+   "event": "count",
+   "reps": 21,
+   "variant": 1,
+   "text": "Vinte e um. Isso, devagar na descida.",
+   "file": "count__r21_v1.mp3",
+   "hash": "81a7b3f5d7f4e1b0",
+   "duration_s": 2.52,
+   "qa": 1.0
+  },
+  "count__r21_v2": {
+   "event": "count",
+   "reps": 21,
+   "variant": 2,
+   "text": "Vinte e um. Amplitude completa.",
+   "file": "count__r21_v2.mp3",
+   "hash": "11fef05b6dd8baaa",
+   "duration_s": 2.26,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count__r21_v3": {
+   "event": "count",
+   "reps": 21,
+   "variant": 3,
+   "text": "Vinte e um. Sobe com força.",
+   "file": "count__r21_v3.mp3",
+   "hash": "70ad0dbfc7226cac",
+   "duration_s": 2.2,
+   "qa": 1.0
+  },
+  "count__r21_v4": {
+   "event": "count",
+   "reps": 21,
+   "variant": 4,
+   "text": "Vinte e um. Mantém o ritmo.",
+   "file": "count__r21_v4.mp3",
+   "hash": "6f44c834ac676b84",
+   "duration_s": 1.92,
+   "qa": 1.0
+  },
+  "count__r22_v1": {
+   "event": "count",
+   "reps": 22,
+   "variant": 1,
+   "text": "Vinte e dois. Isso, devagar na descida.",
+   "file": "count__r22_v1.mp3",
+   "hash": "b9d6d82eb6f0a8e6",
+   "duration_s": 2.75,
+   "qa": 1.0
+  },
+  "count__r22_v2": {
+   "event": "count",
+   "reps": 22,
+   "variant": 2,
+   "text": "Vinte e dois. Amplitude completa.",
+   "file": "count__r22_v2.mp3",
+   "hash": "02280e99169bbb96",
+   "duration_s": 2.39,
+   "seed": 242,
+   "qa": 1.0
+  },
+  "count__r22_v3": {
+   "event": "count",
+   "reps": 22,
+   "variant": 3,
+   "text": "Vinte e dois. Sobe com força.",
+   "file": "count__r22_v3.mp3",
+   "hash": "1df7cd9d8f5ad3bb",
+   "duration_s": 2.21,
+   "qa": 1.0
+  },
+  "count__r22_v4": {
+   "event": "count",
+   "reps": 22,
+   "variant": 4,
+   "text": "Vinte e dois. Mantém o ritmo.",
+   "file": "count__r22_v4.mp3",
+   "hash": "f8407becc69bdb52",
+   "duration_s": 2.12,
+   "qa": 1.0
+  },
+  "count__r23_v1": {
+   "event": "count",
+   "reps": 23,
+   "variant": 1,
+   "text": "Vinte e três. Isso, devagar na descida.",
+   "file": "count__r23_v1.mp3",
+   "hash": "79c8d4c0e53be45e",
+   "duration_s": 2.76,
+   "qa": 1.0
+  },
+  "count__r23_v2": {
+   "event": "count",
+   "reps": 23,
+   "variant": 2,
+   "text": "Vinte e três. Amplitude completa.",
+   "file": "count__r23_v2.mp3",
+   "hash": "b2c1c19d085b14b3",
+   "duration_s": 2.21,
+   "qa": 1.0
+  },
+  "count__r23_v3": {
+   "event": "count",
+   "reps": 23,
+   "variant": 3,
+   "text": "Vinte e três. Sobe com força.",
+   "file": "count__r23_v3.mp3",
+   "hash": "1e0fa96140cdc80d",
+   "duration_s": 2.21,
+   "qa": 1.0
+  },
+  "count__r23_v4": {
+   "event": "count",
+   "reps": 23,
+   "variant": 4,
+   "text": "Vinte e três. Mantém o ritmo.",
+   "file": "count__r23_v4.mp3",
+   "hash": "3f5b00c3c3b713c6",
+   "duration_s": 2.24,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count__r24_v1": {
+   "event": "count",
+   "reps": 24,
+   "variant": 1,
+   "text": "Vinte e quatro. Isso, devagar na descida.",
+   "file": "count__r24_v1.mp3",
+   "hash": "a7a292f4090ffe92",
+   "duration_s": 3.15,
+   "qa": 1.0
+  },
+  "count__r24_v2": {
+   "event": "count",
+   "reps": 24,
+   "variant": 2,
+   "text": "Vinte e quatro. Amplitude completa.",
+   "file": "count__r24_v2.mp3",
+   "hash": "08c319a5ea3a7c51",
+   "duration_s": 2.75,
+   "qa": 1.0
+  },
+  "count__r24_v3": {
+   "event": "count",
+   "reps": 24,
+   "variant": 3,
+   "text": "Vinte e quatro. Sobe com força.",
+   "file": "count__r24_v3.mp3",
+   "hash": "e56208aff1f84389",
+   "duration_s": 2.05,
+   "qa": 1.0
+  },
+  "count__r24_v4": {
+   "event": "count",
+   "reps": 24,
+   "variant": 4,
+   "text": "Vinte e quatro. Mantém o ritmo.",
+   "file": "count__r24_v4.mp3",
+   "hash": "a734ab82c1772119",
+   "duration_s": 1.94,
+   "qa": 1.0
+  },
+  "count__r25_v1": {
+   "event": "count",
+   "reps": 25,
+   "variant": 1,
+   "text": "Vinte e cinco. Isso, devagar na descida.",
+   "file": "count__r25_v1.mp3",
+   "hash": "42ab36ad9904f45a",
+   "duration_s": 2.85,
+   "qa": 1.0
+  },
+  "count__r25_v2": {
+   "event": "count",
+   "reps": 25,
+   "variant": 2,
+   "text": "Vinte e cinco. Amplitude completa.",
+   "file": "count__r25_v2.mp3",
+   "hash": "5e562471e406135f",
+   "duration_s": 2.45,
+   "qa": 1.0
+  },
+  "count__r25_v3": {
+   "event": "count",
+   "reps": 25,
+   "variant": 3,
+   "text": "Vinte e cinco. Sobe com força.",
+   "file": "count__r25_v3.mp3",
+   "hash": "4f9988b10a8a0973",
+   "duration_s": 1.97,
+   "qa": 1.0
+  },
+  "count__r25_v4": {
+   "event": "count",
+   "reps": 25,
+   "variant": 4,
+   "text": "Vinte e cinco. Mantém o ritmo.",
+   "file": "count__r25_v4.mp3",
+   "hash": "84c79e4f3b9576f6",
+   "duration_s": 2.06,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count__r26_v1": {
+   "event": "count",
+   "reps": 26,
+   "variant": 1,
+   "text": "Vinte e seis. Isso, devagar na descida.",
+   "file": "count__r26_v1.mp3",
+   "hash": "5b0038b15ab38d5d",
+   "duration_s": 2.81,
+   "qa": 1.0
+  },
+  "count__r26_v2": {
+   "event": "count",
+   "reps": 26,
+   "variant": 2,
+   "text": "Vinte e seis. Amplitude completa.",
+   "file": "count__r26_v2.mp3",
+   "hash": "cae1a45d247c6c87",
+   "duration_s": 2.3,
+   "qa": 1.0
+  },
+  "count__r26_v3": {
+   "event": "count",
+   "reps": 26,
+   "variant": 3,
+   "text": "Vinte e seis. Sobe com força.",
+   "file": "count__r26_v3.mp3",
+   "hash": "0e488283ed1c8ef5",
+   "duration_s": 1.92,
+   "qa": 1.0
+  },
+  "count__r26_v4": {
+   "event": "count",
+   "reps": 26,
+   "variant": 4,
+   "text": "Vinte e seis. Mantém o ritmo.",
+   "file": "count__r26_v4.mp3",
+   "hash": "2eafc66445943c11",
+   "duration_s": 2.29,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count__r27_v1": {
+   "event": "count",
+   "reps": 27,
+   "variant": 1,
+   "text": "Vinte e sete. Isso, devagar na descida.",
+   "file": "count__r27_v1.mp3",
+   "hash": "b3889022ed678162",
+   "duration_s": 2.78,
+   "qa": 1.0
+  },
+  "count__r27_v2": {
+   "event": "count",
+   "reps": 27,
+   "variant": 2,
+   "text": "Vinte e sete. Amplitude completa.",
+   "file": "count__r27_v2.mp3",
+   "hash": "9caead5d9a542abd",
+   "duration_s": 2.33,
+   "qa": 1.0
+  },
+  "count__r27_v3": {
+   "event": "count",
+   "reps": 27,
+   "variant": 3,
+   "text": "Vinte e sete. Sobe com força.",
+   "file": "count__r27_v3.mp3",
+   "hash": "dcf714275502db44",
+   "duration_s": 2.2,
+   "qa": 1.0
+  },
+  "count__r27_v4": {
+   "event": "count",
+   "reps": 27,
+   "variant": 4,
+   "text": "Vinte e sete. Mantém o ritmo.",
+   "file": "count__r27_v4.mp3",
+   "hash": "fef889fa5892c6d2",
+   "duration_s": 2.12,
+   "qa": 1.0
+  },
+  "count__r28_v1": {
+   "event": "count",
+   "reps": 28,
+   "variant": 1,
+   "text": "Vinte e oito. Isso, devagar na descida.",
+   "file": "count__r28_v1.mp3",
+   "hash": "56ec8b81a8a143bf",
+   "duration_s": 2.79,
+   "qa": 1.0
+  },
+  "count__r28_v2": {
+   "event": "count",
+   "reps": 28,
+   "variant": 2,
+   "text": "Vinte e oito. Amplitude completa.",
+   "file": "count__r28_v2.mp3",
+   "hash": "1f5a92cc88f0c031",
+   "duration_s": 2.27,
+   "qa": 1.0
+  },
+  "count__r28_v3": {
+   "event": "count",
+   "reps": 28,
+   "variant": 3,
+   "text": "Vinte e oito. Sobe com força.",
+   "file": "count__r28_v3.mp3",
+   "hash": "e4d4978ff44df353",
+   "duration_s": 2.07,
+   "qa": 1.0
+  },
+  "count__r28_v4": {
+   "event": "count",
+   "reps": 28,
+   "variant": 4,
+   "text": "Vinte e oito. Mantém o ritmo.",
+   "file": "count__r28_v4.mp3",
+   "hash": "945408f9cd5e4558",
+   "duration_s": 2.13,
+   "qa": 1.0
+  },
+  "count__r29_v1": {
+   "event": "count",
+   "reps": 29,
+   "variant": 1,
+   "text": "Vinte e nove. Isso, devagar na descida.",
+   "file": "count__r29_v1.mp3",
+   "hash": "f23ec549b3b9b879",
+   "duration_s": 2.78,
+   "qa": 1.0
+  },
+  "count__r29_v2": {
+   "event": "count",
+   "reps": 29,
+   "variant": 2,
+   "text": "Vinte e nove. Amplitude completa.",
+   "file": "count__r29_v2.mp3",
+   "hash": "41cbd0c9f146f9c0",
+   "duration_s": 2.32,
+   "qa": 1.0
+  },
+  "count__r29_v3": {
+   "event": "count",
+   "reps": 29,
+   "variant": 3,
+   "text": "Vinte e nove. Sobe com força.",
+   "file": "count__r29_v3.mp3",
+   "hash": "b76de8964e57a219",
+   "duration_s": 2.23,
+   "qa": 1.0
+  },
+  "count__r29_v4": {
+   "event": "count",
+   "reps": 29,
+   "variant": 4,
+   "text": "Vinte e nove. Mantém o ritmo.",
+   "file": "count__r29_v4.mp3",
+   "hash": "903367eb996b055e",
+   "duration_s": 2.15,
+   "qa": 1.0
+  },
+  "count__r30_v1": {
+   "event": "count",
+   "reps": 30,
+   "variant": 1,
+   "text": "Trinta. Isso, devagar na descida.",
+   "file": "count__r30_v1.mp3",
+   "hash": "0a1118d61eddd3b9",
+   "duration_s": 2.19,
+   "qa": 1.0
+  },
+  "count__r30_v2": {
+   "event": "count",
+   "reps": 30,
+   "variant": 2,
+   "text": "Trinta. Amplitude completa.",
+   "file": "count__r30_v2.mp3",
+   "hash": "e9ce02b06f5416e6",
+   "duration_s": 1.82,
+   "qa": 1.0
+  },
+  "count__r30_v3": {
+   "event": "count",
+   "reps": 30,
+   "variant": 3,
+   "text": "Trinta. Sobe com força.",
+   "file": "count__r30_v3.mp3",
+   "hash": "6394969b736d77e2",
+   "duration_s": 1.59,
+   "qa": 1.0
+  },
+  "count__r30_v4": {
+   "event": "count",
+   "reps": 30,
+   "variant": 4,
+   "text": "Trinta. Mantém o ritmo.",
+   "file": "count__r30_v4.mp3",
+   "hash": "7865775b9ca54501",
+   "duration_s": 1.57,
+   "qa": 0.75,
+   "qa_ouvido": "30. Mantenha o ritmo."
+  },
+  "count_half__r1": {
+   "event": "count_half",
+   "reps": 1,
+   "variant": 1,
+   "text": "Um. Metade. Tá bonito.",
+   "file": "count_half__r1.mp3",
+   "hash": "6c88aa80eaca9e48",
+   "duration_s": 1.67,
+   "qa": 1.0
+  },
+  "count_half__r2": {
+   "event": "count_half",
+   "reps": 2,
+   "variant": 1,
+   "text": "Dois. Metade. Tá bonito.",
+   "file": "count_half__r2.mp3",
+   "hash": "4605940ea54fb7ca",
+   "duration_s": 1.85,
+   "qa": 1.0
+  },
+  "count_half__r3": {
+   "event": "count_half",
+   "reps": 3,
+   "variant": 1,
+   "text": "Três. Metade. Tá bonito.",
+   "file": "count_half__r3.mp3",
+   "hash": "0f8fbe74c0f994a2",
+   "duration_s": 2.04,
+   "qa": 1.0
+  },
+  "count_half__r4": {
+   "event": "count_half",
+   "reps": 4,
+   "variant": 1,
+   "text": "Quatro. Metade. Tá bonito.",
+   "file": "count_half__r4.mp3",
+   "hash": "0bbeaa270be9a496",
+   "duration_s": 2.07,
+   "qa": 1.0
+  },
+  "count_half__r5": {
+   "event": "count_half",
+   "reps": 5,
+   "variant": 1,
+   "text": "Cinco. Metade. Tá bonito.",
+   "file": "count_half__r5.mp3",
+   "hash": "652e8293f446ccdc",
+   "duration_s": 2.0,
+   "qa": 1.0
+  },
+  "count_half__r6": {
+   "event": "count_half",
+   "reps": 6,
+   "variant": 1,
+   "text": "Seis. Metade. Tá bonito.",
+   "file": "count_half__r6.mp3",
+   "hash": "502b545b26161a36",
+   "duration_s": 1.97,
+   "qa": 1.0
+  },
+  "count_half__r7": {
+   "event": "count_half",
+   "reps": 7,
+   "variant": 1,
+   "text": "Sete. Metade. Tá bonito.",
+   "file": "count_half__r7.mp3",
+   "hash": "452949a0ca687802",
+   "duration_s": 1.94,
+   "qa": 1.0
+  },
+  "count_half__r8": {
+   "event": "count_half",
+   "reps": 8,
+   "variant": 1,
+   "text": "Oito. Metade. Tá bonito.",
+   "file": "count_half__r8.mp3",
+   "hash": "4cc60688574b4e72",
+   "duration_s": 1.74,
+   "qa": 1.0
+  },
+  "count_half__r9": {
+   "event": "count_half",
+   "reps": 9,
+   "variant": 1,
+   "text": "Nove. Metade. Tá bonito.",
+   "file": "count_half__r9.mp3",
+   "hash": "a88bf2e59514bf1b",
+   "duration_s": 1.75,
+   "qa": 1.0
+  },
+  "count_half__r10": {
+   "event": "count_half",
+   "reps": 10,
+   "variant": 1,
+   "text": "Dez. Metade. Tá bonito.",
+   "file": "count_half__r10.mp3",
+   "hash": "83f5214d73480423",
+   "duration_s": 2.2,
+   "qa": 1.0
+  },
+  "count_half__r11": {
+   "event": "count_half",
+   "reps": 11,
+   "variant": 1,
+   "text": "Onze. Metade. Tá bonito.",
+   "file": "count_half__r11.mp3",
+   "hash": "140c2b4381f2ded9",
+   "duration_s": 1.74,
+   "qa": 1.0
+  },
+  "count_half__r12": {
+   "event": "count_half",
+   "reps": 12,
+   "variant": 1,
+   "text": "Doze. Metade. Tá bonito.",
+   "file": "count_half__r12.mp3",
+   "hash": "b3362588735d8483",
+   "duration_s": 1.79,
+   "qa": 1.0
+  },
+  "count_half__r13": {
+   "event": "count_half",
+   "reps": 13,
+   "variant": 1,
+   "text": "Treze. Metade. Tá bonito.",
+   "file": "count_half__r13.mp3",
+   "hash": "a6127a93ce890a05",
+   "duration_s": 1.92,
+   "qa": 1.0
+  },
+  "count_half__r14": {
+   "event": "count_half",
+   "reps": 14,
+   "variant": 1,
+   "text": "Catorze. Metade. Tá bonito.",
+   "file": "count_half__r14.mp3",
+   "hash": "c5a12df6213c2d9b",
+   "duration_s": 1.95,
+   "qa": 1.0
+  },
+  "count_half__r15": {
+   "event": "count_half",
+   "reps": 15,
+   "variant": 1,
+   "text": "Quinze. Metade. Tá bonito.",
+   "file": "count_half__r15.mp3",
+   "hash": "043af6841bb07add",
+   "duration_s": 1.78,
+   "qa": 1.0
+  },
+  "count_left2__r1": {
+   "event": "count_left2",
+   "reps": 1,
+   "variant": 1,
+   "text": "Um! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r1.mp3",
+   "hash": "9c0c51c8366cde17",
+   "duration_s": 1.89,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r2": {
+   "event": "count_left2",
+   "reps": 2,
+   "variant": 1,
+   "text": "Dois! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r2.mp3",
+   "hash": "e0ed9b1ccc9e1830",
+   "duration_s": 2.35,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r3": {
+   "event": "count_left2",
+   "reps": 3,
+   "variant": 1,
+   "text": "Três! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r3.mp3",
+   "hash": "8e6e82d7e0301c56",
+   "duration_s": 2.35,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r4": {
+   "event": "count_left2",
+   "reps": 4,
+   "variant": 1,
+   "text": "Quatro! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r4.mp3",
+   "hash": "ddb0ea58ffbd86ff",
+   "duration_s": 2.39,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r5": {
+   "event": "count_left2",
+   "reps": 5,
+   "variant": 1,
+   "text": "Cinco! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r5.mp3",
+   "hash": "704dbe80430c45e6",
+   "duration_s": 2.45,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r6": {
+   "event": "count_left2",
+   "reps": 6,
+   "variant": 1,
+   "text": "Seis! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r6.mp3",
+   "hash": "1504493131def001",
+   "duration_s": 2.08,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r7": {
+   "event": "count_left2",
+   "reps": 7,
+   "variant": 1,
+   "text": "Sete! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r7.mp3",
+   "hash": "0bcb89a0403b91ce",
+   "duration_s": 2.19,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r8": {
+   "event": "count_left2",
+   "reps": 8,
+   "variant": 1,
+   "text": "Oito! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r8.mp3",
+   "hash": "d20b33d72d4f56f2",
+   "duration_s": 2.09,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r9": {
+   "event": "count_left2",
+   "reps": 9,
+   "variant": 1,
+   "text": "Nove! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r9.mp3",
+   "hash": "e4fd327d3cc75c23",
+   "duration_s": 2.36,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r10": {
+   "event": "count_left2",
+   "reps": 10,
+   "variant": 1,
+   "text": "Dez! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r10.mp3",
+   "hash": "bc5bd8774c93e150",
+   "duration_s": 2.35,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r11": {
+   "event": "count_left2",
+   "reps": 11,
+   "variant": 1,
+   "text": "Onze! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r11.mp3",
+   "hash": "4403311d7b202a20",
+   "duration_s": 2.18,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r12": {
+   "event": "count_left2",
+   "reps": 12,
+   "variant": 1,
+   "text": "Doze! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r12.mp3",
+   "hash": "cd09458ef45e9e0e",
+   "duration_s": 2.19,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r13": {
+   "event": "count_left2",
+   "reps": 13,
+   "variant": 1,
+   "text": "Treze! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r13.mp3",
+   "hash": "f1666e2f582a0ad5",
+   "duration_s": 2.26,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r14": {
+   "event": "count_left2",
+   "reps": 14,
+   "variant": 1,
+   "text": "Catorze! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r14.mp3",
+   "hash": "21b8b96d5c197283",
+   "duration_s": 2.72,
+   "speed": 0.95,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count_left2__r15": {
+   "event": "count_left2",
+   "reps": 15,
+   "variant": 1,
+   "text": "Quinze! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r15.mp3",
+   "hash": "7ddb2504f09a7943",
+   "duration_s": 2.54,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r16": {
+   "event": "count_left2",
+   "reps": 16,
+   "variant": 1,
+   "text": "Dezesseis! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r16.mp3",
+   "hash": "faba538d3ebfe346",
+   "duration_s": 2.65,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r17": {
+   "event": "count_left2",
+   "reps": 17,
+   "variant": 1,
+   "text": "Dezessete! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r17.mp3",
+   "hash": "5cb034043dcbc136",
+   "duration_s": 3.02,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r18": {
+   "event": "count_left2",
+   "reps": 18,
+   "variant": 1,
+   "text": "Dezoito! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r18.mp3",
+   "hash": "98c0fc9db636194a",
+   "duration_s": 2.46,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r19": {
+   "event": "count_left2",
+   "reps": 19,
+   "variant": 1,
+   "text": "Dezenove! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r19.mp3",
+   "hash": "931217ed4dad12fb",
+   "duration_s": 2.54,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r20": {
+   "event": "count_left2",
+   "reps": 20,
+   "variant": 1,
+   "text": "Vinte! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r20.mp3",
+   "hash": "6368a1b45318fe34",
+   "duration_s": 2.32,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r21": {
+   "event": "count_left2",
+   "reps": 21,
+   "variant": 1,
+   "text": "Vinte e um! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r21.mp3",
+   "hash": "31ae3eb04f538cbb",
+   "duration_s": 2.82,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r22": {
+   "event": "count_left2",
+   "reps": 22,
+   "variant": 1,
+   "text": "Vinte e dois! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r22.mp3",
+   "hash": "80d52ad86720948d",
+   "duration_s": 2.74,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r23": {
+   "event": "count_left2",
+   "reps": 23,
+   "variant": 1,
+   "text": "Vinte e três! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r23.mp3",
+   "hash": "aec0f24a393e43ad",
+   "duration_s": 2.73,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r24": {
+   "event": "count_left2",
+   "reps": 24,
+   "variant": 1,
+   "text": "Vinte e quatro! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r24.mp3",
+   "hash": "4a15bac3e1c8efb5",
+   "duration_s": 2.8,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r25": {
+   "event": "count_left2",
+   "reps": 25,
+   "variant": 1,
+   "text": "Vinte e cinco! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r25.mp3",
+   "hash": "1a769853c1595817",
+   "duration_s": 2.81,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r26": {
+   "event": "count_left2",
+   "reps": 26,
+   "variant": 1,
+   "text": "Vinte e seis! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r26.mp3",
+   "hash": "45302bc83db8db0b",
+   "duration_s": 2.72,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r27": {
+   "event": "count_left2",
+   "reps": 27,
+   "variant": 1,
+   "text": "Vinte e sete! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r27.mp3",
+   "hash": "17c6d77312cc3be4",
+   "duration_s": 2.97,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left2__r28": {
+   "event": "count_left2",
+   "reps": 28,
+   "variant": 1,
+   "text": "Vinte e oito! Faltam duas. Agora é cabeça.",
+   "file": "count_left2__r28.mp3",
+   "hash": "00c0457ff0b9c40a",
+   "duration_s": 2.74,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r1": {
+   "event": "count_left1",
+   "reps": 1,
+   "variant": 1,
+   "text": "Um! Falta uma. Vai!",
+   "file": "count_left1__r1.mp3",
+   "hash": "f1c0a4d46b3a0d7a",
+   "duration_s": 1.26,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r2": {
+   "event": "count_left1",
+   "reps": 2,
+   "variant": 1,
+   "text": "Dois! Falta uma. Vai!",
+   "file": "count_left1__r2.mp3",
+   "hash": "82dcbb6677f289b8",
+   "duration_s": 1.81,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r3": {
+   "event": "count_left1",
+   "reps": 3,
+   "variant": 1,
+   "text": "Três! Falta uma. Vai!",
+   "file": "count_left1__r3.mp3",
+   "hash": "df640748eccad93d",
+   "duration_s": 1.4,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r4": {
+   "event": "count_left1",
+   "reps": 4,
+   "variant": 1,
+   "text": "Quatro! Falta uma. Vai!",
+   "file": "count_left1__r4.mp3",
+   "hash": "8e942622969677ad",
+   "duration_s": 1.67,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r5": {
+   "event": "count_left1",
+   "reps": 5,
+   "variant": 1,
+   "text": "Cinco! Falta uma. Vai!",
+   "file": "count_left1__r5.mp3",
+   "hash": "e08efd5f2a43eace",
+   "duration_s": 1.56,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r6": {
+   "event": "count_left1",
+   "reps": 6,
+   "variant": 1,
+   "text": "Seis! Falta uma. Vai!",
+   "file": "count_left1__r6.mp3",
+   "hash": "e2acf0b1b7872dbe",
+   "duration_s": 1.56,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r7": {
+   "event": "count_left1",
+   "reps": 7,
+   "variant": 1,
+   "text": "Sete! Falta uma. Vai!",
+   "file": "count_left1__r7.mp3",
+   "hash": "67d309923e9dafd2",
+   "duration_s": 1.69,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r8": {
+   "event": "count_left1",
+   "reps": 8,
+   "variant": 1,
+   "text": "Oito! Falta uma. Vai!",
+   "file": "count_left1__r8.mp3",
+   "hash": "5392a71aa28b651e",
+   "duration_s": 1.6,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r9": {
+   "event": "count_left1",
+   "reps": 9,
+   "variant": 1,
+   "text": "Nove! Falta uma. Vai!",
+   "file": "count_left1__r9.mp3",
+   "hash": "204dc3ddcae15050",
+   "duration_s": 1.86,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r10": {
+   "event": "count_left1",
+   "reps": 10,
+   "variant": 1,
+   "text": "Dez! Falta uma. Vai!",
+   "file": "count_left1__r10.mp3",
+   "hash": "c60810f4d1c452bc",
+   "duration_s": 1.84,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r11": {
+   "event": "count_left1",
+   "reps": 11,
+   "variant": 1,
+   "text": "Onze! Falta uma. Vai!",
+   "file": "count_left1__r11.mp3",
+   "hash": "6ffd0676f11afd50",
+   "duration_s": 1.78,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r12": {
+   "event": "count_left1",
+   "reps": 12,
+   "variant": 1,
+   "text": "Doze! Falta uma. Vai!",
+   "file": "count_left1__r12.mp3",
+   "hash": "c9d7e93e95879c48",
+   "duration_s": 1.85,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r13": {
+   "event": "count_left1",
+   "reps": 13,
+   "variant": 1,
+   "text": "Treze! Falta uma. Vai!",
+   "file": "count_left1__r13.mp3",
+   "hash": "c7a56e1a9458dc9c",
+   "duration_s": 1.42,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r14": {
+   "event": "count_left1",
+   "reps": 14,
+   "variant": 1,
+   "text": "Catorze! Falta uma. Vai!",
+   "file": "count_left1__r14.mp3",
+   "hash": "656c91ab27edad7f",
+   "duration_s": 1.79,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r15": {
+   "event": "count_left1",
+   "reps": 15,
+   "variant": 1,
+   "text": "Quinze! Falta uma. Vai!",
+   "file": "count_left1__r15.mp3",
+   "hash": "e1c163b0066415f0",
+   "duration_s": 1.68,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r16": {
+   "event": "count_left1",
+   "reps": 16,
+   "variant": 1,
+   "text": "Dezesseis! Falta uma. Vai!",
+   "file": "count_left1__r16.mp3",
+   "hash": "5ea2fd0e93b29ac0",
+   "duration_s": 2.04,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r17": {
+   "event": "count_left1",
+   "reps": 17,
+   "variant": 1,
+   "text": "Dezessete! Falta uma. Vai!",
+   "file": "count_left1__r17.mp3",
+   "hash": "839b605af4160318",
+   "duration_s": 2.04,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r18": {
+   "event": "count_left1",
+   "reps": 18,
+   "variant": 1,
+   "text": "Dezoito! Falta uma. Vai!",
+   "file": "count_left1__r18.mp3",
+   "hash": "e2ce93f537f0296b",
+   "duration_s": 2.04,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r19": {
+   "event": "count_left1",
+   "reps": 19,
+   "variant": 1,
+   "text": "Dezenove! Falta uma. Vai!",
+   "file": "count_left1__r19.mp3",
+   "hash": "8e0f4f7e4d14b778",
+   "duration_s": 2.04,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r20": {
+   "event": "count_left1",
+   "reps": 20,
+   "variant": 1,
+   "text": "Vinte! Falta uma. Vai!",
+   "file": "count_left1__r20.mp3",
+   "hash": "167afea2e9eaa1d9",
+   "duration_s": 1.46,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r21": {
+   "event": "count_left1",
+   "reps": 21,
+   "variant": 1,
+   "text": "Vinte e um! Falta uma. Vai!",
+   "file": "count_left1__r21.mp3",
+   "hash": "0ddd6a8f0215315c",
+   "duration_s": 1.76,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r22": {
+   "event": "count_left1",
+   "reps": 22,
+   "variant": 1,
+   "text": "Vinte e dois! Falta uma. Vai!",
+   "file": "count_left1__r22.mp3",
+   "hash": "2eb61982a9cf0b86",
+   "duration_s": 1.93,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r23": {
+   "event": "count_left1",
+   "reps": 23,
+   "variant": 1,
+   "text": "Vinte e três! Falta uma. Vai!",
+   "file": "count_left1__r23.mp3",
+   "hash": "5d2d79c69059e3ea",
+   "duration_s": 1.76,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r24": {
+   "event": "count_left1",
+   "reps": 24,
+   "variant": 1,
+   "text": "Vinte e quatro! Falta uma. Vai!",
+   "file": "count_left1__r24.mp3",
+   "hash": "f3b6f505b2c66d4e",
+   "duration_s": 1.98,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r25": {
+   "event": "count_left1",
+   "reps": 25,
+   "variant": 1,
+   "text": "Vinte e cinco! Falta uma. Vai!",
+   "file": "count_left1__r25.mp3",
+   "hash": "82e8aa11dfd82888",
+   "duration_s": 1.92,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r26": {
+   "event": "count_left1",
+   "reps": 26,
+   "variant": 1,
+   "text": "Vinte e seis! Falta uma. Vai!",
+   "file": "count_left1__r26.mp3",
+   "hash": "ede78c7b4f0f2fe9",
+   "duration_s": 2.11,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r27": {
+   "event": "count_left1",
+   "reps": 27,
+   "variant": 1,
+   "text": "Vinte e sete! Falta uma. Vai!",
+   "file": "count_left1__r27.mp3",
+   "hash": "e534e31702f545a6",
+   "duration_s": 2.15,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r28": {
+   "event": "count_left1",
+   "reps": 28,
+   "variant": 1,
+   "text": "Vinte e oito! Falta uma. Vai!",
+   "file": "count_left1__r28.mp3",
+   "hash": "328a82484538d986",
+   "duration_s": 1.93,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_left1__r29": {
+   "event": "count_left1",
+   "reps": 29,
+   "variant": 1,
+   "text": "Vinte e nove! Falta uma. Vai!",
+   "file": "count_left1__r29.mp3",
+   "hash": "20430009b0ade981",
+   "duration_s": 1.78,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_push__v1": {
+   "event": "count_push",
+   "variant": 1,
+   "text": "Sobe! Sobe! Empurra!",
+   "file": "count_push__v1.mp3",
+   "hash": "0ce59253229cf020",
+   "duration_s": 1.64,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_push__v2": {
+   "event": "count_push",
+   "variant": 2,
+   "text": "Vai! Vai! Empurra!",
+   "file": "count_push__v2.mp3",
+   "hash": "a70c05f1dbffa982",
+   "duration_s": 1.49,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r1": {
+   "event": "count_last",
+   "reps": 1,
+   "variant": 1,
+   "text": "Um! Isso! Pode soltar.",
+   "file": "count_last__r1.mp3",
+   "hash": "bacd46a5e3e55007",
+   "duration_s": 1.45,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r2": {
+   "event": "count_last",
+   "reps": 2,
+   "variant": 1,
+   "text": "Dois! Isso! Pode soltar.",
+   "file": "count_last__r2.mp3",
+   "hash": "efb5e24904974f3b",
+   "duration_s": 1.7,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r3": {
+   "event": "count_last",
+   "reps": 3,
+   "variant": 1,
+   "text": "Três! Isso! Pode soltar.",
+   "file": "count_last__r3.mp3",
+   "hash": "f9073e289f48e8d5",
+   "duration_s": 1.6,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r4": {
+   "event": "count_last",
+   "reps": 4,
+   "variant": 1,
+   "text": "Quatro! Isso! Pode soltar.",
+   "file": "count_last__r4.mp3",
+   "hash": "8ead340c4380fe86",
+   "duration_s": 1.78,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r5": {
+   "event": "count_last",
+   "reps": 5,
+   "variant": 1,
+   "text": "Cinco! Isso! Pode soltar.",
+   "file": "count_last__r5.mp3",
+   "hash": "216a1a9c644c7236",
+   "duration_s": 1.82,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r6": {
+   "event": "count_last",
+   "reps": 6,
+   "variant": 1,
+   "text": "Seis! Isso! Pode soltar.",
+   "file": "count_last__r6.mp3",
+   "hash": "72864d40305ebed4",
+   "duration_s": 1.8,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r7": {
+   "event": "count_last",
+   "reps": 7,
+   "variant": 1,
+   "text": "Sete! Isso! Pode soltar.",
+   "file": "count_last__r7.mp3",
+   "hash": "21fe249769923f45",
+   "duration_s": 1.8,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r8": {
+   "event": "count_last",
+   "reps": 8,
+   "variant": 1,
+   "text": "Oito! Isso! Pode soltar.",
+   "file": "count_last__r8.mp3",
+   "hash": "6777c0ba08b10413",
+   "duration_s": 1.79,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r9": {
+   "event": "count_last",
+   "reps": 9,
+   "variant": 1,
+   "text": "Nove! Isso! Pode soltar.",
+   "file": "count_last__r9.mp3",
+   "hash": "8e126c24a1db5933",
+   "duration_s": 1.93,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r10": {
+   "event": "count_last",
+   "reps": 10,
+   "variant": 1,
+   "text": "Dez! Isso! Pode soltar.",
+   "file": "count_last__r10.mp3",
+   "hash": "29e7f72166e30758",
+   "duration_s": 1.87,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r11": {
+   "event": "count_last",
+   "reps": 11,
+   "variant": 1,
+   "text": "Onze! Isso! Pode soltar.",
+   "file": "count_last__r11.mp3",
+   "hash": "c19a465a4e4cdb1f",
+   "duration_s": 1.75,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r12": {
+   "event": "count_last",
+   "reps": 12,
+   "variant": 1,
+   "text": "Doze! Isso! Pode soltar.",
+   "file": "count_last__r12.mp3",
+   "hash": "74eae6c49d8d5f3d",
+   "duration_s": 1.68,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r13": {
+   "event": "count_last",
+   "reps": 13,
+   "variant": 1,
+   "text": "Treze! Isso! Pode soltar.",
+   "file": "count_last__r13.mp3",
+   "hash": "dcffc2f9ca8f6571",
+   "duration_s": 1.69,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r14": {
+   "event": "count_last",
+   "reps": 14,
+   "variant": 1,
+   "text": "Catorze! Isso! Pode soltar.",
+   "file": "count_last__r14.mp3",
+   "hash": "334f6a36e27ad0e8",
+   "duration_s": 1.85,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r15": {
+   "event": "count_last",
+   "reps": 15,
+   "variant": 1,
+   "text": "Quinze! Isso! Pode soltar.",
+   "file": "count_last__r15.mp3",
+   "hash": "a5a8f6a7a8c745b9",
+   "duration_s": 1.65,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r16": {
+   "event": "count_last",
+   "reps": 16,
+   "variant": 1,
+   "text": "Dezesseis! Isso! Pode soltar.",
+   "file": "count_last__r16.mp3",
+   "hash": "55741bba820fcc56",
+   "duration_s": 2.22,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r17": {
+   "event": "count_last",
+   "reps": 17,
+   "variant": 1,
+   "text": "Dezessete! Isso! Pode soltar.",
+   "file": "count_last__r17.mp3",
+   "hash": "e8b42b51a82efb6f",
+   "duration_s": 2.18,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r18": {
+   "event": "count_last",
+   "reps": 18,
+   "variant": 1,
+   "text": "Dezoito! Isso! Pode soltar.",
+   "file": "count_last__r18.mp3",
+   "hash": "8dae87796cacccaf",
+   "duration_s": 2.08,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r19": {
+   "event": "count_last",
+   "reps": 19,
+   "variant": 1,
+   "text": "Dezenove! Isso! Pode soltar.",
+   "file": "count_last__r19.mp3",
+   "hash": "cb03009f01553c19",
+   "duration_s": 2.19,
+   "speed": 0.95,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count_last__r20": {
+   "event": "count_last",
+   "reps": 20,
+   "variant": 1,
+   "text": "Vinte! Isso! Pode soltar.",
+   "file": "count_last__r20.mp3",
+   "hash": "e9ff263399aa0503",
+   "duration_s": 2.01,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r21": {
+   "event": "count_last",
+   "reps": 21,
+   "variant": 1,
+   "text": "Vinte e um! Isso! Pode soltar.",
+   "file": "count_last__r21.mp3",
+   "hash": "3a2d50702296a362",
+   "duration_s": 1.74,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r22": {
+   "event": "count_last",
+   "reps": 22,
+   "variant": 1,
+   "text": "Vinte e dois! Isso! Pode soltar.",
+   "file": "count_last__r22.mp3",
+   "hash": "c5db26322c209f2a",
+   "duration_s": 2.36,
+   "speed": 0.95,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count_last__r23": {
+   "event": "count_last",
+   "reps": 23,
+   "variant": 1,
+   "text": "Vinte e três! Isso! Pode soltar.",
+   "file": "count_last__r23.mp3",
+   "hash": "9efed097c83ea5a7",
+   "duration_s": 2.13,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r24": {
+   "event": "count_last",
+   "reps": 24,
+   "variant": 1,
+   "text": "Vinte e quatro! Isso! Pode soltar.",
+   "file": "count_last__r24.mp3",
+   "hash": "0423961c6e35bfb2",
+   "duration_s": 2.11,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r25": {
+   "event": "count_last",
+   "reps": 25,
+   "variant": 1,
+   "text": "Vinte e cinco! Isso! Pode soltar.",
+   "file": "count_last__r25.mp3",
+   "hash": "5825c980f3be8e05",
+   "duration_s": 2.13,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r26": {
+   "event": "count_last",
+   "reps": 26,
+   "variant": 1,
+   "text": "Vinte e seis! Isso! Pode soltar.",
+   "file": "count_last__r26.mp3",
+   "hash": "f8275b6017fad66c",
+   "duration_s": 2.48,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r27": {
+   "event": "count_last",
+   "reps": 27,
+   "variant": 1,
+   "text": "Vinte e sete! Isso! Pode soltar.",
+   "file": "count_last__r27.mp3",
+   "hash": "382041bfffbef339",
+   "duration_s": 2.01,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r28": {
+   "event": "count_last",
+   "reps": 28,
+   "variant": 1,
+   "text": "Vinte e oito! Isso! Pode soltar.",
+   "file": "count_last__r28.mp3",
+   "hash": "23e724cddc335258",
+   "duration_s": 2.0,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r29": {
+   "event": "count_last",
+   "reps": 29,
+   "variant": 1,
+   "text": "Vinte e nove! Isso! Pode soltar.",
+   "file": "count_last__r29.mp3",
+   "hash": "90a6c7b08108f8ac",
+   "duration_s": 2.01,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_last__r30": {
+   "event": "count_last",
+   "reps": 30,
+   "variant": 1,
+   "text": "Trinta! Isso! Pode soltar.",
+   "file": "count_last__r30.mp3",
+   "hash": "b0503877e0d6a3e6",
+   "duration_s": 1.65,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_done_top__v1": {
+   "event": "count_done_top",
+   "variant": 1,
+   "text": "Série de respeito. Respira, registra e descansa.",
+   "file": "count_done_top__v1.mp3",
+   "hash": "6b6ca081729e2bac",
+   "duration_s": 3.71,
+   "qa": 1.0
+  },
+  "count_done_top__v2": {
+   "event": "count_done_top",
+   "variant": 2,
+   "text": "Isso é top set. Respira e registra.",
+   "file": "count_done_top__v2.mp3",
+   "hash": "b783c136edb45303",
+   "duration_s": 2.38,
+   "qa": 1.0
+  },
+  "count_goal__r1": {
+   "event": "count_goal",
+   "reps": 1,
+   "variant": 1,
+   "text": "Um! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r1.mp3",
+   "hash": "fb97d2a8de7a8947",
+   "duration_s": 2.02,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r2": {
+   "event": "count_goal",
+   "reps": 2,
+   "variant": 1,
+   "text": "Dois! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r2.mp3",
+   "hash": "56f65de1835ec936",
+   "duration_s": 2.26,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r3": {
+   "event": "count_goal",
+   "reps": 3,
+   "variant": 1,
+   "text": "Três! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r3.mp3",
+   "hash": "937f94ef46e65e9e",
+   "duration_s": 2.52,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r4": {
+   "event": "count_goal",
+   "reps": 4,
+   "variant": 1,
+   "text": "Quatro! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r4.mp3",
+   "hash": "3db7fa74e9855702",
+   "duration_s": 2.47,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r5": {
+   "event": "count_goal",
+   "reps": 5,
+   "variant": 1,
+   "text": "Cinco! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r5.mp3",
+   "hash": "de8c94ea2077de80",
+   "duration_s": 2.49,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r6": {
+   "event": "count_goal",
+   "reps": 6,
+   "variant": 1,
+   "text": "Seis! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r6.mp3",
+   "hash": "ad88017b3af8c54c",
+   "duration_s": 2.21,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r7": {
+   "event": "count_goal",
+   "reps": 7,
+   "variant": 1,
+   "text": "Sete! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r7.mp3",
+   "hash": "b944e1138f57d9cd",
+   "duration_s": 2.24,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r8": {
+   "event": "count_goal",
+   "reps": 8,
+   "variant": 1,
+   "text": "Oito! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r8.mp3",
+   "hash": "f903e8ca026eefc0",
+   "duration_s": 2.21,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r9": {
+   "event": "count_goal",
+   "reps": 9,
+   "variant": 1,
+   "text": "Nove! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r9.mp3",
+   "hash": "3b993de3e90e26fd",
+   "duration_s": 2.18,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r10": {
+   "event": "count_goal",
+   "reps": 10,
+   "variant": 1,
+   "text": "Dez! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r10.mp3",
+   "hash": "cc715bde295c5881",
+   "duration_s": 2.06,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r11": {
+   "event": "count_goal",
+   "reps": 11,
+   "variant": 1,
+   "text": "Onze! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r11.mp3",
+   "hash": "934e21da24c3d125",
+   "duration_s": 2.23,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r12": {
+   "event": "count_goal",
+   "reps": 12,
+   "variant": 1,
+   "text": "Doze! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r12.mp3",
+   "hash": "94814fde8ef05ab6",
+   "duration_s": 2.24,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r13": {
+   "event": "count_goal",
+   "reps": 13,
+   "variant": 1,
+   "text": "Treze! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r13.mp3",
+   "hash": "d2a2728d831a1a70",
+   "duration_s": 2.32,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r14": {
+   "event": "count_goal",
+   "reps": 14,
+   "variant": 1,
+   "text": "Catorze! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r14.mp3",
+   "hash": "b03dd8897fc3e191",
+   "duration_s": 2.63,
+   "speed": 0.95,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count_goal__r15": {
+   "event": "count_goal",
+   "reps": 15,
+   "variant": 1,
+   "text": "Quinze! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r15.mp3",
+   "hash": "b88da526983512fb",
+   "duration_s": 2.21,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r16": {
+   "event": "count_goal",
+   "reps": 16,
+   "variant": 1,
+   "text": "Dezesseis! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r16.mp3",
+   "hash": "eb2bd60272abda97",
+   "duration_s": 2.64,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r17": {
+   "event": "count_goal",
+   "reps": 17,
+   "variant": 1,
+   "text": "Dezessete! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r17.mp3",
+   "hash": "8c9169645e67fd7c",
+   "duration_s": 2.91,
+   "speed": 0.95,
+   "seed": 142,
+   "qa": 1.0
+  },
+  "count_goal__r18": {
+   "event": "count_goal",
+   "reps": 18,
+   "variant": 1,
+   "text": "Dezoito! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r18.mp3",
+   "hash": "d76924fbe82be07d",
+   "duration_s": 2.58,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r19": {
+   "event": "count_goal",
+   "reps": 19,
+   "variant": 1,
+   "text": "Dezenove! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r19.mp3",
+   "hash": "f3bb329b815564a2",
+   "duration_s": 2.67,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r20": {
+   "event": "count_goal",
+   "reps": 20,
+   "variant": 1,
+   "text": "Vinte! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r20.mp3",
+   "hash": "c238dba378a88980",
+   "duration_s": 2.16,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r21": {
+   "event": "count_goal",
+   "reps": 21,
+   "variant": 1,
+   "text": "Vinte e um! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r21.mp3",
+   "hash": "1b4dbfcb86ffbaac",
+   "duration_s": 2.66,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r22": {
+   "event": "count_goal",
+   "reps": 22,
+   "variant": 1,
+   "text": "Vinte e dois! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r22.mp3",
+   "hash": "74aba9715127b2a7",
+   "duration_s": 2.89,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r23": {
+   "event": "count_goal",
+   "reps": 23,
+   "variant": 1,
+   "text": "Vinte e três! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r23.mp3",
+   "hash": "70a5583289c2d319",
+   "duration_s": 2.79,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r24": {
+   "event": "count_goal",
+   "reps": 24,
+   "variant": 1,
+   "text": "Vinte e quatro! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r24.mp3",
+   "hash": "9cdc33198bb67360",
+   "duration_s": 3.05,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r25": {
+   "event": "count_goal",
+   "reps": 25,
+   "variant": 1,
+   "text": "Vinte e cinco! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r25.mp3",
+   "hash": "13e8a59d72ec8841",
+   "duration_s": 2.98,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r26": {
+   "event": "count_goal",
+   "reps": 26,
+   "variant": 1,
+   "text": "Vinte e seis! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r26.mp3",
+   "hash": "0224013f3dd5302f",
+   "duration_s": 2.79,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r27": {
+   "event": "count_goal",
+   "reps": 27,
+   "variant": 1,
+   "text": "Vinte e sete! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r27.mp3",
+   "hash": "48e1c6cd3231bc6d",
+   "duration_s": 2.92,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r28": {
+   "event": "count_goal",
+   "reps": 28,
+   "variant": 1,
+   "text": "Vinte e oito! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r28.mp3",
+   "hash": "0fb541d6e2be6a38",
+   "duration_s": 2.87,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r29": {
+   "event": "count_goal",
+   "reps": 29,
+   "variant": 1,
+   "text": "Vinte e nove! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r29.mp3",
+   "hash": "e2bd8b29d58d2614",
+   "duration_s": 2.87,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_goal__r30": {
+   "event": "count_goal",
+   "reps": 30,
+   "variant": 1,
+   "text": "Trinta! Meta batida. Agora é tudo seu.",
+   "file": "count_goal__r30.mp3",
+   "hash": "261ffd86d61b0fa0",
+   "duration_s": 2.18,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r2": {
+   "event": "count_safety",
+   "reps": 2,
+   "variant": 1,
+   "text": "Dois! Se a técnica quebrar, para.",
+   "file": "count_safety__r2.mp3",
+   "hash": "1ed14ffa96006074",
+   "duration_s": 2.15,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r3": {
+   "event": "count_safety",
+   "reps": 3,
+   "variant": 1,
+   "text": "Três! Se a técnica quebrar, para.",
+   "file": "count_safety__r3.mp3",
+   "hash": "c0d8da5f5fb64208",
+   "duration_s": 2.14,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r4": {
+   "event": "count_safety",
+   "reps": 4,
+   "variant": 1,
+   "text": "Quatro! Se a técnica quebrar, para.",
+   "file": "count_safety__r4.mp3",
+   "hash": "b95d4f4c21956830",
+   "duration_s": 2.12,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r5": {
+   "event": "count_safety",
+   "reps": 5,
+   "variant": 1,
+   "text": "Cinco! Se a técnica quebrar, para.",
+   "file": "count_safety__r5.mp3",
+   "hash": "94fa855f5f04e779",
+   "duration_s": 2.26,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r6": {
+   "event": "count_safety",
+   "reps": 6,
+   "variant": 1,
+   "text": "Seis! Se a técnica quebrar, para.",
+   "file": "count_safety__r6.mp3",
+   "hash": "c4fa252eeff91f7b",
+   "duration_s": 2.24,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r7": {
+   "event": "count_safety",
+   "reps": 7,
+   "variant": 1,
+   "text": "Sete! Se a técnica quebrar, para.",
+   "file": "count_safety__r7.mp3",
+   "hash": "c734e18706ea5bd6",
+   "duration_s": 2.28,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r8": {
+   "event": "count_safety",
+   "reps": 8,
+   "variant": 1,
+   "text": "Oito! Se a técnica quebrar, para.",
+   "file": "count_safety__r8.mp3",
+   "hash": "70f3cef9a552dad2",
+   "duration_s": 2.05,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r9": {
+   "event": "count_safety",
+   "reps": 9,
+   "variant": 1,
+   "text": "Nove! Se a técnica quebrar, para.",
+   "file": "count_safety__r9.mp3",
+   "hash": "dbec43e693895b40",
+   "duration_s": 2.09,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r10": {
+   "event": "count_safety",
+   "reps": 10,
+   "variant": 1,
+   "text": "Dez! Se a técnica quebrar, para.",
+   "file": "count_safety__r10.mp3",
+   "hash": "5fcbd6534c543a21",
+   "duration_s": 2.17,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r11": {
+   "event": "count_safety",
+   "reps": 11,
+   "variant": 1,
+   "text": "Onze! Se a técnica quebrar, para.",
+   "file": "count_safety__r11.mp3",
+   "hash": "1b3985a9d3be1ef2",
+   "duration_s": 2.06,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r12": {
+   "event": "count_safety",
+   "reps": 12,
+   "variant": 1,
+   "text": "Doze! Se a técnica quebrar, para.",
+   "file": "count_safety__r12.mp3",
+   "hash": "eec220b770481090",
+   "duration_s": 2.12,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r13": {
+   "event": "count_safety",
+   "reps": 13,
+   "variant": 1,
+   "text": "Treze! Se a técnica quebrar, para.",
+   "file": "count_safety__r13.mp3",
+   "hash": "7476621fbc505e52",
+   "duration_s": 2.23,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r14": {
+   "event": "count_safety",
+   "reps": 14,
+   "variant": 1,
+   "text": "Catorze! Se a técnica quebrar, para.",
+   "file": "count_safety__r14.mp3",
+   "hash": "be060c53452c4894",
+   "duration_s": 2.42,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r15": {
+   "event": "count_safety",
+   "reps": 15,
+   "variant": 1,
+   "text": "Quinze! Se a técnica quebrar, para.",
+   "file": "count_safety__r15.mp3",
+   "hash": "c10c76a16644da4a",
+   "duration_s": 2.18,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r16": {
+   "event": "count_safety",
+   "reps": 16,
+   "variant": 1,
+   "text": "Dezesseis! Se a técnica quebrar, para.",
+   "file": "count_safety__r16.mp3",
+   "hash": "11e0083b0a079c76",
+   "duration_s": 2.47,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r17": {
+   "event": "count_safety",
+   "reps": 17,
+   "variant": 1,
+   "text": "Dezessete! Se a técnica quebrar, para.",
+   "file": "count_safety__r17.mp3",
+   "hash": "e6d5db61ce7e0096",
+   "duration_s": 2.53,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r18": {
+   "event": "count_safety",
+   "reps": 18,
+   "variant": 1,
+   "text": "Dezoito! Se a técnica quebrar, para.",
+   "file": "count_safety__r18.mp3",
+   "hash": "1f0def4c03acf129",
+   "duration_s": 2.37,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r19": {
+   "event": "count_safety",
+   "reps": 19,
+   "variant": 1,
+   "text": "Dezenove! Se a técnica quebrar, para.",
+   "file": "count_safety__r19.mp3",
+   "hash": "25b0f62ee885ce94",
+   "duration_s": 2.32,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r20": {
+   "event": "count_safety",
+   "reps": 20,
+   "variant": 1,
+   "text": "Vinte! Se a técnica quebrar, para.",
+   "file": "count_safety__r20.mp3",
+   "hash": "7d2c467a147f86c0",
+   "duration_s": 1.97,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r21": {
+   "event": "count_safety",
+   "reps": 21,
+   "variant": 1,
+   "text": "Vinte e um! Se a técnica quebrar, para.",
+   "file": "count_safety__r21.mp3",
+   "hash": "1bb2678c54456fbf",
+   "duration_s": 2.13,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r22": {
+   "event": "count_safety",
+   "reps": 22,
+   "variant": 1,
+   "text": "Vinte e dois! Se a técnica quebrar, para.",
+   "file": "count_safety__r22.mp3",
+   "hash": "a748db3bd1e08bc5",
+   "duration_s": 2.57,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r23": {
+   "event": "count_safety",
+   "reps": 23,
+   "variant": 1,
+   "text": "Vinte e três! Se a técnica quebrar, para.",
+   "file": "count_safety__r23.mp3",
+   "hash": "e4ed3f329b2a0e92",
+   "duration_s": 2.53,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r24": {
+   "event": "count_safety",
+   "reps": 24,
+   "variant": 1,
+   "text": "Vinte e quatro! Se a técnica quebrar, para.",
+   "file": "count_safety__r24.mp3",
+   "hash": "c50f52ec7108ba0e",
+   "duration_s": 2.62,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r25": {
+   "event": "count_safety",
+   "reps": 25,
+   "variant": 1,
+   "text": "Vinte e cinco! Se a técnica quebrar, para.",
+   "file": "count_safety__r25.mp3",
+   "hash": "ab7c721d3abee6e0",
+   "duration_s": 2.57,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r26": {
+   "event": "count_safety",
+   "reps": 26,
+   "variant": 1,
+   "text": "Vinte e seis! Se a técnica quebrar, para.",
+   "file": "count_safety__r26.mp3",
+   "hash": "739afbbe2cac0b86",
+   "duration_s": 2.59,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r27": {
+   "event": "count_safety",
+   "reps": 27,
+   "variant": 1,
+   "text": "Vinte e sete! Se a técnica quebrar, para.",
+   "file": "count_safety__r27.mp3",
+   "hash": "86773b62cdf2f43e",
+   "duration_s": 2.59,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r28": {
+   "event": "count_safety",
+   "reps": 28,
+   "variant": 1,
+   "text": "Vinte e oito! Se a técnica quebrar, para.",
+   "file": "count_safety__r28.mp3",
+   "hash": "cc516bad1135eb9d",
+   "duration_s": 2.66,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r29": {
+   "event": "count_safety",
+   "reps": 29,
+   "variant": 1,
+   "text": "Vinte e nove! Se a técnica quebrar, para.",
+   "file": "count_safety__r29.mp3",
+   "hash": "fe2b1c22bceaafba",
+   "duration_s": 2.58,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_safety__r30": {
+   "event": "count_safety",
+   "reps": 30,
+   "variant": 1,
+   "text": "Trinta! Se a técnica quebrar, para.",
+   "file": "count_safety__r30.mp3",
+   "hash": "56c59376c48df541",
+   "duration_s": 2.22,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r2_v1": {
+   "event": "count_beyond",
+   "reps": 2,
+   "variant": 1,
+   "text": "Dois! Respira lá em cima e vai.",
+   "file": "count_beyond__r2_v1.mp3",
+   "hash": "daef406e4eddb96a",
+   "duration_s": 1.91,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r2_v2": {
+   "event": "count_beyond",
+   "reps": 2,
+   "variant": 2,
+   "text": "Dois! Tá voando!",
+   "file": "count_beyond__r2_v2.mp3",
+   "hash": "e978d9663daad84b",
+   "duration_s": 1.31,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r2_v3": {
+   "event": "count_beyond",
+   "reps": 2,
+   "variant": 3,
+   "text": "Dois! Tem mais uma? Vai!",
+   "file": "count_beyond__r2_v3.mp3",
+   "hash": "e650fc152d206aea",
+   "duration_s": 1.64,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r3_v1": {
+   "event": "count_beyond",
+   "reps": 3,
+   "variant": 1,
+   "text": "Três! Respira lá em cima e vai.",
+   "file": "count_beyond__r3_v1.mp3",
+   "hash": "7b60380ac103b69c",
+   "duration_s": 1.84,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r3_v2": {
+   "event": "count_beyond",
+   "reps": 3,
+   "variant": 2,
+   "text": "Três! Tá voando!",
+   "file": "count_beyond__r3_v2.mp3",
+   "hash": "3a8f74241c5b2379",
+   "duration_s": 1.36,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r3_v3": {
+   "event": "count_beyond",
+   "reps": 3,
+   "variant": 3,
+   "text": "Três! Tem mais uma? Vai!",
+   "file": "count_beyond__r3_v3.mp3",
+   "hash": "e6be7bc9dec2a00e",
+   "duration_s": 1.72,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r4_v1": {
+   "event": "count_beyond",
+   "reps": 4,
+   "variant": 1,
+   "text": "Quatro! Respira lá em cima e vai.",
+   "file": "count_beyond__r4_v1.mp3",
+   "hash": "c61dd356c1ed42a8",
+   "duration_s": 2.08,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r4_v2": {
+   "event": "count_beyond",
+   "reps": 4,
+   "variant": 2,
+   "text": "Quatro! Tá voando!",
+   "file": "count_beyond__r4_v2.mp3",
+   "hash": "581867b7b455c42e",
+   "duration_s": 1.4,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r4_v3": {
+   "event": "count_beyond",
+   "reps": 4,
+   "variant": 3,
+   "text": "Quatro! Tem mais uma? Vai!",
+   "file": "count_beyond__r4_v3.mp3",
+   "hash": "3bf5674b676e745d",
+   "duration_s": 1.69,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r5_v1": {
+   "event": "count_beyond",
+   "reps": 5,
+   "variant": 1,
+   "text": "Cinco! Respira lá em cima e vai.",
+   "file": "count_beyond__r5_v1.mp3",
+   "hash": "0737c700316b6847",
+   "duration_s": 2.14,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r5_v2": {
+   "event": "count_beyond",
+   "reps": 5,
+   "variant": 2,
+   "text": "Cinco! Tá voando!",
+   "file": "count_beyond__r5_v2.mp3",
+   "hash": "4d4baadccbfd7661",
+   "duration_s": 1.47,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r5_v3": {
+   "event": "count_beyond",
+   "reps": 5,
+   "variant": 3,
+   "text": "Cinco! Tem mais uma? Vai!",
+   "file": "count_beyond__r5_v3.mp3",
+   "hash": "9552d5bab01b4e25",
+   "duration_s": 1.79,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r6_v1": {
+   "event": "count_beyond",
+   "reps": 6,
+   "variant": 1,
+   "text": "Seis! Respira lá em cima e vai.",
+   "file": "count_beyond__r6_v1.mp3",
+   "hash": "18c3952fbb6adff4",
+   "duration_s": 1.83,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r6_v2": {
+   "event": "count_beyond",
+   "reps": 6,
+   "variant": 2,
+   "text": "Seis! Tá voando!",
+   "file": "count_beyond__r6_v2.mp3",
+   "hash": "771b4e76da8fff40",
+   "duration_s": 1.44,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r6_v3": {
+   "event": "count_beyond",
+   "reps": 6,
+   "variant": 3,
+   "text": "Seis! Tem mais uma? Vai!",
+   "file": "count_beyond__r6_v3.mp3",
+   "hash": "e7e34d78ac6d44df",
+   "duration_s": 1.75,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r7_v1": {
+   "event": "count_beyond",
+   "reps": 7,
+   "variant": 1,
+   "text": "Sete! Respira lá em cima e vai.",
+   "file": "count_beyond__r7_v1.mp3",
+   "hash": "46537ca89b90635f",
+   "duration_s": 2.0,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r7_v2": {
+   "event": "count_beyond",
+   "reps": 7,
+   "variant": 2,
+   "text": "Sete! Tá voando!",
+   "file": "count_beyond__r7_v2.mp3",
+   "hash": "955bcb5e11db6635",
+   "duration_s": 1.47,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r7_v3": {
+   "event": "count_beyond",
+   "reps": 7,
+   "variant": 3,
+   "text": "Sete! Tem mais uma? Vai!",
+   "file": "count_beyond__r7_v3.mp3",
+   "hash": "591895546f6672cb",
+   "duration_s": 1.71,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r8_v1": {
+   "event": "count_beyond",
+   "reps": 8,
+   "variant": 1,
+   "text": "Oito! Respira lá em cima e vai.",
+   "file": "count_beyond__r8_v1.mp3",
+   "hash": "d2bb0e64bd03a5cf",
+   "duration_s": 1.79,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r8_v2": {
+   "event": "count_beyond",
+   "reps": 8,
+   "variant": 2,
+   "text": "Oito! Tá voando!",
+   "file": "count_beyond__r8_v2.mp3",
+   "hash": "6caeb6dcf410ff72",
+   "duration_s": 1.29,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r8_v3": {
+   "event": "count_beyond",
+   "reps": 8,
+   "variant": 3,
+   "text": "Oito! Tem mais uma? Vai!",
+   "file": "count_beyond__r8_v3.mp3",
+   "hash": "c19ae8a84c8bc07d",
+   "duration_s": 1.84,
+   "speed": 0.95,
+   "seed": 242,
+   "qa": 1.0
+  },
+  "count_beyond__r9_v1": {
+   "event": "count_beyond",
+   "reps": 9,
+   "variant": 1,
+   "text": "Nove! Respira lá em cima e vai.",
+   "file": "count_beyond__r9_v1.mp3",
+   "hash": "3ef0c7f810f6b271",
+   "duration_s": 1.77,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r9_v2": {
+   "event": "count_beyond",
+   "reps": 9,
+   "variant": 2,
+   "text": "Nove! Tá voando!",
+   "file": "count_beyond__r9_v2.mp3",
+   "hash": "2861a8f38cabe0a3",
+   "duration_s": 1.75,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r9_v3": {
+   "event": "count_beyond",
+   "reps": 9,
+   "variant": 3,
+   "text": "Nove! Tem mais uma? Vai!",
+   "file": "count_beyond__r9_v3.mp3",
+   "hash": "841686b0ec225d29",
+   "duration_s": 1.71,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r10_v1": {
+   "event": "count_beyond",
+   "reps": 10,
+   "variant": 1,
+   "text": "Dez! Respira lá em cima e vai.",
+   "file": "count_beyond__r10_v1.mp3",
+   "hash": "5b21abd9cf9a4402",
+   "duration_s": 2.21,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r10_v2": {
+   "event": "count_beyond",
+   "reps": 10,
+   "variant": 2,
+   "text": "Dez! Tá voando!",
+   "file": "count_beyond__r10_v2.mp3",
+   "hash": "24738a1eff4d0151",
+   "duration_s": 1.35,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r10_v3": {
+   "event": "count_beyond",
+   "reps": 10,
+   "variant": 3,
+   "text": "Dez! Tem mais uma? Vai!",
+   "file": "count_beyond__r10_v3.mp3",
+   "hash": "4bad029d1f41e1b0",
+   "duration_s": 1.79,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r11_v1": {
+   "event": "count_beyond",
+   "reps": 11,
+   "variant": 1,
+   "text": "Onze! Respira lá em cima e vai.",
+   "file": "count_beyond__r11_v1.mp3",
+   "hash": "623980c65c9c1fa6",
+   "duration_s": 1.79,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r11_v2": {
+   "event": "count_beyond",
+   "reps": 11,
+   "variant": 2,
+   "text": "Onze! Tá voando!",
+   "file": "count_beyond__r11_v2.mp3",
+   "hash": "e3581a3385c8953a",
+   "duration_s": 1.21,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r11_v3": {
+   "event": "count_beyond",
+   "reps": 11,
+   "variant": 3,
+   "text": "Onze! Tem mais uma? Vai!",
+   "file": "count_beyond__r11_v3.mp3",
+   "hash": "97b4568d7bebd92a",
+   "duration_s": 1.63,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r12_v1": {
+   "event": "count_beyond",
+   "reps": 12,
+   "variant": 1,
+   "text": "Doze! Respira lá em cima e vai.",
+   "file": "count_beyond__r12_v1.mp3",
+   "hash": "256adfcb16ee5531",
+   "duration_s": 1.88,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r12_v2": {
+   "event": "count_beyond",
+   "reps": 12,
+   "variant": 2,
+   "text": "Doze! Tá voando!",
+   "file": "count_beyond__r12_v2.mp3",
+   "hash": "036150e247630c9f",
+   "duration_s": 1.33,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r12_v3": {
+   "event": "count_beyond",
+   "reps": 12,
+   "variant": 3,
+   "text": "Doze! Tem mais uma? Vai!",
+   "file": "count_beyond__r12_v3.mp3",
+   "hash": "bf89cd7cc276c7c5",
+   "duration_s": 1.63,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r13_v1": {
+   "event": "count_beyond",
+   "reps": 13,
+   "variant": 1,
+   "text": "Treze! Respira lá em cima e vai.",
+   "file": "count_beyond__r13_v1.mp3",
+   "hash": "98ebb006d404391d",
+   "duration_s": 2.06,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r13_v2": {
+   "event": "count_beyond",
+   "reps": 13,
+   "variant": 2,
+   "text": "Treze! Tá voando!",
+   "file": "count_beyond__r13_v2.mp3",
+   "hash": "4bb404c3d8070135",
+   "duration_s": 1.41,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r13_v3": {
+   "event": "count_beyond",
+   "reps": 13,
+   "variant": 3,
+   "text": "Treze! Tem mais uma? Vai!",
+   "file": "count_beyond__r13_v3.mp3",
+   "hash": "1e4a1bc60c756645",
+   "duration_s": 1.7,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r14_v1": {
+   "event": "count_beyond",
+   "reps": 14,
+   "variant": 1,
+   "text": "Catorze! Respira lá em cima e vai.",
+   "file": "count_beyond__r14_v1.mp3",
+   "hash": "fead3a3a3516d26f",
+   "duration_s": 2.3,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r14_v2": {
+   "event": "count_beyond",
+   "reps": 14,
+   "variant": 2,
+   "text": "Catorze! Tá voando!",
+   "file": "count_beyond__r14_v2.mp3",
+   "hash": "3ac198d0d8e5108d",
+   "duration_s": 1.47,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r14_v3": {
+   "event": "count_beyond",
+   "reps": 14,
+   "variant": 3,
+   "text": "Catorze! Tem mais uma? Vai!",
+   "file": "count_beyond__r14_v3.mp3",
+   "hash": "3edcf1a40af20c64",
+   "duration_s": 1.78,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r15_v1": {
+   "event": "count_beyond",
+   "reps": 15,
+   "variant": 1,
+   "text": "Quinze! Respira lá em cima e vai.",
+   "file": "count_beyond__r15_v1.mp3",
+   "hash": "f04cde2e5c70ef38",
+   "duration_s": 2.14,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r15_v2": {
+   "event": "count_beyond",
+   "reps": 15,
+   "variant": 2,
+   "text": "Quinze! Tá voando!",
+   "file": "count_beyond__r15_v2.mp3",
+   "hash": "595737e8b474444c",
+   "duration_s": 1.41,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r15_v3": {
+   "event": "count_beyond",
+   "reps": 15,
+   "variant": 3,
+   "text": "Quinze! Tem mais uma? Vai!",
+   "file": "count_beyond__r15_v3.mp3",
+   "hash": "c7022d59e30d07ae",
+   "duration_s": 1.71,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r16_v1": {
+   "event": "count_beyond",
+   "reps": 16,
+   "variant": 1,
+   "text": "Dezesseis! Respira lá em cima e vai.",
+   "file": "count_beyond__r16_v1.mp3",
+   "hash": "b5cc52e89ae8fedb",
+   "duration_s": 2.31,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r16_v2": {
+   "event": "count_beyond",
+   "reps": 16,
+   "variant": 2,
+   "text": "Dezesseis! Tá voando!",
+   "file": "count_beyond__r16_v2.mp3",
+   "hash": "7baa12509be3a1ad",
+   "duration_s": 1.9,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r16_v3": {
+   "event": "count_beyond",
+   "reps": 16,
+   "variant": 3,
+   "text": "Dezesseis! Tem mais uma? Vai!",
+   "file": "count_beyond__r16_v3.mp3",
+   "hash": "f622fa63cb095fc0",
+   "duration_s": 2.14,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r17_v1": {
+   "event": "count_beyond",
+   "reps": 17,
+   "variant": 1,
+   "text": "Dezessete! Respira lá em cima e vai.",
+   "file": "count_beyond__r17_v1.mp3",
+   "hash": "0d2fce05174c2107",
+   "duration_s": 2.27,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r17_v2": {
+   "event": "count_beyond",
+   "reps": 17,
+   "variant": 2,
+   "text": "Dezessete! Tá voando!",
+   "file": "count_beyond__r17_v2.mp3",
+   "hash": "b99c9f94de366b19",
+   "duration_s": 1.83,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r17_v3": {
+   "event": "count_beyond",
+   "reps": 17,
+   "variant": 3,
+   "text": "Dezessete! Tem mais uma? Vai!",
+   "file": "count_beyond__r17_v3.mp3",
+   "hash": "4c6c6ac4d9826ddf",
+   "duration_s": 2.13,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r18_v1": {
+   "event": "count_beyond",
+   "reps": 18,
+   "variant": 1,
+   "text": "Dezoito! Respira lá em cima e vai.",
+   "file": "count_beyond__r18_v1.mp3",
+   "hash": "c220a176d0ee5757",
+   "duration_s": 2.17,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r18_v2": {
+   "event": "count_beyond",
+   "reps": 18,
+   "variant": 2,
+   "text": "Dezoito! Tá voando!",
+   "file": "count_beyond__r18_v2.mp3",
+   "hash": "3e08b874f764d219",
+   "duration_s": 1.75,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r18_v3": {
+   "event": "count_beyond",
+   "reps": 18,
+   "variant": 3,
+   "text": "Dezoito! Tem mais uma? Vai!",
+   "file": "count_beyond__r18_v3.mp3",
+   "hash": "ea6dc3ce172a688b",
+   "duration_s": 2.01,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r19_v1": {
+   "event": "count_beyond",
+   "reps": 19,
+   "variant": 1,
+   "text": "Dezenove! Respira lá em cima e vai.",
+   "file": "count_beyond__r19_v1.mp3",
+   "hash": "0eee308f1b15557b",
+   "duration_s": 2.09,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r19_v2": {
+   "event": "count_beyond",
+   "reps": 19,
+   "variant": 2,
+   "text": "Dezenove! Tá voando!",
+   "file": "count_beyond__r19_v2.mp3",
+   "hash": "3bdb050283df22c1",
+   "duration_s": 1.74,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r19_v3": {
+   "event": "count_beyond",
+   "reps": 19,
+   "variant": 3,
+   "text": "Dezenove! Tem mais uma? Vai!",
+   "file": "count_beyond__r19_v3.mp3",
+   "hash": "187b4f43a5d01580",
+   "duration_s": 2.12,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r20_v1": {
+   "event": "count_beyond",
+   "reps": 20,
+   "variant": 1,
+   "text": "Vinte! Respira lá em cima e vai.",
+   "file": "count_beyond__r20_v1.mp3",
+   "hash": "c3a753cca8bd39ef",
+   "duration_s": 2.13,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r20_v2": {
+   "event": "count_beyond",
+   "reps": 20,
+   "variant": 2,
+   "text": "Vinte! Tá voando!",
+   "file": "count_beyond__r20_v2.mp3",
+   "hash": "041b520df1d502c2",
+   "duration_s": 1.49,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r20_v3": {
+   "event": "count_beyond",
+   "reps": 20,
+   "variant": 3,
+   "text": "Vinte! Tem mais uma? Vai!",
+   "file": "count_beyond__r20_v3.mp3",
+   "hash": "d88845de239f22b6",
+   "duration_s": 1.79,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r21_v1": {
+   "event": "count_beyond",
+   "reps": 21,
+   "variant": 1,
+   "text": "Vinte e um! Respira lá em cima e vai.",
+   "file": "count_beyond__r21_v1.mp3",
+   "hash": "709b7292ffe165d6",
+   "duration_s": 2.39,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r21_v2": {
+   "event": "count_beyond",
+   "reps": 21,
+   "variant": 2,
+   "text": "Vinte e um! Tá voando!",
+   "file": "count_beyond__r21_v2.mp3",
+   "hash": "6a52c3f8c49c5496",
+   "duration_s": 1.57,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r21_v3": {
+   "event": "count_beyond",
+   "reps": 21,
+   "variant": 3,
+   "text": "Vinte e um! Tem mais uma? Vai!",
+   "file": "count_beyond__r21_v3.mp3",
+   "hash": "22ecf50d76425f1d",
+   "duration_s": 1.93,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r22_v1": {
+   "event": "count_beyond",
+   "reps": 22,
+   "variant": 1,
+   "text": "Vinte e dois! Respira lá em cima e vai.",
+   "file": "count_beyond__r22_v1.mp3",
+   "hash": "e1d9cc4793b0bdce",
+   "duration_s": 2.29,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r22_v2": {
+   "event": "count_beyond",
+   "reps": 22,
+   "variant": 2,
+   "text": "Vinte e dois! Tá voando!",
+   "file": "count_beyond__r22_v2.mp3",
+   "hash": "f10931beb532b6ff",
+   "duration_s": 1.76,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r22_v3": {
+   "event": "count_beyond",
+   "reps": 22,
+   "variant": 3,
+   "text": "Vinte e dois! Tem mais uma? Vai!",
+   "file": "count_beyond__r22_v3.mp3",
+   "hash": "b821a202f7b8c02b",
+   "duration_s": 2.08,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r23_v1": {
+   "event": "count_beyond",
+   "reps": 23,
+   "variant": 1,
+   "text": "Vinte e três! Respira lá em cima e vai.",
+   "file": "count_beyond__r23_v1.mp3",
+   "hash": "c5a5403d701199e6",
+   "duration_s": 2.31,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r23_v2": {
+   "event": "count_beyond",
+   "reps": 23,
+   "variant": 2,
+   "text": "Vinte e três! Tá voando!",
+   "file": "count_beyond__r23_v2.mp3",
+   "hash": "96361a9d47f9696d",
+   "duration_s": 1.75,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r23_v3": {
+   "event": "count_beyond",
+   "reps": 23,
+   "variant": 3,
+   "text": "Vinte e três! Tem mais uma? Vai!",
+   "file": "count_beyond__r23_v3.mp3",
+   "hash": "c1909db091b36128",
+   "duration_s": 2.08,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r24_v1": {
+   "event": "count_beyond",
+   "reps": 24,
+   "variant": 1,
+   "text": "Vinte e quatro! Respira lá em cima e vai.",
+   "file": "count_beyond__r24_v1.mp3",
+   "hash": "c1f4548893134d7c",
+   "duration_s": 2.6,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r24_v2": {
+   "event": "count_beyond",
+   "reps": 24,
+   "variant": 2,
+   "text": "Vinte e quatro! Tá voando!",
+   "file": "count_beyond__r24_v2.mp3",
+   "hash": "869ca520261434f5",
+   "duration_s": 1.77,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r24_v3": {
+   "event": "count_beyond",
+   "reps": 24,
+   "variant": 3,
+   "text": "Vinte e quatro! Tem mais uma? Vai!",
+   "file": "count_beyond__r24_v3.mp3",
+   "hash": "c5dc9e844bc0f08a",
+   "duration_s": 2.2,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r25_v1": {
+   "event": "count_beyond",
+   "reps": 25,
+   "variant": 1,
+   "text": "Vinte e cinco! Respira lá em cima e vai.",
+   "file": "count_beyond__r25_v1.mp3",
+   "hash": "8ce732a000ffeb91",
+   "duration_s": 2.19,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r25_v2": {
+   "event": "count_beyond",
+   "reps": 25,
+   "variant": 2,
+   "text": "Vinte e cinco! Tá voando!",
+   "file": "count_beyond__r25_v2.mp3",
+   "hash": "bc7b42d91e4bca50",
+   "duration_s": 1.73,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r25_v3": {
+   "event": "count_beyond",
+   "reps": 25,
+   "variant": 3,
+   "text": "Vinte e cinco! Tem mais uma? Vai!",
+   "file": "count_beyond__r25_v3.mp3",
+   "hash": "6fe021e46fb213ff",
+   "duration_s": 2.16,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r26_v1": {
+   "event": "count_beyond",
+   "reps": 26,
+   "variant": 1,
+   "text": "Vinte e seis! Respira lá em cima e vai.",
+   "file": "count_beyond__r26_v1.mp3",
+   "hash": "d78fb639cf01b3a3",
+   "duration_s": 2.32,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r26_v2": {
+   "event": "count_beyond",
+   "reps": 26,
+   "variant": 2,
+   "text": "Vinte e seis! Tá voando!",
+   "file": "count_beyond__r26_v2.mp3",
+   "hash": "6f77876e8f3cde5b",
+   "duration_s": 1.76,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r26_v3": {
+   "event": "count_beyond",
+   "reps": 26,
+   "variant": 3,
+   "text": "Vinte e seis! Tem mais uma? Vai!",
+   "file": "count_beyond__r26_v3.mp3",
+   "hash": "2208bac601904fd5",
+   "duration_s": 2.31,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r27_v1": {
+   "event": "count_beyond",
+   "reps": 27,
+   "variant": 1,
+   "text": "Vinte e sete! Respira lá em cima e vai.",
+   "file": "count_beyond__r27_v1.mp3",
+   "hash": "ff057dbdb4974fab",
+   "duration_s": 2.32,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r27_v2": {
+   "event": "count_beyond",
+   "reps": 27,
+   "variant": 2,
+   "text": "Vinte e sete! Tá voando!",
+   "file": "count_beyond__r27_v2.mp3",
+   "hash": "b88ad8838036051b",
+   "duration_s": 1.77,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r27_v3": {
+   "event": "count_beyond",
+   "reps": 27,
+   "variant": 3,
+   "text": "Vinte e sete! Tem mais uma? Vai!",
+   "file": "count_beyond__r27_v3.mp3",
+   "hash": "6f93326dfea1d5a5",
+   "duration_s": 2.14,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r28_v1": {
+   "event": "count_beyond",
+   "reps": 28,
+   "variant": 1,
+   "text": "Vinte e oito! Respira lá em cima e vai.",
+   "file": "count_beyond__r28_v1.mp3",
+   "hash": "6506bd5a33f1d5b4",
+   "duration_s": 2.31,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r28_v2": {
+   "event": "count_beyond",
+   "reps": 28,
+   "variant": 2,
+   "text": "Vinte e oito! Tá voando!",
+   "file": "count_beyond__r28_v2.mp3",
+   "hash": "5d32d96b9a6ec468",
+   "duration_s": 1.76,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r28_v3": {
+   "event": "count_beyond",
+   "reps": 28,
+   "variant": 3,
+   "text": "Vinte e oito! Tem mais uma? Vai!",
+   "file": "count_beyond__r28_v3.mp3",
+   "hash": "ad7f0eaee96463b0",
+   "duration_s": 2.11,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r29_v1": {
+   "event": "count_beyond",
+   "reps": 29,
+   "variant": 1,
+   "text": "Vinte e nove! Respira lá em cima e vai.",
+   "file": "count_beyond__r29_v1.mp3",
+   "hash": "b456d694f63d8a56",
+   "duration_s": 2.29,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r29_v2": {
+   "event": "count_beyond",
+   "reps": 29,
+   "variant": 2,
+   "text": "Vinte e nove! Tá voando!",
+   "file": "count_beyond__r29_v2.mp3",
+   "hash": "0505ba6a35a4c84d",
+   "duration_s": 1.77,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r29_v3": {
+   "event": "count_beyond",
+   "reps": 29,
+   "variant": 3,
+   "text": "Vinte e nove! Tem mais uma? Vai!",
+   "file": "count_beyond__r29_v3.mp3",
+   "hash": "3d59ab9307456406",
+   "duration_s": 2.1,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r30_v1": {
+   "event": "count_beyond",
+   "reps": 30,
+   "variant": 1,
+   "text": "Trinta! Respira lá em cima e vai.",
+   "file": "count_beyond__r30_v1.mp3",
+   "hash": "70e521864c71b5f2",
+   "duration_s": 2.12,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r30_v2": {
+   "event": "count_beyond",
+   "reps": 30,
+   "variant": 2,
+   "text": "Trinta! Tá voando!",
+   "file": "count_beyond__r30_v2.mp3",
+   "hash": "cb87afcd624c3af2",
+   "duration_s": 1.37,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_beyond__r30_v3": {
+   "event": "count_beyond",
+   "reps": 30,
+   "variant": 3,
+   "text": "Trinta! Tem mais uma? Vai!",
+   "file": "count_beyond__r30_v3.mp3",
+   "hash": "377e1358669a75c2",
+   "duration_s": 1.71,
+   "speed": 0.95,
+   "qa": 1.0
+  },
+  "count_stop__r1": {
+   "event": "count_stop",
+   "reps": 1,
+   "variant": 1,
+   "text": "Fechou em uma repetição. Isso é evolução. Anota aí.",
+   "file": "count_stop__r1.mp3",
+   "hash": "26b2ed15a98b7f09",
+   "duration_s": 3.83,
+   "qa": 1.0
+  },
+  "count_stop__r2": {
+   "event": "count_stop",
+   "reps": 2,
+   "variant": 1,
+   "text": "Fechou em duas repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r2.mp3",
+   "hash": "03dec1694de220b3",
+   "duration_s": 3.84,
+   "qa": 1.0
+  },
+  "count_stop__r3": {
+   "event": "count_stop",
+   "reps": 3,
+   "variant": 1,
+   "text": "Fechou em três repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r3.mp3",
+   "hash": "b2363a83ebf43821",
+   "duration_s": 3.85,
+   "qa": 1.0
+  },
+  "count_stop__r4": {
+   "event": "count_stop",
+   "reps": 4,
+   "variant": 1,
+   "text": "Fechou em quatro repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r4.mp3",
+   "hash": "0dd8bc1e82eb17c7",
+   "duration_s": 3.9,
+   "qa": 1.0
+  },
+  "count_stop__r5": {
+   "event": "count_stop",
+   "reps": 5,
+   "variant": 1,
+   "text": "Fechou em cinco repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r5.mp3",
+   "hash": "6c2d8fb58f200b01",
+   "duration_s": 3.5,
+   "qa": 1.0
+  },
+  "count_stop__r6": {
+   "event": "count_stop",
+   "reps": 6,
+   "variant": 1,
+   "text": "Fechou em seis repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r6.mp3",
+   "hash": "a079734ef7b9484b",
+   "duration_s": 3.87,
+   "qa": 1.0
+  },
+  "count_stop__r7": {
+   "event": "count_stop",
+   "reps": 7,
+   "variant": 1,
+   "text": "Fechou em sete repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r7.mp3",
+   "hash": "8ffcaa63e0c5a543",
+   "duration_s": 3.9,
+   "qa": 1.0
+  },
+  "count_stop__r8": {
+   "event": "count_stop",
+   "reps": 8,
+   "variant": 1,
+   "text": "Fechou em oito repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r8.mp3",
+   "hash": "6584cba572b0601a",
+   "duration_s": 3.87,
+   "qa": 1.0
+  },
+  "count_stop__r9": {
+   "event": "count_stop",
+   "reps": 9,
+   "variant": 1,
+   "text": "Fechou em nove repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r9.mp3",
+   "hash": "10efe8266a3d3274",
+   "duration_s": 3.86,
+   "qa": 1.0
+  },
+  "count_stop__r10": {
+   "event": "count_stop",
+   "reps": 10,
+   "variant": 1,
+   "text": "Fechou em dez repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r10.mp3",
+   "hash": "1c3bc35202a4b875",
+   "duration_s": 4.06,
+   "qa": 1.0
+  },
+  "count_stop__r11": {
+   "event": "count_stop",
+   "reps": 11,
+   "variant": 1,
+   "text": "Fechou em onze repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r11.mp3",
+   "hash": "1775f7a0ebf65202",
+   "duration_s": 3.78,
+   "qa": 1.0
+  },
+  "count_stop__r12": {
+   "event": "count_stop",
+   "reps": 12,
+   "variant": 1,
+   "text": "Fechou em doze repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r12.mp3",
+   "hash": "19eaf18128e8a39a",
+   "duration_s": 3.48,
+   "qa": 1.0
+  },
+  "count_stop__r13": {
+   "event": "count_stop",
+   "reps": 13,
+   "variant": 1,
+   "text": "Fechou em treze repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r13.mp3",
+   "hash": "5807de0feafaae79",
+   "duration_s": 3.87,
+   "qa": 1.0
+  },
+  "count_stop__r14": {
+   "event": "count_stop",
+   "reps": 14,
+   "variant": 1,
+   "text": "Fechou em catorze repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r14.mp3",
+   "hash": "e95e8415e0f0ac34",
+   "duration_s": 4.09,
+   "qa": 1.0
+  },
+  "count_stop__r15": {
+   "event": "count_stop",
+   "reps": 15,
+   "variant": 1,
+   "text": "Fechou em quinze repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r15.mp3",
+   "hash": "54dd870ff209f3e0",
+   "duration_s": 3.94,
+   "qa": 1.0
+  },
+  "count_stop__r16": {
+   "event": "count_stop",
+   "reps": 16,
+   "variant": 1,
+   "text": "Fechou em dezesseis repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r16.mp3",
+   "hash": "b595f335ebd2006f",
+   "duration_s": 4.45,
+   "qa": 1.0
+  },
+  "count_stop__r17": {
+   "event": "count_stop",
+   "reps": 17,
+   "variant": 1,
+   "text": "Fechou em dezessete repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r17.mp3",
+   "hash": "9410d298b3d909ca",
+   "duration_s": 4.51,
+   "qa": 1.0
+  },
+  "count_stop__r18": {
+   "event": "count_stop",
+   "reps": 18,
+   "variant": 1,
+   "text": "Fechou em dezoito repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r18.mp3",
+   "hash": "ff4e0eaf97025a22",
+   "duration_s": 4.12,
+   "qa": 1.0
+  },
+  "count_stop__r19": {
+   "event": "count_stop",
+   "reps": 19,
+   "variant": 1,
+   "text": "Fechou em dezenove repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r19.mp3",
+   "hash": "47d3f64842b866b5",
+   "duration_s": 4.45,
+   "qa": 1.0
+  },
+  "count_stop__r20": {
+   "event": "count_stop",
+   "reps": 20,
+   "variant": 1,
+   "text": "Fechou em vinte repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r20.mp3",
+   "hash": "de811f0078c2f69b",
+   "duration_s": 3.91,
+   "qa": 1.0
+  },
+  "count_stop__r21": {
+   "event": "count_stop",
+   "reps": 21,
+   "variant": 1,
+   "text": "Fechou em vinte e uma repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r21.mp3",
+   "hash": "65c12f8d64784bd4",
+   "duration_s": 4.56,
+   "qa": 1.0
+  },
+  "count_stop__r22": {
+   "event": "count_stop",
+   "reps": 22,
+   "variant": 1,
+   "text": "Fechou em vinte e duas repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r22.mp3",
+   "hash": "08676404580e305d",
+   "duration_s": 4.68,
+   "qa": 1.0
+  },
+  "count_stop__r23": {
+   "event": "count_stop",
+   "reps": 23,
+   "variant": 1,
+   "text": "Fechou em vinte e três repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r23.mp3",
+   "hash": "6e56195b11aa469f",
+   "duration_s": 4.65,
+   "qa": 1.0
+  },
+  "count_stop__r24": {
+   "event": "count_stop",
+   "reps": 24,
+   "variant": 1,
+   "text": "Fechou em vinte e quatro repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r24.mp3",
+   "hash": "919cc21a387d1a4f",
+   "duration_s": 4.68,
+   "qa": 1.0
+  },
+  "count_stop__r25": {
+   "event": "count_stop",
+   "reps": 25,
+   "variant": 1,
+   "text": "Fechou em vinte e cinco repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r25.mp3",
+   "hash": "d478c4d4c7d0e84d",
+   "duration_s": 4.38,
+   "qa": 1.0
+  },
+  "count_stop__r26": {
+   "event": "count_stop",
+   "reps": 26,
+   "variant": 1,
+   "text": "Fechou em vinte e seis repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r26.mp3",
+   "hash": "f2373e58928b47a8",
+   "duration_s": 4.65,
+   "qa": 1.0
+  },
+  "count_stop__r27": {
+   "event": "count_stop",
+   "reps": 27,
+   "variant": 1,
+   "text": "Fechou em vinte e sete repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r27.mp3",
+   "hash": "38fa75bdeff720c6",
+   "duration_s": 4.77,
+   "qa": 1.0
+  },
+  "count_stop__r28": {
+   "event": "count_stop",
+   "reps": 28,
+   "variant": 1,
+   "text": "Fechou em vinte e oito repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r28.mp3",
+   "hash": "bb5e4360109362a5",
+   "duration_s": 4.79,
+   "qa": 1.0
+  },
+  "count_stop__r29": {
+   "event": "count_stop",
+   "reps": 29,
+   "variant": 1,
+   "text": "Fechou em vinte e nove repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r29.mp3",
+   "hash": "b4262cc3f51dd163",
+   "duration_s": 4.62,
+   "qa": 1.0
+  },
+  "count_stop__r30": {
+   "event": "count_stop",
+   "reps": 30,
+   "variant": 1,
+   "text": "Fechou em trinta repetições. Isso é evolução. Anota aí.",
+   "file": "count_stop__r30.mp3",
+   "hash": "8dcee216464da772",
+   "duration_s": 3.88,
+   "qa": 1.0
+  }
+ }
+}

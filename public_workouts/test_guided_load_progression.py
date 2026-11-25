@@ -140,14 +140,17 @@ class GuidedLoadProgressionTest(TestCase):
 
         # 100 x 8 com RIR 2 estima 1RM ~133,3 kg, que define o teto de cada fase.
         expected = {
-            # 100 x 76/67 = 113,4, teto 80% de 133,3 = 106,7 -> 107,5
-            _WEEK_2: 107.5,
-            # 100 x 85/67 = 126,9, teto 90% de 133,3 = 120 -> 120
-            _WEEK_3: 120.0,
+            # A faixa 6-8 do treinador cruza a da fase, então as reps ficam 6-8 e a
+            # carga segue reps+RIR: fez 8 @ RIR 2 (10 efetivas); a semana pede
+            # 7 @ RIR 1,5 (8,5): 100 x (1+10/30)/(1+8,5/30) = 103,9 -> 105
+            _WEEK_2: 105.0,
+            # Intensidade: 7 @ RIR 0,5 (7,5 efetivas): 100 x 1,0667 = 106,7 -> 107,5
+            _WEEK_3: 107.5,
             # deload: 100 x 57,5/67 = 85,8 (abaixo do teto de 86,7) -> 85
             _WEEK_4: 85.0,
-            # o mesociclo recomeça em Volume, a fase do registro: repete os 100 kg
-            _WEEK_5: 100.0,
+            # volta a Volume, a fase do registro: 8 reps = teto da faixa 6-8 com
+            # RIR 2 -> progressão dupla, +2,5 kg
+            _WEEK_5: 102.5,
         }
         for moment, kg in expected.items():
             with self.subTest(semana=moment), freeze_time(moment):
@@ -171,7 +174,7 @@ class GuidedLoadProgressionTest(TestCase):
             self.assertEqual(self._top_kg(), (100.0, 'phase_progressive'))
 
     def test_page_hands_the_guided_screen_last_week_load_and_this_week_phase(self):
-        """Dados do quadro "Semana passada 100 kg → Hoje 107,5 kg" e da linha da fase."""
+        """Dados do quadro "Semana passada 100 kg → Hoje 105 kg" e da linha da fase."""
         self._publish()
         with freeze_time(_WEEK_1):
             _series, anchor, _kind = self._bench_card_with_anchor()
@@ -181,7 +184,7 @@ class GuidedLoadProgressionTest(TestCase):
             html = self._page()
             series, anchor, kind = self._bench_card_with_anchor(html)
             self.assertEqual(anchor, {'kg': 100.0, 'on': '2026-01-06'})
-            self.assertEqual((series[_TOP_SET_NUMBER - 1]['weight_kg'], kind), (107.5, 'phase_progressive'))
+            self.assertEqual((series[_TOP_SET_NUMBER - 1]['weight_kg'], kind), (105.0, 'phase_progressive'))
             self.assertIn('data-period-week="2" data-period-total="4" data-period-phase="Força-Hipertrofia"', html)
 
     def test_newest_guided_load_is_the_anchor_for_the_following_week(self):
@@ -189,12 +192,12 @@ class GuidedLoadProgressionTest(TestCase):
         with freeze_time(_WEEK_1):
             self._record_top_through_guided(weight=100, reps=8, rir=2)
         with freeze_time(_WEEK_2):
-            self.assertEqual(self._top_kg(), (107.5, 'phase_progressive'))
+            self.assertEqual(self._top_kg(), (105.0, 'phase_progressive'))
             # O aluno foi além da sugestão: 112,5 x 8 com RIR 2 (1RM estimado 150).
             self._record_top_through_guided(weight=Decimal('112.5'), reps=8, rir=2)
         with freeze_time(_WEEK_3):
-            # Âncora nova: 112,5 x 85/76 = 125,8 (teto 90% de 150 = 135) -> 125.
-            self.assertEqual(self._top_kg(), (125.0, 'phase_progressive'))
+            # Âncora nova: 112,5 x 8 @ RIR 2 -> Intensidade 7 @ RIR 0,5: x 1,0667 = 120.
+            self.assertEqual(self._top_kg(), (120.0, 'phase_progressive'))
 
     def test_coach_percentage_of_rm_uses_the_1rm_estimated_from_the_guided_load(self):
         # Treinador prescreveu 75% do RM: a prescrição dele vence a progressão por fase.

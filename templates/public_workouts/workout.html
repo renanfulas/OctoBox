@@ -274,10 +274,14 @@ PONTOS CRITICOS:
         >
           {% for block in day.blocks %}
           <div class="workout-movement-list">
+            {% if block.group_type == 'biset' %}
+            <p class="workout-phase-note">Bi-set: faça os movimentos em sequência, sem pausa entre eles; descanse {{ block.rest_spec|default:'90–120 s' }} após o par.</p>
+            {% endif %}
             {% for movement in block.movements %}
             {% movement_load_display movement program current_phase one_rep_max_by_movement progress_snapshots as load %}
-            {% guided_series movement load.value_kg one_rep_max_by_movement as guided_plan %}
-            <article class="student-card workout-movement-card{% if movement.is_tracked %} is-load-tracked{% endif %}" data-guided-series="{{ guided_plan }}" data-load-anchor="{{ load.anchor_json|default:'{}' }}" data-movement-slug="{{ movement.movement_slug }}" data-movement-label="{{ movement|movement_name:movement_labels }}" data-reference-url="{{ movement.reference_url|default:'' }}" data-rir-spec="{{ movement.rir_spec|default:'' }}" data-load-kind="{{ load.kind }}" data-allow-load-registration="{% if movement.allow_load_registration|default_if_none:True %}true{% else %}false{% endif %}">
+            {% guided_series movement load.value_kg one_rep_max_by_movement current_phase program as guided_plan %}
+            {% phase_week_prescription_note movement current_phase program as phase_week_note %}
+            <article class="student-card workout-movement-card{% if movement.is_tracked %} is-load-tracked{% endif %}" data-guided-series="{{ guided_plan }}" data-load-anchor="{{ load.anchor_json|default:'{}' }}" data-movement-slug="{{ movement.movement_slug }}" data-movement-label="{{ movement|movement_name:movement_labels }}" data-reference-url="{{ movement.reference_url|default:'' }}" data-rir-spec="{{ movement.rir_spec|default:'' }}" data-guided-superset-group="{% if block.group_type == 'biset' %}{{ day.day_id }}-{{ forloop.parentloop.counter }}{% endif %}" data-guided-superset-order="{{ forloop.counter }}" data-guided-superset-rest-seconds="{{ block.rest_seconds|default:'105' }}" data-load-kind="{{ load.kind }}" data-allow-load-registration="{% if movement.allow_load_registration|default_if_none:True %}true{% else %}false{% endif %}">
               <div class="workout-movement-copy">
                 {% if movement.reference_url %}
                 <strong><a class="workout-wiki-link" href="{{ movement.reference_url }}" target="_blank" rel="noopener">{{ movement|movement_name:movement_labels }} <span class="workout-wiki-link__icon" aria-hidden="true">↗</span></a></strong>
@@ -304,6 +308,8 @@ PONTOS CRITICOS:
                 </span>
                 {% endif %}
                 {% endwith %}
+                {% if phase_week_note %}<span class="workout-phase-note workout-phase-note--week"><strong>{{ phase_week_note }}</strong></span>{% endif %}
+                {% if movement.rest_spec %}<span class="workout-phase-note">Descanso: {{ movement.rest_spec }}</span>{% elif movement.rest_policy == 'percentage_of_1rm' %}<span class="workout-phase-note">Descanso ajustado pela %1RM no treino guiado.</span>{% endif %}
               </div>
               {% if movement.allow_load_registration|default_if_none:True %}
               <div class="workout-movement-load">

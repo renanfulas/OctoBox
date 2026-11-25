@@ -190,6 +190,7 @@ def _render_public_workout_html(
         'show_onboarding_wizard': show_onboarding_wizard,
         'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
         'push_configured': curva_push_configured(),
+        'coach_voice_enabled': coach_voice_enabled_for(plan.slug),
     })
 
 
@@ -211,6 +212,13 @@ def _public_workout_login_redirect(plan_slug: str):
     response = redirect(f'/treinos/login?next=/renan/{plan_slug}')
     response['X-Robots-Tag'] = 'noindex, nofollow'
     return response
+
+
+def coach_voice_enabled_for(plan_slug: str) -> bool:
+    """Coach de voz: ligado para todos pela flag geral, ou só para os planos do beta."""
+    if getattr(settings, 'CURVA_COACH_VOICE_ENABLED', False):
+        return True
+    return plan_slug in getattr(settings, 'CURVA_COACH_VOICE_PLANS', ())
 
 
 def _private_public_workout_response(html: str) -> HttpResponse:
@@ -440,6 +448,7 @@ class PublicWorkoutPreviewView(View):
             'account_email': account_email,
             'push_public_key': getattr(settings, 'STUDENT_WEB_PUSH_VAPID_PUBLIC_KEY', '').strip(),
             'push_configured': curva_push_configured(),
+            'coach_voice_enabled': coach_voice_enabled_for(plan_slug),
         })
         response = _private_public_workout_response(html)
         response.set_signed_cookie(
