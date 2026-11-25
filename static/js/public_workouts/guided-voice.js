@@ -476,8 +476,92 @@
     };
   }
 
+  // Liga o coach à tela do treino guiado (workout-guided.js): toggle do lançador,
+  // "Contar comigo" no foco e pré-cache das falas. `host` diz qual é a série atual;
+  // sem pacote publicado (data-coach-voice-manifest) tudo vira no-op.
+  function attach(root, dialog, host) {
+    var voice = root.dataset.coachVoiceManifest ? create({
+      manifestUrl: root.dataset.coachVoiceManifest, baseUrl: root.dataset.coachVoiceBase,
+    }) : null;
+    var countBox = voice ? dialog.querySelector('[data-guided-count]') : null;
+    var countKey = null;
+    function call(method) {
+      if (!voice) return;
+      var args = Array.prototype.slice.call(arguments, 1);
+      try { voice[method].apply(voice, args); } catch (_) { /* voz é conforto: nunca trava o treino */ }
+    }
+    function paint() {
+      if (!countBox) return;
+      var counting = voice.counting();
+      var step = host.step();
+      // Saiu da série que estava contando (registrou, pulou, minimizou): a voz para.
+      if (counting && (!host.inExercise() || !step || countKey !== host.key(step))) {
+        voice.countCancel();
+        counting = false;
+      }
+      countBox.hidden = !(host.inExercise() && !!step && (counting || voice.countable(step)));
+      countBox.querySelector('[data-guided-count-start]').hidden = counting;
+      countBox.querySelector('[data-guided-count-live]').hidden = !counting;
+    }
+    var box = voice ? root.querySelector('[data-coach-voice]') : null;
+    if (box) {
+      var toggle = box.querySelector('[data-coach-voice-toggle]');
+      var help = box.querySelector('[data-coach-voice-help]');
+      voice.load().then(function (manifest) {
+        if (!manifest) return; // pacote fora do ar: o lançador segue sem a opção
+        box.hidden = false;
+        toggle.checked = voice.enabled();
+        help.hidden = !toggle.checked;
+      });
+      toggle.addEventListener('change', function () {
+        voice.setEnabled(toggle.checked);
+        help.hidden = !toggle.checked;
+        if (toggle.checked) voice.unlock();
+      });
+      box.querySelector('[data-coach-voice-test]').addEventListener('click', function () {
+        voice.unlock();
+        voice.test();
+      });
+    }
+    if (countBox) {
+      var value = countBox.querySelector('[data-guided-count-value]');
+      var unit = countBox.querySelector('[data-guided-count-unit]');
+      var live = countBox.querySelector('[data-guided-count-live]');
+      var show = function (n) { value.textContent = String(n); if (unit) unit.textContent = host.repWord(n); };
+      countBox.querySelector('[data-guided-count-start]').addEventListener('click', function () {
+        var step = host.step();
+        if (!step) return;
+        voice.unlock();
+        var setKey = countKey = host.key(step);
+        show(0);
+        voice.countStart(step, {
+          onRep: show,
+          onDone: function (n) { host.fillReps(setKey, n); paint(); },
+        });
+        paint();
+        countBox.querySelector('[data-guided-count-stop]').focus({ preventScroll: true });
+      });
+      // Durante a contagem a tela inteira é o "Parei": o aluno acabou de largar a
+      // barra e não vai mirar num botão. O botão continua lá para teclado/leitor.
+      live.addEventListener('click', function () {
+        if (!voice.counting()) return;
+        host.fillReps(countKey, voice.countStop());
+        paint();
+      });
+    }
+    // As falas deste treino passam pelo service worker, que as guarda para o
+    // modo offline (cache curva-coach-audio-*). Uma por vez: rede de academia.
+    function precache(preview) {
+      if (!voice || !voice.enabled() || !window.fetch) return;
+      voice.urlsFor(preview).reduce(function (chain, url) {
+        return chain.then(function () { return fetch(url, { credentials: 'same-origin' }).catch(function () {}); });
+      }, Promise.resolve());
+    }
+    return { call: call, paint: paint, precache: precache };
+  }
+
   window.CurvaGuidedVoice = {
-    create: create, setPhrases: setPhrases, kgKey: kgKey, countPlan: countPlan, countMode: countMode,
+    create: create, attach: attach, setPhrases: setPhrases, kgKey: kgKey, countPlan: countPlan, countMode: countMode,
     ANNOUNCE_AT_MS: ANNOUNCE_AT_MS, STORAGE_KEY: STORAGE_KEY, STOP_GRACE_MS: STOP_GRACE_MS, LATE_MS: LATE_MS,
   };
 }());

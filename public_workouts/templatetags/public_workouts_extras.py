@@ -50,9 +50,9 @@ from public_workouts.load_resolution import resolve_movement_load
 from public_workouts.progress_eligibility import eligible_for_personal_record, eligible_for_progress_curve
 from public_workouts.periodization import (
     build_chart_points_from_weeks,
-    coach_week_reps,
     current_phase_profile,
     current_week_number,
+    phase_banner,
 )
 from public_workouts.models import PublicWorkoutMovement, PublicWorkoutMovementEquipment
 from public_workouts.substitutions import suggest_substitutes
@@ -884,33 +884,8 @@ def current_period_phase(payload: dict):
 
 @register.simple_tag
 def periodization_phase_banner(payload: dict) -> dict:
-    """Banner "Semana 3 de 6 · Força-Hipertrofia — alvo 6-8 reps · RIR 1-2
-    · ~76% RM" no topo da aba Treino — só aparece (`visible=True`) quando o
-    programa já tem `periodization.weeks` (modelo canônico); `visible=
-    False` pros outros clientes, nada muda pra eles."""
-    phase = current_phase_profile(payload)
-    if phase is None:
-        return {'visible': False}
-
-    weeks = (payload.get('periodization') or {}).get('weeks') or []
-    week_number = current_week_number(payload)
-    coach_reps = coach_week_reps(payload, week_number)
-    reps_min, reps_max = coach_reps or phase.reps_target_range
-    pct_mid = round(sum(phase.intensity_pct_range) / 2)
-    if coach_reps:
-        # Reps do treinador para a semana: o %RM mostrado segue essas reps + RIR
-        # (Epley), não o perfil da fase — senão "8-12 reps · ~94% RM".
-        pct_mid = round(100 / (1 + ((reps_min + reps_max) / 2 + phase.rir_target) / 30))
-    return {
-        'visible': True,
-        'week_number': week_number,
-        'total_weeks': len(weeks),
-        'phase_label': phase.label,
-        'reps_min': reps_min,
-        'reps_max': reps_max,
-        'rir_target': phase.rir_target,
-        'pct_mid': pct_mid,
-    }
+    """Banner da semana no topo da aba Treino (ver periodization.phase_banner)."""
+    return phase_banner(payload)
 
 
 @register.simple_tag

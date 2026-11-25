@@ -210,7 +210,7 @@ def transcrever(x: np.ndarray, sr: int, base_url: str) -> str | None:
     req = urllib.request.Request(f'{base_url}/v1/audio/transcriptions', data=corpo, method='POST',
                                  headers={'Content-Type': f'multipart/form-data; boundary={limite}'})
     try:
-        with urllib.request.urlopen(req, timeout=300) as resp:
+        with urllib.request.urlopen(req, timeout=300) as resp:  # nosec B310 - ferramenta local; URL do --voicestudio (http/https)
             return json.loads(resp.read().decode('utf-8')).get('text', '').strip()
     except Exception as exc:  # QA é rede de proteção: sem transcrição, a fala segue sem nota
         print(f'  transcrição falhou: {exc!r}', flush=True)
@@ -229,7 +229,7 @@ def gerar(voice: dict, texto: str, base_url: str, seed: int | None = None) -> by
         for k, v in campos.items()) + f'--{limite}--\r\n'.encode()
     req = urllib.request.Request(f'{base_url}/generate', data=corpo, method='POST',
                                  headers={'Content-Type': f'multipart/form-data; boundary={limite}'})
-    with urllib.request.urlopen(req, timeout=300) as resp:
+    with urllib.request.urlopen(req, timeout=300) as resp:  # nosec B310 - ferramenta local; URL do --voicestudio (http/https)
         return resp.read()
 
 
@@ -469,7 +469,7 @@ def main() -> int:
     # ---- QA: lote de 8 numa chamada; lote com palavra faltando → fala a fala
     # Ordem embaralhada (semente fixa): 8 frases quase iguais seguidas ("A carga
     # dessa série é…") o transcritor junta numa só e o lote inteiro reprova.
-    para_qa.sort(key=lambda e: hashlib.sha1(e['id'].encode()).hexdigest())
+    para_qa.sort(key=lambda e: hashlib.sha1(e['id'].encode(), usedforsecurity=False).hexdigest())
     for i in range(0, len(para_qa), QA_LOTE):
         lote = para_qa[i:i + QA_LOTE]
         sr = lote[0]['sr']

@@ -377,7 +377,7 @@ def test_guided_top_set_finishes_and_survives_reload(page: Page, live_server):
 @pytest.mark.django_db(transaction=True)
 @override_settings(DEBUG=True)
 def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_server):
-    """100 kg na Top da semana 1 aparece, sem digitar, como 107,5 kg na semana 2."""
+    """100 kg na Top da semana 1 aparece, sem digitar, como 105 kg na semana 2."""
     from public_workouts.models import (
         PublicWorkoutAccount, PublicWorkoutLoginToken, PublicWorkoutSubscription, PublicWorkoutTrainingSession,
     )
@@ -424,10 +424,10 @@ def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_serve
     _start_guided(page)
     weight = page.locator('[data-workout-guided-weight]')
     plan = page.locator('[data-guided-plan]')
-    # Aquecimento 1 = 40% da Top sugerida (107,5) -> 42,5 kg, já preenchido.
+    # Aquecimento 1 = 40% da Top sugerida (105) -> 42 -> 42,5 kg, já preenchido.
     expect(weight).to_have_value('42,5')
     expect(plan).to_contain_text('Série principal hoje')
-    expect(page.locator('[data-guided-plan-from]')).to_have_text('107,5 kg')
+    expect(page.locator('[data-guided-plan-from]')).to_have_text('105 kg')
     expect(page.locator('[data-guided-plan-to]')).to_have_text('42,5 kg')
     expect(page.locator('[data-guided-plan-delta]')).to_have_text('40%')
     expect(page.locator('[data-guided-weight-source]')).to_contain_text('ajuste se precisar')
@@ -435,13 +435,14 @@ def test_last_week_guided_load_fills_this_week_suggestion(page: Page, live_serve
         page.locator('[data-workout-guided-skip]').click()
         if page.locator('[data-guided-skip-rest]').is_visible():
             page.locator('[data-guided-skip-rest]').click()
-    # Top: 100 x 76/67 = 113,4, teto 80% do 1RM estimado (133,3) = 106,7 -> 107,5 kg.
-    expect(weight).to_have_value('107,5')
-    # O quadro conta de onde veio: semana passada 100 kg -> hoje 107,5 kg (+8%), fase da semana.
+    # Top: a carga segue o esforço feito contra o pedido da semana (Epley com RIR):
+    # 100 x 8 RIR 2 (10 reps) -> 7 reps RIR 1,5 (8,5) = 100 x 1,333/1,283 = 103,9 -> 105 kg.
+    expect(weight).to_have_value('105')
+    # O quadro conta de onde veio: semana passada 100 kg -> hoje 105 kg (+5%), fase da semana.
     expect(page.locator('[data-guided-plan-from-label]')).to_have_text('Semana passada')
     expect(page.locator('[data-guided-plan-from]')).to_have_text('100 kg')
-    expect(page.locator('[data-guided-plan-to]')).to_have_text('107,5 kg')
-    expect(page.locator('[data-guided-plan-delta]')).to_have_text('+8%')
+    expect(page.locator('[data-guided-plan-to]')).to_have_text('105 kg')
+    expect(page.locator('[data-guided-plan-delta]')).to_have_text('+5%')
     expect(page.locator('[data-guided-plan-why]')).to_have_text('Semana 2 de 2 · Força-Hipertrofia · cálculo automático')
     expect(page.locator('[data-guided-weight-source]')).to_have_text('Calculada automaticamente · ajuste se precisar')
     if screenshot_path := os.environ.get('CURVA_LOAD_PLAN_SCREENSHOT'):

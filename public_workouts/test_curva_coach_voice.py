@@ -28,7 +28,7 @@ class CoachVoiceLauncherTest(TestCase):
 
         platform_cache.clear()
         publish_program(slug='bruno', payload=build_example_payload())
-        account, _ = _student()
+        account, _ = _student(device=None)
         token = PublicWorkoutLoginToken.objects.create(account=account, expires_at=timezone.now() + timedelta(minutes=15))
         self.client.post(reverse('public-workout-login'), {
             'action': 'entrar_link', 'token': str(token.token), 'next': '/renan/bruno',

@@ -102,5 +102,15 @@
     };
   }
 
-  window.CurvaGuidedState = { key: key, project: project };
+  // Descanso depois de uma série de bi-set: zero entre os dois exercícios da mesma
+  // volta, o descanso do par ao fechar a volta. null fora de bi-set.
+  function supersetRest(step, next) {
+    var group = step.movement.supersetGroup;
+    if (!group) return null;
+    var paired = next && next.movementIndex !== step.movementIndex
+      && next.movement.supersetGroup === group && next.setNumber === step.setNumber;
+    return paired ? 0 : Number(step.movement.supersetRestSeconds || 105);
+  }
+
+  window.CurvaGuidedState = { key: key, project: project, supersetRest: supersetRest };
 })();

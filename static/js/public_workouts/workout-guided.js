@@ -19,11 +19,6 @@
   var launchTitle = root.querySelector('[data-guided-launch-title]');
   var launchText = root.querySelector('[data-guided-launch-text]');
   var launchMeta = root.querySelector('[data-guided-launch-meta]');
-  var conflictPanel = root.querySelector('[data-workout-guided-conflict]');
-  var conflictMessage = root.querySelector('[data-workout-guided-conflict-message]');
-  var conflictExport = root.querySelector('[data-workout-guided-conflict-export]');
-  var conflictServer = root.querySelector('[data-workout-guided-conflict-server]');
-  var conflictCorrect = root.querySelector('[data-workout-guided-conflict-correct]');
   var format = window.CurvaGuidedFormat;
   var focus = window.CurvaGuidedFocus.create(dialog, { period: format.periodFrom(root.dataset) });
   var scope = root.dataset.accountScope && document.body.dataset.planSlug
@@ -78,18 +73,15 @@
     },
   }) : { started: noop, cleared: noop, ended: noop, tick: noop, hidden: noop, remap: noop, covers: noop };
 
-  // Coach de voz (guided-voice.js). Só existe com o pacote publicado
-  // (data-coach-voice-manifest) e o aluno ligando o toggle; sem isso, tudo é no-op.
-  var voice = window.CurvaGuidedVoice && root.dataset.coachVoiceManifest ? window.CurvaGuidedVoice.create({
-    manifestUrl: root.dataset.coachVoiceManifest, baseUrl: root.dataset.coachVoiceBase,
-  }) : null;
-  function voiceDo(method) {
-    if (!voice) return;
-    var args = Array.prototype.slice.call(arguments, 1);
-    try { voice[method].apply(voice, args); } catch (_) { /* voz é conforto: nunca trava o treino */ }
-  }
-  setupCoachVoice();
-  setupCoachCount();
+  // Coach de voz (guided-voice.js): sem o script ou sem o pacote publicado, no-op.
+  var coach = window.CurvaGuidedVoice ? window.CurvaGuidedVoice.attach(root, dialog, {
+    step: function () { return movements.length && sessionId ? project().current : null; },
+    key: function (step) { return key(step.movementIndex, step.setNumber); },
+    inExercise: function () { return screen === 'exercise' && focus.isOpen(); },
+    fillReps: function (setKey, reps) { focus.fillReps(setKey, reps); },
+    repWord: format.repWord,
+  }) : { call: noop, paint: noop, precache: noop };
+  var voiceDo = coach.call;
 
   var sync = window.CurvaGuidedSync.create({
     outbox: outbox, scope: scope, request: request, newId: newId,
@@ -104,7 +96,7 @@
         setSync.set(setKey, 'blocked');
         render();
       }
-      showConflict(command);
+      conflict.show(command);
     },
     onSent: function (payload) {
       if (payload.session_id !== sessionId || (payload.action !== 'set' && payload.action !== 'correct')) return;
@@ -196,91 +188,6 @@
   function stopRest() {
     timer.stop();
     restAlert.cleared();
-  }
-
-  /* ---------- coach de voz ---------- */
-  function setupCoachVoice() {
-    var box = root.querySelector('[data-coach-voice]');
-    if (!voice || !box) return;
-    var toggle = box.querySelector('[data-coach-voice-toggle]');
-    var help = box.querySelector('[data-coach-voice-help]');
-    voice.load().then(function (manifest) {
-      if (!manifest) return; // pacote fora do ar: o lançador segue sem a opção
-      box.hidden = false;
-      toggle.checked = voice.enabled();
-      help.hidden = !toggle.checked;
-    });
-    toggle.addEventListener('change', function () {
-      voice.setEnabled(toggle.checked);
-      help.hidden = !toggle.checked;
-      if (toggle.checked) voice.unlock();
-    });
-    box.querySelector('[data-coach-voice-test]').addEventListener('click', function () {
-      voice.unlock();
-      voice.test();
-    });
-  }
-
-  // Contagem intra-série (top set e AMRAP): "Contar comigo" liga a voz ditando o
-  // ritmo; "Parei" (ou o fim da top set) preenche as repetições contadas.
-  var countBox; // preenchido em setupCoachCount(), que roda antes desta linha
-  var countKey = null;
-  function currentKey() {
-    var step = movements.length ? project().current : null;
-    return step ? key(step.movementIndex, step.setNumber) : null;
-  }
-  function paintCount() {
-    if (!countBox || !voice) return;
-    var counting = voice.counting();
-    // Saiu da série que estava contando (registrou, pulou, minimizou): a voz para.
-    if (counting && (screen !== 'exercise' || !focus.isOpen() || countKey !== currentKey())) {
-      voice.countCancel();
-      counting = false;
-    }
-    var step = movements.length && sessionId ? project().current : null;
-    var show = screen === 'exercise' && focus.isOpen() && !!step && (counting || voice.countable(step));
-    countBox.hidden = !show;
-    countBox.querySelector('[data-guided-count-start]').hidden = counting;
-    countBox.querySelector('[data-guided-count-live]').hidden = !counting;
-  }
-  function setupCoachCount() {
-    countBox = dialog.querySelector('[data-guided-count]');
-    if (!countBox || !voice) return;
-    var value = countBox.querySelector('[data-guided-count-value]');
-    var unit = countBox.querySelector('[data-guided-count-unit]');
-    var live = countBox.querySelector('[data-guided-count-live]');
-    var show = function (n) { value.textContent = String(n); if (unit) unit.textContent = format.repWord(n); };
-    countBox.querySelector('[data-guided-count-start]').addEventListener('click', function () {
-      var step = project().current;
-      if (!step) return;
-      voice.unlock();
-      countKey = key(step.movementIndex, step.setNumber);
-      var setKey = countKey;
-      show(0);
-      voice.countStart(step, {
-        onRep: show,
-        onDone: function (n) { focus.fillReps(setKey, n); paintCount(); },
-      });
-      paintCount();
-      countBox.querySelector('[data-guided-count-stop]').focus({ preventScroll: true });
-    });
-    // Durante a contagem a tela inteira é o "Parei": o aluno acabou de largar a
-    // barra e não vai mirar num botão. O botão continua lá para teclado/leitor.
-    live.addEventListener('click', function () {
-      if (!voice.counting()) return;
-      var reps = voice.countStop();
-      focus.fillReps(countKey, reps);
-      paintCount();
-    });
-  }
-
-  // As falas deste treino passam pelo service worker, que as guarda para o
-  // modo offline (cache curva-coach-audio-*). Uma por vez: rede de academia.
-  function precacheCoachVoice(preview) {
-    if (!voice || !voice.enabled() || !window.fetch) return;
-    voice.urlsFor(preview).reduce(function (chain, url) {
-      return chain.then(function () { return fetch(url, { credentials: 'same-origin' }).catch(function () {}); });
-    }, Promise.resolve());
   }
 
   /* ---------- estado e view model ---------- */
@@ -415,7 +322,7 @@
   }
 
   function paintLauncher() {
-    paintCount();
+    coach.paint();
     var state = movements.length ? project() : null;
     var rest = timer.snapshot();
     // Sinal lido pelo widget de carga da grade (load_tracker.js): com sessão guiada
@@ -455,79 +362,11 @@
     });
   }
 
-  /* ---------- conflito da fila ---------- */
-  function showConflict(command) {
-    conflictPanel.hidden = false;
-    conflictMessage.textContent = command.error || 'O servidor não aceitou este registro.';
-    conflictCorrect.hidden = command.payload.action !== 'set' || command.error_status !== 409;
-    conflictServer.textContent = command.payload.action === 'start'
-      ? 'Exportar e abrir a ficha atual' : 'Usar registro do servidor';
-    if (focus.isOpen()) {
-      focus.toast('Um registro precisa de atenção', 'Resolver', function () {
-        minimize();
-        conflictPanel.scrollIntoView({ block: 'center' });
-      }, true);
-    }
-  }
-
-  function exportDraft() {
-    return outbox.list(scope).then(function (commands) {
-      var data = JSON.stringify({ exported_at: new Date().toISOString(), scope: scope, commands: commands }, null, 2);
-      var url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
-      var link = document.createElement('a');
-      link.href = url;
-      link.download = 'curva-treino-pendente.json';
-      link.click();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-      return commands;
-    });
-  }
-
-  conflictExport.addEventListener('click', function () {
-    exportDraft().catch(function () { status.textContent = 'Não foi possível exportar o rascunho local.'; });
-  });
-
-  conflictServer.addEventListener('click', function () {
-    var command = sync.blocked();
-    if (!command) return;
-    var question = command.payload.action === 'start'
-      ? 'Exportar o rascunho, descartar esta fila e abrir a ficha atual?'
-      : 'Descartar este comando local e usar o registro do servidor?';
-    if (!window.confirm(question)) return;
-    if (command.payload.action === 'start') {
-      var localId = command.payload.local_session_id;
-      exportDraft().then(function (commands) {
-        var sameSession = commands.filter(function (item) {
-          return item.payload.local_session_id === localId || item.payload.session_id === localId;
-        });
-        return sameSession.reduce(function (chain, item) {
-          return chain.then(function () { return sync.forget(item.key); });
-        }, Promise.resolve());
-      }).then(function () { return outbox.clear(scope); }).then(function () {
-        location.reload();
-      }).catch(function () {
-        status.textContent = 'Não foi possível exportar e limpar a fila. Seus dados locais foram preservados.';
-      });
-      return;
-    }
-    sync.removeBlocked().then(function () {
-      conflictPanel.hidden = true;
-      return request('GET');
-    }).then(function (result) {
-      if (result.session) activate(result.session);
-      return snapshot();
-    }).then(drain).catch(function (error) { status.textContent = error.message; });
-  });
-
-  conflictCorrect.addEventListener('click', function () {
-    var command = sync.blocked();
-    if (!command || command.payload.action !== 'set') return;
-    var replacement = Object.assign({}, command.payload, { action: 'correct', command_key: newId() });
-    sync.replaceBlocked(replacement).then(function () {
-      conflictPanel.hidden = true;
-      status.textContent = 'Correção preparada; enviando em ordem.';
-      return drain();
-    }).catch(function (error) { status.textContent = error.message; });
+  /* ---------- conflito da fila (painel em guided-sync.js) ---------- */
+  var conflict = window.CurvaGuidedSync.conflictPanel(root, {
+    sync: sync, outbox: outbox, scope: scope, status: status, focus: focus, newId: newId,
+    request: request, drain: drain, snapshot: snapshot, minimize: function () { minimize(); },
+    activate: function (session) { activate(session); },
   });
 
   /* ---------- ficha do dia ---------- */
@@ -684,7 +523,7 @@
     screen = 'exercise';
     // Ainda dentro do toque: o iOS só libera o áudio assim.
     voiceDo('unlock');
-    precacheCoachVoice(preview);
+    coach.precache(preview);
     var startPayload = {
       action: 'start', day_id: dayId, start_key: id,
       program_version: root.dataset.programVersion, local_session_id: id,
@@ -779,15 +618,8 @@
     receiptKey = setKey;
     if (step.movement.supersetGroup) focusIndex = null;
     clearFocusIfDone();
-    var nextSet = project().next;
-    var restSeconds = step.series.rest_seconds == null ? 90 : Number(step.series.rest_seconds);
-    if (step.movement.supersetGroup) {
-      var nextIsPairedMovementInSameRound = nextSet
-        && nextSet.movementIndex !== step.movementIndex
-        && nextSet.movement.supersetGroup === step.movement.supersetGroup
-        && nextSet.setNumber === step.setNumber;
-      restSeconds = nextIsPairedMovementInSameRound ? 0 : Number(step.movement.supersetRestSeconds || 105);
-    }
+    var restSeconds = window.CurvaGuidedState.supersetRest(step, project().next);
+    if (restSeconds == null) restSeconds = step.series.rest_seconds == null ? 90 : Number(step.series.rest_seconds);
     if (!project().next) { skipRest(); screen = 'summary'; }
     else if (restSeconds > 0) { startRest(restSeconds); screen = 'rest'; }
     else { skipRest(); screen = 'exercise'; }
@@ -841,21 +673,11 @@
       status.textContent = waitsForNetwork(result)
         ? 'Pulo salvo neste aparelho; ainda não confirmado no Curva.'
         : (step.series.required ? 'Série pulada. Encerre como parcial para registrar o treino.' : 'Série opcional pulada.');
-      var nextStep = project().next;
-      if (!nextStep) {
-        skipRest();
-        screen = 'summary';
-      } else if (step.movement.supersetGroup) {
-        var nextIsPairedMovementInSameRound = nextStep.movementIndex !== step.movementIndex
-          && nextStep.movement.supersetGroup === step.movement.supersetGroup
-          && nextStep.setNumber === step.setNumber;
-        var restSeconds = nextIsPairedMovementInSameRound
-          ? 0 : Number(step.movement.supersetRestSeconds || 105);
-        if (restSeconds > 0) { startRest(restSeconds); screen = 'rest'; }
-        else { skipRest(); screen = 'exercise'; }
-      } else {
-        screen = 'exercise';
-      }
+      var restSeconds = window.CurvaGuidedState.supersetRest(step, project().next);
+      if (!project().next) { skipRest(); screen = 'summary'; }
+      else if (restSeconds > 0) { startRest(restSeconds); screen = 'rest'; }
+      else if (restSeconds === 0) { skipRest(); screen = 'exercise'; }
+      else screen = 'exercise'; // fora de bi-set, pular não abre descanso
       render();
       focus.toast('Série pulada', 'Desfazer', undoSkip);
       return snapshot();
