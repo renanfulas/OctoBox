@@ -17,6 +17,8 @@ test('aceita kg decimal e rejeita carga inválida', () => {
   assert.equal(loads.parseTarget('0'), null);
   assert.equal(loads.parseTarget('10.999'), null);
   assert.equal(loads.parseTarget('Infinity'), null);
+  assert.equal(loads.parseTarget('999'), 999);
+  assert.equal(loads.parseTarget('1000'), null);
 });
 
 test('alvo da Top sugere Prep e Feeder, preserva carga fixa e permite limpar', () => {

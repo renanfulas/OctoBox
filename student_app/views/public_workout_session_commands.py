@@ -21,6 +21,12 @@ def _address(data):
     return session_id, movement_index, set_number
 
 
+# Limites do registro da série (os mesmos da tela, guided-format.js): carga de
+# até 3 dígitos e repetições até 300.
+MAX_SET_WEIGHT_KG = Decimal('999')
+MAX_SET_REPS = 300
+
+
 def _values(data):
     if any(isinstance(data.get(field), bool) for field in ('weight_kg', 'reps', 'rir')):
         raise ValueError('valor de série inválido')
@@ -28,9 +34,9 @@ def _values(data):
     reps = int(data['reps']) if data.get('reps') not in (None, '') else None
     rir = Decimal(str(data['rir'])) if data.get('rir') not in (None, '') else None
     if (
-        (weight is not None and (not weight.is_finite() or weight < 0 or weight > Decimal('9999.99')
+        (weight is not None and (not weight.is_finite() or weight < 0 or weight > MAX_SET_WEIGHT_KG
                                  or weight != weight.quantize(Decimal('0.01'))))
-        or (reps is not None and not 1 <= reps <= 999)
+        or (reps is not None and not 1 <= reps <= MAX_SET_REPS)
         or (rir is not None and (not rir.is_finite() or rir < 0 or rir > 10
                                  or rir != rir.quantize(Decimal('0.1'))))
     ):

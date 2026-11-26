@@ -5,7 +5,8 @@
     var text = String(value == null ? '' : value).trim().replace(',', '.');
     if (!/^\d+(?:\.\d{1,2})?$/.test(text)) return null;
     var number = Number(text);
-    return Number.isFinite(number) && number > 0 && number <= 9999.99 ? number : null;
+    // Teto de 999 kg, o mesmo do registro da série (guided-format.js MAX_WEIGHT_KG).
+    return Number.isFinite(number) && number > 0 && number <= 999 ? number : null;
   }
 
   function roundToStep(value, step) {

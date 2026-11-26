@@ -12,7 +12,7 @@ from student_app.views.public_workout_access import (
     _get_public_workout_entry,
 )
 from student_app.views.public_workout_offline_telemetry import log_offline_sync_lag
-from student_app.views.public_workout_session_commands import handle_session_decision
+from student_app.views.public_workout_session_commands import MAX_SET_REPS, MAX_SET_WEIGHT_KG, handle_session_decision
 from student_app.views.public_workout_request import json_payload
 
 from public_workouts.services import LoadValueError
@@ -132,8 +132,8 @@ class PublicWorkoutSessionView(View):
                 not movement_slug or len(movement_slug) > 80 or not movement_slug.replace('-', '').isalnum()
                 or not 0 <= movement_index <= 100
                 or not 1 <= set_number <= 100 or role not in valid_roles
-                or (reps is not None and not 1 <= reps <= 999)
-                or (weight is not None and (not weight.is_finite() or weight < 0 or weight > Decimal('9999.99')))
+                or (reps is not None and not 1 <= reps <= MAX_SET_REPS)
+                or (weight is not None and (not weight.is_finite() or weight < 0 or weight > MAX_SET_WEIGHT_KG))
                 or (rir is not None and (not rir.is_finite() or rir < 0 or rir > 10))
                 or (duration is not None and not 1 <= duration <= 3600)
             ):

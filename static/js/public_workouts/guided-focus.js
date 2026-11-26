@@ -389,8 +389,8 @@
         if (validDuration()) startHold(draft.key, draft.duration);
         return;
       }
-      if (draft.invalidWeight) { setError('Confira a carga: use números com até duas casas decimais.'); weightInput.focus(); return; }
-      if (draft.invalidReps) { setError('Repetições precisam ser um número inteiro.'); repsInput.focus(); return; }
+      if (draft.invalidWeight) { setError('Confira a carga: até 999 kg, com até duas casas decimais.'); weightInput.focus(); return; }
+      if (draft.invalidReps) { setError('Repetições: um número inteiro de 1 a 300.'); repsInput.focus(); return; }
       if (draft.repsRequired && draft.reps == null) { setError('Informe quantas repetições você fez.'); repsInput.focus(); return; }
       if (draft.weight == null && draft.reps == null && movement.allowLoad) {
         setError('Informe a carga ou as repetições realizadas.'); return;
@@ -465,7 +465,7 @@
             if (direction < 0) return;
             draft.reps = series.reps != null ? series.reps : 1;
           } else {
-            draft.reps = Math.min(999, Math.max(1, draft.reps + direction));
+            draft.reps = Math.min(format.MAX_REPS, Math.max(1, draft.reps + direction));
           }
           draft.invalidReps = false;
           setError('');
@@ -485,7 +485,7 @@
         }
         q('[data-workout-guided-correct-weight]').value = format.decimal(correction.weight);
       } else {
-        correction.reps = correction.reps == null ? (direction > 0 ? 1 : null) : Math.min(999, Math.max(1, correction.reps + direction));
+        correction.reps = correction.reps == null ? (direction > 0 ? 1 : null) : Math.min(format.MAX_REPS, Math.max(1, correction.reps + direction));
         q('[data-workout-guided-correct-reps]').value = correction.reps == null ? '' : String(correction.reps);
       }
     }
